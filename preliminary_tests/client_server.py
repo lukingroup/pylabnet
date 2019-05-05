@@ -3,16 +3,13 @@ import threading
 
 
 class Server:
-    def __init__(self, module_ref, port, host='localhost'):
-
-        self._service = ModuleService()
-        self._service.assign_module(module_ref=module_ref)
+    def __init__(self, module_service, port, host='localhost'):
 
         self._server = rpyc.ThreadedServer(
-            service=self._service,
+            service=module_service,
             hostname=host,
             port=port,
-            protocol_config={'allow_public_attrs': True}
+            protocol_config=rpyc.core.protocol.DEFAULT_CONFIG
         )
 
         self._server_thread = threading.Thread(

@@ -50,6 +50,10 @@ class RNG:
     def ret_test_array(self, client_number):
         return self.test_array_dict[str(client_number)]
 
+    # Multi-level traceback/stability test
+    def divide(self, a, b):
+        return a / b
+
 
 class RNGService(rpyc.Service):
 
@@ -98,6 +102,10 @@ class RNGService(rpyc.Service):
     def exposed_ret_test_array(self, client_number):
         res = self._module.ret_test_array(client_number=client_number)
         return pickle.dumps(res)
+
+    # Multi-level traceback/stability test
+    def exposed_divide(self, a, b):
+        return self._module.divide(a=a, b=b)
 
 
 class RNGClient:
@@ -187,3 +195,7 @@ class RNGClient:
         except EOFError:
             print('[ERROR] get_params(): connection lost')
             return dict()
+
+    # Multi-level traceback/stability test
+    def divide(self, a, b):
+        return self._service.exposed_divide(a=a, b=b)

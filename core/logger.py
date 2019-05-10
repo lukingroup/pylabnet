@@ -5,54 +5,82 @@ import traceback
 class LogClient:
 
     _level_dict = dict(
+        NOLOG=100,
         CRITICAL=50,
         ERROR=40,
         WARN=30,
         INFO=20,
-        DEBUG=10,
-        NOTSET=0
+        DEBUG=10
     )
 
-    def __init__(self, port, host='localhost', module_id=None, level_str='INFO'):
+    def __init__(self, host, port, module_tag='', level_str='INFO'):
 
-        self._host = host
-        self._port = port
+        # Declare all internal vars
+        self._host = ''
+        self._port = 0
         self._connection = None
         self._service = None
-        self.connect()
+        self._level_str = ''
+        self._level = 0
+        self._module_taga = ''
 
-        self._level_str = 'NOTSET'
-        self._level = self._level_dict['NOTSET']
+        # Set log level
         self.set_level(level_str=level_str)
 
-        self._module_id = module_id
+        # Connect to log server
+        #   This call must be performed after set_level() call:
+        #       if host is None or port is None, connect() call
+        #       will automatically set _level_str to 'NOLOG'
+        self.connect(host=host, port=port)
 
+        # Set module alias to display with log messages
+        self._module_tag = module_tag
+
+        # Log test message
         self.info('Started logging')
 
-    def connect(self):
+    def connect(self, host='place_holder', port=-1):
+
+        # Update server address if new values are given
+        if host != 'place_holder':
+            self._host = host
+        if port != -1:
+            self._port = port
+
+        # Clean-up old connection if it exists
         if self._connection is not None or self._service is not None:
             try:
                 self._connection.close()
             except:
                 pass
 
-            del self._service, self._connection
-
-        try:
-            self._connection = rpyc.connect(
-                host=self._host,
-                port=self._port,
-                config={'allow_public_attrs': True}
-            )
-            self._service = self._connection.root
-            return 0
-
-        except:
             self._service = None
             self._connection = None
 
-            print('[LOG ERROR] connect(): failed to establish connection')
-            return -1
+        # Establish connection if
+        if host is None or port is None:
+            # 'No logging' was requested.
+            #   Do not establish connection to log server and
+            #   set level to 'NOLOG' to stop generating log messages
+            self.set_level(level_str='NOLOG')
+            return 0
+
+        else:
+            # Connect to log server
+            try:
+                self._connection = rpyc.connect(
+                    host=self._host,
+                    port=self._port,
+                    config={'allow_public_attrs': True}
+                )
+                self._service = self._connection.root
+                return 0
+
+            except Exception as exc_obj:
+                self._service = None
+                self._connection = None
+
+                raise exc_obj
 
     def set_level(self, level_str):
         # Sanity check
@@ -65,31 +93,58 @@ class LogClient:
         return 0
 
     def debug(self, msg_str):
-        return self._log_msg(msg_str=msg_str, level_str='DEBUG')
+        return self._log_msg(
+            msg_str=msg_str,
+            level_str='DEBUG'
+        )
 
     def info(self, msg_str):
-        return self._log_msg(msg_str=msg_str, level_str='INFO')
+        return self._log_msg(
+            msg_str=msg_str,
+            level_str='INFO'
+        )
 
     def warn(self, msg_str):
-        return self._log_msg(msg_str=msg_str, level_str='WARN')
+        return self._log_msg(
+            msg_str=msg_str,
+            level_str='WARN'
+        )
 
     def error(self, msg_str):
-        return self._log_msg(msg_str=msg_str, level_str='ERROR')
+        return self._log_msg(
+            msg_str=msg_str,
+            level_str='ERROR'
+        )
 
     def exception(self, msg_str):
+        # Get traceback string from the last exception
         tb_str = traceback.format_exc()
+
+        # Prepend user-give message
         full_msg_str = msg_str + '\n' + tb_str
+
         return self.error(msg_str=full_msg_str)
 
     def critical(self, msg_str):
-        return self._log_msg(msg_str=msg_str, level_str='CRITICAL')
+        return self._log_msg(
+            msg_str=msg_str,
+            level_str='CRITICAL'
+        )
 
     def _log_msg(self, msg_str, level_str):
 
-        if self._level_dict[level_str] >= self._level:
+        if self._level_dict[level_str] < self._level:
+            # No need to send the message
+            return 0
 
-            message = f'[{level_str}] {self._module_id}: {msg_str}'
+        else:
+            # ------------- To be revised -------------
+            # This block depended on specific implementation if the server.
+            message = '[{0}] {1}: {2}'.format(level_str, self._module_tag, msg_str)
+            # Pickle message object if not just a string is sent
+            # ------------- To be revised -------------
 
+            # Try sending message to the log server
             try:
                 ret_code = self._service.exposed_log_msg(
                     msg_str=message,
@@ -97,27 +152,29 @@ class LogClient:
                 )
                 return ret_code
 
-            # If connection was lost (EOFError) or was not initialized (AttributeError)
+            # If connection was lost (EOFError)
+            # or was not initialized (AttributeError),
+            # try to reconnect and send the message again
             except (EOFError, AttributeError):
-                # try reconnecting
-                print('[LOG INFO: no connection. Trying to reconnect to log server]')
+                # Try reconnecting.
+                #   If an exception is risen at this step,
+                #   one cannot fix the problem automatically and
+                #   the exception should just be returned to the caller.
+                #   That is why no exception catch should be done here.
+                print('DEBUG: no connection. Trying to reconnect to log server')
                 self.connect()
 
-                try:
-                    ret_code = self._service.exposed_log_msg(
-                        msg_str=message,
-                        level_str=level_str
-                    )
-                    return ret_code
-                except:
-                    return -1
-
-        else:
-            return 0
-
-
-# class Logger:
-#     pass
+                # Try sending message again.
+                #   If an exception is risen at this step,
+                #   one cannot fix problem automatically and
+                #   the exception should just be returned to the caller
+                #   That is why no exception catch should be done here.
+                print('DEBUG: Trying to resend the message')
+                ret_code = self._service.exposed_log_msg(
+                    msg_str=message,
+                    level_str=level_str
+                )
+                return ret_code
 
 
 class LogService(rpyc.Service):

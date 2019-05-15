@@ -1,7 +1,7 @@
 import rpyc
 import numpy as np
 import pickle
-from pylabnet.core.logger import LogClient
+from pylabnet.utils.logging.logger import LogClient
 
 
 class RNG:

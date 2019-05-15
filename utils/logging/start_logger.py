@@ -1,6 +1,6 @@
 import sys
 sys.path.append(r'C:\Users\Lukin SiV\pylabnet')
-from core.logger import LogService
+from utils.logging.logger import LogService
 from core.generic_server import GenericServer
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
-def str_to_float(in_str):
+def str_to_float(in_val):
     """Convert human-readable exponential form to float.
 
-    :param in_str: (str) input string of the following formats:
+    :param in_val: (str) input string of the following formats:
 
             'float_number' --> float_number
 
@@ -23,8 +23,11 @@ def str_to_float(in_str):
     :return: (float) extracted value without unit
     """
 
+    if isinstance(in_val, (float, int)):
+        return in_val
+
     # Split string into mantissa and exp_prefix + unit
-    item_list = in_str.split()
+    item_list = in_val.split()
 
     # Extract mantissa exp_prefix if included
     mantissa = float(item_list[0])
@@ -65,4 +68,32 @@ def str_to_float(in_str):
         exp_value = 0
 
     return mantissa * (10 ** exp_value)
+
+
+def pwr_to_float(in_val):
+
+    # FIXME: implement
+
+    # if isinstance(in_val, float):
+    #     return in_val
+    # #
+    # # Determine whether the power is given in Volts or dBm
+    # #
+    # # Split string into mantissa and exp_prefix + unit
+    # item_list = in_val.split()
+    #
+    # # Extract exp_prefix (a single letter) if included
+    # try:
+    #     exp_prefix_unit = item_list[1]
+    #
+    #     if len(exp_prefix_unit) > 1:
+    #         exp_prefix = item_list[1][0]
+    #     else:
+    #         exp_prefix = ''
+    # except IndexError:
+    #     exp_prefix = ''
+
+    return str_to_float(in_val=in_val)
+
+
 

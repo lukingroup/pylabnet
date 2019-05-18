@@ -33,7 +33,7 @@ class PulseBlock:
 
         self.duration = 0
 
-        # Build chnl_set
+        # Build ch_set
         # [set() is an unordered collections of unique elements]
         for pulse in init_list:
             self.chnl_set.add(pulse.chnl)
@@ -57,7 +57,7 @@ class PulseBlock:
         self.bin_number = len(self.bin_len_list)
         self.duration = np.sum(self.bin_len_list)
 
-        # Iterate though chnl_set and for each channel
+        # Iterate though ch_set and for each channel
         # fill-in bin array with corresponding p_func
         for chnl in self.chnl_set:
 
@@ -166,7 +166,7 @@ def pb_merge(*args):
     new_pb.duration = duration
 
     #
-    # Fill-in pulse_dict (the pulse table)
+    # Fill-in p_dict (the pulse table)
     #
 
     # Initially fill everything with default p_func
@@ -203,7 +203,7 @@ def pb_merge(*args):
                 # within the block is known
 
                 # Iterate through all channels, mentioned in the block,
-                # and set corresponding values to new_pb.pulse_dict
+                # and set corresponding values to new_pb.p_dict
                 for chnl in block.chnl_set:
                     new_pb.pulse_dict[chnl][bin_index] = block.pulse_dict[chnl][cover_bin_index]
 

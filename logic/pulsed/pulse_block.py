@@ -213,10 +213,6 @@ class PulseBlock:
 
         return ret_str
 
-    def iplot(self):
-        # TODO: implement
-        pass
-
 
 # def merge(*pb_items, name=''):
 #

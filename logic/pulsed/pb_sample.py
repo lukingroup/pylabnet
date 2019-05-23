@@ -1,7 +1,15 @@
 import numpy as np
 
 
-def sample_pb(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, step_adj=True):
+def add_offset(pb_obj, offset_dict):
+    pass
+
+
+def chnl_map():
+    pass
+
+
+def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, step_adj=True):
 
     t_step = 1 / samp_rate
     n_pts = int(pb_obj.dur//t_step + 1)
@@ -34,34 +42,36 @@ def sample_pb(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
             ''.format(n_pts, len_max)
         )
 
+    # Generate arrays of T-points
     t_ar = np.linspace(
         start=0,
         stop=t_step * (n_pts - 1),
         num=n_pts
     )
 
+    # Construct sample array for each channel in ch_set
+    # and store it in samp_dict
     samp_dict = dict()
+
     for ch in pb_obj.ch_set:
 
-        # Determine type of return values
-        # of pulse objects on this channel.
-        #
-        # Assumptions:
-        # - if 'ch' key is present in p_dict, corresponding list is non-empty
-        # - all p-elements of a channel have the same return type
-        # - all Pulse classes used have ret_type property
+        # Fill the array with default values
+        samp_dict[ch] = pb_obj.dflt_dict[ch].get_value(t_ar=t_ar)
 
-        ret_type = pb_obj.p_dict[ch][0].ret_type
-
-        #
-        if ret_type == np.float32:
-        samp_dict[ch] = np.zeros(n_pts)
-
+        # Iterate through each pulse item and calculate
+        # non-default values for corresponding T-points
         for p_item in pb_obj.p_dict[ch]:
-            pass
 
-    return None
+            # find indexes of pulse edges
+            indx_1 = int(p_item.t0 // t_step)
+            indx_2 = int((p_item.t0 + p_item.dur) // t_step)
 
+            # calculate new values
+            val_ar = p_item.get_value(
+                t_ar=t_ar[indx_1 : indx_2+1]
+            )
 
-def add_offset(pb_obj, offset_dict):
-    pass
+            # set the values to sample array
+            samp_dict[ch][indx_1 : indx_2+1] = val_ar
+
+    return t_ar, samp_dict

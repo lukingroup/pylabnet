@@ -22,10 +22,17 @@ def iplot(pb_obj, use_gl=False):
         # Build x_ar, y_ar, text_ar
         #
 
-        # initial zero-point
+        # initial zero-point - default pulse object printout
         x_ar = [0]
         y_ar = [ch_index]
-        text_ar = ['']
+        if ch in pb_obj.dflt_dict.keys():
+            text_ar = [
+                '{}'.format(
+                    str(pb_obj.dflt_dict[ch])
+                )
+            ]
+        else:
+            text_ar = ['']
 
         # Iterate through pulse list and create a rectangular
         # arc for each pulse. The mid-point on the upper segment
@@ -36,8 +43,15 @@ def iplot(pb_obj, use_gl=False):
             t2 = p_item.t0 + p_item.dur
 
             # left vertical line
-            x_ar.extend([t1, t1])
-            y_ar.extend([ch_index, ch_index + 0.8])
+            if t1 == 0:
+                # If pulse starts at the origin,
+                # do not overwrite (x=0, y=ch_index) point
+                # which contains dflt_dict[ch] printout
+                x_ar.append(t1)
+                y_ar.append(ch_index + 0.8)
+            else:
+                x_ar.extend([t1, t1])
+                y_ar.extend([ch_index, ch_index + 0.8])
 
             # mid-point, which will contain printout
             x_ar.append((t1 + t2) / 2)
@@ -48,15 +62,28 @@ def iplot(pb_obj, use_gl=False):
             y_ar.extend([ch_index + 0.8, ch_index])
 
             # set mid-point text to object printout
-            text_ar.extend(
-                [
-                    '{:.2e}'.format(t1),
-                    '{:.2e}'.format(t1),
-                    '{}'.format(str(p_item)),
-                    '{:.2e}'.format(t2),
-                    '{:.2e}'.format(t2)
-                ]
-            )
+            if t1 == 0:
+                # If pulse starts at the origin,
+                # do not overwrite (x=0, y=ch_index) point
+                # which contains dflt_dict[ch] printout
+                text_ar.extend(
+                    [
+                        '{:.2e}'.format(t1),
+                        '{}'.format(str(p_item)),
+                        '{:.2e}'.format(t2),
+                        '{:.2e}'.format(t2)
+                    ]
+                )
+            else:
+                text_ar.extend(
+                    [
+                        '{:.2e}'.format(t1),
+                        '{:.2e}'.format(t1),
+                        '{}'.format(str(p_item)),
+                        '{:.2e}'.format(t2),
+                        '{:.2e}'.format(t2)
+                    ]
+                )
 
         # final zero-point
         x_ar.append(pb_obj.dur)

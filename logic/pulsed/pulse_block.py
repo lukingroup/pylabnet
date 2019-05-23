@@ -3,7 +3,7 @@ import copy
 
 
 class PulseBlock:
-    def __init__(self, *p_obj_list, name=''):
+    def __init__(self, p_obj_list=None, dflt_dict=None, name=''):
         # p_obj_list = [
         #     po.High(chnl='ch1', t=0, dur=1e-6),
         #     po.Sin(chnl='ch2', t=1e-6, dur=1e-6, amp=1e-3, freq=2.5e9, ph=0)
@@ -26,6 +26,13 @@ class PulseBlock:
         self.ch_set = set()
         self.dur = 0
         self.p_dict = dict()
+        self.dflt_dict = dict()
+
+        if dflt_dict is not None:
+            self.dflt_dict = copy.deepcopy(dflt_dict)
+
+        if p_obj_list is None:
+            p_obj_list = list()
 
         # Among given pulses, there may be several with negative offsets.
         #
@@ -125,7 +132,8 @@ class PulseBlock:
 
         pb_obj = copy.deepcopy(pb_obj)
 
-        # Sanity check: no overlap between blocks
+        # Sanity checks
+        #  - no overlap between blocks
         if cflct_er and (self.ch_set & pb_obj.ch_set):
             if t0 >= 0:
                 if not self.dur <= t0:
@@ -136,6 +144,14 @@ class PulseBlock:
                 if not pb_obj.dur <= abs(t0):
                     raise ValueError(
                         'insert_pb(): blocks overlap and cannot be merged. (DEBUG: t0 < 0)'
+                    )
+        #  - no conflicts between default pulse objects
+        if cflct_er:
+            for ch in pb_obj.dflt_dict.keys():
+                if ch in self.dflt_dict.keys() and pb_obj.dflt_dict[ch] != self.dflt_dict[ch]:
+                    raise ValueError(
+                        'insert_pb(): conflict between default pulse objects on channel "{}"'
+                        ''.format(ch)
                     )
 
         # Calculate duration
@@ -173,6 +189,12 @@ class PulseBlock:
                     key=lambda pulse_item: pulse_item.t0
                 )
 
+        # Add new default pulse objects
+        for ch in pb_obj.dflt_dict.keys():
+            if ch not in self.dflt_dict.keys():
+                self.dflt_dict[ch] = copy.deepcopy(
+                    pb_obj.dflt_dict[ch]
+                )
         # pass
 
     def join_pb(self, pb_obj, t0=0, cflct_er=True, name=''):
@@ -204,12 +226,16 @@ class PulseBlock:
 
         # TODO: each p_item on a new line
         for ch in self.ch_set:
-            ch_str = '    {}: '.format(ch)
+            ch_str = '    {}: \n'.format(ch)
             for p_obj in self.p_dict[ch]:
-                ch_str += '{{{:.2e}, {:.2e}, {}}}  '.format(p_obj.t0, p_obj.dur, str(p_obj))
+                ch_str += '        {{{:.2e}, {:.2e}, {}}}\n'.format(p_obj.t0, p_obj.dur, str(p_obj))
 
             ret_str += ch_str
             ret_str += '\n'
+
+        ret_str += 'dflt_dict: \n'
+        for ch in self.dflt_dict.keys():
+            ret_str += '    {}: {} \n'.format(ch, str(self.dflt_dict[ch]))
 
         return ret_str
 

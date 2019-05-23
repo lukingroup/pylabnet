@@ -224,7 +224,6 @@ class PulseBlock:
                   'p_dict: \n' \
                   ''.format(self.name, self.ch_set, self.dur)
 
-        # TODO: each p_item on a new line
         for ch in self.ch_set:
             ch_str = '    {}: \n'.format(ch)
             for p_obj in self.p_dict[ch]:

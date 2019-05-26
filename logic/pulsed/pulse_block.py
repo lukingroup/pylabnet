@@ -23,7 +23,6 @@ class PulseBlock:
         # }
 
         self.name = name
-        self.ch_set = set()
         self.dur = 0
         self.p_dict = dict()
         self.dflt_dict = dict()
@@ -67,7 +66,7 @@ class PulseBlock:
         ch = p_obj.ch
 
         # Sanity check: new pulse does not conflict with existing pulses
-        if cflct_er and ch in self.ch_set:
+        if cflct_er and ch in self.p_dict.keys():
 
             p_list = self.p_dict[ch]
 
@@ -93,9 +92,8 @@ class PulseBlock:
                     )
 
         # Create a new entry for 'ch' if it is not yet registered
-        if ch not in self.ch_set:
+        if ch not in self.p_dict.keys():
             self.p_dict[ch] = []
-            self.ch_set.add(ch)
 
         # Add p_obj as a new entry in 'ch' pulse list
         self.p_dict[ch].append(p_obj)
@@ -114,7 +112,7 @@ class PulseBlock:
             # shift every pulse to the right
             t_shift = abs(p_obj.t0)
 
-            for ch_ in self.ch_set:
+            for ch_ in self.p_dict.keys():
                 for p_item in self.p_dict[ch_]:
                     p_item.t0 += t_shift
 
@@ -134,7 +132,7 @@ class PulseBlock:
 
         # Sanity checks
         #  - no overlap between blocks
-        if cflct_er and (self.ch_set & pb_obj.ch_set):
+        if cflct_er and (set(self.p_dict.keys()) & set(pb_obj.p_dict.keys())):
             if t0 >= 0:
                 if not self.dur <= t0:
                     raise ValueError(
@@ -162,22 +160,21 @@ class PulseBlock:
 
         # Shift all elements of the right-most block
         if t0 >= 0:
-            for ch in pb_obj.ch_set:
+            for ch in pb_obj.p_dict.keys():
                 for p_item in pb_obj.p_dict[ch]:
                     p_item.t0 += t0
         else:
-            for ch in self.ch_set:
+            for ch in self.p_dict.keys():
                 for p_item in self.p_dict[ch]:
                     p_item.t0 += abs(t0)
 
         # Register new channels
-        for ch in pb_obj.ch_set:
-            if ch not in self.ch_set:
-                self.ch_set.add(ch)
+        for ch in pb_obj.p_dict.keys():
+            if ch not in self.p_dict.keys():
                 self.p_dict[ch] = []
 
         # Add new pulses
-        for ch in pb_obj.ch_set:
+        for ch in pb_obj.p_dict.keys():
             self.p_dict[ch].extend(
                 pb_obj.p_dict[ch]
             )
@@ -208,6 +205,90 @@ class PulseBlock:
         return new_pb
         # pass
 
+    def ch_map(self, map_dict):
+
+        #
+        # Sanity check:
+        #
+
+        # - map_dict.keys() covers p_dict.keys()
+        if not set(self.p_dict.keys()) <= set(map_dict.keys()):
+            raise ValueError(
+                'ch_map(): map_dict does not include all channels of p_dict: \n'
+                '   map_dict.keys()={} \n'
+                'self.p_dict.keys()={} \n'
+                ''.format(
+                    sorted(map_dict.keys()),
+                    sorted(self.p_dict.keys())
+                )
+            )
+
+        # - map_dict.keys() covers dflt_dict.keys()
+        if not set(self.dflt_dict.keys()) <= set(map_dict.keys()):
+            raise ValueError(
+                'ch_map(): map_dict does not include all channels of dflt_dict \n'
+                '      map_dict.keys() = {} \n'
+                'self.dlft_dict.keys() = {}'
+                ''.format(
+                    sorted(map_dict.keys()),
+                    sorted(self.dflt_dict.keys())
+                )
+            )
+
+        #
+        # Channel mapping
+        #
+
+        # Store references to the original pulse
+        # dictionaries in temporary variables
+        tmp_p_dict = self.p_dict
+        tmp_dflt_dict = self.dflt_dict
+
+        # Create empty dicts to store original
+        # pulse lists / pulses with new channel names
+        self.p_dict = dict()
+        self.dflt_dict = dict()
+
+        # Fill-in new p_dict with original pulse lists
+        for ch in tmp_p_dict.keys():
+            self.p_dict[map_dict[ch]] = tmp_p_dict[ch]
+
+        # Fill-in new dflt_dict with original dflt pulses
+        for ch in tmp_dflt_dict.keys():
+            self.dflt_dict[map_dict[ch]] = tmp_dflt_dict[ch]
+
+        del tmp_p_dict, tmp_dflt_dict
+
+    def add_offset(self, offset_dict):
+        pass
+
+    def reset_edges(self):
+
+        p_ch_list = list(self.p_dict.keys())
+
+        # Left edge ==============
+
+        # Find the left-most edge - it will be set to origin
+        left_edge_list = [
+            self.p_dict[ch][0].t0 for ch in p_ch_list
+        ]
+        left_edge = min(left_edge_list)
+
+        # Shift all pulses such that the left-most edge
+        # coincides with zero
+        for ch in self.p_dict.keys():
+            for p_item in self.p_dict[ch]:
+                p_item.t0 -= left_edge
+
+        # Right edge ==============
+
+        # Find the right-most edge - the duration of the block
+        right_edge_list = [
+            self.p_dict[ch][-1].t0 + self.p_dict[ch][-1].dur for ch in p_ch_list
+        ]
+        self.dur = max(right_edge_list)
+        # =
+
     def save(self):
         # TODO: implement
         pass
@@ -218,13 +299,17 @@ class PulseBlock:
         pass
 
     def __str__(self):
+        pulse_ch_list = sorted(list(self.p_dict.keys()))
+        dflt_ch_list = sorted(list(self.dflt_dict.keys()))
+
         ret_str = 'PulseBlock "{}" \n' \
-                  'ch_set = {} \n' \
+                  'pulse_chs = {} \n' \
+                  'deflt_chs = {} \n' \
                   'dur = {:.2e} \n' \
                   'p_dict: \n' \
-                  ''.format(self.name, self.ch_set, self.dur)
+                  ''.format(self.name, pulse_ch_list, dflt_ch_list, self.dur)
 
-        for ch in self.ch_set:
+        for ch in self.p_dict.keys():
             ch_str = '    {}: \n'.format(ch)
             for p_obj in self.p_dict[ch]:
                 ch_str += '        {{{:.2e}, {:.2e}, {}}}\n'.format(p_obj.t0, p_obj.dur, str(p_obj))

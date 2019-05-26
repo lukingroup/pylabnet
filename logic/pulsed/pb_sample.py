@@ -14,7 +14,25 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
     t_step = 1 / samp_rate
     n_pts = int(pb_obj.dur//t_step + 1)
 
+    #
     # Sanity checks
+    #
+
+    # There is a default pulse for each of the channels in p_dict
+    if not set(pb_obj.p_dict.keys()) <= set(pb_obj.dflt_dict.keys()):
+        raise ValueError(
+            'Every channel with non-default pulses must have the default pulse. \n'
+            'The following channels contain non-default pulses: \n'
+            '   {} \n'
+            'The following channels have default pulse: \n'
+            '   {}'
+            ''.format(
+                sorted(list(pb_obj.p_dict.keys())),
+                sorted(list(pb_obj.dflt_dict.keys()))
+            )
+        )
+
+    # Sample array length fits hardware constraints
     # - length step
     if n_pts % len_step != 0:
         if step_adj:
@@ -42,6 +60,10 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
             ''.format(n_pts, len_max)
         )
 
+    #
+    # Sample pulse block
+    #
+
     # Generate arrays of T-points
     t_ar = np.linspace(
         start=0,
@@ -49,29 +71,31 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
         num=n_pts
     )
 
-    # Construct sample array for each channel in ch_set
+    # Construct sample array for each channel in dflt_dict.keys()
     # and store it in samp_dict
     samp_dict = dict()
 
-    for ch in pb_obj.ch_set:
+    for ch in pb_obj.dflt_dict.keys():
 
         # Fill the array with default values
         samp_dict[ch] = pb_obj.dflt_dict[ch].get_value(t_ar=t_ar)
 
         # Iterate through each pulse item and calculate
         # non-default values for corresponding T-points
-        for p_item in pb_obj.p_dict[ch]:
+        if ch in pb_obj.p_dict.keys():
 
-            # find indexes of pulse edges
-            indx_1 = int(p_item.t0 // t_step)
-            indx_2 = int((p_item.t0 + p_item.dur) // t_step)
+            for p_item in pb_obj.p_dict[ch]:
 
-            # calculate new values
-            val_ar = p_item.get_value(
-                t_ar=t_ar[indx_1 : indx_2+1]
-            )
+                # find indexes of pulse edges
+                indx_1 = int(p_item.t0 // t_step)
+                indx_2 = int((p_item.t0 + p_item.dur) // t_step)
 
-            # set the values to sample array
-            samp_dict[ch][indx_1 : indx_2+1] = val_ar
+                # calculate new values
+                val_ar = p_item.get_value(
+                    t_ar=t_ar[indx_1 : indx_2+1]
+                )
+
+                # set the values to sample array
+                samp_dict[ch][indx_1 : indx_2+1] = val_ar
 
     return t_ar, samp_dict

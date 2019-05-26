@@ -107,7 +107,7 @@ class DConst(DfltPulseBase):
 
     def get_value(self, t_ar):
         t_ar_len = len(t_ar)
-        ret_ar = np.full(t_ar_len, self._val)
+        ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
 
         return ret_ar
 

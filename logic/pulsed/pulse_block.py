@@ -5,19 +5,19 @@ import copy
 class PulseBlock:
     def __init__(self, p_obj_list=None, dflt_dict=None, name=''):
         # p_obj_list = [
-        #     po.High(chnl='ch1', t=0, dur=1e-6),
-        #     po.Sin(chnl='ch2', t=1e-6, dur=1e-6, amp=1e-3, freq=2.5e9, ph=0)
+        #     po.PTrue(ch='ch1', t0=0, dur=1e-6),
+        #     po.PSin(ch='ch2', t0=1e-6, dur=1e-6, amp=1e-3, freq=2.5e9, ph=0)
         # ]
 
         # p_dict = {
         #     'ch1': [
-        #         PulseObject(ch, t=0, dur, ...),
-        #         PulseObject(ch, t=0, dur, ...),
-        #         PulseObject(ch, t=0, dur, ...)
+        #         PulseObject(ch, t0=0, dur, ...),
+        #         PulseObject(ch, t0=0, dur, ...),
+        #         PulseObject(ch, t0=0, dur, ...)
         #     ],
         #     'ch3': [
-        #         PulseObject(ch, t=0, dur, ...),
-        #         PulseObject(ch, t=0, dur, ...)
+        #         PulseObject(ch, t0=0, dur, ...),
+        #         PulseObject(ch, t0=0, dur, ...)
         #     ],
         #
         # }
@@ -33,62 +33,75 @@ class PulseBlock:
         if p_obj_list is None:
             p_obj_list = list()
 
-        # Among given pulses, there may be several with negative offsets.
-        #
-        # If one just sequentially passes the them to insert(), it will shift
-        # the T-origin. But the requested offsets for next pulses will not change,
-        # thus next pulses will be place in unexpected shifted positions
-        # (when passing several pulses at a time, the user thinks of the whole block
-        # in a single frame and the offsets mean mutual position of pulses).
-        #
-        # To avoid this problem, below one checks all pulses, finds the largest
-        # negative offset t_shift and just shifts all pulses by this amount before
-        # calling insert(). In this case insert() does not perform any origin
-        # shift.
-
-        t_shift = 0
+        # Iterate through all given pulses and _insert them into the block
+        # (_insert should be used - it does not reset edges)
         for p_obj in p_obj_list:
-            if p_obj.t0 < 0:
-                t_shift = max(t_shift, abs(p_obj.t0))
-
-        # Iterate through all given pulses and
-        # insert them into the block
-        for p_obj in p_obj_list:
-
             p_obj = copy.deepcopy(p_obj)
-            p_obj.t0 += t_shift
+            self._insert(p_obj=p_obj)
 
-            self.insert(p_obj=p_obj)
+        # Reset edges: set the left-most edge to zero
+        # and set self.dur to the right-most edge
+        self.reset_edges()
 
-    def insert(self, p_obj, cflct_er=True):
-
+    def _insert(self, p_obj, cflct_er=True):
         p_obj = copy.deepcopy(p_obj)
         ch = p_obj.ch
 
-        # Sanity check: new pulse does not conflict with existing pulses
+        # Sanity check:
+        #   new pulse does not conflict with existing pulses
         if cflct_er and ch in self.p_dict.keys():
 
             p_list = self.p_dict[ch]
 
+            # Find the position, into which
+            # the new pulse should be inserted
             t0_list = np.array(
                 [p_item.t0 for p_item in p_list]
             )
             idx = np.searchsorted(t0_list, p_obj.t0)
 
+            # If the new pulse will not be the left-most [idx = 0],
+            # check for overlap with existing pulse to the left
             if idx > 0:
-                # Check for overlap with existing pulse to the left
-                if not (p_list[idx-1].t0 + p_list[idx-1].dur) <= p_obj.t0:
+                if not (p_list[idx - 1].t0 + p_list[idx - 1].dur) <= p_obj.t0:
+                    cflct_item = p_list[idx - 1]
+
                     raise ValueError(
-                        'insert(): given pulse {} overlaps with existing pulse to the left'
-                        ''.format(p_obj)
+                        'insert(): conflict on ch="{}":  given pulse \n'
+                        '   {}, t0={:.2e}, dur={:.2e} \n'
+                        'overlaps with existing pulse to the left \n'
+                        '   {}, t0={:.2e}, dur={:.2e}'
+                        ''.format(
+                            ch,
+                            str(p_obj),
+                            p_obj.t0,
+                            p_obj.dur,
+                            str(cflct_item),
+                            cflct_item.t0,
+                            cflct_item.dur
+                        )
                     )
 
+            # If the new pulse will not be the right-most [idx = len-1],
+            # check for overlap with existing pulse to the right
             if idx < len(p_list):
-                # Check for overlap with existing pulse to the right
                 if not (p_obj.t0 + p_obj.dur) <= p_list[idx].t0:
+                    cflct_item = p_list[idx]
+
                     raise ValueError(
-                        'insert(): given pulse {} overlaps with existing pulse to the right'
-                        ''.format(p_obj)
+                        'insert(): conflict on ch="{}": given pulse \n'
+                        '   {} t0={:.2e}, dur={:.2e} \n'
+                        'overlaps with existing pulse to the right \n'
+                        '   {} t0={:.2e}, dur={:.2e}'
+                        ''.format(
+                            ch,
+                            str(p_obj),
+                            p_obj.t0,
+                            p_obj.dur,
+                            str(cflct_item),
+                            cflct_item.t0,
+                            cflct_item.dur
+                        )
                     )
 
         # Create a new entry for 'ch' if it is not yet registered
@@ -103,54 +116,68 @@ class PulseBlock:
             key=lambda p_item: p_item.t0
         )
 
-        # Expand block edges if the new pulse sticks out:
-        #   - beyond the end
-        self.dur = max(self.dur, p_obj.t0 + p_obj.dur)
-        #   - before the beginning
-        if p_obj.t0 < 0:
+    def insert(self, p_obj, cflct_er=True):
 
-            # shift every pulse to the right
-            t_shift = abs(p_obj.t0)
+        self._insert(p_obj=p_obj, cflct_er=cflct_er)
+        self.reset_edges()
 
-            for ch_ in self.p_dict.keys():
-                for p_item in self.p_dict[ch_]:
-                    p_item.t0 += t_shift
+    def join(self, p_obj, name='', cflct_er=True):
 
-            # update duration
-            self.dur += t_shift
-
-    def join(self, p_obj, cflct_er=True, name=''):
         new_pb = copy.deepcopy(self)
         new_pb.name = name
-        new_pb.insert(p_obj=p_obj, cflct_er=cflct_er)
+        new_pb.insert(
+            p_obj=p_obj,
+            cflct_er=cflct_er
+        )
+
         return new_pb
-        # pass
 
     def insert_pb(self, pb_obj, t0=0, cflct_er=True):
 
+        # TODO: re-implement using reset_edges()
+
         pb_obj = copy.deepcopy(pb_obj)
 
+        #
         # Sanity checks
-        #  - no overlap between blocks
+        #
+
+        # No overlap between blocks
         if cflct_er and (set(self.p_dict.keys()) & set(pb_obj.p_dict.keys())):
             if t0 >= 0:
                 if not self.dur <= t0:
                     raise ValueError(
-                        'insert_pb(): blocks overlap and cannot be merged. (DEBUG: t0 > 0)'
+                        'insert_pb(): blocks overlap and cannot be merged: \n'
+                        '   t0={:.2e} does not exceed self.dur={:.2e}'
+                        ''.format(t0, self.dur)
                     )
             else:
                 if not pb_obj.dur <= abs(t0):
                     raise ValueError(
-                        'insert_pb(): blocks overlap and cannot be merged. (DEBUG: t0 < 0)'
+                        'insert_pb(): blocks overlap and cannot be merged: \n'
+                        '   offset -t0={:.2e} is smaller than pb_obj.dur={:.2e}'
+                        ''.format(-t0, pb_obj.dur)
                     )
-        #  - no conflicts between default pulse objects
+        # No conflicts between default pulse objects
         if cflct_er:
             for ch in pb_obj.dflt_dict.keys():
                 if ch in self.dflt_dict.keys() and pb_obj.dflt_dict[ch] != self.dflt_dict[ch]:
                     raise ValueError(
-                        'insert_pb(): conflict between default pulse objects on channel "{}"'
-                        ''.format(ch)
+                        'insert_pb(): conflict between default pulse objects on channel "{}": \n'
+                        '   self.dflt_dict[{}] = {} \n'
+                        ' pb_obj.dflt_dict[{}] = {}'
+                        ''.format(
+                            ch,
+                            ch,
+                            str(self.dflt_dict[ch]),
+                            ch,
+                            str(pb_obj.dflt_dict[ch])
+                        )
                     )
+
+        #
+        # Insert pb
+        #
 
         # Calculate duration
         if t0 >= 0:
@@ -192,7 +219,6 @@ class PulseBlock:
                 self.dflt_dict[ch] = copy.deepcopy(
                     pb_obj.dflt_dict[ch]
                 )
-        # pass
 
     def join_pb(self, pb_obj, t0=0, cflct_er=True, name=''):
         new_pb = copy.deepcopy(self)
@@ -203,7 +229,6 @@ class PulseBlock:
             cflct_er=cflct_er
         )
         return new_pb
-        # pass
 
     def ch_map(self, map_dict):
 
@@ -260,11 +285,34 @@ class PulseBlock:
         del tmp_p_dict, tmp_dflt_dict
 
     def add_offset(self, offset_dict):
-        pass
+
+        # Sanity check: all given channels are present in p_dict
+
+        if not set(offset_dict.keys()) <= set(self.p_dict.keys()):
+            raise ValueError(
+                'offset dictionary contains unknown channels: \n'
+                'offset_dict.keys() = {} \n'
+                'self.p_dict.keys() = {}'
+                ''.format(
+                    sorted(offset_dict.keys()),
+                    sorted(self.p_dict.keys())
+                )
+            )
+
+        for ch in offset_dict.keys():
+            offset = offset_dict[ch]
+
+            for p_item in self.p_dict[ch]:
+                p_item.t0 += offset
+
+        self.reset_edges()
 
     def reset_edges(self):
 
         p_ch_list = list(self.p_dict.keys())
+        if len(p_ch_list) == 0:
+            self.dur = 0
+            return
 
         # Left edge ==============
 
@@ -276,7 +324,7 @@ class PulseBlock:
 
         # Shift all pulses such that the left-most edge
         # coincides with zero
-        for ch in self.p_dict.keys():
+        for ch in p_ch_list:
             for p_item in self.p_dict[ch]:
                 p_item.t0 -= left_edge
 
@@ -287,10 +335,10 @@ class PulseBlock:
             self.p_dict[ch][-1].t0 + self.p_dict[ch][-1].dur for ch in p_ch_list
         ]
         self.dur = max(right_edge_list)
-        # =
 
     def save(self):
         # TODO: implement
+        # =
         pass
 
     @staticmethod

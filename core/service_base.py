@@ -1,11 +1,11 @@
 import rpyc
+from utils.logging.logger import LogHandler
 
 
 class ServiceBase(rpyc.Service):
-    # FIXME: do not require the module to have log client
 
     _module = None
-    log = None
+    log = LogHandler()
 
     def on_connect(self, conn):
         # code that runs when a connection is created
@@ -19,4 +19,6 @@ class ServiceBase(rpyc.Service):
 
     def assign_module(self, module):
         self._module = module
-        self.log = module.log
+
+    def assign_logger(self, logger):
+        self.log.set_logger(logger=logger)

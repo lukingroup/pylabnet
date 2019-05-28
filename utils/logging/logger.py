@@ -2,6 +2,73 @@ import rpyc
 import traceback
 
 
+class LogHandler:
+    """Protection wrapper for logger instance.
+
+    If a module needs to log, always use this class for self.log.
+
+    This class wraps actual logger instance into a protective layer,
+    such that no errors of the logger can break the host module.
+    This is necessary to avoid reducing module stability due to
+    limited stability of the logger (which is often the case).
+
+    Examples of possible errors which a logger can produce:
+     - connection lost
+     - no logger instance was given
+
+    Such exceptions can break the host module. Since logging is not
+    necessary for module operation, it is better to ignore them and
+    do not disturb the module.
+    """
+
+    def __init__(self, logger=None):
+        self._logger = None
+        self.set_logger(logger=logger)
+
+    def set_logger(self, logger):
+        self._logger = logger
+
+    def debug(self, msg_str):
+        try:
+            return self._logger.debug(msg_str=msg_str)
+        except:
+            return -1
+
+    def info(self, msg_str):
+        try:
+            return self._logger.info(msg_str=msg_str)
+        except:
+            return -1
+
+    def warn(self, msg_str):
+        try:
+            return self._logger.warn(msg_str=msg_str)
+        except:
+            return -1
+
+    def error(self, msg_str):
+        try:
+            return self._logger.error(msg_str=msg_str)
+        except:
+            return -1
+
+    def exception(self, msg_str):
+        try:
+            return self._logger.exception(msg_str=msg_str)
+        except:
+            return -1
+
+    def critical(self, msg_str):
+        try:
+            return self._logger.critical(msg_str=msg_str)
+        except:
+            return -1
+
+
+class ILog:
+    pass
+
+
 class LogClient:
 
     _level_dict = dict(

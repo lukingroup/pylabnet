@@ -1,15 +1,7 @@
 import numpy as np
 
 
-def add_offset(pb_obj, offset_dict):
-    pass
-
-
-def chnl_map():
-    pass
-
-
-def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, step_adj=True):
+def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, step_adj=True, debug=False):
 
     t_step = 1 / samp_rate
     n_pts = int(pb_obj.dur//t_step + 1)
@@ -98,4 +90,7 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
                 # set the values to sample array
                 samp_dict[ch][indx_1 : indx_2+1] = val_ar
 
-    return t_ar, samp_dict
+    if debug:
+        return samp_dict, n_pts, t_ar
+    else:
+        return samp_dict, n_pts

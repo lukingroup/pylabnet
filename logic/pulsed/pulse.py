@@ -43,6 +43,19 @@ class PTrue(PulseBase):
         return np.full(len(t_ar), True)
 
 
+class PFalse(PulseBase):
+
+    def __init__(self, ch, dur, t0=0):
+        super().__init__(ch=ch, dur=dur, t0=t0)
+
+    def __str__(self):
+        # return 'False(t0={:.2e} dur={:.2e})'.format(self.t0, self.dur)
+        return 'False'
+
+    def get_value(self, t_ar):
+        return np.full(len(t_ar), False)
+
+
 class PSin(PulseBase):
 
     def __init__(self, ch, dur, t0=0, amp=0, freq=0, ph=0):

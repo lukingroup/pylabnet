@@ -58,6 +58,7 @@ class NIConst:
     NIHSDIO_ATTR_STATIC_CHANNELS = NITypes.ViAttr(IVI_SPECIFIC_PUBLIC_ATTR_BASE + 3)  # /* ViString */
 
     # /* Device attributes */
+    NIHSDIO_ATTR_TOTAL_GENERATION_MEMORY_SIZE = NITypes.ViAttr(IVI_SPECIFIC_PUBLIC_ATTR_BASE + 74)  # / * ViInt32 * /
 
     # /* Voltage attributes */
     NIHSDIO_ATTR_DATA_VOLTAGE_LOW_LEVEL = NITypes.ViAttr(IVI_SPECIFIC_PUBLIC_ATTR_BASE + 6)   # ViReal64, channel-based

@@ -390,6 +390,14 @@ class NI654x:
 
         return 0
 
+    def clr_mem(self):
+        wfm_set = copy.deepcopy(self.writn_wfm_set)
+
+        for wfm_name in wfm_set:
+            self.del_wfm(wfm_name=wfm_name)
+
+        return 0
+
     def get_rep(self):
         """Returns number of repetitions in Waveform generation mode.
 
@@ -691,8 +699,3 @@ class NI654x:
 
 class NIHSDIOError(Exception):
     pass
-
-
-
-
-

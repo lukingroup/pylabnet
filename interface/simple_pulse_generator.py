@@ -4,6 +4,10 @@ import abc
 class SimplePGenInterface(abc.ABC):
 
     @abc.abstractmethod
+    def activate_interface(self):
+        pass
+
+    @abc.abstractmethod
     def write(self, pb_obj, step_adj=True):
         pass
 

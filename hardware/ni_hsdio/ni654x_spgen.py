@@ -1,36 +1,64 @@
 from interface.simple_pulse_generator import SimplePGenInterface
-from hardware.ni_hsdio.ni654x import NI654x
 from core.service_base import ServiceBase
 from core.client_base import ClientBase
 import pickle
-import copy
 
 
-class NI654xSPGen(NI654x, SimplePGenInterface):
+class NI654xSPGen(SimplePGenInterface):
 
-    def __init__(self, dev_name_str, dll_path_str, logger=None):
-        super().__init__(
-            dev_name_str=dev_name_str,
-            dll_path_str=dll_path_str,
-            logger=logger
-        )
-        self.set_active_chs(chs_str='0-31')
-        self.set_mode(mode_string='W')
+    def __init__(self, ni654x_inst):
+        self._dev = ni654x_inst
+
+    def activate_interface(self):
+
+        # TODO: add mutex check and lock (force lock option)
+
+        self._dev.set_mode(mode_string='W')
+        self._dev.set_active_chs(chs_str='0-31')
+        self._dev.clr_mem()
+
+        return 0
 
     def write(self, pb_obj, step_adj=True):
 
-        wfm_set = copy.deepcopy(self.writn_wfm_set)
+        self._dev.clr_mem()
 
-        for wfm_name in wfm_set:
-            self.del_wfm(wfm_name=wfm_name)
-
-        return self.write_wfm(
+        return self._dev.write_wfm(
             pb_obj=pb_obj,
             step_adj=step_adj
         )
 
+    def set_rep(self, rep_num):
+        return self._dev.set_rep(
+            rep_num=rep_num
+        )
+
+    def start(self):
+        return self._dev.start()
+
+    def stop(self):
+        return self._dev.stop()
+
+    def get_status(self):
+        """Get status of the device
+
+        0 - 'Idle'
+        1 - 'Running'
+        Exception is produced in the case of any error
+        (for example, connection to the device is lost)
+
+        :return: (int) status code
+                 Exception is produced in the case of error
+        """
+
+        return self._dev.get_status()
+
 
 class NI654xSPGenService(ServiceBase):
+
+    def exposed_activate_interface(self):
+        return self._module.activate_interface()
+
     def exposed_write(self, pb_obj_pckl, step_adj=True):
 
         pb_obj = pickle.loads(pb_obj_pckl)
@@ -57,6 +85,9 @@ class NI654xSPGenService(ServiceBase):
 
 class NI654xSPGenClient(ClientBase, SimplePGenInterface):
 
+    def activate_interface(self):
+        return self._service.exposed_activate_interface()
+
     def write(self, pb_obj, step_adj=True):
 
         pb_obj_pckl = pickle.dumps(pb_obj)
@@ -79,4 +110,3 @@ class NI654xSPGenClient(ClientBase, SimplePGenInterface):
 
     def get_status(self):
         return self._service.exposed_get_status()
-

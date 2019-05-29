@@ -5,6 +5,7 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
 
     t_step = 1 / samp_rate
     n_pts = int(pb_obj.dur//t_step + 1)
+    add_pts = 0
 
     #
     # Sanity checks
@@ -28,9 +29,11 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
     # - length step
     if n_pts % len_step != 0:
         if step_adj:
-            n_pts = int(
+            new_n_pts = int(
                 (n_pts // len_step + 1) * len_step
             )
+            add_pts = new_n_pts - n_pts
+            n_pts = new_n_pts
         else:
             raise ValueError(
                 'Calculated number of points {} does not match hardware step {}. \n'
@@ -91,6 +94,6 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, st
                 samp_dict[ch][indx_1 : indx_2+1] = val_ar
 
     if debug:
-        return samp_dict, n_pts, t_ar
+        return samp_dict, n_pts, add_pts, t_ar
     else:
-        return samp_dict, n_pts
+        return samp_dict, n_pts, add_pts

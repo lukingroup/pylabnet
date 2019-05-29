@@ -66,14 +66,14 @@ class NI654x:
             self.dll.niHSDIO_reset(self._handle)
         )
 
-    def __start(self):
+    def start(self):
         return self._er_chk(
             self.dll.niHSDIO_Initiate(
                 self._handle
             )
         )
 
-    def __stop(self):
+    def stop(self):
         return self._er_chk(
             self.dll.niHSDIO_Abort(
                 self._handle
@@ -223,6 +223,61 @@ class NI654x:
 
         return constr_dict
 
+    def get_status(self):
+
+        try:
+            # Record current samp_rate to restore it later
+            current_rate = self.get_samp_rate()
+            rate_lims = self.constraints['samp_rate']
+
+            test_rate = (rate_lims['min'] + rate_lims['max']) / 2
+
+            # Try changing samp_rate
+            op_status = self.dll.niHSDIO_ConfigureSampleClock(
+                self._handle,                            # ViSession vi
+                NIConst.NIHSDIO_VAL_ON_BOARD_CLOCK_STR,  # ViConstString clockSource
+                NITypes.ViReal64(test_rate)              # ViReal64 clockRate
+            )
+
+            # If device is idle, operation should be successful:
+            #   op_status = 0.
+            # Restore original samp rate and return 0 - "idle"
+
+            if op_status == 0:
+                self.set_samp_rate(samp_rate=current_rate)
+                return 0
+
+            # If device is running, attempt to change samp_rate should return
+            # the following error code:
+            #   -1074118617
+            #   "Specified property cannot be set while the session is running.
+            #   Set the property prior to initiating the session,
+            #   or abort the session prior to setting the property."
+
+            elif op_status == -1074118617:
+                # Device is running
+                return 1
+
+            # This method cannot interpret any other error/warning code and has
+            # to raise an exception
+
+            else:
+                raise NIHSDIOError(
+                    'get_status(): the attempt to test-change samp_rate returned unknown error code {}'
+                    ''.format(op_status)
+                )
+
+        # If connection to the device is lost
+        # or any operation fails, raise an exception.
+
+        except Exception as exc_obj:
+            self.log.exception(
+                'get_status(): an exception was produced. \n'
+                'This might mean that connection to the device is lost '
+                'or there is some bug in the get_status() method. \n'
+            )
+            raise exc_obj
+
     # ================================================================
     # Waveform Generation
     # ================================================================
@@ -237,11 +292,10 @@ class NI654x:
         # (DLL function niHSDIO_WriteNamedWaveformU32)
         hrdw_data_width = 8 * self._get_attr_int32(NIConst.NIHSDIO_ATTR_DATA_WIDTH)
         if hrdw_data_width != 32:
-            msg_txt = """
-            write_wfm(): the card you use has data_width = {0} bits.
-            The method was written assuming 32-bit width and have to be modified for your card.
-            Rewrite bit_ar construction part and use niHSDIO_WriteNamedWaveformU{1}() DLL function
-            """.format(hrdw_data_width, hrdw_data_width)
+            msg_txt = 'write_wfm(): the card you use has data_width = {0} bits. \n' \
+                      'The method was written assuming 32-bit width and have to be modified for your card. \n' \
+                      'Rewrite bit_ar construction part and use niHSDIO_WriteNamedWaveformU{1}() DLL function' \
+                      ''.format(hrdw_data_width, hrdw_data_width)
 
             self.log.error(msg_txt)
             raise NIHSDIOError(msg_txt)
@@ -256,7 +310,7 @@ class NI654x:
 
         # Sample pulse block
         samp_rate = self.get_samp_rate()
-        samp_dict, n_pts = pb_sample(
+        samp_dict, n_pts, add_pts = pb_sample(
             pb_obj=pb_obj,
             samp_rate=samp_rate,
             len_min=self.constraints['wfm_len']['min'],
@@ -266,6 +320,12 @@ class NI654x:
         )
         wfm_name = pb_obj.name
         del pb_obj
+
+        self.log.info(
+            'write_wfm(): sampled PulseBlock "{}". \n'
+            'Sample array has {} points. {} samples were added to match hardware wfm len step'
+            ''.format(wfm_name, n_pts, add_pts)
+        )
 
         #
         # Pack samp_dict into bit_ar

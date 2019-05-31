@@ -7,6 +7,8 @@ class MWSrcInterface(abc.ABC):
     def activate_interface(self):
         pass
 
+    # Output control
+
     @abc.abstractmethod
     def on(self):
         pass
@@ -16,14 +18,10 @@ class MWSrcInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_freq(self):
+    def get_status(self):
         pass
 
-    def set_freq(self, freq):
-        pass
-
-    def set_freq_swp(self, start, stop, n_pts):
-        pass
+    # Power
 
     @abc.abstractmethod
     def get_pwr(self):
@@ -33,10 +31,21 @@ class MWSrcInterface(abc.ABC):
     def set_pwr(self, pwr):
         pass
 
+    # Frequency
+
+    @abc.abstractmethod
+    def get_freq(self):
+        pass
+
+    @abc.abstractmethod
+    def set_freq(self, freq):
+        pass
+
+    @abc.abstractmethod
+    def set_freq_swp(self, start, stop, n_pts):
+        pass
+
     @abc.abstractmethod
     def get_mode(self):
         pass
 
-    @abc.abstractmethod
-    def get_status(self):
-        pass

@@ -2,13 +2,14 @@
 """
 
 import visa
-import time
 from utils.logging.logger import LogHandler
+from interface.mw_src import MWSrcInterface
+from core.service_base import ServiceBase
+from core.client_base import ClientBase
+import pickle
 
 
-class RSsmc:
-    """ Hardware file to control a R&S SMBV100A microwave device.
-    """
+class RSsmc(MWSrcInterface):
 
     def __init__(self, addr_str, logger=None):
 
@@ -37,9 +38,123 @@ class RSsmc:
         # Error check
         self._er_chk()
 
-    # def disconnect(self):
-    #     self.rm.close()
-    #     return 0
+    def reset(self):
+        # Reset
+        self._cmd_wait('*RST')
+        # Clear status register
+        self._cmd_wait('*CLS')
+
+        return 0
+
+    def activate_interface(self):
+        return 0
+
+    # Output control
+
+    def on(self):
+
+        if self.get_mode() == 'sweep':
+            self.reset_swp()
+
+        return self._cmd_wait(
+            cmd_str=':OUTP:STAT ON'
+        )
+
+    def off(self):
+        return self._cmd_wait(
+            cmd_str=':OUTP:STAT OFF'
+        )
+
+    def get_status(self):
+        status = int(
+            self._dev.query('OUTP:STAT?')
+        )
+        return status
+
+    # Power
+
+    def get_pwr(self):
+        return float(self._dev.query(':POW?'))
+
+    def set_pwr(self, pwr):
+        self._cmd_wait(':POW {0:f}'.format(pwr))
+
+        return self.get_pwr()
+
+    # Frequency
+
+    def get_freq(self):
+        mode = self.get_mode()
+
+        if mode == 'cw':
+            ret_val = float(self._dev.query(':FREQ?'))
+
+        elif mode == 'sweep':
+            start = float(self._dev.query(':FREQ:STAR?'))
+            stop = float(self._dev.query(':FREQ:STOP?'))
+            step = float(self._dev.query(':SWE:STEP?'))
+
+            n_pts = int((stop - start) / step) + 2
+
+            ret_val = dict(
+                start=start,
+                stop=stop,
+                n_pts=n_pts
+            )
+
+        else:
+            raise CWMWError(
+                'get_freq(): got unknown mode {}'.format(mode)
+            )
+
+        return ret_val
+
+    def set_freq(self, freq):
+
+        if self.get_status() == 1:
+            self.off()
+
+        # Activate CW mode
+        self._cmd_wait(':FREQ:MODE CW')
+
+        # Set CW frequency
+        self._cmd_wait(':FREQ {0:f}'.format(freq))
+
+        return self.get_freq()
+
+    def set_freq_swp(self, start, stop, n_pts):
+
+        if self.get_status() == 1:
+            self.off()
+
+        # Set mode to Sweep
+        self._cmd_wait(':FREQ:MODE SWEEP')
+
+        # Set frequency sweep
+        step = (stop - start) / (n_pts - 1)
+
+        self._cmd_wait(':SWE:MODE STEP')
+        self._cmd_wait(':SWE:SPAC LIN')
+        self._cmd_wait(':FREQ:START {0:f}'.format(start))
+        self._cmd_wait(':FREQ:STOP {0:f}'.format(stop))
+        self._cmd_wait(':SWE:STEP:LIN {0:f}'.format(step))
+
+        return self.get_freq()
+
+    def get_mode(self):
+
+        mode_str = self._dev.query(':FREQ:MODE?').strip('\n').lower()
+
+        if 'cw' in mode_str:
+            return 'cw'
+        elif 'swe' in mode_str:
+            return 'sweep'
+        else:
+            msg_str = 'get_mode(): unknown mode string {} was returned'
+            self.log.error(msg_str=msg_str)
+            raise CWMWError(msg_str)
+
+    # Technical methods
 
     def _cmd_wait(self, cmd_str):
         """Writes the command in command_str via resource manager
@@ -57,310 +172,6 @@ class RSsmc:
 
         # Error check
         self._er_chk()
-
-        return 0
-
-    def reset(self):
-        # Reset
-        self._cmd_wait('*RST')
-        # Clear status register
-        self._cmd_wait('*CLS')
-
-        return 0
-
-    def get_status(self):
-        """Gets the current status of the MW source
-
-        @return int: status:
-                    0 - idle
-                    1 - running
-                    Exception is produced in the case of error
-        """
-
-        status = int(
-            self._dev.query('OUTP:STAT?')
-        )
-
-        return status
-
-    def get_mode(self):
-        mode_str = self._dev.query(':FREQ:MODE?').strip('\n').lower()
-
-        if 'cw' in mode_str:
-            return 'cw'
-        elif 'swe' in mode_str:
-            return 'sweep'
-        else:
-            msg_str = 'get_mode(): unknown mode string {} was returned'
-            self.log.error(msg_str=msg_str)
-            raise CWMWError(msg_str)
-
-    def set_mode(self, mode_str):
-
-        if mode_str == 'cw':
-            self._cmd_wait(':FREQ:MODE CW')
-        elif mode_str == 'sweep':
-            self._cmd_wait(':FREQ:MODE SWEEP')
-        else:
-            msg_str = 'set_mode(): invalid mode string "{}" \n' \
-                      'Valid values are "cw" and "sweep"' \
-                      ''.format(mode_str)
-
-            self.log.error(msg_str=msg_str)
-            raise CWMWError(msg_str)
-
-        return self.get_mode()
-
-    def get_pwr(self):
-        """
-        Gets the microwave output power.
-
-        @return float: the power set at the device in dBm
-        """
-        # This case works for cw AND sweep mode
-        return float(self._dev.query(':POW?'))
-
-    def get_freq(self):
-        """Gets the frequency of the microwave output.
-        Returns single float value if the device is in cw mode.
-        Returns list like [start, stop, step] if the device is in sweep mode.
-        Returns list of frequencies if the device is in list mode.
-
-        @return [float, list]: frequency(s) currently set for this device in Hz
-        """
-
-        mode = self.get_mode()
-
-        if mode == 'cw':
-            return_val = float(self._dev.query(':FREQ?'))
-
-        elif mode == 'sweep':
-            start = float(self._dev.query(':FREQ:STAR?'))
-            stop = float(self._dev.query(':FREQ:STOP?'))
-            step = float(self._dev.query(':SWE:STEP?'))
-            return_val = [start, stop, step]
-
-        else:
-            raise CWMWError(
-                'get_freq(): got unknown mode {}'.format(mode)
-            )
-
-        return return_val
-
-    def off(self):
-        """Switches off any microwave output.
-        Must return AFTER the device is actually stopped.
-
-        @return int: error code (0:OK, -1:error)
-        """
-
-        status = self.get_status()
-
-        if status == 0:
-            return 0
-
-        self._cmd_wait('OUTP:STAT OFF')
-
-        while int(self._dev.query('OUTP:STAT?')) != 0:
-            time.sleep(0.2)
-
-        return 0
-
-    def set_cw(self, freq=None, pwr=None):
-        """Configures the device for cw-mode and optionally sets frequency and/or power
-
-        @param float freq: frequency to set in Hz
-        @param float pwr: power to set in dBm
-
-        @return tuple(float, float, str): with the relation
-            current frequency in Hz,
-            current power in dBm,
-            current mode
-        """
-
-        is_running = self.get_status()
-        mode = self.get_mode()
-
-        if is_running:
-            self.off()
-
-        # Activate CW mode
-        if mode != 'cw':
-            self._cmd_wait(':FREQ:MODE CW')
-
-        # Set CW frequency
-        if freq is not None:
-            self._cmd_wait(':FREQ {0:f}'.format(freq))
-
-        # Set CW power
-        if pwr is not None:
-            self._cmd_wait(':POW {0:f}'.format(pwr))
-
-        # Return actually set values
-        actual_freq = self.get_freq()
-        actual_power = self.get_pwr()
-        mode = self.get_mode()
-
-        return actual_freq, actual_power, mode
-
-    def cw_on(self):
-        """Switches on cw microwave output.
-        Must return AFTER the device is actually running.
-
-        @return int: error code (0:OK, -1:error)
-        """
-
-        is_running = self.get_status()
-        current_mode = self.get_mode()
-
-        if is_running:
-            if current_mode == 'cw':
-                return 0
-            else:
-                self.off()
-
-        if current_mode != 'cw':
-            self.set_mode(mode_str='cw')
-
-        self._cmd_wait(':OUTP:STAT ON')
-
-        while not self.get_status():
-            time.sleep(0.2)
-
-        return 0
-
-    def set_sweep(self, start=None, stop=None, n_pts=None, power=None):
-        """Configures the device for sweep-mode and
-        optionally sets frequency start/stop/step and/or power
-
-        @return float, float, float, float, str: current start frequency in Hz,
-                                                 current stop frequency in Hz,
-                                                 current frequency step in Hz,
-                                                 current power in dBm,
-                                                 current mode
-        """
-
-        is_running = self.get_status()
-        mode = self.get_mode()
-
-        if is_running:
-            self.off()
-
-        if mode != 'sweep':
-            self._cmd_wait(':FREQ:MODE SWEEP')
-
-        if (start is not None) and (stop is not None) and (n_pts is not None):
-            step = (stop - start) / (n_pts - 1)
-
-            self._dev.write(':SWE:MODE STEP')
-            self._dev.write(':SWE:SPAC LIN')
-            self._dev.write('*WAI')
-            self._dev.write(':FREQ:START {0:f}'.format(start))
-            self._dev.write(':FREQ:STOP {0:f}'.format(stop))
-            self._dev.write(':SWE:STEP:LIN {0:f}'.format(step))
-            self._dev.write('*WAI')
-
-            # Error check
-            self._er_chk()
-
-        if power is not None:
-            self._dev.write(':POW {0:f}'.format(power))
-            self._dev.write('*WAI')
-
-            # Error check
-            self._er_chk()
-
-        self._cmd_wait('TRIG:FSW:SOUR EXT')
-
-        # Return actual values
-        start, stop, step = self.get_freq()
-        power = self.get_pwr()
-        mode = self.get_mode()
-
-        return start, stop, step, power, mode
-
-    def sweep_on(self):
-        """ Switches on the sweep mode.
-
-        @return int: error code (0:OK, -1:error)
-        """
-
-        is_running = self.get_status()
-        current_mode = self.get_mode()
-
-        if is_running:
-            if current_mode == 'sweep':
-                return 0
-            else:
-                self.off()
-
-        if current_mode != 'sweep':
-            self.set_mode(mode_str='sweep')
-
-        self._cmd_wait(':OUTP:STAT ON')
-
-        while not self.get_status():
-            time.sleep(0.2)
-
-        return 0
-
-    def reset_sweeppos(self):
-        """Reset of MW sweep mode position to start (start frequency)
-
-        @return int: error code (0:OK, -1:error)
-        """
-
-        self._cmd_wait(':ABOR:SWE')
-        return 0
-
-    def set_ext_trig(self, edge_str):
-        """ Set the external trigger for this device with proper polarization.
-
-        @param edge_str: 'r' - rising edge, 'f' - falling edge
-
-        @return (str): actual trigger edge
-        """
-
-        is_running = self.get_status()
-
-        if is_running:
-            self.off()
-
-        if edge_str == 'r':
-            edge = 'POS'
-        elif edge_str == 'f':
-            edge = 'NEG'
-        else:
-            msg_str = 'set_ext_trig(): invalid argument edge_str={} \n' \
-                      'Valid values are: "r" - raising, "f" - falling' \
-                      ''.format(edge_str)
-
-            self.log.error(msg_str=msg_str)
-            raise ValueError(msg_str)
-
-        self._cmd_wait(':TRIG1:SLOP {0}'.format(edge))
-
-        polarity = self._dev.query(':TRIG1:SLOP?')
-        if 'NEG' in polarity:
-            return 'f'
-        elif 'POS' in polarity:
-            return 'r'
-        else:
-            msg_str = 'set_ext_trig(): device returned unknown edge type {}' \
-                      ''.format(polarity)
-            self.log.error(msg_str=msg_str)
-            raise CWMWError(msg_str)
-
-    def force_trig(self):
-        """ Trigger the next element in the list or sweep mode programmatically.
-
-        @return int: error code (0:OK, -1:error)
-
-        Ensure that the Frequency was set AFTER the function returns, or give
-        the function at least a save waiting time.
-        """
-
-        self._cmd_wait('*TRG')
 
         return 0
 
@@ -421,6 +232,163 @@ class RSsmc:
 
         return 0
 
+    def set_trig(self, src_str='ext', slope_str='r'):
+
+        if self.get_status() == 1:
+            self.off()
+
+        #
+        # Set trigger source
+        #
+
+        if src_str == 'ext':
+            src_str = 'EXT'
+        elif src_str == 'int':
+            src_str = 'AUTO'
+        else:
+            msg_str = 'set_trig(): unknown trigger source  "{}" \n' \
+                      'Valid values are "ext" - external, "int" - internal' \
+                      ''.format(src_str)
+            self.log.error(msg_str=msg_str)
+            raise CWMWError(msg_str)
+
+        self._cmd_wait('TRIG:FSW:SOUR {}'.format(src_str))
+
+        #
+        # Set trigger edge
+        #
+
+        if slope_str == 'r':
+            edge = 'POS'
+        elif slope_str == 'f':
+            edge = 'NEG'
+        else:
+            msg_str = 'set_trig(): invalid argument slope_str={} \n' \
+                      'Valid values are: "r" - raising, "f" - falling' \
+                      ''.format(slope_str)
+            self.log.error(msg_str=msg_str)
+            raise ValueError(msg_str)
+
+        self._cmd_wait(':TRIG1:SLOP {0}'.format(edge))
+
+        return 0
+
+    def force_trig(self):
+        """ Trigger the next element in the list or sweep mode programmatically.
+
+        @return int: error code (0:OK, -1:error)
+
+        Ensure that the Frequency was set AFTER the function returns, or give
+        the function at least a save waiting time.
+        """
+
+        self._cmd_wait('*TRG')
+
+        return 0
+
+    def reset_swp(self):
+        """Reset of MW sweep mode position to start (start frequency)
+
+        @return int: error code (0:OK, -1:error)
+        """
+
+        self._cmd_wait(':ABOR:SWE')
+        return 0
+
 
 class CWMWError(Exception):
     pass
+
+
+#
+# Service-Client pair
+#
+
+class RSsmcMWSrcService(ServiceBase):
+    def exposed_activate_interface(self):
+        return self._module.activate_interface()
+
+    # Output control
+
+    def exposed_on(self):
+        return self._module.on()
+
+    def exposed_off(self):
+        return self._module.off()
+
+    def exposed_get_status(self):
+        return self._module.get_status()
+
+    # Power
+
+    def exposed_get_pwr(self):
+        return self._module.get_pwr()
+
+    def exposed_set_pwr(self, pwr):
+        return self._module.set_pwr(pwr=pwr)
+
+    # Frequency
+
+    def exposed_get_freq(self):
+        res = self._module.get_freq()
+        return pickle.dumps(res)
+
+    def exposed_set_freq(self, freq):
+        return self._module.set_freq(freq=freq)
+
+    def exposed_set_freq_swp(self, start, stop, n_pts):
+        res = self._module.set_freq_swp(
+            start=start,
+            stop=stop,
+            n_pts=n_pts
+        )
+        return pickle.dumps(res)
+
+    def exposed_get_mode(self):
+        return self._module.get_mode()
+
+
+class RSsmcMWSrcClient(ClientBase, MWSrcInterface):
+
+    def activate_interface(self):
+        return self._service.exposed_activate_interface()
+
+    # Output control
+
+    def on(self):
+        return self._service.exposed_on()
+
+    def off(self):
+        return self._service.exposed_off()
+
+    def get_status(self):
+        return self._service.exposed_get_status()
+
+    # Power
+
+    def get_pwr(self):
+        return self._service.exposed_get_pwr()
+
+    def set_pwr(self, pwr):
+        return self._service.exposed_set_pwr(pwr=pwr)
+
+    # Frequency
+
+    def get_freq(self):
+        ret_pckl = self._service.exposed_get_freq()
+        return pickle.loads(ret_pckl)
+
+    def set_freq(self, freq):
+        return self._service.exposed_set_freq(freq=freq)
+
+    def set_freq_swp(self, start, stop, n_pts):
+        res_pckl = self._service.exposed_set_freq_swp(
+            start=start,
+            stop=stop,
+            n_pts=n_pts
+        )
+
+        return pickle.loads(res_pckl)
+
+    def get_mode(self):
+        return self._service.exposed_get_mode()

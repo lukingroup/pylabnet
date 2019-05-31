@@ -1,15 +1,14 @@
-"""Adapted from Qudi <https://github.com/Ulm-IQO/qudi/>
-"""
-
 import visa
 from utils.logging.logger import LogHandler
-from interface.mw_src import MWSrcInterface
+from hardware.interface.mw_src import MWSrcInterface
 from core.service_base import ServiceBase
 from core.client_base import ClientBase
 import pickle
 
 
 class RSsmc(MWSrcInterface):
+    """Adapted from Qudi <https://github.com/Ulm-IQO/qudi/>
+    """
 
     def __init__(self, addr_str, logger=None):
 

@@ -1,8 +1,8 @@
 import visa
-from utils.logging.logger import LogHandler
-from hardware.interface.mw_src import MWSrcInterface
-from core.service_base import ServiceBase
-from core.client_base import ClientBase
+from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.hardware.interface.mw_src import MWSrcInterface
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 import pickle
 
 

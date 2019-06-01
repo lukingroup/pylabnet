@@ -1,5 +1,5 @@
 import rpyc
-from utils.logging.logger import LogHandler
+from pylabnet.utils.logging.logger import LogHandler
 
 
 class ServiceBase(rpyc.Service):

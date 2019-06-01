@@ -1,6 +1,6 @@
-from hardware.interface.simple_pulse_generator import SimplePGenInterface
-from core.service_base import ServiceBase
-from core.client_base import ClientBase
+from pylabnet.hardware.interface.simple_pulse_generator import SimplePGenInterface
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 import pickle
 
 

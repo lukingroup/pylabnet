@@ -1,4 +1,5 @@
 import ctypes
+from pylabnet.hardware.p_gen.ni_hsdio import NI_HSDIO_DLL_PATH
 from pylabnet.hardware.p_gen.ni_hsdio.c_headers import NITypes, NIConst, build_c_func_prototypes
 from pylabnet.logic.pulsed.pb_sample import pb_sample
 from pylabnet.utils.logging.logger import LogHandler
@@ -7,7 +8,7 @@ import copy
 
 
 class NI654x:
-    def __init__(self, dev_name_str, dll_path_str, logger=None):
+    def __init__(self, dev_name_str, logger=None):
 
         #
         # Define internal variables
@@ -21,7 +22,16 @@ class NI654x:
         # "Load" niHSDIO DLL
         #
 
-        self.dll = ctypes.WinDLL(dll_path_str)
+        try:
+            self.dll = ctypes.WinDLL(NI_HSDIO_DLL_PATH)
+        except OSError:
+            msg_str = 'DLL loading failed. \n' \
+                      'Ensure that niHSDIO DLL path is correct: \n' \
+                      'it should be specified in pylabnet.hardware.p_gen.ni_hsdio.__init__.py \n' \
+                      'Current value is: \n' \
+                      '"{}"'.format(NI_HSDIO_DLL_PATH)
+            self.log.error(msg_str=msg_str)
+            raise NIHSDIOError(msg_str)
 
         # Build C-prototypes (in particular, specify the return
         # types such that Python reads results correctly)

@@ -150,12 +150,12 @@ class SlowCounter:
             self._counter.stop()
             self._counter.clear()
         # Handle the case of exception in TT function call (NotImplementedError)
-        # and the case of self._counter = None (AttributeError)
+        # and the case of self._ctr = None (AttributeError)
         except (NotImplementedError, AttributeError):
             pass
 
         # Remove reference to the counter
-        # self._counter = None
+        # self._ctr = None
 
         # Clear counter parameters
         # self._buffer_size = []
@@ -195,7 +195,7 @@ class SlowCounter:
         #
         # start_time = time.time()
         # while time.time() - start_time < self._timeout:
-        #     new_complete_bins = self._counter.getCaptureDuration() // self._bin_width - self._last_read_bin
+        #     new_complete_bins = self._ctr.getCaptureDuration() // self._bin_width - self._last_read_bin
         #
         #     self._overflow = new_complete_bins
         #     # self.log.error('new_complete_bins = {}'.format(new_complete_bins))
@@ -405,7 +405,7 @@ class SlowCounterService(rpyc.Service):
                                   -1 - Error
         """
 
-        return self._module.close_counter()
+        return self._module.close_ctr()
 
     def exposed_get_counter(self, samples=1):
         """

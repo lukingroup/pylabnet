@@ -1,54 +1,61 @@
-import rpyc
 import TimeTagger as TT
 import time
 import copy
 import pickle
 import numpy as np
+from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface, GatedCtrError
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 
 
-class GatedCounter:
+class SITTGatedCtr(GatedCtrInterface):
 
-    def __init__(self, tagger, click_channel, gate_channel):
+    def __init__(self, tagger, click_ch, gate_ch, logger=None):
         """Instantiate gated counter
 
         :param tagger:
-        :param click_channel: (int|list of int) clicks on all specified channels
+        :param click_ch: (int|list of int) clicks on all specified channels
                               will be summed into one logical channel
-        :param gate_channel: (int) positive/negative channel number - count while
+        :param gate_ch: (int) positive/negative channel number - count while
                              gate is high/low
         """
 
+        # Log
+        self.log = LogHandler(logger=logger)
+
         # Reference to tagger
         self._tagger = tagger
+
         # Log device ID information to demonstrate that connection indeed works
         serial = self._tagger.getSerial()
         model = self._tagger.getModel()
-        # self.log.info('Got reference to Swabian Instruments TimeTagger device \n'
-        #               'Serial number: {0}, Model: {1}'
-        #               ''.format(serial, model))
-        print('[INFO] Got reference to Swabian Instruments TimeTagger device \n'
-              'Serial number: {0}, Model: {1}'.format(serial, model))
+        self.log.info(
+            'Got reference to Swabian Instruments TimeTagger device \n'
+            'Serial number: {0}, Model: {1}'
+            ''.format(serial, model)
+        )
 
         # Gated Counter
         # reference to the TT.CountBetweenMarkers measurement instance
-        self._counter = None
+        self._ctr = None
         # number of count bins:
         #   length of returned 1D count array, the expected number of gate pulses,
         #   the size of allocated memory buffer.
-        # must be given as argument of init_counter() call
+        # must be given as argument of init_ctr() call
         self._bin_number = 0
 
         # Channel assignments
-        self._click_channel = 0
-        self._gate_channel = 0
+        self._click_ch = 0
+        self._gate_ch = 0
         # reference to Combiner object
-        #   (if _click_channel is a list - then counts on all channels are summed
+        #   (if _click_ch is a list - then counts on all channels are summed
         #   into virtual channel - self._combiner.getChannel())
         self._combiner = None
         # apply channel assignment
-        self.set_channel_assignment(
-            click_channel=click_channel,
-            gate_channel=gate_channel
+        self.set_ch_assignment(
+            click_ch=click_ch,
+            gate_ch=gate_ch
         )
 
         # Module status code
@@ -60,22 +67,25 @@ class GatedCounter:
         self._set_status(-1)
 
         # Once __init__() call is complete,
-        # the counter is ready to be initialized by the above-lying logic though init_counter() call
+        # the counter is ready to be initialized by the above-lying logic though init_ctr() call
 
     # ---------------- Interface ---------------------------
 
-    def init_counter(self, bin_number):
+    def activate_interface(self):
+        return 0
+
+    def init_ctr(self, bin_number):
         # Close existing counter, if it was initialized before
         if self.get_status() != -1:
-            self.close_counter()
+            self.close_ctr()
 
         # Instantiate counter measurement
         try:
-            self._counter = TT.CountBetweenMarkers(
+            self._ctr = TT.CountBetweenMarkers(
                 tagger=self._tagger,
-                click_channel=self._click_channel,
-                begin_channel=self._gate_channel,
-                end_channel=-self._gate_channel,
+                click_channel=self._click_ch,
+                begin_channel=self._gate_ch,
+                end_channel=-self._gate_ch,
                 n_values=bin_number
             )
             # set status to "idle"
@@ -86,35 +96,34 @@ class GatedCounter:
 
         # handle NotImplementedError (typical error, produced by TT functions)
         except NotImplementedError:
-            # self.log.error('init_counter(): instantiation of CountBetweenMarkers measurement failed')
-            print('[ERROR] init_counter(): instantiation of CountBetweenMarkers measurement failed')
-
             # remove reference to the counter measurement
-            self._counter = None
+            self._ctr = None
             # set status to "void"
             self._set_status(-1)
 
-            return -1
+            msg_str = 'init_ctr(): instantiation of CountBetweenMarkers measurement failed'
+            self.log.error(msg_str=msg_str)
+            raise GatedCtrError(msg_str)
 
         # Prepare counter to be started by start_counting()
         # (CountBetweenMarkers measurement starts running immediately after instantiation,
         # so it is necessary to stop it and erase all counts collected between instantiation and stop() call)
-        self._counter.stop()
-        self._counter.clear()
+        self._ctr.stop()
+        self._ctr.clear()
 
         return 0
 
-    def close_counter(self):
+    def close_ctr(self):
 
         # Try to stop and to clear TT.CountBetweenMarkers measurement instance
         try:
-            self._counter.stop()
-            self._counter.clear()
+            self._ctr.stop()
+            self._ctr.clear()
         except:
             pass
 
         # Remove reference, set status to "void"
-        self._counter = None
+        self._ctr = None
         self._set_status(-1)
 
         return 0
@@ -125,11 +134,11 @@ class GatedCounter:
 
         # Sanity check: ensure that counter is not "void"
         if current_status == -1:
-            # self.log.error('start_counting(): counter is in "void" state - it ether was not initialized '
-            #                'or was closed. Initialize it by calling init_counter()')
-            print('[ERROR] start_counting(): counter is in "void" state - it ether was not initialized '
-                  'or was closed. Initialize it by calling init_counter()')
-            return -1
+            msg_str = 'start_counting(): ' \
+                      'counter is in "void" state - it ether was not initialized or was closed. \n' \
+                      'Initialize it by calling init_ctr()'
+            self.log.error(msg_str=msg_str)
+            raise GatedCtrError(msg_str)
 
         # Terminate counting if it is already running
         if current_status == 1:
@@ -137,9 +146,9 @@ class GatedCounter:
 
         # Try stopping and restarting counter measurement
         try:
-            self._counter.stop()  # does not fail even if the measurement is not running
-            self._counter.clear()
-            self._counter.start()
+            self._ctr.stop()  # does not fail even if the measurement is not running
+            self._ctr.clear()
+            self._ctr.start()
 
             # set status to "in_progress"
             self._set_status(1)
@@ -150,13 +159,12 @@ class GatedCounter:
             # Since stop() and clear() methods are very robust,
             # this part is only executed if counter is totally broken.
             # In this case it makes sense to close counter.
-            self.close_counter()
+            self.close_ctr()
 
-            # self.log.error('start_counting(): call failed. Counter was closed. \n'
-            #                'Re-initialize counter by calling init_counter() again')
-            print('[ERROR] start_counting(): call failed. Counter was closed. \n'
-                  'Re-initialize counter by calling init_counter() again')
-            return -1
+            msg_str = 'start_counting(): call failed. Counter was closed. \n'\
+                      'Re-initialize counter by calling init_ctr() again'
+            self.log.error(msg_str=msg_str)
+            raise GatedCtrError(msg_str)
 
     def terminate_counting(self):
 
@@ -167,8 +175,8 @@ class GatedCounter:
         # Try stopping and clearing counter measurement
         try:
             # stop counter, clear count array
-            self._counter.stop()
-            self._counter.clear()
+            self._ctr.stop()
+            self._ctr.clear()
 
             # set status to "idle"
             self._set_status(0)
@@ -179,23 +187,24 @@ class GatedCounter:
             # Since stop() and clear() methods are very robust,
             # this part is only executed if counter is totally broken.
             # In this case it makes sense to close counter.
-            self.close_counter()
+            self.close_ctr()
 
-            # self.log.error('terminate_counting(): call failed. Counter was closed')
-            print('[ERROR] terminate_counting(): call failed. Counter was closed')
-            return -1
+            msg_str = 'terminate_counting(): call failed. Counter was closed. \n' \
+                      'Re-initialize it by calling init_ctr()'
+            self.log.error(msg_str=msg_str)
+            raise GatedCtrError(msg_str)
 
     def get_status(self):
 
         # Check that counter measurement was initialized and that the connection works
         # by calling isRunning()
-        #  -- if self._counter is None or if connection is broken, call will rise some
+        #  -- if self._ctr is None or if connection is broken, call will rise some
         #     exception. In this case "void" status should be set
         #  -- if counter was initialized and connection works, it will return successfully
         #     (True or False, but the result does not matter)
         #     and further choice between "idle", "in_progress", and "finished" should be made
         try:
-            self._counter.isRunning()
+            self._ctr.isRunning()
         except:
             # set status to "void"
             self._status = -1
@@ -208,14 +217,14 @@ class GatedCounter:
         #   Now one needs to check if it is already finished or not.
         #   If measurement is complete, change status to "finished".
         if self._status == 1:
-            if self._counter.ready():
+            if self._ctr.ready():
 
-                self._counter.stop()
+                self._ctr.stop()
                 self._status = 2
 
         return copy.deepcopy(self._status)
 
-    def get_count_array(self, timeout=-1):
+    def get_count_ar(self, timeout=-1):
 
         # If current status is "in_progress",
         # wait for transition to some other state:
@@ -237,7 +246,7 @@ class GatedCounter:
         # return data only in the case of "finished" state
         if status == 2:
             count_array = np.array(
-                self._counter.getData(),
+                self._ctr.getData(),
                 dtype=np.uint32
             )
             return count_array
@@ -245,16 +254,17 @@ class GatedCounter:
         # return empty list for all other states ("in_progress", "idle", and "void")
         else:
             if status == 1:
-                # self.log.warn('get_count_array(): operation timed out, but counter is still running. \n'
-                #               'Try calling get_count_array() later or terminate process by terminate_counting().')
-                print('[WARN] get_count_array(): operation timed out, but counter is still running. \n'
-                      'Try calling get_count_array() later or terminate process by terminate_counting().')
+                self.log.warn(
+                    'get_count_ar(): operation timed out, but counter is still running. \n'
+                    'Try calling get_count_ar() later or terminate process by terminate_counting().'
+                )
             elif status == 0:
-                # self.log.warn('get_count_array(): counter is "idle" - nothing to read')
-                print('[WARN] get_count_array(): counter is "idle" - nothing to read')
+                self.log.warn('get_count_ar(): counter is "idle" - nothing to read')
             else:
-                # self.log.error('get_count_array(): counter broke and was deleted')
-                print('[ERROR] get_count_array(): counter broke and was deleted')
+                msg_str = 'get_count_ar(): counter broke and was deleted \n' \
+                          'Re-initialize it by calling init_ctr()'
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
 
             return []
 
@@ -282,42 +292,38 @@ class GatedCounter:
         """
 
         # Transition to "void" is always possible
-        # by calling close_counter()
+        # by calling close_ctr()
         if new_status == -1:
             self._status = -1
             return 0
 
         # Transition to "idle" is possible from
-        #   "void" by calling init_counter()
+        #   "void" by calling init_ctr()
         #   "in_progress" by calling terminate_counting()
         if new_status == 0:
-            if self._status==-1 or self._status==1:
+            if self._status == -1 or self._status == 1:
                 self._status = 0
                 return 0
             else:
-                # self.log.error('_set_status(): transition to new_status={0} from self._status={1} is impossible. \n'
-                #                'Counter status was not changed.'
-                #                ''.format(new_status, self._status))
-                print('[ERROR] _set_status(): transition to new_status={0} from self._status={1} is impossible. \n'
-                      'Counter status was not changed.'
-                      ''.format(new_status, self._status))
-                return -1
+                msg_str = '_set_status(): transition to new_status={0} from self._status={1} is impossible. \n'\
+                          'Counter status was not changed.'\
+                          ''.format(new_status, self._status)
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
 
         # Transition to "in_progress" is possible from
         #   "idle" by calling start_counting()
         #   "finished" by calling start_counting()
         if new_status == 1:
-            if self._status==0 or self._status==2:
+            if self._status == 0 or self._status == 2:
                 self._status = 1
                 return 0
             else:
-                # self.log.error('_set_status(): transition to new_status={0} from self._status={1} is impossible. \n'
-                #                'Counter status was not changed.'
-                #                ''.format(new_status, self._status))
-                print('[ERROR] _set_status(): transition to new_status={0} from self._status={1} is impossible. \n'
-                      'Counter status was not changed.'
-                      ''.format(new_status, self._status))
-                return -1
+                msg_str = '_set_status(): transition to new_status={0} from self._status={1} is impossible. \n'\
+                          'Counter status was not changed.'\
+                          ''.format(new_status, self._status)
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
 
         # Transition to "finished" is only possible from "in_progress"
         # by successful completion of count_array accumulation
@@ -326,43 +332,41 @@ class GatedCounter:
                 self._status = 2
                 return 0
             else:
-                # self.log.error('_set_status(): transition to new_status={0} from self._status={1} is impossible. \n'
-                #                'Counter status was not changed.'
-                #                ''.format(new_status, self._status))
-                print('[ERROR] _set_status(): transition to new_status={0} from self._status={1} is impossible. \n'
-                      'Counter status was not changed.'
-                      ''.format(new_status, self._status))
-                return -1
+                msg_str = '_set_status(): transition to new_status={0} from self._status={1} is impossible. \n'\
+                          'Counter status was not changed.'\
+                          ''.format(new_status, self._status)
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
 
-    def get_channel_assignment(self):
+    def get_ch_assignment(self):
         """Returns dictionary containing current channel assignment:
             {
-                'click_channel': (int) click_channel_number_including_edge_sign
-                'gate_channel': (int) gate_channel_number_including_edge_sign
+                'click_ch': (int) click_channel_number_including_edge_sign
+                'gate_ch': (int) gate_channel_number_including_edge_sign
             }
 
-        :return: dict('click_channel': _, 'gate_channel': _)
+        :return: dict('click_ch': _, 'gate_ch': _)
         """
 
-        click_channel = copy.deepcopy(self._click_channel)
-        gate_channel = copy.deepcopy(self._gate_channel)
+        click_ch = copy.deepcopy(self._click_ch)
+        gate_ch = copy.deepcopy(self._gate_ch)
 
-        return {'click_channel': click_channel, 'gate_channel': gate_channel}
+        return dict(click_ch=click_ch, gate_ch=gate_ch)
 
-    def set_channel_assignment(self, click_channel=None, gate_channel=None):
+    def set_ch_assignment(self, click_ch=None, gate_ch=None):
         """Sets click channel and and gate channel.
 
         This method only changes internal variables
-        self._click_channel and self._gate_channel.
-        To apply the channel update, call  init_counter() again.
+        self._click_ch and self._gate_ch.
+        To apply the channel update, call  init_ctr() again.
 
 
-        :param click_channel: (int|list of int) click channel number
+        :param click_ch: (int|list of int) click channel number
                               positive/negative values - rising/falling edge detection
                               if list is given, clicks on all specified channels
                               will be merged into one logic channel
 
-        :param gate_channel: (int) channel number
+        :param gate_ch: (int) channel number
                              positive/negative - count during high/low gate level
 
         :return: (dict) actually channel assignment:
@@ -372,62 +376,57 @@ class GatedCounter:
                         }
         """
 
-        if click_channel is not None:
+        if click_ch is not None:
             # for convenience bring int type of input to list of int
-            if isinstance(click_channel, list):
-                click_channel_list = click_channel
-            elif isinstance(click_channel, int):
-                click_channel_list = [click_channel]
+            if isinstance(click_ch, list):
+                click_ch_list = click_ch
+            elif isinstance(click_ch, int):
+                click_ch_list = [click_ch]
             else:
                 # unknown input type
-                # self.log.error('set_channel_assignment(click_channel={0}): invalid argument type'
-                #                ''.format(click_channel))
-                print('[ERROR] set_channel_assignment(click_channel={0}): invalid argument type'
-                      ''.format(click_channel))
-                return self.get_channel_assignment()
+                msg_str = 'set_ch_assignment(click_ch={0}): invalid argument type'\
+                          ''.format(click_ch)
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
 
             # sanity check: all requested channels are available on the device
-            all_channels = self.get_all_channels()
-            for channel in click_channel_list:
-                if channel not in all_channels:
-                    # self.log.error('set_channel_assignment(): '
-                    #                'click_channel={0} - this channel is not available on the device'
-                    #                ''.format(click_channel))
-                    print('[ERROR] set_channel_assignment(): '
-                          'click_channel={0} - this channel is not available on the device'
-                          ''.format(click_channel))
-                    return self.get_channel_assignment()
+            all_chs = self.get_all_chs()
+            for channel in click_ch_list:
+                if channel not in all_chs:
+                    msg_str = 'set_ch_assignment(): '\
+                              'click_ch={0} - this channel is not available on the device'\
+                              ''.format(click_ch)
+                    self.log.error(msg_str=msg_str)
+                    raise GatedCtrError(msg_str)
 
             # If several channel numbers were passed, create virtual Combiner channel
-            if len(click_channel_list) > 1:
+            if len(click_ch_list) > 1:
                 self._combiner = TT.Combiner(
                     tagger=self._tagger,
-                    channels=click_channel_list
+                    channels=click_ch_list
                 )
                 # Obtain int channel number for the virtual channel
-                click_channel_list = [self._combiner.getChannel()]
+                click_ch_list = [self._combiner.getChannel()]
 
             # Set new value for click channel
-            self._click_channel = int(click_channel_list[0])
+            self._click_ch = int(click_ch_list[0])
 
-        if gate_channel is not None:
+        if gate_ch is not None:
 
             # sanity check: channel is available on the device
-            if gate_channel not in self.get_all_channels():
-                # self.log.error('set_channel_assignment(): '
-                #                'gate_channel={0} - this channel is not available on the device'
-                #                ''.format(gate_channel))
-                print('[ERROR] set_channel_assignment(): '
-                      'gate_channel={0} - this channel is not available on the device'
-                      ''.format(gate_channel))
-                return self.get_channel_assignment()
+            if gate_ch not in self.get_all_chs():
+                msg_str = 'set_ch_assignment(): '\
+                          'gate_ch={0} - this channel is not available on the device'\
+                          ''.format(gate_ch)
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
 
             # Set new value for gate channel
-            self._gate_channel = int(gate_channel)
+            self._gate_ch = int(gate_ch)
 
-        return self.get_channel_assignment()
+        return self.get_ch_assignment()
 
-    def get_all_channels(self):
+    def get_all_chs(self):
         """Returns list of all channels available on the device,
         including edge type sign.
 
@@ -444,9 +443,9 @@ class GatedCounter:
 
         # Sanity check: check that connection to the device was established
         if self._tagger is None:
-            # self.log.error('get_all_channels(): not connected to the device yet')
-            print('[ERROR] get_all_channels(): not connected to the device yet')
-            return []
+            msg_str = 'get_all_chs(): not connected to the device yet'
+            self.log.error(msg_str=msg_str)
+            raise GatedCtrError(msg_str)
 
         channel_list = list(
             self._tagger.getChannelList(TT.TT_CHANNEL_RISING_AND_FALLING_EDGES)
@@ -454,29 +453,16 @@ class GatedCounter:
         return channel_list
 
 
-class GatedCounterService(rpyc.Service):
+class SITTGatedCtrService(ServiceBase):
 
-    _module = None
+    def exposed_activate_interface(self):
+        return self._module.activate_interface()
 
-    def on_connect(self, conn):
-        # code that runs when a connection is created
-        # (to init the service, if needed)
-        pass
+    def exposed_init_ctr(self, bin_number):
+        return self._module.init_ctr(bin_number=bin_number)
 
-    def on_disconnect(self, conn):
-        # code that runs after the connection has already closed
-        # (to finalize the service, if needed)
-        pass
-
-    def assign_module(self, module):
-        self._module = module
-
-    # ---- Interface --------
-    def exposed_init_counter(self, bin_number):
-        return self._module.init_counter(bin_number=bin_number)
-
-    def exposed_close_counter(self):
-        return self._module.close_counter()
+    def exposed_close_ctr(self):
+        return self._module.close_ctr()
 
     def exposed_start_counting(self):
         return self._module.start_counting()
@@ -487,28 +473,21 @@ class GatedCounterService(rpyc.Service):
     def exposed_get_status(self):
         return self._module.get_status()
 
-    def exposed_get_count_array(self, timeout=-1):
-        res = self._module.get_count_array(timeout=timeout)
+    def exposed_get_count_ar(self, timeout=-1):
+        res = self._module.get_count_ar(timeout=timeout)
         return pickle.dumps(res)
 
 
-class GatedCounterClient:
+class SITTGatedCtrClient(ClientBase, GatedCtrInterface):
 
-    def __init__(self, port, host='localhost'):
+    def activate_interface(self):
+        return self._service.exposed_activate_interface()
 
-        self._connection = rpyc.connect(
-            host=host,
-            port=port,
-            config={'allow_public_attrs': True}
-        )
+    def init_ctr(self, bin_number):
+        return self._service.exposed_init_ctr(bin_number=bin_number)
 
-        self._service = self._connection.root
-
-    def init_counter(self, bin_number):
-        return self._service.exposed_init_counter(bin_number=bin_number)
-
-    def close_counter(self):
-        return self._service.exposed_close_counter()
+    def close_ctr(self):
+        return self._service.exposed_close_ctr()
 
     def start_counting(self):
         return self._service.exposed_start_counting()
@@ -519,6 +498,6 @@ class GatedCounterClient:
     def get_status(self):
         return self._service.exposed_get_status()
 
-    def get_count_array(self, timeout=-1):
-        res_pickle = self._service.exposed_get_count_array(timeout=timeout)
+    def get_count_ar(self, timeout=-1):
+        res_pickle = self._service.exposed_get_count_ar(timeout=timeout)
         return pickle.loads(res_pickle)

@@ -49,3 +49,7 @@ class MWSrcInterface(abc.ABC):
     def get_mode(self):
         pass
 
+
+class MWSrcError(Exception):
+    pass
+

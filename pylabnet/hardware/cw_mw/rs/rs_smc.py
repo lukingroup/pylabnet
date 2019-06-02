@@ -1,6 +1,6 @@
 import visa
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.hardware.interface.mw_src import MWSrcInterface
+from pylabnet.hardware.interface.mw_src import MWSrcInterface, MWSrcError
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 import pickle
@@ -102,7 +102,7 @@ class RSsmc(MWSrcInterface):
             )
 
         else:
-            raise CWMWError(
+            raise MWSrcError(
                 'get_freq(): got unknown mode {}'.format(mode)
             )
 
@@ -151,7 +151,7 @@ class RSsmc(MWSrcInterface):
         else:
             msg_str = 'get_mode(): unknown mode string {} was returned'
             self.log.error(msg_str=msg_str)
-            raise CWMWError(msg_str)
+            raise MWSrcError(msg_str)
 
     # Technical methods
 
@@ -227,7 +227,7 @@ class RSsmc(MWSrcInterface):
                 er_str += (er + ' \n')
             er_str = er_str.rstrip('\n')
             self.log.error(msg_str=er_str)
-            raise CWMWError(er_str)
+            raise MWSrcError(er_str)
 
         return 0
 
@@ -249,7 +249,7 @@ class RSsmc(MWSrcInterface):
                       'Valid values are "ext" - external, "int" - internal' \
                       ''.format(src_str)
             self.log.error(msg_str=msg_str)
-            raise CWMWError(msg_str)
+            raise MWSrcError(msg_str)
 
         self._cmd_wait('TRIG:FSW:SOUR {}'.format(src_str))
 
@@ -295,15 +295,12 @@ class RSsmc(MWSrcInterface):
         return 0
 
 
-class CWMWError(Exception):
-    pass
-
-
 #
 # Service-Client pair
 #
 
 class RSsmcMWSrcService(ServiceBase):
+
     def exposed_activate_interface(self):
         return self._module.activate_interface()
 

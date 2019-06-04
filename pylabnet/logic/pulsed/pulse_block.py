@@ -132,6 +132,28 @@ class PulseBlock:
 
         return new_pb
 
+    def append(self, p_obj, join=False, name=None, cflct_er=True):
+
+        p_obj = copy.deepcopy(p_obj)
+        p_obj.t0 += self.dur
+
+        if join:
+
+            if name is None:
+                name = self.name
+
+            return self.join(
+                p_obj=p_obj,
+                name=name,
+                cflct_er=cflct_er
+            )
+
+        else:
+            self.insert(
+                p_obj=p_obj,
+                cflct_er=cflct_er
+            )
+
     def insert_pb(self, pb_obj, t0=0, cflct_er=True):
 
         # TODO: re-implement using reset_edges()
@@ -229,6 +251,26 @@ class PulseBlock:
             cflct_er=cflct_er
         )
         return new_pb
+
+    def append_pb(self, pb_obj, offset=0, join=False):
+
+        if offset < 0:
+            raise ValueError(
+                'append_pb(): only non-negative offset is allowed. \n'
+                'Use insert_pb() or join_pb() for arbitrary t0'
+            )
+
+        if join:
+            return self.join_pb(
+                pb_obj=pb_obj,
+                t0=self.dur + offset,
+                name=self.name
+            )
+        else:
+            self.insert_pb(
+                pb_obj=pb_obj,
+                t0=self.dur + offset
+            )
 
     def ch_map(self, map_dict):
 

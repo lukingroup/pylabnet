@@ -140,6 +140,10 @@ class RSsmc(MWSrcInterface):
 
         return self.get_freq()
 
+    def reset_swp_pos(self):
+        self._cmd_wait(':ABOR:SWE')
+        return 0
+
     def get_mode(self):
 
         mode_str = self._dev.query(':FREQ:MODE?').strip('\n').lower()
@@ -340,6 +344,9 @@ class RSsmcMWSrcService(ServiceBase):
         )
         return pickle.dumps(res)
 
+    def exposed_reset_swp_pos(self):
+        return self._module.reset_swp_pos()
+
     def exposed_get_mode(self):
         return self._module.get_mode()
 
@@ -385,6 +392,9 @@ class RSsmcMWSrcClient(ClientBase, MWSrcInterface):
         )
 
         return pickle.loads(res_pckl)
+
+    def reset_swp_pos(self):
+        return self._service.exposed_reset_swp_pos()
 
     def get_mode(self):
         return self._service.exposed_get_mode()

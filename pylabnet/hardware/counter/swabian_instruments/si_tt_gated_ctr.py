@@ -152,6 +152,10 @@ class SITTGatedCtr(GatedCtrInterface):
 
             # set status to "in_progress"
             self._set_status(1)
+
+            # Wait until the counter is actually ready to count
+            time.sleep(0.2)
+
             return 0
 
         # handle exception in TT function calls [NotImplementedError]

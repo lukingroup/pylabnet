@@ -101,6 +101,23 @@ class DFalse(DfltPulseBase):
         return np.full(t_ar_len, False)
 
 
+class DTrue(DfltPulseBase):
+
+    def __eq__(self, other):
+        if not isinstance(other, DTrue):
+            return NotImplemented
+
+        return True
+
+    def __str__(self):
+        return 'True'
+
+    @staticmethod
+    def get_value(t_ar):
+        t_ar_len = len(t_ar)
+        return np.full(t_ar_len, True)
+
+
 class DConst(DfltPulseBase):
 
     def __init__(self, val=0):

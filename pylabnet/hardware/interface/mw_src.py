@@ -46,6 +46,10 @@ class MWSrcInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def reset_swp_pos(self):
+        pass
+
+    @abc.abstractmethod
     def get_mode(self):
         pass
 

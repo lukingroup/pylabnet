@@ -46,6 +46,24 @@ class RSsmc(MWSrcInterface):
         return 0
 
     def activate_interface(self):
+
+        # Store hardware settings which are not controlled by logic,
+        # to restore them after reset()
+        # [logic does not know anything about this params, so it should not
+        # introduce any changes to them by calling activate_interface()].
+        tmp_trig_dict = self.get_trig()
+
+        # Reset device
+        self.reset()
+
+        # Restore hardware settings which are not controlled by logic
+        # but were changed by self._dev.reset()
+
+        self.set_trig(
+            src_str=tmp_trig_dict['src_str'],
+            slope_str=tmp_trig_dict['slope_str']
+        )
+
         return 0
 
     # Output control
@@ -53,7 +71,7 @@ class RSsmc(MWSrcInterface):
     def on(self):
 
         if self.get_mode() == 'sweep':
-            self.reset_swp()
+            self.reset_swp_pos()
 
         return self._cmd_wait(
             cmd_str=':OUTP:STAT ON'
@@ -141,6 +159,11 @@ class RSsmc(MWSrcInterface):
         return self.get_freq()
 
     def reset_swp_pos(self):
+        """Reset of MW sweep mode position to start (start frequency)
+
+        @return int: error code (0:OK, -1:error)
+        """
+
         self._cmd_wait(':ABOR:SWE')
         return 0
 
@@ -235,6 +258,42 @@ class RSsmc(MWSrcInterface):
 
         return 0
 
+    def get_trig(self):
+
+        #
+        # Get trigger source
+        #
+
+        src_str = self._dev.query('TRIG:FSW:SOUR?')
+
+        if 'EXT' in src_str:
+            src_str = 'ext'
+        elif 'AUTO' in src_str:
+            src_str = 'int'
+        else:
+            msg_str = 'get_trig(): unknown trigger source was returned "{}" \n' \
+                      ''.format(src_str)
+            self.log.error(msg_str=msg_str)
+            raise MWSrcError(msg_str)
+
+        #
+        # Get edge slope
+        #
+
+        slope_str = self._dev.query(':TRIG1:SLOP?')
+
+        if 'POS' in slope_str:
+            slope_str = 'r'
+        elif 'NEG' in slope_str:
+            slope_str = 'f'
+        else:
+            msg_str = 'get_trig(): unknown slope was returned "{}" \n' \
+                      ''.format(slope_str)
+            self.log.error(msg_str=msg_str)
+            raise MWSrcError(msg_str)
+
+        return dict(src_str=src_str, slope_str=slope_str)
+
     def set_trig(self, src_str='ext', slope_str='r'):
 
         if self.get_status() == 1:
@@ -274,7 +333,7 @@ class RSsmc(MWSrcInterface):
 
         self._cmd_wait(':TRIG1:SLOP {0}'.format(edge))
 
-        return 0
+        return self.get_trig()
 
     def force_trig(self):
         """ Trigger the next element in the list or sweep mode programmatically.
@@ -287,15 +346,6 @@ class RSsmc(MWSrcInterface):
 
         self._cmd_wait('*TRG')
 
-        return 0
-
-    def reset_swp(self):
-        """Reset of MW sweep mode position to start (start frequency)
-
-        @return int: error code (0:OK, -1:error)
-        """
-
-        self._cmd_wait(':ABOR:SWE')
         return 0
 
 

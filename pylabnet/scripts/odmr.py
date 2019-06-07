@@ -79,20 +79,23 @@ class ODMR:
             )
 
         # Save references in internal variables
+        # [None if not given]
         self._1d_trace = trace
         self._2d_heat_map = heat_map
         self._p_bar = p_bar
 
         # Set axes labels
-        self._1d_trace.set_lbls(
-            x_str='Frequency [Hz]',
-            y_str='Count rate [cts/s]'
-        )
+        if self._1d_trace is not None:
+            self._1d_trace.set_lbls(
+                x_str='Frequency [Hz]',
+                y_str='Count rate [Cts/s]'
+            )
 
-        self._2d_heat_map.set_lbls(
-            x_str='Frequency [Hz]',
-            y_str='Repetition'
-        )
+        if self._2d_heat_map is not None:
+            self._2d_heat_map.set_lbls(
+                x_str='Frequency [Hz]',
+                y_str='Repetition'
+            )
 
         return 0
 
@@ -122,9 +125,10 @@ class ODMR:
 
             self._is_running = True
 
-            # Main sweep loop
+            # Main measurement iteration loop
             while self._is_running and self._swp_idx < self._n_swps:
 
+                # Run actual iteration
                 self._make_iter()
 
                 # Increment _swp_idx only after the iteration is complete
@@ -132,9 +136,15 @@ class ODMR:
                 # not count as done)
                 self._swp_idx += 1
 
+                # Update GUI
+                self._update_gui()
+
             # Measurement is complete or paused
             self._hardware_off()
             self._is_running = False
+            # [The main difference from interruption due to exception is that
+            # here the loop waits for the iteration in progress to complete
+            # before switching hardware off]
 
         except KeyboardInterrupt:
             # Measurement is interrupted by user
@@ -152,6 +162,11 @@ class ODMR:
         )
 
     def pause(self):
+
+        # The main difference between pause and interruption due to exception
+        # is that, after calling pause(), the loop waits for the iteration in
+        # progress to complete.
+
         self._is_running = False
         return 0
 
@@ -195,14 +210,12 @@ class ODMR:
             stop=self._stop_f,
             num=self._n_pts
         )
-        self.avg_ar = np.full(
+        self.avg_ar = np.zeros(
             shape=self._n_pts,
-            fill_value=np.nan,
             dtype=float
         )
-        self.raw_ar = np.full(
+        self.raw_ar = np.zeros(
             shape=(self._n_swps, self._n_pts),
-            fill_value=np.nan,
             dtype=float
         )
 
@@ -247,7 +260,7 @@ class ODMR:
         safety_window = 0.1 * self._accum_dur
 
         # Duration of sweep-step pulse
-        step_pulse_dur = 200e-6
+        step_pulse_dur = 0.1 * self._accum_dur  # 200e-6
 
         # ========== Prepare individual blocks =========
 
@@ -334,9 +347,9 @@ class ODMR:
 
         # Default values
         odmr_pb.dflt_dict = dict(
-            aom=po.DTrue(),
+            aom=po.DFalse(),
             ctr_gate=po.DFalse(),
-            mw_gate=po.DTrue(),
+            mw_gate=po.DFalse(),
             mw_step=po.DFalse(),
         )
 
@@ -346,6 +359,15 @@ class ODMR:
         # append step_bp ** (_n_pts-1)
         for _ in np.arange(start=1, stop=self._n_pts):
             odmr_pb.append_pb(pb_obj=step_pb)
+
+        # aom and mw_gate are High during the whole block
+        tmp_dur = odmr_pb.dur
+        odmr_pb.insert(
+            p_obj=po.PTrue(ch='aom', dur=tmp_dur)
+        )
+        odmr_pb.insert(
+            p_obj=po.PTrue(ch='mw_gate', dur=tmp_dur)
+        )
 
         # append off_pb
         odmr_pb.append_pb(pb_obj=off_pb)
@@ -378,27 +400,31 @@ class ODMR:
 
         # Update data arrays
         self.raw_ar[self._swp_idx][:] = cnt_rate_ar
-        self.avg_ar[:] = self.raw_ar.mean(axis=0)
+        self.avg_ar[:] = self.raw_ar[:self._swp_idx+1].mean(axis=0)
 
         self._p_gen.stop()
-        self._update_gui()
 
     def _update_gui(self):
 
-        self._1d_trace.set_data(
-            x_ar=self.freq_ar,
-            y_ar=self.avg_ar
-        )
+        if self._1d_trace is not None:
+            self._1d_trace.set_data(
+                x_ar=self.freq_ar,
+                y_ar=self.avg_ar
+            )
 
-        self._2d_heat_map.append_row(
-            y_val=self._swp_idx,
-            z_ar=self.raw_ar[self._swp_idx]
-        )
+        if self._2d_heat_map is not None:
+            self._2d_heat_map.set_data(
+                x_ar=self.freq_ar,
+                y_ar=np.arange(start=1, stop=self._swp_idx + 1),
+                z_ar=self.raw_ar[:self._swp_idx]
+            )
 
-        self._p_bar.set_value(
-            value=100 * self._swp_idx / self._n_swps
-        )
+        if self._p_bar is not None:
+            self._p_bar.set_value(
+                value=100 * self._swp_idx / self._n_swps
+            )
 
     def _hardware_off(self):
         self._mw_src.off()
         self._p_gen.stop()
+        self._gated_ctr.terminate_counting()

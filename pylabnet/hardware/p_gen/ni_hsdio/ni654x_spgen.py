@@ -13,9 +13,24 @@ class NI654xSPGen(SimplePGenInterface):
 
         # TODO: add mutex check and lock (force lock option)
 
+        # Reset device
+        #   store hardware settings which are not controlled by logic,
+        #   to restore them after reset()
+        #   [logic does not know anything about this params, so it should not
+        #   introduce any changes to them by calling activate_interface()].
+        tmp_map_dict = self._dev.map_dict
+        tmp_samp_rate = self._dev.get_samp_rate()
+        #   full hardware reset
+        self._dev.reset()
+
+        # Restore hardware settings which are not controlled by logic
+        # but were changed by self._dev.reset()
+        self._dev.map_dict = tmp_map_dict
+        self._dev.set_samp_rate(samp_rate=tmp_samp_rate)
+
+        # Configure the device to operate as Simple Pulse Generator
         self._dev.set_mode(mode_string='W')
         self._dev.set_active_chs(chs_str='0-31')
-        self._dev.clr_mem()
 
         return 0
 

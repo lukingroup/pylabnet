@@ -71,6 +71,7 @@ class NI654x:
     def reset(self):
 
         self.writn_wfm_set = set()
+        self.map_dict = dict()
 
         return self._er_chk(
             self.dll.niHSDIO_reset(self._handle)

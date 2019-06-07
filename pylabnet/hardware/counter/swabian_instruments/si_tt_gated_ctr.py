@@ -75,6 +75,44 @@ class SITTGatedCtr(GatedCtrInterface):
         return 0
 
     def init_ctr(self, bin_number):
+
+        # Device-specific fix explanation:
+        #
+        #   CountBetweenMarkers measurement configured for n_value bins
+        #   indeed fills-up buffer after n_value gate pules, but call of
+        #   self._ctr.ready() still gives False. Only after one additional
+        #   gate pulse it gives True, such that self.get_status()
+        #   gives 2 and self.get_count_ar() returns:
+        #
+        #       device always needs an additional pulse to complete
+        #       (even for n_values = 1 it needs 2 gate pulses).
+        #
+        #   Since this is very counter-intuitive and confuses
+        #   above-lying logic, a fix is made here:
+        #
+        #       For given bin_number, CountBetweenMarkers measurement
+        #       is instantiated with n_values = (bin_number - 1) such
+        #       that it completes after receiving bin_number physical
+        #       gate pulses as expected.
+        #
+        #       As a result, in the returned count_ar
+        #       (still of length bin_number, as logic expects), the last
+        #       value is just a copy of (bin_number - 1)-st element.
+        #
+        #   The last physical bin is not actually measured, what can lead
+        #   to confusions when bin_number is on the order of one.
+        #   The warning below reminds about it:
+        if bin_number <= 5:
+            self.log.warn(
+                'init_ctr(): due to strange behaviour of TT.CountBetweenMarkers '
+                'measurement, this driver makes a hack: counter is configured to '
+                'measure bin_number-1 pulses and the last element of the returned '
+                'count_ar is just a copy of the preceding one. \n'
+                'With bin_number={}, only the first {} gate windows will actually be '
+                'measured.'
+                ''.format(bin_number, bin_number - 1)
+            )
+
         # Close existing counter, if it was initialized before
         if self.get_status() != -1:
             self.close_ctr()
@@ -86,7 +124,7 @@ class SITTGatedCtr(GatedCtrInterface):
                 click_channel=self._click_ch,
                 begin_channel=self._gate_ch,
                 end_channel=-self._gate_ch,
-                n_values=bin_number
+                n_values=bin_number - 1
             )
             # set status to "idle"
             self._set_status(0)
@@ -154,7 +192,7 @@ class SITTGatedCtr(GatedCtrInterface):
             self._set_status(1)
 
             # Wait until the counter is actually ready to count
-            time.sleep(0.2)
+            time.sleep(0.1)
 
             return 0
 
@@ -253,6 +291,13 @@ class SITTGatedCtr(GatedCtrInterface):
                 self._ctr.getData(),
                 dtype=np.uint32
             )
+
+            # Fix of the issue with an additional gate pulse needed to complete
+            # measurement (see comment in init_ctr() for explanation):
+            #   the last element of returned array is just a copy
+            #   of the last physically measured bin
+            count_array = np.append(count_array, count_array[-1])
+
             return count_array
 
         # return empty list for all other states ("in_progress", "idle", and "void")

@@ -8,7 +8,13 @@ class GatedCtrInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def init_ctr(self, bin_number):
+    def init_ctr(self, bin_number, gate_type):
+        """
+
+        :param bin_number:
+        :param gate_type: 'RR' and 'RF'
+        :return:
+        """
         pass
 
     @abc.abstractmethod

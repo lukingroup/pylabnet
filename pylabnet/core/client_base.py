@@ -38,7 +38,10 @@ class ClientBase:
             self._connection = rpyc.connect(
                 host=self._host,
                 port=self._port,
-                config={'allow_public_attrs': True}
+                config={
+                    'allow_public_attrs': True,
+                    'sync_request_timeout': 300
+                }
             )
             self._service = self._connection.root
 

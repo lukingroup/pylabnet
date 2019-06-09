@@ -241,7 +241,10 @@ class ODMR:
         self._mw_src.on()
 
         # Init gated_ctr
-        self._gated_ctr.init_ctr(bin_number=self._n_pts)
+        self._gated_ctr.init_ctr(
+            bin_number=self._n_pts,
+            gate_type='RF'
+        )
 
         # Configure p_gen
         self._p_gen.write(

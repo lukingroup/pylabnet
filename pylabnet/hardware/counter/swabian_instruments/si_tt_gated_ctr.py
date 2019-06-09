@@ -74,7 +74,7 @@ class SITTGatedCtr(GatedCtrInterface):
     def activate_interface(self):
         return 0
 
-    def init_ctr(self, bin_number):
+    def init_ctr(self, bin_number, gate_type):
 
         # Device-specific fix explanation:
         #
@@ -119,13 +119,29 @@ class SITTGatedCtr(GatedCtrInterface):
 
         # Instantiate counter measurement
         try:
-            self._ctr = TT.CountBetweenMarkers(
-                tagger=self._tagger,
-                click_channel=self._click_ch,
-                begin_channel=self._gate_ch,
-                end_channel=-self._gate_ch,
-                n_values=bin_number - 1
-            )
+            if gate_type == 'RF':
+                self._ctr = TT.CountBetweenMarkers(
+                    tagger=self._tagger,
+                    click_channel=self._click_ch,
+                    begin_channel=self._gate_ch,
+                    end_channel=-self._gate_ch,
+                    n_values=bin_number - 1
+                )
+            elif gate_type == 'RR':
+                self._ctr = TT.CountBetweenMarkers(
+                    tagger=self._tagger,
+                    click_channel=self._click_ch,
+                    begin_channel=self._gate_ch,
+                    n_values=bin_number - 1
+                )
+            else:
+                msg_str = 'init_ctr(): unknown gate type "{}" \n' \
+                          'Valid types are: \v' \
+                          '     "RR" - Raising-Raising \n' \
+                          '     "RF" - Raising-Falling'
+                self.log.error(msg_str=msg_str)
+                raise GatedCtrError(msg_str)
+
             # set status to "idle"
             self._set_status(0)
 
@@ -507,8 +523,11 @@ class SITTGatedCtrService(ServiceBase):
     def exposed_activate_interface(self):
         return self._module.activate_interface()
 
-    def exposed_init_ctr(self, bin_number):
-        return self._module.init_ctr(bin_number=bin_number)
+    def exposed_init_ctr(self, bin_number, gate_type):
+        return self._module.init_ctr(
+            bin_number=bin_number,
+            gate_type=gate_type
+        )
 
     def exposed_close_ctr(self):
         return self._module.close_ctr()
@@ -532,8 +551,11 @@ class SITTGatedCtrClient(ClientBase, GatedCtrInterface):
     def activate_interface(self):
         return self._service.exposed_activate_interface()
 
-    def init_ctr(self, bin_number):
-        return self._service.exposed_init_ctr(bin_number=bin_number)
+    def init_ctr(self, bin_number, gate_type):
+        return self._service.exposed_init_ctr(
+            bin_number=bin_number,
+            gate_type=gate_type
+        )
 
     def close_ctr(self):
         return self._service.exposed_close_ctr()

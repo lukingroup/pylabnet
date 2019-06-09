@@ -9,7 +9,10 @@ class GenericServer:
             service=service,
             hostname=host,
             port=port,
-            protocol_config={'allow_public_attrs': True}
+            protocol_config={
+                'allow_public_attrs': True,
+                'sync_request_timeout': 300
+            }
         )
 
         self._server_thread = threading.Thread(

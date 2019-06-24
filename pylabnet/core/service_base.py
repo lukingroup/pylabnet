@@ -20,5 +20,5 @@ class ServiceBase(rpyc.Service):
     def assign_module(self, module):
         self._module = module
 
-    def assign_logger(self, logger):
-        self.log.set_logger(logger=logger)
+    def assign_logger(self, logger=None):
+        self.log = LogHandler(logger=logger)

@@ -8,6 +8,8 @@ import numpy as np
 import threading
 import time
 
+# TODO: add readout window and refocus as parameters
+
 
 class Rabi:
     def __init__(self):

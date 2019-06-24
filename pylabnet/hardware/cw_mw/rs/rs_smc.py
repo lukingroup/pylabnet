@@ -423,7 +423,9 @@ class RSsmcMWSrcClient(ClientBase, MWSrcInterface):
         return self._service.exposed_get_pwr()
 
     def set_pwr(self, pwr):
-        return self._service.exposed_set_pwr(pwr=pwr)
+        return self._service.exposed_set_pwr(
+            pwr=float(pwr)
+        )
 
     # Frequency
 
@@ -432,7 +434,9 @@ class RSsmcMWSrcClient(ClientBase, MWSrcInterface):
         return pickle.loads(ret_pckl)
 
     def set_freq(self, freq):
-        return self._service.exposed_set_freq(freq=freq)
+        return self._service.exposed_set_freq(
+            freq=float(freq)
+        )
 
     def set_freq_swp(self, start, stop, n_pts):
         res_pckl = self._service.exposed_set_freq_swp(

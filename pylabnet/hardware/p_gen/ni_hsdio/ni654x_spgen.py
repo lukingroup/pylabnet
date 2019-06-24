@@ -3,6 +3,9 @@ from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 import pickle
 
+# TODO: add automatic frequency setting
+# TODO: (analyze given PulseBlock, find smallest interval, set 1/10 sampling rate)
+
 
 class NI654xSPGen(SimplePGenInterface):
 

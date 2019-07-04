@@ -37,3 +37,7 @@ class SimplePGenInterface(abc.ABC):
         """
 
         pass
+
+
+class PGenError(Exception):
+    pass

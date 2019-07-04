@@ -79,6 +79,22 @@ class PSin(PulseBase):
         )
         return ret_ar
 
+
+class PConst(PulseBase):
+
+    def __init__(self, ch, dur, t0=0, val=0.0):
+        super().__init__(ch=ch, dur=dur, t0=t0)
+        self._val = val
+
+    def __str__(self):
+        return 'Const(val={})'.format(self._val)
+
+    def get_value(self, t_ar):
+        t_ar_len = len(t_ar)
+        ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
+
+        return ret_ar
+
 #
 #   Default Pulse classes
 #
@@ -120,7 +136,7 @@ class DTrue(DfltPulseBase):
 
 class DConst(DfltPulseBase):
 
-    def __init__(self, val=0):
+    def __init__(self, val=0.0):
         self._val = val
 
     def __eq__(self, other):

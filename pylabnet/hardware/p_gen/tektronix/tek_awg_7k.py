@@ -28,7 +28,7 @@ class TekAWG7k:
                  ftp_username=None, ftp_pswrd=None,
                  local_wfm_dir='user\\local_wfm_dir',
                  remote_wfm_dir='remote_wfm_dir',
-                 visa_timeout=10,
+                 visa_timeout=20,
                  logger=None):
 
         self.log = LogHandler(logger=logger)
@@ -55,6 +55,8 @@ class TekAWG7k:
             self._awg = self._rm.open_resource(visa_adr_str)
             # set timeout (in ms)
             self._awg.timeout = visa_timeout * 1000
+            # Reset hardware
+            self.reset()
         except:
             self._awg = None
 
@@ -662,9 +664,9 @@ class TekAWG7k:
 
     def _get_all_chs(self):
         """Helper method to return a sorted list of all technically available
-        channel numbers (e.g. ['a_ch1', 'a_ch2', 'd_ch1', 'd_ch2', 'd_ch3', 'd_ch4'])
+        channel names (e.g. ['a_ch1', 'a_ch2', 'd_ch1', 'd_ch2', 'd_ch3', 'd_ch4'])
 
-        :return list: Sorted list of channel numbers
+        :return list: Sorted list of channel names
         """
 
         # Determine number of available channels based on model
@@ -737,20 +739,30 @@ class TekAWG7k:
     # Waveform and Sequence generation methods
     # =========================================================================
 
-    # ================ Waveform ================
+    # -------------------------------------------------------------------------
+    # Waveform
+    # -------------------------------------------------------------------------
 
-    def write_wfm(self, pb_obj, len_min=1, len_max=float('inf'), len_step=1, step_adj=False):
+    def fill_unused_chs(self, pb_obj):
+        """Fill all unused channels with default values:
+            DFalse() for marker channels
+            DConst(val=0.0) for analog channels
+
+        :param pb_obj: PulseBlock object
+        :return: new PulseBlock object with all unused channels
+                 filled with default values.
+        """
 
         pb_obj = copy.deepcopy(pb_obj)
 
-        req_ch_set = set(pb_obj.p_dict.keys())
+        pb_ch_set = set(pb_obj.p_dict.keys()) | set(pb_obj.dflt_dict.keys())
         avail_ch_set = set(self._get_all_chs())
 
         # Sanity check: all requested channels are available
-        if not req_ch_set.issubset(avail_ch_set):
+        if not pb_ch_set.issubset(avail_ch_set):
             msg_str = 'write_wfm(): the following channels of the PulseBlock are not available: \n' \
                       '{} \n' \
-                      ''.format(sorted(list(req_ch_set - avail_ch_set)))
+                      ''.format(sorted(list(pb_ch_set - avail_ch_set)))
 
             self.log.error(msg_str=msg_str)
             raise PGenError(msg_str)
@@ -758,14 +770,29 @@ class TekAWG7k:
         # All available channels have to have a waveform assigned.
         # If some channels are not used in the pb_obj,
         # fill them with default value pulses
-        miss_ch_set = avail_ch_set - req_ch_set
-        for miss_ch_name in miss_ch_set:
-            if self._is_digital(miss_ch_name):
-                pb_obj.dflt_dict[miss_ch_name] = po.DFalse()
+        unused_ch_set = avail_ch_set - pb_ch_set
+        for unused_ch_name in unused_ch_set:
+            if self._is_digital(unused_ch_name):
+                pb_obj.dflt_dict[unused_ch_name] = po.DFalse()
             else:
-                pb_obj.dflt_dict[miss_ch_name] = po.DConst(val=0.0)
+                pb_obj.dflt_dict[unused_ch_name] = po.DConst(val=0.0)
 
-        # Sample pulse block
+        return pb_obj
+
+    def write_wfm(self, pb_obj, len_min=1, len_max=float('inf'), len_step=1, step_adj=False):
+        """Write plain waveform to AWG memory
+
+        :param pb_obj: PulseBlock object
+        :param len_min: (optional) argument of pb_sample()
+        :param len_max: (optional) argument of pb_sample()
+        :param len_step: (optional) argument of pb_sample()
+        :param step_adj: (optional) argument of pb_sample()
+        :return int: 0 - success code.
+                     PGenError exception is produced in the case of error.
+        """
+
+        # Sample pulse block --------------------------------------------------
+
         samp_dict, n_samp_pts, add_samp_pts = pb_sample(
             pb_obj=pb_obj,
             samp_rate=self.get_samp_rate(),
@@ -777,62 +804,77 @@ class TekAWG7k:
         )
 
         # Write waveforms. One for each analog channel.
-        for a_ch_name in self._get_all_anlg_chs():
-            # Get the integer analog channel number
-            a_ch_num = int(a_ch_name.rsplit('ch', 1)[1])
-            # Get the digital channel specifiers belonging to this analog channel markers
-            mrk_ch_1 = 'd_ch{0:d}'.format(a_ch_num * 2 - 1)
-            mrk_ch_2 = 'd_ch{0:d}'.format(a_ch_num * 2)
+        anlg_level_dict = self.get_analog_level()  # will be used to calculate DAC bits
 
+        for a_ch_name in self._get_all_anlg_chs():
+
+            # Calculate bytes array -------------------------------------------
             start_t = time.time()
-            # Encode marker information in an array of bytes (uint8). Avoid intermediate copies!!!
-            mrk_bytes = samp_dict[mrk_ch_2].view('uint8')
-            tmp_bytes = samp_dict[mrk_ch_1].view('uint8')
-            # Marker bits live in the LSB of the byte, as opposed to the AWG70k
-            np.left_shift(mrk_bytes, 1, out=mrk_bytes)
-            np.left_shift(tmp_bytes, 0, out=tmp_bytes)
-            np.add(mrk_bytes, tmp_bytes, out=mrk_bytes)
-            self.log.debug('Prepared digital channel data: {0}'.format(time.time() - start_t))
+
+            # Get the analog channel number
+            a_ch_num = int(a_ch_name.rsplit('ch', 1)[1])
+            # Get the corresponding digital channel names
+            mrk1_name = 'd_ch{0:d}'.format(a_ch_num * 2 - 1)
+            mrk2_name = 'd_ch{0:d}'.format(a_ch_num * 2)
+
+            byte_ar = self._calc_byte_ar(
+                amp_pp=anlg_level_dict[a_ch_name]['amp_pp'],
+                offset=anlg_level_dict[a_ch_name]['offset'],
+                anlg_ar=samp_dict[a_ch_name],
+                mrk1_ar=samp_dict[mrk1_name],
+                mrk2_ar=samp_dict[mrk2_name]
+            )
+
+            self.log.debug(
+                'Calculated byte data: {:.3f} s'.format(time.time() - start_t)
+            )
+
+            # Write bytes array to local HDD file -----------------------------
+            start = time.time()
 
             # Create waveform name string
             file_name = '{0}_ch{1:d}'.format(pb_obj.name, a_ch_num)
-
             # Write WFM to a file on local HDD
-            start = time.time()
             self._write_wfm_file(
                 filename=file_name,
-                anlg_samp_list=samp_dict[a_ch_name],  # FIXME: compensate for incorrect amplitude
-                mrk_byte_list=mrk_bytes
+                byte_ar=byte_ar
             )
-            self.log.debug('Wrote WFM file to local HDD: {0}'.format(time.time() - start))
 
-            # Send file to AWG over FTP and load into workspace
+            self.log.debug(
+                'Wrote WFM file to local HDD: {:.3f} s'.format(time.time() - start)
+            )
+
+            # Send file to AWG over FTP ---------------------------------------
             start = time.time()
-            self._send_file(filename=file_name + '.wfm')
-            self.log.debug('Sent WFM file to AWG HDD: {0}'.format(time.time() - start))
 
-            # Load waveform to the AWG fast memory (waveform will appear in "User Defined" list)
+            self._send_file(filename=file_name)
+
+            self.log.debug(
+                'Sent WFM file to AWG HDD: {:.3f} s'.format(time.time() - start)
+            )
+
+            # Load waveform to the AWG fast memory ----------------------------
+            # (waveform will appear on "User Defined" list)
             start = time.time()
-            self.write('MMEM:IMP "{0}","{1}",WFM'.format(file_name, file_name + '.wfm'))
 
-            # Wait for everything to complete
+            self.write('MMEM:IMP "{0}","{1}",PAT'.format(file_name, file_name + '.pat'))
+            # Wait for loading to complete
+            # (can take about 10 s for 64 MSa waveform)
             self.query('*OPC?')
 
-            # Just to make sure
-            while file_name not in self.get_waveform_names():
-                time.sleep(0.2)
-            self.log.debug('Loaded WFM file into workspace: {0}'.format(time.time() - start))
+            self.log.debug(
+                'Loaded WFM file into "User Defined" list: {:.3f} s'.format(time.time() - start)
+            )
 
         self.raise_errors()
+        return 0
 
-        return samp_dict#0
-
-    def load_waveform(self, load_dict):
-        """ Loads a wfm_name to the specified channel of AWG.
+    def load_wfm(self, load_dict):
+        """Load wfm_name from 'User defined' list to specified channel of AWG.
 
         :param load_dict: a dictionary with keys being one of the channel number
-                          and values being the name of the already written wfm_name to
-                          load into the channel.
+                          and values being the name of the already written wfm_name
+                          to load into the channel.
                           Examples:   {1: 'rabi_ch1', 2: 'rabi_ch2'}
 
         :return dict: Dictionary containing the actually loaded waveforms per channel.
@@ -843,107 +885,117 @@ class TekAWG7k:
 
             # load into channel
             self.write('SOUR{0:d}:WAV "{1}"'.format(ch_num, wfm_name))
-
             self.query('*OPC?')
-            while self.query('SOUR{0:d}:WAV?'.format(ch_num)) != wfm_name:
-                time.sleep(0.1)
 
-        # self.set_mode('C')
+        self.raise_errors()
         return self.get_loaded_assets()
 
-    def get_waveform_names(self):
-        """ Retrieve the names of all uploaded waveforms on the device.
+    def get_wfm_names(self):
+        """ Retrieve the names on 'User defined' list.
 
-        @return list: List of all uploaded waveform name strings in the device workspace.
+        :return list: 'User defined' list.
         """
+
         wfm_list_len = int(self.query('WLIS:SIZE?'))
         wfm_list = list()
         for index in range(wfm_list_len):
             wfm_list.append(self.query('WLIS:NAME? {0:d}'.format(index)))
         return sorted(wfm_list)
 
-    def delete_waveform(self, waveform_name):
-        """ Delete the waveform with name "waveform_name" from the device memory (from "User Defined" list).
+    def del_wfm(self, wfm_name):
+        """ Delete waveform_name from 'User Defined' list.
 
-        @param str waveform_name: The name of the waveform to be deleted
-                                  Optionally a list of waveform names can be passed.
+        :param str wfm_name: The name/list of names of the waveform to be deleted
+                           Optionally 'all' can be passed to delete all waveforms.
 
-        @return list: a list of deleted waveform names.
-        """
-        if isinstance(waveform_name, str):
-            waveform_name = [waveform_name]
-
-        avail_waveforms = self.get_waveform_names()
-        deleted_waveforms = list()
-        for waveform in waveform_name:
-            if waveform in avail_waveforms:
-                self.write('WLIS:WAV:DEL "{0}"'.format(waveform))
-                deleted_waveforms.append(waveform)
-        return sorted(deleted_waveforms)
-
-    # ======== Wfm Technical ========
-
-    def _write_wfm_file(self, filename, anlg_samp_list, mrk_byte_list):
-        """
-        Appends a sampled chunk of a whole waveform to a wfm-file. Create the file
-        if it is the first chunk.
-        If both flags (is_first_chunk, is_last_chunk) are set to TRUE it means
-        that the whole ensemble is written as a whole in one big chunk.
-
-        @param filename: string, represents the name of the sampled waveform
-        @param anlg_samp_list: dict containing float32 numpy ndarrays, contains the
-                                       samples for the analog channels that
-                                       are to be written by this function call.
-        @param mrk_byte_list: np.ndarray containing bool numpy ndarrays, contains the samples
-                                      for the digital channels that
-                                      are to be written by this function call.
-        @param total_number_of_samples: int, The total number of samples in the
-                                        entire waveform. Has to be known in advance.
+        :return int: 0 - success code.
+                     PGenError is produced in the case of error.
         """
 
-        total_samp_num = len(anlg_samp_list)
+        # Delete all
+        if wfm_name == 'all':
+            self.write('WLIS:WAV:DEL ALL')
 
-        # Max number of bytes to write in one command
-        max_chunk_bytes = 104857600  # 100 MB
-        # respective number of analog samples
-        # [analog sample (float32) - 4 bytes, markers sample - 1 byte]
-        samp_chunk_size = min(
-            max_chunk_bytes // 5,
-            total_samp_num
+            self.raise_errors()
+            return 0
+
+        # Delete specified
+        else:
+            if isinstance(wfm_name, str):
+                wfm_name = [wfm_name]
+            wfm_list = wfm_name
+
+            for wfm in wfm_list:
+                self.write('WLIS:WAV:DEL "{0}"'.format(wfm))
+
+            self.raise_errors()
+            return 0
+
+    # Waveform technical methods
+
+    def _calc_byte_ar(self, amp_pp, offset, anlg_ar, mrk1_ar, mrk2_ar):
+
+        v_min = offset - amp_pp/2
+        v_max = offset + amp_pp/2
+        v_step = amp_pp / (2**8 - 1)
+
+        # Sanity check: all values of anlg_ar are within DAC range
+        ar_min = np.amin(anlg_ar)
+        ar_max = np.amax(anlg_ar)
+
+        if not v_min <= ar_min:
+            msg_str = '_calc_byte_ar(): min requested value {} is below DAC min {}' \
+                      ''.format(ar_min, v_min)
+            self.log.error(msg_str=msg_str)
+            raise PGenError(msg_str)
+
+        if not ar_max <= v_max:
+            msg_str = '_calc_byte_ar(): max requested value {} is above DAC max {}' \
+                      ''.format(ar_max, v_max)
+            self.log.error(msg_str=msg_str)
+            raise PGenError(msg_str)
+
+        # Calculate DAC bits (closest integer number of v_step)
+        a_int_ar = (anlg_ar - v_min) // v_step
+
+        # Bit offset (see AWG docs)
+        a_offs = 2 ** 2
+        m1_offs = 2 ** 13
+        m2_offs = 2 ** 14
+
+        byte_ar = np.asarray(
+            a=mrk2_ar*m2_offs + mrk1_ar*m1_offs + a_int_ar*a_offs,
+            dtype=np.uint16
         )
 
+        return byte_ar
+
+    def _write_wfm_file(self, filename, byte_ar):
+        """ Write byte_ar to binary file filename
+
+        :param byte_ar: numpy array of np.uint16 data type
+        :param filename: string, represents the name of the sampled waveform
+        :return int: status code: 0 - success
+                     PGenError exception is produced in the case of error
+        """
+
+        total_samp_num = len(byte_ar)
+
         # Create the WFM file.
-        if not filename.endswith('.wfm'):
-            filename += '.wfm'
+        if not filename.endswith('.pat'):
+            filename += '.pat'
         wfm_path = os.path.join(self._local_wfm_dir, filename)
 
         #   - write header
         with open(wfm_path, 'wb') as wfm_file:
-            num_bytes = str(total_samp_num * 5)
+            num_bytes = str(total_samp_num * 2)
             num_digits = str(len(num_bytes))
-            header = 'MAGIC 1000\r\n#{0}{1}'.format(num_digits, num_bytes)
+            header = 'MAGIC 2000\r\n#{0}{1}'.format(num_digits, num_bytes)
             wfm_file.write(header.encode())
 
-        # Combine analog (float32) and digital (uint8) values into a single 5-bytes sample
-        write_array = np.zeros(samp_chunk_size, dtype='float32, uint8')
-
-        # Consecutively prepare and write chunks of maximal size max_chunk_bytes to file
-        samps_written = 0
+        # Write byte_ar to file
         with open(wfm_path, 'ab') as wfm_file:
-            while samps_written < total_samp_num:
-                write_end = samps_written + samp_chunk_size
-                # Prepare tmp write array
-                write_array['f0'] = anlg_samp_list[samps_written:write_end]
-                write_array['f1'] = mrk_byte_list[samps_written:write_end]
-                # Write to file
-                wfm_file.write(write_array)
-                # Increment write counter
-                samps_written = write_end
-                # Reduce write array size if
-                if 0 < total_samp_num - samps_written < samp_chunk_size:
-                    write_array.resize(total_samp_num - samps_written)
-
-        del write_array
+            wfm_file.write(byte_ar)
 
         # Append the footer: the sample rate, which was used for that file
         footer = 'CLOCK {0:16.10E}\r\n'.format(self.get_samp_rate())
@@ -953,12 +1005,15 @@ class TekAWG7k:
         return 0
 
     def _send_file(self, filename):
+        """ Send binary file filename over FTP
+
+        :param filename: file name
+        :return: status code: 0 - Ok
+                 Exception is produced in the case of error
         """
 
-        @param filename:
-        @return:
-        """
-
+        if not filename.endswith('.pat'):
+            filename += '.pat'
         filepath = os.path.join(self._local_wfm_dir, filename)
 
         # Sanity check: file is present
@@ -969,7 +1024,8 @@ class TekAWG7k:
             raise PGenError(msg_str)
 
         # Delete old file on AWG by the same filename
-        self._delete_file(filename)
+        if filename in self._remote_dir_list():
+            self._del_remote_file(filename)
 
         # Transfer file
         with FTP(self._ftp_ip_str) as ftp:
@@ -980,10 +1036,26 @@ class TekAWG7k:
 
         return 0
 
-    def _get_filenames_on_device(self):
+    def _del_remote_file(self, filename):
+        """ Delete file from AWG HDD
+
+        File must be in 'C:\\inetpub\\ftproot\\remote_wfm_dir' directory
+
+        :param str filename: The full filename to delete from FTP cwd
+        :return int: status code: 0 -Ok
         """
 
-        @return list: filenames found in <ftproot>\\waves
+        with FTP(self._ftp_ip_str) as ftp:
+            ftp.login(user=self._ftp_username, passwd=self._ftp_pswrd)
+            ftp.cwd(self._remote_wfm_dir)
+            ftp.delete(filename)
+
+        return 0
+
+    def _remote_dir_list(self):
+        """ Get list of all files in 'C:\\inetpub\\ftproot\\remote_wfm_dir' directory.
+
+        :return list: list of file name strings
         """
 
         filename_list = list()
@@ -1005,20 +1077,8 @@ class TekAWG7k:
                     # Remove for safety all trailing and leading whitespaces:
                     filename = size_filename.split(' ', 1)[1].strip()
                     filename_list.append(filename)
+
         return filename_list
-
-    def _delete_file(self, filename):
-        """
-
-        @param str filename: The full filename to delete from FTP cwd
-        """
-
-        if filename in self._get_filenames_on_device():
-            with FTP(self._ftp_ip_str) as ftp:
-                ftp.login(user=self._ftp_username, passwd=self._ftp_pswrd)
-                ftp.cwd(self._remote_wfm_dir)
-                ftp.delete(filename)
-        return 0
 
     # ================ Sequence ================
 
@@ -1044,7 +1104,7 @@ class TekAWG7k:
             self.log.warn('set_sequence_jump_mode(): current run mode "{}" is not Sequence'.format(run_mode))
 
         # Check if all waveforms are present on device memory
-        avail_waveforms = set(self.get_waveform_names())
+        avail_waveforms = set(self.get_wfm_names())
         for waveform_tuple, param_dict in sequence_parameter_list:
             if not avail_waveforms.issuperset(waveform_tuple):
                 self.log.error('Failed to create sequence "{0}" due to waveforms "{1}" not '

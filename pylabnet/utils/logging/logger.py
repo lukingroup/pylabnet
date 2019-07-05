@@ -104,7 +104,7 @@ class LogClient:
         self._module_tag = module_tag
 
         # Log test message
-        self.info('Started logging')
+        self.info('Started logging. Level: {}'.format(level_str))
 
     def connect(self, host='place_holder', port=-1):
 

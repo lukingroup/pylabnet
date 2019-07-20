@@ -1,7 +1,3 @@
-# TODO: implement Dynamic Jump sequence mode
-# TODO: implement (write_)sub-sequence mode
-# TODO: inclulde proper routine to check and change zeroing functionality
-
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.hardware.interface.simple_p_gen import PGenError
 import pylabnet.logic.pulsed.pulse as po
@@ -12,7 +8,6 @@ import time
 import visa
 import numpy as np
 from ftplib import FTP
-from collections import OrderedDict
 import copy
 
 
@@ -45,8 +40,6 @@ class TekAWG7k:
         self._ftp_pswrd = None
         self._written_seqs = []  # Helper variable since written sequences can not be queried
         self._loaded_seqs = []  # Helper variable since a loaded sequence can not be queried :(
-        self._marker_byte_dict = {0: b'\x00', 1: b'\x01', 2: b'\x02', 3: b'\x03'}
-        self._event_triggers = {'OFF': 'OFF', 'ON': 'ON'}
 
         # VISA connection -----------------------------------------------------
 
@@ -105,14 +98,6 @@ class TekAWG7k:
 
         self._local_wfm_dir = local_wfm_dir
 
-        # Set AWG current working dir to 'C:\\inetpub\\ftproot\remote_wfm_dir'
-        self.write(
-            'MMEM:CDIR "{0}"'.format(
-                os.path.join('C:\\inetpub\\ftproot', remote_wfm_dir)
-            )
-        )
-        self.query('*OPC?')
-
         # Determine device params ---------------------------------------------
 
         # Get model and option list
@@ -132,8 +117,6 @@ class TekAWG7k:
             )
         )
 
-        self.raise_errors()
-
     def close(self):
         """ Deinitialisation performed during deactivation of the module.
         """
@@ -152,7 +135,7 @@ class TekAWG7k:
     # Basic commands and Hardware settings
     # -------------------------------------------------------------------------
 
-    # Basic commands ----------------------------------------------------------
+    # Basic commands
 
     def write(self, cmd_str):
         """ Sends a command string to the device.
@@ -165,8 +148,16 @@ class TekAWG7k:
         @return int: error code (0:OK, -1:error)
         """
 
-        bytes_written, status_code = self._awg.write(cmd_str)
         self._awg.write('*WAI')
+        bytes_written, status_code = self._awg.write(cmd_str)
+        # self._awg.write('*WAI')
+
+        # Block Python process until the operation is complete
+        # TODO: implement more robust blocking mechanism:
+        # TODO: to avoid timeout for very long operations
+        self._awg.query('*OPC?')
+
+        self.raise_errors()
 
         return status_code
 
@@ -179,12 +170,27 @@ class TekAWG7k:
         @return string: the answer of the device to the 'question' in a string
         """
 
-        answer = self._awg.query(question)
-        answer = answer.strip()
-        answer = answer.rstrip('\n')
-        answer = answer.rstrip()
-        answer = answer.strip('"')
-        return answer
+        try:
+            answer = self._awg.query(question)
+            answer = answer.strip()
+            answer = answer.rstrip('\n')
+            answer = answer.rstrip()
+            answer = answer.strip('"')
+            return answer
+
+        except Exception as exc_obj:
+            self.log.exception(msg_str='Exception in query()')
+
+            # If the reason for timeout is an incorrect command,
+            # raise_errors() should produce an exception.
+            self.raise_errors()
+            # This call is necessary to clean-up the error register
+            # such that subsequent commands do not break due to this
+            # error message still in the register.
+
+            # Else, some other error was produced.
+            # Just re-raise the original exception
+            raise exc_obj
 
     def reset(self):
         """ Reset the device.
@@ -193,11 +199,9 @@ class TekAWG7k:
         """
 
         self.write('*RST')
-        self.query('*OPC?')  # block and wait until the operation is complete
 
         # Clear status register
         self.write('*CLS')
-        self.query('*OPC?')  # block and wait until the operation is complete
 
         return 0
 
@@ -227,20 +231,17 @@ class TekAWG7k:
         """
 
         # Switch outputs on
-        # (here it is assumed that all analog channels have a waveform
-        # assigned, such that all channels are switched on)
+        # (here it is assumed that all active analog channels have
+        # a waveform assigned, such that all active channels are switched on)
         for ch in self._get_all_anlg_chs():
             ch_num = int(ch.rsplit('_ch', 1)[1])
             self.write(
                 'OUTPUT{}:STATE ON'.format(ch_num)
             )
-            self.query('*OPC?')
 
         # Start generator
         self.write('AWGC:RUN')
-        self.query('*OPC?')
 
-        self.raise_errors()
         return 0
 
     def stop(self):
@@ -252,27 +253,20 @@ class TekAWG7k:
         """
 
         self.write('AWGC:STOP')
-        self.query('*OPC?')
 
         for ch in self._get_all_anlg_chs():
             ch_num = int(ch.rsplit('_ch', 1)[1])
             self.write(
                 'OUTPUT{0:d}:STATE OFF'.format(ch_num)
             )
-            self.query('*OPC?')
 
-        self.raise_errors()
         return 0
 
     def raise_errors(self):
         """Get all errors from the device and log them.
 
-        :param level: (str) determines the level of the produced log entry:
-                            'err' - the error messages will be logged as errors
-                                    and PGenError exception will be produced
-                            'warn' - as warnings
-
-        :return: (bool) whether any error was found
+        :return: (int) 0 is there is no errors.
+                 PGenError is produced in the case of error.
         """
 
         # Get all errors
@@ -304,7 +298,7 @@ class TekAWG7k:
 
         return 0
 
-    # Hardware settings -------------------------------------------------------
+    # Hardware settings
 
     def get_mode(self):
         """
@@ -328,9 +322,9 @@ class TekAWG7k:
             raise PGenError(msg_str)
 
     def set_mode(self, mode_str):
-        """Change the run mode of the AWG5000 series.
+        """Change the run mode of the AWG7000 series.
 
-        @param str mode_str: Options for mode (case-insensitive):
+        :param str mode_str: Options for mode (case-insensitive):
                             continuous - 'C'
                             triggered  - 'T'
                             gated      - 'G'
@@ -350,7 +344,6 @@ class TekAWG7k:
             )
         )
 
-        self.raise_errors()
         return self.get_mode()
 
     def get_samp_rate(self):
@@ -375,9 +368,7 @@ class TekAWG7k:
         """
 
         self.write('SOUR1:FREQ {} Hz'.format(samp_rate))
-        self.query('*OPC?')
 
-        self.raise_errors()
         return self.get_samp_rate()
 
     def get_analog_level(self):
@@ -443,8 +434,6 @@ class TekAWG7k:
                         level_dict[ch_name]['amp_pp']
                     )
                 )
-                # Block until the operation is complete
-                self.query('*OPC?')
 
             # set offset
             if 'offset' in level_dict[ch_name].keys():
@@ -454,10 +443,7 @@ class TekAWG7k:
                         level_dict[ch_name]['offset']
                     )
                 )
-                # Block until the operation is complete
-                self.query('*OPC?')
 
-        self.raise_errors()
         return self.get_analog_level()
 
     def get_digital_level(self):
@@ -551,7 +537,6 @@ class TekAWG7k:
                     req_dict[d_ch_name]['low']
                 )
             )
-            self.query('*OPC?')
 
             # High
             self.write(
@@ -561,11 +546,10 @@ class TekAWG7k:
                     req_dict[d_ch_name]['high']
                 )
             )
-            self.query('*OPC?')
 
         # Check if the operation was successful
-        #   - check for explicit error messages
-        self.raise_errors()
+        #   - check for explicit error messages was already performed in
+        #     self.write()
 
         #   - check if the actual set values coincide with requested:
         #     if the requested values do not satisfy hardware restrictions,
@@ -574,7 +558,7 @@ class TekAWG7k:
         #     will be produced, but the actual values will be different from expected.
         actual_dict = self.get_digital_level()
         if req_dict != actual_dict:
-            msg_str = 'set_digital_level(): the actual set value is different fro expected: \n' \
+            msg_str = 'set_digital_level(): the actual set value is different from expected: \n' \
                       'requested = {} \n' \
                       '   actual = {} \n' \
                       'Most probably the requested values do not satisfy hardware restrictions ' \
@@ -614,9 +598,6 @@ class TekAWG7k:
             self.write(
                 'AWGC:INT:STAT {}'.format(int(state))
             )
-            self.query('*OPC?')
-            # Error check
-            self.raise_errors()
 
         # Enable all markers for all active analog channels
         # (set DAC resolution to 8)
@@ -630,9 +611,6 @@ class TekAWG7k:
                     8
                 )
             )
-            self.query('*OPC?')
-            # Error check
-            self.raise_errors()
 
         return self.get_interleave()
 
@@ -655,9 +633,7 @@ class TekAWG7k:
             'OUTPUT{}:FILTER:LPASS:FREQUENCY {}'
             ''.format(ch_num, cutoff_freq)
         )
-        self.query('*OPC?')
 
-        self.raise_errors()
         return 0
 
     #  Technical methods
@@ -734,10 +710,6 @@ class TekAWG7k:
         """
 
         return '06' in self.option_list
-
-    # =========================================================================
-    # Waveform and Sequence generation methods
-    # =========================================================================
 
     # -------------------------------------------------------------------------
     # Waveform
@@ -857,16 +829,20 @@ class TekAWG7k:
             # (waveform will appear on "User Defined" list)
             start = time.time()
 
+            # Set AWG current working dir to 'C:\\inetpub\\ftproot\\remote_wfm_dir'
+            self.write(
+                'MMEM:CDIR "{0}"'.format(
+                    os.path.join('C:\\inetpub\\ftproot', self._remote_wfm_dir)
+                )
+            )
+
             self.write('MMEM:IMP "{0}","{1}",PAT'.format(file_name, file_name + '.pat'))
-            # Wait for loading to complete
-            # (can take about 10 s for 64 MSa waveform)
-            self.query('*OPC?')
+            # (This operation can take about 10 s to complete for 64 MSa waveform)
 
             self.log.debug(
                 'Loaded WFM file into "User Defined" list: {:.3f} s'.format(time.time() - start)
             )
 
-        self.raise_errors()
         return 0
 
     def load_wfm(self, load_dict):
@@ -885,9 +861,7 @@ class TekAWG7k:
 
             # load into channel
             self.write('SOUR{0:d}:WAV "{1}"'.format(ch_num, wfm_name))
-            self.query('*OPC?')
 
-        self.raise_errors()
         return self.get_loaded_assets()
 
     def get_wfm_names(self):
@@ -916,7 +890,6 @@ class TekAWG7k:
         if wfm_name == 'all':
             self.write('WLIS:WAV:DEL ALL')
 
-            self.raise_errors()
             return 0
 
         # Delete specified
@@ -928,7 +901,6 @@ class TekAWG7k:
             for wfm in wfm_list:
                 self.write('WLIS:WAV:DEL "{0}"'.format(wfm))
 
-            self.raise_errors()
             return 0
 
     # Waveform technical methods
@@ -1080,438 +1052,454 @@ class TekAWG7k:
 
         return filename_list
 
-    # ================ Sequence ================
+    # -------------------------------------------------------------------------
+    # Sequence and sub-sequence
+    # -------------------------------------------------------------------------
 
-    def write_sequence(self, name, sequence_parameters):
-        """
-        Write a new sequence on the device memory.
+    # Basic
 
-        @param name: str, the name of the waveform to be created/append to
-        @param sequence_parameters: list, contains the parameters for each sequence step and
-                                        the according waveform names.
-
-        @return: int, number of sequence steps written (-1 indicates failed process)
-        """
-        sequence_parameter_list = sequence_parameters  # introduce new name to append _list suffix for clarity
-
-        # Check if device has sequencer option installed
-        if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation is not possible on this AWG: sequencer option is not installed.')
-            return -1
-        # Give a warning if run mode is nor Sequence
-        run_mode = self.get_mode()
-        if run_mode != 'S':
-            self.log.warn('set_sequence_jump_mode(): current run mode "{}" is not Sequence'.format(run_mode))
-
-        # Check if all waveforms are present on device memory
-        avail_waveforms = set(self.get_wfm_names())
-        for waveform_tuple, param_dict in sequence_parameter_list:
-            if not avail_waveforms.issuperset(waveform_tuple):
-                self.log.error('Failed to create sequence "{0}" due to waveforms "{1}" not '
-                               'present in device memory.'.format(name, waveform_tuple))
-                return -1
-
-        # Create list of active analog channel numbers for further sanity check
-        ch_state_dict = self.get_active_channels()
-        active_a_ch_list = sorted(
-            chnl for chnl in ch_state_dict if chnl.startswith('a') and ch_state_dict[chnl]
-        )
-        active_a_ch_num_list = sorted(
-            int(chnl.rsplit('_ch', 1)[1]) for chnl in active_a_ch_list
+    def seq_get_len(self):
+        return int(
+            self.query('SEQUENCE:LENGTH?')
         )
 
-        # In essence, a sequence is just a table which references already loaded waveforms and specifies repetitions,
-        # wait for trigger, GoTo, and JumpTo.
-        #
-        # Only one pulse sequence can be stored in AWG's memory, and it is not possible to load it from file,
-        # so there is no need for sequence name.
-        #
-        # To create a new pulse sequence, one needs to set the length to the expected number of sequence elements.
-        # This will fill the table with default lines, which are to be filled later with actual settings.
-        # If there are already some lines in the table, and self.write('SEQ:LENG 0') sets length which exceeds
-        # current table length, the existing entries stay unchanged and the new empty lines are added.
-        # If the operation sets smaller length, the corresponig lines at the bottom are erased.
+    def seq_set_len(self, seq_len):
+        self.write(
+            'SEQUENCE:LENGTH {}'.format(seq_len)
+        )
 
-        # Erase the AWG's sequence table
-        self.write('SEQ:LENG 0')
-        # Create empty lines in the sequence table
-        num_elements = len(sequence_parameter_list)
-        self.write('SEQ:LENG {0:d}'.format(num_elements))
+        return self.seq_get_len()
 
-        # Fill in sequence information for each sequence element (that is, for each table line)
-        for elem_num, (elem_wfm_tuple, elem_param_dict) in enumerate(sequence_parameter_list, 1):
+    def seq_get_wfm(self, elem_num, a_ch_name):
+        a_ch_num = int(
+            a_ch_name.rsplit('_ch', 1)[1]
+        )
 
-            # Sanity check: set of active channels should coincide with the set of waveforms passed for this element
-            wfm_ch_num_list = sorted(
-                int(wfm_name.rsplit('_ch', 1)[1]) for wfm_name in elem_wfm_tuple
+        return self.query(
+            'SEQUENCE:ELEMENT{}:WAVEFORM{}?'.format(
+                elem_num,
+                a_ch_num
             )
-            if active_a_ch_num_list != wfm_ch_num_list:
-                self.log.error('write_sequence(), sequence element #{0:d}:\n'
-                               'the set of active channels: {1}\n'
-                               'does not match \n'
-                               'requested set of waveforms: {2}\n'
-                               'write_sequence() was aborted'
-                               ''.format(elem_num, active_a_ch_list, sorted(elem_wfm_tuple)))
-                return -1
+        )
 
-            # Set waveforms to all analog channels given
-            for wfm_name in elem_wfm_tuple:
-                chnl_num = int(wfm_name.rsplit('_ch', 1)[1])
-                self.sequence_set_waveform(wfm_name, elem_num, chnl_num)
+    def seq_set_wfm(self, elem_num, a_ch_name, wfm_name):
+        a_ch_num = int(
+            a_ch_name.rsplit('_ch', 1)[1]
+        )
 
-            # Set all other applicable fields of the table row.
-            # There are 3 possible cases, different in which fields are available:
-            #   - subsequence: Wait, GoTo, and Event_Jump_To are not available
-            #   - sequence Dynamic Jump mode: Event_Jump_To is not available
-            #   - sequence Event Jump mode: all settings are available
+        self.write(
+            'SEQUENCE:ELEMENT{}:WAVEFORM{} "{}"'.format(
+                elem_num,
+                a_ch_num,
+                wfm_name
+            )
+        )
 
-            # @param bool is_subsequence:
-            # @param jump_mode: str {'EJUMP'|'DJUMP'}, select between Event-jump or Dynamic-jump mode
-            is_subsequence = False
-            jump_mode = 'EJUM'
+        return self.seq_get_wfm(
+            elem_num=elem_num,
+            a_ch_name=a_ch_name
+        )
 
-            # Set "Repetitions", available in all cases
-            self.sequence_set_repetitions(elem_num, elem_param_dict['repetitions'])
+    def seq_set_subseq(self, elem_num, subseq_name):
+        self.write(
+            'SEQUENCE:ELEMENT{}:SUBSEQUENCE "{}"'.format(
+                elem_num,
+                subseq_name
+            )
+        )
 
-            if not is_subsequence:
-                # Set "Wait for trigger", not available for subsequence
-                self.sequence_set_wait_trigger(elem_num, elem_param_dict['wait_for'])
-                # Set "go_to" parameter, not available for subsequence
-                self.sequence_set_goto(elem_num, elem_param_dict['go_to'])
+        return self.query(
+            'SEQUENCE:ELEMENT{}:SUBSEQUENCE?'.format(elem_num)
+        )
 
-                if jump_mode == 'EJUM':
-                    # Set "Event_Jump_To", available only in the Event_Jump mode
-                    self.sequence_set_event_jump(elem_num, elem_param_dict['event_jump_to'])
+    def seq_get_twait(self, elem_num):
+        return bool(int(
+            self.query(
+                'SEQUENCE:ELEMENT{}:TWAIT?'.format(elem_num)
+            )
+        ))
 
-        # Wait for everything to complete
-        while int(self.query('*OPC?')) != 1:
-            time.sleep(0.25)
+    def seq_set_twait(self, elem_num, trig_enable):
+        self.write(
+            'SEQUENCE:ELEMENT{}:TWAIT {}'.format(
+                elem_num,
+                int(trig_enable)
+            )
+        )
 
-        # Set flag states
-        self._written_seqs = [name]
+        return self.seq_get_twait(elem_num=elem_num)
 
-        self.raise_errors(level='warn')
+    def seq_get_rep(self, elem_num):
+        """ Get repetition number of elem_num
 
-        return num_elements
-
-    def load_sequence(self, sequence_name):
-        """ Loads a sequence to the channels of the device in order to be ready for playback.
-        For devices that have a workspace (i.e. AWG) this will load the sequence from the device
-        workspace into the channels.
-        For a device without mass memory this will make the waveform/pattern that has been
-        previously written with self.write_waveform ready to play.
-
-        @param sequence_name:  dict|list, a dictionary with keys being one of the available channel
-                                      index and values being the name of the already written
-                                      waveform to load into the channel.
-                                      Examples:   {1: rabi_ch1, 2: rabi_ch2} or
-                                                  {1: rabi_ch2, 2: rabi_ch1}
-                                      If just a list of waveform names if given, the channel
-                                      association will be invoked from the channel
-                                      suffix '_ch1', '_ch2' etc.
-
-        @return dict: Dictionary containing the actually loaded waveforms per channel.
-        """
-        # FIXME: Is this check necessary?
-        if sequence_name not in self.get_sequence_names():
-            self.log.error('Unable to load sequence.\n'
-                           'Sequence to load is missing on device memory.')
-            return self.get_loaded_assets()
-
-        # set the AWG to Sequence Run Mode:
-        self.set_mode('S')
-        # set the AWG to the proper jump mode:
-        # FIXME: extend to include Dynamic jump mode
-        self.set_sequence_jump_mode(jump_mode='EJUM')
-
-        self._loaded_seqs = [sequence_name]
-        return self.get_loaded_assets()
-
-    def set_sequence_jump_mode(self, jump_mode):
-        """
-        Set sequencer to proper jump mode
-
-        :param jump_mode: str, sequence jump mode.
-                            Valid values:
-                                'EJUM' - Event Jump
-                                'DJUM' - Dynamic Jump
-        :return: error code: int
-                            0 -- Ok
-                            -1 -- Error
+        :param elem_num: (int) sequence element number
+                         [1 corresponds to the first element]
+        :return: (int) 0 - infinite
+                       positive integer - number of repetitions
         """
 
-        # Sanity checks
-        if not self.has_sequence_mode():
-            self.log.error('Sequence generation is not possible: sequencer option is not installed on this AWG.')
-            return -1
+        is_inf = bool(int(
+            self.query(
+                'SEQUENCE:ELEMENT{}:LOOP:INFINITE?'.format(elem_num)
+            )
+        ))
 
-        # Set jump mode
-        if jump_mode == 'EJUM':
-            self.write('AWGControl:EVENt:JMODe EJUMP')
-        elif jump_mode == 'DJUM':
-            self.write('AWGControl:EVENt:JMODe DJUMP')
+        if is_inf:
+            return 0
         else:
-            self.log.error('set_sequence_jump_mode(): invalid argument passed: {}\n'
-                           'Valid values are: "EJUM" - Event_Jump and "DJUM" - Dynamic_Jump'.format(jump_mode))
-            return -1
+            return int(
+                self.query(
+                    'SEQUENCE:ELEMENT{}:LOOP:COUNT?'.format(elem_num)
+                )
+            )
 
-        # Check that the jump mode was successfully set
-        actual_mode = self.query('AWGControl:EVENt:JMODe?')
-        if actual_mode != jump_mode:
-            self.log.error('set_sequence_jump_mode(): failed to set sequence jump mode\n'
-                           'requested mode: {0}\n'
-                           ' obtained mode: {1}\n'.format(jump_mode, actual_mode))
-            return -1
+    def seq_set_rep(self, elem_num, rep_num):
+        """ Set repetition number of elem_num
 
-        return 0
-
-    def get_sequence_jump_mode(self):
-        """
-        Returns current Sequencer Jump mode
-        :return: str, 'EJUM' - Event Jump
-                      'DJUM' - Dynamic Jump
+        :param elem_num: (int) sequence element number
+                         [1 corresponds to the first element]
+        :param rep_num: (int) 0 - infinite
+                        positive integer - number of repetitions
+        :return: (int) actual number of repetitions
         """
 
-        if not self.has_sequence_mode():
-            self.log.error('Sequence generation is not possible: sequencer option is not installed on this AWG.')
-            return -1
-
-        return self.query('AWGControl:EVENt:JMODe?')
-
-    def sequence_set_waveform(self, wfm_name, elem_num, chnl_num):
-        """
-        Set the waveform 'wfm_name' to channel 'chnl_num' at table raw 'elem_num'.
-
-        @param str wfm_name: Name of the waveform which should be added from the AWG's memory
-        @param int elem_num: element number to be edited (line number in the sequence table)
-        @param int chnl_num: analog channel number, to which the waveform should be assigned
-
-        @return int: error code
-        """
-        if not self.has_sequence_mode():
-            self.log.error('Sequence generation is not possible: sequencer option is not installed on this AWG.')
-            return -1
-
-        self.write('SEQ:ELEM{0:d}:WAV{1} "{2}"'.format(elem_num, chnl_num, wfm_name))
-
-        self.raise_errors(level='warn')
-        return 0
-
-    def sequence_set_repetitions(self, elem_num, repeat=1):
-        """
-        Set the repetition counter at sequence element "elem_num" to "repeat" times.
-        A repeat value of -1 denotes infinite repetitions; 0 and 1 both mean the step is played once.
-
-        @param int elem_num: Sequence step to be edited
-        @param int repeat: number of repetitions. (-1: infinite; 0 and 1 : once; 2: twice, ...)
-
-        @return int: error code
-        """
-        if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation in AWG not possible. '
-                           'Sequencer option not installed.')
-            return -1
-        if repeat < 0:
-            self.write('SEQ:ELEM{0:d}:LOOP:INFINITE ON'.format(elem_num))
+        if rep_num == 0:
+            self.write(
+                'SEQUENCE:ELEMENT{}:LOOP:INFINITE 1'.format(elem_num)
+            )
+        elif rep_num > 0:
+            self.write(
+                'SEQUENCE:ELEMENT{}:LOOP:INFINITE 0'.format(elem_num)
+            )
+            self.write(
+                'SEQUENCE:ELEMENT{}:LOOP:COUNT {}'.format(
+                    elem_num,
+                    rep_num
+                )
+            )
         else:
-            if repeat == 0:
-                repeat = 1
-            self.write('SEQ:ELEM{0:d}:LOOP:INFINITE OFF'.format(elem_num))
-            self.write('SEQ:ELEM{0:d}:LOOP:COUNT {1:d}'.format(elem_num, repeat))
+            msg_str = 'seq_set_rep(): invalid argument rep_num = {}. \n' \
+                      'Valid values: 0 - for inf, positive integer - for finite' \
+                      ''.format(rep_num)
+            self.log.error(msg_str=msg_str)
+            raise PGenError(msg_str)
 
-        self.raise_errors(level='warn')
-        return 0
+        return self.seq_get_rep(elem_num=elem_num)
 
-    def sequence_set_goto(self, elem_num, goto=-1):
+    def seq_get_goto(self, elem_num):
+        """Get go-to target for elem_num sequence element
+
+        :param elem_num: (int) number of seq element [first seq elem is 1]
+        :return: (int) actual target:
+                0 - 'go to the next'
+                positive integer - non-trivial target
         """
 
-        @param int elem_num: Sequence step to be edited
-        @param int goto: positive integer - number of sequence element to go to after completing palying elem_num,
-                         negative integer and 0 - disable GoTo
+        is_enabled = bool(int(
+            self.query(
+                'SEQUENCE:ELEMENT{}:GOTO:STATE?'.format(elem_num)
+            )
+        ))
 
-        @return int: error code: 0 -- Ok, -1 -- Error
-        """
-        if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation in AWG not possible. '
-                           'Sequencer option not installed.')
-            return -1
-
-        if goto > 0:
-            goto = str(int(goto))
-            self.write('SEQ:ELEM{0:d}:GOTO:STATE ON'.format(elem_num))
-            self.write('SEQ:ELEM{0:d}:GOTO:INDEX {1}'.format(elem_num, goto))
+        if not is_enabled:
+            return 0
         else:
-            self.write('SEQ:ELEM{0:d}:GOTO:STATE OFF'.format(elem_num))
+            return int(
+                self.query(
+                    'SEQUENCE:ELEMENT{}:GOTO:INDEX?'.format(elem_num)
+                )
+            )
 
-        self.raise_errors(level='warn')
-        return 0
+    def seq_set_goto(self, elem_num, target):
+        """Set go-to target for elem_num sequence element
 
-    def sequence_set_event_jump(self, elem_num, jump_to=-1):
+        :param elem_num: (int) number of seq element [first seq elem is 1]
+        :param target: (int) 0 - 'go to the next'
+                             positive integer - non-trivial target
+        :return: (int) actual target
         """
-        Set the event trigger input of the specified sequence step and the jump_to destination.
 
-        @param int elem_num: Sequence step to be edited
-        @param int jump_to: The sequence step to jump to. 0 is interpreted as next step. -1 is interpreted as OFF
+        if target == 0:
+            # Set trivial go-to (go to the next)
+            self.write(
+                'SEQUENCE:ELEMENT{}:GOTO:STATE 0'.format(elem_num)
+            )
 
-        @return int: error code
-        """
-        if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation in AWG not possible. '
-                           'Sequencer option not installed.')
-            return -1
+        elif target > 0:
+            # Enable non-trivial go-to
+            self.write(
+                'SEQUENCE:ELEMENT{}:GOTO:STATE 1'.format(elem_num)
+            )
+            # Set go-to target
+            self.write(
+                'SEQUENCE:ELEMENT{}:GOTO:INDEX {}'.format(
+                    elem_num,
+                    target
+                )
+            )
 
-        # Set event_jump_to (works even when jump mode is set to Dynamic Jump)
-        if jump_to > 0:
-            self.write('SEQ:ELEM{0:d}:JTAR:TYPE INDEX'.format(elem_num))
-            self.write('SEQ:ELEM{0:d}:JTAR:INDEX {1}'.format(elem_num, jump_to))
-        elif jump_to == 0:
-            self.write('SEQ:ELEM{0:d}:JTAR:TYPE NEXT'.format(elem_num))
-        elif jump_to == -1:
-            self.write('SEQ:ELEM{0:d}:JTAR:TYPE OFF'.format(elem_num))
         else:
-            self.log.error('sequence_set_event_jump(): invalid value of jump_to: {}'.format(jump_to))
-            return -1
+            msg_str = 'seq_set_goto(): invalid argument target {}. \n' \
+                      'Valid values are: \n' \
+                      '     0 - "go to the next" \n' \
+                      '     positive integer - target' \
+                      ''.format(target)
+            self.log.error(msg_str=msg_str)
+            raise PGenError(msg_str)
 
-        self.raise_errors(level='warn')
-        return 0
+        return self.seq_get_goto(elem_num=elem_num)
 
-    def sequence_set_wait_trigger(self, elem_num, trigger='OFF'):
-        """
-        Make a certain sequence step wait for a trigger to start playing.
+    # Event / dynamic jump
 
-        @param int elem_num: Sequence step to be edited
-        @param str trigger: Trigger string specifier. Valid values: {'OFF', 'ON'}
-
-        @return int: error code
-        """
-        if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation in AWG not possible. '
-                           'Sequencer option not installed.')
-            return -1
-
-        if '08' not in self.option_list:
-            self.log.warn('sequence_set_wait_trigger(): The instrument without option 08 always sets Wait Trigger On.\n'
-                          'Trying to set the wait trigger state to off in an instrument without option 08 '
-                          'will cause an error')
-
-        trigger_val = self._event_triggers.get(trigger)
-        if trigger_val is None:
-            self.log.error('Invalid trigger specifier "{0}".\n'
-                           'Please choose one of: "OFF", "ON"'.format(trigger))
-            return -1
-
-        if trigger_val != 'OFF':
-            self.write('SEQ:ELEM{0:d}:TWAIT ON'.format(elem_num))
+    def get_jmp_mode(self):
+        mode_str = self.query('AWGControl:EVENt:JMODe?')
+        if mode_str == 'EJUM':
+            return 'EJUMP'
+        elif mode_str == 'DJUM':
+            return 'DJUMP'
         else:
-            self.write('SEQ:ELEM{0:d}:TWAIT OFF'.format(elem_num))
+            msg_str = 'get_jmp_mode(): unknown jump mode string {} was returned' \
+                      ''.format(mode_str)
+            self.log.error(msg_str=msg_str)
+            raise PGenError(msg_str)
 
-        self.raise_errors(level='warn')
-        return 0
+    def set_jmp_mode(self, mode_str):
+        """ Set sequence jump mode: Event Jump or Dynamic Jump.
 
-    def set_jump_timing(self, synchronous=False):
-        """Sets control of the jump timing in the AWG.
-
-        @param bool synchronous: if True the jump timing will be set to synchornous, otherwise the
-                                 jump timing will be set to asynchronous.
-
-        If the Jump timing is set to asynchornous the jump occurs as quickly as possible after an
-        event occurs (e.g. event jump tigger), if set to synchornous the jump is made after the
-        current waveform is output. The default value is asynchornous.
+        :param mode_str: 'EJUMP' - Event Jump
+                         'DJUMP' - Dynamic Jump
+        :return: actual jump mode string
         """
-        timing = 'SYNC' if synchronous else 'ASYN'
-        self.write('EVEN:JTIM {0}'.format(timing))
 
-        self.raise_errors(level='warn')
+        self.write(
+            'AWGCONTROL:EVENT:JMODE {}'.format(mode_str)
+        )
+        return self.get_jmp_mode()
 
-    def make_sequence_continuous(self):
+    def get_jmp_timing(self):
+        return self.query('EVENT:JTIMING?')
+
+    def set_jmp_timing(self, sync=True):
+        if sync:
+            self.write('EVENT:JTIMING SYNCHRONOUS')
+        else:
+            self.write('EVENT:JTIMING ASYNCHRONOUS')
+
+        return self.get_jmp_timing()
+
+    def get_ejmp_trgt(self, elem_num):
+        """ Get Event Jump target (use get/set_djmp_trgt for Dynamic Jump mode)
+
+        :param elem_num: (int) sequence element number
+        (1 corresponds to the first sequence element)
+        :return: (int) target sequence element number
+                       -1 - ignore event signal for this element
+                        0 - jump to the next
+         positive integer - jump to the specified element
         """
-        Usually after a run of a sequence the output stops. Many times it is desired that the full
-        sequence is repeated many times. This is achieved here by setting the 'jump to' value of
-        the last element to 'First'
 
-        @return int last_step: The step number which 'jump to' has to be set to 'First'
-        """
-        if not self.has_sequence_mode():
-            self.log.error('Direct sequence generation in AWG not possible. '
-                           'Sequencer option not installed.')
+        jmp_type_str = self.query(
+            'SEQUENCE:ELEMENT{}:JTARGET:TYPE?'.format(elem_num)
+        )
+
+        # Ignore event signal for this element
+        if jmp_type_str == 'OFF':
             return -1
 
-        last_step = int(self.query('SEQ:LENG?'))
-        err = self.sequence_set_goto(last_step, 1)
-        if err < 0:
-            last_step = err
-        return last_step
+        # Jump to the next
+        elif jmp_type_str == 'NEXT':
+            return 0
 
-    def force_jump_sequence(self, target):
+        # Jump to the specified index
+        elif jmp_type_str == 'IND':
+            target_str = self.query(
+                'SEQUENCE:ELEMENT{}:JTARGET:INDEX?'.format(elem_num)
+            )
+            return int(target_str)
+
+        # Unknown type
+        else:
+            msg_str = 'get_ejmp_trgt(): query for elem_num={} returned unknown jump type string {}' \
+                      ''.format(elem_num, jmp_type_str)
+            self.log.error(msg_str=msg_str)
+            raise PGenError(msg_str)
+
+    def set_ejmp_trgt(self, elem_num, target):
+        """ Set Event Jump target (use get/set_djmp_trgt for Dynamic Jump mode)
+
+        :param elem_num: (int) sequence element number
+        (1 corresponds to the first sequence element)
+
+        :param target: (int) target sequence element number
+                       -1 - ignore event signal for this element
+                        0 - jump to the next
+         positive integer - jump to the specified element
+
+        :return: (int) actual jump target.
         """
-        This command forces the sequencer to jump to the specified sequnce step. A
-        force jump does not require a trigger event to execute the jump.
 
-        @param target: Step to jump to. Possible options are:
-            <NR1> - This forces the sequencer to jump to the specified step, where the
-            value is between 1 and 16000.
+        # No Event jump action for this sequence element
+        if target < 0:
+            self.write(
+                'SEQUENCE:ELEMENT{}:JTARGET:TYPE OFF'.format(elem_num)
+            )
 
+        # Jump to the next
+        elif target == 0:
+            self.write(
+                'SEQUENCE:ELEMENT{}:JTARGET:TYPE NEXT'.format(elem_num)
+            )
+
+        # Jump to non-trivial index
+        else:
+            self.write(
+                'SEQUENCE:ELEMENT{}:JTARGET:TYPE INDEX'.format(elem_num)
+            )
+            self.write(
+                'SEQUENCE:ELEMENT{}:JTARGET:INDEX {}'.format(elem_num, target)
+            )
+
+        return self.get_ejmp_trgt(elem_num=elem_num)
+
+    def get_djmp_trgt(self, bit_patrn_int):
+        """ Get Dynamic Jump target for the specified bit pattern
+
+        :param bit_patrn_int: integer representation of bit patter:
+                              '0000 0101' is specified as 5
+        :return: (int) target element for this bit pattern
         """
-        # FIXME: Doesn't work properly!!!
-        # FIXME: AWG7122C error: 5000 "Sequence/Waveform loading error; E11200 - SEQUENCE:JUMP:IMMEDIATE 2
-        # FIXME: AWG7122C error: -221 "Settings conflict; E11307 - SEQUENCE:JUMP:IMMEDIATE 1
 
-        self.write('SEQUENCE:JUMP:IMMEDIATE {0}'.format(target))
+        return int(self.query(
+            'AWGCONTROL:EVENT:DJUMP:DEFINE? {}'.format(
+                bit_patrn_int
+            )
+        ))
 
-        self.raise_errors(level='warn')
+    def set_djmp_trgt(self, bit_patrn_int, trgt_elem):
+        """ Set Dynamic Jump target for the specified bit pattern
 
-        return
+        :param bit_patrn_int: integer representation of bit patter:
+                              '0000 0101' is specified as 5
+        :param trgt_elem: sequence element number to jump onto
+                          (1 corresponds to the first sequence element).
+                          Passing 0 disables dynamic jump for this bit
+                          pattern
 
-    def get_sequence_names(self):
-        """ Retrieve the names of all uploaded sequence on the device.
-
-        @return list: List of all uploaded sequence name strings in the device workspace.
+        :return: (int) actual target element for this bit pattern
         """
 
-        return self._written_seqs
+        self.write(
+            'AWGCONTROL:EVENT:DJUMP:DEFINE {},{}'.format(
+                bit_patrn_int,
+                trgt_elem
+            )
+        )
+        return self.get_djmp_trgt(bit_patrn_int=bit_patrn_int)
 
-    def delete_sequence(self, sequence_name):
-        """ Delete the sequence with name "sequence_name" from the device memory.
+    # Sub-sequence
 
-        @param str sequence_name: The name of the sequence to be deleted
-                                  Optionally a list of sequence names can be passed.
+    def subseq_new(self, name, length):
+        self.write(
+            'SLIST:SUBSEQUENCE:NEW "{}",{}'.format(name, length)
+        )
 
-        @return list: a list of deleted sequence names.
+        return 0
+
+    def subseq_del(self, name):
+        """ Delete sub-sequence from sub-sequence list
+
+        :param name: (str) sub-sequence name or 'all'
+        :return: (int) 0 - success
+                 PGenError is produced in the case of error
         """
-        self.write('SEQUENCE:LENGTH 0')
-        return list()
 
-    def get_sequencer_mode(self, output_as_int=False):
-        """ Asks the AWG which sequencer mode it is using.
+        if name == 'all':
+            self.write(
+                'SLIST:SUBSEQUENCE:DELETE ALL'
+            )
+        else:
+            self.write(
+                'SLIST:SUBSEQUENCE:DELETE "{}"'.format(name)
+            )
 
-        @param: bool output_as_int: optional boolean variable to set the output
-        @return: str or int with the following meaning:
-                'HARD' or 0 indicates Hardware Mode
-                'SOFT' or 1 indicates Software Mode
-                'Error' or -1 indicates a failure of request
+        return 0
 
-        It can be either in Hardware Mode or in Software Mode. The optional
-        variable output_as_int sets if the returned value should be either an
-        integer number or string.
-        """
-        if self.has_sequence_mode():
-            message = self.query('AWGC:SEQ:TYPE?')
-            if 'HARD' in message:
-                return 0 if output_as_int else 'Hardware-Sequencer'
-            elif 'SOFT' in message:
-                return 1 if output_as_int else 'Software-Sequencer'
-        return -1 if output_as_int else 'Request-Error'
+    def subseq_get_len(self, name):
+        len_str = self.query(
+            'SLIST:SUBSEQUENCE:LENGTH? "{}"'.format(name)
+        )
+        return int(len_str)
 
-    def has_sequence_mode(self):
-        """ Asks the pulse generator whether sequence mode exists.
+    def subseq_set_len(self, name, length):
+        self.write(
+            'SLISt:SUBSequence:LENGth "{}",{}'.format(
+                name,
+                length
+            )
+        )
 
-        @return: bool, True for yes, False for no.
-        """
-        if '08' in self.option_list:
-            return True
-        return False
+        return self.subseq_get_len(name=name)
 
-    # ================ Wfm and Seq common Technical ================
+    def subseq_get_wfm(self, subseq_name, elem_num, a_ch_name):
+        a_ch_num = int(
+            a_ch_name.rsplit('_ch', 1)[1]
+        )
+
+        return self.query(
+            'SLIST:SUBSEQUENCE:ELEMENT{}:WAVEFORM{}? "{}"'.format(
+                elem_num,
+                a_ch_num,
+                subseq_name
+            )
+        )
+
+    def subseq_set_wfm(self, subseq_name, elem_num, a_ch_name, wfm_name):
+        a_ch_num = int(
+            a_ch_name.rsplit('_ch', 1)[1]
+        )
+
+        self.write(
+            'SLIST:SUBSEQUENCE:ELEMENT{}:WAVEFORM{} "{}","{}"'.format(
+                elem_num,
+                a_ch_num,
+                subseq_name,
+                wfm_name
+            )
+        )
+
+        return self.subseq_get_wfm(
+            subseq_name=subseq_name,
+            elem_num=elem_num,
+            a_ch_name=a_ch_name
+        )
+
+    def subseq_get_rep(self, subseq_name, elem_num):
+        rep_num = int(self.query(
+            'SLIST:SUBSEQUENCE:ELEMENT{}:LOOP:COUNT? "{}"'.format(
+                elem_num,
+                subseq_name
+            )
+        ))
+
+        return rep_num
+
+    def subseq_set_rep(self, subseq_name, elem_num, rep_num):
+        self.write(
+            'SLIST:SUBSEQUENCE:ELEMENT{}:LOOP:COUNT "{}",{}'.format(
+                elem_num,
+                subseq_name,
+                rep_num
+            )
+        )
+
+        return self.subseq_get_rep(
+            subseq_name=subseq_name,
+            elem_num=elem_num
+        )
+
+    # -------------------------------------------------------------------------
+    # Waveform and sequence technical
+    # -------------------------------------------------------------------------
 
     def get_loaded_assets(self):
         """
@@ -1568,81 +1556,4 @@ class TekAWG7k:
         self._written_seqs = []
         self._loaded_seqs = []
 
-        self.raise_errors()
-
         return 0
-
-    # def get_constraints(self):
-    #     """
-    #     Retrieve the hardware constrains from the Pulsing device.
-    #
-    #     @return constraints object: object with pulser constraints as attributes.
-    #
-    #     Provides all the constraints (e.g. sample_rate, amplitude, total_length_bins,
-    #     channel_config, ...) related to the pulse generator hardware to the caller.
-    #
-    #         SEE PulserConstraints CLASS IN pulser_interface.py FOR AVAILABLE CONSTRAINTS!!!
-    #
-    #     If you are not sure about the meaning, look in other hardware files to get an impression.
-    #     If still additional constraints are needed, then they have to be added to the
-    #     PulserConstraints class.
-    #
-    #     Each scalar parameter is an ScalarConstraints object defined in cor.util.interfaces.
-    #     Essentially it contains min/max values as well as min step size, default value and unit of
-    #     the parameter.
-    #
-    #     PulserConstraints.activation_config differs, since it contain the channel
-    #     configuration/activation information of the form:
-    #         {<descriptor_str>: <channel_set>,
-    #          <descriptor_str>: <channel_set>,
-    #          ...}
-    #
-    #     If the constraints cannot be set in the pulsing hardware (e.g. because it might have no
-    #     sequence mode) just leave it out so that the default is used (only zeros).
-    #     """
-    #
-    #     # TODO: Check values for AWG7122c
-    #     constraints = PulserConstraints()
-    #
-    #     constraints.waveform_length.min = 1
-    #     constraints.waveform_length.step = 4
-    #     constraints.waveform_length.default = 80
-    #     if '01' in self.option_list:
-    #         constraints.waveform_length.max = 64800000
-    #     else:
-    #         constraints.waveform_length.max = 32400000
-    #
-    #     constraints.waveform_num.min = 1
-    #     constraints.waveform_num.max = 32000
-    #     constraints.waveform_num.step = 1
-    #     constraints.waveform_num.default = 1
-    #
-    #     constraints.sequence_num.min = 1
-    #     constraints.sequence_num.max = 16000
-    #     constraints.sequence_num.step = 1
-    #     constraints.sequence_num.default = 1
-    #
-    #     constraints.subsequence_num.min = 1
-    #     constraints.subsequence_num.max = 8000
-    #     constraints.subsequence_num.step = 1
-    #     constraints.subsequence_num.default = 1
-    #
-    #     # If sequencer mode is available then these should be specified
-    #     constraints.repetitions.min = 0
-    #     constraints.repetitions.max = 65539
-    #     constraints.repetitions.step = 1
-    #     constraints.repetitions.default = 0
-    #
-    #     # Device has only one trigger and no flags
-    #     constraints.event_triggers = ['ON']
-    #     constraints.flags = list()
-    #
-    #     constraints.sequence_steps.min = 0
-    #     constraints.sequence_steps.max = 8000
-    #     constraints.sequence_steps.step = 1
-    #     constraints.sequence_steps.default = 0
-    #
-    #     return constraints
-
-
-

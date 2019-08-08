@@ -293,7 +293,7 @@ class NI654x:
     # Waveform Generation
     # ================================================================
 
-    def write_wfm(self, pb_obj, step_adj=True):
+    def write_wfm(self, pb_obj, len_adj=True):
 
         #
         # Sanity checks
@@ -327,7 +327,7 @@ class NI654x:
             len_min=self.constraints['wfm_len']['min'],
             len_max=self.constraints['wfm_len']['max'],
             len_step=self.constraints['wfm_len']['step'],
-            step_adj=step_adj
+            len_adj=len_adj
         )
         wfm_name = pb_obj.name
         del pb_obj

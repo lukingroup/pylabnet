@@ -2,6 +2,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.hardware.interface.simple_p_gen import PGenError
 import pylabnet.logic.pulsed.pulse as po
 from pylabnet.logic.pulsed.pb_sample import pb_sample
+from pylabnet.logic.pulsed.pb_zip import pb_zip
 
 import os
 import time
@@ -751,96 +752,158 @@ class TekAWG7k:
 
         return pb_obj
 
-    def write_wfm(self, pb_obj, len_min=1, len_max=float('inf'), len_step=1, step_adj=False):
+    def write_wfm(self, pb_obj, len_adj=True, strict_hrdw_seq=False):
         """Write plain waveform to AWG memory
 
         :param pb_obj: PulseBlock object
-        :param len_min: (optional) argument of pb_sample()
-        :param len_max: (optional) argument of pb_sample()
-        :param len_step: (optional) argument of pb_sample()
-        :param step_adj: (optional) argument of pb_sample()
+        :param len_adj: (bool) [argument of pb_sample()]
+            Add trailing default points to the end of the waveform to meet
+            length constraints.
+        :param strict_hrdw_seq: (bool) [argument of pb_sample()]
+            if True, strict waveform length constraints will be checked
+            (necessary for Hardware Sequence to operate in Sequence run mode)
+
         :return int: 0 - success code.
-                     PGenError exception is produced in the case of error.
+                     PGenError, ValueError, and other exceptions are produced
+                     in the cases of errors.
         """
 
-        # Sample pulse block --------------------------------------------------
+        # Get waveform length constraints
+        wfm_len_constr = self.get_wfm_len_constr(strict_hrdw_seq=strict_hrdw_seq)
 
+        # Sample pulse block
         samp_dict, n_samp_pts, add_samp_pts = pb_sample(
             pb_obj=pb_obj,
             samp_rate=self.get_samp_rate(),
-            len_min=len_min,
-            len_max=len_max,
-            len_step=len_step,
-            step_adj=step_adj,
+            len_min=wfm_len_constr['min'],
+            len_max=wfm_len_constr['max'],
+            len_step=wfm_len_constr['step'],
+            len_adj=len_adj,
             debug=False
         )
 
-        # Write waveforms. One for each analog channel.
-        anlg_level_dict = self.get_analog_level()  # will be used to calculate DAC bits
+        # Write waveform to the AWG memory
+        self._write_wfm(
+            samp_dict=samp_dict,
+            wfm_name=pb_obj.name
+        )
 
-        for a_ch_name in self._get_all_anlg_chs():
+        return 0
 
-            # Calculate bytes array -------------------------------------------
-            start_t = time.time()
+    def write_wfm_zip(self, pb_obj, len_adj=True):
+        """ Write waveform as a sub-sequence with wait periods
+        collapsed into repetitions of the same short wait waveform.
 
-            # Get the analog channel number
-            a_ch_num = int(a_ch_name.rsplit('ch', 1)[1])
-            # Get the corresponding digital channel names
-            mrk1_name = 'd_ch{0:d}'.format(a_ch_num * 2 - 1)
-            mrk2_name = 'd_ch{0:d}'.format(a_ch_num * 2)
+        :param pb_obj: PulseBlock object to write
+        :param len_adj: (bool) if True, the waveform will be padded with
+            leading default-value points to meet waveform length constraints.
+            If False and length does not meet constraints (min, max, step),
+            ValueError will be produced. Note that if length exceeds max,
+            ValueError is always produced.
 
-            byte_ar = self._calc_byte_ar(
-                amp_pp=anlg_level_dict[a_ch_name]['amp_pp'],
-                offset=anlg_level_dict[a_ch_name]['offset'],
-                anlg_ar=samp_dict[a_ch_name],
-                mrk1_ar=samp_dict[mrk1_name],
-                mrk2_ar=samp_dict[mrk2_name]
+        :return: 0 - success
+            PGenError, ValueError, or another exception is produced in the case
+            of error.
+        """
+
+        len_constr_dict = self.get_wfm_len_constr(strict_hrdw_seq=True)
+        len_min = len_constr_dict['min']
+        len_max = len_constr_dict['max']
+        len_step = len_constr_dict['step']
+
+        samp_rate = self.get_samp_rate()
+
+        # Zip (collapse) pulse block ------------------------------------------
+
+        dur_quant = len_min / samp_rate
+        zip_dict = pb_zip(
+            pb_obj=pb_obj,
+            dur_quant=dur_quant
+        )
+        self.log.debug(msg_str='write_wfm_zip(): completed pb_zip() call')
+
+        # Sample and write all individual waveform snippets -------------------
+
+        snip_list = zip_dict['snip_list']
+        for snip_idx in range(len(snip_list)):
+            # Only the last snippet can have length different from len_min
+            # - external argument len_adj should be passed when sampling it
+            # - no sanity check for len % len_min == 0 is required for it
+            is_last = (
+                snip_idx == len(snip_list) - 1
             )
 
-            self.log.debug(
-                'Calculated byte data: {:.3f} s'.format(time.time() - start_t)
+            samp_dict, n_samp_pts, _ = pb_sample(
+                pb_obj=snip_list[snip_idx],
+                samp_rate=samp_rate,
+                len_min=len_min,
+                len_max=len_max,
+                len_step=len_step,
+                len_adj=len_adj if is_last else False
+            )
+            # Sanity check:
+            #   all snippets (except the last one) are expected to be of len_min
+            #   (corresponding to dur_quant).
+            #   Only the last element can be length-adjusted
+            #   (where adjustment is equivalent to total wfm len adjustment)
+            if not is_last and n_samp_pts % len_min != 0:
+                msg_str = 'write_wfm_zip(): sampling of pb_snip={} ' \
+                          'resulted in unexpected sample array length {}. \n' \
+                          'The expectation was integer multiple of the hardware min {}. \n' \
+                          'Having precise length is necessary for operation ' \
+                          'of hardware sequencer.' \
+                          ''.format(
+                              snip_list[snip_idx].name,
+                              n_samp_pts,
+                              len_min
+                          )
+                self.log.error(msg_str=msg_str)
+                raise PGenError(msg_str)
+
+            self._write_wfm(
+                samp_dict=samp_dict,
+                wfm_name=snip_list[snip_idx].name
             )
 
-            # Write bytes array to local HDD file -----------------------------
-            start = time.time()
+        self.log.debug(
+            msg_str='write_wfm_zip(): completed sampling and loading all '
+                    'individual waveform snippets'
+        )
 
-            # Create waveform name string
-            file_name = '{0}_ch{1:d}'.format(pb_obj.name, a_ch_num)
-            # Write WFM to a file on local HDD
-            self._write_wfm_file(
-                filename=file_name,
-                byte_ar=byte_ar
-            )
+        # Construct sub-sequence ----------------------------------------------
 
-            self.log.debug(
-                'Wrote WFM file to local HDD: {:.3f} s'.format(time.time() - start)
-            )
+        if pb_obj.name in self.subseq_get_names():
+            self.subseq_del(name=pb_obj.name)
 
-            # Send file to AWG over FTP ---------------------------------------
-            start = time.time()
+        seq_len = len(zip_dict['seq_list'])
+        self.subseq_new(
+            name=pb_obj.name,
+            length=seq_len
+        )
 
-            self._send_file(filename=file_name)
+        self.log.debug(
+            msg_str='write_wfm_zip(): created new sub-sequence. \n'
+                    'Start filling-in sequence table'
+        )
 
-            self.log.debug(
-                'Sent WFM file to AWG HDD: {:.3f} s'.format(time.time() - start)
-            )
+        # Fill-in sequence steps
+        for elem_idx in range(seq_len):
+            elem_wfm_name, elem_rep = zip_dict['seq_list'][elem_idx]
 
-            # Load waveform to the AWG fast memory ----------------------------
-            # (waveform will appear on "User Defined" list)
-            start = time.time()
-
-            # Set AWG current working dir to 'C:\\inetpub\\ftproot\\remote_wfm_dir'
-            self.write(
-                'MMEM:CDIR "{0}"'.format(
-                    os.path.join('C:\\inetpub\\ftproot', self._remote_wfm_dir)
+            # Set waveforms
+            for a_ch_name in self._get_all_anlg_chs():
+                self.subseq_set_wfm(
+                    subseq_name=pb_obj.name,
+                    elem_num=elem_idx + 1,
+                    a_ch_name=a_ch_name,
+                    wfm_name=elem_wfm_name + a_ch_name[1:]
                 )
-            )
 
-            self.write('MMEM:IMP "{0}","{1}",PAT'.format(file_name, file_name + '.pat'))
-            # (This operation can take about 10 s to complete for 64 MSa waveform)
-
-            self.log.debug(
-                'Loaded WFM file into "User Defined" list: {:.3f} s'.format(time.time() - start)
+            # Set repetition
+            self.subseq_set_rep(
+                subseq_name=pb_obj.name,
+                elem_num=elem_idx + 1,
+                rep_num=elem_rep
             )
 
         return 0
@@ -889,7 +952,6 @@ class TekAWG7k:
         # Delete all
         if wfm_name == 'all':
             self.write('WLIS:WAV:DEL ALL')
-
             return 0
 
         # Delete specified
@@ -941,6 +1003,87 @@ class TekAWG7k:
         )
 
         return byte_ar
+
+    def _write_wfm(self, samp_dict, wfm_name):
+
+        # Get analog levels (will be used to calculate DAC bits)
+        anlg_level_dict = self.get_analog_level()
+
+        # Write waveforms. One for each analog channel.
+        for a_ch_name in self._get_all_anlg_chs():
+
+            # Calculate bytes array -------------------------------------------
+
+            start_t = time.time()
+
+            # Get the analog channel number
+            a_ch_num = int(a_ch_name.rsplit('ch', 1)[1])
+            # Get the corresponding digital channel names
+            mrk1_name = 'd_ch{0:d}'.format(a_ch_num * 2 - 1)
+            mrk2_name = 'd_ch{0:d}'.format(a_ch_num * 2)
+
+            byte_ar = self._calc_byte_ar(
+                amp_pp=anlg_level_dict[a_ch_name]['amp_pp'],
+                offset=anlg_level_dict[a_ch_name]['offset'],
+                anlg_ar=samp_dict[a_ch_name],
+                mrk1_ar=samp_dict[mrk1_name],
+                mrk2_ar=samp_dict[mrk2_name]
+            )
+
+            self.log.debug(
+                'Calculated byte data: {:.3f} s'.format(time.time() - start_t)
+            )
+
+            # Write bytes array to local HDD file -----------------------------
+
+            start = time.time()
+
+            # Create waveform name string
+            file_name = '{0}_ch{1:d}'.format(wfm_name, a_ch_num)
+            # Write WFM to a file on local HDD
+            self._write_wfm_file(
+                filename=file_name,
+                byte_ar=byte_ar
+            )
+
+            self.log.debug(
+                'Wrote WFM file to local HDD: {:.3f} s'.format(time.time() - start)
+            )
+
+            # Send file to AWG over FTP ---------------------------------------
+
+            start = time.time()
+            self._send_file(filename=file_name)
+            self.log.debug(
+                'Sent WFM file to AWG HDD: {:.3f} s'.format(time.time() - start)
+            )
+
+            # Load waveform to the AWG fast memory ----------------------------
+            # (waveform will appear on "User Defined" list)
+
+            start = time.time()
+
+            # Set AWG current working dir to 'C:\\inetpub\\ftproot\\remote_wfm_dir'
+            self.write(
+                'MMEM:CDIR "{0}"'
+                ''.format(
+                    os.path.join('C:\\inetpub\\ftproot', self._remote_wfm_dir)
+                )
+            )
+            self.write(
+                'MMEM:IMP "{0}","{1}",PAT'
+                ''.format(
+                    file_name,
+                    file_name + '.pat'
+                )
+            )  # This operation can take about 10 s to complete for 64 MSa waveform
+
+            self.log.debug(
+                'Loaded WFM file into "User Defined" list: {:.3f} s'
+                ''.format(time.time() - start)
+            )
+
+        return 0
 
     def _write_wfm_file(self, filename, byte_ar):
         """ Write byte_ar to binary file filename
@@ -1051,6 +1194,60 @@ class TekAWG7k:
                     filename_list.append(filename)
 
         return filename_list
+
+    def get_wfm_len_constr(self, strict_hrdw_seq=False):
+        """Get waveform length constraints
+
+        :param strict_hrdw_seq: whether strict hardware sequencing
+        is required (imposes strong length constraints, required for
+        using Sequnce mode to collapse large waveforms)
+
+        :return: (dict) constraints dictionary, depending on
+            strrict_hrdw_seq parapeter and interleave state:
+            {
+                'min': minimal length,
+                'max': maximal length,
+                'step': granularity
+            }
+        """
+
+        # FIXME: this is not general.
+
+        # Constraints depend on whether interleave is enabled or not
+        interleave = self.get_interleave()
+
+        # Hardware sequencing is strictly required
+        # (for using Sequence run mode to collapse large waveforms)
+        if strict_hrdw_seq:
+            if interleave:
+                return {
+                    'min': 1920,
+                    'max': int(19.5e6),
+                    'step': 8
+                }
+            else:
+                return {
+                    'min': 960,
+                    'max': int(19.5e6),
+                    'step': 4
+                }
+
+        # No requirement to use Hardware Sequencer only
+        # (just to output a plain waveform without memory-saving sequencing)
+        # Constraints are much softer in this case
+        else:
+            if interleave:
+                return {
+                    'min': 1,
+                    'max': int(19.5e6),
+                    'step': 1
+                }
+            else:
+                return {
+                    'min': 1,
+                    'max': int(19.5e6),
+                    'step': 1
+                }
 
     # -------------------------------------------------------------------------
     # Sequence and sub-sequence
@@ -1496,6 +1693,22 @@ class TekAWG7k:
             subseq_name=subseq_name,
             elem_num=elem_num
         )
+
+    def subseq_get_names(self):
+
+        ss_name_list = []
+
+        # Number of seb-sequences on the list
+        ss_list_len = int(
+            self.query('SLIST:SIZE?')
+        )
+
+        for idx in range(1, ss_list_len + 1):
+            ss_name_list.append(
+                self.query('SLIST:NAME? {}'.format(idx))
+            )
+
+        return ss_name_list
 
     # -------------------------------------------------------------------------
     # Waveform and sequence technical

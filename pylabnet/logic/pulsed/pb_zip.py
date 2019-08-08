@@ -4,6 +4,37 @@ import copy
 
 
 def pb_zip(pb_obj, dur_quant):
+    """ Collapse default (wait) periods into repetitions of a single wait block.
+
+    This method takes a plain PulseBlock and returns a sequence table and a list
+    of individual waveforms (snippets).
+    Corresponding pulse sequence reproduces the original waveform but with long
+    wait periods replaced by multiple repetitions of the same short wait element
+    for saving hardware memory (collapsing or zipping of a waveform).
+
+    :param pb_obj: PulseObject instance - original pulse block to be collapsed
+
+    :param dur_quant: (float) minimal waveform duration allowed by the hardware
+    memory (in the same units as used in pb_obj).
+    This value is normally determined as
+        min_wfm_size / sampling_rate,
+    where min_wfm_size is the minimal size of a sample array in hardware memory.
+    The repeated wait waveform will have this size.
+
+    :return: (dict)
+    {
+        'seq_list': list of tuples ('wfm_name', repetition_number) - chronological
+        sequence of (name of the wfm snippet, how many times it should be repeated)
+
+        'snip_list': list of PulseBlock objects - 'snippets' of the original pb_obj,
+        which form the sequence according to seq_list
+        Naming convention:
+            pb_obj.name + '_wait' for the repeated wait wfm
+            pb_obj.name + '_' + 'snip number {0, 1, ...}' for non-repeated snippets
+        Order: wait is the first element, non-repeated snippets go next in
+            chronological order.
+    }
+    """
 
     # Non-default intervals ---------------------------------------------------
 
@@ -83,7 +114,8 @@ def pb_zip(pb_obj, dur_quant):
             fill_value=True
         )
     # Last integer step of dur_quant must be considered as non-wait
-    # (to be merged and sampled with the reminder)
+    # (to be merged and sampled with the reminder, which is shorter
+    # than the hardware minimum)
     use_ar[-1] = True
 
     # Find periods of pulses / repeating wait (perform 'run-length encoding'):
@@ -98,7 +130,7 @@ def pb_zip(pb_obj, dur_quant):
 
     # Final sequence table and PulseBlock dictionary --------------------------
 
-    final_pb_dict = dict()
+    final_snip_list = []
     final_seq_list = []
 
     # Construct 'wait' PulseBlock
@@ -106,7 +138,7 @@ def pb_zip(pb_obj, dur_quant):
     wait_pb = pb.PulseBlock(name=wait_pb_name)
     wait_pb.dur = dur_quant
     wait_pb.dflt_dict = copy.deepcopy(pb_obj.dflt_dict)
-    final_pb_dict[wait_pb_name] = wait_pb
+    final_snip_list.append(wait_pb)
 
     # Iterate through all pulse runs, take 'snippet pulse blocks',
     # and construct sequence table
@@ -120,37 +152,30 @@ def pb_zip(pb_obj, dur_quant):
 
         # Pulse period
         if period_val:
+
+            # Take a snippet of this pulse period
             tmp_pb_name = pb_obj.name + '_{}'.format(pb_name_idx)
 
-            # pulse period in the bulk - take the snippet by the period edges
+            # Snippet edges
+            start_t = period_dict['start_ar'][period_idx] * dur_quant
             if period_idx < last_period_idx:
-
-                # Take a snippet of this pulse period
-                start_t = period_dict['start_ar'][period_idx] * dur_quant
+                # pulse period in the bulk - take the snippet by the period edges
                 stop_t = (period_dict['start_ar'][period_idx] +
                           period_dict['len_ar'][period_idx]) * dur_quant
-
-                tmp_pb = pb_snip(
-                    pb_obj=pb_obj,
-                    start_t=start_t,
-                    stop_t=stop_t,
-                    snip_name=tmp_pb_name
-                )
-
-            # right-most pulse period must be extended to include the reminder
             else:
-                start_t = period_dict['start_ar'][period_idx] * dur_quant
+                # right-most pulse period must be extended to include the reminder
                 stop_t = pb_obj.dur
 
-                tmp_pb = pb_snip(
-                    pb_obj=pb_obj,
-                    start_t=start_t,
-                    stop_t=stop_t,
-                    snip_name=tmp_pb_name
-                )
+            tmp_pb = pb_snip(
+                pb_obj=pb_obj,
+                start_t=start_t,
+                stop_t=stop_t,
+                snip_name=tmp_pb_name,
+                use_centers=True
+            )
 
-            # Add the snippet to the PulseBlock dictionary
-            final_pb_dict[tmp_pb_name] = tmp_pb
+            # Add the snippet to the PulseBlock list
+            final_snip_list.append(tmp_pb)
             # Add corresponding entry to the sequence table:
             #   output tmp_pb_name once
             final_seq_list.append(
@@ -169,126 +194,64 @@ def pb_zip(pb_obj, dur_quant):
 
     return {
         'seq_list': final_seq_list,
-        'pb_dict': final_pb_dict
+        'snip_list': final_snip_list
     }
-    # final_pb_list = []
-    # final_wait_rep_list = []
-    #
-    # # Wait pulse block --------------------------------------------------------
-    #
-    # # Create elementary "wait" pulse block
-    # wait_pb = pb.PulseBlock(name=pb_obj.name + '_wait')
-    # wait_pb.dur = dur_quant
-    #
-    # # Copy all default pulses from pb_obj
-    # for ch in pb_obj.dflt_dict.keys():
-    #     wait_pb.dflt_dict[ch] = copy.deepcopy(
-    #         pb_obj.dflt_dict[ch]
-    #     )
-    #
-    # # Add wait block to the return list
-    # final_pb_list.append(wait_pb)
-    #
-    # # Find non-wait intervals -------------------------------------------------
-    # blk_list = []
-    # for ch in pb_obj.p_dict.keys():
-    #     for p_obj in pb_obj.p_dict[ch]:
-    #         blk_list.append(
-    #             (p_obj.t0, p_obj.t0 + p_obj.dur)
-    #         )
-    #
-    # # Merge all overlapping intervals
-    # blk_list = merge_intervals(i_list=blk_list)
-    #
-    # # Construct non-wait blocks -----------------------------------------------
-    #
-    # # --|**blk_idx=0**|--------|**blk_idx=1**|-----|**blk_idx=2**|-------|**blk_idx=n**|--
-    #
-    # for blk_idx in range(len(blk_list)):
-    #     # Calculate integer-quant-matched time edges of this interval
-    #     start_t = (blk_list[blk_idx][0] // dur_quant) * dur_quant
-    #     stop_t = (blk_list[blk_idx][1] // dur_quant + 1) * dur_quant
-    #
-    #     # Create new pulse block with name = 'pb_obj_name + blk_idx'
-    #     tmp_pb = pb.PulseBlock(name=pb_obj.name + '_{}'.format(blk_idx))
-    #     tmp_pb.dur = stop_t - start_t
-    #
-    #     # Copy all default pulses
-    #     for ch in pb_obj.dflt_dict.keys():
-    #         tmp_pb.dflt_dict[ch] = copy.deepcopy(
-    #             pb_obj.dflt_dict[ch]
-    #         )
-    #
-    #     # Copy all covered non-default pulse objects
-    #     for ch in pb_obj.p_dict.keys():
-    #
-    #         # Iterate through all pulse objects of this channel and
-    #         # find the ones, which fall into [start_t, stop_t)
-    #         for p_obj in pb_obj.p_dict[ch]:
-    #
-    #             if p_obj.t0 < start_t:
-    #                 # Didn't reach the beginning of the interval yet
-    #                 continue
-    #
-    #             elif p_obj.t0 < stop_t:
-    #                 # This pulse object is covered by current time-interval
-    #                 # Copy pulse and change offset (move origin to start_t)
-    #                 p_obj_copy = copy.deepcopy(p_obj)
-    #                 p_obj_copy.t0 -= start_t
-    #                 # Insert pulse into new pulse block
-    #                 tmp_pb.insert(
-    #                     p_obj=p_obj_copy,
-    #                     reset_edges=False
-    #                 )
-    #             else:
-    #                 # All subsequent pulse objects of this channel
-    #                 # are beyond the scope of current time interval
-    #                 break
-    #
-    #     # Add the new pulse block to the final list
-    #     final_pb_list.append(tmp_pb)
-    #
-    # # Calculate wait repetition numbers ----------
-    # #   - determine the number of wait reps to the previous interval
-    # # Wait before the first non-trivial interval
-    # final_wait_rep_list.append(int(
-    #     blk_list[0][0] // dur_quant
-    # ))
-    #
-    # for blk_idx in range(1, len(blk_list)):
-    #     final_wait_rep_list.append(int(
-    #         (
-    #                 blk_list[blk_idx][0] - blk_list[blk_idx - 1][1]
-    #         ) // dur_quant
-    #     ))
 
 
-def pb_expand_test(res_dict):
+def pb_expand_test(res_dict, indicate_bounds=True):
+    """ Helper method to test and pb_zip()
+
+    This method takes direct output res_dict of pb_zip() call and reconstructs
+    the original pulse block according to the sequence.
+    To visualize boundaries between individual sequence elements, set optional
+    indicate_bounds parameter to True. This will add zero-length divider pulses
+    on one of the channels.
+
+    :param res_dict: (dict) return of pb_zip() call to be reconstructed back
+    into a plain waveform.
+    :param indicate_bounds: (bool) if True, divider pulses will be added to one
+    of the channels after each individual waveform.
+    :return: (PulseBlock) reconstructed plain waveform
+    """
+
     import pylabnet.logic.pulsed.pulse as po
 
     new_pb = pb.PulseBlock()
 
     seq_list = res_dict['seq_list']
-    pb_dict = res_dict['pb_dict']
+    snip_list = res_dict['snip_list']
 
-    for pb_name, rep_num in seq_list:
+    for snip_idx in range(len(seq_list)):
+        snip_name, rep_num = seq_list[snip_idx]
+
         for rep_idx in range(rep_num):
+
+            # Find wfm_snip corresponding to snip_name
+            wfm_snip = None
+            for wfm_snip in snip_list:
+                if wfm_snip.name == snip_name:
+                    break
+
             new_pb.append_pb(
-                pb_obj=pb_dict[pb_name]
+                pb_obj=wfm_snip
             )
 
-            mrk_ch = list(
-                pb_dict[pb_name].dflt_dict.keys()
-            )[0]
+            # Add a marker to indicate the block boundary
+            if indicate_bounds:
+                mrk_ch = list(
+                    wfm_snip.dflt_dict.keys()
+                )[0]
 
-            new_pb.append(
-                p_obj=po.PTrue(
-                    ch=mrk_ch,
-                    dur=0
+                new_pb.append(
+                    p_obj=po.PTrue(
+                        ch=mrk_ch,
+                        dur=0
+                    ),
+                    cflct_er=False
                 )
-            )
 
     return new_pb
+
 
 # Technical methods
 
@@ -347,13 +310,9 @@ def merge_intervals(i_list):
     return merged_i_list
 
 
-def merge_domains(tile_list):
-    pass
-
-
 def run_len_encode(in_ar):
     """ Run-length encode the input array:
-    find runs oi identical values and replace them with
+    finds runs of identical values and replaces them with
     {run start index, run length, run value}.
 
     :param in_ar: input array
@@ -410,7 +369,7 @@ def run_len_encode(in_ar):
     }
 
 
-def pb_snip(pb_obj, start_t, stop_t, snip_name=None):
+def pb_snip(pb_obj, start_t, stop_t, snip_name=None, use_centers=False):
     """ PulseBlock snipping tool
 
     Copies all default values and all pulse objects between the snippet edges
@@ -432,6 +391,8 @@ def pb_snip(pb_obj, start_t, stop_t, snip_name=None):
     :param stop_t: (float) right snippet edge
     :param snip_name: (str, optional) name for the new PulseBlock object
                       If not given, pb_obj.name + '_snip' is used.
+    :param use_centers: (bool) if False, belonging of a pulse to the snippet
+    is determined by edges. If True - by position of the pulse central point
 
     :return: new PulseBlock object -
              snippet of pb_obj between start_t and stop_t
@@ -459,41 +420,80 @@ def pb_snip(pb_obj, start_t, stop_t, snip_name=None):
             #   but such pulse might be left out or included unpredictably,
             #   if it touches the window edges star_t or stop_t.
 
-            if pulse.t0+pulse.dur <= start_t:
-                # pulse is fully to the left from snip window
-                continue
+            # Two ways to determine belonging of a block to the snippet:
+            #
+            # 1) whether the center of a pulse falls into [start_t, stop_t]
+            # interval.
+            #   Pros: robust against float-comparison errors if the pulse
+            #     touches snippet edge.
+            #   Cons: This method does not detect the cases when snippet
+            #     edges go across a pulse block.
+            #
+            # 2) whether both edges of a pulse fall into [start_t, stop_t]
+            #   Pros: checks for snippet edges crossing the pulse
+            #   Cons: may unpredictably produce exceptions if one of the pulses
+            #       touches snippet edge (due to unpredictable comparison result
+            #       for two nominally identical floats)
 
-            elif start_t <= pulse.t0 and pulse.t0+pulse.dur <= stop_t:
-                # pulse is fully inside the snip window
+            # Method 1: use pulse center
+            if use_centers:
+                pulse_center = pulse.t0 + pulse.dur/2
+                if pulse_center <= start_t:
+                    # pulse is fully to the left from snip window
+                    continue
 
-                if ch not in new_pb.p_dict.keys():
-                    # the first time the pulse is added to this channel
-                    new_pb.p_dict[ch] = []
+                elif start_t <= pulse_center <= stop_t:
+                    # pulse is fully inside the snip window
 
-                pulse_copy = copy.deepcopy(pulse)
-                pulse_copy.t0 -= start_t
-                new_pb.p_dict[ch].append(pulse_copy)
+                    if ch not in new_pb.p_dict.keys():
+                        # the first time the pulse is added to this channel
+                        new_pb.p_dict[ch] = []
 
-            elif stop_t <= pulse.t0:
-                # This pulse and all subsequent ones lie to the right
-                # from the snip window
-                break
+                    pulse_copy = copy.deepcopy(pulse)
+                    pulse_copy.t0 -= start_t
+                    new_pb.p_dict[ch].append(pulse_copy)
 
+                else:
+                    # This pulse and all subsequent ones lie to the right
+                    # from the snip window
+                    break
+
+            # Method 2: use pulse edges
             else:
+                if pulse.t0+pulse.dur <= start_t:
+                    # pulse is fully to the left from snip window
+                    continue
+
+                elif start_t <= pulse.t0 and pulse.t0+pulse.dur <= stop_t:
+                    # pulse is fully inside the snip window
+
+                    if ch not in new_pb.p_dict.keys():
+                        # the first time the pulse is added to this channel
+                        new_pb.p_dict[ch] = []
+
+                    pulse_copy = copy.deepcopy(pulse)
+                    pulse_copy.t0 -= start_t
+                    new_pb.p_dict[ch].append(pulse_copy)
+
+                elif stop_t <= pulse.t0:
+                    # This pulse and all subsequent ones lie to the right
+                    # from the snip window
+                    break
+
                 # The window edge goes across one of the pulse objects.
                 # Since it is not clear what to do with such a pulse,
                 # one has to raise an exception.
-                #
-                # Alternatively, some unexpected comparison error occurred.
-
-                # Determine the conflicting edge
-                if pulse.t0 < start_t < pulse.t0+pulse.dur:
-                    edge_type = 'start_t'
-                    edge_t = start_t
-                elif pulse.t0 < stop_t < pulse.t0+pulse.dur:
-                    edge_type = 'stop_t'
-                    edge_t = stop_t
+                # Alternatively, it might be some unexpected comparison error.
                 else:
+                    # Determine the conflicting edge
+                    if pulse.t0 < start_t < pulse.t0+pulse.dur:
+                        edge_type = 'start_t'
+                        edge_t = start_t
+
+                    elif pulse.t0 < stop_t < pulse.t0+pulse.dur:
+                        edge_type = 'stop_t'
+                        edge_t = stop_t
+
                     # Something completely unexpected:
                     # if it were just a crossing with an edge,
                     # one of the above conditions should have been satisfied.
@@ -501,41 +501,39 @@ def pb_snip(pb_obj, start_t, stop_t, snip_name=None):
                     # unexpected error.
                     #
                     # Just raise an exception and provide all the information
+                    else:
+                        raise ValueError(
+                            'pb_snip(): condition check failed: \n'
+                            '   pulse_obj = {} \n'
+                            '   t0 = {} \n'
+                            '   dur = {} \n'
+                            '   start_t = {} \n'
+                            '   stop_t = {}'
+                            ''.format(
+                                pulse,
+                                pulse.t0,
+                                pulse.dur,
+                                start_t,
+                                stop_t
+                            )
+                        )
+
                     raise ValueError(
-                        'pb_snip(): condition check failed: \n'
-                        '   pulse_obj = {} \n'
+                        'pb_snip(): snip edge goes across a pulse object \n'
+                        '   channel = {} \n'
                         '   t0 = {} \n'
-                        '   dur = {} \n'
-                        '   start_t = {} \n'
-                        '   stop_t = {}'
+                        '   t0+dur = {} \n'
+                        '   pulse object = {} \n'
+                        '   conflicting edge = {} \n'
+                        '   edge position = {}'
                         ''.format(
-                            pulse,
+                            ch,
                             pulse.t0,
-                            pulse.dur,
-                            start_t,
-                            stop_t
+                            pulse.t0 + pulse.dur,
+                            str(pulse),
+                            edge_type,
+                            edge_t
                         )
                     )
 
-                raise ValueError(
-                    'pb_snip(): snip edge goes across a pulse object \n'
-                    '   channel = {} \n'
-                    '   t0 = {} \n'
-                    '   t0+dur = {} \n'
-                    '   pulse object = {} \n'
-                    '   conflicting edge = {} \n'
-                    '   edge position = {}'
-                    ''.format(
-                        ch,
-                        pulse.t0,
-                        pulse.t0 + pulse.dur,
-                        str(pulse),
-                        edge_type,
-                        edge_t
-                    )
-                )
-
     return new_pb
-
-
-

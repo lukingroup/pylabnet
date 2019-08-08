@@ -37,13 +37,13 @@ class NI654xSPGen(SimplePGenInterface):
 
         return 0
 
-    def write(self, pb_obj, step_adj=True):
+    def write(self, pb_obj, len_adj=True):
 
         self._dev.clr_mem()
 
         return self._dev.write_wfm(
             pb_obj=pb_obj,
-            step_adj=step_adj
+            len_adj=len_adj
         )
 
     def set_rep(self, rep_num):
@@ -77,13 +77,13 @@ class NI654xSPGenService(ServiceBase):
     def exposed_activate_interface(self):
         return self._module.activate_interface()
 
-    def exposed_write(self, pb_obj_pckl, step_adj=True):
+    def exposed_write(self, pb_obj_pckl, len_adj=True):
 
         pb_obj = pickle.loads(pb_obj_pckl)
 
         return self._module.write(
             pb_obj=pb_obj,
-            step_adj=step_adj
+            len_adj=len_adj
         )
 
     def exposed_set_rep(self, rep_num):
@@ -106,13 +106,13 @@ class NI654xSPGenClient(ClientBase, SimplePGenInterface):
     def activate_interface(self):
         return self._service.exposed_activate_interface()
 
-    def write(self, pb_obj, step_adj=True):
+    def write(self, pb_obj, len_adj=True):
 
         pb_obj_pckl = pickle.dumps(pb_obj)
 
         return self._service.exposed_write(
             pb_obj_pckl=pb_obj_pckl,
-            step_adj=step_adj
+            len_adj=len_adj
         )
 
     def set_rep(self, rep_num):

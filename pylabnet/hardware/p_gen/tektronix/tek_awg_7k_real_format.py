@@ -772,7 +772,7 @@ class TekAWG7k:
             len_min=len_min,
             len_max=len_max,
             len_step=len_step,
-            step_adj=step_adj,
+            len_adj=step_adj,
             debug=False
         )
 

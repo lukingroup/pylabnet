@@ -720,6 +720,9 @@ class TekAWG7k:
         """Fill all unused channels with default values:
             DFalse() for marker channels
             DConst(val=0.0) for analog channels
+        (channel mapping from user-friendly names [like 'AOM' and 'Ctr']
+        to device-native names [like 'a_ch1', 'd_ch2'] has to be performed
+        before calling this function)
 
         :param pb_obj: PulseBlock object
         :return: new PulseBlock object with all unused channels

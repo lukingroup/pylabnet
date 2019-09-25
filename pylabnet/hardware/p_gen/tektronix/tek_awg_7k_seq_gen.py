@@ -70,3 +70,4 @@ class TekAWG7kSeqGen:
 
     def write_seq(self, seq_table):
         pass
+

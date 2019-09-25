@@ -1,8 +1,8 @@
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.hardware.interface.simple_p_gen import PGenError
-import pylabnet.logic.pulsed.pulse as po
-from pylabnet.logic.pulsed.pb_sample import pb_sample
-from pylabnet.logic.pulsed.pb_zip import pb_zip
+import pulseblock.pulse as po
+from pulseblock.pb_sample import pb_sample
+from pulseblock.pb_zip import pb_zip
 
 import os
 import time

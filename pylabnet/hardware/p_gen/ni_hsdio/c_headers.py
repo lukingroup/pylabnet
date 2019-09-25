@@ -1,3 +1,9 @@
+""" Constant definitions and function prototypes from
+National Instruments High-Speed Digital I/O
+API header file niHSDIO.h
+"""
+
+
 import ctypes
 
 # #if defined(LONG_MAX) && (LONG_MAX > 0x7FFFFFFFL)

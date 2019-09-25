@@ -1,7 +1,7 @@
 import ctypes
 from pylabnet.hardware.p_gen.ni_hsdio import NI_HSDIO_DLL_PATH
 from pylabnet.hardware.p_gen.ni_hsdio.c_headers import NITypes, NIConst, build_c_func_prototypes
-from pylabnet.logic.pulsed.pb_sample import pb_sample
+from pulseblock.pb_sample import pb_sample
 from pylabnet.utils.logging.logger import LogHandler
 import numpy as np
 import copy

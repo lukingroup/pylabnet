@@ -38,5 +38,5 @@ class GatedCtrInterface(abc.ABC):
         pass
 
 
-class GatedCtrError(Exception):
+class CtrError(Exception):
     pass

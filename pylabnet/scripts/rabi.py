@@ -5,7 +5,6 @@ from pylabnet.gui.output_interface import TraceInterface, HeatMapInterface, PBar
 import pulseblock.pulse as po
 import pulseblock.pulse_block as pb
 import numpy as np
-import threading
 import time
 
 # TODO: add readout window and refocus as parameters
@@ -180,16 +179,6 @@ class Rabi:
         except Exception as exc_obj:
             self.interrupt()
             raise exc_obj
-
-    def run_in_bkgr(self):
-
-        thread = threading.Thread(target=self.run)
-        thread.start()
-
-        # # TODO: implement
-        # raise NotImplementedError(
-        #     'Running in a background thread is not implemented'
-        # )
 
     def pause(self):
 

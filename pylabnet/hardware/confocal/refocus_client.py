@@ -1,3 +1,7 @@
+""" Client to access qudi's confocal refocus
+"""
+
+
 from pylabnet.core.client_base import ClientBase
 
 

@@ -6,7 +6,7 @@ from pylabnet.core.client_base import ClientBase
 import pickle
 
 
-class RSsmc(MWSrcInterface):
+class Driver(MWSrcInterface):
     """Adapted from Qudi <https://github.com/Ulm-IQO/qudi/>
     """
 
@@ -349,11 +349,7 @@ class RSsmc(MWSrcInterface):
         return 0
 
 
-#
-# Service-Client pair
-#
-
-class RSsmcMWSrcService(ServiceBase):
+class Service(ServiceBase):
 
     def exposed_activate_interface(self):
         return self._module.activate_interface()
@@ -401,7 +397,7 @@ class RSsmcMWSrcService(ServiceBase):
         return self._module.get_mode()
 
 
-class RSsmcMWSrcClient(ClientBase, MWSrcInterface):
+class Client(ClientBase, MWSrcInterface):
 
     def activate_interface(self):
         return self._service.exposed_activate_interface()
@@ -452,3 +448,4 @@ class RSsmcMWSrcClient(ClientBase, MWSrcInterface):
 
     def get_mode(self):
         return self._service.exposed_get_mode()
+

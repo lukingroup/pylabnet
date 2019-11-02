@@ -1,3 +1,5 @@
+"""Wrapper for NI654x driver to implement SimplePGenInterface"""
+
 from pylabnet.hardware.interface.simple_p_gen import SimplePGenInterface
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
@@ -7,7 +9,7 @@ import pickle
 # TODO: (analyze given PulseBlock, find smallest interval, set 1/10 sampling rate)
 
 
-class NI654xSPGen(SimplePGenInterface):
+class Wrap(SimplePGenInterface):
 
     def __init__(self, ni654x_inst):
         self._dev = ni654x_inst
@@ -72,7 +74,7 @@ class NI654xSPGen(SimplePGenInterface):
         return self._dev.get_status()
 
 
-class NI654xSPGenService(ServiceBase):
+class Service(ServiceBase):
 
     def exposed_activate_interface(self):
         return self._module.activate_interface()
@@ -101,7 +103,7 @@ class NI654xSPGenService(ServiceBase):
         return self._module.get_status()
 
 
-class NI654xSPGenClient(ClientBase, SimplePGenInterface):
+class Client(ClientBase, SimplePGenInterface):
 
     def activate_interface(self):
         return self._service.exposed_activate_interface()

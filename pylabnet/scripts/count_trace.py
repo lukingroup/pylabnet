@@ -5,7 +5,6 @@ import pulseblock.pulse as po
 import pulseblock.pulse_block as pb
 import numpy as np
 import time
-import threading
 
 
 class CountTrace:
@@ -160,11 +159,6 @@ class CountTrace:
         except Exception as exc_obj:
             self.interrupt()
             raise exc_obj
-
-    def run_in_bkgr(self):
-
-        thread = threading.Thread(target=self.run)
-        thread.start()
 
     def pause(self):
 

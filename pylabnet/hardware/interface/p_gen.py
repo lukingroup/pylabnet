@@ -1,0 +1,2 @@
+class PGenError(Exception):
+    pass

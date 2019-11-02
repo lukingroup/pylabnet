@@ -1,13 +1,19 @@
 import ctypes
 from pylabnet.hardware.p_gen.ni_hsdio import NI_HSDIO_DLL_PATH
 from pylabnet.hardware.p_gen.ni_hsdio.c_headers import NITypes, NIConst, build_c_func_prototypes
+from pylabnet.hardware.interface.p_gen import PGenError
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 from pulseblock.pb_sample import pb_sample
 from pylabnet.utils.logging.logger import LogHandler
 import numpy as np
 import copy
 
 
-class NI654x:
+class Driver:
+    """Driver class for NI PXI 654x HSDIO card
+    """
+
     def __init__(self, dev_name_str, logger=None):
 
         #
@@ -31,7 +37,7 @@ class NI654x:
                       'Current value is: \n' \
                       '"{}"'.format(NI_HSDIO_DLL_PATH)
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
         # Build C-prototypes (in particular, specify the return
         # types such that Python reads results correctly)
@@ -180,7 +186,7 @@ class NI654x:
             msg_str = 'get_mode(): self._get_attr_int32(NIHSDIO_ATTR_GENERATION_MODE) ' \
                       'returned unknown mode_id = {0}'.format(mode_id)
             self.log.error(msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
     def set_mode(self, mode_string):
         """
@@ -198,7 +204,7 @@ class NI654x:
                       'Run mode was not changed. Actual run mode string was returned.'.format(mode_string)
 
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
         # Call DLL function
         self._er_chk(
@@ -273,7 +279,7 @@ class NI654x:
             # to raise an exception
 
             else:
-                raise NIHSDIOError(
+                raise PGenError(
                     'get_status(): the attempt to test-change samp_rate returned unknown error code {}'
                     ''.format(op_status)
                 )
@@ -309,7 +315,7 @@ class NI654x:
                       ''.format(hrdw_data_width, hrdw_data_width)
 
             self.log.error(msg_txt)
-            raise NIHSDIOError(msg_txt)
+            raise PGenError(msg_txt)
 
         #
         # Sample PulseBlock
@@ -419,7 +425,7 @@ class NI654x:
         :return: (int) repeat mode + number of repetitions:
                  0 - repeat infinitely
                  positive integer - finite, number of repetitions
-                 NIHSDIOError exception - error
+                 PGenError exception - error
         """
 
         rep_mode = self._get_attr_int32(
@@ -436,7 +442,7 @@ class NI654x:
             msg_str = 'get_rep(): DLL call returned unknown repetition mode code {}'.format(rep_mode)
 
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
         return rep_num
 
@@ -450,7 +456,7 @@ class NI654x:
         :return: (int) actual repeat mode + number of repetitions:
                     0 - repeat infinitely
                     positive integer - finite, number of repetitions
-                    NIHSDIOError exception - error
+                    PGenError exception - error
         """
 
         if rep_num == 0:
@@ -467,7 +473,7 @@ class NI654x:
                       ''.format(rep_num)
 
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
         self._er_chk(
             self.dll.niHSDIO_ConfigureGenerationRepeat(
@@ -504,7 +510,7 @@ class NI654x:
             msg_str = 'write_script(): passed argument is not a string'
 
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
         plain_script_str = script_str.replace('\n', ' ')
 
@@ -574,7 +580,7 @@ class NI654x:
             else:
                 # Error
                 self.log.error(msg_str=msg_str)
-                raise NIHSDIOError(msg_str)
+                raise PGenError(msg_str)
 
     def _get_attr_int32(self, attr_id, ch=None):
         """
@@ -582,7 +588,7 @@ class NI654x:
         :param attr_id:
         :param ch: (int)
         :return: (int) obtained value in the case of success
-                 NIHSDIOError exception is produced in the case of error
+                 PGenError exception is produced in the case of error
         """
 
         # Create buffer where niHSDIO_GetAttribute will store the result
@@ -617,7 +623,7 @@ class NI654x:
 
             msg_str = '_get_attr_int32(): OSError, DLL function call failed'
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
     def _get_attr_str(self, attr_id, ch=None):
         """
@@ -662,7 +668,7 @@ class NI654x:
 
             msg_str = '_get_attr_str(): OSError, DLL function call failed'
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
     def _get_attr_real64(self, attr_id, ch=None):
         """
@@ -705,8 +711,14 @@ class NI654x:
 
             msg_str = '_get_attr_real64(): OSError, DLL function call failed'
             self.log.error(msg_str=msg_str)
-            raise NIHSDIOError(msg_str)
+            raise PGenError(msg_str)
 
 
-class NIHSDIOError(Exception):
+class Service(ServiceBase):
+    # TODO: implement
+    pass
+
+
+class Client(ClientBase):
+    # TODO: implement
     pass

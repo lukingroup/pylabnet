@@ -1,5 +1,19 @@
 import abc
 
+class MultiTraceInterface(abc.ABC):
+
+    @abc.abstractmethod
+    def set_data(self, x_ar=None, y_ar=None, ind=0, noise=None):
+        pass
+
+    @abc.abstractmethod
+    def set_lbls(self, x_str=None, y_str=None):
+        pass
+
+    @abc.abstractmethod
+    def show(self):
+        pass
+
 
 class TraceInterface(abc.ABC):
 

@@ -9,7 +9,7 @@ If you are an external user and you would like to use the package, please fork t
 
 If you are an internal user (SiV Lukin lab team), and you would like to setup the package on a new machine, you can follow the steps below:
 
-1. First, clone the repository onto the local machine. Follow instructions in setup/readme.txt
+1. First, clone the repository onto the local machine. Make sure github is installed on the local machine! Follow instructions in setup/readme.txt
 
 If you plan on developing the package (e.g. writing new drivers or scripts that do not exist yet), then please follow steps 2-6. If you plan on immediately using the package for expeirmental control without development, skip to step 7.
 

@@ -9,11 +9,11 @@ If you are an external user and you would like to use the package, please fork t
 
 If you are an internal user (SiV Lukin lab team), and you would like to setup the package on a new machine, you can follow the steps below:
 
-1. First, clone the repository onto the local machine. Make sure github is installed on the local machine! Follow instructions in setup/readme.txt
+1. First, clone the repository onto the local machine. Make sure github is installed on the local machine! Go to the command line, in your home user directory and use the command "git clone XXX" (insert the link above). Follow instructions in setup/readme.txt as well.
 
 If you plan on developing the package (e.g. writing new drivers or scripts that do not exist yet), then please follow steps 2-6. If you plan on immediately using the package for expeirmental control without development, skip to step 7.
 
-2. Create a new working branch "new-branch" (insert a relevant name) for your changes - **please do not make the changes directly in the master branch!**
+2. Create a new working branch "new-branch" (insert a relevant name) for your changes. Within the local github repository, use the command "git checkout -b XXX" (insert relevant branch name). This simultaneously creates a new branch and switches over to it. **Please do not make the changes directly in the master branch!**
 
 3. Make changes to (or add new) relevant modules: pylabnet/hardware, pylabnet/gui, and pylabnet/script.
 

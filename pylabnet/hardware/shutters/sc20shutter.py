@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from pylabnet.hardware.ni_daqs.nidaqmx_card import Ni_Daq_Mx_Card
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
-
-
 """
 This file contains the pylabnet Hardware module class for SDC20 Thorlabs shutter.
 
 The shutter is triggered via a TTL signal from a NI DAQmx card
 
 """
+
+from pylabnet.hardware.ni_daqs.nidaqmx_card import Ni_Daq_Mx_Card
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
+
 
 class SC20Shutter():
 

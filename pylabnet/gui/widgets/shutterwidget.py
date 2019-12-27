@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import ipywidgets as widgets
 
 """
 This file contains wrappers for Jupyter Notebook Widgets used for controling the SC20 Shutter
 
 """
+
+import ipywidgets as widgets
 
 
 class Shuttertoogle():

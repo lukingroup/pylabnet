@@ -62,10 +62,13 @@ class FW102C(object):
             return
         self._sio = io.TextIOWrapper(io.BufferedRWPair(self._fw, self._fw, 1),
                        newline=None, encoding='ascii')
-								  
+
+
+        
         self._sio.write(str('*idn?\r'))
         self.devInfo = self._sio.readlines(2048)[1][:-1]
 
+        
         self.log.info(self.devInfo)
         self._sio.write(str('pos?\r'))
         self.pos = self._sio.readlines(2048)[1][:-1]

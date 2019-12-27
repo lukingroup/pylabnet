@@ -10,6 +10,8 @@ Is is essentially a wrapper for the class  FW102C in fw102.py writen by Gilles S
 
 from pylabnet.hardware.filterwheel.fw102c import FW102C
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 
 
 
@@ -66,9 +68,18 @@ class FW102CFilterWheel():
             self.log.info("Filterwheel {device_name} changing to position failed".format( device_name = self.device_name))
 
 
+    class Service(ServiceBase):
 
-  
-   
+        def exposed_change_filter(self, new_pos):
+            return self._module.change_filter(new_pos)
 
+        def exposed_get_pos(self):
+            return self._module.get_pos()
 
-        
+    
+    class Client(ClientBase):
+        def change_filter(self, new_pos):
+            return self._service.exposed_change_filter(new_pos)
+
+        def get_pos(self):
+            return self._service.exposed_get_pos() 

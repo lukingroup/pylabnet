@@ -9,6 +9,7 @@ Is is essentially a wrapper for the class  FW102C in fw102.py writen by Gilles S
 """
 
 from pylabnet.hardware.filterwheel.fw102c import FW102C
+from pylabnet.hardware.shutters.sc20shutter import SC20Shutter
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
@@ -48,11 +49,16 @@ class FW102CFilterWheel():
         return self.filterwheel.query('pos?')
         
 
-    def change_filter(self, new_pos):
+    def change_filter(self, new_pos, protect_shutter_client):
         """Update filter wheel position
 
         :new_pos:Target filter wheel position 1-6 or 1-12
+        :protect_shutter_client: An optinal SC20Shutter instance. If provided, shutter will be closed during a filter change
         """
+
+        # Close protection shutter
+        if protect_shutter_client is not None:
+            protect_shutter_client.close()
 
         # Update Position
         self.filterwheel.command('pos={}'.format(new_pos))
@@ -64,22 +70,26 @@ class FW102CFilterWheel():
                 position = new_pos,
                 filter = self.filters.get('{}'.format(new_pos)))
             )
+
+            # Open protection shutter
+            if protect_shutter_client is not None:
+                protect_shutter_client.open()
         else:
             self.log.info("Filterwheel {device_name} changing to position failed".format( device_name = self.device_name))
 
 
     class Service(ServiceBase):
 
-        def exposed_change_filter(self, new_pos):
-            return self._module.change_filter(new_pos)
+        def exposed_change_filter(self, new_pos, protect_shutter_client):
+            return self._module.change_filter(new_pos, protect_shutter_client)
 
         def exposed_get_pos(self):
             return self._module.get_pos()
 
     
     class Client(ClientBase):
-        def change_filter(self, new_pos):
-            return self._service.exposed_change_filter(new_pos)
+        def change_filter(self, new_pos, protect_shutter_client=None):
+            return self._service.exposed_change_filter(new_pos, protect_shutter_client)
 
         def get_pos(self):
             return self._service.exposed_get_pos() 

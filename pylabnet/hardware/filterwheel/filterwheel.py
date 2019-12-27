@@ -56,9 +56,13 @@ class FW102CFilterWheel():
         :protect_shutter_client: An optinal SC20Shutter instance. If provided, shutter will be closed during a filter change
         """
 
-        # Close protection shutter
+        # Close protection shutter if open
         if protect_shutter_client is not None:
-            protect_shutter_client.close()
+            
+            # Check if shutter is initially open
+            shutter_open = protect_shutter_client.get_is_open()
+            if shutter_open:
+                protect_shutter_client.close()
 
         # Update Position
         self.filterwheel.command('pos={}'.format(new_pos))
@@ -71,8 +75,8 @@ class FW102CFilterWheel():
                 filter = self.filters.get('{}'.format(new_pos)))
             )
 
-            # Open protection shutter
-            if protect_shutter_client is not None:
+            # Open protection shutter if shutter was originally open
+            if protect_shutter_client is not None and shutter_open:
                 protect_shutter_client.open()
         else:
             self.log.info("Filterwheel {device_name} changing to position failed".format( device_name = self.device_name))

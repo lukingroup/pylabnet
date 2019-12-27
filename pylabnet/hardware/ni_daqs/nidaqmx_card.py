@@ -56,3 +56,4 @@ class Ni_Daq_Mx_Card():
             task.write(voltages, auto_start=True)
 
 
+

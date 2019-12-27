@@ -33,15 +33,23 @@ class SC20Shutter():
         # Set AO to 0V
         self.daq.set_ao_voltage(self.output_channel, [0])
 
+        # Keep track of sate
+        self.is_open = False 
+
     # Raising edge opens shutter
     def open(self):
         self.daq.set_ao_voltage(self.output_channel, [5])
+        self.is_open = True
         self.log.info('Opened shutter {}  \n'.format(self.shutter_name))
 
     # Falling edge closes shutter
     def close(self):
         self.daq.set_ao_voltage(self.output_channel, [0])
+        self.is_open = False
         self.log.info('Closed shutter {}  \n'.format(self.shutter_name))
+
+    def get_is_open(self):
+        return self.is_open
 
     def get_name(self):
         return self.shutter_name
@@ -57,6 +65,9 @@ class SC20Shutter():
         def exposed_get_name(self):
             return self._module.get_name()
 
+        def exposed_get_is_open(self):
+            return self._module.get_is_open()
+
     class Client(ClientBase):
         def open(self):
             return self._service.exposed_open()
@@ -66,4 +77,8 @@ class SC20Shutter():
 
         def get_name(self):
             return self._service.exposed_get_name()
+
+        def get_is_open(self):
+            return self._service.exposed_get_is_open()
+
 

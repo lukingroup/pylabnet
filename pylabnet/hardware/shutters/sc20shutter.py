@@ -8,7 +8,7 @@ from pylabnet.core.client_base import ClientBase
 """
 This file contains the pylabnet Hardware module class for SDC20 Thorlabs shutter.
 
-The shutter is triggered via a 5V TTL signal from a NI DAQmx card
+The shutter is triggered via a TTL signal from a NI DAQmx card
 
 """
 
@@ -22,34 +22,38 @@ class SC20Shutter():
         :shutter_name: Readable name of shutter (e.g. 'Collection Path') 
         """
         # Retrieve member variables 
-        self.device_name = device_name
+        self.device_name    = device_name
         self.output_channel = output_channel
-        self.shutter_name = shutter_name
+        self.shutter_name   = shutter_name
+        self.log            = logger
 
         # Instanciate NI DAQ
         self.daq = Ni_Daq_Mx_Card(device_name=device_name, logger=logger)
 
-    # Raising edge TTL 
-    def shutter_open(self):
-        self.daq.set_ao_voltage(self.output_channel, [0,5])
+    # Raising edge TTL opens shutter
+    def open(self):
+        self.daq.set_ao_voltage(self.output_channel, [0,2.5])
+        self.log.info('Opened shutter {}  \n'.format(self.shutter_name))
 
-    # Falling edge TTL 
-    def shutter_close(self):
-        self.daq.set_ao_voltage(self.output_channel, [0,-5])
+
+    # Falling edge TTL closes shutter
+    def close(self):
+        self.daq.set_ao_voltage(self.output_channel, [0,-2.5])
+        self.log.info('Closed shutter {}  \n'.format(self.shutter_name))
 
 
     class Service(ServiceBase):
-        # Raising edge TTL 
-        def open(self):
-            self._module.open()
 
-        # Falling edge TTL 
-        def close(self):
-            self._module.close()
+        def exposed_open(self):
+            return self._module.open()
+
+        def exposed_close(self):
+            return self._module.close()
 
     class Client(ClientBase):
         def open(self):
-            self._service.open()
+            return self._service.exposed_open()
 
         def close(self):
-            self._service.close() 
+            return self._service.exposed_close() 
+

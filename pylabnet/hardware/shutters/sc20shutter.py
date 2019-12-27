@@ -30,17 +30,21 @@ class SC20Shutter():
         # Instanciate NI DAQ
         self.daq = Ni_Daq_Mx_Card(device_name=device_name, logger=logger)
 
-    # Raising edge TTL opens shutter
+        # Set AO to 0V
+        self.daq.set_ao_voltage(self.output_channel, [0])
+
+    # Raising edge opens shutter
     def open(self):
-        self.daq.set_ao_voltage(self.output_channel, [0,2.5])
+        self.daq.set_ao_voltage(self.output_channel, [5])
         self.log.info('Opened shutter {}  \n'.format(self.shutter_name))
 
-
-    # Falling edge TTL closes shutter
+    # Falling edge closes shutter
     def close(self):
-        self.daq.set_ao_voltage(self.output_channel, [0,-2.5])
+        self.daq.set_ao_voltage(self.output_channel, [0])
         self.log.info('Closed shutter {}  \n'.format(self.shutter_name))
 
+    def get_name(self):
+        return self.shutter_name
 
     class Service(ServiceBase):
 
@@ -50,10 +54,16 @@ class SC20Shutter():
         def exposed_close(self):
             return self._module.close()
 
+        def exposed_get_name(self):
+            return self._module.get_name()
+
     class Client(ClientBase):
         def open(self):
             return self._service.exposed_open()
 
         def close(self):
             return self._service.exposed_close() 
+
+        def get_name(self):
+            return self._service.exposed_get_name()
 

@@ -47,23 +47,23 @@ class SC20Shutter():
     def get_name(self):
         return self.shutter_name
 
-class Service(ServiceBase):
+    class Service(ServiceBase):
 
-    def exposed_open(self):
-        return self._module.open()
+        def exposed_open(self):
+            return self._module.open()
 
-    def exposed_close(self):
-        return self._module.close()
+        def exposed_close(self):
+            return self._module.close()
 
-    def exposed_get_name(self):
-        return self._module.get_name()
+        def exposed_get_name(self):
+            return self._module.get_name()
 
-class Client(ClientBase):
-    def open(self):
-        return self._service.exposed_open()
+    class Client(ClientBase):
+        def open(self):
+            return self._service.exposed_open()
 
-    def close(self):
-        return self._service.exposed_close()
+        def close(self):
+            return self._service.exposed_close()
 
-    def get_name(self):
-        return self._service.exposed_get_name()
+        def get_name(self):
+            return self._service.exposed_get_name()

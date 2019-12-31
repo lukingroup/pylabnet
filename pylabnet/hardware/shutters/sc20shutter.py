@@ -15,7 +15,7 @@ The shutter is triggered via a TTL signal from a NI DAQmx card
 class SC20Shutter():
 
     def __init__(self, device_name, output_channel, shutter_name, logger=None):
-        """Instantiate Harware class for SC20 Thorlabs by instanciating NI DAQ card an assiging channel
+        """Instantiate Harware class for SC20 Thorlabs by instanciating NI DAQ card an assiging channel.
 
         :device_name: Name of NI DAQ mx card, as displayed in the measurement and automation explorer
         :ao_channel: Name of output channel where SC20 is connected(e.g. 'ao1', 'ao2')

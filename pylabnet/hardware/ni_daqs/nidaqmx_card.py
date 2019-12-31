@@ -30,9 +30,9 @@ class Ni_Daq_Mx_Card():
                 "Successfully connected to NI DAQ '{device_name}' (type: {product_type}) \n".format\
                     (device_name = ni_daq_device.name, product_type=ni_daq_device.product_type)
                 )
-        
+    
         # If failed, provide info about connected DAQs
-        except:
+        except nidaqmx.DaqError:
             # Get names of all connected NI DAQs
             ni_daqs_names = nidaqmx.system._collections.device_collection.DeviceCollection().device_names
             self.log.error('NI DAQ {device_name} not found: \n'.format(device_name=device_name))

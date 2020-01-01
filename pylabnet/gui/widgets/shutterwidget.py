@@ -22,7 +22,6 @@ class ShutterToogle():
         # retrieve shutter client
         self.shutter_client = shutter_client
 
-
         # The toogle button
         self.toogle_raw = widgets.ToggleButtons(
             options=['Closed', 'Open'],

@@ -31,17 +31,19 @@ class SC20Shutter():
         # Set AO to 0V
         self.daq.set_ao_voltage(self.output_channel, [0])
 
-        # Keep track of sate
+        # Keep track of state
         self.is_open = False
 
     # Raising edge opens shutter
     def open(self):
         self.daq.set_ao_voltage(self.output_channel, [5])
+        self.is_open = True
         self.log.info('Opened shutter {}  \n'.format(self.shutter_name))
 
     # Falling edge closes shutter
     def close(self):
         self.daq.set_ao_voltage(self.output_channel, [0])
+        self.is_open = False
         self.log.info('Closed shutter {}  \n'.format(self.shutter_name))
 
     def get_is_open(self):

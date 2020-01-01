@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\b16lu\\.conda\\envs\\pylabnet\\python.exe"
+    "python.pythonPath": "C:\\Users\\b16lu\\.conda\\envs\\pylabnet\\python.exe",
+    "editor.renderWhitespace": "all", 
+    "files.trimTrailingWhitespace": true
 }

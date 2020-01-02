@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 
-
 """
-This file contains wrappers for Jupyter Notebook Widgets used for controling the SC20 Shutter
-
+This file contains wrappers for Jupyter Notebook Widgets used for controlling the SC20 Shutter
 """
 
 import ipywidgets as widgets
 
 
-class FilterwheelToogle():
-    """
-    This Class implements a toggle change the filter of a Thorlabs FW102C Filterwheel
+class FilterwheelToogle:
+    """ This Class implements a toggle change the filter of a Thorlabs FW102C Filterwheel
     """
 
     def __init__(self, filterwheel_client):
@@ -39,15 +36,20 @@ class FilterwheelToogle():
 
         # Add label to toogle
         self.dropdown = widgets.HBox(
-            [widgets.Label("Filterwheel {name}".format(name=self.name)),
-             self.dropdown_raw]
-            )
+            [
+                widgets.Label("Filterwheel {name}".format(name=self.name)),
+                self.dropdown_raw
+            ]
+        )
 
         self.output = widgets.Output()
 
-        #Display Toogle
+        # Display Toogle
         display(self.dropdown, self.output)
 
     def on_value_change(self, change, protect_shutter_client=None):
         with self.output:
-            return self.filterwheel_client.change_filter(int(change['new']), protect_shutter_client)
+            return self.filterwheel_client.change_filter(
+                int(change['new']),
+                protect_shutter_client
+            )

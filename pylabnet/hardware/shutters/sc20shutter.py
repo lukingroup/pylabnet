@@ -9,7 +9,8 @@ from pylabnet.core.client_base import ClientBase
 The shutter is triggered via a TTL signal from a NI DAQmx card
 """
 
-class SC20Shutter():
+
+class SC20Shutter:
 
     def __init__(self, device_name, output_channel, shutter_name='shutter', logger=None):
         """Hardware module class for SDC20 Thorlabs shutter.
@@ -18,8 +19,8 @@ class SC20Shutter():
         to gate SDC20 Thorlabs shutter.
         
         :device_name: (str) Name of NI DAQ mx card, as displayed in NI MAX
-        :ao_channel: (str)  Name of output channel where SC20 is connected (e.g. 'ao1', 'ao2')
-        :shutter_name: (str) Readable name of shutter (e.g. 'Collection Path')
+        :ao_channel: (str) Name of output channel where SC20 is connected (e.g. 'ao1', 'ao2')
+        :shutter_name: (str, optional) Readable name of shutter (e.g. 'Collection Path')
         """
 
         # Retrieve member variables
@@ -58,6 +59,7 @@ class SC20Shutter():
     def get_name(self):
         return self.shutter_name
 
+
 class Service(ServiceBase):
 
     def exposed_open(self):
@@ -71,6 +73,7 @@ class Service(ServiceBase):
 
     def exposed_get_is_open(self):
         return self._module.get_is_open()
+
 
 class Client(ClientBase):
     def open(self):

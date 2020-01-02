@@ -5,18 +5,21 @@ from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
 
-"""
-This file contains the pylabnet Hardware module class for SDC20 Thorlabs shutter.
+""" This file contains the pylabnet Hardware module class for SDC20 Thorlabs shutter.
 The shutter is triggered via a TTL signal from a NI DAQmx card
 """
 
 class SC20Shutter():
 
-    def __init__(self, device_name, output_channel, shutter_name, logger=None):
-        """Instantiate Harware class for SC20 Thorlabs by instanciating NI DAQ card and assiging channel
-        :device_name: (string) Name of NI DAQ mx card, as displayed in the measurement and automation explorer
-        :ao_channel: (string)  Name of output channel where SC20 is connected(e.g. 'ao1', 'ao2')
-        :shutter_name: (string) Readable name of shutter (e.g. 'Collection Path')
+    def __init__(self, device_name, output_channel, shutter_name='shutter', logger=None):
+        """Hardware module class for SDC20 Thorlabs shutter.
+        
+        This method connects to NI-DAQmx card and uses the analog output
+        to gate SDC20 Thorlabs shutter.
+        
+        :device_name: (str) Name of NI DAQ mx card, as displayed in NI MAX
+        :ao_channel: (str)  Name of output channel where SC20 is connected (e.g. 'ao1', 'ao2')
+        :shutter_name: (str) Readable name of shutter (e.g. 'Collection Path')
         """
 
         # Retrieve member variables
@@ -25,8 +28,11 @@ class SC20Shutter():
         self.shutter_name = shutter_name
         self.log = logger
 
-        # Instanciate NI DAQ
-        self.daq = NiDaqMxCard(device_name=device_name, logger=logger)
+        # Instantiate NI DAQ
+        self.daq = NiDaqMxCard(
+            device_name=device_name, 
+            logger=logger
+        )
 
         # Set AO to 0V
         self.daq.set_ao_voltage(self.output_channel, [0])
@@ -52,29 +58,29 @@ class SC20Shutter():
     def get_name(self):
         return self.shutter_name
 
-    class Service(ServiceBase):
+class Service(ServiceBase):
 
-        def exposed_open(self):
-            return self._module.open()
+    def exposed_open(self):
+        return self._module.open()
 
-        def exposed_close(self):
-            return self._module.close()
+    def exposed_close(self):
+        return self._module.close()
 
-        def exposed_get_name(self):
-            return self._module.get_name()
+    def exposed_get_name(self):
+        return self._module.get_name()
 
-        def exposed_get_is_open(self):
-            return self._module.get_is_open()
+    def exposed_get_is_open(self):
+        return self._module.get_is_open()
 
-    class Client(ClientBase):
-        def open(self):
-            return self._service.exposed_open()
+class Client(ClientBase):
+    def open(self):
+        return self._service.exposed_open()
 
-        def close(self):
-            return self._service.exposed_close()
+    def close(self):
+        return self._service.exposed_close()
 
-        def get_name(self):
-            return self._service.exposed_get_name()
+    def get_name(self):
+        return self._service.exposed_get_name()
 
-        def get_is_open(self):
-            return self._service.exposed_get_is_open()
+    def get_is_open(self):
+        return self._service.exposed_get_is_open()

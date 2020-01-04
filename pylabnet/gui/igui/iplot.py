@@ -241,6 +241,7 @@ class MultiTraceFig(MultiTraceInterface):
                     )
                 self._num_ch += 1
 
+
 class HeatMapFig(HeatMapInterface):
 
     def __init__(self, title_str=None):

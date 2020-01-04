@@ -3,6 +3,7 @@ Client-server, python-based laboratory software
 
 This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed initially for use in solid-state quantum optics + quantum network experiments in the Lukin group. 
 
+
 ## Using and developing the package properly with github
 
 If you are an external user and you would like to use the package, please fork the package to your own personal or group repository. See below for a description of the package.
@@ -54,3 +55,4 @@ The general experimental flow is the following. It generally consists of running
 (2) Set up a GUI instance for the experimental result output. 
 (3) Program in script parameters for the desired experimental script.
 (4) Run the experiment!
+

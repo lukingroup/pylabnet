@@ -5,7 +5,7 @@ from pylabnet.core.client_base import ClientBase
 import ctypes
 
 
-class HFWavemeter(WavemeterInterface):
+class Driver(WavemeterInterface):
     """ Hardware class to control High Finesse Wavemeter."""
 
     def __init__(self, logger=None):

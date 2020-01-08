@@ -72,7 +72,7 @@ class SingleTraceFig(TraceInterface):
 
 class MultiTraceFig(MultiTraceInterface):
 
-    def __init__(self, title_str=None, ch_names=None, shot_noise=False):
+    def __init__(self, title_str=None, ch_names=None, shot_noise=False, legend_orientation=None):
         """
 
         :param mode: type of scatter plot
@@ -98,6 +98,12 @@ class MultiTraceFig(MultiTraceInterface):
 
         if title_str is not None:
             self._fig.layout.update(title=title_str)
+
+        if legend_orientation is not None:
+            self._fig.update_layout(
+                legend=dict(x=0, y=1.1),
+                legend_orientation=legend_orientation
+            )
 
     def set_data(self, x_ar=None, y_ar=None, ind=0, noise=None):
         """
@@ -159,6 +165,7 @@ class MultiTraceFig(MultiTraceInterface):
 
     def show(self):
         display(self._fig)
+        # self._fig.show(renderer="iframe")
 
     # Technical methods
 
@@ -240,6 +247,7 @@ class MultiTraceFig(MultiTraceInterface):
                         name=channel
                     )
                 self._num_ch += 1
+
 
 class HeatMapFig(HeatMapInterface):
 

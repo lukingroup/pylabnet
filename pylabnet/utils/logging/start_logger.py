@@ -10,3 +10,5 @@ if __name__ == '__main__':
     log_service = LogService()
     log_server = GenericServer(service=log_service, host=host, port=port)
     log_server.start()
+
+    print("Log messages will be displayed below")

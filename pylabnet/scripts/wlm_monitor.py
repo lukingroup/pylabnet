@@ -22,13 +22,15 @@ class WlmMonitor:
         self._display_length = 0
         self._update_rate = 0
         self._bin_by = 0
+        self._gui = None
 
-    def set_params(self, channels=None, update_rate=0.05, display_pts=1000, bin_by=5, memory=10):
+    def set_params(self, channels=None, gui=None, update_rate=0.05, display_pts=1000, bin_by=5, memory=10):
         """
         Configures script parameters for wavemeter control
         
         :param channels: list of dictionaries containing channel information in the example structure:
             {"channel": 1, "setpoint": None, "lock": False, "PID":[0, 0, 0]}
+        :param gui: instance of GUI client for data streaming
         :param update_rate: how often to update the plot in seconds
             Note: this should be increased in order to avoid lagging in plot outputting
         :param display_pts: number of points to display on graph
@@ -41,6 +43,7 @@ class WlmMonitor:
         self._data_length = self._display_length * self._bin_by
         self._x_axis = np.arange(self._data_length)
         self._update_rate = update_rate
+        self._gui = gui
 
         # Initialize to default settings if nothing provided
         if channels is None:
@@ -52,23 +55,24 @@ class WlmMonitor:
         else:
             self.channels = channels
 
+
         for channel in self.channels:
 
             # We need to configure the plot differently based on whether or not a setpoint is given
-            if channel["setpoint"] is None:
+            if channel["setpoint"] is not None:
 
                 # Initialize plot with no setpoints
-                channel["trace"] = SingleTraceFig(title_str="Channel {} Laser Monitor".format(channel["channel"]))
+                # channel["trace"] = SingleTraceFig(title_str="Channel {} Laser Monitor".format(channel["channel"]))
 
-            else:
+            #else:
 
                 # Initialize plot with setpoints
-                channel["trace"] = MultiTraceFig(
-                    title_str="Channel {} Laser Monitor".format(channel["channel"]),
-                    ch_names=["Channel {} Frequency".format(channel["channel"]),
-                              "Channel {} Setpoint".format(channel["channel"])],
-                    legend_orientation='h'
-                )
+                # channel["trace"] = MultiTraceFig(
+                #     title_str="Channel {} Laser Monitor".format(channel["channel"]),
+                #     ch_names=["Channel {} Frequency".format(channel["channel"]),
+                #               "Channel {} Setpoint".format(channel["channel"])],
+                #     legend_orientation='h'
+                # )
 
                 # If a setpoint is given, configure PID to be an instance of PID class with desired parameters
                 if "PID" in channel:
@@ -91,26 +95,26 @@ class WlmMonitor:
                     )
 
                 # Initialize lock monitor
-                channel["error_monitor"] = SingleTraceFig(
-                    title_str="Channel {} Lock Error Monitor".format(channel["channel"])
-                )
-                channel["error_monitor"].set_lbls(
-                    x_str="Time (pts)",
-                    y_str="Lock error (GHz)"
-                )
-                channel["voltage_monitor"] = SingleTraceFig(
-                    title_str="Channel {} Voltage Monitor".format(channel["channel"])
-                )
-                channel["voltage_monitor"].set_lbls(
-                    x_str="Time (pts)",
-                    y_str="Voltage (V)"
-                )
+                # channel["error_monitor"] = SingleTraceFig(
+                #     title_str="Channel {} Lock Error Monitor".format(channel["channel"])
+                # )
+                # channel["error_monitor"].set_lbls(
+                #     x_str="Time (pts)",
+                #     y_str="Lock error (GHz)"
+                # )
+                # channel["voltage_monitor"] = SingleTraceFig(
+                #     title_str="Channel {} Voltage Monitor".format(channel["channel"])
+                # )
+                # channel["voltage_monitor"].set_lbls(
+                #     x_str="Time (pts)",
+                #     y_str="Voltage (V)"
+                # )
 
             # Set axis labels
-            channel["trace"].set_lbls(
-                x_str="Time (pts)",
-                y_str="Frequency (THz)"
-            )
+            # channel["trace"].set_lbls(
+            #     x_str="Time (pts)",
+            #     y_str="Frequency (THz)"
+            # )
 
     def run(self):
         """Runs the wavemeter monitor"""
@@ -203,45 +207,47 @@ class WlmMonitor:
             channel["display_data"] = np.ones(self._display_length) * wavelength
 
             # Set the data to the plot
-            channel["trace"].set_data(
-                x_ar=self._x_axis,
-                y_ar=channel["display_data"]
-                # y_ar=channel["data"]
-            )
+            # channel["trace"].set_data(
+            #     x_ar=self._x_axis,
+            #     y_ar=channel["display_data"]
+            #     # y_ar=channel["data"]
+            # )
+
+            self._gui.set_data(channel["display_data"])
 
             # Plot the setpoint as well if it exists
-            if channel["setpoint"] is not None:
-                channel["sp_data"] = np.ones(self._data_length) * channel["setpoint"]
-                channel["display_sp"] = np.ones(self._display_length) * channel["setpoint"]
-                channel["trace"].set_data(
-                    x_ar=self._x_axis,
-                    y_ar=channel["display_sp"]
-                )
+            # if channel["setpoint"] is not None:
+            #     channel["sp_data"] = np.ones(self._data_length) * channel["setpoint"]
+            #     channel["display_sp"] = np.ones(self._display_length) * channel["setpoint"]
+            #     channel["trace"].set_data(
+            #         x_ar=self._x_axis,
+            #         y_ar=channel["display_sp"]
+            #     )
 
             # Show graph
-            channel["trace"].show()
+            # channel["trace"].show()
 
             # Plot error monitor if it exists
-            if channel["error_monitor"] is not None:
-                channel["error"] = np.ones(self._data_length) * channel["PID"].error
-                channel["display_error"] = np.ones(self._display_length) * channel["PID"].error
-                channel["error_monitor"].set_data(
-                    x_ar=self._x_axis,
-                    y_ar=channel["display_error"]
-                    # y_ar=channel["error"]
-                )
-                channel["error_monitor"].show()
+            # if channel["error_monitor"] is not None:
+            #     channel["error"] = np.ones(self._data_length) * channel["PID"].error
+            #     channel["display_error"] = np.ones(self._display_length) * channel["PID"].error
+            #     channel["error_monitor"].set_data(
+            #         x_ar=self._x_axis,
+            #         y_ar=channel["display_error"]
+            #         # y_ar=channel["error"]
+            #     )
+            #     channel["error_monitor"].show()
 
             # Plot voltage monitor if it exists
-            if channel["voltage_monitor"] is not None:
-                channel["voltage"] = np.ones(self._data_length) * channel["PID"].cv
-                channel["display_voltage"] = np.ones(self._display_length) * channel["PID"].cv
-                channel["voltage_monitor"].set_data(
-                    x_ar=self._x_axis,
-                    y_ar=channel["display_voltage"]
-                    # y_ar=channel["voltage"]
-                )
-                channel["voltage_monitor"].show()
+            # if channel["voltage_monitor"] is not None:
+            #     channel["voltage"] = np.ones(self._data_length) * channel["PID"].cv
+            #     channel["display_voltage"] = np.ones(self._display_length) * channel["PID"].cv
+            #     channel["voltage_monitor"].set_data(
+            #         x_ar=self._x_axis,
+            #         y_ar=channel["display_voltage"]
+            #         # y_ar=channel["voltage"]
+            #     )
+            #     channel["voltage_monitor"].show()
 
     def _update_data(self):
         """Pulls a new sample from the WLM into the data for each channel"""
@@ -254,7 +260,8 @@ class WlmMonitor:
             channel["data"] = np.append(channel["data"][1:], wavelength)
 
             # Pull the most recent setpoint
-            channel["sp_data"] = np.append(channel["sp_data"][1:], channel["setpoint"])
+            if channel["setpoint"] is not None:
+                channel["sp_data"] = np.append(channel["sp_data"][1:], channel["setpoint"])
 
     def _update_setpoint(self):
         """Updates the setpoint to current value"""
@@ -272,35 +279,37 @@ class WlmMonitor:
         for channel in self.channels:
 
             # Set data
-            channel["trace"].set_data(
-                x_ar=self._x_axis,
-                y_ar=channel["display_data"]
-                # y_ar=channel["data"]
-            )
+            # channel["trace"].set_data(
+            #     x_ar=self._x_axis,
+            #     y_ar=channel["display_data"]
+            #     # y_ar=channel["data"]
+            # )
+
+            self._gui.set_data(channel["display_data"])
 
             # Plot the setpoint as well if provided
-            if channel["setpoint"] is not None:
-                # Set data
-                channel["trace"].set_data(
-                    x_ar=self._x_axis,
-                    y_ar=channel["display_sp"],
-                    ind=1
-                )
+            # if channel["setpoint"] is not None:
+            #     # Set data
+            #     channel["trace"].set_data(
+            #         x_ar=self._x_axis,
+            #         y_ar=channel["display_sp"],
+            #         ind=1
+            #     )
 
             # Plot monitors if desired
-            if channel["error_monitor"] is not None:
-                channel["error_monitor"].set_data(
-                    x_ar=self._x_axis,
-                    y_ar=channel["display_error"]
-                    # y_ar = channel["error"]
-                )
-
-            if channel["voltage_monitor"] is not None:
-                channel["voltage_monitor"].set_data(
-                    x_ar=self._x_axis,
-                    y_ar=channel["display_voltage"]
-                    # y_ar=channel["voltage"]
-                )
+            # if channel["error_monitor"] is not None:
+            #     channel["error_monitor"].set_data(
+            #         x_ar=self._x_axis,
+            #         y_ar=channel["display_error"]
+            #         # y_ar = channel["error"]
+            #     )
+            #
+            # if channel["voltage_monitor"] is not None:
+            #     channel["voltage_monitor"].set_data(
+            #         x_ar=self._x_axis,
+            #         y_ar=channel["display_voltage"]
+            #         # y_ar=channel["voltage"]
+            #     )
 
     def _get_display_data(self):
         """Generates data to be displayed from all wavemeter samples"""
@@ -311,8 +320,8 @@ class WlmMonitor:
             current_data_index = 0
             current_display_index = 0
             monitor_setpoint = channel["setpoint"] is not None
-            monitor_error = channel["error_monitor"] is not None
-            monitor_voltage = channel["voltage_monitor"] is not None
+            monitor_error = "error_monitor" in channel
+            monitor_voltage = "voltage_monitor" in channel
             while current_data_index < self._data_length:
                 channel["display_data"][current_display_index] = np.mean(
                     channel["data"][current_data_index:current_data_index+self._bin_by]
@@ -333,9 +342,6 @@ class WlmMonitor:
                     )
                 current_data_index += self._bin_by
                 current_display_index += 1
-
-        # Update the setpoint
-        # self._update_setpoint()
 
     def _update_lock(self):
         """Updates control variables for laser locking"""

@@ -33,46 +33,47 @@ def main():
     gui_server.start()
 
     # Test code
-    main_window.assign_plot(
-        plot_widget="graph_widget_1",
-        legend_widget="legend_widget_1",
-        plot_label="Channel 1 Monitor",
-        curve_label="Curve 1",
-        error_bars=True
-    )
-    # main_window.assign_plot(plot_label="Channel 1 Monitor", curve_label="Curve 2")
 
-    main_window.assign_plot(
-        plot_widget="graph_widget_2",
-        legend_widget="legend_widget_2",
-        plot_label="Channel 2 Monitor",
-        curve_label="Curve 1"
-    )
-    main_window.assign_plot(plot_label="Channel 2 Monitor", curve_label="Curve 2")
+    # main_window.configure_curve(
+    #     plot_widget="graph_widget_1",
+    #     legend_widget="legend_widget_1",
+    #     plot_label="Channel 1 Monitor",
+    #     curve_label="Curve 1"
+    # )
+    # main_window.configure_curve(plot_label="Channel 1 Monitor", curve_label="Curve 2")
+    #
+    # main_window.configure_curve(
+    #     plot_widget="graph_widget_2",
+    #     legend_widget="legend_widget_2",
+    #     plot_label="Channel 2 Monitor",
+    #     curve_label="Curve 1"
+    # )
+    # main_window.configure_curve(plot_label="Channel 2 Monitor", curve_label="Curve 2")
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():
-        main_window.set_data(
-            np.random.random(1000),
-            error=np.random.random(1000)*0.2,
-            plot_label="Channel 1 Monitor",
-            curve_label="Curve 1"
-        )
-        # main_window.set_data(
+        # main_window.set_curve_data(
+        #     np.random.random(1000),
+        #     plot_label="Channel 1 Monitor",
+        #     curve_label="Curve 1"
+        # )
+        # main_window.set_curve_data(
         #     1 + np.random.random(1000),
         #     plot_label="Channel 1 Monitor",
         #     curve_label="Curve 2"
         # )
-        main_window.set_data(
-            np.random.random(1000),
-            plot_label="Channel 2 Monitor",
-            curve_label="Curve 1"
-        )
-        main_window.set_data(
-            1 + np.random.random(1000),
-            plot_label="Channel 2 Monitor",
-            curve_label="Curve 2"
-        )
+        # main_window.set_curve_data(
+        #     np.random.random(1000),
+        #     plot_label="Channel 2 Monitor",
+        #     curve_label="Curve 1"
+        # )
+        # main_window.set_curve_data(
+        #     1 + np.random.random(1000),
+        #     plot_label="Channel 2 Monitor",
+        #     curve_label="Curve 2"
+        # )
+        main_window.configure_widgets()
+        main_window.update_widgets()
         app.processEvents()
     main_window.close_gui()
 

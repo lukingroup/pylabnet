@@ -1,4 +1,3 @@
-from pylabnet.gui.igui.iplot import SingleTraceFig, MultiTraceFig
 from pylabnet.scripts.pid import PID
 import numpy as np
 import time
@@ -6,6 +5,13 @@ import time
 
 class WlmMonitor:
     """Script class for monitoring wavemeter"""
+
+    # Name of GUI template to use
+    _ui = "wavemetermonitor"
+
+    # Define GUI widget instance names for assignment of data
+    _gui_plot_widgets = ["graph_widget_1", "graph_widget_2", "graph_widget_3", "graph_widget_4"]
+    _gui_legend_widgets = ["legend_widget_1", "legend_widget_2", "legend_widget_3", "legend_widget_4"]
 
     def __init__(self, wlm_client=None):
 
@@ -17,32 +23,22 @@ class WlmMonitor:
         self._wlm = wlm_client
         self._is_running = False
         self.channels = [None]
-        self._x_axis = None
-        self._data_length = 0
-        self._display_length = 0
-        self._update_rate = 0
-        self._bin_by = 0
+        self._display_pts = 0
         self._gui = None
 
-    def set_params(self, channels=None, gui=None, update_rate=0.05, display_pts=1000, bin_by=5, memory=10):
+    def set_params(self, channels=None, gui=None, display_pts=1000, memory=10):
         """
         Configures script parameters for wavemeter control
         
         :param channels: list of dictionaries containing channel information in the example structure:
             {"channel": 1, "setpoint": None, "lock": False, "PID":[0, 0, 0]}
         :param gui: instance of GUI client for data streaming
-        :param update_rate: how often to update the plot in seconds
             Note: this should be increased in order to avoid lagging in plot outputting
         :param display_pts: number of points to display on graph
-        :param bin_by: number of wavemeter samples per display point
         :param memory: number of points to use for integral memory
         """
 
-        self._bin_by = bin_by
-        self._display_length = display_pts
-        self._data_length = self._display_length * self._bin_by
-        self._x_axis = np.arange(self._data_length)
-        self._update_rate = update_rate
+        self._display_pts = display_pts
         self._gui = gui
 
         # Initialize to default settings if nothing provided
@@ -55,24 +51,10 @@ class WlmMonitor:
         else:
             self.channels = channels
 
-
         for channel in self.channels:
 
             # We need to configure the plot differently based on whether or not a setpoint is given
             if channel["setpoint"] is not None:
-
-                # Initialize plot with no setpoints
-                # channel["trace"] = SingleTraceFig(title_str="Channel {} Laser Monitor".format(channel["channel"]))
-
-            #else:
-
-                # Initialize plot with setpoints
-                # channel["trace"] = MultiTraceFig(
-                #     title_str="Channel {} Laser Monitor".format(channel["channel"]),
-                #     ch_names=["Channel {} Frequency".format(channel["channel"]),
-                #               "Channel {} Setpoint".format(channel["channel"])],
-                #     legend_orientation='h'
-                # )
 
                 # If a setpoint is given, configure PID to be an instance of PID class with desired parameters
                 if "PID" in channel:
@@ -110,37 +92,24 @@ class WlmMonitor:
                 #     y_str="Voltage (V)"
                 # )
 
-            # Set axis labels
-            # channel["trace"].set_lbls(
-            #     x_str="Time (pts)",
-            #     y_str="Frequency (THz)"
-            # )
-
     def run(self):
         """Runs the wavemeter monitor"""
 
         try:
-
-            # Start the monitor with desired parameters
-            # Raise is_running flag
             self._is_running = True
 
             # Set display to initial sample and show
             self._initialize_display()
 
-            # Continuously update data until paused
+            # Continuously update data and lock until paused
             while self._is_running:
+                self._update_data()
+                self._update_lock()
 
-                # Keep track of time to refresh output
-                start_time = time.time()
-                while time.time() - start_time < self._update_rate and self._is_running:
-                    self._update_data()
-                    self._update_lock()
-                    time.sleep(0.005)
+                # Sleep slightly longer than the max query time
+                time.sleep(0.003)
 
-                self._get_display_data()
                 self._update_output()
-                time.sleep(self._update_rate)
 
         except Exception as exc_obj:
             self._is_running = False
@@ -195,64 +164,49 @@ class WlmMonitor:
     # Technical methods
 
     def _initialize_display(self):
-        """Initializes the display, sets all output points to the first reading for each WL"""
+        """Initializes the display, sets all data to the first reading for each WL"""
 
-        for channel in self.channels:
+        # Keep track of how many graphs we initialize so we don't overload the GUI
+        graph_index = 0
+        num_graphs = len(self._gui_plot_widgets)
+        while graph_index < num_graphs and graph_index < len(self.channels):
 
-            # Get current wavelength
-            wavelength = self._wlm.get_wavelength(channel["channel"])
+            # Assign main channel GUI labels
+            current_channel = self.channels[graph_index]["channel"]
+            self.channels[graph_index]["plot_label"] = "Channel {} Wavemeter Monitor".format(current_channel)
+            self.channels[graph_index]["curve_label"] = "Laser {} Frequency".format(current_channel)
 
-            # Generate constant array with current wavelength for initialization
-            channel["data"] = np.ones(self._data_length) * wavelength
-            channel["display_data"] = np.ones(self._display_length) * wavelength
+            # Assign plot for laser frequency
+            self._gui.configure_curve(
+                plot_widget=self._gui_plot_widgets[graph_index],
+                legend_widget=self._gui_legend_widgets[graph_index],
+                plot_label=self.channels[graph_index]["plot_label"],
+                curve_label=self.channels[graph_index]["curve_label"]
+            )
 
-            # Set the data to the plot
-            # channel["trace"].set_data(
-            #     x_ar=self._x_axis,
-            #     y_ar=channel["display_data"]
-            #     # y_ar=channel["data"]
-            # )
+            # Set data array
+            self.channels[graph_index]["data"] = np.ones(self._display_pts)*self._wlm.get_wavelength()
 
-            self._gui.set_data(channel["display_data"])
+            # Assign setpoint to the sames plot (but a new curve) if relevant
+            if self.channels[graph_index]["setpoint"] is not None:
+                self.channels[graph_index]["sp_label"] = "Channel {} Setpoint".format(current_channel)
+                self._gui.configure_curve(
+                    plot_label=self.channels[graph_index]["plot_label"],
+                    curve_label=self.channels[graph_index]["sp_label"]
+                )
 
-            # Plot the setpoint as well if it exists
-            # if channel["setpoint"] is not None:
-            #     channel["sp_data"] = np.ones(self._data_length) * channel["setpoint"]
-            #     channel["display_sp"] = np.ones(self._display_length) * channel["setpoint"]
-            #     channel["trace"].set_data(
-            #         x_ar=self._x_axis,
-            #         y_ar=channel["display_sp"]
-            #     )
+                # Set setpoint array
+                self.channels[graph_index]["sp_data"] = (np.ones(self._display_pts)
+                                                         * self.channels[graph_index]["setpoint"])
 
-            # Show graph
-            # channel["trace"].show()
-
-            # Plot error monitor if it exists
-            # if channel["error_monitor"] is not None:
-            #     channel["error"] = np.ones(self._data_length) * channel["PID"].error
-            #     channel["display_error"] = np.ones(self._display_length) * channel["PID"].error
-            #     channel["error_monitor"].set_data(
-            #         x_ar=self._x_axis,
-            #         y_ar=channel["display_error"]
-            #         # y_ar=channel["error"]
-            #     )
-            #     channel["error_monitor"].show()
-
-            # Plot voltage monitor if it exists
-            # if channel["voltage_monitor"] is not None:
-            #     channel["voltage"] = np.ones(self._data_length) * channel["PID"].cv
-            #     channel["display_voltage"] = np.ones(self._display_length) * channel["PID"].cv
-            #     channel["voltage_monitor"].set_data(
-            #         x_ar=self._x_axis,
-            #         y_ar=channel["display_voltage"]
-            #         # y_ar=channel["voltage"]
-            #     )
-            #     channel["voltage_monitor"].show()
+            # Proceed to the next channel
+            graph_index += 1
 
     def _update_data(self):
         """Pulls a new sample from the WLM into the data for each channel"""
 
         for channel in self.channels:
+
             # Get current wavelength
             wavelength = self._wlm.get_wavelength(channel["channel"])
 
@@ -278,23 +232,20 @@ class WlmMonitor:
 
         for channel in self.channels:
 
-            # Set data
-            # channel["trace"].set_data(
-            #     x_ar=self._x_axis,
-            #     y_ar=channel["display_data"]
-            #     # y_ar=channel["data"]
-            # )
+            # Update main trace
+            self._gui.set_curve_data(
+                channel["data"],
+                plot_label=channel["plot_label"],
+                curve_label=channel["curve_label"]
+            )
 
-            self._gui.set_data(channel["display_data"])
-
-            # Plot the setpoint as well if provided
-            # if channel["setpoint"] is not None:
-            #     # Set data
-            #     channel["trace"].set_data(
-            #         x_ar=self._x_axis,
-            #         y_ar=channel["display_sp"],
-            #         ind=1
-            #     )
+            # Update setpoint if relevant
+            if channel["setpoint"] is not None:
+                self._gui.set_curve_data(
+                    channel["sp_data"],
+                    plot_label=channel["plot_label"],
+                    curve_label=channel["sp_label"]
+                )
 
             # Plot monitors if desired
             # if channel["error_monitor"] is not None:
@@ -360,6 +311,6 @@ class WlmMonitor:
                 # TODO: set voltage
 
                 # Update error and lock attributes
-                channel["error"] = np.append(channel["error"][1:], channel["PID"].error)
-                channel["voltage"] = np.append(channel["voltage"][1:], channel["PID"].cv)
+                # channel["error"] = np.append(channel["error"][1:], channel["PID"].error)
+                # channel["voltage"] = np.append(channel["voltage"][1:], channel["PID"].cv)
 

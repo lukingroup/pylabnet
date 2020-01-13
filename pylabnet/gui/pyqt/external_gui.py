@@ -363,4 +363,10 @@ class Scalar:
         self.data = data
 
     def update_output(self):
-        self.widget.display(self.data)
+        """Updates the physical output of the scalar widget."""
+
+        # Set the state, checking first whether it is a boolean display or not
+        if isinstance(self.data, bool):
+            self.widget.setCheckState(self.data)
+        else:
+            self.widget.display(self.data)

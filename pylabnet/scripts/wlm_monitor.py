@@ -120,6 +120,26 @@ class WlmMonitor:
 
         self._is_running = False
 
+    def resume(self):
+        """Resumes wavemeter monitor after it has been paused"""
+
+        try:
+            self._is_running = True
+
+            # Continuously update data and lock until paused
+            while self._is_running:
+                self._update_data()
+                self._update_lock()
+
+                # Sleep slightly longer than the max query time
+                time.sleep(0.003)
+
+                self._update_output()
+
+        except Exception as exc_obj:
+            self._is_running = False
+            raise exc_obj
+
     def update_parameters(self, params):
         """
         Updates the monitoring script parameters during runtime. To be called remotely (see parameter_update module).
@@ -303,7 +323,7 @@ class WlmMonitor:
             if channel["lock"]:
 
                 # Feed in the data
-                channel["PID"].set_pv(channel["data"][self._data_length - channel["PID"].memory:])
+                channel["PID"].set_pv(channel["data"][self._display_pts - channel["PID"].memory:])
 
                 # Make a step with the control variable
                 channel["PID"].set_cv()
@@ -313,4 +333,3 @@ class WlmMonitor:
                 # Update error and lock attributes
                 # channel["error"] = np.append(channel["error"][1:], channel["PID"].error)
                 # channel["voltage"] = np.append(channel["voltage"][1:], channel["PID"].cv)
-

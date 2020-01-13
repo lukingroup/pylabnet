@@ -31,9 +31,6 @@ class Window(QtWidgets.QMainWindow):
 
     _gui_directory = "gui_templates"
     _default_template = "mainwindow"
-    _color_list = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
-                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
-                   '#000075', '#808080']
 
     def __init__(self, app, gui_template=None, run=True):
         """
@@ -50,14 +47,7 @@ class Window(QtWidgets.QMainWindow):
         self._app = app
         self._is_running = False
         self.plots = {}
-        self.curves = {}
-        self.curve_data = {}
-        self.errors = {}
-        self.curve_error = {}
-        self.legends = {}
-        self.pens = {}
         self._to_configure = []
-        self._active_widgets = []
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
@@ -70,64 +60,27 @@ class Window(QtWidgets.QMainWindow):
 
         sys.exit(self._app.exec_())
 
-    def configure_widgets(self):
+    def assign_plot(self, plot_widget, plot_label, legend_widget):
         """
-        Configures all widgets currently in the self._to_configure list using the self._assign_plot() method.
-        Currently only does plot widgets.
-        """
+        Adds plot assignment request to a queue
 
-        # Configure all widgets
-        while len(self._to_configure) > 0:
-
-            # Assign the plot and remove from configuration list
-            self._assign_plot(self._to_configure[0])
-            del self._to_configure[0]
-
-    def update_widgets(self):
-        """Updates all widgets in the update queue. Currently only does plot widgets."""
-
-        for curve_key in self.curves:
-            self._set_plot_data(curve_key)
-
-    def configure_curve(self, plot_widget=None, legend_widget=None, plot_label=None, curve_label=None,
-                        error_bars=False):
-        """
-        Adds plot configuration request to a queue of plots to configure
-
-        :param plot_widget: (str) variable name of the plot to be assigned. Should only be passed the first time for
-            each plot widget in the GUI. After that, the plot_label can be used to reference the plot
-        :param legend_widget:  (str, optional) variable name of the GraphicsView container for the legend. If this is
-            not provided on the first assignment to a new plot widget, a legend will not be shown.
-        :param plot_label: (str, optional) reference name of the plot. By default plot_label is set to plot_widget.
-            plot_label is used as the title for the plot.
-        :param curve_label: (str, optional) reference name of the curve on the plot. Only relevant for plots which have
-                more than one curve. In that case, curve_label is used both to identify which curve to set data to in
-                future calls of the set_plot_data() method, as well as in the plot legend
-        :param error_bars: (bool, optional) determines whether or not the plot will have error bars
+        :param plot_widget: (str) name of the plot widget to use in the GUI window
+        :param plot_label: (str) label to use for future referencing of the plot widget from the self.plots dictionary
+        :param legend_widget: (str) name of the pg.GraphicsView instance for use as a legend
         """
 
-        # Add to queue
-        self._to_configure.append((plot_widget, legend_widget, plot_label, curve_label, error_bars))
+        self._plots_to_configure.append((plot_widget, plot_label, legend_widget))
 
-    def set_curve_data(self, data, error=None, plot_label=None, curve_label=str(0)):
-        """
-        Updates plot data
+    def set_curve_data(self, data, plot_label, curve_label, error=None):
+        """Sets data to a specific curve (does not update GUI directly)
 
-        :param data: (np array) plot data to set. Either a single np array (just y-axis) or 2D np array (x-axis, y-axis)
-        :param error: (np array, optional) list of error-bars (if applicable)
-        :param plot_label: (str) reference label of the plot widget
-        :param curve_label: (str) reference label of the curve widget
+        :param data: (np.array) 1D or 2D numpy array with data
+        :param plot_label: (str) label of the plot
+        :param curve_label: (str) curve key of curve to set
+        :param error: (np.array, optional) 1D array with error bars, if applicable
         """
 
-        # Set to default if no curve label provided
-        if curve_label is None:
-            curve_label = 0
-        curve_key = plot_label+'_'+curve_label
-
-        # Update data and error
-        self.curve_data[curve_key] = data
-        if error is not None:
-            self.curve_error[curve_label] = error
+        self.plots[plot_label].curves[curve_label].set_curve_data(data, error=error)
 
     # Technical methods
 
@@ -165,119 +118,99 @@ class Window(QtWidgets.QMainWindow):
 
         self.show()
 
-    def _set_legend(self, legend_widget=None, plot_label=None):
-        """
-        Sets the legend for a plot. Should be invoked once at the beginning when a plot is initialized. Requires a
-        GraphicsView instance in order to serve as a container for the legend. This can be done by dragging a
-        QGraphicsView object into the desired shape and location in the GUI, and promoting to a GraphicsView object
-        with the pyqtgraph header. The legend is configured to sit in the top left corner of the box.
-
-        :param legend_widget: (str, optional) variable name of the GraphicsView container for the legend. If this is not
-            provided on the first assignment to a new plot widget, a legend will not be shown.
-        :param plot_label: (str, optional) reference name of the plot. By default plot_label is set to plot_widget
-        """
-        # Initialize legend display
-        if legend_widget is not None and plot_label is not None:
-            # Assign legend widget to plot_label key in self.legends
-            self.legends[plot_label] = pg.LegendItem()
-
-            # Assign legend widget to GraphicsView instance provided using a ViewBox object as an anchor
-            # Simply tying the legend to the plot causes it to overlap with the data
-            # Not sure this is the best way to solve this, but this solution enables .ui defined legend placement
-            view_box = pg.ViewBox()
-            getattr(self, legend_widget).setCentralWidget(view_box)
-            self.legends[plot_label].setParentItem(view_box)
-            self.legends[plot_label].anchor((0, 0), (0, 0))
-
     def _force_update(self):
         self._app.processEvents()
 
-    def _assign_plot(self, assign_params):
+    # def _assign_plot(self, assign_params):
+    #     """
+    #     Assigns a plot with the key plot_label to the variable self.plot_widget. Example:
+    #         >> main_window.assign_plot("plot_widget_1", plot_label="Channel 1 Monitor")
+    #     Here, "plot_widget_1" refers to a widget object in main_window, as specified in the .ui file
+    #
+    #     :param assign_params: (tuple) containing the following parameters:
+    #         plot_widget: (str) variable name of the plot to be assigned. Should only be passed the first time for
+    #             each plot widget in the GUI. After that, the plot_label can be used to reference the plot
+    #         legend_widget: (str, optional) variable name of the GraphicsView container for the legend. If this is not
+    #             provided on the first assignment to a new plot widget, a legend will not be shown.
+    #         plot_label: (str, optional) reference name of the plot. By default plot_label is set to plot_widget.
+    #             plot_label is used as the title for the plot.
+    #         curve_label: (str, optional) reference name of the curve on the plot. Only relevant for plots which have
+    #             more than one curve. In that case, curve_label is used both to identify which curve to set data to in
+    #             future calls of the set_plot_data() method, as well as in the plot legend
+    #         error_bars: (bool, optional) determines whether or not the plot will have error bars
+    #     """
+    #
+    #     # Unpack parameters
+    #     plot_widget, legend_widget, plot_label, curve_label, error_bars = assign_params
+    #
+    #     # Set a default plot_label if not provided
+    #     if plot_label is None:
+    #         plot_label = plot_widget
+    #
+    #     # Assign plot widget object to plot_label key in self.plots
+    #     # getattr(Obj, str) is used to find the attribute of Obj with a particular name (str)
+    #     if plot_widget is not None:
+    #         self.plots[plot_label] = getattr(self, plot_widget)
+    #
+    #         # Set plot legend and title
+    #         self.plots[plot_label].setTitle(plot_label)
+    #         self._set_legend(legend_widget=legend_widget, plot_label=plot_label)
+    #
+    #     # Count how many times this plot_label has been used based on the existing list of curves
+    #     curve_index = sum(1 for plot_heading in self.curves.keys() if plot_label in plot_heading)
+    #
+    #     # If no curve label is given, assign default numerical curve name based on number of curve
+    #     if curve_label is None:
+    #         curve_label = "curve_"+str(curve_index)
+    #
+    #     # Assign pen and curve objects to plot_label+'_'+curve_label key in self.curves and self.pens
+    #     # Set curve style
+    #     curve_key = plot_label+'_'+curve_label
+    #     self.pens[curve_key] = pg.mkPen(
+    #         self._color_list[len(self.pens)]
+    #     )
+    #     self.curves[curve_key] = self.plots[plot_label].plot(
+    #         pen=self.pens[curve_key]
+    #     )
+    #
+    #     # Initialize blank data
+    #     self.curve_data[curve_key] = np.array([])
+    #
+    #     # Initialize error bars if necessary
+    #     if error_bars:
+    #         self.errors[curve_key] = pg.ErrorBarItem(
+    #             pen=self.pens[curve_key],
+    #             beam=1
+    #         )
+    #         self.plots[plot_label].addItem(self.errors[curve_key])
+    #         self.curve_error[curve_key] = np.array([])
+    #
+    #     self.legends[plot_label].addItem(self.curves[curve_key], name=curve_label)
+    #
+    #     self._force_update()
+
+    def _assign_plot(self, plot_widget, plot_label, legend_widget):
         """
-        Assigns a plot with the key plot_label to the variable self.plot_widget. Example:
-            >> main_window.assign_plot("plot_widget_1", plot_label="Channel 1 Monitor")
-        Here, "plot_widget_1" refers to a widget object in main_window, as specified in the .ui file
+        Assigns a plot to a particular plot widget
 
-        :param assign_params: (tuple) containing the following parameters:
-            plot_widget: (str) variable name of the plot to be assigned. Should only be passed the first time for
-                each plot widget in the GUI. After that, the plot_label can be used to reference the plot
-            legend_widget: (str, optional) variable name of the GraphicsView container for the legend. If this is not
-                provided on the first assignment to a new plot widget, a legend will not be shown.
-            plot_label: (str, optional) reference name of the plot. By default plot_label is set to plot_widget.
-                plot_label is used as the title for the plot.
-            curve_label: (str, optional) reference name of the curve on the plot. Only relevant for plots which have
-                more than one curve. In that case, curve_label is used both to identify which curve to set data to in
-                future calls of the set_plot_data() method, as well as in the plot legend
-            error_bars: (bool, optional) determines whether or not the plot will have error bars
+        :param plot_widget: (str) name of the plot widget to use in the GUI window
+        :param plot_label: (str) label to use for future referencing of the plot widget from the self.plots dictionary
         """
 
-        # Unpack parameters
-        plot_widget, legend_widget, plot_label, curve_label, error_bars = assign_params
+        self.plots[plot_label] = Plot(self, plot_widget, legend_widget)
 
-        # Set a default plot_label if not provided
-        if plot_label is None:
-            plot_label = plot_widget
+        # Set title
+        self.plots[plot_label].widget.setTitle(plot_label)
 
-        # Assign plot widget object to plot_label key in self.plots
-        # getattr(Obj, str) is used to find the attribute of Obj with a particular name (str)
-        if plot_widget is not None:
-            self.plots[plot_label] = getattr(self, plot_widget)
+    def _assign_curve(self, plot_label, curve_label):
+        """
+        Assigns a curve to a plot
 
-            # Set plot legend and title
-            self.plots[plot_label].setTitle(plot_label)
-            self._set_legend(legend_widget=legend_widget, plot_label=plot_label)
-
-        # Count how many times this plot_label has been used based on the existing list of curves
-        curve_index = sum(1 for plot_heading in self.curves.keys() if plot_label in plot_heading)
-
-        # If no curve label is given, assign default numerical curve name based on number of curve
-        if curve_label is None:
-            curve_label = "curve_"+str(curve_index)
-
-        # Assign pen and curve objects to plot_label+'_'+curve_label key in self.curves and self.pens
-        # Set curve style
-        curve_key = plot_label+'_'+curve_label
-        self.pens[curve_key] = pg.mkPen(
-            self._color_list[len(self.pens)]
-        )
-        self.curves[curve_key] = self.plots[plot_label].plot(
-            pen=self.pens[curve_key]
-        )
-
-        # Initialize blank data
-        self.curve_data[curve_key] = np.array([])
-
-        # Initialize error bars if necessary
-        if error_bars:
-            self.errors[curve_key] = pg.ErrorBarItem(
-                pen=self.pens[curve_key],
-                beam=1
-            )
-            self.plots[plot_label].addItem(self.errors[curve_key])
-            self.curve_error[curve_key] = np.array([])
-
-        self.legends[plot_label].addItem(self.curves[curve_key], name=curve_label)
-
-        self._force_update()
-
-    def _set_plot_data(self, curve_key):
-        """Sets data to a plot widget
-
-        :param curve_key: (str) curve key of curve to set
+        :param plot_label: (str) label of the plot to assign
+        :param curve_label: (str) label of curve to use for indexing in the self.plots[plot_label].curves dictionary
         """
 
-        data = self.curve_data[curve_key]
-        self.curves[curve_key].setData(data)
-
-        # We need to do some type handling for error bars since the data must be format as x, y
-        if curve_key in self.errors:
-            if len(data.shape) == 1:
-                x, y = np.arange(len(data)), data
-            else:
-                x, y = data[0], data[1]
-            self.errors[curve_key].setData(x=x, y=y, height=self.curve_error[curve_key])
-
-        self._force_update()
+        self.plots[plot_label].add_curve(curve_label)
 
 
 class Service(ServiceBase):
@@ -326,3 +259,114 @@ class Client(ClientBase):
             plot_label=plot_label,
             curve_label=curve_label
         )
+
+
+class Plot:
+
+    _color_list = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                   '#000075', '#808080']
+
+    def __init__(self, gui, plot_widget, legend_widget):
+        """
+        Instantiates plot object for a plot inside of the GUI window
+
+        :param gui: (Window) instance of the GUI window
+        :param plot_widget: (str) name of the plot widget
+        :param legend_widget: (str) name of the legend widget
+        """
+
+        self.gui = gui
+        self.widget = getattr(self.gui, plot_widget)
+        self.curves = {}
+        self.legend = None
+
+        # Set up legend
+        self._set_legend(legend_widget=legend_widget)
+
+    def add_curve(self, curve_label):
+        """
+        Add a curve to the plot
+
+        :param curve_label: (str, optional) instance of curve class to add to the plot
+        """
+
+        # Add a new curve to self.curves dictionary for this plot
+        self.curves[curve_label] = Curve(
+            self.widget,
+            pen=pg.mkPen(color=self._color_list[len(self.curves)])
+        )
+
+        # Configure legend
+        self._add_to_legend(curve_label)
+
+    # Technical methods
+
+    def _set_legend(self, legend_widget):
+        """
+        Sets the legend for a plot. Should be invoked once at the beginning when a plot is initialized. Requires a
+        GraphicsView instance in order to serve as a container for the legend. This can be done by dragging a
+        QGraphicsView object into the desired shape and location in the GUI, and promoting to a GraphicsView object
+        with the pyqtgraph header. The legend is configured to sit in the top left corner of the box.
+
+        :param legend_widget: (str) name of GraphicsView instance in the GUI window to store legend in
+        """
+
+        # Assign legend widget to plot_label key in self.legends
+        self.legend = pg.LegendItem()
+
+        # Assign legend widget to GraphicsView instance provided using a ViewBox object as an anchor
+        # Simply tying the legend to the plot causes it to overlap with the data
+        # Not sure this is the best way to solve this, but this solution enables .ui defined legend placement
+        view_box = pg.ViewBox()
+        getattr(self, legend_widget).setCentralWidget(view_box)
+        self.legend.setParentItem(view_box)
+        self.legend.anchor((0, 0), (0, 0))
+
+    def _add_to_legend(self, curve_label):
+        """
+        Adds a curve to the legend
+
+        :param curve_label: (str) key label of curve in self.curves dictionary to add to legend
+        """
+
+        self.legend.addItem(self.curves[curve_label], curve_label)
+
+
+class Curve:
+
+    def __init__(self, plot_widget, pen=None, error=False):
+        """
+        Instantiates a curve inside of a plot_widget
+
+        :param plot_widget: (pg.PlotItem) instance of plot widget to add curve to
+        :param pen: (pg.Pen) pen to use to draw curve
+        :param error: (bool, optional) whether or not to add error bars to this plot
+        """
+
+        # Instantiate new curve in the plot
+        self.widget = plot_widget.plot(pen=pen)
+
+        # Instantiate error bars
+        self.error = None
+        if error:
+            self.error = pg.ErrorBarItem(
+                pen=pen
+            )
+            plot_widget.addItem(self.error)
+
+        self.data = np.array([])
+        self.error_data = np.array([])
+
+    def set_curve_data(self, data, error=None):
+        """
+        Stores data to a new curve
+
+        :param data: (np.array) either a 1D (only y-axis) or 2D (x-axis, y-axis) numpy array
+        :param error: (np.array, optional) 1D array for error bars
+        """
+
+        self.data = data
+
+        if self.error is not None:
+            self.error_data = error

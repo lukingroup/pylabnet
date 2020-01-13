@@ -18,8 +18,6 @@ import pickle
 import copy
 
 
-# TODO: change architecture to perform all data updates on the server (client only streams data)
-
 class Window(QtWidgets.QMainWindow):
     """
     Main window for GUI. This should be instantiated locally to create a GUI window.
@@ -47,18 +45,13 @@ class Window(QtWidgets.QMainWindow):
         self._app = app
         self._is_running = False
         self.plots = {}
-        self._to_configure = []
+        self.scalars = {}
+        self._plots_to_assign = []
+        self._curves_to_assign = []
+        self._scalars_to_assign = []
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
-
-    def close_gui(self):
-        """
-        Stops GUI without crashing. Does not physically close the window, but after execution of this statement,
-        it is safe to close the window.
-        """
-
-        sys.exit(self._app.exec_())
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """
@@ -69,7 +62,21 @@ class Window(QtWidgets.QMainWindow):
         :param legend_widget: (str) name of the pg.GraphicsView instance for use as a legend
         """
 
-        self._plots_to_configure.append((plot_widget, plot_label, legend_widget))
+        self._plots_to_assign.append((plot_widget, plot_label, legend_widget))
+
+    def assign_curve(self, plot_label, curve_label):
+        """Adds curve assignment to the queue"""
+
+        self._curves_to_assign.append((plot_label, curve_label))
+
+    def assign_scalar(self, scalar_widget, scalar_label):
+        """
+        Adds scalar assignment request to the queue
+
+        :param scalar_widget: (str) name of the scalar object (e.g. QLCDNumber) in the GUI
+        :param scalar_label: (str) label for self.numbers dictionary
+        """
+        self._scalars_to_assign.append((scalar_widget, scalar_label))
 
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """Sets data to a specific curve (does not update GUI directly)
@@ -81,6 +88,53 @@ class Window(QtWidgets.QMainWindow):
         """
 
         self.plots[plot_label].curves[curve_label].set_curve_data(data, error=error)
+
+    def set_scalar(self, value, scalar_label):
+        """Sets the value of a numerical display internally (does not update)"""
+        self.scalars[scalar_label].set_data(value)
+
+    def configure_widgets(self):
+        """Configures all widgets in the queue"""
+
+        # Assign plot widgets
+        for plot_widget_params in self._plots_to_assign:
+
+            # Unpack parameters
+            plot_widget, plot_label, legend_widget = plot_widget_params
+
+            # Assign plot to physical plot widget in GUI
+            self._assign_plot(plot_widget, plot_label, legend_widget)
+        self._plots_to_assign = []
+
+        # Assign curves to plots
+        for curve_params in self._curves_to_assign:
+
+            # Unpack parameters
+            plot_label, curve_label = curve_params
+
+            # Assign curve to physical plot widget in GUI
+            self._assign_curve(plot_label, curve_label)
+        self._curves_to_assign = []
+
+        # Assign scalar widgets
+        for scalar_params in self._scalars_to_assign:
+
+            # Unpack parameters
+            scalar_widget, scalar_label = scalar_params
+
+            # Assign scalar to physical scalar widget in GUI
+            self._assign_scalar(scalar_widget, scalar_label)
+
+    def update_widgets(self):
+        """Updates all widgets on the physical GUI to current data"""
+
+        # Update all plots
+        for plot in self.plots.values():
+            plot.update_output()
+
+        # Update all scalars
+        for scalar in self.scalars.values():
+            scalar.update_output()
 
     # Technical methods
 
@@ -121,80 +175,13 @@ class Window(QtWidgets.QMainWindow):
     def _force_update(self):
         self._app.processEvents()
 
-    # def _assign_plot(self, assign_params):
-    #     """
-    #     Assigns a plot with the key plot_label to the variable self.plot_widget. Example:
-    #         >> main_window.assign_plot("plot_widget_1", plot_label="Channel 1 Monitor")
-    #     Here, "plot_widget_1" refers to a widget object in main_window, as specified in the .ui file
-    #
-    #     :param assign_params: (tuple) containing the following parameters:
-    #         plot_widget: (str) variable name of the plot to be assigned. Should only be passed the first time for
-    #             each plot widget in the GUI. After that, the plot_label can be used to reference the plot
-    #         legend_widget: (str, optional) variable name of the GraphicsView container for the legend. If this is not
-    #             provided on the first assignment to a new plot widget, a legend will not be shown.
-    #         plot_label: (str, optional) reference name of the plot. By default plot_label is set to plot_widget.
-    #             plot_label is used as the title for the plot.
-    #         curve_label: (str, optional) reference name of the curve on the plot. Only relevant for plots which have
-    #             more than one curve. In that case, curve_label is used both to identify which curve to set data to in
-    #             future calls of the set_plot_data() method, as well as in the plot legend
-    #         error_bars: (bool, optional) determines whether or not the plot will have error bars
-    #     """
-    #
-    #     # Unpack parameters
-    #     plot_widget, legend_widget, plot_label, curve_label, error_bars = assign_params
-    #
-    #     # Set a default plot_label if not provided
-    #     if plot_label is None:
-    #         plot_label = plot_widget
-    #
-    #     # Assign plot widget object to plot_label key in self.plots
-    #     # getattr(Obj, str) is used to find the attribute of Obj with a particular name (str)
-    #     if plot_widget is not None:
-    #         self.plots[plot_label] = getattr(self, plot_widget)
-    #
-    #         # Set plot legend and title
-    #         self.plots[plot_label].setTitle(plot_label)
-    #         self._set_legend(legend_widget=legend_widget, plot_label=plot_label)
-    #
-    #     # Count how many times this plot_label has been used based on the existing list of curves
-    #     curve_index = sum(1 for plot_heading in self.curves.keys() if plot_label in plot_heading)
-    #
-    #     # If no curve label is given, assign default numerical curve name based on number of curve
-    #     if curve_label is None:
-    #         curve_label = "curve_"+str(curve_index)
-    #
-    #     # Assign pen and curve objects to plot_label+'_'+curve_label key in self.curves and self.pens
-    #     # Set curve style
-    #     curve_key = plot_label+'_'+curve_label
-    #     self.pens[curve_key] = pg.mkPen(
-    #         self._color_list[len(self.pens)]
-    #     )
-    #     self.curves[curve_key] = self.plots[plot_label].plot(
-    #         pen=self.pens[curve_key]
-    #     )
-    #
-    #     # Initialize blank data
-    #     self.curve_data[curve_key] = np.array([])
-    #
-    #     # Initialize error bars if necessary
-    #     if error_bars:
-    #         self.errors[curve_key] = pg.ErrorBarItem(
-    #             pen=self.pens[curve_key],
-    #             beam=1
-    #         )
-    #         self.plots[plot_label].addItem(self.errors[curve_key])
-    #         self.curve_error[curve_key] = np.array([])
-    #
-    #     self.legends[plot_label].addItem(self.curves[curve_key], name=curve_label)
-    #
-    #     self._force_update()
-
     def _assign_plot(self, plot_widget, plot_label, legend_widget):
         """
         Assigns a plot to a particular plot widget
 
         :param plot_widget: (str) name of the plot widget to use in the GUI window
         :param plot_label: (str) label to use for future referencing of the plot widget from the self.plots dictionary
+        :param legend_widget: (str) name of the GraphicsView widget to use in the GUI window for this plot legend
         """
 
         self.plots[plot_label] = Plot(self, plot_widget, legend_widget)
@@ -212,53 +199,24 @@ class Window(QtWidgets.QMainWindow):
 
         self.plots[plot_label].add_curve(curve_label)
 
+    def _assign_scalar(self, scalar_widget, scalar_label):
+        """
+        Assigns scalar widget display in the GUI
+
+        :param scalar_widget: (str) name of the scalar widget (e.g. QLCDNumber) in the GUI
+        :param scalar_label: (str) label of the scalar widget
+        """
+        self.scalars[scalar_label] = Scalar(self, scalar_widget)
+
 
 class Service(ServiceBase):
 
-    def exposed_configure_curve(self, plot_widget=None, legend_widget=None, plot_label=None, curve_label=None,
-                                error_bars=False):
-
-        return self._module.configure_curve(
-            plot_widget=plot_widget,
-            legend_widget=legend_widget,
-            plot_label=plot_label,
-            curve_label=curve_label,
-            error_bars=error_bars
-        )
-
-    def exposed_set_curve_data(self, data_pickle, error_pickle=None, plot_label=None, curve_label=str(0)):
-
-        data, error = pickle.loads(data_pickle), pickle.loads(error_pickle)
-        return self._module.set_curve_data(
-            data=data,
-            error=error,
-            plot_label=plot_label,
-            curve_label=curve_label
-        )
+    pass
 
 
 class Client(ClientBase):
 
-    def configure_curve(self, plot_widget=None, legend_widget=None, plot_label=None, curve_label=None,
-                        error_bars=False):
-
-        return self._service.exposed_configure_curve(
-            plot_widget=plot_widget,
-            legend_widget=legend_widget,
-            plot_label=plot_label,
-            curve_label=curve_label,
-            error_bars=error_bars
-        )
-
-    def set_curve_data(self, data, error=None, plot_label=None, curve_label=str(0)):
-
-        data_pickle, error_pickle = pickle.dumps(data), pickle.dumps(error)
-        return self._service.exposed_set_curve_data(
-            data_pickle=data_pickle,
-            error_pickle=error_pickle,
-            plot_label=plot_label,
-            curve_label=curve_label
-        )
+    pass
 
 
 class Plot:
@@ -300,6 +258,15 @@ class Plot:
         # Configure legend
         self._add_to_legend(curve_label)
 
+    def update_output(self):
+        """Updates plot output to latest data"""
+
+        for curve in self.curves.values():
+            curve.widget.setData(
+                curve.data,
+                error=curve.error
+            )
+
     # Technical methods
 
     def _set_legend(self, legend_widget):
@@ -319,7 +286,7 @@ class Plot:
         # Simply tying the legend to the plot causes it to overlap with the data
         # Not sure this is the best way to solve this, but this solution enables .ui defined legend placement
         view_box = pg.ViewBox()
-        getattr(self, legend_widget).setCentralWidget(view_box)
+        getattr(self.gui, legend_widget).setCentralWidget(view_box)
         self.legend.setParentItem(view_box)
         self.legend.anchor((0, 0), (0, 0))
 
@@ -330,7 +297,8 @@ class Plot:
         :param curve_label: (str) key label of curve in self.curves dictionary to add to legend
         """
 
-        self.legend.addItem(self.curves[curve_label], curve_label)
+        # Add some space to the legend to prevent overlapping
+        self.legend.addItem(self.curves[curve_label].widget, ' - '+curve_label)
 
 
 class Curve:
@@ -370,3 +338,29 @@ class Curve:
 
         if self.error is not None:
             self.error_data = error
+
+
+class Scalar:
+    """A scalar display object (number or boolean)"""
+
+    def __init__(self, gui, scalar_widget):
+        """
+        Initializes the scalar widget
+
+        :param gui: (Window) instance of the GUI window class containing the number widget
+        :param scalar_widget: name of the
+        """
+
+        self.data = None
+        self.widget = getattr(gui, scalar_widget)
+
+    def set_data(self, data):
+        """
+        Sets the value of the number internally
+
+        :param data: number to set to
+        """
+        self.data = data
+
+    def update_output(self):
+        self.widget.display(self.data)

@@ -1,5 +1,4 @@
 import sys
-sys.path.append(r'C:\Users\Lukin SiV\pylabnet')
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
 

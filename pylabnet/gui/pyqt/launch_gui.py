@@ -19,7 +19,7 @@ def main():
 
     # Create app and instantiate main window
     app = QtWidgets.QApplication(sys.argv)
-    main_window = Window(app)
+    main_window = Window(app, gui_template='wavemetermonitor')
 
     # Instantiate GUI server
     gui_service = Service()
@@ -34,48 +34,76 @@ def main():
 
     # Test code
 
-    # main_window.configure_curve(
-    #     plot_widget="graph_widget_1",
-    #     legend_widget="legend_widget_1",
-    #     plot_label="Channel 1 Monitor",
-    #     curve_label="Curve 1"
-    # )
-    # main_window.configure_curve(plot_label="Channel 1 Monitor", curve_label="Curve 2")
-    #
-    # main_window.configure_curve(
-    #     plot_widget="graph_widget_2",
-    #     legend_widget="legend_widget_2",
-    #     plot_label="Channel 2 Monitor",
-    #     curve_label="Curve 1"
-    # )
-    # main_window.configure_curve(plot_label="Channel 2 Monitor", curve_label="Curve 2")
+    plot_1 = 'Channel 1 Monitor'
+    curve_1 = 'Curve 1'
+    plot_2 = 'Channel 2 Monitor'
+    curve_2 = 'Curve 2'
+
+    main_window.assign_plot(
+        plot_widget='graph_widget_1',
+        plot_label=plot_1,
+        legend_widget='legend_widget_1'
+    )
+    main_window.assign_curve(
+        plot_label=plot_1,
+        curve_label=curve_1
+    )
+    main_window.assign_curve(
+        plot_label=plot_1,
+        curve_label=curve_2
+    )
+
+    main_window.assign_plot(
+        plot_widget='graph_widget_2',
+        plot_label=plot_2,
+        legend_widget='legend_widget_2'
+    )
+    main_window.assign_curve(
+        plot_label=plot_2,
+        curve_label=curve_1
+    )
+    main_window.assign_curve(
+        plot_label=plot_2,
+        curve_label=curve_2
+    )
+
+    num_1 = 'Number 1'
+    main_window.assign_scalar(
+        scalar_widget='number_widget_1',
+        scalar_label=num_1
+    )
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():
-        # main_window.set_curve_data(
-        #     np.random.random(1000),
-        #     plot_label="Channel 1 Monitor",
-        #     curve_label="Curve 1"
-        # )
-        # main_window.set_curve_data(
-        #     1 + np.random.random(1000),
-        #     plot_label="Channel 1 Monitor",
-        #     curve_label="Curve 2"
-        # )
-        # main_window.set_curve_data(
-        #     np.random.random(1000),
-        #     plot_label="Channel 2 Monitor",
-        #     curve_label="Curve 1"
-        # )
-        # main_window.set_curve_data(
-        #     1 + np.random.random(1000),
-        #     plot_label="Channel 2 Monitor",
-        #     curve_label="Curve 2"
-        # )
         main_window.configure_widgets()
+        main_window.set_curve_data(
+            np.random.random(1000),
+            plot_label=plot_1,
+            curve_label=curve_1
+        )
+        main_window.set_curve_data(
+            1 + np.random.random(1000),
+            plot_label=plot_1,
+            curve_label=curve_2
+        )
+        main_window.set_curve_data(
+            np.random.random(1000),
+            plot_label=plot_2,
+            curve_label=curve_1
+        )
+        main_window.set_curve_data(
+            1 + np.random.random(1000),
+            plot_label=plot_2,
+            curve_label=curve_2
+        )
+        main_window.set_scalar(
+            value=np.random.random_sample(),
+            scalar_label=num_1
+        )
+
         main_window.update_widgets()
         app.processEvents()
-    main_window.close_gui()
+    sys.exit(app.exec_())
 
 
 if __name__ == '__main__':

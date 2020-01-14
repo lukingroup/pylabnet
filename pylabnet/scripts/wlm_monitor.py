@@ -3,15 +3,34 @@ import numpy as np
 import time
 
 
+# Static methods
+
+def generate_widgets():
+    """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
+    graphs, legends, numbers, booleans = [], [], [], []
+
+    for i in range(4):
+        graphs.append('graph_widget_'+str(i+1))
+        legends.append('legend_widget_'+str(i+1))
+        numbers.append('number_widget_'+str(i+1))
+        booleans.append('boolean_widget_'+str(i+1))
+    for i in range(4, 8):
+        numbers.append('number_widget_' + str(i + 1))
+        booleans.append('boolean_widget_' + str(i + 1))
+    return graphs, legends, numbers, booleans
+
+
+# Main class
+
+# noinspection PyTypeChecker
 class WlmMonitor:
     """Script class for monitoring wavemeter"""
 
     # Name of GUI template to use
-    _ui = "wavemetermonitor"
+    _ui = "wavemetermonitor_4ch"
 
     # Define GUI widget instance names for assignment of data
-    _gui_plot_widgets = ["graph_widget_1", "graph_widget_2", "graph_widget_3", "graph_widget_4"]
-    _gui_legend_widgets = ["legend_widget_1", "legend_widget_2", "legend_widget_3", "legend_widget_4"]
+    _gui_plot_widgets, _gui_legend_widgets, _gui_number_widgets, _gui_boolean_widgets = generate_widgets()
 
     def __init__(self, wlm_client=None):
 
@@ -196,12 +215,22 @@ class WlmMonitor:
             self.channels[graph_index]["plot_label"] = "Channel {} Wavemeter Monitor".format(current_channel)
             self.channels[graph_index]["curve_label"] = "Laser {} Frequency".format(current_channel)
 
-            # Assign plot for laser frequency
-            self._gui.configure_curve(
+            # Configure plot
+            self._gui.assign_plot(
                 plot_widget=self._gui_plot_widgets[graph_index],
-                legend_widget=self._gui_legend_widgets[graph_index],
-                plot_label=self.channels[graph_index]["plot_label"],
-                curve_label=self.channels[graph_index]["curve_label"]
+                plot_label=self.channels[graph_index]['plot_label']
+            )
+
+            # Configure frequency monitoring curve
+            self._gui.assign_curve(
+                plot_label=self.channels[graph_index]['plot_label'],
+                curve_label=self.channels[graph_index]['curve_label']
+            )
+
+            # Configure frequency display, keeping in mind there are 2 number widgets per channel
+            self._gui.assign_scalar(
+                scalar_widget=self._gui_number_widgets[2*graph_index],
+                scalar_label=self.channels[graph_index]['curve_label']
             )
 
             # Set data array
@@ -210,14 +239,32 @@ class WlmMonitor:
             # Assign setpoint to the sames plot (but a new curve) if relevant
             if self.channels[graph_index]["setpoint"] is not None:
                 self.channels[graph_index]["sp_label"] = "Channel {} Setpoint".format(current_channel)
-                self._gui.configure_curve(
-                    plot_label=self.channels[graph_index]["plot_label"],
-                    curve_label=self.channels[graph_index]["sp_label"]
+                self._gui.assign_curve(
+                    plot_label=self.channels[graph_index]['plot_label'],
+                    curve_label=self.channels[graph_index]['sp_label']
+                )
+
+                # Configure setpoint display
+                self._gui.assign_scalar(
+                    scalar_widget=self._gui_number_widgets[2*graph_index+1],
+                    scalar_label=self.channels[graph_index]['sp_label']
                 )
 
                 # Set setpoint array
                 self.channels[graph_index]["sp_data"] = (np.ones(self._display_pts)
                                                          * self.channels[graph_index]["setpoint"])
+
+                # Set lock booleans
+                self.channels[graph_index]['lock_label'] = 'Channel {} Lock'.format(current_channel)
+                self.channels[graph_index]['error_label'] = 'Channel {} Error'.format(current_channel)
+                self._gui.assign_scalar(
+                    scalar_widget=self._gui_boolean_widgets[2*graph_index],
+                    scalar_label=self.channels[graph_index]['lock_label']
+                )
+                self._gui.assign_scalar(
+                    scalar_widget=self._gui_boolean_widgets[2*graph_index+1],
+                    scalar_label=self.channels[graph_index]['error_label']
+                )
 
             # Proceed to the next channel
             graph_index += 1
@@ -259,12 +306,22 @@ class WlmMonitor:
                 curve_label=channel["curve_label"]
             )
 
+            # Update current WL
+            self._gui.set_scalar(
+                value=channel['data'][-1],
+                scalar_label=channel['curve_label']
+            )
+
             # Update setpoint if relevant
             if channel["setpoint"] is not None:
                 self._gui.set_curve_data(
                     channel["sp_data"],
                     plot_label=channel["plot_label"],
                     curve_label=channel["sp_label"]
+                )
+                self._gui.set_scalar(
+                    value=channel['sp_data'][-1],
+                    scalar_label=channel['sp_label']
                 )
 
             # Plot monitors if desired

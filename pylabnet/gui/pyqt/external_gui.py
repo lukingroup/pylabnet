@@ -482,7 +482,7 @@ class Scalar:
         Initializes the scalar widget
 
         :param gui: (Window) instance of the GUI window class containing the number widget
-        :param scalar_widget: name of the
+        :param scalar_widget: (str) name of the widget for reference
         """
 
         self.data = None

@@ -6,6 +6,7 @@ class PID:
 
     def __init__(self, p=0, i=0, d=0, setpoint=0, memory=20):
         """
+        :rtype: object
         :param p: proportional gain
         :param i: integral
         :param d: differential

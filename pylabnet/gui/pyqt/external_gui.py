@@ -260,16 +260,96 @@ class Window(QtWidgets.QMainWindow):
         self.scalars[scalar_label] = Scalar(self, scalar_widget)
 
 
-# TODO: re-implement client-server interface
-
 class Service(ServiceBase):
 
-    pass
+    def exposed_assign_widgets(self, plots_pickle, scalars_pickle):
+        plots = pickle.loads(plots_pickle)
+        scalars = pickle.loads(scalars_pickle)
+        return self._module.assign_widgets(
+            plots=plots,
+            scalars=scalars
+        )
+
+    def exposed_assign_plot(self, plot_widget, plot_label, legend_widget):
+        return self._module.assign_plot(
+            plot_widget=plot_widget,
+            plot_label=plot_label,
+            legend_widget=legend_widget
+        )
+
+    def exposed_assign_curve(self, plot_label, curve_label):
+        return self._module.assign_curve(
+            plot_label=plot_label,
+            curve_label=curve_label
+        )
+
+    def exposed_assign_scalar(self, scalar_widget, scalar_label):
+        return self._module.assign_scalar(
+            scalar_widget=scalar_widget,
+            scalar_label=scalar_label
+        )
+
+    def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
+        data = pickle.loads(data_pickle)
+        error = pickle.loads(error_pickle)
+        return self._module.set_curve_data(
+            data=data,
+            plot_label=plot_label,
+            curve_label=curve_label,
+            error=error
+        )
+
+    def exposed_set_scalar(self, value, scalar_label):
+        return self._module.set_scalar(
+            value=value,
+            scalar_label=scalar_label
+        )
 
 
 class Client(ClientBase):
 
-    pass
+    def assign_widgets(self, plots, scalars):
+        plots_pickle = pickle.dumps(plots)
+        scalars_pickle = pickle.dumps(scalars)
+        return self._service.exposed_assign_widgets(
+            plots_pickle=plots_pickle,
+            scalars_pickle=scalars_pickle
+        )
+
+    def assign_plot(self, plot_widget, plot_label, legend_widget):
+        return self._service.exposed_assign_plot(
+            plot_widget=plot_widget,
+            plot_label=plot_label,
+            legend_widget=legend_widget
+        )
+
+    def assign_curve(self, plot_label, curve_label):
+        return self._service.exposed_assign_curve(
+            plot_label=plot_label,
+            curve_label=curve_label
+        )
+
+    def assign_scalar(self, scalar_widget, scalar_label):
+        self._service.exposed_assign_scalar(
+            scalar_widget=scalar_widget,
+            scalar_label=scalar_label
+        )
+
+    def set_curve_data(self, data, plot_label, curve_label, error=None):
+        data_pickle = pickle.dumps(data)
+        error_pickle = pickle.dumps(error)
+        return self._service.exposed_set_curve_data(
+            data_pickle=data_pickle,
+            plot_label=plot_label,
+            curve_label=curve_label,
+            error_pickle=error_pickle
+        )
+
+    def set_scalar(self, value, scalar_label):
+        return self._service.exposed_set_scalar(
+            value=value,
+            scalar_label=scalar_label
+        )
 
 
 class Plot:
@@ -423,5 +503,5 @@ class Scalar:
             # Check the state of the button
             if self.widget.isChecked() != self.data:
                 self.widget.toggle()
-        else:
+        elif self.data is not None:
             self.widget.display(self.data)

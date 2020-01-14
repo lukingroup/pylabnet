@@ -53,6 +53,57 @@ class Window(QtWidgets.QMainWindow):
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
 
+    def assign_widgets(self, plots, scalars):
+        """
+        Adds all plots and widget configurations to assignment queue in one step. This is for convenience, to be used
+        at the beginning of a script. Plots and curves can still be assigned later on using the individual assign_plot,
+        assign_curve, and assign_scalar methods.
+
+        :param plots: (dict) dictionary of curves to assign to the GUI. Keys are used as plot titles and are also used
+            to reference plots in future calls (e.g. set_curve_data). Values are another dictionary with two keys:
+            'curves' and 'widgets'. Values associated with 'curves' are a list of curve name strings, which are used as
+            name references and in plot legends. These should be chosen at the script writing stage to be application
+            specific and to allow the developer to conveniently refer to a particular plot and curve. Values associated
+            with 'widget' are names of instances of PlotWidget in the GUI. Values of 'legend' are names of instances of
+            GraphicsView widgets in the GUI. Instances of widgets should be defined when developing the .gui file in
+            QtDesigner, and should generally be given variable names that are agnostic to the specific application.
+            Example input:
+                {'Velocity Monitor': {'curves': ['Velocity', 'Velocity setpoint'],
+                                      'widget': 'graph_widget_1', 'legend': 'legend_widget_1'},
+                 'TiSa Monitor': {'curves': ['TiSa'], 'widget': 'graph_widget_2', 'legend': 'legend_widget_2'}}
+        :param scalars: (dict) dictionary of scalars (numerical values, booleans) revealing mapping between scalar
+            labels and instances of widgets in the GUI. Instances of GUI widgets should be defined when developing the
+            .gui file in QtDesigner, and should generally be given variable names that are agnostic to the specific
+            application. Script specific names are defined as scalar labels (keys). Values should be a string - the
+            variable name for the Widget instance (e.g. QLCDNumber or QCheckbox). Example:
+                {'Velocity Frequency': 'number_widget_1', 'Velocity Setpoint': 'number_widget_2',
+                 'Velocity Lock': 'boolean_widget_1', 'TiSa Frequency': 'number_widget_3'}
+        """
+
+        # Iterate through all plots and curves
+        for plot, plot_dict in plots.items():
+
+            # First instantiate this plot
+            self.assign_plot(
+                plot_widget=plot_dict['widget'],
+                plot_label=plot,
+                legend_widget=plot_dict['legend']
+            )
+
+            # Now assign all curves
+            for curve in plot_dict['curves']:
+                self.assign_curve(
+                    plot_label=plot,
+                    curve_label=curve
+                )
+
+        # Next, assign all scalars
+        for scalar_name, scalar_widget in scalars.items():
+            self.assign_scalar(
+                scalar_widget=scalar_widget,
+                scalar_label=scalar_name
+            )
+
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """
         Adds plot assignment request to a queue
@@ -208,6 +259,8 @@ class Window(QtWidgets.QMainWindow):
         """
         self.scalars[scalar_label] = Scalar(self, scalar_widget)
 
+
+# TODO: re-implement client-server interface
 
 class Service(ServiceBase):
 
@@ -367,6 +420,8 @@ class Scalar:
 
         # Set the state, checking first whether it is a boolean display or not
         if isinstance(self.data, bool):
-            self.widget.setCheckState(self.data)
+            # Check the state of the button
+            if self.widget.isChecked() != self.data:
+                self.widget.toggle()
         else:
             self.widget.display(self.data)

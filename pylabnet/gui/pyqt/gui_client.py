@@ -63,7 +63,7 @@ gui_client.assign_widgets(plots=plots, scalars=scalars)
 time.sleep(1)
 gui_client.set_scalar(0.5, sp_1)
 
-# TODO debug scalar update
+gui_client.set_scalar(True, lock_1)
 
 for i in range(10000):
     gui_client.set_curve_data(

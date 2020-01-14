@@ -34,7 +34,7 @@ def main():
 
     # Test code
 
-    # Build list of widgets internal to .gui (script specific)
+    # # Build list of widgets internal to .gui (script specific)
     # graph_widgets = []
     # legend_widgets = []
     # number_widgets = []
@@ -46,8 +46,8 @@ def main():
     #     number_widgets.append('number_widget_'+str(i+1))
     # for i in range(4, 8):
     #     number_widgets.append('number_widget_'+str(i+1))
-
-    # Define our plot, curve, and scalar names
+    #
+    # # Define our plot, curve, and scalar names
     # plot_1 = 'Velocity monitor'
     # p1_curve_1 = 'Velocity frequency'
     # p1_curve_2 = 'Velocity setpoint'
@@ -57,8 +57,8 @@ def main():
     # sp_1 = 'Velocity setpoint'
     # freq_2 = 'TiSa frequency'
     # lock_1 = 'Velocity lock'
-
-    # Define mapping between key names and widget names
+    #
+    # # Define mapping between key names and widget names
     # plots = {
     #     plot_1: {
     #         'curves': [p1_curve_1, p1_curve_2],
@@ -77,7 +77,7 @@ def main():
     #     lock_1: bool_widgets[0],
     #     freq_2: number_widgets[2]
     # }
-    #
+
     # main_window.assign_widgets(plots=plots, scalars=scalars)
     # main_window.configure_widgets()
     # main_window.set_scalar(
@@ -102,11 +102,11 @@ def main():
         #     plot_label=plot_2,
         #     curve_label=p2_curve_1
         # )
-        # # main_window.set_curve_data(
-        # #     1 + np.random.random(1000),
-        # #     plot_label=plot_2,
-        # #     curve_label=curve_2
-        # # )
+        # main_window.set_curve_data(
+        #     1 + np.random.random(1000),
+        #     plot_label=plot_2,
+        #     curve_label=curve_2
+        # )
         # main_window.set_scalar(
         #     value=np.random.random_sample(),
         #     scalar_label=freq_1

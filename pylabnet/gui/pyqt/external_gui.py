@@ -175,6 +175,7 @@ class Window(QtWidgets.QMainWindow):
 
             # Assign scalar to physical scalar widget in GUI
             self._assign_scalar(scalar_widget, scalar_label)
+        self._scalars_to_assign = []
 
     def update_widgets(self):
         """Updates all widgets on the physical GUI to current data"""

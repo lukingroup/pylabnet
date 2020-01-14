@@ -54,7 +54,7 @@ selection-color: rgb(255, 0, 0);</string>
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>12</x>
@@ -195,6 +195,12 @@ selection-color: rgb(255, 0, 0);</string>
              <normaloff>green_LED_off.svg</normaloff>
              <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
            </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -212,6 +218,9 @@ selection-color: rgb(255, 0, 0);</string>
             <iconset>
              <normaloff>red_LED_off.svg</normaloff>
              <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>

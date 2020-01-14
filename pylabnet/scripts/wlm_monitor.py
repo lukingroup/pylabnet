@@ -218,7 +218,8 @@ class WlmMonitor:
             # Configure plot
             self._gui.assign_plot(
                 plot_widget=self._gui_plot_widgets[graph_index],
-                plot_label=self.channels[graph_index]['plot_label']
+                plot_label=self.channels[graph_index]['plot_label'],
+                legend_widget=self._gui_legend_widgets[graph_index]
             )
 
             # Configure frequency monitoring curve

@@ -139,7 +139,7 @@ selection-color: rgb(255, 0, 0);</string>
             <enum>QLCDNumber::Filled</enum>
            </property>
            <property name="value" stdset="0">
-            <double>0.000000000000000</double>
+            <double>999.999999000000003</double>
            </property>
           </widget>
          </item>
@@ -175,7 +175,7 @@ selection-color: rgb(255, 0, 0);</string>
             <enum>QLCDNumber::Filled</enum>
            </property>
            <property name="value" stdset="0">
-            <double>0.000000000000000</double>
+            <double>999.999999000000003</double>
            </property>
           </widget>
          </item>
@@ -726,7 +726,7 @@ selection-color: rgb(255, 0, 0);</string>
      <x>0</x>
      <y>0</y>
      <width>1610</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

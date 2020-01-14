@@ -505,4 +505,5 @@ class Scalar:
             if self.widget.isChecked() != self.data:
                 self.widget.toggle()
         elif self.data is not None:
-            self.widget.display(self.data)
+            display_str = '%.6f' % self.data
+            self.widget.display(display_str)

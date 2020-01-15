@@ -213,6 +213,8 @@ class Window(QtWidgets.QMainWindow):
         :return: 0 when complete
         """
 
+        # self.configure_widgets()
+        # self.update_widgets()
         self._app.processEvents()
         return 0
 

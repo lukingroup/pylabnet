@@ -109,13 +109,13 @@ class WlmMonitor:
 
                         # If the setpoint didn't exist and now exists, we need to update and add a curve
                         if channel.setpoint is None and parameter['setpoint'] is not None:
-                            channel.setpoint = parameter['setpoint']
-                            channel.pid.set_parameters(setpoint=channel.setpoint)
                             self.gui.assign_curve(
                                 plot_label=channel.name,
                                 curve_label=channel.setpoint_name
                             )
                             self.gui.force_update()
+                            channel.setpoint = parameter['setpoint']
+                            channel.pid.set_parameters(setpoint=channel.setpoint)
                             channel.initialize_sp_data()
 
                         # If the setpoint existed and is now removed, delete the plot item
@@ -278,16 +278,28 @@ class WlmMonitor:
                         )
 
                     # Set lock and error booleans
-                    self.gui.set_scalar(
-                        value=channel.lock,
-                        scalar_label=channel.lock_name
-                    )
-                    if channel.lock and np.abs(channel.data[-1]-channel.setpoint) > self.threshold:
+                    if channel.setpoint is not None:
                         self.gui.set_scalar(
-                            value=True,
-                            scalar_label=channel.error_name
+                            value=channel.lock,
+                            scalar_label=channel.lock_name
                         )
+                        if channel.lock and np.abs(channel.data[-1]-channel.setpoint) > self.threshold:
+                            self.gui.set_scalar(
+                                value=True,
+                                scalar_label=channel.error_name
+                            )
+                        else:
+                            self.gui.set_scalar(
+                                value=False,
+                                scalar_label=channel.error_name
+                            )
+
+                    # If the setpoint isn't given just set everything false
                     else:
+                        self.gui.set_scalar(
+                            value=False,
+                            scalar_label=channel.lock_name
+                        )
                         self.gui.set_scalar(
                             value=False,
                             scalar_label=channel.error_name
@@ -297,6 +309,10 @@ class WlmMonitor:
                 except EOFError:
                     self._gui_connected = False
                     print('GUI disconnected')
+
+                # Handle case where plot assignment has not been completed yet
+                except KeyError:
+                    pass
 
             # Check if we should try reconnecting to the GUI
             elif self._gui_reconnect:

@@ -59,6 +59,7 @@ wlm_monitor.set_parameters(
 )
 # Initialize display
 wlm_monitor.initialize_channels()
+wlm_monitor.gui.force_update()
 
 # Run
 wlm_monitor.run()

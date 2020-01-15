@@ -109,21 +109,21 @@ class WlmMonitor:
                         if channel.setpoint is None and parameter['setpoint'] is not None:
                             channel.setpoint = parameter['setpoint']
                             channel.pid.set_parameters(setpoint=channel.setpoint)
-                            channel.setpoint_name = channel.name + ' Setpoint'
                             self.gui.assign_curve(
                                 plot_label=channel.name,
                                 curve_label=channel.setpoint_name
                             )
+                            self.gui.force_update()
+                            channel.initialize_sp_data()
 
                         # If the setpoint existed and is now removed, delete the plot item
                         elif channel.setpoint is not None and parameter['setpoint'] is None:
-                            channel.setpoint = None
-                            channel.pid.set_parameters(setpoint=0)
-                            channel.setpoint_name = None
                             self.gui.remove_curve(
                                 plot_label=channel.name,
                                 curve_label=channel.setpoint_name
                             )
+                            channel.setpoint = None
+                            channel.pid.set_parameters(setpoint=0)
 
                         # Otherwise just update the setpoint normally
                         else:
@@ -208,11 +208,11 @@ class WlmMonitor:
                 curve_label=channel.setpoint_name
             )
 
-            # Numeric label
-            self.gui.assign_scalar(
-                scalar_widget=self._number_widgets[2 * index + 1],
-                scalar_label=channel.setpoint_name
-            )
+        # Numeric label for setpoint
+        self.gui.assign_scalar(
+            scalar_widget=self._number_widgets[2 * index + 1],
+            scalar_label=channel.setpoint_name
+        )
 
         # Assign lock and error boolean widgets
         self.gui.assign_scalar(
@@ -223,6 +223,8 @@ class WlmMonitor:
             scalar_widget=self._boolean_widgets[2 * index + 1],
             scalar_label=channel.error_name
         )
+
+        self.gui.force_update()
 
     def _update_channels(self):
         """Updates all channels + displays"""
@@ -244,7 +246,6 @@ class WlmMonitor:
             )
 
             # Update setpoints if necessary
-            # TODO implement setpoint deletion
             if channel.setpoint is not None:
                 self.gui.set_curve_data(
                     data=channel.sp_data,
@@ -253,6 +254,11 @@ class WlmMonitor:
                 )
                 self.gui.set_scalar(
                     value=channel.setpoint,
+                    scalar_label=channel.setpoint_name
+                )
+            else:
+                self.gui.set_scalar(
+                    value=0,
                     scalar_label=channel.setpoint_name
                 )
 
@@ -315,6 +321,10 @@ class Channel:
         if self.setpoint is not None:
             self.sp_data = np.ones(display_pts)*self.setpoint
 
+    def initialize_sp_data(self, display_pts=5000):
+        if self.setpoint is not None:
+            self.sp_data = np.ones(display_pts)*self.setpoint
+
     def update(self, wavelength):
         """
         Updates the data, setpoints, and all locks
@@ -323,8 +333,10 @@ class Channel:
         """
 
         self.data = np.append(self.data[1:], wavelength)
-        self.sp_data = np.append(self.sp_data[1:], self.setpoint)
-        self.pid.set_parameters(setpoint=self.setpoint)
+
+        if self.setpoint is not None:
+            self.sp_data = np.append(self.sp_data[1:], self.setpoint)
+        self.pid.set_parameters(setpoint=0 if self.setpoint is None else self.setpoint)
 
         # Implement lock
         if self.lock:
@@ -361,10 +373,9 @@ class Channel:
 
         if 'setpoint' in channel_params:
             self.setpoint = channel_params['setpoint']
-            self.setpoint_name = self.name+' Setpoint'
         else:
             self.setpoint = None
-            self.setpoint_name = None
+        self.setpoint_name = self.name + ' Setpoint'
 
         if 'lock' in channel_params:
             self.lock = channel_params['lock']
@@ -382,7 +393,7 @@ class Channel:
                 i=channel_params['PID']['i'],
                 d=channel_params['PID']['d'],
                 memory=self.memory,
-                setpoint=0 if None else self.setpoint
+                setpoint=0 if self.setpoint is None else self.setpoint
             )
         else:
             # Just initialize a default PID module

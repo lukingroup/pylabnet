@@ -206,6 +206,16 @@ class Window(QtWidgets.QMainWindow):
         for scalar in self.scalars.values():
             scalar.update_output()
 
+    def force_update(self):
+        """
+        Forces the GUI to update
+
+        :return: 0 when complete
+        """
+
+        self._app.processEvents()
+        return 0
+
     # Technical methods
 
     def _load_gui(self, gui_template=None, run=True):
@@ -312,6 +322,12 @@ class Service(ServiceBase):
             curve_label=curve_label
         )
 
+    def exposed_remove_curve(self, plot_label, curve_label):
+        self._module.remove_curve(
+            plot_label=plot_label,
+            curve_label=curve_label
+        )
+
     def exposed_assign_scalar(self, scalar_widget, scalar_label):
         return self._module.assign_scalar(
             scalar_widget=scalar_widget,
@@ -333,6 +349,9 @@ class Service(ServiceBase):
             value=value,
             scalar_label=scalar_label
         )
+
+    def exposed_force_update(self):
+        return self._module.force_update()
 
 
 class Client(ClientBase):
@@ -358,6 +377,12 @@ class Client(ClientBase):
             curve_label=curve_label
         )
 
+    def remove_curve(self, plot_label, curve_label):
+        return self._service.exposed_remove_curve(
+            plot_label=plot_label,
+            curve_label=curve_label
+        )
+
     def assign_scalar(self, scalar_widget, scalar_label):
         self._service.exposed_assign_scalar(
             scalar_widget=scalar_widget,
@@ -379,6 +404,9 @@ class Client(ClientBase):
             value=value,
             scalar_label=scalar_label
         )
+
+    def force_update(self):
+        return self._service.exposed_force_update()
 
 
 class Plot:

@@ -1,9 +1,10 @@
 """
-Set of tools to update parameters of a currently running script
+Set of tools to update parameters of a currently running script,
+as well as pause the script
 
 Steps:
 - the script class should have public method update_parameters(params),
-  which will be called by client through RPyC link
+  and pause() which will be called by client through RPyC link
 - once the script is instantiated, assign it as the module to
   UpdateService instance:
       update_service_instance.assign_module(script_instance)
@@ -13,6 +14,7 @@ Steps:
 
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
+import pickle
 
 
 class UpdateService(ServiceBase):
@@ -23,9 +25,20 @@ class UpdateService(ServiceBase):
         update_service_instance.assign_module(script_instance)
     """
 
-    def exposed_update_parameters(self, params):
+    def exposed_update_parameters(self, params_pickle):
 
+        params = pickle.loads(params_pickle)
         return self._module.update_parameters(params)
+
+    def exposed_pause(self):
+
+        if isinstance(self._module, list):
+            for module in self._module:
+                module.pause()
+            return 0
+
+        else:
+            return self._module.pause()
 
 
 class UpdateClient(ClientBase):
@@ -40,4 +53,9 @@ class UpdateClient(ClientBase):
 
     def update_parameters(self, params):
 
-        return self._service.exposed_update_parameters(params)
+        params_pickle = pickle.dumps(params)
+        return self._service.exposed_update_parameters(params_pickle)
+
+    def pause(self):
+
+        return self._service.exposed_pause()

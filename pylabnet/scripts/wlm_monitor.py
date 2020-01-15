@@ -20,374 +20,370 @@ def generate_widgets():
     return graphs, legends, numbers, booleans
 
 
-# Main class
-
-# noinspection PyTypeChecker
 class WlmMonitor:
-    """Script class for monitoring wavemeter"""
 
-    # Name of GUI template to use
-    _ui = "wavemetermonitor_4ch"
+    # Assign widget names based on .gui file. This line works for wavemetermonitor_4ch.ui
+    _graph_widgets, _legend_widgets, _number_widgets, _boolean_widgets = generate_widgets()
 
-    # Define GUI widget instance names for assignment of data
-    _gui_plot_widgets, _gui_legend_widgets, _gui_number_widgets, _gui_boolean_widgets = generate_widgets()
-
-    def __init__(self, wlm_client=None):
-
-        # Store wavemeter client
-        if wlm_client is None:
-            msg_str = "Please pass wavemeter client in order to instantiate WlmMonitor script."
-            raise Exception(msg_str)
-
-        self._wlm = wlm_client
-        self._is_running = False
-        self.channels = [None]
-        self._display_pts = 0
-        self._gui = None
-
-    def set_params(self, channels=None, gui=None, display_pts=1000, memory=10):
+    def __init__(self, wlm_client=None, display_pts=5000, threshold=0.0002):
         """
-        Configures script parameters for wavemeter control
-        
-        :param channels: list of dictionaries containing channel information in the example structure:
-            {"channel": 1, "setpoint": None, "lock": False, "PID":[0, 0, 0]}
-        :param gui: instance of GUI client for data streaming
-            Note: this should be increased in order to avoid lagging in plot outputting
-        :param display_pts: number of points to display on graph
-        :param memory: number of points to use for integral memory
+        Instantiates WlmMonitor script object for monitoring wavemeter
+
+        :param wlm_client: (obj) instance of wavemeter client
+        :param display_pts: (int) number of points to display on plot
+        :param threshold: (float) threshold in THz for lock error signal
         """
 
-        self._display_pts = display_pts
-        self._gui = gui
+        self.channels = []
+        self.gui = None
+        self.is_running = False
+        self.wlm_client = wlm_client
+        self.display_pts = display_pts
+        self.threshold = threshold
 
-        # Initialize to default settings if nothing provided
-        if channels is None:
-            self.channels = [{
-                "channel": 1,
-                "setpoint": None,
-                "lock": False
-            }]
-        else:
-            self.channels = channels
+    def assign_gui(self, gui_client):
+        """
+        Assigns a GUI client to the WlmMonitor
 
-        for channel in self.channels:
+        :param gui_client: (obj) instance of GUI client
+        """
 
-            # We need to configure the plot differently based on whether or not a setpoint is given
-            if channel["setpoint"] is not None:
+        self.gui = gui_client
 
-                # If a setpoint is given, configure PID to be an instance of PID class with desired parameters
-                if "PID" in channel:
-                    channel["PID"] = PID(
-                        p=channel["PID"][0],
-                        i=channel["PID"][1],
-                        d=channel["PID"][2],
-                        memory=memory,
-                        setpoint=channel["setpoint"]
-                    )
+    def assign_wlm(self, wlm_client):
+        """
+        Assigns the wlm Client to the WlmMonitor module
 
-                # If PID parameters were not provided, but we have a setpoint, initialize PID to [0, 0, 0]
+        :param wlm_client: (obj) instance of Client of High-Finesse wavemeter
+        """
+
+        self.wlm_client = wlm_client
+
+    def assign_channel(self, channel_params):
+        """
+        Instantiates a new channel with given parameters and assigns it to the WlmMonitor
+
+        :param channel_params: (dict) dictionary containing all parameters. Example of full parameter set:
+            {'channel': 1, 'name': 'Velocity', 'setpoint': 406.7, 'lock':True, 'memory': 20,
+             'PID': {'p': 1, 'i': 0.1, 'd': 0}}
+        """
+        self.channels.append(Channel(channel_params))
+
+    def set_parameters(self, all_parameters):
+        """
+        Assigns all channels (for convenience in a single call from the notebook). Overwrites all parameters, not just
+        given ones.
+
+        :param all_parameters: (list) list of all dictionaries of channel parameters. For dictionary example/structure,
+            see the assign_channel method
+        """
+
+        for channel_params in all_parameters:
+            self.assign_channel(channel_params=channel_params)
+
+    def update_parameters(self, parameters):
+        """
+        Updates only the parameters given. Can be used in the middle of the script operation
+
+        :param parameters: (list) list of dictionaries, see assign_channel() for details
+        """
+
+        for parameter in parameters:
+
+            # Only proceed if a channel number is given
+            if 'channel' in parameter:
+
+                # Check if it is a channel that is already logged
+                channel_list = self._get_channels()
+                if parameter['channel'] in channel_list:
+
+                    # Find index of the desired channel
+                    channel = self.channels[channel_list.index(parameter['channel'])]
+
+                    # Set all other parameters for this channel
+                    if 'name' in parameter:
+                        channel.name = parameter['name']
+                    if 'setpoint' in parameter:
+
+                        # If the setpoint didn't exist and now exists, we need to update and add a curve
+                        if channel.setpoint is None and parameter['setpoint'] is not None:
+                            channel.setpoint = parameter['setpoint']
+                            channel.pid.set_parameters(setpoint=channel.setpoint)
+                            channel.setpoint_name = channel.name + ' Setpoint'
+                            self.gui.assign_curve(
+                                plot_label=channel.name,
+                                curve_label=channel.setpoint_name
+                            )
+
+                        # If the setpoint existed and is now removed, delete the plot item
+                        elif channel.setpoint is not None and parameter['setpoint'] is None:
+                            channel.setpoint = None
+                            channel.pid.set_parameters(setpoint=0)
+                            channel.setpoint_name = None
+                            self.gui.remove_curve(
+                                plot_label=channel.name,
+                                curve_label=channel.setpoint_name
+                            )
+
+                        # Otherwise just update the setpoint normally
+                        else:
+                            channel.setpoint = parameter['setpoint']
+
+                    if 'lock' in parameter:
+                        channel.lock = parameter['lock']
+                    if 'memory' in parameter:
+                        channel.memory = parameter['memory']
+                    if 'PID' in parameter:
+                        channel.pid.set_parameters(
+                            p=parameter['PID']['p'],
+                            i=parameter['PID']['i'],
+                            d=parameter['PID']['d'],
+                        )
+
+                # Otherwise, it is a new channel so we should add it
                 else:
-                    channel["PID"] = PID(
-                        p=0,
-                        i=0,
-                        d=0,
-                        memory=memory,
-                        setpoint=channel["setpoint"]
+                    self.channels.append(Channel(parameter))
+                    self._initialize_channel(
+                        index=len(self.channels)-1,
+                        channel=self.channels[-1]
                     )
 
-                # Initialize lock monitor
-                # channel["error_monitor"] = SingleTraceFig(
-                #     title_str="Channel {} Lock Error Monitor".format(channel["channel"])
-                # )
-                # channel["error_monitor"].set_lbls(
-                #     x_str="Time (pts)",
-                #     y_str="Lock error (GHz)"
-                # )
-                # channel["voltage_monitor"] = SingleTraceFig(
-                #     title_str="Channel {} Voltage Monitor".format(channel["channel"])
-                # )
-                # channel["voltage_monitor"].set_lbls(
-                #     x_str="Time (pts)",
-                #     y_str="Voltage (V)"
-                # )
+    def initialize_channels(self):
+        """Initializes all channels and outputs to the GUI"""
+
+        for index, channel in enumerate(self.channels):
+            self._initialize_channel(index, channel)
+
+    def update_channels(self):
+        """Updates the wavelength for each channel"""
+
+        self._initialize_channels()
+        for channel in self.channels:
+            channel.update()
 
     def run(self):
-        """Runs the wavemeter monitor"""
+        """Runs the WlmMonitor. Can also be used to resume after a pause"""
 
-        try:
-            self._is_running = True
-
-            # Set display to initial sample and show
-            self._initialize_display()
-
-            # Continuously update data and lock until paused
-            while self._is_running:
-                self._update_data()
-                self._update_lock()
-
-                # Sleep slightly longer than the max query time
-                time.sleep(0.003)
-
-                self._update_output()
-
-        except Exception as exc_obj:
-            self._is_running = False
-            raise exc_obj
+        self.is_running = True
+        while self.is_running:
+            self._update_channels()
+            time.sleep(0.003)
 
     def pause(self):
-        """Stops the wavemeter monitor"""
-
-        self._is_running = False
-
-    def resume(self):
-        """Resumes wavemeter monitor after it has been paused"""
-
-        try:
-            self._is_running = True
-
-            # Continuously update data and lock until paused
-            while self._is_running:
-                self._update_data()
-                self._update_lock()
-
-                # Sleep slightly longer than the max query time
-                time.sleep(0.003)
-
-                self._update_output()
-
-        except Exception as exc_obj:
-            self._is_running = False
-            raise exc_obj
-
-    def update_parameters(self, params):
-        """
-        Updates the monitoring script parameters during runtime. To be called remotely (see parameter_update module).
-
-        :param params: List of dictionaries containing channel, setpoint, and lock parameters. Example:
-            [{"channel": 1, "setpoint": 406.7, "lock": True}]
-        """
-
-        # Iterate through all channels to update
-        for parameter in params:
-
-            # Iterate through channels to find matching one
-            channel_index = None
-            for index, channel in enumerate(self.channels):
-                if parameter["channel"] == channel["channel"]:
-                    channel_index = index
-                    break
-
-            # If the channel is not currently running, raise an error
-            if channel_index is None:
-                msg_str = "Channel {} is not yet configured!".format(parameter["channel"])
-                "Please restart wavemeter monitor with this channel"
-                raise Exception(msg_str)
-
-            # Otherwise just update the channel properties
-            else:
-
-                # Check that parameters are provided, and update them
-                if "setpoint" in parameter:
-                    self.channels[channel_index]["setpoint"] = parameter["setpoint"]
-                if "lock" in parameter:
-                    self.channels[channel_index]["lock"] = parameter["lock"]
-                if "PID" in parameter:
-                    self.channels["PID"].set_parameters(
-                        p=parameter["PID"][0],
-                        i=parameter["PID"][1],
-                        d=parameter["PID"][2]
-                    )
-                if "memory" in parameter:
-                    self.channels["PID"].set_parameters(memory=parameter["memory"])
+        """Pauses the wavemeter monitor"""
+        self.is_running = False
 
     # Technical methods
 
-    def _initialize_display(self):
-        """Initializes the display, sets all data to the first reading for each WL"""
+    def _initialize_channel(self, index, channel):
+        """Initializes a channel"""
 
-        # Keep track of how many graphs we initialize so we don't overload the GUI
-        graph_index = 0
-        num_graphs = len(self._gui_plot_widgets)
-        while graph_index < num_graphs and graph_index < len(self.channels):
+        # Get wavelength and initialize data
+        channel.initialize(
+            wavelength=self.wlm_client.get_wavelength(channel.number),
+            display_pts=self.display_pts
+        )
 
-            # Assign main channel GUI labels
-            current_channel = self.channels[graph_index]["channel"]
-            self.channels[graph_index]["plot_label"] = "Channel {} Wavemeter Monitor".format(current_channel)
-            self.channels[graph_index]["curve_label"] = "Laser {} Frequency".format(current_channel)
+        # Assign GUI + curves
+        self.gui.assign_plot(
+            plot_widget=self._graph_widgets[index],
+            plot_label=channel.name,
+            legend_widget=self._legend_widgets[index]
+        )
+        self.gui.assign_curve(
+            plot_label=channel.name,
+            curve_label=channel.curve_name
+        )
 
-            # Configure plot
-            self._gui.assign_plot(
-                plot_widget=self._gui_plot_widgets[graph_index],
-                plot_label=self.channels[graph_index]['plot_label'],
-                legend_widget=self._gui_legend_widgets[graph_index]
+        # Numeric label
+        self.gui.assign_scalar(
+            scalar_widget=self._number_widgets[2 * index],
+            scalar_label=channel.name
+        )
+
+        # Only initialize setpoint plot if it is provided
+        if channel.setpoint is not None:
+            self.gui.assign_curve(
+                plot_label=channel.name,
+                curve_label=channel.setpoint_name
             )
 
-            # Configure frequency monitoring curve
-            self._gui.assign_curve(
-                plot_label=self.channels[graph_index]['plot_label'],
-                curve_label=self.channels[graph_index]['curve_label']
+            # Numeric label
+            self.gui.assign_scalar(
+                scalar_widget=self._number_widgets[2 * index + 1],
+                scalar_label=channel.setpoint_name
             )
 
-            # Configure frequency display, keeping in mind there are 2 number widgets per channel
-            self._gui.assign_scalar(
-                scalar_widget=self._gui_number_widgets[2*graph_index],
-                scalar_label=self.channels[graph_index]['curve_label']
-            )
+        # Assign lock and error boolean widgets
+        self.gui.assign_scalar(
+            scalar_widget=self._boolean_widgets[2 * index],
+            scalar_label=channel.lock_name
+        )
+        self.gui.assign_scalar(
+            scalar_widget=self._boolean_widgets[2 * index + 1],
+            scalar_label=channel.error_name
+        )
 
-            # Set data array
-            self.channels[graph_index]["data"] = np.ones(self._display_pts)*self._wlm.get_wavelength()
-
-            # Assign setpoint to the sames plot (but a new curve) if relevant
-            if self.channels[graph_index]["setpoint"] is not None:
-                self.channels[graph_index]["sp_label"] = "Channel {} Setpoint".format(current_channel)
-                self._gui.assign_curve(
-                    plot_label=self.channels[graph_index]['plot_label'],
-                    curve_label=self.channels[graph_index]['sp_label']
-                )
-
-                # Configure setpoint display
-                self._gui.assign_scalar(
-                    scalar_widget=self._gui_number_widgets[2*graph_index+1],
-                    scalar_label=self.channels[graph_index]['sp_label']
-                )
-
-                # Set setpoint array
-                self.channels[graph_index]["sp_data"] = (np.ones(self._display_pts)
-                                                         * self.channels[graph_index]["setpoint"])
-
-                # Set lock booleans
-                self.channels[graph_index]['lock_label'] = 'Channel {} Lock'.format(current_channel)
-                self.channels[graph_index]['error_label'] = 'Channel {} Error'.format(current_channel)
-                self._gui.assign_scalar(
-                    scalar_widget=self._gui_boolean_widgets[2*graph_index],
-                    scalar_label=self.channels[graph_index]['lock_label']
-                )
-                self._gui.assign_scalar(
-                    scalar_widget=self._gui_boolean_widgets[2*graph_index+1],
-                    scalar_label=self.channels[graph_index]['error_label']
-                )
-
-            # Proceed to the next channel
-            graph_index += 1
-
-    def _update_data(self):
-        """Pulls a new sample from the WLM into the data for each channel"""
+    def _update_channels(self):
+        """Updates all channels + displays"""
 
         for channel in self.channels:
 
-            # Get current wavelength
-            wavelength = self._wlm.get_wavelength(channel["channel"])
+            # Update data
+            channel.update(self.wlm_client.get_wavelength(channel.number))
 
-            # Update output array
-            channel["data"] = np.append(channel["data"][1:], wavelength)
-
-            # Pull the most recent setpoint
-            if channel["setpoint"] is not None:
-                channel["sp_data"] = np.append(channel["sp_data"][1:], channel["setpoint"])
-
-    def _update_setpoint(self):
-        """Updates the setpoint to current value"""
-
-        for channel in self.channels:
-
-            # Update the setpoint if needed
-            if channel["setpoint"] is not None:
-                # Add the current setpoint to the data (in case it has changed)
-                channel["sp_data"] = np.append(channel["sp_data"][1:], channel["setpoint"])
-
-    def _update_output(self):
-        """Updates the output with a new wavemeter sample"""
-
-        for channel in self.channels:
-
-            # Update main trace
-            self._gui.set_curve_data(
-                channel["data"],
-                plot_label=channel["plot_label"],
-                curve_label=channel["curve_label"]
+            # Update plots
+            self.gui.set_curve_data(
+                data=channel.data,
+                plot_label=channel.name,
+                curve_label=channel.curve_name
+            )
+            self.gui.set_scalar(
+                value=channel.data[-1],
+                scalar_label=channel.name
             )
 
-            # Update current WL
-            self._gui.set_scalar(
-                value=channel['data'][-1],
-                scalar_label=channel['curve_label']
+            # Update setpoints if necessary
+            # TODO implement setpoint deletion
+            if channel.setpoint is not None:
+                self.gui.set_curve_data(
+                    data=channel.sp_data,
+                    plot_label=channel.name,
+                    curve_label=channel.setpoint_name
+                )
+                self.gui.set_scalar(
+                    value=channel.setpoint,
+                    scalar_label=channel.setpoint_name
+                )
+
+            # Set lock and error booleans
+            self.gui.set_scalar(
+                value=channel.lock,
+                scalar_label=channel.lock_name
             )
-
-            # Update setpoint if relevant
-            if channel["setpoint"] is not None:
-                self._gui.set_curve_data(
-                    channel["sp_data"],
-                    plot_label=channel["plot_label"],
-                    curve_label=channel["sp_label"]
+            if channel.lock and np.abs(channel.data[-1]-channel.setpoint) > self.threshold:
+                self.gui.set_scalar(
+                    value=True,
+                    scalar_label=channel.error_name
                 )
-                self._gui.set_scalar(
-                    value=channel['sp_data'][-1],
-                    scalar_label=channel['sp_label']
+            else:
+                self.gui.set_scalar(
+                    value=False,
+                    scalar_label=channel.error_name
                 )
 
-            # Plot monitors if desired
-            # if channel["error_monitor"] is not None:
-            #     channel["error_monitor"].set_data(
-            #         x_ar=self._x_axis,
-            #         y_ar=channel["display_error"]
-            #         # y_ar = channel["error"]
-            #     )
-            #
-            # if channel["voltage_monitor"] is not None:
-            #     channel["voltage_monitor"].set_data(
-            #         x_ar=self._x_axis,
-            #         y_ar=channel["display_voltage"]
-            #         # y_ar=channel["voltage"]
-            #     )
+    def _get_channels(self):
+        """
+        Returns all active channel numbers
 
-    def _get_display_data(self):
-        """Generates data to be displayed from all wavemeter samples"""
+        :return: (list) all active channel numbers
+        """
 
+        channel_list = []
         for channel in self.channels:
+            channel_list.append(channel.number)
+        return channel_list
 
-            # Bin the data
-            current_data_index = 0
-            current_display_index = 0
-            monitor_setpoint = channel["setpoint"] is not None
-            monitor_error = "error_monitor" in channel
-            monitor_voltage = "voltage_monitor" in channel
-            while current_data_index < self._data_length:
-                channel["display_data"][current_display_index] = np.mean(
-                    channel["data"][current_data_index:current_data_index+self._bin_by]
-                )
 
-                # Also compute display data for setpoint, error, and voltage if relevant
-                if monitor_setpoint:
-                    channel["display_sp"][current_display_index] = np.mean(
-                        channel["sp_data"][current_data_index:current_data_index+self._bin_by]
-                    )
-                if monitor_error:
-                    channel["display_error"][current_display_index] = np.mean(
-                        channel["error"][current_data_index:current_data_index+self._bin_by]
-                    )*1000
-                if monitor_voltage:
-                    channel["display_voltage"][current_display_index] = np.mean(
-                        channel["voltage"][current_data_index:current_data_index+self._bin_by]
-                    )
-                current_data_index += self._bin_by
-                current_display_index += 1
+class Channel:
+    """Object containing all information regarding a single wavemeter channel"""
 
-    def _update_lock(self):
-        """Updates control variables for laser locking"""
+    def __init__(self, channel_params):
+        """
+        Initializes all parameters given, sets others to default. Also sets up some defaults + placeholders for data
 
-        for channel in self.channels:
+        :param channel_params:
+        """
 
-            # Check if the lock is on
-            if channel["lock"]:
+        # Set channel parameters
+        self._overwrite_parameters(channel_params)
 
-                # Feed in the data
-                channel["PID"].set_pv(channel["data"][self._display_pts - channel["PID"].memory:])
+        # Initialize relevant placeholders
+        self.data = np.array([])
+        self.sp_data = np.array([])
 
-                # Make a step with the control variable
-                channel["PID"].set_cv()
+    def initialize(self, wavelength, display_pts=5000):
+        """
+        Initializes the channel based on the current wavelength
 
-                # TODO: set voltage
+        :param wavelength: current wavelength
+        :param display_pts: number of points to display on the plot
+        """
 
-                # Update error and lock attributes
-                # channel["error"] = np.append(channel["error"][1:], channel["PID"].error)
-                # channel["voltage"] = np.append(channel["voltage"][1:], channel["PID"].cv)
+        self.data = np.ones(display_pts)*wavelength
+
+        if self.setpoint is not None:
+            self.sp_data = np.ones(display_pts)*self.setpoint
+
+    def update(self, wavelength):
+        """
+        Updates the data, setpoints, and all locks
+
+        :param wavelength: (float) current wavelength
+        """
+
+        self.data = np.append(self.data[1:], wavelength)
+        self.sp_data = np.append(self.sp_data[1:], self.setpoint)
+        self.pid.set_parameters(setpoint=self.setpoint)
+
+        # Implement lock
+        if self.lock:
+            # Set process variable
+            self.pid.set_pv(pv=self.data[len(self.data)-self.memory:])
+            # Set control variable
+            self.pid.set_cv()
+
+            # TODO: implement voltage
+
+    def _overwrite_parameters(self, channel_params):
+        """
+        Sets all internal channel parameters to input. If parameters are not given, they are overwritten to defaults
+
+        :param channel_params: (dict) dictionary containing all parameters. Example of full parameter set:
+            {'channel': 1, 'name': 'Velocity', 'setpoint': 406.7, 'lock':True, 'memory': 20,
+             'PID': {'p': 1, 'i': 0.1, 'd': 0}}
+        """
+
+        # Initialize all given attributes, otherwise initialize defaults
+        if 'channel' in channel_params:
+            self.number = channel_params['channel']
+        else:
+            self.number = 1
+
+        if 'name' in channel_params:
+            self.name = channel_params['name']
+        else:
+            # Initialize random channel name if not given
+            self.name = 'Channel '+str(np.random.randint(1000000))
+        self.curve_name = self.name + ' Frequency'
+        self.lock_name = self.name + ' Lock'
+        self.error_name = self.name + ' Error'
+
+        if 'setpoint' in channel_params:
+            self.setpoint = channel_params['setpoint']
+            self.setpoint_name = self.name+' Setpoint'
+        else:
+            self.setpoint = None
+            self.setpoint_name = None
+
+        if 'lock' in channel_params:
+            self.lock = channel_params['lock']
+        else:
+            self.lock = False
+
+        if 'memory' in channel_params:
+            self.memory = channel_params['memory']
+        else:
+            self.memory = 20
+
+        if 'PID' in channel_params:
+            self.pid = PID(
+                p=channel_params['PID']['p'],
+                i=channel_params['PID']['i'],
+                d=channel_params['PID']['d'],
+                memory=self.memory,
+                setpoint=0 if None else self.setpoint
+            )
+        else:
+            # Just initialize a default PID module
+            self.pid = PID()

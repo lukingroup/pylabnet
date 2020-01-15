@@ -13,7 +13,6 @@ from pylabnet.core.client_base import ClientBase
 
 import numpy as np
 import os
-import sys
 import pickle
 import copy
 
@@ -49,6 +48,7 @@ class Window(QtWidgets.QMainWindow):
         self._plots_to_assign = []
         self._curves_to_assign = []
         self._scalars_to_assign = []
+        self._curves_to_remove = []
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
@@ -120,6 +120,16 @@ class Window(QtWidgets.QMainWindow):
 
         self._curves_to_assign.append((plot_label, curve_label))
 
+    def remove_curve(self, plot_label, curve_label):
+        """
+        Adds a curve removal request to the queue
+
+        :param plot_label: (str) name of plot holding the curve
+        :param curve_label: (str) name of the curve to remove
+        """
+
+        self._curves_to_remove.append((plot_label, curve_label))
+
     def assign_scalar(self, scalar_widget, scalar_label):
         """
         Adds scalar assignment request to the queue
@@ -176,6 +186,14 @@ class Window(QtWidgets.QMainWindow):
             # Assign scalar to physical scalar widget in GUI
             self._assign_scalar(scalar_widget, scalar_label)
         self._scalars_to_assign = []
+
+        for curve_params in self._curves_to_remove:
+
+            # Unpack parameters
+            plot_label, curve_label = curve_params
+
+            self._remove_curve(plot_label, curve_label)
+        self._curves_to_remove = []
 
     def update_widgets(self):
         """Updates all widgets on the physical GUI to current data"""
@@ -250,6 +268,16 @@ class Window(QtWidgets.QMainWindow):
         """
 
         self.plots[plot_label].add_curve(curve_label)
+
+    def _remove_curve(self, plot_label, curve_label):
+        """
+        Removes a curve from a plot
+
+        :param plot_label: (str) label of plot holding curve
+        :param curve_label: (str) label of curve to remove
+        """
+
+        self.plots[plot_label].remove_curve(curve_label)
 
     def _assign_scalar(self, scalar_widget, scalar_label):
         """
@@ -380,7 +408,7 @@ class Plot:
         """
         Add a curve to the plot
 
-        :param curve_label: (str, optional) instance of curve class to add to the plot
+        :param curve_label: (str) instance of curve class to add to the plot
         """
 
         # Add a new curve to self.curves dictionary for this plot
@@ -391,6 +419,22 @@ class Plot:
 
         # Configure legend
         self._add_to_legend(curve_label)
+
+    def remove_curve(self, curve_label):
+        """
+        Removes a curve from the plot
+
+        :param curve_label: (str) name of curve to remove
+        """
+
+        # Remove from legend
+        self._remove_from_legend(curve_label)
+
+        # Remove from plot
+        self.widget.removeItem(self.curves[curve_label].widget)
+
+        # Remove from dictionary of curves
+        del self.curves[curve_label]
 
     def update_output(self):
         """Updates plot output to latest data"""
@@ -433,6 +477,14 @@ class Plot:
 
         # Add some space to the legend to prevent overlapping
         self.legend.addItem(self.curves[curve_label].widget, ' - '+curve_label)
+
+    def _remove_from_legend(self, curve_label):
+        """
+        Removes a curve from the legend
+
+        :param curve_label: (str) label of curve to remove from legend
+        """
+        self.legend.removeItem(self.curves[curve_label].widget)
 
 
 class Curve:
@@ -505,5 +557,6 @@ class Scalar:
             if self.widget.isChecked() != self.data:
                 self.widget.toggle()
         elif self.data is not None:
-            display_str = '%.6f' % self.data
-            self.widget.display(display_str)
+            if self.widget.value() != self.data:
+                display_str = copy.deepcopy('%.6f' % self.data)
+                self.widget.display(display_str)

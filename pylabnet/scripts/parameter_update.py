@@ -3,7 +3,7 @@ Set of tools to update parameters of a currently running script,
 as well as pause the script
 
 Steps:
-- the script class should have public method update_parameters(params),
+- the script class should have public method update_parameters(params), reconnect_gui()
   and pause() which will be called by client through RPyC link
 - once the script is instantiated, assign it as the module to
   UpdateService instance:
@@ -30,6 +30,9 @@ class UpdateService(ServiceBase):
         params = pickle.loads(params_pickle)
         return self._module.update_parameters(params)
 
+    def exposed_reconnect_gui(self):
+        return self._module.reconnect_gui()
+
     def exposed_pause(self):
 
         if isinstance(self._module, list):
@@ -55,6 +58,9 @@ class UpdateClient(ClientBase):
 
         params_pickle = pickle.dumps(params)
         return self._service.exposed_update_parameters(params_pickle)
+
+    def reconnect_gui(self):
+        return self._service.exposed_reconnect_gui()
 
     def pause(self):
 

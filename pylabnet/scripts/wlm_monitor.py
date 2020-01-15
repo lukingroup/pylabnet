@@ -37,6 +37,8 @@ class WlmMonitor:
         self.channels = []
         self.gui = None
         self.is_running = False
+        self._gui_connected = False
+        self._gui_reconnect = False
         self.wlm_client = wlm_client
         self.display_pts = display_pts
         self.threshold = threshold
@@ -173,6 +175,9 @@ class WlmMonitor:
         """Pauses the wavemeter monitor"""
         self.is_running = False
 
+    def reconnect_gui(self):
+        self._gui_reconnect = True
+
     # Technical methods
 
     def _initialize_channel(self, index, channel):
@@ -184,47 +189,55 @@ class WlmMonitor:
             display_pts=self.display_pts
         )
 
-        # Assign GUI + curves
-        self.gui.assign_plot(
-            plot_widget=self._graph_widgets[index],
-            plot_label=channel.name,
-            legend_widget=self._legend_widgets[index]
-        )
-        self.gui.assign_curve(
-            plot_label=channel.name,
-            curve_label=channel.curve_name
-        )
+        # Try to send data to the GUI
+        try:
+            self._gui_connected = True
 
-        # Numeric label
-        self.gui.assign_scalar(
-            scalar_widget=self._number_widgets[2 * index],
-            scalar_label=channel.name
-        )
-
-        # Only initialize setpoint plot if it is provided
-        if channel.setpoint is not None:
+            # Assign GUI + curves
+            self.gui.assign_plot(
+                plot_widget=self._graph_widgets[index],
+                plot_label=channel.name,
+                legend_widget=self._legend_widgets[index]
+            )
             self.gui.assign_curve(
                 plot_label=channel.name,
-                curve_label=channel.setpoint_name
+                curve_label=channel.curve_name
             )
 
-        # Numeric label for setpoint
-        self.gui.assign_scalar(
-            scalar_widget=self._number_widgets[2 * index + 1],
-            scalar_label=channel.setpoint_name
-        )
+            # Numeric label
+            self.gui.assign_scalar(
+                scalar_widget=self._number_widgets[2 * index],
+                scalar_label=channel.name
+            )
 
-        # Assign lock and error boolean widgets
-        self.gui.assign_scalar(
-            scalar_widget=self._boolean_widgets[2 * index],
-            scalar_label=channel.lock_name
-        )
-        self.gui.assign_scalar(
-            scalar_widget=self._boolean_widgets[2 * index + 1],
-            scalar_label=channel.error_name
-        )
+            # Only initialize setpoint plot if it is provided
+            if channel.setpoint is not None:
+                self.gui.assign_curve(
+                    plot_label=channel.name,
+                    curve_label=channel.setpoint_name
+                )
 
-        self.gui.force_update()
+            # Numeric label for setpoint
+            self.gui.assign_scalar(
+                scalar_widget=self._number_widgets[2 * index + 1],
+                scalar_label=channel.setpoint_name
+            )
+
+            # Assign lock and error boolean widgets
+            self.gui.assign_scalar(
+                scalar_widget=self._boolean_widgets[2 * index],
+                scalar_label=channel.lock_name
+            )
+            self.gui.assign_scalar(
+                scalar_widget=self._boolean_widgets[2 * index + 1],
+                scalar_label=channel.error_name
+            )
+
+            self.gui.force_update()
+
+        except EOFError:
+            self._gui_connected = False
+            print('GUI disconnected')
 
     def _update_channels(self):
         """Updates all channels + displays"""
@@ -234,49 +247,68 @@ class WlmMonitor:
             # Update data
             channel.update(self.wlm_client.get_wavelength(channel.number))
 
-            # Update plots
-            self.gui.set_curve_data(
-                data=channel.data,
-                plot_label=channel.name,
-                curve_label=channel.curve_name
-            )
-            self.gui.set_scalar(
-                value=channel.data[-1],
-                scalar_label=channel.name
-            )
+            # Try to update plots
+            if self._gui_connected:
+                try:
+                    self.gui.set_curve_data(
+                        data=channel.data,
+                        plot_label=channel.name,
+                        curve_label=channel.curve_name
+                    )
+                    self.gui.set_scalar(
+                        value=channel.data[-1],
+                        scalar_label=channel.name
+                    )
 
-            # Update setpoints if necessary
-            if channel.setpoint is not None:
-                self.gui.set_curve_data(
-                    data=channel.sp_data,
-                    plot_label=channel.name,
-                    curve_label=channel.setpoint_name
-                )
-                self.gui.set_scalar(
-                    value=channel.setpoint,
-                    scalar_label=channel.setpoint_name
-                )
-            else:
-                self.gui.set_scalar(
-                    value=0,
-                    scalar_label=channel.setpoint_name
-                )
+                    # Update setpoints if necessary
+                    if channel.setpoint is not None:
+                        self.gui.set_curve_data(
+                            data=channel.sp_data,
+                            plot_label=channel.name,
+                            curve_label=channel.setpoint_name
+                        )
+                        self.gui.set_scalar(
+                            value=channel.setpoint,
+                            scalar_label=channel.setpoint_name
+                        )
+                    else:
+                        self.gui.set_scalar(
+                            value=0,
+                            scalar_label=channel.setpoint_name
+                        )
 
-            # Set lock and error booleans
-            self.gui.set_scalar(
-                value=channel.lock,
-                scalar_label=channel.lock_name
-            )
-            if channel.lock and np.abs(channel.data[-1]-channel.setpoint) > self.threshold:
-                self.gui.set_scalar(
-                    value=True,
-                    scalar_label=channel.error_name
-                )
-            else:
-                self.gui.set_scalar(
-                    value=False,
-                    scalar_label=channel.error_name
-                )
+                    # Set lock and error booleans
+                    self.gui.set_scalar(
+                        value=channel.lock,
+                        scalar_label=channel.lock_name
+                    )
+                    if channel.lock and np.abs(channel.data[-1]-channel.setpoint) > self.threshold:
+                        self.gui.set_scalar(
+                            value=True,
+                            scalar_label=channel.error_name
+                        )
+                    else:
+                        self.gui.set_scalar(
+                            value=False,
+                            scalar_label=channel.error_name
+                        )
+
+                # Handle case that GUI crashes and client fails to connect to server
+                except EOFError:
+                    self._gui_connected = False
+                    print('GUI disconnected')
+
+            # Check if we should try reconnecting to the GUI
+            elif self._gui_reconnect:
+                try:
+                    self._gui_connected = True
+                    self.gui.connect()
+                except ConnectionRefusedError:
+                    self._gui_connected = False
+                    print('GUI reconnection failed')
+                self._gui_reconnect = False
+
+                self.initialize_channels()
 
     def _get_channels(self):
         """

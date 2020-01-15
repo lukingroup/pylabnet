@@ -1,6 +1,6 @@
-(1) Checkout pylabnet from GitHub (C:/Users/Username is the recommended location)
+(1) Clone pylabnet from GitHub (C:/Users/Username is the recommended location)
 
-(2) Checkout pulseblock from GitHub (C:/Users/Username is the recommended location)
+(2) Clone pulseblock from GitHub (C:/Users/Username is the recommended location)
 
 (3) add pylabnet and pulseblock locations to PYTHONPATH environment variable.
 

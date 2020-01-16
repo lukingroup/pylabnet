@@ -164,8 +164,11 @@ class Window(QtWidgets.QMainWindow):
             plot_widget, plot_label, legend_widget = plot_widget_params
 
             # Assign plot to physical plot widget in GUI
-            self._assign_plot(plot_widget, plot_label, legend_widget)
-        self._plots_to_assign = []
+            try:
+                self._assign_plot(plot_widget, plot_label, legend_widget)
+                self._plots_to_assign.remove(plot_widget_params)
+            except KeyError:
+                pass
 
         # Assign curves to plots
         for curve_params in self._curves_to_assign:
@@ -174,8 +177,11 @@ class Window(QtWidgets.QMainWindow):
             plot_label, curve_label = curve_params
 
             # Assign curve to physical plot widget in GUI
-            self._assign_curve(plot_label, curve_label)
-        self._curves_to_assign = []
+            try:
+                self._assign_curve(plot_label, curve_label)
+                self._curves_to_assign.remove(curve_params)
+            except KeyError:
+                pass
 
         # Assign scalar widgets
         for scalar_params in self._scalars_to_assign:
@@ -184,16 +190,22 @@ class Window(QtWidgets.QMainWindow):
             scalar_widget, scalar_label = scalar_params
 
             # Assign scalar to physical scalar widget in GUI
-            self._assign_scalar(scalar_widget, scalar_label)
-        self._scalars_to_assign = []
+            try:
+                self._assign_scalar(scalar_widget, scalar_label)
+                self._scalars_to_assign.remove(scalar_params)
+            except KeyError:
+                pass
 
         for curve_params in self._curves_to_remove:
 
             # Unpack parameters
             plot_label, curve_label = curve_params
 
-            self._remove_curve(plot_label, curve_label)
-        self._curves_to_remove = []
+            try:
+                self._remove_curve(plot_label, curve_label)
+                self._curves_to_remove.remove(curve_params)
+            except KeyError:
+                pass
 
     def update_widgets(self):
         """Updates all widgets on the physical GUI to current data"""
@@ -240,7 +252,11 @@ class Window(QtWidgets.QMainWindow):
 
         # Find path to GUI
         # Currently assumes all templates are in the directory given by the self._gui_directory attribute
-        self._ui = os.path.join(os.getcwd(), self._gui_directory, gui_template)
+        self._ui = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            self._gui_directory,
+            gui_template
+        )
 
         # Load UI
         uic.loadUi(self._ui, self)
@@ -290,6 +306,7 @@ class Window(QtWidgets.QMainWindow):
         """
 
         self.plots[plot_label].remove_curve(curve_label)
+        self._force_update()
 
     def _assign_scalar(self, scalar_widget, scalar_label):
         """

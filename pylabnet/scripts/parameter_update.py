@@ -33,6 +33,9 @@ class UpdateService(ServiceBase):
     def exposed_reconnect_gui(self):
         return self._module.reconnect_gui()
 
+    def exposed_zero_voltage(self, channel):
+        return self._module.zero_voltage(channel)
+
     def exposed_pause(self):
 
         if isinstance(self._module, list):
@@ -58,6 +61,9 @@ class UpdateClient(ClientBase):
 
         params_pickle = pickle.dumps(params)
         return self._service.exposed_update_parameters(params_pickle)
+
+    def zero_voltage(self, channel):
+        return self._service.exposed_zero_voltage(channel)
 
     def reconnect_gui(self):
         return self._service.exposed_reconnect_gui()

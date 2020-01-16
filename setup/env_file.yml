@@ -131,7 +131,6 @@ dependencies:
   - nbconvert=5.6.0=py37_1
   - nbformat=4.4.0=py37_0
   - networkx=2.3=py_0
-  - nidaqmx=0.5.7
   - nltk=3.4.5=py37_0
   - nose=1.3.7=py37_2
   - notebook=6.0.1=py37_0
@@ -268,11 +267,11 @@ dependencies:
   - zlib=1.2.11=h62dcd97_3
   - zstd=1.3.7=h508b16e_0
   - pip:
+    - nidaqmx=0.5.7
     - plotly==4.1.1
     - plumbum==1.6.7
+    - pyqt5-tools==5.13.0.1.5
+    - pyqtgraph==0.10.0
     - pyvisa==1.10.1
     - retrying==1.3.3
     - rpyc==4.1.1
-    - pyqtgraph==0.10.0
-    - pyqt5-tools==5.13.0.1.5
-

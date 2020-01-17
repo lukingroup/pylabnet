@@ -72,7 +72,10 @@ wlm_monitor.set_parameters(
 wlm_monitor.initialize_channels()
 wlm_monitor.gui.force_update()
 
-# Run
-wlm_monitor.run()
-# import numpy as np
-# print(wlm_monitor.channels[0].curve_name)
+# Run continuously
+# Note that the actual operation inside run() can be paused using the update server
+while True:
+    if not wlm_monitor.is_paused:
+        wlm_monitor.run()
+
+

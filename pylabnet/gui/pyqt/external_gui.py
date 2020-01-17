@@ -47,6 +47,7 @@ class Window(QtWidgets.QMainWindow):
         self.scalars = {}
         self.labels = {}
         self._plots_to_assign = []
+        self._plots_to_remove = []
         self._curves_to_assign = []
         self._scalars_to_assign = []
         self._labels_to_assign = []
@@ -54,57 +55,6 @@ class Window(QtWidgets.QMainWindow):
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
-
-    def assign_widgets(self, plots, scalars):
-        """
-        Adds all plots and widget configurations to assignment queue in one step. This is for convenience, to be used
-        at the beginning of a script. Plots and curves can still be assigned later on using the individual assign_plot,
-        assign_curve, and assign_scalar methods.
-
-        :param plots: (dict) dictionary of curves to assign to the GUI. Keys are used as plot titles and are also used
-            to reference plots in future calls (e.g. set_curve_data). Values are another dictionary with two keys:
-            'curves' and 'widgets'. Values associated with 'curves' are a list of curve name strings, which are used as
-            name references and in plot legends. These should be chosen at the script writing stage to be application
-            specific and to allow the developer to conveniently refer to a particular plot and curve. Values associated
-            with 'widget' are names of instances of PlotWidget in the GUI. Values of 'legend' are names of instances of
-            GraphicsView widgets in the GUI. Instances of widgets should be defined when developing the .gui file in
-            QtDesigner, and should generally be given variable names that are agnostic to the specific application.
-            Example input:
-                {'Velocity Monitor': {'curves': ['Velocity', 'Velocity setpoint'],
-                                      'widget': 'graph_widget_1', 'legend': 'legend_widget_1'},
-                 'TiSa Monitor': {'curves': ['TiSa'], 'widget': 'graph_widget_2', 'legend': 'legend_widget_2'}}
-        :param scalars: (dict) dictionary of scalars (numerical values, booleans) revealing mapping between scalar
-            labels and instances of widgets in the GUI. Instances of GUI widgets should be defined when developing the
-            .gui file in QtDesigner, and should generally be given variable names that are agnostic to the specific
-            application. Script specific names are defined as scalar labels (keys). Values should be a string - the
-            variable name for the Widget instance (e.g. QLCDNumber or QCheckbox). Example:
-                {'Velocity Frequency': 'number_widget_1', 'Velocity Setpoint': 'number_widget_2',
-                 'Velocity Lock': 'boolean_widget_1', 'TiSa Frequency': 'number_widget_3'}
-        """
-
-        # Iterate through all plots and curves
-        for plot, plot_dict in plots.items():
-
-            # First instantiate this plot
-            self.assign_plot(
-                plot_widget=plot_dict['widget'],
-                plot_label=plot,
-                legend_widget=plot_dict['legend']
-            )
-
-            # Now assign all curves
-            for curve in plot_dict['curves']:
-                self.assign_curve(
-                    plot_label=plot,
-                    curve_label=curve
-                )
-
-        # Next, assign all scalars
-        for scalar_name, scalar_widget in scalars.items():
-            self.assign_scalar(
-                scalar_widget=scalar_widget,
-                scalar_label=scalar_name
-            )
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """
@@ -116,6 +66,13 @@ class Window(QtWidgets.QMainWindow):
         """
 
         self._plots_to_assign.append((plot_widget, plot_label, legend_widget))
+
+    def clear_plot(self, plot_widget):
+        """ Clears all curves and legend items from a plot
+
+        :param plot_widget: (str) name of the plot widget (instance of PYQTgraph) to clear
+        """
+        self._plots_to_remove.append(plot_widget)
 
     def assign_curve(self, plot_label, curve_label):
         """Adds curve assignment to the queue"""
@@ -174,6 +131,16 @@ class Window(QtWidgets.QMainWindow):
 
     def configure_widgets(self):
         """Configures all widgets in the queue"""
+
+        # Clear plot widgets
+        for plot_widget in self._plots_to_remove:
+
+            # Remove plot widget
+            try:
+                self._clear_plot(plot_widget)
+                self._plots_to_remove.remove(plot_widget)
+            except KeyError:
+                pass
 
         # Assign plot widgets
         for plot_widget_params in self._plots_to_assign:
@@ -318,6 +285,31 @@ class Window(QtWidgets.QMainWindow):
         # Set title
         self.plots[plot_label].widget.setTitle(plot_label)
 
+    def _clear_plot(self, plot_widget):
+        """ Clears a plot and removes it from the self.plots attribute
+
+        :param plot_widget: (str) name of the plot widget (instance of PYQTgraph) to clear
+        """
+
+        # Identify the plot widget
+        widget_to_remove = getattr(self, plot_widget)
+
+        # Find the relevant widget
+        plot_to_delete = None
+        for plot_label, plot in self.plots.items():
+            if plot.widget is widget_to_remove:
+
+                # Remove all curves
+                curves_to_remove = []
+                for curve_label in plot.curves:
+                    curves_to_remove.append(curve_label)
+                for curve_to_remove in curves_to_remove:
+                    plot.remove_curve(curve_to_remove)
+                # Remove plot from self.plots
+                plot_to_delete = plot_label
+        if plot_to_delete is not None:
+            del self.plots[plot_to_delete]
+
     def _assign_curve(self, plot_label, curve_label):
         """
         Assigns a curve to a plot
@@ -359,19 +351,16 @@ class Window(QtWidgets.QMainWindow):
 
 class Service(ServiceBase):
 
-    def exposed_assign_widgets(self, plots_pickle, scalars_pickle):
-        plots = pickle.loads(plots_pickle)
-        scalars = pickle.loads(scalars_pickle)
-        return self._module.assign_widgets(
-            plots=plots,
-            scalars=scalars
-        )
-
     def exposed_assign_plot(self, plot_widget, plot_label, legend_widget):
         return self._module.assign_plot(
             plot_widget=plot_widget,
             plot_label=plot_label,
             legend_widget=legend_widget
+        )
+
+    def exposed_clear_plot(self, plot_widget):
+        return self._module.clear_plot(
+            plot_widget=plot_widget
         )
 
     def exposed_assign_curve(self, plot_label, curve_label):
@@ -408,7 +397,8 @@ class Service(ServiceBase):
             error=error
         )
 
-    def exposed_set_scalar(self, value, scalar_label):
+    def exposed_set_scalar(self, value_pickle, scalar_label):
+        value = pickle.loads(value_pickle)
         return self._module.set_scalar(
             value=value,
             scalar_label=scalar_label
@@ -426,19 +416,16 @@ class Service(ServiceBase):
 
 class Client(ClientBase):
 
-    def assign_widgets(self, plots, scalars):
-        plots_pickle = pickle.dumps(plots)
-        scalars_pickle = pickle.dumps(scalars)
-        return self._service.exposed_assign_widgets(
-            plots_pickle=plots_pickle,
-            scalars_pickle=scalars_pickle
-        )
-
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         return self._service.exposed_assign_plot(
             plot_widget=plot_widget,
             plot_label=plot_label,
             legend_widget=legend_widget
+        )
+
+    def clear_plot(self, plot_widget):
+        return self._service.exposed_clear_plot(
+            plot_widget=plot_widget
         )
 
     def assign_curve(self, plot_label, curve_label):
@@ -476,8 +463,9 @@ class Client(ClientBase):
         )
 
     def set_scalar(self, value, scalar_label):
+        value_pickle = pickle.dumps(value)
         return self._service.exposed_set_scalar(
-            value=value,
+            value_pickle=value_pickle,
             scalar_label=scalar_label
         )
 
@@ -594,7 +582,7 @@ class Plot:
 
         :param curve_label: (str) label of curve to remove from legend
         """
-        self.legend.removeItem(self.curves[curve_label].widget)
+        self.legend.removeItem(' - '+curve_label)
 
 
 class Curve:
@@ -667,9 +655,13 @@ class Scalar:
             if self.widget.isChecked() != self.data:
                 self.widget.toggle()
         elif self.data is not None:
-            if self.widget.value() != self.data:
-                display_str = copy.deepcopy('%.6f' % self.data)
-                self.widget.display(display_str)
+            try:
+                if self.widget.value() != self.data:
+                    display_str = '%.6f' % self.data
+                    self.widget.display(display_str)
+            # In case Wavemeter monitor disconnects
+            except EOFError:
+                pass
 
 
 class Label:

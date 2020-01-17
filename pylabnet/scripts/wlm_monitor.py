@@ -44,6 +44,7 @@ class WlmMonitor:
         self.channels = []
         self.gui = None
         self.is_running = False
+        self.is_paused = False
         self._gui_connected = False
         self._gui_reconnect = False
         self.wlm_client = wlm_client
@@ -182,7 +183,7 @@ class WlmMonitor:
             channel.update()
 
     def run(self):
-        """Runs the WlmMonitor. Can also be used to resume after a pause"""
+        """Runs the WlmMonitor"""
 
         self.is_running = True
         while self.is_running:
@@ -192,6 +193,11 @@ class WlmMonitor:
     def pause(self):
         """Pauses the wavemeter monitor"""
         self.is_running = False
+        self.is_paused = True
+
+    def resume(self):
+        """Resumes the wavemeter monitor by raising a flag"""
+        self.is_paused = False
 
     def reconnect_gui(self):
         self._gui_reconnect = True
@@ -221,7 +227,7 @@ class WlmMonitor:
             display_pts=self.display_pts
         )
 
-        # Calculate indices for various gui widgets
+        # Calculate indices for various gui widget defaults
         if channel.voltage is None:
             plot_multiplier = 2
             scalar_multiplier = 4
@@ -233,11 +239,16 @@ class WlmMonitor:
         try:
             self._gui_connected = True
 
+            # Clear the plot
+            self.gui.clear_plot(
+                plot_widget=self._graph_widgets[plot_multiplier*(index + channel.plot_widget_offset)]
+            )
+
             # Assign GUI + curves
             self.gui.assign_plot(
-                plot_widget=self._graph_widgets[plot_multiplier*index],
+                plot_widget=self._graph_widgets[plot_multiplier*(index + channel.plot_widget_offset)],
                 plot_label=channel.name,
-                legend_widget=self._legend_widgets[plot_multiplier*index]
+                legend_widget=self._legend_widgets[plot_multiplier*(index + channel.plot_widget_offset)]
             )
             self.gui.assign_curve(
                 plot_label=channel.name,
@@ -246,7 +257,7 @@ class WlmMonitor:
 
             # Numeric label
             self.gui.assign_scalar(
-                scalar_widget=self._number_widgets[scalar_multiplier*index],
+                scalar_widget=self._number_widgets[scalar_multiplier*(index + channel.plot_widget_offset)],
                 scalar_label=channel.name
             )
 
@@ -259,26 +270,26 @@ class WlmMonitor:
 
             # Numeric label for setpoint
             self.gui.assign_scalar(
-                scalar_widget=self._number_widgets[scalar_multiplier*index + 1],
+                scalar_widget=self._number_widgets[scalar_multiplier*(index + channel.plot_widget_offset) + 1],
                 scalar_label=channel.setpoint_name
             )
 
             # Assign lock and error boolean widgets
             self.gui.assign_scalar(
-                scalar_widget=self._boolean_widgets[scalar_multiplier*index],
+                scalar_widget=self._boolean_widgets[scalar_multiplier*(index + channel.plot_widget_offset)],
                 scalar_label=channel.lock_name
             )
             self.gui.assign_scalar(
-                scalar_widget=self._boolean_widgets[scalar_multiplier*index + 1],
+                scalar_widget=self._boolean_widgets[scalar_multiplier*(index + channel.plot_widget_offset) + 1],
                 scalar_label=channel.error_name
             )
 
             # Assign voltage if relevant
             if channel.voltage is not None:
                 self.gui.assign_plot(
-                    plot_widget=self._graph_widgets[plot_multiplier*index + 1],
+                    plot_widget=self._graph_widgets[plot_multiplier*(index + channel.plot_widget_offset) + 1],
                     plot_label=channel.aux_name,
-                    legend_widget=self._legend_widgets[plot_multiplier*index + 1]
+                    legend_widget=self._legend_widgets[plot_multiplier*(index + channel.plot_widget_offset) + 1]
                 )
                 self.gui.assign_curve(
                     plot_label=channel.aux_name,
@@ -291,21 +302,21 @@ class WlmMonitor:
 
                 # Display scalars as well
                 self.gui.assign_scalar(
-                    scalar_widget=self._number_widgets[scalar_multiplier*index + 2],
+                    scalar_widget=self._number_widgets[scalar_multiplier*(index + channel.plot_widget_offset) + 2],
                     scalar_label=channel.voltage_curve
                 )
                 self.gui.assign_scalar(
-                    scalar_widget=self._number_widgets[scalar_multiplier*index + 3],
+                    scalar_widget=self._number_widgets[scalar_multiplier*(index + channel.plot_widget_offset) + 3],
                     scalar_label=channel.error_curve
                 )
 
                 # Change label text for voltage
                 self.gui.assign_label(
-                    label_widget=self._label_widgets[scalar_multiplier*index + 2],
+                    label_widget=self._label_widgets[scalar_multiplier*(index + channel.plot_widget_offset) + 2],
                     label_label=channel.voltage_curve
                 )
                 self.gui.assign_label(
-                    label_widget=self._label_widgets[scalar_multiplier*index + 3],
+                    label_widget=self._label_widgets[scalar_multiplier*(index + channel.plot_widget_offset) + 3],
                     label_label=channel.error_curve
                 )
 
@@ -314,6 +325,12 @@ class WlmMonitor:
         except EOFError:
             self._gui_connected = False
             print('GUI disconnected')
+        except IndexError:
+            print("Sorry, there's no more room in this GUI!")
+            raise
+        except AttributeError:
+            print('Incorrect GUI widget name - check .ui file in QtDesigner for widget names')
+            raise
 
     def _update_channels(self):
         """Updates all channels + displays"""
@@ -412,6 +429,7 @@ class WlmMonitor:
                             text=channel.error_curve,
                             label_label=channel.error_curve
                         )
+                        channel.label_updated = True
 
                 # Handle case that GUI crashes and client fails to connect to server
                 except EOFError:
@@ -633,3 +651,8 @@ class Channel:
                 self.voltage = None
         else:
             self.voltage = None
+
+        if 'plot_widget' in channel_params:
+            self.plot_widget_offset = channel_params['plot_widget']
+        else:
+            self.plot_widget_offset = 0

@@ -46,6 +46,9 @@ class UpdateService(ServiceBase):
         else:
             return self._module.pause()
 
+    def exposed_resume(self):
+        return self._module.resume()
+
 
 class UpdateClient(ClientBase):
     """
@@ -71,3 +74,6 @@ class UpdateClient(ClientBase):
     def pause(self):
 
         return self._service.exposed_pause()
+
+    def resume(self):
+        return self._service.exposed_resume()

@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
@@ -6,6 +6,7 @@ from pylabnet.utils.logging.logger import LogClient
 
 import sys
 import socket
+import time
 
 # TODO: Set gui template as command-line argument
 
@@ -24,7 +25,8 @@ def main():
     main_window = Window(app, gui_template='wavemetermonitor_4ch')
 
     # Instantiate GUI server
-    port_num = 9
+    # port_num = 9
+    port_num = 10
     gui_service = Service()
     gui_service.assign_module(module=main_window)
     gui_service.assign_logger(logger=gui_logger)
@@ -40,6 +42,12 @@ def main():
         socket.gethostbyname(socket.gethostname())
     ))
     main_window.port_label.setText('Port: {}'.format(port_num))
+
+    # # Test editing and getting data
+    # main_window.lineEdit.setValidator(QtGui.QIntValidator(0, 100))
+    # for i in range(1000000):
+    #     app.processEvents()
+    # print(main_window.lineEdit.text())
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

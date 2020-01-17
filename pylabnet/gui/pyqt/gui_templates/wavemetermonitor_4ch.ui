@@ -139,7 +139,7 @@ selection-color: rgb(255, 0, 0);</string>
             <enum>QLCDNumber::Filled</enum>
            </property>
            <property name="value" stdset="0">
-            <double>999.999999000000003</double>
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -175,7 +175,7 @@ selection-color: rgb(255, 0, 0);</string>
             <enum>QLCDNumber::Filled</enum>
            </property>
            <property name="value" stdset="0">
-            <double>999.999999000000003</double>
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -484,6 +484,9 @@ selection-color: rgb(255, 0, 0);</string>
            <property name="text">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
+           <property name="scaledContents">
+            <bool>false</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -715,6 +718,40 @@ selection-color: rgb(255, 0, 0);</string>
          </item>
         </layout>
        </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>110</x>
+      <y>10</y>
+      <width>541</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <widget class="QLabel" name="ip_label">
+       <property name="styleSheet">
+        <string notr="true">color: rgb(255, 255, 255);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;IP Address: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="port_label">
+       <property name="styleSheet">
+        <string notr="true">color: rgb(255, 255, 255);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
       </widget>
      </item>
     </layout>

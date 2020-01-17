@@ -61,6 +61,9 @@ wlm_monitor.set_parameters(
         {
             "channel": 1,
             "name": "Velocity",
+            'AO': {'client': 'cDAQ1', 'channel': 'ao0'},
+            'PID': {'p': 0.04, 'i': 0.001, 'd': 0},
+            'memory': 100,
             "voltage_monitor": True
         }
     ]

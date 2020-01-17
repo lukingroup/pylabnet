@@ -9,23 +9,25 @@ import time
 
 def generate_widgets():
     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
-    graphs, legends, numbers, booleans = [], [], [], []
+    graphs, legends, numbers, booleans, labels = [], [], [], [], []
 
     for i in range(4):
         graphs.append('graph_widget_'+str(i+1))
         legends.append('legend_widget_'+str(i+1))
         numbers.append('number_widget_'+str(i+1))
         booleans.append('boolean_widget_'+str(i+1))
+        labels.append('label_'+str(i+1))
     for i in range(4, 8):
         numbers.append('number_widget_' + str(i + 1))
         booleans.append('boolean_widget_' + str(i + 1))
-    return graphs, legends, numbers, booleans
+        labels.append('label_'+str(i+1))
+    return graphs, legends, numbers, booleans, labels
 
 
 class WlmMonitor:
 
     # Assign widget names based on .gui file. This line works for wavemetermonitor_4ch.ui
-    _graph_widgets, _legend_widgets, _number_widgets, _boolean_widgets = generate_widgets()
+    _graph_widgets, _legend_widgets, _number_widgets, _boolean_widgets, _label_widgets = generate_widgets()
 
     def __init__(self, wlm_client=None, ao_clients=None, display_pts=5000, threshold=0.0002):
         """
@@ -297,6 +299,16 @@ class WlmMonitor:
                     scalar_label=channel.error_curve
                 )
 
+                # Change label text for voltage
+                self.gui.assign_label(
+                    label_widget=self._label_widgets[scalar_multiplier*index + 2],
+                    label_label=channel.voltage_curve
+                )
+                self.gui.assign_label(
+                    label_widget=self._label_widgets[scalar_multiplier*index + 3],
+                    label_label=channel.error_curve
+                )
+
             self.gui.force_update()
 
         except EOFError:
@@ -390,6 +402,17 @@ class WlmMonitor:
                             scalar_label=channel.error_curve
                         )
 
+                    # Update labels, if relevant
+                    if not channel.labels_updated:
+                        self.gui.set_label(
+                            text=channel.voltage_curve,
+                            label_label=channel.voltage_curve
+                        )
+                        self.gui.set_label(
+                            text=channel.error_curve,
+                            label_label=channel.error_curve
+                        )
+
                 # Handle case that GUI crashes and client fails to connect to server
                 except EOFError:
                     self._gui_connected = False
@@ -446,6 +469,7 @@ class Channel:
         self.voltage = None
         self.current_voltage = 0
         self.error = None
+        self.labels_updated = False
         self._overwrite_parameters(channel_params)
 
         # Initialize relevant placeholders

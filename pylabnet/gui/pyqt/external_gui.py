@@ -45,9 +45,11 @@ class Window(QtWidgets.QMainWindow):
         self._is_running = False
         self.plots = {}
         self.scalars = {}
+        self.labels = {}
         self._plots_to_assign = []
         self._curves_to_assign = []
         self._scalars_to_assign = []
+        self._labels_to_assign = []
         self._curves_to_remove = []
 
         # Load and run the GUI
@@ -139,6 +141,14 @@ class Window(QtWidgets.QMainWindow):
         """
         self._scalars_to_assign.append((scalar_widget, scalar_label))
 
+    def assign_label(self, label_widget, label_label):
+        """Adds label widget assignment to queue
+
+        :param label_widget: (str) name of label object (e.g. QLabel) in the GUI
+        :param label_label: (str) label for self.labels dictionary
+        """
+        self._labels_to_assign.append((label_widget, label_label))
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """Sets data to a specific curve (does not update GUI directly)
 
@@ -153,6 +163,14 @@ class Window(QtWidgets.QMainWindow):
     def set_scalar(self, value, scalar_label):
         """Sets the value of a numerical display internally (does not update)"""
         self.scalars[scalar_label].set_data(value)
+
+    def set_label(self, text, label_label):
+        """ Sets a label widgets text
+
+        :param text: (str) Text to set
+        :param label_label: (str) Key for the label to set
+        """
+        self.labels[label_label].set_label(text)
 
     def configure_widgets(self):
         """Configures all widgets in the queue"""
@@ -193,6 +211,19 @@ class Window(QtWidgets.QMainWindow):
             try:
                 self._assign_scalar(scalar_widget, scalar_label)
                 self._scalars_to_assign.remove(scalar_params)
+            except KeyError:
+                pass
+
+        # Assign label widgets
+        for label_params in self._labels_to_assign:
+
+            # Unpack parameters
+            label_widget, label_label = label_params
+
+            # Assign label to physical label widget in GUI
+            try:
+                self._assign_label(label_widget, label_label)
+                self._labels_to_assign.remove(label_params)
             except KeyError:
                 pass
 
@@ -317,6 +348,14 @@ class Window(QtWidgets.QMainWindow):
         """
         self.scalars[scalar_label] = Scalar(self, scalar_widget)
 
+    def _assign_label(self, label_widget, label_label):
+        """ Instantiates label object and assigns it to reference string
+
+        :param label_widget: (str) name of the label widget (e.g. QLabel) in the GUI
+        :param label_label: (str) reference string for the label
+        """
+        self.labels[label_label] = Label(self, label_widget)
+
 
 class Service(ServiceBase):
 
@@ -353,6 +392,12 @@ class Service(ServiceBase):
             scalar_label=scalar_label
         )
 
+    def exposed_assign_label(self, label_widget, label_label):
+        return self._module.assign_label(
+            label_widget=label_widget,
+            label_label=label_label
+        )
+
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
         error = pickle.loads(error_pickle)
@@ -367,6 +412,12 @@ class Service(ServiceBase):
         return self._module.set_scalar(
             value=value,
             scalar_label=scalar_label
+        )
+
+    def exposed_set_label(self, text, label_label):
+        return self._module.set_label(
+            text=text,
+            label_label=label_label
         )
 
     def exposed_force_update(self):
@@ -408,6 +459,12 @@ class Client(ClientBase):
             scalar_label=scalar_label
         )
 
+    def assign_label(self, label_widget, label_label):
+        return self._service.exposed_assign_label(
+            label_widget=label_widget,
+            label_label=label_label
+        )
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -422,6 +479,12 @@ class Client(ClientBase):
         return self._service.exposed_set_scalar(
             value=value,
             scalar_label=scalar_label
+        )
+
+    def set_label(self, text, label_label):
+        return self._service.exposed_set_label(
+            text=text,
+            label_label=label_label
         )
 
     def force_update(self):
@@ -607,3 +670,25 @@ class Scalar:
             if self.widget.value() != self.data:
                 display_str = copy.deepcopy('%.6f' % self.data)
                 self.widget.display(display_str)
+
+
+class Label:
+    """A text label display object"""
+
+    def __init__(self, gui, label_widget):
+        """Constructor for label object
+
+        :param gui: (Window) instance of GUI window class containing the label object
+        :param label_widget: (str) name of the widget for reference
+        """
+
+        self.text = None
+        self.widget = getattr(gui, label_widget)
+
+    def set_label(self, label_text=''):
+        """Sets label text
+
+        :param label_text: (str, optional) text string to set the label to
+        """
+
+        self.widget.setText(label_text)

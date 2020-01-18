@@ -1,4 +1,13 @@
-from PyQt5 import QtWidgets, QtGui
+""" Runs a GUI window
+
+Instantiates client to connect to Logger. Runs a Window server
+Continuously updates GUI configuration and output. Can press the stop button + close the window to deactivate the GUI
+Can connect to the GUI and update data by creating a GUI client.
+
+Must tie the GUI to a .ui file that can be created in QtDesigner
+"""
+
+from PyQt5 import QtWidgets
 
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
@@ -6,9 +15,6 @@ from pylabnet.utils.logging.logger import LogClient
 
 import sys
 import socket
-import time
-
-# TODO: Set gui template as command-line argument
 
 
 def main():
@@ -42,17 +48,11 @@ def main():
     ))
     main_window.port_label.setText('Port: {}'.format(port_num))
 
-    # # Test editing and getting data
-    # main_window.doubleSpinBox.display('407.693')
-    # for i in range(1000000):
-    #     app.processEvents()
-    # print(main_window.doubleSpinBox.value())
-
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():
         main_window.configure_widgets()
         main_window.update_widgets()
-        app.processEvents()
+        main_window.force_update()
     sys.exit(app.exec_())
 
 

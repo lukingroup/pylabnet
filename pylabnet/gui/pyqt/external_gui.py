@@ -5,7 +5,7 @@ Templates for the GUI window can be configured using Qt Designer and should be s
 ./gui_templates directory.
 """
 
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, QtCore, uic
 import pyqtgraph as pg
 
 from pylabnet.core.service_base import ServiceBase
@@ -120,6 +120,28 @@ class Window(QtWidgets.QMainWindow):
     def set_scalar(self, value, scalar_label):
         """Sets the value of a numerical display internally (does not update)"""
         self.scalars[scalar_label].set_data(value)
+
+    def get_scalar(self, scalar_label):
+        """ Returns the data associated with a scalar
+
+        :return: scalar data
+        """
+
+        return self.scalars[scalar_label].get_data()
+
+    def activate_scalar(self, scalar_label):
+        """ Tells a scalar to pull data from internal self.data attribute
+
+        :param scalar_label: (str) key for relevant scalar
+        """
+        self.scalars[scalar_label].activate()
+
+    def deactivate_scalar(self, scalar_label):
+        """ Tells a scalar not to update output based on self.data attribute
+
+        :param scalar_label: (str) key for relevant scalar
+        """
+        self.scalars[scalar_label].deactivate()
 
     def set_label(self, text, label_label):
         """ Sets a label widgets text
@@ -404,6 +426,15 @@ class Service(ServiceBase):
             scalar_label=scalar_label
         )
 
+    def exposed_get_scalar(self, scalar_label):
+        return pickle.dumps(self._module.get_scalar(scalar_label))
+
+    def exposed_activate_scalar(self, scalar_label):
+        return self._module.activate_scalar(scalar_label)
+
+    def exposed_deactivate_scalar(self, scalar_label):
+        return self._module.deactivate_scalar(scalar_label)
+
     def exposed_set_label(self, text, label_label):
         return self._module.set_label(
             text=text,
@@ -468,6 +499,15 @@ class Client(ClientBase):
             value_pickle=value_pickle,
             scalar_label=scalar_label
         )
+
+    def get_scalar(self, scalar_label):
+        return pickle.loads(self._service.exposed_get_scalar(scalar_label))
+
+    def activate_scalar(self, scalar_label):
+        return self._service.exposed_activate_scalar(scalar_label)
+
+    def deactivate_scalar(self, scalar_label):
+        return self._service.exposed_deactivate_scalar(scalar_label)
 
     def set_label(self, text, label_label):
         return self._service.exposed_set_label(
@@ -636,6 +676,7 @@ class Scalar:
         """
 
         self.data = None
+        self._use_data = True
         self.widget = getattr(gui, scalar_widget)
 
     def set_data(self, data):
@@ -649,19 +690,52 @@ class Scalar:
     def update_output(self):
         """Updates the physical output of the scalar widget."""
 
-        # Set the state, checking first whether it is a boolean display or not
-        if isinstance(self.data, bool):
-            # Check the state of the button
-            if self.widget.isChecked() != self.data:
-                self.widget.toggle()
-        elif self.data is not None:
-            try:
-                if self.widget.value() != self.data:
-                    display_str = '%.6f' % self.data
-                    self.widget.display(display_str)
-            # In case Wavemeter monitor disconnects
-            except EOFError:
-                pass
+        # Check if active
+        if self._use_data:
+            # Set the state, checking first whether it is a boolean display or not
+            if isinstance(self.data, bool):
+                # Check if the script has updated and implement
+                self.widget.setCheckState(self.data)
+
+            # Handle numerical widgets
+            elif self.data is not None:
+                # Now if it is simply a QLCDButton
+                try:
+                    if self.widget.value() != self.data:
+                        display_str = '%.6f' % self.data
+                        self.widget.display(display_str)
+                # In case client disconnects
+                except EOFError:
+                    pass
+
+                # If it is an input numerical display, update!
+                except AttributeError:
+                    try:
+                        self.widget.setValue(self.data)
+                    # In case client disconnects
+                    except EOFError:
+                        pass
+                    except AttributeError:
+                        pass
+
+    def get_data(self):
+        """ Gets the current data from the GUI widget
+
+        :return: current data (either a bool or a double)
+        """
+        try:
+            data = self.widget.checkState()
+        except AttributeError:
+            data = self.widget.value()
+        return data
+
+    def activate(self):
+        """Tells a scalar to use its data, locking GUI editing and updating from the script"""
+        self._use_data = True
+
+    def deactivate(self):
+        """Tells a scalar not to use its data, enables free GUI editing"""
+        self._use_data = False
 
 
 class Label:

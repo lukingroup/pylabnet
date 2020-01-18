@@ -25,8 +25,7 @@ def main():
     main_window = Window(app, gui_template='wavemetermonitor_4ch')
 
     # Instantiate GUI server
-    # port_num = 9
-    port_num = 10
+    port_num = 9
     gui_service = Service()
     gui_service.assign_module(module=main_window)
     gui_service.assign_logger(logger=gui_logger)
@@ -44,10 +43,10 @@ def main():
     main_window.port_label.setText('Port: {}'.format(port_num))
 
     # # Test editing and getting data
-    # main_window.lineEdit.setValidator(QtGui.QIntValidator(0, 100))
+    # main_window.doubleSpinBox.display('407.693')
     # for i in range(1000000):
     #     app.processEvents()
-    # print(main_window.lineEdit.text())
+    # print(main_window.doubleSpinBox.value())
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

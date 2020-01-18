@@ -1,8 +1,7 @@
-# TODO debug curve deletion + legend
-
 from pylabnet.scripts.pid import PID
 import numpy as np
 import time
+import copy
 
 
 # Static methods
@@ -53,8 +52,7 @@ class WlmMonitor:
         self.threshold = threshold
 
     def assign_gui(self, gui_client):
-        """
-        Assigns a GUI client to the WlmMonitor
+        """ Assigns a GUI client to the WlmMonitor
 
         :param gui_client: (obj) instance of GUI client
         """
@@ -141,8 +139,12 @@ class WlmMonitor:
                         else:
                             channel.setpoint = parameter['setpoint']
 
+                            # Mark that we should override setpoint
+                            channel.setpoint_override = True
+
                     if 'lock' in parameter:
                         channel.lock = parameter['lock']
+                        channel.lock_override = True
                     if 'memory' in parameter:
                         channel.memory = parameter['memory']
                     if 'PID' in parameter:
@@ -175,20 +177,14 @@ class WlmMonitor:
         for index, channel in enumerate(self.channels):
             self._initialize_channel(index, channel)
 
-    def update_channels(self):
-        """Updates the wavelength for each channel"""
-
-        self._initialize_channels()
-        for channel in self.channels:
-            channel.update()
-
     def run(self):
         """Runs the WlmMonitor"""
 
         self.is_running = True
         while self.is_running:
+            self._get_gui_data()
             self._update_channels()
-            time.sleep(0.003)
+            time.sleep(0.02)
 
     def pause(self):
         """Pauses the wavemeter monitor"""
@@ -360,10 +356,20 @@ class WlmMonitor:
                             plot_label=channel.name,
                             curve_label=channel.setpoint_name
                         )
-                        self.gui.set_scalar(
-                            value=channel.setpoint,
-                            scalar_label=channel.setpoint_name
-                        )
+                        if channel.setpoint_override:
+                            # Tell GUI to pull data provided by script
+                            self.gui.activate_scalar(
+                                scalar_label=channel.setpoint_name
+                            )
+                            self.gui.set_scalar(
+                                value=channel.setpoint,
+                                scalar_label=channel.setpoint_name
+                            )
+                        else:
+                            # Tell GUI to stop updating from script
+                            self.gui.deactivate_scalar(
+                                scalar_label=channel.setpoint_name
+                            )
                     else:
                         self.gui.set_scalar(
                             value=0,
@@ -372,11 +378,19 @@ class WlmMonitor:
 
                     # Set lock and error booleans
                     if channel.setpoint is not None:
-                        self.gui.set_scalar(
-                            value=channel.lock,
-                            scalar_label=channel.lock_name
-                        )
-                        if channel.lock and np.abs(channel.data[-1]-channel.setpoint) > self.threshold:
+                        if channel.lock_override:
+                            self.gui.activate_scalar(
+                                scalar_label=channel.lock_name
+                            )
+                            self.gui.set_scalar(
+                                value=channel.lock,
+                                scalar_label=channel.lock_name
+                            )
+                        else:
+                            self.gui.deactivate_scalar(
+                                scalar_label=channel.lock_name
+                            )
+                        if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
                             self.gui.set_scalar(
                                 value=True,
                                 scalar_label=channel.error_name
@@ -387,7 +401,7 @@ class WlmMonitor:
                                 scalar_label=channel.error_name
                             )
 
-                    # If the setpoint isn't given just set everything false
+                    # Otherwise just set everything false
                     else:
                         self.gui.set_scalar(
                             value=False,
@@ -452,6 +466,23 @@ class WlmMonitor:
 
                 self.initialize_channels()
 
+    def _get_gui_data(self):
+        """ Updates setpoint and lock parameters with data pulled from GUI"""
+        for channel in self.channels:
+
+            # Pull the current value from the GUI
+            if channel.setpoint is not None:
+                try:
+                    channel.gui_setpoint = self.gui.get_scalar(scalar_label=channel.setpoint_name)
+                    channel.gui_lock = self.gui.get_scalar(scalar_label=channel.lock_name)
+
+                # In case connection is lost
+                except EOFError:
+                    pass
+                # In case GUI is not configured
+                except KeyError:
+                    pass
+
     def _get_channels(self):
         """
         Returns all active channel numbers
@@ -486,8 +517,17 @@ class Channel:
         self.ao = None
         self.voltage = None
         self.current_voltage = 0
+        self.setpoint = None
         self.error = None
         self.labels_updated = False
+        self.setpoint_override = True
+        self.lock_override = True
+        self.gui_setpoint = 0
+        self.gui_lock = False
+        self.lock = False
+        self.prev_gui_lock = None
+        self.prev_gui_setpoint = None
+
         self._overwrite_parameters(channel_params)
 
         # Initialize relevant placeholders
@@ -531,7 +571,32 @@ class Channel:
         self.data = np.append(self.data[1:], wavelength)
 
         if self.setpoint is not None:
+
+            # Pick which setpoint to use
+            # If the setpoint override is on, this means we need to try and set the GUI value to self.setpoint
+            if self.setpoint_override:
+
+                # Check if the GUI has actually caught up
+                if self.setpoint == self.gui_setpoint:
+                    self.setpoint_override = False
+
+                # Otherwise, the GUI still hasn't implemented the setpoint prescribed by update_parameters()
+
+            # If setpoint override is off, this means the GUI caught up to our last update_parameters() call, and we
+            # should refrain from updating the value until we get a new value from the GUI
+            else:
+
+                # Check if the GUI has changed, and if so, update the setpoint in the script to match
+                if self.gui_setpoint != self.prev_gui_setpoint:
+                    self.setpoint = copy.deepcopy(self.gui_setpoint)
+
+                # Otherwise the GUI is static AND parameters haven't been updated so we don't change the setpoint at all
+
+            # Store the latest GUI setpoint
+            self.prev_gui_setpoint = copy.deepcopy(self.gui_setpoint)
             self.sp_data = np.append(self.sp_data[1:], self.setpoint)
+
+        # Now deal with PID stuff
         self.pid.set_parameters(setpoint=0 if self.setpoint is None else self.setpoint)
 
         # Implement lock
@@ -539,7 +604,17 @@ class Channel:
         self.pid.set_pv(pv=self.data[len(self.data)-self.memory:])
         # Set control variable
         self.pid.set_cv()
-        # Set voltage if desired
+
+        # See logic for setpoint above
+        if self.lock_override:
+            if self.lock == self.gui_lock:
+                self.lock_override = False
+        else:
+            if self.gui_lock != self.prev_gui_lock:
+                self.lock = copy.deepcopy(self.gui_lock)
+
+        self.prev_gui_lock = copy.deepcopy(self.gui_lock)
+
         if self.lock:
             try:
                 if self.ao is not None:

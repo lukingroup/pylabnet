@@ -990,12 +990,21 @@ color: rgb(0, 0, 0);</string>
       <x>110</x>
       <y>10</y>
       <width>541</width>
-      <height>21</height>
+      <height>25</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <item>
       <widget class="QLabel" name="ip_label">
+       <property name="font">
+        <font>
+         <family>Calibri Light</family>
+         <pointsize>12</pointsize>
+         <weight>3</weight>
+         <italic>false</italic>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="styleSheet">
         <string notr="true">color: rgb(255, 255, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>
@@ -1007,12 +1016,94 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </item>
      <item>
       <widget class="QLabel" name="port_label">
+       <property name="font">
+        <font>
+         <family>Calibri Light</family>
+         <pointsize>12</pointsize>
+         <weight>3</weight>
+         <italic>false</italic>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="styleSheet">
         <string notr="true">color: rgb(255, 255, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>
        </property>
        <property name="text">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>1400</x>
+      <y>10</y>
+      <width>182</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <item>
+      <widget class="QLabel" name="label_9">
+       <property name="font">
+        <font>
+         <family>Calibri Light</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(255, 255, 255);</string>
+       </property>
+       <property name="text">
+        <string>Step Size:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="step_size">
+       <property name="font">
+        <font>
+         <family>Calibri Light</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
+       </property>
+       <property name="frame">
+        <bool>false</bool>
+       </property>
+       <property name="buttonSymbols">
+        <enum>QAbstractSpinBox::NoButtons</enum>
+       </property>
+       <property name="accelerated">
+        <bool>false</bool>
+       </property>
+       <property name="correctionMode">
+        <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+       </property>
+       <property name="keyboardTracking">
+        <bool>false</bool>
+       </property>
+       <property name="decimals">
+        <number>6</number>
+       </property>
+       <property name="minimum">
+        <double>-1000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>1000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.000001000000000</double>
+       </property>
+       <property name="value">
+        <double>0.000010000000000</double>
        </property>
       </widget>
      </item>

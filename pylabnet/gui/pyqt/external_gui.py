@@ -88,6 +88,9 @@ class Window(QtWidgets.QMainWindow):
         self._buttons_to_assign = []
         self._curves_to_remove = []
 
+        # List of Numerical widgets for future use in dynamical step size updating
+        self.num_widgets = None
+
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
 
@@ -352,8 +355,46 @@ class Window(QtWidgets.QMainWindow):
             print('Could not find .ui file, please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
             raise
 
+        self._initialize_step_sizes()
+
         if run:
             self._run_gui()
+
+    def _initialize_step_sizes(self):
+        """ Initializes all QDoubleSpinBox step sizes based on step_sizes widget
+
+        If step_sizes widget is not present, does nothing and initializes self.num_widgets to None
+        """
+
+        # Get all numerical widgets in the GUI
+        self.num_widgets = [widget for widget in self.__dict__.values() if isinstance(widget, QtWidgets.QDoubleSpinBox)]
+        try:
+
+            # Exclude the step size setting
+            self.num_widgets.remove(self.step_size)
+
+            # Get current step size
+            step_size = self.step_size.value()
+
+            # Set all step sizes
+            for widget in self.num_widgets:
+                widget.setSingleStep(step_size)
+
+            self.step_size.valueChanged.connect(self._update_step_sizes)
+
+        # Handle case where step size was not in the GUI
+        except AttributeError:
+            self.num_widgets = None
+
+    def _update_step_sizes(self):
+        """ Updates all step sizes of QDoubleSpinBox widgets to current value of step_size widget """
+
+        # Get current step size
+        step_size = self.step_size.value()
+
+        # Set all step sizes
+        for widget in self.num_widgets:
+            widget.setSingleStep(step_size)
 
     def _run_gui(self):
         """Runs the GUI. Displays the main window"""

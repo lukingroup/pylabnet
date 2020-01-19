@@ -181,7 +181,10 @@ class Window(QtWidgets.QMainWindow):
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
-        """ Configures all widgets in the queue"""
+        """ Configures all widgets in the queue
+
+        Simply passes if the widget does not exist in the GUI
+        """
 
         # Clear plot widgets
         for plot_widget in self._plots_to_remove:

@@ -5,20 +5,11 @@ Continuously runs wavemeter monitoring script (see pylabnet/scripts/wlm_monitor.
 """
 
 from pylabnet.utils.logging.logger import LogClient
-
-# Hardware clients
 from pylabnet.hardware.wavemeter import high_finesse_ws7
 from pylabnet.hardware.ni_daqs import nidaqmx_card
-
-# GUI client
 from pylabnet.gui.pyqt import external_gui
-
-# Script
-from pylabnet.scripts.wlm_monitor import WlmMonitor
-
-# Pause, update servers
+from pylabnet.scripts.wlm_monitor import WlmMonitor, Service
 from pylabnet.core.generic_server import GenericServer
-from pylabnet.scripts.parameter_update import UpdateService
 
 
 def main():
@@ -53,7 +44,7 @@ def main():
         port=1234,
         module_tag='Pause & Update'
     )
-    update_service = UpdateService()
+    update_service = Service()
     update_service.assign_module(module=wlm_monitor)
     update_service.assign_logger(logger=log_client)
     update_server = GenericServer(

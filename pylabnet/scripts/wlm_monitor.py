@@ -1,7 +1,11 @@
 from pylabnet.scripts.pid import PID
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
+
 import numpy as np
 import time
 import copy
+import pickle
 
 
 # Static methods
@@ -184,6 +188,23 @@ class WlmMonitor:
         for index, channel in enumerate(self.channels):
             self._initialize_channel(index, channel)
 
+    def clear_channel(self, channel):
+        """ Clears the plot output for this channel
+
+        :param channel: channel number to clear
+        """
+
+        # Get the relevant channel
+        channel_list = self._get_channels()
+
+        try:
+            channel = self.channels[channel_list.index(channel)]
+            channel.initialize(channel.data[-1])
+
+        # If the channel isn't monitored
+        except KeyError:
+            pass
+
     def run(self):
         """Runs the WlmMonitor continuously
 
@@ -262,6 +283,14 @@ class WlmMonitor:
                 plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset)]
             )
 
+            # Clear voltage if relevant
+            if channel.voltage is not None:
+
+                # First clear the plot
+                self.gui.clear_plot(
+                    plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1]
+                )
+
             # Assign GUI + curves
             self.gui.assign_plot(
                 plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
@@ -304,6 +333,8 @@ class WlmMonitor:
 
             # Assign voltage if relevant
             if channel.voltage is not None:
+
+                # Now reassign it
                 self.gui.assign_plot(
                     plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1],
                     plot_label=channel.aux_name,
@@ -469,11 +500,11 @@ class WlmMonitor:
                         # Update labels, if desired
                         if not channel.labels_updated:
                             self.gui.set_label(
-                                text=channel.voltage_curve,
+                                text='Voltage',
                                 label_label=channel.voltage_curve
                             )
                             self.gui.set_label(
-                                text=channel.error_curve,
+                                text='Lock Error',
                                 label_label=channel.error_curve
                             )
                             channel.label_updated = True
@@ -489,12 +520,33 @@ class WlmMonitor:
 
             # If GUI is not connected, check if we should try reconnecting to the GUI
             elif self._gui_reconnect:
+
                 try:
                     self._gui_connected = True
                     self.gui.connect()
 
                     # Reinitialize channels to new GUI
                     self.initialize_channels()
+
+                    # Manually update the GUI for a while so we don't change the setpoints
+                    for i in range(100):
+                        try:
+                            channel.setpoint_override = True
+                            channel.lock_override = True
+                            self.gui.activate_scalar(scalar_label=channel.setpoint_name)
+                            self.gui.activate_scalar(scalar_label=channel.lock_name)
+                            self.gui.set_scalar(
+                                value=channel.setpoint,
+                                scalar_label=channel.setpoint_name
+                            )
+                            self.gui.set_scalar(
+                                value=channel.lock,
+                                scalar_label=channel.lock_name
+                            )
+                            self._update_channels()
+                        except KeyError:
+                            pass
+                    print('GUI reconnected')
                 except ConnectionRefusedError:
                     self._gui_connected = False
                     print('GUI reconnection failed')
@@ -509,13 +561,16 @@ class WlmMonitor:
         for channel in self.channels:
 
             # Pull the current value from the GUI
-            if channel.setpoint is not None:
+            if channel.setpoint is not None and self._gui_connected:
                 try:
                     channel.gui_setpoint = self.gui.get_scalar(scalar_label=channel.setpoint_name)
                     channel.gui_lock = self.gui.get_scalar(scalar_label=channel.lock_name)
 
                 # In case connection is lost
                 except EOFError:
+                    self._gui_connected = False
+                    print('GUI disconnected')
+
                     pass
                 # In case GUI is not configured
                 except KeyError:
@@ -533,6 +588,61 @@ class WlmMonitor:
         for channel in self.channels:
             channel_list.append(channel.number)
         return channel_list
+
+
+class Service(ServiceBase):
+    """ A service to enable external updating of WlmMonitor parameters """
+
+    def exposed_update_parameters(self, params_pickle):
+
+        params = pickle.loads(params_pickle)
+        return self._module.update_parameters(params)
+
+    def exposed_clear_channel(self, channel):
+        return self._module.clear_channel(channel)
+
+    def exposed_reconnect_gui(self):
+        return self._module.reconnect_gui()
+
+    def exposed_zero_voltage(self, channel):
+        return self._module.zero_voltage(channel)
+
+    def exposed_pause(self):
+
+        if isinstance(self._module, list):
+            for module in self._module:
+                module.pause()
+            return 0
+
+        else:
+            return self._module.pause()
+
+    def exposed_resume(self):
+        return self._module.resume()
+
+
+class Client(ClientBase):
+
+    def update_parameters(self, params):
+
+        params_pickle = pickle.dumps(params)
+        return self._service.exposed_update_parameters(params_pickle)
+
+    def clear_channel(self, channel):
+        return self._service.exposed_clear_channel(channel)
+
+    def zero_voltage(self, channel):
+        return self._service.exposed_zero_voltage(channel)
+
+    def reconnect_gui(self):
+        return self._service.exposed_reconnect_gui()
+
+    def pause(self):
+
+        return self._service.exposed_pause()
+
+    def resume(self):
+        return self._service.exposed_resume()
 
 
 class Channel:
@@ -588,10 +698,13 @@ class Channel:
 
         if self.setpoint is not None:
             self.sp_data = np.ones(display_pts) * self.setpoint
+            self.setpoint_override = True
+
+        self.lock_override = True
 
         # Initialize voltage and error
         if self.voltage is not None:
-            self.voltage = np.ones(display_pts) * self.pid.cv
+            self.voltage = np.ones(display_pts) * self.current_voltage
 
             # Check that setpoint is reasonable, otherwise set error to 0
             if self.setpoint is None:
@@ -677,6 +790,8 @@ class Channel:
         if self.voltage is not None:
             self.voltage = np.append(self.voltage[1:], self.current_voltage)
             self.error = np.append(self.error[1:], self.pid.error * self._gain)
+        else:
+            print('Voltage is None')
 
     def zero_voltage(self):
         """Zeros the voltage (if applicable)"""

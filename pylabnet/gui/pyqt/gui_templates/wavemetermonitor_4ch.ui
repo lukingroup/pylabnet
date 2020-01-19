@@ -99,6 +99,9 @@ selection-color: rgb(255, 0, 0);</string>
           <height>351</height>
          </rect>
         </property>
+        <property name="interactive">
+         <bool>false</bool>
+        </property>
        </widget>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">

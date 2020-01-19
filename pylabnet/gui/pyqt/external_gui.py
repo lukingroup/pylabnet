@@ -36,7 +36,10 @@ from pylabnet.core.client_base import ClientBase
 import numpy as np
 import os
 import pickle
+import copy
 
+
+# TODO implement step-size editor
 
 class Window(QtWidgets.QMainWindow):
     """ Main window for GUI.
@@ -71,6 +74,7 @@ class Window(QtWidgets.QMainWindow):
         self.plots = {}
         self.scalars = {}
         self.labels = {}
+        self.event_buttons = {}
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -81,6 +85,7 @@ class Window(QtWidgets.QMainWindow):
         self._curves_to_assign = []
         self._scalars_to_assign = []
         self._labels_to_assign = []
+        self._buttons_to_assign = []
         self._curves_to_remove = []
 
         # Load and run the GUI
@@ -133,6 +138,15 @@ class Window(QtWidgets.QMainWindow):
         """
         self._labels_to_assign.append((label_widget, label_label))
 
+    def assign_event_button(self, event_widget, event_label):
+        """ Adds button assignment request to the queue
+
+        :param event_widget: (str) physical widget name on the .ui file
+        :param event_label: (str) keyname to assign to this button for future reference
+        """
+
+        self._buttons_to_assign.append((event_widget, event_label))
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
 
@@ -177,6 +191,19 @@ class Window(QtWidgets.QMainWindow):
         :param label_label: (str) Key for the label to set
         """
         self.labels[label_label].set_label(text)
+
+    def was_button_pressed(self, event_label):
+        """ Returns whether or not an event button was pressed
+
+        :param event_label: (str) key for button to check
+        """
+
+        try:
+            return self.event_buttons[event_label].get_state()
+
+        # If the button has not been assigned, just return false
+        except KeyError:
+            return False
 
     # Methods to be called by the process launching the GUI
 
@@ -256,6 +283,17 @@ class Window(QtWidgets.QMainWindow):
             try:
                 self._remove_curve(plot_label, curve_label)
                 self._curves_to_remove.remove(curve_params)
+            except KeyError:
+                pass
+
+        for event_button in self._buttons_to_assign:
+
+            # Unpack parameters
+            event_widget, event_label = event_button
+
+            try:
+                self._assign_event_button(event_widget, event_label)
+                self._buttons_to_assign.remove(event_button)
             except KeyError:
                 pass
 
@@ -394,6 +432,18 @@ class Window(QtWidgets.QMainWindow):
         """
         self.labels[label_label] = Label(self, label_widget)
 
+    def _assign_event_button(self, event_widget, event_label):
+        """ Assigns physical event button
+
+        :param event_widget: (str) name of physical button widget on GUI
+        :param event_label: (str) key name for reference to button
+        """
+
+        self.event_buttons[event_label] = EventButton(
+            gui=self,
+            event_widget=event_widget
+        )
+
 
 class Service(ServiceBase):
 
@@ -433,6 +483,12 @@ class Service(ServiceBase):
             label_label=label_label
         )
 
+    def exposed_assign_event_button(self, event_widget, event_label):
+        return self._module.assign_event_button(
+            event_widget=event_widget,
+            event_label=event_label
+        )
+
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
         error = pickle.loads(error_pickle)
@@ -464,6 +520,9 @@ class Service(ServiceBase):
             text=text,
             label_label=label_label
         )
+
+    def exposed_was_button_pressed(self, event_label):
+        return self._module.was_button_pressed(event_label)
 
 
 class Client(ClientBase):
@@ -504,6 +563,12 @@ class Client(ClientBase):
             label_label=label_label
         )
 
+    def assign_event_button(self, event_widget, event_label):
+        return self._service.exposed_assign_event_button(
+            event_widget=event_widget,
+            event_label=event_label
+        )
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -535,6 +600,9 @@ class Client(ClientBase):
             text=text,
             label_label=label_label
         )
+
+    def was_button_pressed(self, event_label):
+        return self._service.exposed_was_button_pressed(event_label)
 
 
 class Plot:
@@ -805,3 +873,36 @@ class Label:
         """
 
         self.widget.setText(label_text)
+
+
+class EventButton:
+    """ Class for event pushbuttons to be tied to some script functions externally """
+
+    def __init__(self, gui, event_widget):
+        """ Instantiates event button """
+
+        self.was_pushed = False  # Keeps track of whether the button has been pushed
+        self.widget = getattr(gui, event_widget)  # Get physical widget instance
+
+        # Connect event to flag raising
+        self.widget.pressed.connect(self.button_pressed)
+
+    def button_pressed(self):
+        """ Raises flag when button is pushed """
+
+        self.was_pushed = True
+
+    def reset_button(self):
+        """ Resets pushed state to False """
+
+        self.was_pushed = False
+
+    def get_state(self):
+        """ Returns whether or not the button has been pressed and resets button state
+
+        :return: bool self._was_pushed
+        """
+
+        result = copy.deepcopy(self.was_pushed)
+        self.reset_button()
+        return result

@@ -13,18 +13,19 @@ import pickle
 def generate_widgets():
     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
 
-    graphs, legends, numbers, booleans, labels = [], [], [], [], []
+    graphs, legends, numbers, booleans, labels, events = [], [], [], [], [], []
     for i in range(4):
         graphs.append('graph_widget_' + str(i + 1))
         legends.append('legend_widget_' + str(i + 1))
         numbers.append('number_widget_' + str(i + 1))
         booleans.append('boolean_widget_' + str(i + 1))
         labels.append('label_' + str(i + 1))
+        events.append('event_button_' + str(i + 1))
     for i in range(4, 8):
         numbers.append('number_widget_' + str(i + 1))
         booleans.append('boolean_widget_' + str(i + 1))
         labels.append('label_' + str(i + 1))
-    return graphs, legends, numbers, booleans, labels
+    return graphs, legends, numbers, booleans, labels, events
 
 
 # Core objects
@@ -33,7 +34,12 @@ class WlmMonitor:
     """ A script class for monitoring and locking lasers based on the wavemeter """
 
     # Assign widget names based on .gui file.
-    _graph_widgets, _legend_widgets, _number_widgets, _boolean_widgets, _label_widgets = generate_widgets()
+    (_graph_widgets,
+     _legend_widgets,
+     _number_widgets,
+     _boolean_widgets,
+     _label_widgets,
+     _event_widgets) = generate_widgets()
 
     def __init__(self, wlm_client, gui_client, ao_clients=None, display_pts=5000, threshold=0.0002):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
@@ -331,6 +337,12 @@ class WlmMonitor:
                 scalar_label=channel.error_name
             )
 
+            # Assign pushbutton for clearing data
+            self.gui.assign_event_button(
+                event_widget=self._event_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
+                event_label=channel.name
+            )
+
             # Assign voltage if relevant
             if channel.voltage is not None:
 
@@ -575,6 +587,21 @@ class WlmMonitor:
                 # In case GUI is not configured
                 except KeyError:
                     pass
+
+            # Check pushbuttons and apply action if necessary
+            try:
+                if self._gui_connected and self.gui.was_button_pressed(event_label=channel.name):
+                    self.clear_channel(channel=channel.number)
+
+            # In case connection is lost
+            except EOFError:
+                self._gui_connected = False
+                print('GUI disconnected')
+                pass
+
+            # In case GUI is not configured
+            except KeyError:
+                pass
 
     def _get_channels(self):
         """ Returns all active channel numbers

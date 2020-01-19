@@ -38,7 +38,8 @@ selection-color: rgb(255, 0, 0);</string>
     </property>
     <property name="font">
      <font>
-      <family>Calibri</family>
+      <family>Calibri Light</family>
+      <pointsize>14</pointsize>
      </font>
     </property>
     <property name="mouseTracking">
@@ -157,6 +158,9 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="decimals">
             <number>6</number>
            </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
+           </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
            </property>
@@ -207,6 +211,9 @@ selection-color: rgb(255, 255, 255);</string>
            </property>
            <property name="decimals">
             <number>6</number>
+           </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
            </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
@@ -268,6 +275,41 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QPushButton" name="event_button_1">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>660</x>
+          <y>380</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);</string>
+        </property>
+        <property name="text">
+         <string>Clear plot</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
        </widget>
       </widget>
      </item>
@@ -352,6 +394,9 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="decimals">
             <number>6</number>
            </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
+           </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
            </property>
@@ -397,6 +442,9 @@ selection-color: rgb(255, 255, 255);</string>
            </property>
            <property name="decimals">
             <number>6</number>
+           </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
            </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
@@ -449,6 +497,41 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QPushButton" name="event_button_3">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>660</x>
+          <y>380</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);</string>
+        </property>
+        <property name="text">
+         <string>Clear plot</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
        </widget>
       </widget>
      </item>
@@ -533,6 +616,9 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="decimals">
             <number>6</number>
            </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
+           </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
            </property>
@@ -581,6 +667,9 @@ selection-color: rgb(255, 255, 255);</string>
            </property>
            <property name="decimals">
             <number>6</number>
+           </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
            </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
@@ -633,6 +722,41 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QPushButton" name="event_button_2">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>650</x>
+          <y>380</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);</string>
+        </property>
+        <property name="text">
+         <string>Clear plot</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
        </widget>
       </widget>
      </item>
@@ -717,6 +841,9 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="decimals">
             <number>6</number>
            </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
+           </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
            </property>
@@ -762,6 +889,9 @@ selection-color: rgb(255, 255, 255);</string>
            </property>
            <property name="decimals">
             <number>6</number>
+           </property>
+           <property name="minimum">
+            <double>-1000.000000000000000</double>
            </property>
            <property name="maximum">
             <double>1000.000000000000000</double>
@@ -814,6 +944,41 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
+       </widget>
+       <widget class="QPushButton" name="event_button_4">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>660</x>
+          <y>380</y>
+          <width>91</width>
+          <height>23</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);</string>
+        </property>
+        <property name="text">
+         <string>Clear plot</string>
+        </property>
+        <property name="checkable">
+         <bool>false</bool>
+        </property>
        </widget>
       </widget>
      </item>

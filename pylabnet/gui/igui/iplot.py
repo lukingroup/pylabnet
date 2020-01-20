@@ -73,9 +73,8 @@ class SingleTraceFig(TraceInterface):
 class MultiTraceFig(MultiTraceInterface):
 
     def __init__(self, title_str=None, ch_names=None, shot_noise=False, legend_orientation=None):
-        """
+        """ MultiTraceFig constructor
 
-        :param mode: type of scatter plot
         :param title_str: string to display for plot title
         :param ch_names: list of channel name strings for multi
             -channel plot
@@ -106,11 +105,13 @@ class MultiTraceFig(MultiTraceInterface):
             )
 
     def set_data(self, x_ar=None, y_ar=None, ind=0, noise=None):
-        """
+        """ Sets data to MultiTraceFig instance
+
         :param x_ar: np array of x-axis data values
         :param y_ar: np array of y-axis data values
         :param ind: index of channels to assign data to
             (index starts from 0)
+        :param noise: np array of y-axis error bar sizes
         """
 
         # First check that data array at particular index has
@@ -136,8 +137,8 @@ class MultiTraceFig(MultiTraceInterface):
                 y_lower = y_ar - noise
                 y_lower = y_lower[::-1]
                 with self._fig.batch_update():
-                    self._fig.data[ind*2].x = np.hstack((x_ar,x_rev))
-                    self._fig.data[ind*2].y = np.hstack((y_upper,y_lower))
+                    self._fig.data[ind*2].x = np.hstack((x_ar, x_rev))
+                    self._fig.data[ind*2].y = np.hstack((y_upper, y_lower))
 
                 # Now data
                 with self._fig.batch_update():
@@ -172,13 +173,15 @@ class MultiTraceFig(MultiTraceInterface):
     def _allocate_arrays(self, num_arrays=None):
 
         # Color-list
-        DEFAULT_PLOTLY_COLORS=['rgb(31, 119, 180)', 'rgb(255, 127, 14)',
+        dflt_plotly_colors = [
+            'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
             'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
             'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
             'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
             'rgb(188, 189, 34)', 'rgb(23, 190, 207)'
         ]
-        DEFAULT_PLOTLY_COLORS_LO=['rgba(31, 119, 180, 0.2)', 'rgba(255, 127, 14, 0.2)',
+        dflt_plotly_colors_lo = [
+            'rgba(31, 119, 180, 0.2)', 'rgba(255, 127, 14, 0.2)',
             'rgba(44, 160, 44, 0.2)', 'rgba(214, 39, 40, 0.2)',
             'rgba(148, 103, 189, 0.2)', 'rgba(140, 86, 75, 0.2)',
             'rgba(227, 119, 194, 0.2)', 'rgba(127, 127, 127, 0.2)',
@@ -199,14 +202,14 @@ class MultiTraceFig(MultiTraceInterface):
                         showlegend=False,
                         fill='tozerox',
                         line=dict(color='rgba(255,255,255,0)'),
-                        fillcolor=DEFAULT_PLOTLY_COLORS_LO[index]
+                        fillcolor=dflt_plotly_colors_lo[index]
                     )
                     self._fig.add_scatter(
                         x=[],
                         y=[],
                         mode='lines',
                         name='ch'+str(index),
-                        line=dict(color=DEFAULT_PLOTLY_COLORS[index])
+                        line=dict(color=dflt_plotly_colors[index])
                     )
                 else:
                     self._fig.add_scatter(
@@ -230,14 +233,14 @@ class MultiTraceFig(MultiTraceInterface):
                         showlegend=False,
                         fill='tozerox',
                         line=dict(color='rgba(255,255,255,0)'),
-                        fillcolor=DEFAULT_PLOTLY_COLORS_LO[index]
+                        fillcolor=dflt_plotly_colors_lo[index]
                     )
                     self._fig.add_scatter(
                         x=[],
                         y=[],
                         mode='lines',
                         name=channel,
-                        line=dict(color=DEFAULT_PLOTLY_COLORS[index])
+                        line=dict(color=dflt_plotly_colors[index])
                     )
                 else:
                     self._fig.add_scatter(

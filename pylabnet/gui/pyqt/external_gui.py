@@ -39,8 +39,6 @@ import pickle
 import copy
 
 
-# TODO implement step-size editor
-
 class Window(QtWidgets.QMainWindow):
     """ Main window for GUI.
 

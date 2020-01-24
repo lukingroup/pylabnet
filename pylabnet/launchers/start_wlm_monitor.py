@@ -59,7 +59,7 @@ def main():
     # using an update client
     wlm_monitor.set_parameters(
         channel_params=[
-            dict(channel=1, name="Velocity", AO=dict(client='cDAQ1', channel='ao0'),
+            dict(channel=1, name="Velocity", setpoint=407.7, AO=dict(client='cDAQ1', channel='ao0'),
                  PID=dict(p=0.15, i=0.01, d=0), memory=100, voltage_monitor=True)
         ]
     )

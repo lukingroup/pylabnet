@@ -28,7 +28,12 @@ def main():
 
     # Create app and instantiate main window
     app = QtWidgets.QApplication(sys.argv)
-    main_window = Window(app, gui_template='wavemetermonitor_4ch')
+
+    if len(sys.argv) > 1:
+        gui_template = sys.argv[1]
+    else:
+        gui_template = None
+    main_window = Window(app, gui_template=gui_template)
 
     # Instantiate GUI server
     port_num = 9
@@ -43,10 +48,13 @@ def main():
     gui_server.start()
 
     # Update GUI with server-specific details
-    main_window.ip_label.setText('IP Address: {}'.format(
-        socket.gethostbyname(socket.gethostname())
-    ))
-    main_window.port_label.setText('Port: {}'.format(port_num))
+    try:
+        main_window.ip_label.setText('IP Address: {}'.format(
+            socket.gethostbyname(socket.gethostname())
+        ))
+        main_window.port_label.setText('Port: {}'.format(port_num))
+    except AttributeError:
+        pass
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

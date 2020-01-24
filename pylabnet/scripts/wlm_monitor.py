@@ -182,9 +182,18 @@ class WlmMonitor:
 
                 # Otherwise, it is a new channel so we should add it
                 else:
+
+                    # Check what plot offset we need to provide based on prior channels
+                    index_offset = -1
+                    for channel in self.channels:
+
+                        # Check if this channel uses a voltage monitor
+                        if channel.voltage is not None:
+                            index_offset += 1
+
                     self.channels.append(Channel(parameter))
                     self._initialize_channel(
-                        index=len(self.channels) - 1,
+                        index=len(self.channels) + index_offset,
                         channel=self.channels[-1]
                     )
 

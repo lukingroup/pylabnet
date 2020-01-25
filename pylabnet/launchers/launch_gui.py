@@ -31,7 +31,7 @@ def main():
     gui_server = GenericServer(
         service=gui_service,
         host='localhost',
-        port=9
+        port=10
     )
     gui_server.start()
 

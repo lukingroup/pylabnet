@@ -2,6 +2,8 @@ from pylabnet.scripts.pid import PID
 import numpy as np
 import time
 
+from pylabnet.scripts.configurators.configurator import GUIConfigurator
+
 
 # Static methods
 
@@ -16,7 +18,7 @@ def generate_widgets():
     return graphs, legends, numbers, booleans
 
 
-class WlmMonitor:
+class WlmGUIConfigurator(GUIConfigurator):
 
     # Assign widget names based on .gui file. This line works for wavemetermonitor_4ch.ui
     _graph_widgets, _legend_widgets, _number_widgets, _boolean_widgets = generate_widgets()
@@ -30,32 +32,12 @@ class WlmMonitor:
         :param threshold: (float) threshold in THz for lock error signal
         """
 
+        # Instanciate generic GUIConfigurator
+        GUIConfigurator.__init__(self, client=None)
+
         self.channels = []
-        self.gui = None
-        self.is_running = False
-        self._gui_connected = False
-        self._gui_reconnect = False
-        self.wlm_client = wlm_client
         self.display_pts = display_pts
         self.threshold = threshold
-
-    def assign_gui(self, gui_client):
-        """
-        Assigns a GUI client to the WlmMonitor
-
-        :param gui_client: (obj) instance of GUI client
-        """
-
-        self.gui = gui_client
-
-    def assign_wlm(self, wlm_client):
-        """
-        Assigns the wlm Client to the WlmMonitor module
-
-        :param wlm_client: (obj) instance of Client of High-Finesse wavemeter
-        """
-
-        self.wlm_client = wlm_client
 
     def assign_channel(self, channel_params):
         """

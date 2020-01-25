@@ -7,8 +7,6 @@ from pylabnet.utils.logging.logger import LogClient
 import sys
 import numpy as np
 
-# TODO: Set gui template as command-line argument
-
 
 def main():
 

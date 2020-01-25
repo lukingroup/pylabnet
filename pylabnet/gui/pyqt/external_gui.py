@@ -240,10 +240,13 @@ class Window(QtWidgets.QMainWindow):
 
         # Find path to GUI
         # Currently assumes all templates are in the directory given by the self._gui_directory attribute
-        self._ui = os.path.join(os.getcwd(), self._gui_directory, gui_template)
-
-        # Load UI
-        uic.loadUi(self._ui, self)
+        # Exception handling added to allow for different working directory setting.
+        try:
+            self._ui = os.path.join(os.getcwd(), self._gui_directory, gui_template)
+            uic.loadUi(self._ui, self)  # Load UI
+        except FileNotFoundError:
+            self._ui = os.path.join(os.getcwd(), 'pylabnet', 'gui', 'pyqt', self._gui_directory, gui_template)
+            uic.loadUi(self._ui, self)
 
         if run:
             self._is_running = True

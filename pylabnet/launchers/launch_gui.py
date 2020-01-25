@@ -10,6 +10,9 @@ import numpy as np
 
 def main():
 
+    # Retrieve GUI template from command line argument
+    gui_template = str(sys.argv[1])
+
     # Instantiate logger
     gui_logger = LogClient(
         host='localhost',
@@ -19,7 +22,7 @@ def main():
 
     # Create app and instantiate main window
     app = QtWidgets.QApplication(sys.argv)
-    main_window = Window(app, gui_template='wavemetermonitor_4ch')
+    main_window = Window(app, gui_template=gui_template)
 
     # Instantiate GUI server
     gui_service = Service()

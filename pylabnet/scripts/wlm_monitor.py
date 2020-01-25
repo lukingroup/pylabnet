@@ -7,16 +7,12 @@ import time
 
 def generate_widgets():
     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
-    graphs, legends, numbers, booleans = [], [], [], []
 
-    for i in range(4):
-        graphs.append('graph_widget_'+str(i+1))
-        legends.append('legend_widget_'+str(i+1))
-        numbers.append('number_widget_'+str(i+1))
-        booleans.append('boolean_widget_'+str(i+1))
-    for i in range(4, 8):
-        numbers.append('number_widget_' + str(i + 1))
-        booleans.append('boolean_widget_' + str(i + 1))
+    graphs = ['graph_widget_{}'.format(i+1) for i in range(4)]
+    legends = ['legend_widget_{}'.format(i+1) for i in range(4)]
+    numbers = ['number_widget_{}'.format(i+1) for i in range(8)]
+    booleans = ['boolean_widget_{}'.format(i+1) for i in range(8)]
+
     return graphs, legends, numbers, booleans
 
 

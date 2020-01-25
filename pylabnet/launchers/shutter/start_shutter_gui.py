@@ -2,13 +2,13 @@
 from pylabnet.utils.logging.logger import LogClient
 
 # Hardware clients
-from pylabnet.hardware.shutters.sc20shutter import SC20Shutter, Client
+from pylabnet.hardware.shutters.sc20shutter import Client
 
 # GUI client
 from pylabnet.gui.pyqt import external_gui
 
 # Script
-from pylabnet.scripts.configurators.shutter.shutter_gui_configurator import ShutterGUIConfigurator
+from pylabnet.scripts.gui_configurators.shutter.shutter_gui_configurator import ShutterGUIConfigurator
 
 # Pause, update servers
 from pylabnet.core.generic_server import GenericServer

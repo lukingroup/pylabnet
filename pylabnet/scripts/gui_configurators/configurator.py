@@ -17,7 +17,7 @@ class GUIConfigurator():
 
     def assign_gui(self, gui_client):
         """
-        Assigns a GUI client to the ShutterGUI
+        Assigns a GUI client to the GUI configurator
 
         :param client:
             (obj) instance of GUI client
@@ -27,10 +27,10 @@ class GUIConfigurator():
 
     def assign_client(self, client):
         """
-        Assigns the wlm Client to the WlmMonitor module
+        Assigns the hardware client to the GUI configurator
 
-        :param wlm_client:
-            (obj) instance of Client of High-Finesse wavemeter
+        :param client:
+            (obj) instance of hardware client
         """
 
         self.client = client

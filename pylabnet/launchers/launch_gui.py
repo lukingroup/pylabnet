@@ -5,7 +5,6 @@ from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 
 import sys
-import numpy as np
 
 
 def main():

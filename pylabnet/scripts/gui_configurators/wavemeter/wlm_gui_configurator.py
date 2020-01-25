@@ -2,7 +2,7 @@ from pylabnet.scripts.pid import PID
 import numpy as np
 import time
 
-from pylabnet.scripts.configurators.configurator import GUIConfigurator
+from pylabnet.scripts.gui_configurators.configurator import GUIConfigurator
 
 
 # Static methods

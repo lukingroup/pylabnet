@@ -1,4 +1,4 @@
-from pylabnet.scripts.configurators.configurator import GUIConfigurator
+from pylabnet.scripts.gui_configurators.configurator import GUIConfigurator
 
 
 class ShutterGUIConfigurator(GUIConfigurator):

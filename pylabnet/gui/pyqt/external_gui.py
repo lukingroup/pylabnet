@@ -80,29 +80,35 @@ class Window(QtWidgets.QMainWindow):
                  'Velocity Lock': 'boolean_widget_1', 'TiSa Frequency': 'number_widget_3'}
         """
 
-        # Iterate through all plots and curves
-        for plot, plot_dict in plots.items():
+        # Account for cases where no plots are assigned
+        if plots is not None:
 
-            # First instantiate this plot
-            self.assign_plot(
-                plot_widget=plot_dict['widget'],
-                plot_label=plot,
-                legend_widget=plot_dict['legend']
-            )
+            # Iterate through all plots and curves
+            for plot, plot_dict in plots.items():
 
-            # Now assign all curves
-            for curve in plot_dict['curves']:
-                self.assign_curve(
+                # First instantiate this plot
+                self.assign_plot(
+                    plot_widget=plot_dict['widget'],
                     plot_label=plot,
-                    curve_label=curve
+                    legend_widget=plot_dict['legend']
                 )
 
-        # Next, assign all scalars
-        for scalar_name, scalar_widget in scalars.items():
-            self.assign_scalar(
-                scalar_widget=scalar_widget,
-                scalar_label=scalar_name
-            )
+                # Now assign all curves
+                for curve in plot_dict['curves']:
+                    self.assign_curve(
+                        plot_label=plot,
+                        curve_label=curve
+                    )
+
+        # Account for cases where no scalars are assigned
+        if scalars is not None:
+
+            # Next, assign all scalars
+            for scalar_name, scalar_widget in scalars.items():
+                self.assign_scalar(
+                    scalar_widget=scalar_widget,
+                    scalar_label=scalar_name
+                )
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """

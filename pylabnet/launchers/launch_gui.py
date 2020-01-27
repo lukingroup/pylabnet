@@ -15,7 +15,7 @@ def main():
     # Instantiate logger
     gui_logger = LogClient(
         host='localhost',
-        port=12347,
+        port=10,
         module_tag='GUI module'
     )
 
@@ -30,7 +30,7 @@ def main():
     gui_server = GenericServer(
         service=gui_service,
         host='localhost',
-        port=10
+        port=14
     )
     gui_server.start()
 

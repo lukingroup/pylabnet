@@ -6,7 +6,7 @@ class GUIConfigurator():
         Instantiates generic GUI configurator
 
         :param client: (obj)
-            instance of shutter client
+            instance of hardware client
         """
 
         self.gui = None

@@ -20,9 +20,9 @@ try:
     shutter_client = Client(host='localhost', port=5950)
     shutter_client.connect()
 except ConnectionRefusedError:
-    raise Exception('Cannot connect to wavemeter server')
+    raise Exception('Cannot connect to shutter server')
 try:
-    gui_client = external_gui.Client(host='localhost', port=10)
+    gui_client = external_gui.Client(host='localhost', port=14)
     gui_client.connect()
 except ConnectionRefusedError:
     raise Exception('Cannot connect to GUI server')
@@ -35,15 +35,19 @@ shutter_monitor.assign_gui(gui_client)
 # Instantiate pause+update service & connect to logger
 log_client = LogClient(
     host='localhost',
-    port=12347,
+    port=10,
     module_tag='Pause & Update'
 )
-update_service = UpdateService()
-update_service.assign_module(module=shutter_monitor)
-update_service.assign_logger(logger=log_client)
-update_server = GenericServer(
-    host='localhost',
-    port=897,
-    service=update_service
-)
-update_server.start()
+# update_service = UpdateService()
+# update_service.assign_module(module=shutter_monitor)
+# update_service.assign_logger(logger=log_client)
+# update_server = GenericServer(
+#     host='localhost',
+#     port=897,
+#     service=update_service
+# )
+# update_server.start()
+
+# Label
+shutter_monitor.set_labels()
+#shutter_monitor.gui.force_update()

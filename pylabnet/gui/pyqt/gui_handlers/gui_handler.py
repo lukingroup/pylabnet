@@ -35,7 +35,5 @@ class GUIHandler():
         :param client:
             (obj) instance of hardware client
         """
-        # Test
-        # Test
-        # TEst
+
         self.client = client

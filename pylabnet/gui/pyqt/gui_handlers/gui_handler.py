@@ -36,4 +36,5 @@ class GUIHandler():
             (obj) instance of hardware client
         """
         # Test
+        # Test
         self.client = client

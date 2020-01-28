@@ -5,6 +5,7 @@ from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 
 import sys
+import numpy as np
 
 
 def main():
@@ -30,11 +31,11 @@ def main():
     gui_server = GenericServer(
         service=gui_service,
         host='localhost',
-        port=14
+        port=15
     )
     gui_server.start()
 
-    # Test code
+    # # Test code
 
     # # Build list of widgets internal to .gui (script specific)
     # graph_widgets = []
@@ -48,7 +49,7 @@ def main():
     #     number_widgets.append('number_widget_'+str(i+1))
     # for i in range(4, 8):
     #     number_widgets.append('number_widget_'+str(i+1))
-    #
+
     # # Define our plot, curve, and scalar names
     # plot_1 = 'Velocity monitor'
     # p1_curve_1 = 'Velocity frequency'
@@ -59,7 +60,7 @@ def main():
     # sp_1 = 'Velocity setpoint'
     # freq_2 = 'TiSa frequency'
     # lock_1 = 'Velocity lock'
-    #
+
     # # Define mapping between key names and widget names
     # plots = {
     #     plot_1: {

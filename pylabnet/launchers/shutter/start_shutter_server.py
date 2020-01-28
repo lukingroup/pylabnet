@@ -28,7 +28,7 @@ shutter_service.assign_logger(logger=shutter_logger)
 shutter_service_server = GenericServer(
     service=shutter_service,
     host='localhost',
-    port=5950
+    port=5951
 )
 
 shutter_service_server.start()

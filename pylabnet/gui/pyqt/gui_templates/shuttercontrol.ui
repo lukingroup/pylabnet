@@ -6,15 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>886</width>
-    <height>466</height>
+    <width>1610</width>
+    <height>946</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Test</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true">background-color: rgb(0, 0, 0);
+selection-color: rgb(255, 0, 0);</string>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonIconOnly</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QPushButton" name="stop_button">
@@ -23,11 +27,16 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>10</y>
       <width>75</width>
       <height>23</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+     </font>
     </property>
     <property name="mouseTracking">
      <bool>false</bool>
@@ -45,54 +54,20 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="pushButton1label">
+   <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>40</x>
-      <y>100</y>
-      <width>47</width>
-      <height>13</height>
+      <x>200</x>
+      <y>190</y>
+      <width>131</width>
+      <height>71</height>
      </rect>
     </property>
     <property name="styleSheet">
-     <string notr="true">color: rgb(215, 55, 255);</string>
+     <string notr="true">background-color: rgb(255, 255, 255);</string>
     </property>
     <property name="text">
      <string>TextLabel</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton1">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>90</y>
-      <width>101</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri Light</family>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="mouseTracking">
-     <bool>false</bool>
-    </property>
-    <property name="toolTip">
-     <string>Test</string>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">color: rgb(255, 255, 255);</string>
-    </property>
-    <property name="text">
-     <string>Can's button</string>
-    </property>
-    <property name="checkable">
-     <bool>false</bool>
-    </property>
-    <property name="autoRepeat">
-     <bool>true</bool>
     </property>
    </widget>
   </widget>
@@ -101,7 +76,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>886</width>
+     <width>1610</width>
      <height>21</height>
     </rect>
    </property>

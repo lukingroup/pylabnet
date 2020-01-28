@@ -8,7 +8,7 @@ from pylabnet.hardware.shutters.sc20shutter import Client
 from pylabnet.gui.pyqt import external_gui
 
 # Script
-from pylabnet.scripts.gui_configurators.shutter.shutter_gui_configurator import ShutterGUIConfigurator
+from pylabnet.gui.pyqt.gui_handlers.shutter.shutter_gui_handler import ShutterGUIHandler
 
 # Pause, update servers
 from pylabnet.core.generic_server import GenericServer
@@ -17,18 +17,18 @@ from pylabnet.scripts.parameter_update import UpdateService
 
 # Connect to servers
 try:
-    shutter_client = Client(host='localhost', port=5950)
+    shutter_client = Client(host='localhost', port=5951)
     shutter_client.connect()
 except ConnectionRefusedError:
     raise Exception('Cannot connect to shutter server')
 try:
-    gui_client = external_gui.Client(host='localhost', port=14)
+    gui_client = external_gui.Client(host='localhost', port=15)
     gui_client.connect()
 except ConnectionRefusedError:
     raise Exception('Cannot connect to GUI server')
 
 # Instantiate Monitor script
-shutter_monitor = ShutterGUIConfigurator()
+shutter_monitor = ShutterGUIHandler()
 shutter_monitor.assign_client(shutter_client)
 shutter_monitor.assign_gui(gui_client)
 
@@ -49,5 +49,4 @@ log_client = LogClient(
 # update_server.start()
 
 # Label
-shutter_monitor.set_labels()
-#shutter_monitor.gui.force_update()
+shutter_monitor.initialize_label('label_1', 'shutter_1')

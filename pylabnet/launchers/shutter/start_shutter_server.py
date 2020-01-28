@@ -5,7 +5,7 @@ from pylabnet.core.generic_server import GenericServer
 # Instantiate Logger
 shutter_logger = LogClient(
     host='localhost',
-    port=10,
+    port=1,
     module_tag='Shutter Log Server'
 )
 

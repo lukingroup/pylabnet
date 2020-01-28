@@ -49,4 +49,4 @@ log_client = LogClient(
 # update_server.start()
 
 # Label
-shutter_monitor.initialize_label('label_1', 'shutter_1')
+

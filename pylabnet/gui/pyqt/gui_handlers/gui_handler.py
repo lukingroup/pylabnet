@@ -12,10 +12,12 @@ class GUIHandler():
             instance of hardware client
         """
 
+        self.is_running = False  # Flag which lets us know if WlmMonitor is running
+        self.is_paused = False  # Flag which tells us we have simply paused WlmMonitor operation
+        self._gui_connected = False  # Flag which alerts if a GUI client has been connected successfully
+        self._gui_reconnect = False  # Flag which tells us to try reconnecting to the GUI client
+
         self.gui = None
-        self.is_running = False
-        self._gui_connected = False
-        self._gui_reconnect = False
         self.client = client
 
     def assign_gui(self, gui_client):
@@ -37,3 +39,9 @@ class GUIHandler():
         """
 
         self.client = client
+
+    def protected_label()
+
+
+
+

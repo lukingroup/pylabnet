@@ -1,5 +1,5 @@
 from pylabnet.gui.pyqt.gui_handlers.gui_handler import GUIHandler
-
+from pylab.utils.decorators.gui_decorators import protected_widget_change
 
 class ShutterGUIHandler(GUIHandler):
 
@@ -23,21 +23,8 @@ class ShutterGUIHandler(GUIHandler):
             widget name of label of button toggling the shutter
         """
 
-        # Assign label to widget.
-        self.gui.assign_scalar(
-            scalar_widget=button_label_widget,
-            scalar_label=button_label_widget_name
-        )
+        @protected_widget_change
+        self.gui.assign_label(button_label_widget, button_label_widget_name)
 
         # Retrieve shutter name from client.
         shutter_name = self.client.get_name()
-
-        # Update shutter name.
-        updated = False
-        while not updated:
-            try:
-                self.gui.set_scalar(shutter_name, button_label_widget_name)
-                updated = True
-            except KeyError:
-                pass
-

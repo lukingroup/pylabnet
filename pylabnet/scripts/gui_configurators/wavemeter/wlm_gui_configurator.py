@@ -7,12 +7,22 @@ import time
 import copy
 import pickle
 
+from pylabnet.scripts.gui_configurators.configurator import GUIConfigurator
+
 
 # Static methods
 
 def generate_widgets():
     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
 
+<<<<<<< HEAD:pylabnet/scripts/gui_configurators/wavemeter/wlm_gui_configurator.py
+    graphs = ['graph_widget_{}'.format(i+1) for i in range(4)]
+    legends = ['legend_widget_{}'.format(i+1) for i in range(4)]
+    numbers = ['number_widget_{}'.format(i+1) for i in range(8)]
+    booleans = ['boolean_widget_{}'.format(i+1) for i in range(8)]
+
+    return graphs, legends, numbers, booleans
+=======
     graphs, legends, numbers, booleans, labels, events = [], [], [], [], [], []
     for i in range(4):
         graphs.append('graph_widget_' + str(i + 1))
@@ -27,11 +37,16 @@ def generate_widgets():
         labels.append('label_' + str(i + 1))
     return graphs, legends, numbers, booleans, labels, events
 
+>>>>>>> gui_consolidated_final:pylabnet/scripts/wlm_monitor.py
 
 # Core objects
 
+<<<<<<< HEAD:pylabnet/scripts/gui_configurators/wavemeter/wlm_gui_configurator.py
+class WlmGUIConfigurator(GUIConfigurator):
+=======
 class WlmMonitor:
     """ A script class for monitoring and locking lasers based on the wavemeter """
+>>>>>>> gui_consolidated_final:pylabnet/scripts/wlm_monitor.py
 
     # Assign widget names based on .gui file.
     (_graph_widgets,

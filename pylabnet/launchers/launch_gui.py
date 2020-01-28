@@ -19,16 +19,19 @@ import socket
 
 def main():
 
+    # Retrieve GUI template from command line argument
+    gui_template = str(sys.argv[1])
+
     # Instantiate logger
     gui_logger = LogClient(
         host='localhost',
-        port=1234,
+        port=10,
         module_tag='GUI module'
     )
 
     # Create app and instantiate main window
     app = QtWidgets.QApplication(sys.argv)
-    main_window = Window(app, gui_template='wavemetermonitor_4ch')
+    main_window = Window(app, gui_template=gui_template)
 
     # Instantiate GUI server
     port_num = 9

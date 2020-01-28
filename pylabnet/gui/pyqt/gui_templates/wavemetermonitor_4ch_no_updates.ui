@@ -38,8 +38,7 @@ selection-color: rgb(255, 0, 0);</string>
     </property>
     <property name="font">
      <font>
-      <family>Calibri Light</family>
-      <pointsize>14</pointsize>
+      <family>Calibri</family>
      </font>
     </property>
     <property name="mouseTracking">
@@ -100,9 +99,6 @@ selection-color: rgb(255, 0, 0);</string>
           <height>351</height>
          </rect>
         </property>
-        <property name="interactive">
-         <bool>false</bool>
-        </property>
        </widget>
        <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
@@ -110,7 +106,7 @@ selection-color: rgb(255, 0, 0);</string>
           <x>21</x>
           <y>21</y>
           <width>761</width>
-          <height>33</height>
+          <height>32</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout">
@@ -119,53 +115,34 @@ selection-color: rgb(255, 0, 0);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Frequency&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_1">
+          <widget class="QLCDNumber" name="number_widget_1">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="accelerated">
-            <bool>false</bool>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
-           </property>
-           <property name="keyboardTracking">
-            <bool>false</bool>
-           </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -177,49 +154,31 @@ selection-color: rgb(255, 255, 255);</string>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_2">
+          <widget class="QLCDNumber" name="number_widget_2">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="accelerated">
-            <bool>false</bool>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
-           </property>
-           <property name="keyboardTracking">
-            <bool>false</bool>
-           </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -228,7 +187,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -255,7 +214,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -275,41 +234,6 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
-       </widget>
-       <widget class="QPushButton" name="event_button_1">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>660</x>
-          <y>380</y>
-          <width>91</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="mouseTracking">
-         <bool>false</bool>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
-        </property>
-        <property name="text">
-         <string>Clear plot</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
        </widget>
       </widget>
      </item>
@@ -352,7 +276,7 @@ color: rgb(0, 0, 0);</string>
           <x>21</x>
           <y>21</y>
           <width>761</width>
-          <height>36</height>
+          <height>32</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -361,47 +285,34 @@ color: rgb(0, 0, 0);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_6">
+          <widget class="QLCDNumber" name="number_widget_5">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 0, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -410,47 +321,34 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_5">
+          <widget class="QLCDNumber" name="number_widget_6">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 0, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -459,7 +357,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -480,7 +378,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -497,41 +395,6 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
-       </widget>
-       <widget class="QPushButton" name="event_button_3">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>660</x>
-          <y>380</y>
-          <width>91</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="mouseTracking">
-         <bool>false</bool>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
-        </property>
-        <property name="text">
-         <string>Clear plot</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
        </widget>
       </widget>
      </item>
@@ -574,7 +437,7 @@ color: rgb(0, 0, 0);</string>
           <x>21</x>
           <y>21</y>
           <width>761</width>
-          <height>33</height>
+          <height>32</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -583,47 +446,34 @@ color: rgb(0, 0, 0);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_3">
+          <widget class="QLCDNumber" name="number_widget_3">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 0, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -632,11 +482,10 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -644,38 +493,26 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_4">
+          <widget class="QLCDNumber" name="number_widget_4">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 0, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -684,7 +521,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -705,7 +542,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -722,41 +559,6 @@ selection-color: rgb(255, 255, 255);</string>
           </widget>
          </item>
         </layout>
-       </widget>
-       <widget class="QPushButton" name="event_button_2">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>650</x>
-          <y>380</y>
-          <width>91</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="mouseTracking">
-         <bool>false</bool>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
-        </property>
-        <property name="text">
-         <string>Clear plot</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
        </widget>
       </widget>
      </item>
@@ -799,7 +601,7 @@ color: rgb(0, 0, 0);</string>
           <x>21</x>
           <y>21</y>
           <width>761</width>
-          <height>33</height>
+          <height>32</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -808,47 +610,34 @@ color: rgb(0, 0, 0);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Frequency&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Frequency&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_7">
+          <widget class="QLCDNumber" name="number_widget_7">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 0, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -857,47 +646,34 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Setpoint&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="number_widget_8">
+          <widget class="QLCDNumber" name="number_widget_8">
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>16</pointsize>
             </font>
            </property>
-           <property name="styleSheet">
-            <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 0, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <property name="accessibleName">
+            <string/>
            </property>
-           <property name="frame">
+           <property name="smallDecimalPoint">
             <bool>false</bool>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
+           <property name="digitCount">
+            <number>10</number>
            </property>
-           <property name="correctionMode">
-            <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Filled</enum>
            </property>
-           <property name="decimals">
-            <number>6</number>
-           </property>
-           <property name="minimum">
-            <double>-1000.000000000000000</double>
-           </property>
-           <property name="maximum">
-            <double>1000.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.000010000000000</double>
+           <property name="value" stdset="0">
+            <double>0.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -906,7 +682,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -927,7 +703,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <family>Calibri Light</family>
-             <pointsize>14</pointsize>
+             <pointsize>10</pointsize>
             </font>
            </property>
            <property name="text">
@@ -945,66 +721,22 @@ selection-color: rgb(255, 255, 255);</string>
          </item>
         </layout>
        </widget>
-       <widget class="QPushButton" name="event_button_4">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>660</x>
-          <y>380</y>
-          <width>91</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="mouseTracking">
-         <bool>false</bool>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
-        </property>
-        <property name="text">
-         <string>Clear plot</string>
-        </property>
-        <property name="checkable">
-         <bool>false</bool>
-        </property>
-       </widget>
       </widget>
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="layoutWidget">
+   <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
       <x>110</x>
       <y>10</y>
       <width>541</width>
-      <height>25</height>
+      <height>21</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
      <item>
       <widget class="QLabel" name="ip_label">
-       <property name="font">
-        <font>
-         <family>Calibri Light</family>
-         <pointsize>12</pointsize>
-         <weight>3</weight>
-         <italic>false</italic>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="styleSheet">
         <string notr="true">color: rgb(255, 255, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>
@@ -1016,94 +748,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </item>
      <item>
       <widget class="QLabel" name="port_label">
-       <property name="font">
-        <font>
-         <family>Calibri Light</family>
-         <pointsize>12</pointsize>
-         <weight>3</weight>
-         <italic>false</italic>
-         <bold>false</bold>
-        </font>
-       </property>
        <property name="styleSheet">
         <string notr="true">color: rgb(255, 255, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>
        </property>
        <property name="text">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>1400</x>
-      <y>10</y>
-      <width>182</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_6">
-     <item>
-      <widget class="QLabel" name="label_9">
-       <property name="font">
-        <font>
-         <family>Calibri Light</family>
-         <pointsize>12</pointsize>
-        </font>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="text">
-        <string>Step Size:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QDoubleSpinBox" name="step_size">
-       <property name="font">
-        <font>
-         <family>Calibri Light</family>
-         <pointsize>12</pointsize>
-        </font>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
-       </property>
-       <property name="frame">
-        <bool>false</bool>
-       </property>
-       <property name="buttonSymbols">
-        <enum>QAbstractSpinBox::NoButtons</enum>
-       </property>
-       <property name="accelerated">
-        <bool>false</bool>
-       </property>
-       <property name="correctionMode">
-        <enum>QAbstractSpinBox::CorrectToNearestValue</enum>
-       </property>
-       <property name="keyboardTracking">
-        <bool>false</bool>
-       </property>
-       <property name="decimals">
-        <number>6</number>
-       </property>
-       <property name="minimum">
-        <double>-1000.000000000000000</double>
-       </property>
-       <property name="maximum">
-        <double>1000.000000000000000</double>
-       </property>
-       <property name="singleStep">
-        <double>0.000001000000000</double>
-       </property>
-       <property name="value">
-        <double>0.000010000000000</double>
        </property>
       </widget>
      </item>

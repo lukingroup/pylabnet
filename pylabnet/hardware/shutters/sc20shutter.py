@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pylabnet.hardware.ni_daqs.nidaqmx_card import NiDaqMxCard
+from pylabnet.hardware.ni_daqs.nidaqmx_card import Driver
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
@@ -30,7 +30,7 @@ class SC20Shutter:
         self.log = logger
 
         # Instantiate NI DAQ
-        self.daq = NiDaqMxCard(
+        self.daq = Driver(
             device_name=device_name,
             logger=logger
         )

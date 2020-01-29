@@ -23,7 +23,7 @@ try:
 except ConnectionRefusedError:
     raise Exception('Cannot connect to shutter server')
 try:
-    gui_client = external_gui.Client(host='localhost', port=9)
+    gui_client = external_gui.Client(host='localhost', port=12)
     gui_client.connect()
 except ConnectionRefusedError:
     raise Exception('Cannot connect to GUI server')
@@ -50,6 +50,7 @@ log_client = LogClient(
 # update_server.start()
 
 # Label
-shutter_monitor.initialize_button('label_1', 'shutterlabel', 'shutter_button_1', 'shutterbutton')
+shutter_monitor.initialize_button()
+shutter_monitor.run()
 
 

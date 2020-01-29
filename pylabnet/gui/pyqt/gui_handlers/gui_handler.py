@@ -47,7 +47,7 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def assign_plot(self, plot_widget, plot_label, legend_widget):
-        return self.gui._service.exposed_assign_plot(
+        return self.gui.assign_plot(
             plot_widget=plot_widget,
             plot_label=plot_label,
             legend_widget=legend_widget
@@ -56,14 +56,14 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def clear_plot(self, plot_widget):
-        return self.gui._service.exposed_clear_plot(
+        return self.gui.clear_plot(
             plot_widget=plot_widget
         )
 
     @protected_widget_change
     @gui_connect_check
     def assign_curve(self, plot_label, curve_label):
-        return self.gui._service.exposed_assign_curve(
+        return self.gui.assign_curve(
             plot_label=plot_label,
             curve_label=curve_label
         )
@@ -71,7 +71,7 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def remove_curve(self, plot_label, curve_label):
-        return self.gui._service.exposed_remove_curve(
+        return self.gui.remove_curve(
             plot_label=plot_label,
             curve_label=curve_label
         )
@@ -79,7 +79,7 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def assign_scalar(self, scalar_widget, scalar_label):
-        self.gui._service.exposed_assign_scalar(
+        self.gui.assign_scalar(
             scalar_widget=scalar_widget,
             scalar_label=scalar_label
         )
@@ -87,7 +87,7 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def assign_label(self, label_widget, label_label):
-        return self.gui._service.exposed_assign_label(
+        return self.gui.assign_label(
             label_widget=label_widget,
             label_label=label_label
         )
@@ -95,17 +95,17 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def assign_event_button(self, event_widget, event_label):
-        return self.gui._service.exposed_assign_event_button(
+        return self.gui.assign_event_button(
             event_widget=event_widget,
-            event_label=event_label
+            event_label=event_label,
         )
 
     @protected_widget_change
     @gui_connect_check
-    def assign_event_button_function(self, event_label, function):
-        return self.gui._service.exposed_assign_event_button_function(
+    def assign_event_button_event(self, event_label, function):
+        return self.gui.assign_event_button_event(
             event_label=event_label,
-            function=function
+            function=function,
         )
 
     @protected_widget_change
@@ -113,7 +113,7 @@ class GUIHandler():
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
-        return self.gui._service.exposed_set_curve_data(
+        return self.gui.set_curve_data(
             data_pickle=data_pickle,
             plot_label=plot_label,
             curve_label=curve_label,
@@ -124,7 +124,7 @@ class GUIHandler():
     @gui_connect_check
     def set_scalar(self, value, scalar_label):
         value_pickle = pickle.dumps(value)
-        return self.gui._service.exposed_set_scalar(
+        return self.gui.set_scalar(
             value_pickle=value_pickle,
             scalar_label=scalar_label
         )
@@ -132,22 +132,22 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def get_scalar(self, scalar_label):
-        return pickle.loads(self.gui._service.exposed_get_scalar(scalar_label))
+        return pickle.loads(self.gui.get_scalar(scalar_label))
 
     @protected_widget_change
     @gui_connect_check
     def activate_scalar(self, scalar_label):
-        return self.gui._service.exposed_activate_scalar(scalar_label)
+        return self.gui.activate_scalar(scalar_label)
 
     @protected_widget_change
     @gui_connect_check
     def deactivate_scalar(self, scalar_label):
-        return self.gui._service.exposed_deactivate_scalar(scalar_label)
+        return self.gui.deactivate_scalar(scalar_label)
 
     @protected_widget_change
     @gui_connect_check
     def set_label(self, text, label_label):
-        return self.gui._service.exposed_set_label(
+        return self.gui.set_label(
             text=text,
             label_label=label_label
         )
@@ -155,7 +155,7 @@ class GUIHandler():
     @protected_widget_change
     @gui_connect_check
     def was_button_pressed(self, event_label):
-        return self.gui._service.exposed_was_button_pressed(event_label)
+        return self.gui.was_button_pressed(event_label)
 
 
 

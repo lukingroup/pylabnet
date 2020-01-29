@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>661</width>
-    <height>150</height>
+    <width>650</width>
+    <height>137</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -106,21 +106,22 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="shutter_button_1">
+   <widget class="QPushButton" name="close_button">
     <property name="enabled">
      <bool>true</bool>
     </property>
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>70</y>
-      <width>161</width>
-      <height>31</height>
+      <x>250</x>
+      <y>50</y>
+      <width>100</width>
+      <height>30</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Calibri</family>
+      <pointsize>12</pointsize>
      </font>
     </property>
     <property name="mouseTracking">
@@ -130,23 +131,23 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <bool>false</bool>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color: rgb(0, 255, 0);
-background-color: rgb(19, 115, 175);</string>
+     <string notr="true">color: rgb(190, 190, 190)rgb(255, 255, 255);
+background-color: rgb(129, 129, 129);</string>
     </property>
     <property name="text">
-     <string>Toggle</string>
+     <string>Close</string>
     </property>
     <property name="checkable">
-     <bool>true</bool>
+     <bool>false</bool>
     </property>
    </widget>
    <widget class="QLabel" name="label_1">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>70</y>
+      <y>50</y>
       <width>101</width>
-      <height>23</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="font">
@@ -166,13 +167,48 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="open_button">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>50</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(14, 122, 255);
+color: rgb(255, 255, 255);</string>
+    </property>
+    <property name="text">
+     <string>Open</string>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>661</width>
+     <width>650</width>
      <height>21</height>
     </rect>
    </property>

@@ -1,5 +1,12 @@
 import functools
 
+def get_signature(*args, **kwargs):
+    """ Gets printable function signature"""
+    args_repr = [repr(a) for a in args]
+    kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
+    signature = ", ".join(args_repr + kwargs_repr)
+    return signature
+
 def protected_widget_change(func):
     """ Error handling decorator useable for all functions changing widgets properties
 
@@ -15,17 +22,14 @@ def protected_widget_change(func):
         while not updated and try_num < timeout:
             try_num += 1
             try:
-                func(*args, **kwargs)
                 updated = True
+                return func(*args, **kwargs)
             except KeyError:
-                args_repr = [repr(a) for a in args]                      # 1
-                kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]  # 2
-                signature = ", ".join(args_repr + kwargs_repr)           # 3
-                print(f"KeyError in calling {func.__name__}({signature}), trying again {try_num}/{try_num}.")
-                pass
+                print(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
-        # If timeout is reached, execute function and throw error
-        func(*args, **kwargs)
+        if not updated:
+            # If timeout is reached, execute function and throw error
+            func(*args, **kwargs)
 
     return wrapper
 
@@ -40,12 +44,8 @@ def gui_connect_check(func):
     def wrapper(self, *args, **kwargs):
         try:
             self._gui_connected = True
-            print(f"Gui connected")
             return func(self, *args, **kwargs)
         except EOFError:
             self._gui_connected = False
-            args_repr = [repr(a) for a in args]                      # 1
-            kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]  # 2
-            signature = ", ".join(args_repr + kwargs_repr)           # 3
-            print(f"Gui disconnected for function {func.__name__}({signature}), trying again {try_num}/{try_num}.")
+            print(f"Gui disconnected for function {func.__name__}({get_signature(*args, **kwargs)})")
     return wrapper

@@ -34,7 +34,7 @@ def main():
     main_window = Window(app, gui_template=gui_template)
 
     # Instantiate GUI server
-    port_num = 9
+    port_num = 12
     gui_service = Service()
     gui_service.assign_module(module=main_window)
     gui_service.assign_logger(logger=gui_logger)
@@ -50,6 +50,8 @@ def main():
         socket.gethostbyname(socket.gethostname())
     ))
     main_window.port_label.setText('Port: {}'.format(port_num))
+
+    #main_window.shutter_button_1.clicked.connect(lambda:print('lol'))
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

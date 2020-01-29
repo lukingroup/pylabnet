@@ -146,17 +146,7 @@ class Window(QtWidgets.QMainWindow):
         :param event_widget: (str) physical widget name on the .ui file
         :param event_label: (str) keyname to assign to this button for future reference
         """
-
         self._buttons_to_assign.append((event_widget, event_label))
-
-    def assign_event_button_function(self, event_label, function):
-        """ Assign a function which is called whenever button is clicked
-
-        :param event_widget: (str) physical widget name on the .ui file
-        :param function: (str) Function to be executed upon clicking of button
-        """
-        self.event_buttons[event_label].assign_function(function)
-
 
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
@@ -213,9 +203,17 @@ class Window(QtWidgets.QMainWindow):
         try:
             return self.event_buttons[event_label].get_state()
 
-        # If the button has not been assigned, just return false
+        #If the button has not been assigned, just return false
         except KeyError:
             return False
+
+    def change_button_background_color(self, event_label, color):
+        """ Change background color of button
+
+        :param event_label: (str) key for button to change
+        :param color: (str) color to change to
+        """
+        self.event_buttons[event_label].change_background_color(color)
 
     # Methods to be called by the process launching the GUI
 
@@ -495,7 +493,6 @@ class Window(QtWidgets.QMainWindow):
             event_widget=event_widget
         )
 
-
 class Service(ServiceBase):
 
     def exposed_assign_plot(self, plot_widget, plot_label, legend_widget):
@@ -537,13 +534,8 @@ class Service(ServiceBase):
     def exposed_assign_event_button(self, event_widget, event_label):
         return self._module.assign_event_button(
             event_widget=event_widget,
-            event_label=event_label
-        )
-
-    def exposed_assign_event_button_function(self, event_label, function):
-        return self._module.assign_event_button_function(
             event_label=event_label,
-            function=function
+
         )
 
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
@@ -580,6 +572,9 @@ class Service(ServiceBase):
 
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
+
+    def exposed_change_button_background_color(self, event_label, color):
+        return self._module.change_button_background_color(self, event_label, color)
 
 
 class Client(ClientBase):
@@ -623,14 +618,7 @@ class Client(ClientBase):
     def assign_event_button(self, event_widget, event_label):
         return self._service.exposed_assign_event_button(
             event_widget=event_widget,
-            event_label=event_label
-        )
-
-
-    def assign_event_button_function(self, event_label, function):
-        return self._service.exposed_assign_event_button_function(
             event_label=event_label,
-            function=function
         )
 
     def set_curve_data(self, data, plot_label, curve_label, error=None):
@@ -667,6 +655,9 @@ class Client(ClientBase):
 
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
+
+    def change_button_background_color(self, event_label, color):
+        return self._service.exposed_change_button_background_color(self, event_label, color)
 
 
 class Plot:
@@ -948,6 +939,8 @@ class EventButton:
         self.was_pushed = False  # Keeps track of whether the button has been pushed
         self.widget = getattr(gui, event_widget)  # Get physical widget instance
 
+        self.disabled = False  # Check if button is disabled
+
         # Connect event to flag raising
         self.widget.pressed.connect(self.button_pressed)
 
@@ -961,6 +954,11 @@ class EventButton:
 
         self.was_pushed = False
 
+    def change_background_color(self, color):
+        """ Changes background_color of button"""
+
+        self.widget.setStyleSheet(f"background-color: {color}")
+
     def get_state(self):
         """ Returns whether or not the button has been pressed and resets button state
 
@@ -970,8 +968,3 @@ class EventButton:
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
         return result
-
-    # TODO: Check this in lauch_gui.py
-    def assign_function(self, function):
-        """ Assigns a function to the button which is called, whenever button is clicked"""
-        self.widget.clicked.connect(function)

@@ -32,7 +32,7 @@ import pyqtgraph as pg
 
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
-from pylab.utils.decorators.gui_decorators import protected_widget_change
+from pylabnet.utils.decorators.gui_decorators import protected_widget_change
 
 import numpy as np
 import os
@@ -149,7 +149,6 @@ class Window(QtWidgets.QMainWindow):
 
         self._buttons_to_assign.append((event_widget, event_label))
 
-    @protected_widget_change
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
 
@@ -161,7 +160,6 @@ class Window(QtWidgets.QMainWindow):
 
         self.plots[plot_label].curves[curve_label].set_curve_data(data, error=error)
 
-    @protected_widget_change
     def set_scalar(self, value, scalar_label):
         """ Sets the value of a numerical display internally (does not update)"""
         self.scalars[scalar_label].set_data(value)
@@ -175,7 +173,6 @@ class Window(QtWidgets.QMainWindow):
 
         return self.scalars[scalar_label].get_data()
 
-    @protected_widget_change
     def activate_scalar(self, scalar_label):
         """ Tells a scalar to pull data from internal self.data attribute
 
@@ -183,7 +180,6 @@ class Window(QtWidgets.QMainWindow):
         """
         self.scalars[scalar_label].activate()
 
-    @protected_widget_change
     def deactivate_scalar(self, scalar_label):
         """ Tells a scalar not to update output based on self.data attribute
 
@@ -191,7 +187,6 @@ class Window(QtWidgets.QMainWindow):
         """
         self.scalars[scalar_label].deactivate()
 
-    @protected_widget_change
     def set_label(self, text, label_label):
         """ Sets a label widgets text
 
@@ -406,7 +401,7 @@ class Window(QtWidgets.QMainWindow):
 
         self.show()
 
-    @protected_widget_change
+
     def _assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Assigns a plot to a particular plot widget
 
@@ -447,7 +442,6 @@ class Window(QtWidgets.QMainWindow):
         if plot_to_delete is not None:
             del self.plots[plot_to_delete]
 
-    @protected_widget_change
     def _assign_curve(self, plot_label, curve_label):
         """ Assigns a curve to a plot
 
@@ -456,7 +450,6 @@ class Window(QtWidgets.QMainWindow):
         """
         self.plots[plot_label].add_curve(curve_label)
 
-    @protected_widget_change
     def _remove_curve(self, plot_label, curve_label):
         """ Removes a curve from a plot
 
@@ -465,7 +458,6 @@ class Window(QtWidgets.QMainWindow):
         """
         self.plots[plot_label].remove_curve(curve_label)
 
-    @protected_widget_change
     def _assign_scalar(self, scalar_widget, scalar_label):
         """ Assigns scalar widget display in the GUI
 
@@ -474,7 +466,6 @@ class Window(QtWidgets.QMainWindow):
         """
         self.scalars[scalar_label] = Scalar(self, scalar_widget)
 
-    @protected_widget_change
     def _assign_label(self, label_widget, label_label):
         """ Instantiates label object and assigns it to reference string
 
@@ -483,7 +474,6 @@ class Window(QtWidgets.QMainWindow):
         """
         self.labels[label_label] = Label(self, label_widget)
 
-    @protected_widget_change
     def _assign_event_button(self, event_widget, event_label):
         """ Assigns physical event button
 
@@ -579,6 +569,7 @@ class Service(ServiceBase):
 
 class Client(ClientBase):
 
+    @protected_widget_change
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         return self._service.exposed_assign_plot(
             plot_widget=plot_widget,
@@ -586,41 +577,48 @@ class Client(ClientBase):
             legend_widget=legend_widget
         )
 
+    @protected_widget_change
     def clear_plot(self, plot_widget):
         return self._service.exposed_clear_plot(
             plot_widget=plot_widget
         )
 
+    @protected_widget_change
     def assign_curve(self, plot_label, curve_label):
         return self._service.exposed_assign_curve(
             plot_label=plot_label,
             curve_label=curve_label
         )
 
+    @protected_widget_change
     def remove_curve(self, plot_label, curve_label):
         return self._service.exposed_remove_curve(
             plot_label=plot_label,
             curve_label=curve_label
         )
 
+    @protected_widget_change
     def assign_scalar(self, scalar_widget, scalar_label):
         self._service.exposed_assign_scalar(
             scalar_widget=scalar_widget,
             scalar_label=scalar_label
         )
 
+    @protected_widget_change
     def assign_label(self, label_widget, label_label):
         return self._service.exposed_assign_label(
             label_widget=label_widget,
             label_label=label_label
         )
 
+    @protected_widget_change
     def assign_event_button(self, event_widget, event_label):
         return self._service.exposed_assign_event_button(
             event_widget=event_widget,
             event_label=event_label
         )
 
+    @protected_widget_change
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -631,6 +629,7 @@ class Client(ClientBase):
             error_pickle=error_pickle
         )
 
+    @protected_widget_change
     def set_scalar(self, value, scalar_label):
         value_pickle = pickle.dumps(value)
         return self._service.exposed_set_scalar(
@@ -638,21 +637,26 @@ class Client(ClientBase):
             scalar_label=scalar_label
         )
 
+    @protected_widget_change
     def get_scalar(self, scalar_label):
         return pickle.loads(self._service.exposed_get_scalar(scalar_label))
 
+    @protected_widget_change
     def activate_scalar(self, scalar_label):
         return self._service.exposed_activate_scalar(scalar_label)
 
+    @protected_widget_change
     def deactivate_scalar(self, scalar_label):
         return self._service.exposed_deactivate_scalar(scalar_label)
 
+    @protected_widget_change
     def set_label(self, text, label_label):
         return self._service.exposed_set_label(
             text=text,
             label_label=label_label
         )
 
+    @protected_widget_change
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
 

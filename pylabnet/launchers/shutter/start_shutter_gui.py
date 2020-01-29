@@ -9,6 +9,8 @@ from pylabnet.gui.pyqt import external_gui
 
 # Script
 from pylabnet.gui.pyqt.gui_handlers.shutter.shutter_gui_handler import ShutterGUIHandler
+from pylabnet.utils.decorators.gui_decorators import protected_widget_change
+
 
 # Pause, update servers
 from pylabnet.core.generic_server import GenericServer
@@ -48,4 +50,6 @@ log_client = LogClient(
 # update_server.start()
 
 # Label
-shutter_monitor.initialize_label('label_1', 'shutterlabel')
+shutter_monitor.initialize_button('label_1', 'shutterlabel', 'shutter_button_1', 'shutterbutton')
+
+

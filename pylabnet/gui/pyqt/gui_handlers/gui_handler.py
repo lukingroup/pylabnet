@@ -1,4 +1,7 @@
 from pylabnet.gui.pyqt import external_gui
+from pylabnet.utils.decorators.gui_decorators import gui_connect_check, protected_widget_change
+import pickle
+
 
 
 class GUIHandler():
@@ -40,7 +43,114 @@ class GUIHandler():
 
         self.client = client
 
-    def protected_label()
+    # Functions called on gui client with corresponding error_handling decorator
+    @protected_widget_change
+    @gui_connect_check
+    def assign_plot(self, plot_widget, plot_label, legend_widget):
+        return self.gui._service.exposed_assign_plot(
+            plot_widget=plot_widget,
+            plot_label=plot_label,
+            legend_widget=legend_widget
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def clear_plot(self, plot_widget):
+        return self.gui._service.exposed_clear_plot(
+            plot_widget=plot_widget
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def assign_curve(self, plot_label, curve_label):
+        return self.gui._service.exposed_assign_curve(
+            plot_label=plot_label,
+            curve_label=curve_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def remove_curve(self, plot_label, curve_label):
+        return self.gui._service.exposed_remove_curve(
+            plot_label=plot_label,
+            curve_label=curve_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def assign_scalar(self, scalar_widget, scalar_label):
+        self.gui._service.exposed_assign_scalar(
+            scalar_widget=scalar_widget,
+            scalar_label=scalar_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def assign_label(self, label_widget, label_label):
+        return self.gui._service.exposed_assign_label(
+            label_widget=label_widget,
+            label_label=label_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def assign_event_button(self, event_widget, event_label):
+        return self.gui._service.exposed_assign_event_button(
+            event_widget=event_widget,
+            event_label=event_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def set_curve_data(self, data, plot_label, curve_label, error=None):
+        data_pickle = pickle.dumps(data)
+        error_pickle = pickle.dumps(error)
+        return self.gui._service.exposed_set_curve_data(
+            data_pickle=data_pickle,
+            plot_label=plot_label,
+            curve_label=curve_label,
+            error_pickle=error_pickle
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def set_scalar(self, value, scalar_label):
+        value_pickle = pickle.dumps(value)
+        return self.gui._service.exposed_set_scalar(
+            value_pickle=value_pickle,
+            scalar_label=scalar_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def get_scalar(self, scalar_label):
+        return pickle.loads(self.gui._service.exposed_get_scalar(scalar_label))
+
+    @protected_widget_change
+    @gui_connect_check
+    def activate_scalar(self, scalar_label):
+        return self.gui._service.exposed_activate_scalar(scalar_label)
+
+    @protected_widget_change
+    @gui_connect_check
+    def deactivate_scalar(self, scalar_label):
+        return self.gui._service.exposed_deactivate_scalar(scalar_label)
+
+    @protected_widget_change
+    @gui_connect_check
+    def set_label(self, text, label_label):
+        return self.gui._service.exposed_set_label(
+            text=text,
+            label_label=label_label
+        )
+
+    @protected_widget_change
+    @gui_connect_check
+    def was_button_pressed(self, event_label):
+        return self.gui._service.exposed_was_button_pressed(event_label)
+
+
+
 
 
 

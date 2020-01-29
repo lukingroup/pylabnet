@@ -1,15 +1,13 @@
+""" Hardware wrapper for Swabian Instruments TimeTagger, including client and server access classes """
+
 import TimeTagger as TT
-import time
-import copy
 import pickle
-import numpy as np
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.hardware.interface.ctr_monitor import CtrMonitorInterface, CtrError
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
 
-class Wrap():
+class Wrap:
 
     def __init__(self, tagger, ch_list=[1], logger=None):
         """Instantiate count monitor
@@ -44,8 +42,8 @@ class Wrap():
     def start_ctr(self, bin_width=1000000000, n_bins=10000):
         """Start counter
 
-        :param binwidth: integer in ps for width of count bins
-        :param n_values: integer number of bins to store before
+        :param bin_width: integer in ps for width of count bins
+        :param n_bins: integer number of bins to store before
                             wrapping around
         """
         
@@ -91,45 +89,9 @@ class Wrap():
                         for rising edge and negative for falling
         """
 
-        # Set channel notation as desired
-        TT.setTimeTaggerChannelNumberScheme(
-            TT.TT_CHANNEL_NUMBER_SCHEME_ONE
-        )
-
-        """  # Assign channel number to wrapper attribute
-        # First take single integer values and place them in a
-        # list
-        if type(ch_list) == int:
-            to_set_list = [ch_list]
-
-        # Now pass through lists
-        elif type(ch_list) == list:
-            to_set_list = ch_list
-
-        # Identify other types and terminate
-        else:
-            err_string = 'Wrong data type for channel list input! \n' \
-                         'Valid types are: Int, and List[Int] \n' \
-                         'You used '
-            err_string_2 = str(type(ch_list))
-            err_string_out = err_string + err_string_2
-            self.log.error(msg_str=err_string_out)
-            raise CtrError(err_string_out)
-
-        # Check the properties of the list
-        if max(ch_list) > 8 or min(ch_list) < -8:
-            err_string = 'ch_list values must be in the ranges: \n' \
-                         '[-8,1] and [1,8]'
-            self.log.error(msg_str=err_string)
-            raise CtrError(err_string)
-
-        if len(ch_list) > 8:
-            err_string = 'ch_list length exceeds number of channels'
-            self.log.error(msg_str=err_string)
-            raise CtrError(err_String) """
-
         # Set attribute to validated ch_list
         self._ch_list = ch_list
+
 
 class Service(ServiceBase):
 

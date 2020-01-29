@@ -28,7 +28,7 @@ def main():
 
     # Create app and instantiate main window
     app = QtWidgets.QApplication(sys.argv)
-    main_window = Window(app, gui_template='wavemetermonitor_4ch')
+    main_window = Window(app, gui_template='count_monitor')
 
     # Instantiate GUI server
     port_num = 9

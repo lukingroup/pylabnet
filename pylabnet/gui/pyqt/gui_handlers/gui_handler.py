@@ -102,6 +102,14 @@ class GUIHandler():
 
     @protected_widget_change
     @gui_connect_check
+    def assign_event_button_function(self, event_label, function):
+        return self.gui._service.exposed_assign_event_button_function(
+            event_label=event_label,
+            function=function
+        )
+
+    @protected_widget_change
+    @gui_connect_check
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)

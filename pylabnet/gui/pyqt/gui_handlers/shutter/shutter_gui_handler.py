@@ -14,9 +14,6 @@ class ShutterGUIHandler(GUIHandler):
         # Instanciate parent class.
         super(ShutterGUIHandler, self).__init__(client)
 
-        self.button_widget_label = None
-        self.button_widget_label = None
-
     def initialize_button(self, button_label_widget, button_label_widget_label, button_widget, button_widget_label):
         """ Initialize label to shutter name, assigned label
 
@@ -36,11 +33,11 @@ class ShutterGUIHandler(GUIHandler):
         # Assign button
         self.assign_event_button(button_widget, button_widget_label)
 
+        # Assign button function
+        self.assign_event_button_function(button_widget_label, lambda:print('lol'))
+
         # Retrieve shutter name from client.
         shutter_name = self.client.get_name()
 
         # Set value of label to shutter name.
         self.set_label(shutter_name, button_label_widget_label)
-
-def run():
-    if self.was_button_pressed(event_label=channel.name):

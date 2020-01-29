@@ -149,6 +149,15 @@ class Window(QtWidgets.QMainWindow):
 
         self._buttons_to_assign.append((event_widget, event_label))
 
+    def assign_event_button_function(self, event_label, function):
+        """ Assign a function which is called whenever button is clicked
+
+        :param event_widget: (str) physical widget name on the .ui file
+        :param function: (str) Function to be executed upon clicking of button
+        """
+        self.event_buttons[event_label].assign_function(function)
+
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
 
@@ -531,6 +540,12 @@ class Service(ServiceBase):
             event_label=event_label
         )
 
+    def exposed_assign_event_button_function(self, event_label, function):
+        return self._module.assign_event_button_function(
+            event_label=event_label,
+            function=function
+        )
+
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
         error = pickle.loads(error_pickle)
@@ -569,7 +584,6 @@ class Service(ServiceBase):
 
 class Client(ClientBase):
 
-    @protected_widget_change
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         return self._service.exposed_assign_plot(
             plot_widget=plot_widget,
@@ -577,48 +591,48 @@ class Client(ClientBase):
             legend_widget=legend_widget
         )
 
-    @protected_widget_change
     def clear_plot(self, plot_widget):
         return self._service.exposed_clear_plot(
             plot_widget=plot_widget
         )
 
-    @protected_widget_change
     def assign_curve(self, plot_label, curve_label):
         return self._service.exposed_assign_curve(
             plot_label=plot_label,
             curve_label=curve_label
         )
 
-    @protected_widget_change
     def remove_curve(self, plot_label, curve_label):
         return self._service.exposed_remove_curve(
             plot_label=plot_label,
             curve_label=curve_label
         )
 
-    @protected_widget_change
     def assign_scalar(self, scalar_widget, scalar_label):
         self._service.exposed_assign_scalar(
             scalar_widget=scalar_widget,
             scalar_label=scalar_label
         )
 
-    @protected_widget_change
     def assign_label(self, label_widget, label_label):
         return self._service.exposed_assign_label(
             label_widget=label_widget,
             label_label=label_label
         )
 
-    @protected_widget_change
     def assign_event_button(self, event_widget, event_label):
         return self._service.exposed_assign_event_button(
             event_widget=event_widget,
             event_label=event_label
         )
 
-    @protected_widget_change
+
+    def assign_event_button_function(self, event_label, function):
+        return self._service.exposed_assign_event_button_function(
+            event_label=event_label,
+            function=function
+        )
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -629,7 +643,6 @@ class Client(ClientBase):
             error_pickle=error_pickle
         )
 
-    @protected_widget_change
     def set_scalar(self, value, scalar_label):
         value_pickle = pickle.dumps(value)
         return self._service.exposed_set_scalar(
@@ -637,26 +650,21 @@ class Client(ClientBase):
             scalar_label=scalar_label
         )
 
-    @protected_widget_change
     def get_scalar(self, scalar_label):
         return pickle.loads(self._service.exposed_get_scalar(scalar_label))
 
-    @protected_widget_change
     def activate_scalar(self, scalar_label):
         return self._service.exposed_activate_scalar(scalar_label)
 
-    @protected_widget_change
     def deactivate_scalar(self, scalar_label):
         return self._service.exposed_deactivate_scalar(scalar_label)
 
-    @protected_widget_change
     def set_label(self, text, label_label):
         return self._service.exposed_set_label(
             text=text,
             label_label=label_label
         )
 
-    @protected_widget_change
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
 
@@ -962,3 +970,8 @@ class EventButton:
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
         return result
+
+    # TODO: Check this in lauch_gui.py
+    def assign_function(self, function):
+        """ Assigns a function to the button which is called, whenever button is clicked"""
+        self.widget.clicked.connect(function)

@@ -1,6 +1,5 @@
 from pylabnet.gui.pyqt.gui_handlers.gui_handler import GUIHandler
 from pylabnet.utils.decorators.gui_decorators import gui_connect_check
-from PyQt5.QtCore import pyqtSlot
 import time
 
 class ShutterGUIHandler(GUIHandler):
@@ -54,7 +53,7 @@ class ShutterGUIHandler(GUIHandler):
         """ Checks state of buttons and sets shutter accordingly"""
         if self.was_button_pressed(event_label=self.shutter_button_open_label):
             self.client.open()
-            self.gui.change_button_background_color(self.shutter_button_open_label, 'red')
+            #self.gui.change_button_background_color(self.shutter_button_open_label, 'red')
         elif self.was_button_pressed(event_label=self.shutter_button_close_label):
             self.client.close()
 

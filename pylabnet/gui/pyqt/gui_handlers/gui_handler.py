@@ -43,6 +43,23 @@ class GUIHandler():
 
         self.client = client
 
+    def pause(self):
+        """Pauses the wavemeter monitor"""
+        self.is_running = False
+        self.is_paused = True
+
+    def resume(self):
+        """Resumes the wavemeter monitor when paused"""
+        self.is_paused = False
+
+    def reconnect_gui(self):
+        """ Reconnects to the GUI
+
+        Should be called if the GUI connection has been lost, once a new GUI client with the same access parameters has
+        been reinstantiated
+        """
+        self._gui_reconnect = True
+
     # Functions called on gui client with corresponding error_handling decorator
     @protected_widget_change
     @gui_connect_check

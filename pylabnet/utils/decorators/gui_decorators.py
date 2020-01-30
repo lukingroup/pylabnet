@@ -48,4 +48,13 @@ def gui_connect_check(func):
         except EOFError:
             self._gui_connected = False
             print(f"Gui disconnected for function {func.__name__}({get_signature(*args, **kwargs)})")
+
+         # Handle case where we run out of GUI elements
+        except IndexError:
+            print(f"No more room at GUI for function {func.__name__}({get_signature(*args, **kwargs)})")
+
+        # Handle case where we tried to assign some GUI widget that didn't exist
+        except AttributeError:
+            print(f"Incorrect GUI widget name for function {func.__name__}({get_signature(*args, **kwargs)})")
+
     return wrapper

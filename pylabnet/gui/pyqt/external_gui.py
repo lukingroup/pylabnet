@@ -32,7 +32,6 @@ import pyqtgraph as pg
 
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
-from pylabnet.utils.decorators.gui_decorators import protected_widget_change
 
 import numpy as np
 import os

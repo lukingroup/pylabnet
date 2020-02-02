@@ -31,22 +31,30 @@ def main():
     except ConnectionRefusedError:
         raise Exception('Cannot connect to GUI server')
 
+    # Instantiatelogger for gui_handler error output
+    log_client_wlm_monitor = LogClient(
+        host='localhost',
+        port=1234,
+        module_tag='Wavemeter GUI control'
+    )
+
     # Instantiate Monitor script
     wlm_monitor = WlmMonitor(
         wlm_client=wavemeter_client,
         gui_client=gui_client,
-        ao_clients={'cDAQ1': ao_client}
+        ao_clients={'cDAQ1': ao_client},
+        logger_client=log_client_wlm_monitor
     )
 
     # Instantiate pause+update service & connect to logger
-    log_client = LogClient(
+    log_client_update = LogClient(
         host='localhost',
         port=1234,
         module_tag='Pause & Update'
     )
     update_service = Service()
     update_service.assign_module(module=wlm_monitor)
-    update_service.assign_logger(logger=log_client)
+    update_service.assign_logger(logger=log_client_update)
     update_server = GenericServer(
         host='localhost',
         port=897,

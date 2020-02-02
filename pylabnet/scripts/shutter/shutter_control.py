@@ -1,4 +1,4 @@
-from pylabnet.gui.pyqt.gui_handlers.gui_handler import GUIHandler
+from pylabnet.gui.pyqt.gui_handler import GUIHandler
 import time
 
 

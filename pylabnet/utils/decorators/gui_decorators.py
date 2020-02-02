@@ -49,4 +49,8 @@ def handle_gui_errors(func):
                 self._gui_connected = False
                 self.logger_client.error(f"Incorrect GUI widget name for function {func.__name__}({get_signature(*args, **kwargs)})")
 
+            except ConnectionRefusedError:
+                self._gui_connected = False
+                self.logger_client.error(f"GUI connection failed for function {func.__name__}({get_signature(*args, **kwargs)})")
+
     return wrapper

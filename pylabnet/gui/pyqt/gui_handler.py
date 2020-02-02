@@ -21,8 +21,8 @@ class GUIHandler():
 
         self.is_running = False  # Flag which lets us know if WlmMonitor is running
         self.is_paused = False  # Flag which tells us we have simply paused WlmMonitor operation
-        self._gui_connected = False  # Flag which alerts if a GUI client has been connected successfully
-        self._gui_reconnect = False  # Flag which tells us to try reconnecting to the GUI client
+        self.gui_connected = False  # Flag which alerts if a GUI client has been connected successfully
+        self.gui_reconnect = False  # Flag which tells us to try reconnecting to the GUI client
 
         self.gui_client = gui_client
         self.logger_client = logger_client
@@ -52,7 +52,7 @@ class GUIHandler():
         Should be called if the GUI connection has been lost, once a new GUI client with the same access parameters has
         been reinstantiated
         """
-        self._gui_reconnect = True
+        self.gui_reconnect = True
 
     # Functions called on gui client with corresponding error_handling decorator
     @handle_gui_errors

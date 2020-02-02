@@ -124,7 +124,7 @@ class WlmMonitor:
 
                         # If the setpoint didn't exist and now exists, we need to update and add a curve
                         if channel.setpoint is None and parameter['setpoint'] is not None:
-                            self.gui.assign_curve(
+                            self.gui_handler.assign_curve(
                                 plot_label=channel.name,
                                 curve_label=channel.setpoint_name
                             )
@@ -386,7 +386,7 @@ class WlmMonitor:
             channel.update(self.wlm_client.get_wavelength(channel.number))
 
             # Try to update plots if we have a GUI connected
-            if self._gui_connected:
+            if self.gui_handler.gui_connected:
 
                 self.gui_handler.set_curve_data(
                     data=channel.data,
@@ -502,7 +502,7 @@ class WlmMonitor:
             # If GUI is not connected, check if we should try reconnecting to the GUI
             elif self._gui_reconnect:
 
-                self._gui_connected = True
+                self.gui_handler.gui_connected = True
                 self.gui_handler.connect()
 
                 # Reinitialize channels to new GUI
@@ -533,11 +533,11 @@ class WlmMonitor:
         for channel in self.channels:
 
             # Pull the current value from the GUI
-            if channel.setpoint is not None and self._gui_connected:
+            if channel.setpoint is not None and self.gui_handler.gui_connected:
                 channel.gui_setpoint = self.gui_handler.get_scalar(scalar_label=channel.setpoint_name)
                 channel.gui_lock = self.gui_handler.get_scalar(scalar_label=channel.lock_name)
 
-            if self._gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
+            if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
                 self.clear_channel(channel=channel.number)
 
 

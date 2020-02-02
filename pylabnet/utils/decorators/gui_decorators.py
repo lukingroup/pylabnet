@@ -12,7 +12,7 @@ def get_signature(*args, **kwargs):
 def handle_gui_errors(func):
     """ Error handling decorator checking all GUI configuration errors
 
-    Checks for EOF error and sets self._gui_connected accordingly
+    Checks for EOF error and sets self.gui_connected accordingly
 
     Can only be added to member function of a gui_handler instance
     """
@@ -29,28 +29,28 @@ def handle_gui_errors(func):
             try_num += 1
             try:
                 updated = True
-                self._gui_connected = True
+                self.gui_connected = True
                 return func(self, *args, **kwargs)
             except KeyError:
-                self._gui_connected = False
+                self.gui_connected = False
                 self.logger_client.error(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             except EOFError:
-                self._gui_connected = False
+                self.gui_connected = False
                 self.logger_client.error(f"Gui disconnected for function {func.__name__}({get_signature(*args, **kwargs)})")
 
             # Handle case where we run out of GUI elements
             except IndexError:
-                self._gui_connected = False
+                self.gui_connected = False
                 self.logger_client.error(f"No more room at GUI for function {func.__name__}({get_signature(*args, **kwargs)})")
 
             # Handle case where we tried to assign some GUI widget that didn't exist
             except AttributeError:
-                self._gui_connected = False
+                self.gui_connected = False
                 self.logger_client.error(f"Incorrect GUI widget name for function {func.__name__}({get_signature(*args, **kwargs)})")
 
             except ConnectionRefusedError:
-                self._gui_connected = False
+                self.gui_connected = False
                 self.logger_client.error(f"GUI connection failed for function {func.__name__}({get_signature(*args, **kwargs)})")
 
     return wrapper

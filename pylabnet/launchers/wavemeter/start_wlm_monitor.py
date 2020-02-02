@@ -8,7 +8,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.hardware.wavemeter import high_finesse_ws7
 from pylabnet.hardware.ni_daqs import nidaqmx_card
 from pylabnet.gui.pyqt import external_gui
-from pylabnet.scripts.wlm_monitor import WlmMonitor, Service
+from pylabnet.scripts.wavemeter.wlm_monitor import WlmMonitor, Service
 from pylabnet.core.generic_server import GenericServer
 
 

@@ -503,7 +503,7 @@ class WlmMonitor:
             elif self._gui_reconnect:
 
                 self.gui_handler.gui_connected = True
-                self.gui_handler.connect()
+                # self.gui_handler.connect() # Commented by CK, unsure what that does.
 
                 # Reinitialize channels to new GUI
                 self.initialize_channels()

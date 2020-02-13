@@ -26,7 +26,7 @@ def main():
     except ConnectionRefusedError:
         raise Exception('Cannot connect to NI DAQmx server')
     try:
-        gui_client = external_gui.Client(host='localhost', port=9)
+        gui_client = external_gui.Client(host='localhost', port=12)
         gui_client.connect()
     except ConnectionRefusedError:
         raise Exception('Cannot connect to GUI server')
@@ -80,7 +80,7 @@ def main():
     while True:
 
         # Make sure the WlmMonitor is not paused, otherwise run it
-        if not wlm_monitor.is_paused:
+        if not wlm_monitor.gui_handler.is_paused:
             wlm_monitor.run()
 
 

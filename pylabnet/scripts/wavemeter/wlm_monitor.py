@@ -53,6 +53,7 @@ class WlmMonitor:
         :param display_pts: (int, optional) number of points to display on plot
         :param threshold: (float, optional) threshold in THz for lock error signal
         """
+        self.channels = []
         self.wlm_client = wlm_client
         self.ao_clients = ao_clients
         self.display_pts = display_pts

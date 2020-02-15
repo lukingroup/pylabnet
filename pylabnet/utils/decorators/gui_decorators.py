@@ -32,25 +32,30 @@ def handle_gui_errors(func):
                 self.gui_connected = True
                 return func(self, *args, **kwargs)
             except KeyError:
+                updated = False
                 self.gui_connected = False
                 self.logger_client.error(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             except EOFError:
+                updated = False
                 self.gui_connected = False
-                self.logger_client.error(f"Gui disconnected for function {func.__name__}({get_signature(*args, **kwargs)})")
+                self.logger_client.error(f"Gui disconnected for function {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             # Handle case where we run out of GUI elements
             except IndexError:
+                updated = False
                 self.gui_connected = False
-                self.logger_client.error(f"No more room at GUI for function {func.__name__}({get_signature(*args, **kwargs)})")
+                self.logger_client.error(f"No more room at GUI for function {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             # Handle case where we tried to assign some GUI widget that didn't exist
             except AttributeError:
+                updated = False
                 self.gui_connected = False
-                self.logger_client.error(f"Incorrect GUI widget name for function {func.__name__}({get_signature(*args, **kwargs)})")
+                self.logger_client.error(f"Incorrect GUI widget name for function {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             except ConnectionRefusedError:
+                updated = False
                 self.gui_connected = False
-                self.logger_client.error(f"GUI connection failed for function {func.__name__}({get_signature(*args, **kwargs)})")
+                self.logger_client.error(f"GUI connection failed for function {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
     return wrapper

@@ -25,7 +25,7 @@ def main():
     # Instantiate logger
     gui_logger = LogClient(
         host='localhost',
-        port=1,
+        port=12345,
         module_tag='GUI module'
     )
 

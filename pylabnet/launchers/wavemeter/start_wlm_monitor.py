@@ -34,7 +34,7 @@ def main():
     # Instantiatelogger for gui_handler error output
     log_client_wlm_monitor = LogClient(
         host='localhost',
-        port=1234,
+        port=12345,
         module_tag='Wavemeter GUI control'
     )
 
@@ -49,7 +49,7 @@ def main():
     # Instantiate pause+update service & connect to logger
     log_client_update = LogClient(
         host='localhost',
-        port=1234,
+        port=12345,
         module_tag='Pause & Update'
     )
     update_service = Service()

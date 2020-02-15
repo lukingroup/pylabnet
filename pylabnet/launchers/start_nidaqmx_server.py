@@ -5,7 +5,7 @@ from pylabnet.core.generic_server import GenericServer
 # Instantiate Logger
 ni_daqmx_logger = LogClient(
     host='localhost',
-    port=1234,
+    port=12345,
     module_tag='NI DAQmx Card'
 )
 

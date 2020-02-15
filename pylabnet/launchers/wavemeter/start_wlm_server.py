@@ -5,7 +5,7 @@ from pylabnet.core.generic_server import GenericServer
 # Instantiate Logger
 wavemeter_logger = LogClient(
     host='localhost',
-    port=1234,
+    port=12345,
     module_tag='High-Finesse WS7 Wavemeter'
 )
 

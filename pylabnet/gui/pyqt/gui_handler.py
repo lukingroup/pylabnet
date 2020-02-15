@@ -113,26 +113,23 @@ class GUIHandler():
 
     @handle_gui_errors
     def set_curve_data(self, data, plot_label, curve_label, error=None):
-        data_pickle = pickle.dumps(data)
-        error_pickle = pickle.dumps(error)
         return self.gui_client.set_curve_data(
-            data_pickle=data_pickle,
+            data=data,
             plot_label=plot_label,
             curve_label=curve_label,
-            error_pickle=error_pickle
+            error=error
         )
 
     @handle_gui_errors
     def set_scalar(self, value, scalar_label):
-        value_pickle = pickle.dumps(value)
         return self.gui_client.set_scalar(
-            value_pickle=value_pickle,
+            value=value,
             scalar_label=scalar_label
         )
 
     @handle_gui_errors
     def get_scalar(self, scalar_label):
-        return pickle.loads(self.gui_client.get_scalar(scalar_label))
+        return self.gui_client.get_scalar(scalar_label)
 
     @handle_gui_errors
     def activate_scalar(self, scalar_label):

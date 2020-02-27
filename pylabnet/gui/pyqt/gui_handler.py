@@ -70,7 +70,7 @@ class GUIHandler():
         )
 
     @handle_gui_errors
-    def assign_curve(self, plot_label, curve_label):
+    def assign_curve(self, plot_label, curve_label, error=False):
         return self.gui_client.assign_curve(
             plot_label=plot_label,
             curve_label=curve_label

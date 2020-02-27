@@ -48,6 +48,7 @@ class WlmMonitor:
 
         :param wlm_client: (obj) instance of wavemeter client
         :param gui_client: (obj) instance of GUI client.
+        :param logger_client: (obj) instance of logger client.
         :param ao_clients: (dict, optional) dictionary of AO client objects with keys to identify. Exmaple:
             {'ni_usb_1': nidaqmx_usb_client_1, 'ni_usb_2': nidaqmx_usb_client_2, 'ni_pxi_multi': nidaqmx_pxi_client}
         :param display_pts: (int, optional) number of points to display on plot

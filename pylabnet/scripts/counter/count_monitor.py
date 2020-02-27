@@ -1,6 +1,7 @@
 """ Generic script for monitoring counts from a counter """
 
 import numpy as np
+from pylabnet.gui.pyqt.gui_handler import GUIHandler
 
 
 # Static methods
@@ -23,22 +24,25 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client=None, gui_client=None):
+    def __init__(self, ctr_client, gui_client, logger_client):
         """ Constructor for CountMonitor script
 
         :param ctr_client: (optional) instance of hardware client for counter
         :param gui_client: (optional) instance of client of desired output GUI
+        :param logger_client: (obj) instance of logger client.
         """
 
         self._ctr = ctr_client
-        self._gui = gui_client
-        self._is_running = False
         self._bin_width = None
         self._n_bins = None
         self._ch_list = None
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
-        
+
+
+        # Instanciate gui handler
+        self.gui_handler = GUIHandler(gui_client, logger_client)
+
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
 
@@ -47,14 +51,6 @@ class CountMonitor:
 
         # Initialize counter instance
         self._ctr = ctr
-
-    def set_gui(self, gui_client):
-        """ Sets GUI client
-
-        :param gui_client: instance of client of desired output GUI
-        """
-
-        self._gui = gui_client
 
     def set_params(self, bin_width=1e9, n_bins=1e4, ch_list=[1], plot_list=None):
 
@@ -66,7 +62,7 @@ class CountMonitor:
 
         # Configure counting channels
         self._ctr.set_channels(ch_list=ch_list)
-    
+
     def run(self):
 
         try:
@@ -117,35 +113,28 @@ class CountMonitor:
                         plot_index = index
                         break
 
-            try:
-
-                # If we have not assigned this plot yet, assign it
-                if plot_index not in self._plots_assigned:
-                    self._gui.assign_plot(
-                        plot_widget=self._plot_widgets[plot_index],
-                        plot_label='Counter Monitor {}'.format(plot_index + 1),
-                        legend_widget=self._legend_widgets[plot_index]
-                    )
-                    self._plots_assigned.append(plot_index)
-
-                # Now assign this curve
-                self._gui.assign_curve(
+            # If we have not assigned this plot yet, assign it
+            if plot_index not in self._plots_assigned:
+                self.gui_handler.assign_plot(
+                    plot_widget=self._plot_widgets[plot_index],
                     plot_label='Counter Monitor {}'.format(plot_index + 1),
-                    curve_label='Channel {}'.format(channel),
-                    error=True
+                    legend_widget=self._legend_widgets[plot_index]
                 )
+                self._plots_assigned.append(plot_index)
 
-                # Assign scalar
-                self._gui.assign_label(
-                    label_widget=self._number_widgets[channel - 1],
-                    label_label='Channel {}'.format(channel)
-                )
+            # Now assign this curve
+            self.gui_handler.assign_curve(
+                plot_label='Counter Monitor {}'.format(plot_index + 1),
+                curve_label='Channel {}'.format(channel),
+                error=True
+            )
 
-            # Handle GUI disconnection
-            except EOFError:
-                print('Plots could not be properly initialized')
-                self._is_running = False
-                raise
+            # Assign scalar
+            self.gui_handler.assign_label(
+                label_widget=self._number_widgets[channel - 1],
+                label_label='Channel {}'.format(channel)
+            )
+
 
     def _update_output(self):
 
@@ -167,25 +156,14 @@ class CountMonitor:
                         break
 
             # Update GUI data
-            try:
 
-                self._gui.set_curve_data(
-                    data=count_array,
-                    error=noise[index],
-                    plot_label='Counter Monitor {}'.format(plot_index + 1),
-                    curve_label='Channel {}'.format(channel)
-                )
-                self._gui.set_label(
-                    text='{:.4e}'.format(count_array[-1]),
-                    label_label='Channel {}'.format(channel)
-                )
-
-            # Handle GUI disconnection error
-            except EOFError:
-                print('GUI disconnected - terminating counter')
-                self._is_running = False
-
-            # Handle plot assignment error
-            except KeyError:
-                pass
-
+            self.gui_handler.set_curve_data(
+                data=count_array,
+                error=noise[index],
+                plot_label='Counter Monitor {}'.format(plot_index + 1),
+                curve_label='Channel {}'.format(channel)
+            )
+            self.gui_handler.set_label(
+                text='{:.4e}'.format(count_array[-1]),
+                label_label='Channel {}'.format(channel)
+            )

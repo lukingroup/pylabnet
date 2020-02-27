@@ -237,7 +237,7 @@ class WlmMonitor:
         Should be called if the GUI connection has been lost, once a new GUI client with the same access parameters has
         been reinstantiated
         """
-        self._gui_reconnect = True
+         self.gui_handler.gui_reconnect = True
 
     def zero_voltage(self, channel):
         """ Zeros the output voltage for this channel
@@ -501,7 +501,7 @@ class WlmMonitor:
                         channel.label_updated = True
 
             # If GUI is not connected, check if we should try reconnecting to the GUI
-            elif self._gui_reconnect:
+            elif  self.gui_handler.gui_reconnect:
 
                 self.gui_handler.gui_connected = True
                 # self.gui_handler.connect() # Commented by CK, unsure what that does.
@@ -523,7 +523,7 @@ class WlmMonitor:
                     scalar_label=channel.lock_name
                 )
                 self._update_channels()
-                self._gui_reconnect = False
+                 self.gui_handler.gui_reconnect = False
 
     def _get_gui_data(self):
         """ Updates setpoint and lock parameters with data pulled from GUI

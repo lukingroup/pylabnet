@@ -109,10 +109,15 @@ class Window(QtWidgets.QMainWindow):
         """
         self._plots_to_remove.append(plot_widget)
 
-    def assign_curve(self, plot_label, curve_label):
-        """Adds curve assignment to the queue"""
+    def assign_curve(self, plot_label, curve_label, error=False):
+        """Adds curve assignment to the queue
 
-        self._curves_to_assign.append((plot_label, curve_label))
+        :param plot_label: (str) key of plot to assign curve to
+        :param curve_label: (str) key to use for curve assignment + legend
+        :param error: (bool, optional) whether or not to use error bars
+        """
+
+        self._curves_to_assign.append((plot_label, curve_label, error))
 
     def remove_curve(self, plot_label, curve_label):
         """ Adds a curve removal request to the queue
@@ -249,11 +254,11 @@ class Window(QtWidgets.QMainWindow):
         for curve_params in self._curves_to_assign:
 
             # Unpack parameters
-            plot_label, curve_label = curve_params
+            plot_label, curve_label, error = curve_params
 
             # Assign curve to physical plot widget in GUI
             try:
-                self._assign_curve(plot_label, curve_label)
+                self._assign_curve(plot_label, curve_label, error)
                 self._curves_to_assign.remove(curve_params)
             except KeyError:
                 pass
@@ -448,13 +453,14 @@ class Window(QtWidgets.QMainWindow):
         if plot_to_delete is not None:
             del self.plots[plot_to_delete]
 
-    def _assign_curve(self, plot_label, curve_label):
+    def _assign_curve(self, plot_label, curve_label, error=False):
         """ Assigns a curve to a plot
 
         :param plot_label: (str) label of the plot to assign
         :param curve_label: (str) label of curve to use for indexing in the self.plots[plot_label].curves dictionary
+        :param error: (bool, optional) whether or not to use error bars
         """
-        self.plots[plot_label].add_curve(curve_label)
+        self.plots[plot_label].add_curve(curve_label, error)
 
     def _remove_curve(self, plot_label, curve_label):
         """ Removes a curve from a plot
@@ -506,10 +512,11 @@ class Service(ServiceBase):
             plot_widget=plot_widget
         )
 
-    def exposed_assign_curve(self, plot_label, curve_label):
+    def exposed_assign_curve(self, plot_label, curve_label, error=False):
         return self._module.assign_curve(
             plot_label=plot_label,
-            curve_label=curve_label
+            curve_label=curve_label,
+            error=error
         )
 
     def exposed_remove_curve(self, plot_label, curve_label):
@@ -590,10 +597,11 @@ class Client(ClientBase):
             plot_widget=plot_widget
         )
 
-    def assign_curve(self, plot_label, curve_label):
+    def assign_curve(self, plot_label, curve_label, error=False):
         return self._service.exposed_assign_curve(
             plot_label=plot_label,
-            curve_label=curve_label
+            curve_label=curve_label,
+            error=error
         )
 
     def remove_curve(self, plot_label, curve_label):
@@ -690,18 +698,20 @@ class Plot:
         # Set up legend
         self._set_legend(legend_widget=legend_widget)
 
-    def add_curve(self, curve_label):
+    def add_curve(self, curve_label, error=False):
         """ Adds a curve to the plot
 
         TODO (if someone wants...): implement custom curve property override (e.g. custom color, line style, etc)
 
         :param curve_label: (str) curve label key to attach to this curve for future reference + naming purposes
+        :param error: (bool, optional) whether or not to use error bars
         """
 
         # Add a new curve to self.curves dictionary for this plot
         self.curves[curve_label] = Curve(
             self.widget,
-            pen=pg.mkPen(color=self._color_list[len(self.curves)])  # Instantiate a Pen for curve properties
+            pen=pg.mkPen(color=self._color_list[len(self.curves)]),  # Instantiate a Pen for curve properties
+            error=error
         )
 
         # Configure legend
@@ -726,10 +736,18 @@ class Plot:
         """ Updates plot output to latest data"""
 
         for curve in self.curves.values():
+
+            # Set data without error bars
             curve.widget.setData(
-                curve.data,
-                error=curve.error
+                curve.data
             )
+
+            if curve.error_data is not None:
+                curve.error.setData(
+                    x=np.arange(len(curve.data)),
+                    y=curve.data,
+                    height=2*curve.error_data
+                )
 
     # Technical methods
 
@@ -783,30 +801,36 @@ class Curve:
         :param error: (bool, optional) whether or not to add error bars to this plot
         """
 
-        # Instantiate new curve in the plot
+        # Instantiate error bar plot
         self.widget = plot_widget.plot(pen=pen)
 
-        # Instantiate error bars
-        self.error = None
         if error:
             self.error = pg.ErrorBarItem(
+                x=np.array([]),
+                y=np.array([]),
                 pen=pen
             )
             plot_widget.addItem(self.error)
+            self.error_data = np.array([])
+
+        # Instantiate new curve in the plot without error bars
+        else:
+            self.widget = plot_widget.plot(pen=pen)
+            self.error = None
+            self.error_data = None
 
         self.data = np.array([])
-        self.error_data = np.array([])
 
     def set_curve_data(self, data, error=None):
         """ Stores data to a new curve
 
         :param data: (np.array) either a 1D (only y-axis) or 2D (x-axis, y-axis) numpy array
-        :param error: (np.array, optional) 1D array for error bars
+        :param error: (np.array, optional) 1D array for error bars (standard deviation)
         """
 
         self.data = data
 
-        if self.error is not None:
+        if self.error_data is not None:
             self.error_data = error
 
 

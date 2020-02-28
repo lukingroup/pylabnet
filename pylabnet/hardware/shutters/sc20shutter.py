@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pylabnet.hardware.ni_daqs.nidaqmx_card import NiDaqMxCard
+from pylabnet.hardware.ni_daqs.nidaqmx_card import Driver
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
@@ -14,10 +14,10 @@ class SC20Shutter:
 
     def __init__(self, device_name, output_channel, shutter_name='shutter', logger=None):
         """Hardware module class for SDC20 Thorlabs shutter.
-        
+
         This method connects to NI-DAQmx card and uses the analog output
         to gate SDC20 Thorlabs shutter.
-        
+
         :device_name: (str) Name of NI DAQ mx card, as displayed in NI MAX
         :ao_channel: (str) Name of output channel where SC20 is connected (e.g. 'ao1', 'ao2')
         :shutter_name: (str, optional) Readable name of shutter (e.g. 'Collection Path')
@@ -30,8 +30,8 @@ class SC20Shutter:
         self.log = logger
 
         # Instantiate NI DAQ
-        self.daq = NiDaqMxCard(
-            device_name=device_name, 
+        self.daq = Driver(
+            device_name=device_name,
             logger=logger
         )
 

@@ -28,8 +28,7 @@ class GUIHandler():
         self.logger_client = logger_client
 
     def assign_gui(self, gui_client):
-        """
-        Assigns a GUI client to the GUI handler
+        """Assigns a GUI client to the GUI handler
 
         :param client:
             (obj) instance of GUI client

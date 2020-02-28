@@ -53,6 +53,13 @@ class CountMonitor:
         self._ctr = ctr
 
     def set_params(self, bin_width=1e9, n_bins=1e4, ch_list=[1], plot_list=None):
+        """ Sets counter parameters
+        
+        :param bin_width: bin width in ps
+        :param n_bins: number of bins to display on graph
+        :param ch_list: (list) channels to record
+        :param plot_list: list of channels to assign to each plot (e.g. [[1,2], [3,4]])
+        """
 
         # Save params to internal variables
         self._bin_width = int(bin_width)
@@ -64,6 +71,7 @@ class CountMonitor:
         self._ctr.set_channels(ch_list=ch_list)
 
     def run(self):
+        """ Runs the counter from scratch"""
 
         try:
 
@@ -81,10 +89,15 @@ class CountMonitor:
             raise exc_obj
 
     def pause(self):
+        """ Pauses the counter"""
 
         self._is_running = False
 
     def resume(self):
+        """ Resumes the counter.
+        
+        To be used to resume after the counter has been paused.
+        """
 
         try:
             self._is_running = True
@@ -137,6 +150,7 @@ class CountMonitor:
 
 
     def _update_output(self):
+        """ Updates the output to all current values"""
 
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12

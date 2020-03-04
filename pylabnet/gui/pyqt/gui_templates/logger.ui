@@ -135,7 +135,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <rect>
       <x>20</x>
       <y>60</y>
-      <width>751</width>
+      <width>501</width>
       <height>291</height>
      </rect>
     </property>
@@ -147,6 +147,31 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
     </property>
     <property name="styleSheet">
      <string notr="true">color: rgb(255, 255, 255);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="client_list">
+    <property name="geometry">
+     <rect>
+      <x>535</x>
+      <y>60</y>
+      <width>251</width>
+      <height>291</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Calibri Light</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(85, 170, 255);</string>
     </property>
     <property name="frameShape">
      <enum>QFrame::NoFrame</enum>

@@ -89,7 +89,7 @@ class LogClient:
         self._service = None
         self._level_str = ''
         self._level = 0
-        self._module_taga = ''
+        self._module_tag = ''
 
         # Set log level
         self.set_level(level_str=level_str)
@@ -104,7 +104,7 @@ class LogClient:
         self._module_tag = module_tag
 
         # Log test message
-        self.info('Started logging. Level: {}'.format(level_str))
+        self.info('Started logging.')
 
     def connect(self, host='place_holder', port=-1):
 

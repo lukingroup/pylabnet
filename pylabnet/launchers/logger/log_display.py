@@ -2,6 +2,8 @@
 
 import sys
 import socket
+import os
+import time
 from io import StringIO
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
@@ -12,6 +14,7 @@ from pylabnet.utils.logging.logger import LogClient
 
 def main():
 
+    # Hardwire log and GUI server ports
     LOG_PORT = 1234
     GUI_PORT = 5678
     log_port, gui_port = LOG_PORT, GUI_PORT
@@ -53,6 +56,16 @@ def main():
     )
     gui_server.start()
     main_window.gui_label.setText('GUI Port: {}'.format(gui_port))
+
+    # Add GUI server to list of connected clients
+    socket_data = [client for client in log_server._server.clients][0]
+    client_list = {'Logger GUI': QtWidgets.QListWidgetItem('Logger GUI')}
+    main_window.client_list.addItem(client_list['Logger GUI'])
+    data_str = 'Connection timestamp: {} \nSocket info: {}'.format(
+        time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
+        socket_data
+    )
+    client_list['Logger GUI'].setToolTip(data_str)
 
     main_window.terminal.append(sys.stdout.getvalue())
     sys.stdout.truncate(0)

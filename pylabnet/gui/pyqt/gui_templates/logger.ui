@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>802</width>
-    <height>422</height>
+    <width>811</width>
+    <height>612</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,7 +64,7 @@ selection-color: rgb(255, 0, 0);</string>
       <x>110</x>
       <y>10</y>
       <width>671</width>
-      <height>25</height>
+      <height>26</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -133,9 +133,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
    <widget class="QTextBrowser" name="terminal">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>60</y>
-      <width>501</width>
+      <x>10</x>
+      <y>260</y>
+      <width>781</width>
       <height>291</height>
      </rect>
     </property>
@@ -155,10 +155,10 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
    <widget class="QListWidget" name="client_list">
     <property name="geometry">
      <rect>
-      <x>535</x>
-      <y>60</y>
-      <width>251</width>
-      <height>291</height>
+      <x>10</x>
+      <y>50</y>
+      <width>271</width>
+      <height>191</height>
      </rect>
     </property>
     <property name="font">
@@ -177,14 +177,30 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <enum>QFrame::NoFrame</enum>
     </property>
    </widget>
+   <widget class="QTreeView" name="file_tree">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>40</y>
+      <width>501</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(255, 255, 255);</string>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::NoFrame</enum>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>802</width>
-     <height>21</height>
+     <width>811</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>

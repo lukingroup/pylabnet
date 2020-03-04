@@ -41,6 +41,11 @@ def main():
     main_window.terminal.setText('Log messages will be displayed below \n')
     main_window.force_update()
 
+    # Add script launching tree
+    file_model = QtWidgets.QFileSystemModel()
+    file_model.setRootPath(os.path.dirname(os.getcwd()))
+    main_window.file_tree.setModel(file_model)
+
     # Instantiate GUI server so it can be connected to externally
     gui_logger = LogClient(
         host='localhost',
@@ -64,12 +69,12 @@ def main():
     main_window.client_list.addItem(client_list[LG])
     client_list[LG].setToolTip(log_service.client_data[LG])
 
+    # Display terminal text and clear
     main_window.terminal.append(sys.stdout.getvalue())
     sys.stdout.truncate(0)
     sys.stdout.seek(0)
 
     disconnection_flag = False
-
     while not main_window.stop_button.isChecked():
         main_window.configure_widgets()
         main_window.update_widgets()

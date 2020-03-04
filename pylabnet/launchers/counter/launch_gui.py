@@ -20,7 +20,7 @@ import socket
 def main():
 
     # Retrieve GUI template from command line argument
-    gui_template = str(sys.argv[1])
+    gui_template = 'count_monitor'
 
     # Instantiate logger
     gui_logger = LogClient(
@@ -50,8 +50,6 @@ def main():
         socket.gethostbyname(socket.gethostname())
     ))
     main_window.port_label.setText('Port: {}'.format(port_num))
-
-    #main_window.shutter_button_1.clicked.connect(lambda:print('lol'))
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

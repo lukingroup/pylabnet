@@ -34,7 +34,10 @@ def main():
     main_window = Window(app, gui_template=gui_template)
 
     # Instantiate GUI server
-    port_num = 12
+    try:
+        port_num = int(sys.argv[2])
+    except:
+        port_num=12
     gui_service = Service()
     gui_service.assign_module(module=main_window)
     gui_service.assign_logger(logger=gui_logger)

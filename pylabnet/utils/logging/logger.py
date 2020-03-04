@@ -1,6 +1,8 @@
 import rpyc
 import traceback
 import time
+import socket
+import pickle
 
 
 class LogHandler:
@@ -95,6 +97,9 @@ class LogClient:
         # Set log level
         self.set_level(level_str=level_str)
 
+        # Set module alias to display with log messages
+        self._module_tag = module_tag
+
         # Connect to log server
         #   This call must be performed after set_level() call:
         #       if host is None or port is None, connect() call
@@ -105,9 +110,7 @@ class LogClient:
         self._module_tag = module_tag
 
         # Log test message
-        self.info('Started logging.\n\tHost: {}\n\tPort: {}\n\tTime:{}'.format(
-            self._host,
-            self._port,
+        self.info('Started logging at {}'.format(
             time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
         ))
 
@@ -146,13 +149,21 @@ class LogClient:
                     config={'allow_public_attrs': True}
                 )
                 self._service = self._connection.root
-                return 0
 
             except Exception as exc_obj:
                 self._service = None
                 self._connection = None
+                self._module_tag = ''
 
                 raise exc_obj
+
+            client_data_str = 'IP Address: {}\nTimestamp: {}'.format(
+                socket.gethostbyname(socket.gethostname()),
+                time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+            )
+
+            self._service.add_client_data(self._module_tag, client_data_str)
+            return 0
 
     def set_level(self, level_str):
         # Sanity check
@@ -250,6 +261,11 @@ class LogClient:
 
 
 class LogService(rpyc.Service):
+    
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.client_data = {}
+
     def on_connect(self, conn):
         # code that runs when a connection is created
         # (to init the service, if needed)
@@ -262,4 +278,23 @@ class LogService(rpyc.Service):
 
     def exposed_log_msg(self, msg_str, level_str):
         print(msg_str)
+        return 0
+
+    def add_client_data(self, module_name, module_data):
+        """ Add new client info
+
+        :param module_name: (str) name of the module
+        :param module_data: (dict) dictionary containing client data.
+            e.g. {'ip_address':'0.0.0.0', 'timestamp':'2020-03-04, 12:12:12, 'data':None}
+        """
+
+        # Check if this module has already been inserted and modify its name accordingly
+        mn = module_name
+        module_index = 2
+        while module_name in self.client_data:
+            module_name = mn + str(module_index)
+            module_index += 1
+
+        # Add client data to attribute of service
+        self.client_data[module_name] = module_data
         return 0

@@ -17,6 +17,7 @@ def main():
     # Hardwire log and GUI server ports
     LOG_PORT = 1234
     GUI_PORT = 5678
+    LG = 'Logger GUI'
     log_port, gui_port = LOG_PORT, GUI_PORT
 
     # Use standard logger template
@@ -44,7 +45,7 @@ def main():
     gui_logger = LogClient(
         host='localhost',
         port=log_port,
-        module_tag='Logger GUI'
+        module_tag=LG
     )
     gui_service = Service()
     gui_service.assign_module(module=main_window)
@@ -58,18 +59,16 @@ def main():
     main_window.gui_label.setText('GUI Port: {}'.format(gui_port))
 
     # Add GUI server to list of connected clients
-    socket_data = [client for client in log_server._server.clients][0]
-    client_list = {'Logger GUI': QtWidgets.QListWidgetItem('Logger GUI')}
-    main_window.client_list.addItem(client_list['Logger GUI'])
-    data_str = 'Connection timestamp: {} \nSocket info: {}'.format(
-        time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
-        socket_data
-    )
-    client_list['Logger GUI'].setToolTip(data_str)
+    client_list = {LG: QtWidgets.QListWidgetItem(LG)}
+    port_list = {LG: [port for port in log_server._server.clients][0]}
+    main_window.client_list.addItem(client_list[LG])
+    client_list[LG].setToolTip(log_service.client_data[LG])
 
     main_window.terminal.append(sys.stdout.getvalue())
     sys.stdout.truncate(0)
     sys.stdout.seek(0)
+
+    disconnection_flag = False
 
     while not main_window.stop_button.isChecked():
         main_window.configure_widgets()
@@ -78,11 +77,42 @@ def main():
         # Check stdout and update
         current_output = sys.stdout.getvalue()
         if current_output is not '':
-            main_window.terminal.append(sys.stdout.getvalue())
+
+            # Update output
+            main_window.terminal.append(current_output)
             main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+
             # Clear stdout
             sys.stdout.truncate(0)
             sys.stdout.seek(0)
+
+            # check for deletion
+            if 'Client disconnected' in current_output or disconnection_flag:
+                disconnection_flag = True
+
+            # Check for any additions from/to client list
+            # PUT INSIDE TRY
+            port_to_add = [port for port in log_server._server.clients if port not in port_list.values()]
+            client_to_add = [client for client in log_service.client_data if client not in client_list]
+
+            if len(client_to_add) > 0:
+                client = client_to_add[0]
+                client_list[client] = QtWidgets.QListWidgetItem(client)
+                main_window.client_list.addItem(client_list[client])
+                client_list[client].setToolTip(log_service.client_data[client])
+                if len(port_to_add) > 0:
+                    port_list[client] = port_to_add[0]
+
+        if disconnection_flag:
+            to_del = [client for (client, port) in port_list.items() if port not in log_server._server.clients]
+            for client in to_del:
+                main_window.client_list.takeItem(main_window.client_list.row(client_list[client]))
+                del client_list[client]
+                del port_list[client]
+                del log_service.client_data[client]
+                disconnection_flag = False
+
+
         main_window.force_update()
     sys.exit(app.exec_())
 

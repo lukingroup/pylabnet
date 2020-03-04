@@ -1,5 +1,6 @@
 import rpyc
 import traceback
+import time
 
 
 class LogHandler:
@@ -104,7 +105,11 @@ class LogClient:
         self._module_tag = module_tag
 
         # Log test message
-        self.info('Started logging.')
+        self.info('Started logging.\n\tHost: {}\n\tPort: {}\n\tTime:{}'.format(
+            self._host,
+            self._port,
+            time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+        ))
 
     def connect(self, host='place_holder', port=-1):
 

@@ -74,10 +74,13 @@ def main():
     while not main_window.stop_button.isChecked():
         main_window.configure_widgets()
         main_window.update_widgets()
+
+        # Check stdout and update
         current_output = sys.stdout.getvalue()
         if current_output is not '':
             main_window.terminal.append(sys.stdout.getvalue())
             main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+            # Clear stdout
             sys.stdout.truncate(0)
             sys.stdout.seek(0)
         main_window.force_update()

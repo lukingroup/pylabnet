@@ -18,13 +18,28 @@ class HDAWG_Driver():
         """ Create a base configuration: Disable all available outputs, awgs, demods, scopes,.. """
         zhinst.utils.disable_everything(self.daq, self.device_id)
 
-    def __init__(self, device_id, logger=None, api_level=6):
+    def __init__(self, device_id, logger, api_level=6):
         """ Instantiate AWG
 
         :logger: instance of LogClient class
         :device_id: Device id of connceted ZI HDAWG, for example 'dev8060'
         :api_level: API level of zhins API
         """
+
+        self.logger = logger
+
+        # We now configure a StreamHandler which outputs all standard output produced by print()
+        # commands to the logger. 
+
+        import logging
+        import sys
+
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        
 
         # Part of this code has been modified from ZI's Zurich Instruments LabOne Python API Example
 
@@ -33,6 +48,9 @@ class HDAWG_Driver():
         # - an API session `daq` in order to communicate with devices via the data server.
         # - the device ID string that specifies the device branch in the server's node hierarchy.
         # - the device's discovery properties.
+
+        print = self.logger.info()
+
         (daq, device, props) = zhinst.utils.create_api_session(device_id, api_level, required_devtype='HDAWG',
                                                         required_err_msg=err_msg)
         zhinst.utils.api_server_version_check(daq)

@@ -11,12 +11,24 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
+from pylabnet.utils.decorators.logging_redirector import log_standard_output
+
 
 class HDAWG_Driver():
 
     def disable_everything(self):
         """ Create a base configuration: Disable all available outputs, awgs, demods, scopes,.. """
         zhinst.utils.disable_everything(self.daq, self.device_id)
+
+    @log_standard_output
+    def log_stdout(self, function):
+        """ Execute function and log print output to self.log
+
+        This statement is needed for an inline call where any zhinst command is
+        executed and the standard output should be logged
+        :function: The function to be executed.
+         """
+        return function()
 
     def __init__(self, device_id, logger, api_level=6):
         """ Instantiate AWG
@@ -26,34 +38,23 @@ class HDAWG_Driver():
         :api_level: API level of zhins API
         """
 
-        self.logger = logger
-
-        # We now configure a StreamHandler which outputs all standard output produced by print()
-        # commands to the logger. 
-
-        import logging
-        import sys
-
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        
+         # Instantiate log
+        self.log = LogHandler(logger=logger)
 
         # Part of this code has been modified from ZI's Zurich Instruments LabOne Python API Example
 
-        err_msg = "This example can only be ran on an HDAWG."
         # Call a zhinst utility function that returns:
         # - an API session `daq` in order to communicate with devices via the data server.
         # - the device ID string that specifies the device branch in the server's node hierarchy.
         # - the device's discovery properties.
 
-        print = self.logger.info()
+        err_msg = "This example can only be ran on an HDAWG."
 
-        (daq, device, props) = zhinst.utils.create_api_session(device_id, api_level, required_devtype='HDAWG',
-                                                        required_err_msg=err_msg)
-        zhinst.utils.api_server_version_check(daq)
+        # Connect to device and log print output, not the lambda expression.
+        (daq, device, props) = self.log_stdout(lambda: zhinst.utils.create_api_session(device_id, api_level, required_devtype='HDAWG',
+                                                required_err_msg=err_msg))
+
+        self.log_stdout(lambda: zhinst.utils.api_server_version_check(daq))
 
         self.daq = daq
         self.device_id = device
@@ -64,6 +65,7 @@ class HDAWG_Driver():
         # read out number of channels from property dictionary
         self.num_outputs = int(re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1))
 
+    @log_standard_output
     def seti(self, node, new_int):
         """
         Warapper for daq.setInt commands. For instance, instead of
@@ -77,11 +79,6 @@ class HDAWG_Driver():
 
         self.daq.setInt('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_int)
 
-    def check_output_index(self, output_index):
-        """ Checks if output index exists"""
-        assert output_index in range(self.num_outputs), "This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index)
-        return output_index
-
     def enable_output(self, output_index):
         """
         Enables wave output.
@@ -92,7 +89,11 @@ class HDAWG_Driver():
         :output_index: Indicating wave output 0 to 7
         """
 
-        self.seti('sigouts/{output_index}/on'.format(output_index=self.check_output_index(output_index)), 1)
+        if output_index in range(self.num_outputs):
+            self.seti('sigouts/{output_index}/on'.format(output_index=output_index), 1)
+            self.log.info("Enabled wave output {}.".format(output_index))
+        else:
+            self.log.error("This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index))
 
     def disable_output(self, output_index):
         """
@@ -101,4 +102,8 @@ class HDAWG_Driver():
         :output_index: Indicating wave output 0 to 7
         """
 
-        self.seti('sigouts/{output_index}/on'.format(output_index=self.check_output_index(output_index)), 0)
+        if output_index in range(self.num_outputs):
+            self.seti('sigouts/{output_index}/on'.format(output_index=output_index), 0)
+            self.log.info("Disabled wave output {}.".format(output_index))
+        else:
+            self.log.error("This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index))

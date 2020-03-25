@@ -103,6 +103,20 @@ class HDAWG_Driver():
         self.daq.setDouble('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_double)
 
     @log_standard_output
+    def setv(self, node, vector):
+        """
+        Warapper for daq.setVector commands. For instance, instead of
+        daq.setVector('/dev8060/awgs/0/waveform/waves/1', vector), write
+
+        hdawg.setd('sigouts/awgs/0/waveform/waves/1', vector)
+
+        :node: Node which will be appended to '/device_id/'
+        :new_double: New value for double.
+        """
+
+        self.daq.setVector(f'/{self.device_id}/{node}', vector)
+
+    @log_standard_output
     def geti(self, node):
         """
         Warapper for daq.getInt commands. For instance, instead of
@@ -270,3 +284,25 @@ class HDAWG_Driver():
             self.log.info("Upload to the instrument successful.")
         if awgModule.getInt('elf/status') == 1:
             self.log.warning("Upload to the instrument failed.")
+
+    def dyn_waveform_upload(self, awgModule, waveform, index):
+        """ Dynamically upload a numpy array into HDAWG Memory
+
+        This will overwrite the allocated waveform memory of a waveform
+        defined in the sequence. The index designates which waveform to
+        overwrite:
+        Let N be the total number of waveforms and M>0 be the number of waveforms defined from CSV files. Then the index
+        of the waveform to be replaced is defined as following:
+        - 0,...,M-1 for all waveforms defined from CSV file alphabetically ordered by filename,
+        - M,...,N-1 in the order that the waveforms are defined in the sequencer program.
+        For the case of M=0, the index is defined as:
+        - 0,...,N-1 in the order that the waveforms are defined in the sequencer program.
+
+        :awgModule: Instance of AWG module to be used
+        :waveform: np.array containing waveform
+        :index: Index of waveform to be overwritten as defined above
+        """
+
+        waveform_native = zhinst.utils.convert_awg_waveform(waveform)
+        awg_index = awgModule.get('index')['index'][0]
+        self.setv(f'awgs/{awg_index}/waveform/waves/{index}', waveform_native)

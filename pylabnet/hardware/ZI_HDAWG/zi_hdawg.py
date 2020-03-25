@@ -19,6 +19,7 @@ class HDAWG_Driver():
     def disable_everything(self):
         """ Create a base configuration: Disable all available outputs, awgs, demods, scopes,.. """
         zhinst.utils.disable_everything(self.daq, self.device_id)
+        self.log.info("Disabled all wave outputs")
 
     @log_standard_output
     def log_stdout(self, function):
@@ -79,31 +80,41 @@ class HDAWG_Driver():
 
         self.daq.setInt('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_int)
 
-    def enable_output(self, output_index):
+    def _toggle_output(self, output_indices, target_index):
+        """
+        Local function enabeling/disabeling wave output.
+        """
+
+        # Convert to list if input is integer
+        if type(output_indices) is not list:
+            output_indices = [output_indices]
+
+        for output_index in output_indices:
+            if output_index in range(self.num_outputs):
+                self.seti('sigouts/{output_index}/on'.format(output_index=output_index), target_index)
+                if target_index == 1:
+                    self.log.info("Enabled wave output {}.".format(output_index))
+                elif target_index == 0:
+                    self.log.info("Disable wave output {}.".format(output_index))
+            else:
+                self.log.error("This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index))
+
+    def enable_output(self, output_indices):
         """
         Enables wave output.
 
         Channel designation uses channel index (0 to 7),
         not channel number (1 to 8).
 
-        :output_index: Indicating wave output 0 to 7
+        :output_index: List or int containing integers indicating wave output 0 to 7
         """
 
-        if output_index in range(self.num_outputs):
-            self.seti('sigouts/{output_index}/on'.format(output_index=output_index), 1)
-            self.log.info("Enabled wave output {}.".format(output_index))
-        else:
-            self.log.error("This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index))
+        self._toggle_output(output_indices, 1)
 
-    def disable_output(self, output_index):
+    def disable_output(self, output_indices):
         """
         Disables wave output.
 
-        :output_index: Indicating wave output 0 to 7
+        :output_index: List or int containing integers indicating wave output 0 to 7
         """
-
-        if output_index in range(self.num_outputs):
-            self.seti('sigouts/{output_index}/on'.format(output_index=output_index), 0)
-            self.log.info("Disabled wave output {}.".format(output_index))
-        else:
-            self.log.error("This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index))
+        self._toggle_output(output_indices, 0)

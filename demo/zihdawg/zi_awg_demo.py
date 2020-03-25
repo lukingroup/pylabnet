@@ -11,7 +11,7 @@ from pylabnet.utils.logging.logger import LogClient
 
 dev_id = 'dev8040'
 
-# Instantiate logger
+# Instantiate
 logger = LogClient(
     host='localhost',
     port=12345,
@@ -20,6 +20,6 @@ logger = LogClient(
 
 
 hd = HDAWG_Driver(dev_id, logger)
-hd.enable_output(8)  # Shows error in log server.
-hd.enable_output(7)  # Works fine.
+hd.enable_output([0, 1, 2, 3, 8])  # Shows error in log server for index 8
+hd.disable_output(1)  # Works fine.
 hd.disable_everything()

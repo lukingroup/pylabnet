@@ -2,6 +2,7 @@
 This module contains utility functions used for pylabnet decorators.
 '''
 
+
 def get_signature(*args, **kwargs):
     """ Gets printable function signature"""
     args_repr = [repr(a) for a in args]

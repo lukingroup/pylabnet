@@ -18,8 +18,13 @@ logger = LogClient(
     module_tag=f'ZI HDAWG {dev_id}'
 )
 
-
+# Instanciate Hardware class
 hd = HDAWG_Driver(dev_id, logger)
+
+# Select channel grouping
+hd.set_channel_grouping(0)
+
 hd.enable_output([0, 1, 2, 3, 8])  # Shows error in log server for index 8
 hd.disable_output(1)  # Works fine.
+hd.set_output_range(1, 1)
 hd.disable_everything()

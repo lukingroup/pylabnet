@@ -19,7 +19,7 @@ class HDAWG_Driver():
     def disable_everything(self):
         """ Create a base configuration: Disable all available outputs, awgs, demods, scopes,.. """
         zhinst.utils.disable_everything(self.daq, self.device_id)
-        self.log.info("Disabled all wave outputs")
+        self.log.info("Disabled all wave outputs.")
 
     @log_standard_output
     def log_stdout(self, function):
@@ -30,6 +30,13 @@ class HDAWG_Driver():
         :function: The function to be executed.
          """
         return function()
+
+    def _convert_to_list(self, input_argument):
+        """Checks if input is list and if not, converts it to list."""
+        if type(input_argument) is not list:
+            input_argument = [input_argument]
+        return input_argument
+
 
     def __init__(self, device_id, logger, api_level=6):
         """ Instantiate AWG
@@ -80,14 +87,39 @@ class HDAWG_Driver():
 
         self.daq.setInt('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_int)
 
+    @log_standard_output
+    def setd(self, node, new_double):
+        """
+        Warapper for daq.setDouble commands. For instance, instead of
+        daq.setDouble('/dev8040/sigouts/0/range', 0.8), write
+
+        hdawg.setd('sigouts/0/range, 1)
+
+        :node: Node which will be appended to '/device_id/'
+        :new_double: New value for double.
+        """
+
+        self.daq.setDouble('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_double)
+
+    def set_channel_grouping(self, index):
+        """ Specifies channel grouping.
+
+        :index: Integer indicating channel grouping:
+            0 : 4x2 with HDAWG8; 2x2 with HDAWG4.
+            1 : 2x4 with HDAWG8; 1x4 with HDAWG4.
+            2 : 1x8 with HDAWG8.
+        """
+        self.seti('system/awg/channelgrouping', index)
+
+    # Functions related to wave outputs:
+
     def _toggle_output(self, output_indices, target_index):
         """
         Local function enabeling/disabeling wave output.
         """
 
-        # Convert to list if input is integer
-        if type(output_indices) is not list:
-            output_indices = [output_indices]
+        # If single integer is given, convert to list.
+        output_indices = self._convert_to_list(output_indices)
 
         for output_index in output_indices:
             if output_index in range(self.num_outputs):
@@ -97,7 +129,7 @@ class HDAWG_Driver():
                 elif target_index == 0:
                     self.log.info("Disable wave output {}.".format(output_index))
             else:
-                self.log.error("This device has only {} channels, channel index {} is invalid.".format(self.num_outputs, output_index))
+                self.log.error(f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid.")
 
     def enable_output(self, output_indices):
         """
@@ -118,3 +150,24 @@ class HDAWG_Driver():
         :output_index: List or int containing integers indicating wave output 0 to 7
         """
         self._toggle_output(output_indices, 0)
+
+    def set_output_range(self, output_index, output_range):
+        """
+        Set the output range.
+
+        :output_index: List or int containing integers indicating wave output 0 to 7
+        :output_range: Double indicating the range of wave output, in Volt.
+            All waveforms (ranging from 0 to 1 in value) will be multiplied with this value. Possible ranges are:
+            0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5 (V)
+        """
+
+        allowed_ranges = [0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5]
+
+        if output_index in range(self.num_outputs):
+            if output_range in allowed_ranges:
+                self.setd('sigouts/{output_index}/range'.format(output_index=output_index), output_range)
+                self.log.info(f"Changed range of wave output {output_index} to {output_range} V.")
+            else:
+                self.log.error(f"Range {output_range} is not valid, allowed values for range are {allowed_ranges}")
+        else:
+            self.log.error(f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid.")

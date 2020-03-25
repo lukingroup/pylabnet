@@ -5,7 +5,7 @@ This module demonstrates the use of the ZI HDAWG Hardware Class.
 """
 
 
-from pylabnet.hardware.zi_hdawg.zi_hdawg import  HDAWG_Driver
+from pylabnet.hardware.zi_hdawg.zi_hdawg import HDAWG_Driver
 from pylabnet.utils.logging.logger import LogClient
 
 
@@ -24,7 +24,11 @@ hd = HDAWG_Driver(dev_id, logger)
 # Select channel grouping
 hd.set_channel_grouping(0)
 
-hd.enable_output([0, 1, 2, 3, 8])  # Shows error in log server for index 8
-hd.disable_output(1)  # Works fine.
-hd.set_output_range(1, 1)
+
+outputs = [0, 1]
+hd.enable_output(outputs)
+
+for output in outputs:
+    hd.set_output_range(output, 0.2)
+
 hd.disable_everything()

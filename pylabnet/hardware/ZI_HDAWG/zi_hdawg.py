@@ -6,6 +6,7 @@ This file contains the pylabnet Hardware class for the Zurich Instruments HDAWG.
 
 import zhinst.utils
 import re
+import time
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
@@ -93,13 +94,26 @@ class HDAWG_Driver():
         Warapper for daq.setDouble commands. For instance, instead of
         daq.setDouble('/dev8040/sigouts/0/range', 0.8), write
 
-        hdawg.setd('sigouts/0/range, 1)
+        hdawg.setd('sigouts/0/range')
 
         :node: Node which will be appended to '/device_id/'
         :new_double: New value for double.
         """
 
         self.daq.setDouble('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_double)
+
+    @log_standard_output
+    def geti(self, node):
+        """
+        Warapper for daq.getInt commands. For instance, instead of
+        daq.getInt('/dev8040/sigouts/0/busy'), write
+
+        hdawg.geti('sigouts/0/busy')
+
+        :node: Node which will be appended to '/device_id/'
+        """
+
+        return self.daq.getInt(f'/{self.device_id}/{node}')
 
     def set_channel_grouping(self, index):
         """ Specifies channel grouping.
@@ -165,8 +179,21 @@ class HDAWG_Driver():
 
         if output_index in range(self.num_outputs):
             if output_range in allowed_ranges:
+
+                # Send change range command.
                 self.setd('sigouts/{output_index}/range'.format(output_index=output_index), output_range)
-                self.log.info(f"Changed range of wave output {output_index} to {output_range} V.")
+
+                # Wait for HDAWG to be ready, try 100 times before timeout.
+                max_tries = 100
+                num_tries = 0
+                while self.geti(f'sigouts/{output_index}/busy') and num_tries < max_tries:
+                    time.sleep(0.2)
+                    num_tries += 1
+
+                if num_tries is max_tries:
+                    self.log.error(f"Range change timeout after {max_tries} tries.")
+                else:
+                    self.log.info(f"Changed range of wave output {output_index} to {output_range} V.")
             else:
                 self.log.error(f"Range {output_range} is not valid, allowed values for range are {allowed_ranges}")
         else:

@@ -134,3 +134,4 @@ dmypy.json
 .idea
 
 /.idea/
+pylabnet/hardware/zi_hdawg/zh_ex.py

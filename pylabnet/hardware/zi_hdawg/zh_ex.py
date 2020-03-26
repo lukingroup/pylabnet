@@ -121,7 +121,7 @@ def run_example(device_id):
         """)
 
     # Define an array of values that are used to write values for wave w0 to a CSV file in the module's data directory
-    waveform_0 = -1.0 * np.blackman(AWG_N)
+    waveform_0 = -1.0 *  np.blackman(AWG_N)
 
     # Define an array of values that are used to generate wave w2
     waveform_2 = np.sin(np.linspace(0, 2*np.pi, 96))

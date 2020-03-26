@@ -7,6 +7,8 @@ This file contains the pylabnet Hardware class for the Zurich Instruments HDAWG.
 import zhinst.utils
 import re
 import time
+import textwrap
+import copy
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
@@ -47,7 +49,7 @@ class HDAWG_Driver():
         :api_level: API level of zhins API
         """
 
-         # Instantiate log
+        # Instantiate log
         self.log = LogHandler(logger=logger)
 
         # Part of this code has been modified from ZI's Zurich Instruments LabOne Python API Example
@@ -214,19 +216,26 @@ class HDAWG_Driver():
         else:
             self.log.error(f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid.")
 
-    def setup_awg_module(self, index):
-        """ Startup helper for awg module
+class AWGModule():
+    """ Wrapper class for awgModule"""
+
+    def __init__(self, hdawg_driver, index):
+        """ Setup AWG Module
 
         :index: Which AWG sequencer to be used
             0 - 3 for 4x2 channel grouping
             0 - 1 for 2x4 channel grouping
             0     for 1x8 channel grouping
 
-        Returns instance ow awgModule
+         :hdawg_driver: Instance of HDAWG_Driver
         """
 
+        self.hd = hdawg_driver
+        self.index = index
+
+
         # Check if chosen index is allowed for current channel grouping.
-        channel_grouping = self.geti('system/awg/channelgrouping')
+        channel_grouping = hdawg_driver.geti('system/awg/channelgrouping')
 
         if channel_grouping == 0:
             num_awgs = 4
@@ -238,54 +247,92 @@ class HDAWG_Driver():
         allowed_indices = range(num_awgs)
 
         if index not in allowed_indices:
-            self.log.error(f"Current channel grouping only allows for the following AWG indices {list(allowed_indices)}")
+            self.hd.log.error(f"Current channel grouping only allows for the following AWG indices {list(allowed_indices)}")
             return None
 
         # Create an instance of the AWG Module
-        awgModule = self.daq.awgModule()
+        awgModule = hdawg_driver.daq.awgModule()
         awgModule.set('index', index)
-        awgModule.set('device', self.device_id)
+        awgModule.set('device', hdawg_driver.device_id)
         awgModule.execute()
 
-        return awgModule
+        # Disable re-run function
+        self.hd.seti(f'awgs/{self.index}/single', 1)
 
-    def compile_upload_sequence(self, awgModule, sequence):
-        """ Compile and upload AWG sequence to AWG Module
+        self.module = awgModule
+        self.hd.log.info(f"AWG {self.index}: Module created.")
 
-        :awgModule: Instance of awgModule.
-        :sequence: Valid .seqc sequence to be uploaded.
+
+    def set_sampling_rate(self, sampling_rate_index):
+        """ Set sampling rate of AWG output
+
+        :sampling_rate_index: Index from 0 to 13, with the following mapping
+            0 : 2.4GHz
+            1 : 1.2 GHz
+            ...
+            13: 292.96 kHz
+            See full table in LabOne Webpage.
         """
 
-        awgModule.set('compiler/sourcestring', sequence)
+        if sampling_rate_index not in range(14):
+            self.hd.log.error(f"Index {sampling_rate_index} not in permissible range {list(range(14))}.")
+            return
+
+        self.hd.seti(f'awgs/{self.index}/time', sampling_rate_index)
+        self.hd.log.info(f"AWG {self.index}: Changed sampling rate to index {sampling_rate_index}.")
+
+    def start(self):
+        """ Start AWG"""
+        self.module.set('awg/enable', 1)
+        self.hd.log.info(f"AWG {self.index}: Started.")
+
+    def stop(self):
+        """ Start AWG"""
+        self.module.set('awg/enable', 0)
+        self.hd.log.info(f"AWG {self.index}: Stopped.")
+
+    def compile_upload_sequence(self, sequence):
+        """ Compile and upload AWG sequence to AWG Module
+
+        :awgModule: Instance of AWGModule class.
+        """
+
+        # First check if all values have been replaced in sequence:
+        if not sequence.is_ready():
+            self.log.error("Sequence is not ready: Not all placeholders have been replaced.")
+            return
+
+        self.module.set('compiler/sourcestring', sequence.sequence)
         # Note: when using an AWG program from a source file (and only then), the compiler needs to
         # be started explicitly with awgModule.set('compiler/start', 1)
-        while awgModule.getInt('compiler/status') == -1:
+        while self.module.getInt('compiler/status') == -1:
             time.sleep(0.1)
 
-        if awgModule.getInt('compiler/status') == 1:
+        if self.module.getInt('compiler/status') == 1:
             # compilation failed, raise an exception
-            self.log.warning(awgModule.getString('compiler/statusstring'))
+            self.hd.log.warn(self.module.getString('compiler/statusstring'))
 
-        if awgModule.getInt('compiler/status') == 0:
-            self.log.info("Compilation successful with no warnings, will upload the program to the instrument.")
-        if awgModule.getInt('compiler/status') == 2:
-            self.log.warning("Compilation successful with warnings, will upload the program to the instrument.")
-            self.log.warning("Compiler warning: ", awgModule.getString('compiler/statusstring'))
+        if self.module.getInt('compiler/status') == 0:
+            self.hd.log.info("Compilation successful with no warnings, will upload the program to the instrument.")
+        if self.module.getInt('compiler/status') == 2:
+            self.hd.log.warn("Compilation successful with warnings, will upload the program to the instrument.")
+            self.hd.log.warn(f"Compiler warning: {self.module.getString('compiler/statusstring')}")
 
         # Wait for the waveform upload to finish
         time.sleep(0.2)
         i = 0
-        while (awgModule.getDouble('progress') < 1.0) and (awgModule.getInt('elf/status') != 1):
-            self.log.info("{} progress: {:.2f}".format(i, awgModule.getDouble('progress')))
+        while (self.module.getDouble('progress') < 1.0) and (self.module.getInt('elf/status') != 1):
+            self.hd.log.info("{} progress: {:.2f}".format(i, self.module.getDouble('progress')))
             time.sleep(0.2)
             i += 1
-        self.log.info("{} progress: {:.2f}".format(i, awgModule.getDouble('progress')))
-        if awgModule.getInt('elf/status') == 0:
-            self.log.info("Upload to the instrument successful.")
-        if awgModule.getInt('elf/status') == 1:
-            self.log.warning("Upload to the instrument failed.")
+        self.hd.log.info("{} progress: {:.2f}".format(i, self.module.getDouble('progress')))
+        if self.module.getInt('elf/status') == 0:
+            self.hd.log.info("Upload to the instrument successful.")
+        if self.module.getInt('elf/status') == 1:
+            self.hd.log.warning("Upload to the instrument failed.")
 
-    def dyn_waveform_upload(self, awgModule, waveform, index):
+
+    def dyn_waveform_upload(self, waveform, index):
         """ Dynamically upload a numpy array into HDAWG Memory
 
         This will overwrite the allocated waveform memory of a waveform
@@ -298,11 +345,64 @@ class HDAWG_Driver():
         For the case of M=0, the index is defined as:
         - 0,...,N-1 in the order that the waveforms are defined in the sequencer program.
 
-        :awgModule: Instance of AWG module to be used
         :waveform: np.array containing waveform
         :index: Index of waveform to be overwritten as defined above
         """
 
         waveform_native = zhinst.utils.convert_awg_waveform(waveform)
-        awg_index = awgModule.get('index')['index'][0]
-        self.setv(f'awgs/{awg_index}/waveform/waves/{index}', waveform_native)
+        awg_index = self.module.get('index')['index'][0]
+        self.hd.setv(f'awgs/{awg_index}/waveform/waves/{index}', waveform_native)
+
+
+class Sequence():
+    """ Helper class containing .seqc sequences and helper functions
+
+    """
+
+    def replace_placeholder(self, placeholder, value):
+        """ Replace a placeholder by some value
+
+        :placeholder: Placeholder string to be replaced.
+        :value: Value to which the placeholder string need to be set.
+        """
+        self.sequence = self.sequence.replace(f"_{placeholder}_", str(value))
+        self.unresolved_placeholders.remove(placeholder)
+
+    def replace_waveform(self, placeholder, waveform):
+        """ Replace a placeholder by a waveform
+
+        :placeholder: Placeholder string to be replaced.
+        :waveform: Numpy array designating the waveform.
+        """
+        waveform = 'vect(' + ','.join([str(x) for x in waveform]) + ')'
+        self.sequence = self.sequence.replace(f"_{placeholder}_", waveform)
+        self.unresolved_placeholders.remove(placeholder)
+
+    def is_ready(self):
+        """ Return True if all placeholders have been replaced"""
+        return len(self.unresolved_placeholders) == 0
+
+    def __init__(self, hdawg_driver, sequence, placeholders=None):
+        """ Initialize sequence with string
+
+        :hdawg_driver: Instance of HDAWG_Driver
+        :sequence: A string containing a valid .seqc sequence, with possible palceholders
+        :placeholders: A list of placeholder which need to be replaced before compilation of sequence.
+
+        Note: A placeholder 'c' need to be included in a sequence as '_c_'
+        """
+
+        # Store reference to HDAWG_Driver to use logging function.
+        self.hd = hdawg_driver
+
+        # Some sanity checks.
+        for placeholder in placeholders:
+            if f"_{placeholder}_" not in sequence:
+                error_msg = f"The placeholder _{placeholder}_ cannot be found in the sequence."
+                hdawg_driver.log.error(error_msg)
+                raise Exception(error_msg)
+
+        # Store sequence and placeholders.
+        self.sequence = textwrap.dedent(sequence)
+        self.placeholders = placeholders
+        self.unresolved_placeholders = copy.deepcopy(placeholders)  # Keeps track of which placeholders has not been replaced yet.

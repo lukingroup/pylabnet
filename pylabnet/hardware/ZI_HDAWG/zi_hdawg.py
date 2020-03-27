@@ -382,7 +382,7 @@ class AWGModule():
         if self.module.getInt('elf/status') == 1:
             self.hd.log.warning("Upload to the instrument failed.")
 
-    def dyn_waveform_upload(self, waveform, index):
+    def dyn_waveform_upload(self, index, waveform1, waveform2=None):
         """ Dynamically upload a numpy array into HDAWG Memory
 
         This will overwrite the allocated waveform memory of a waveform
@@ -399,11 +399,18 @@ class AWGModule():
         - 0,...,N-1 in the order that the waveforms are
             defined in the sequencer program.
 
-        :waveform: np.array containing waveform
+        :waveform1: np.array containing waveform
+        :waveform2: np.array containing waveform of second waveform is dynamic
+            waveform upload is used for playback of two waveforms at two channels,
+            as represented in the .seqc command `playWave(waveform1, waveform2)
         :index: Index of waveform to be overwritten as defined above
         """
 
-        waveform_native = zhinst.utils.convert_awg_waveform(waveform)
+        waveform_native = zhinst.utils.convert_awg_waveform(
+            waveform1,
+            waveform2
+        )
+
         awg_index = self.module.get('index')['index'][0]
         self.hd.setv(
             f'awgs/{awg_index}/waveform/waves/{index}', waveform_native

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-This file contains the pylabnet Hardware class for the Zurich Instruments HDAWG.
+This file contains the pylabnet Hardware class
+for the Zurich Instruments HDAWG.
 """
 
 import zhinst.utils
@@ -9,11 +10,8 @@ import re
 import time
 import textwrap
 import copy
-import pickle
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
 
 from pylabnet.utils.decorators.logging_redirector import log_standard_output
 
@@ -21,7 +19,9 @@ from pylabnet.utils.decorators.logging_redirector import log_standard_output
 class HDAWGDriver():
 
     def disable_everything(self):
-        """ Create a base configuration: Disable all available outputs, awgs, demods, scopes,.. """
+        """ Create a base configuration.
+        Disable all available outputs, awgs, demods, scopes, etc.
+        """
         zhinst.utils.disable_everything(self.daq, self.device_id)
         self.log.info("Disabled all wave outputs.")
 
@@ -52,29 +52,40 @@ class HDAWGDriver():
         # Instantiate log
         self.log = LogHandler(logger=logger)
 
-        # Part of this code has been modified from ZI's Zurich Instruments LabOne Python API Example
+        # Part of this code has been modified from
+        # ZI's Zurich Instruments LabOne Python API Example
 
         # Call a zhinst utility function that returns:
-        # - an API session `daq` in order to communicate with devices via the data server.
-        # - the device ID string that specifies the device branch in the server's node hierarchy.
+        # - an API session `daq` in order to communicate
+        # with devices via the data server.
+        # - the device ID string that specifies the device
+        # branch in the server's node hierarchy.
         # - the device's discovery properties.
 
         err_msg = "This example can only be ran on an HDAWG."
 
         # Connect to device and log print output, not the lambda expression.
-        (daq, device, props) = self.log_stdout(lambda: zhinst.utils.create_api_session(device_id, api_level, required_devtype='HDAWG',
-                                                required_err_msg=err_msg))
+        (daq, device, props) = self.log_stdout(
+            lambda: zhinst.utils.create_api_session(
+                device_id,
+                api_level,
+                required_devtype='HDAWG',
+                required_err_msg=err_msg
+            )
+        )
 
         self.log_stdout(lambda: zhinst.utils.api_server_version_check(daq))
 
         self.daq = daq
         self.device_id = device
 
-        # Create a base configuration: Disable all available outputs, awgs, demods, scopes,...
+        # Create a base configuration
         self.disable_everything()
 
         # read out number of channels from property dictionary
-        self.num_outputs = int(re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1))
+        self.num_outputs = int(
+            re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1)
+        )
 
     @log_standard_output
     def seti(self, node, new_int):
@@ -88,7 +99,7 @@ class HDAWGDriver():
         :new_int: New value for integer
         """
 
-        self.daq.setInt('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_int)
+        self.daq.setInt(f'/{self.device_id}/{node}', new_int)
 
     @log_standard_output
     def setd(self, node, new_double):
@@ -102,7 +113,7 @@ class HDAWGDriver():
         :new_double: New value for double.
         """
 
-        self.daq.setDouble('/{device_id}/{node}'.format(device_id=self.device_id, node=node), new_double)
+        self.daq.setDouble(f'/{self.device_id}/{node}', new_double)
 
     @log_standard_output
     def setv(self, node, vector):
@@ -154,13 +165,16 @@ class HDAWGDriver():
 
         for output_index in output_indices:
             if output_index in range(self.num_outputs):
-                self.seti('sigouts/{output_index}/on'.format(output_index=output_index), target_index)
+                self.seti(f'sigouts/{output_index}/on', target_index)
                 if target_index == 1:
-                    self.log.info("Enabled wave output {}.".format(output_index))
+                    self.log.info(f"Enabled wave output {output_index}.")
                 elif target_index == 0:
-                    self.log.info("Disable wave output {}.".format(output_index))
+                    self.log.info(f"Disable wave output {output_index}.")
             else:
-                self.log.error(f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid.")
+                self.log.error(
+                    f"This device has only {self.num_outputs} channels, \
+                        channel index {output_index} is invalid."
+                )
 
     def enable_output(self, output_indices):
         """
@@ -169,7 +183,8 @@ class HDAWGDriver():
         Channel designation uses channel index (0 to 7),
         not channel number (1 to 8).
 
-        :output_index: List or int containing integers indicating wave output 0 to 7
+        :output_index: List or int containing
+            integers indicating wave output 0 to 7
         """
 
         self._toggle_output(output_indices, 1)
@@ -178,7 +193,8 @@ class HDAWGDriver():
         """
         Disables wave output.
 
-        :output_index: List or int containing integers indicating wave output 0 to 7
+        :output_index: List or int containing
+            integers indicating wave output 0 to 7
         """
         self._toggle_output(output_indices, 0)
 
@@ -186,9 +202,11 @@ class HDAWGDriver():
         """
         Set the output range.
 
-        :output_index: List or int containing integers indicating wave output 0 to 7
+        :output_index: List or int containing integers
+            indicating wave output 0 to 7
         :output_range: Double indicating the range of wave output, in Volt.
-            All waveforms (ranging from 0 to 1 in value) will be multiplied with this value. Possible ranges are:
+            All waveforms (ranging from 0 to 1 in value) will be multiplied
+            with this value. Possible ranges are:
             0.2, 0.4, 0.6, 0.8, 1, 2, 3, 4, 5 (V)
         """
 
@@ -198,23 +216,35 @@ class HDAWGDriver():
             if output_range in allowed_ranges:
 
                 # Send change range command.
-                self.setd('sigouts/{output_index}/range'.format(output_index=output_index), output_range)
+                self.setd(f'sigouts/{output_index}/range', output_range)
 
                 # Wait for HDAWG to be ready, try 100 times before timeout.
                 max_tries = 100
                 num_tries = 0
+
                 while self.geti(f'sigouts/{output_index}/busy') and num_tries < max_tries:
                     time.sleep(0.2)
                     num_tries += 1
 
                 if num_tries is max_tries:
-                    self.log.error(f"Range change timeout after {max_tries} tries.")
+                    self.log.error(
+                        f"Range change timeout after {max_tries} tries."
+                    )
                 else:
-                    self.log.info(f"Changed range of wave output {output_index} to {output_range} V.")
+                    self.log.info(
+                        f"Changed range of wave output {output_index} \
+                            to {output_range} V."
+                    )
             else:
-                self.log.error(f"Range {output_range} is not valid, allowed values for range are {allowed_ranges}")
+                self.log.error(
+                    f"Range {output_range} is not valid, allowed \
+                        values for range are {allowed_ranges}"
+                )
         else:
-            self.log.error(f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid.")
+            self.log.error(
+                f"This device has only {self.num_outputs} channels, \
+                    channel index {output_index} is invalid."
+            )
 
 
 class AWGModule():
@@ -234,7 +264,6 @@ class AWGModule():
         self.hd = hdawg_driver
         self.index = index
 
-
         # Check if chosen index is allowed for current channel grouping.
         channel_grouping = hdawg_driver.geti('system/awg/channelgrouping')
 
@@ -248,7 +277,10 @@ class AWGModule():
         allowed_indices = range(num_awgs)
 
         if index not in allowed_indices:
-            self.hd.log.error(f"Current channel grouping only allows for the following AWG indices {list(allowed_indices)}")
+            self.hd.log.error(
+                f"Current channel grouping only allows for the following \
+                     AWG indices {list(allowed_indices)}"
+            )
             return None
 
         # Create an instance of the AWG Module
@@ -263,7 +295,6 @@ class AWGModule():
         self.module = awgModule
         self.hd.log.info(f"AWG {self.index}: Module created.")
 
-
     def set_sampling_rate(self, sampling_rate_index):
         """ Set sampling rate of AWG output
 
@@ -276,11 +307,17 @@ class AWGModule():
         """
 
         if sampling_rate_index not in range(14):
-            self.hd.log.error(f"Index {sampling_rate_index} not in permissible range {list(range(14))}.")
+            self.hd.log.error(
+                f"Index {sampling_rate_index} not in \
+                    permissible range {list(range(14))}."
+            )
             return
 
         self.hd.seti(f'awgs/{self.index}/time', sampling_rate_index)
-        self.hd.log.info(f"AWG {self.index}: Changed sampling rate to index {sampling_rate_index}.")
+        self.hd.log.info(
+            f"AWG {self.index}: Changed sampling rate \
+                 to index {sampling_rate_index}."
+        )
 
     def start(self):
         """ Start AWG"""
@@ -300,11 +337,13 @@ class AWGModule():
 
         # First check if all values have been replaced in sequence:
         if not sequence.is_ready():
-            self.log.error("Sequence is not ready: Not all placeholders have been replaced.")
+            self.log.error("Sequence is not ready:\
+                 Not all placeholders have been replaced.")
             return
 
         self.module.set('compiler/sourcestring', sequence.sequence)
-        # Note: when using an AWG program from a source file (and only then), the compiler needs to
+        # Note: when using an AWG program from a source file
+        # (and only then), the compiler needs to
         # be started explicitly with awgModule.set('compiler/start', 1)
         while self.module.getInt('compiler/status') == -1:
             time.sleep(0.1)
@@ -314,10 +353,19 @@ class AWGModule():
             self.hd.log.warn(self.module.getString('compiler/statusstring'))
 
         if self.module.getInt('compiler/status') == 0:
-            self.hd.log.info("Compilation successful with no warnings, will upload the program to the instrument.")
+            self.hd.log.info(
+                "Compilation successful with no warnings, \
+                     will upload the program to the instrument."
+            )
         if self.module.getInt('compiler/status') == 2:
-            self.hd.log.warn("Compilation successful with warnings, will upload the program to the instrument.")
-            self.hd.log.warn(f"Compiler warning: {self.module.getString('compiler/statusstring')}")
+            self.hd.log.warn(
+                "Compilation successful with warnings, \
+                    will upload the program to the instrument."
+            )
+            self.hd.log.warn(
+                f"Compiler warning: \
+                     {self.module.getString('compiler/statusstring')}"
+            )
 
         # Wait for the waveform upload to finish
         time.sleep(0.2)
@@ -326,7 +374,9 @@ class AWGModule():
             self.hd.log.info("{} progress: {:.2f}".format(i, self.module.getDouble('progress')))
             time.sleep(0.2)
             i += 1
-        self.hd.log.info("{} progress: {:.2f}".format(i, self.module.getDouble('progress')))
+        self.hd.log.info(
+            "{} progress: {:.2f}".format(i, self.module.getDouble('progress'))
+        )
         if self.module.getInt('elf/status') == 0:
             self.hd.log.info("Upload to the instrument successful.")
         if self.module.getInt('elf/status') == 1:
@@ -338,12 +388,16 @@ class AWGModule():
         This will overwrite the allocated waveform memory of a waveform
         defined in the sequence. The index designates which waveform to
         overwrite:
-        Let N be the total number of waveforms and M>0 be the number of waveforms defined from CSV files. Then the index
+        Let N be the total number of waveforms and M>0 be the number of
+        waveforms defined from CSV files. Then the index
         of the waveform to be replaced is defined as following:
-        - 0,...,M-1 for all waveforms defined from CSV file alphabetically ordered by filename,
-        - M,...,N-1 in the order that the waveforms are defined in the sequencer program.
+        - 0,...,M-1 for all waveforms defined from CSV file
+            alphabetically ordered by filename,
+        - M,...,N-1 in the order that the waveforms are
+            defined in the sequencer program.
         For the case of M=0, the index is defined as:
-        - 0,...,N-1 in the order that the waveforms are defined in the sequencer program.
+        - 0,...,N-1 in the order that the waveforms are
+            defined in the sequencer program.
 
         :waveform: np.array containing waveform
         :index: Index of waveform to be overwritten as defined above
@@ -351,7 +405,9 @@ class AWGModule():
 
         waveform_native = zhinst.utils.convert_awg_waveform(waveform)
         awg_index = self.module.get('index')['index'][0]
-        self.hd.setv(f'awgs/{awg_index}/waveform/waves/{index}', waveform_native)
+        self.hd.setv(
+            f'awgs/{awg_index}/waveform/waves/{index}', waveform_native
+        )
 
 
 class Sequence():
@@ -386,8 +442,10 @@ class Sequence():
         """ Initialize sequence with string
 
         :hdawg_driver: Instance of HDAWG_Driver
-        :sequence: A string containing a valid .seqc sequence, with possible palceholders
-        :placeholders: A list of placeholder which need to be replaced before compilation of sequence.
+        :sequence: A string containing a valid .seqc sequence,
+            with possible palceholders
+        :placeholders: A list of placeholder which need to be replaced
+            before compilation of sequence.
 
         Note: A placeholder 'c' need to be included in a sequence as '_c_'
         """
@@ -398,72 +456,13 @@ class Sequence():
         # Some sanity checks.
         for placeholder in placeholders:
             if f"_{placeholder}_" not in sequence:
-                error_msg = f"The placeholder _{placeholder}_ cannot be found in the sequence."
+                error_msg = f"The placeholder _{placeholder}_ cannot \
+                    be found in the sequence."
                 hdawg_driver.log.error(error_msg)
                 raise Exception(error_msg)
 
         # Store sequence and placeholders.
         self.sequence = textwrap.dedent(sequence)
         self.placeholders = placeholders
-        self.unresolved_placeholders = copy.deepcopy(placeholders)  # Keeps track of which placeholders has not been replaced yet.
-
-
-class HDAWGService(ServiceBase):
-
-    def exposed_seti(self, node, new_int):
-        return self._module.seti(
-            node=node,
-            new_int=new_int
-        )
-
-    def exposed_setd(self, node, new_double):
-        return self._module.setd(
-            node=node,
-            new_double=new_double
-        )
-
-    def exposed_setv(self, node, vector_pickle):
-        vector = pickle.loads(vector_pickle)
-        return self._module.setv(
-            node=node,
-            vector=vector
-        )
-
-    def exposed_geti(self, node):
-        return self._module.geti(
-            node=node,
-        )
-
-
-class HDAWGClient(ClientBase):
-
-    def set_ao_voltage(self, ao_channel, voltages):
-        voltage_pickle = pickle.dumps(voltages)
-        return self._service.exposed_set_ao_voltage(
-            ao_channel=ao_channel,
-            voltage_pickle=voltage_pickle
-        )
-
-    def seti(self, node, new_int):
-        return self._service.exposed_seti(
-            node=node,
-            new_int=new_int
-        )
-
-    def setd(self, node, new_double):
-        return self._service.exposed_setd(
-            node=node,
-            new_double=new_double
-        )
-
-    def setv(self, node, vector):
-        vector_pickle = pickle.dumps(vector)
-        return self._service.exposed_setv(
-            node=node,
-            vector=vector_pickle
-        )
-
-    def geti(self, node):
-        return self._service.exposed_geti(
-            node=node,
-        )
+        # Keeps track of which placeholders has not been replaced yet.
+        self.unresolved_placeholders = copy.deepcopy(placeholders)

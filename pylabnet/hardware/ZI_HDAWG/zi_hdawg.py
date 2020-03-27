@@ -9,6 +9,7 @@ import re
 import time
 import textwrap
 import copy
+import pickle
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
@@ -17,7 +18,7 @@ from pylabnet.core.client_base import ClientBase
 from pylabnet.utils.decorators.logging_redirector import log_standard_output
 
 
-class HDAWG_Driver():
+class HDAWGDriver():
 
     def disable_everything(self):
         """ Create a base configuration: Disable all available outputs, awgs, demods, scopes,.. """
@@ -39,7 +40,6 @@ class HDAWG_Driver():
         if type(input_argument) is not list:
             input_argument = [input_argument]
         return input_argument
-
 
     def __init__(self, device_id, logger, api_level=6):
         """ Instantiate AWG
@@ -216,6 +216,7 @@ class HDAWG_Driver():
         else:
             self.log.error(f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid.")
 
+
 class AWGModule():
     """ Wrapper class for awgModule"""
 
@@ -331,7 +332,6 @@ class AWGModule():
         if self.module.getInt('elf/status') == 1:
             self.hd.log.warning("Upload to the instrument failed.")
 
-
     def dyn_waveform_upload(self, waveform, index):
         """ Dynamically upload a numpy array into HDAWG Memory
 
@@ -406,3 +406,64 @@ class Sequence():
         self.sequence = textwrap.dedent(sequence)
         self.placeholders = placeholders
         self.unresolved_placeholders = copy.deepcopy(placeholders)  # Keeps track of which placeholders has not been replaced yet.
+
+
+class HDAWGService(ServiceBase):
+
+    def exposed_seti(self, node, new_int):
+        return self._module.seti(
+            node=node,
+            new_int=new_int
+        )
+
+    def exposed_setd(self, node, new_double):
+        return self._module.setd(
+            node=node,
+            new_double=new_double
+        )
+
+    def exposed_setv(self, node, vector_pickle):
+        vector = pickle.loads(vector_pickle)
+        return self._module.setv(
+            node=node,
+            vector=vector
+        )
+
+    def exposed_geti(self, node):
+        return self._module.geti(
+            node=node,
+        )
+
+
+class HDAWGClient(ClientBase):
+
+    def set_ao_voltage(self, ao_channel, voltages):
+        voltage_pickle = pickle.dumps(voltages)
+        return self._service.exposed_set_ao_voltage(
+            ao_channel=ao_channel,
+            voltage_pickle=voltage_pickle
+        )
+
+    def seti(self, node, new_int):
+        return self._service.exposed_seti(
+            node=node,
+            new_int=new_int
+        )
+
+    def setd(self, node, new_double):
+        return self._service.exposed_setd(
+            node=node,
+            new_double=new_double
+        )
+
+    def setv(self, node, vector):
+        vector_pickle = pickle.dumps(vector)
+        return self._service.exposed_setv(
+            node=node,
+            vector=vector_pickle
+        )
+
+    def geti(self, node):
+        return self._service.exposed_geti(
+            node=node,
+        )

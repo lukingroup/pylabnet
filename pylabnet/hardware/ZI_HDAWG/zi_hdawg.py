@@ -62,7 +62,7 @@ class HDAWGDriver():
         # branch in the server's node hierarchy.
         # - the device's discovery properties.
 
-        err_msg = "This example can only be ran on an HDAWG."
+        err_msg = "This example can only be run on an HDAWG."
 
         # Connect to device and log print output, not the lambda expression.
         (daq, device, props) = self.log_stdout(

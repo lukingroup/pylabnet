@@ -325,7 +325,7 @@ class AWGModule():
         self.hd.log.info(f"AWG {self.index}: Started.")
 
     def stop(self):
-        """ Start AWG"""
+        """ Stop AWG"""
         self.module.set('awg/enable', 0)
         self.hd.log.info(f"AWG {self.index}: Stopped.")
 

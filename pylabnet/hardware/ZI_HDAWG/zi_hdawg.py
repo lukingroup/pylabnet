@@ -468,12 +468,13 @@ class Sequence():
         """ Initialize sequence with string
 
         :hdawg_driver: Instance of HDAWG_Driver
-        :sequence: A string containing a valid .seqc sequence,
-            with possible palceholders
-        :placeholders: A list of placeholder which need to be replaced
-            before compilation of sequence.
-
-        Note: A placeholder 'c' need to be included in a sequence as '_c_'
+        :sequence: A string which contains sequence instructions,
+            as defined in the ZI language seqc. This string can contain placeholders
+            indicated by '_c_', where c is the name of the placeholder.
+        :placeholders: A list of placeholders which need to be replaced
+            before compilation of sequence. If for example '_c_' is included
+            in the sequence string, 'c' is the name of the placeholder to be
+            passed in this argument.
         """
 
         # Store reference to HDAWG_Driver to use logging function.

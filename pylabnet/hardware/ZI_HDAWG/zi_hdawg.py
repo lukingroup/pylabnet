@@ -353,9 +353,9 @@ class AWGModule():
         self.hd.log.info(f"AWG {self.index}: Stopped.")
 
     def compile_upload_sequence(self, sequence):
-        """ Compile and upload AWG sequence to AWG Module
+        """ Compile and upload AWG sequence to AWG Module.
 
-        :awgModule: Instance of AWGModule class.
+        :sequence: Instance of Sequence class.
         """
 
         # First check if all values have been replaced in sequence:

@@ -15,6 +15,24 @@ from pylabnet.utils.logging.logger import LogHandler
 
 from pylabnet.utils.decorators.logging_redirector import log_standard_output
 
+# Storing the sampling rates and the corresponding target integers for the setInt command
+SAMPLING_RATE_DICT = {
+    '2.4 GHz':       0,
+    '1.2 GHz':       1,
+    '600 MHz':       2,
+    '300 MHz':       3,
+    '150 MHz':       4,
+    '75 MHz':        5,
+    '37.5 MHz':      6,
+    '18.75 MHz':     7,
+    '9.37 MHz':      8,
+    '4.68 MHz':      9,
+    '2.34 MHz':      10,
+    '1.17 MHz':      11,
+    '585.93 kHz':    12,
+    '292.96 kHz':    13,
+}
+
 
 class HDAWGDriver():
 
@@ -232,18 +250,15 @@ class HDAWGDriver():
                     )
                 else:
                     self.log.info(
-                        f"Changed range of wave output {output_index} \
-                            to {output_range} V."
+                        f"Changed range of wave output {output_index} to {output_range} V."
                     )
             else:
                 self.log.error(
-                    f"Range {output_range} is not valid, allowed \
-                        values for range are {allowed_ranges}"
+                    f"Range {output_range} is not valid, allowed values for range are {allowed_ranges}"
                 )
         else:
             self.log.error(
-                f"This device has only {self.num_outputs} channels, \
-                    channel index {output_index} is invalid."
+                f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid."
             )
 
 
@@ -295,28 +310,36 @@ class AWGModule():
         self.module = awgModule
         self.hd.log.info(f"AWG {self.index}: Module created.")
 
-    def set_sampling_rate(self, sampling_rate_index):
+    def set_sampling_rate(self, sampling_rate):
         """ Set sampling rate of AWG output
 
-        :sampling_rate_index: Index from 0 to 13, with the following mapping
-            0 : 2.4GHz
-            1 : 1.2 GHz
-            ...
-            13: 292.96 kHz
-            See full table in LabOne Webpage.
+        :sampling_rate: String of target sampling rate:
+            '2.4 GHz',
+            '1.2 GHz',
+            '600 MHz',
+            '300 MHz',
+            '150 MHz',
+            '75 MHz',
+            '37.5 MHz',
+            '18.75 MHz',
+            '9.37 MHz',
+            '4.68 MHz',
+            '2.34 MHz',
+            '1.17 MHz',
+            '585.93 kHz',
+            '292.96 kHz'
         """
 
-        if sampling_rate_index not in range(14):
-            self.hd.log.error(
-                f"Index {sampling_rate_index} not in \
-                    permissible range {list(range(14))}."
-            )
+        possible_sampling_rates = SAMPLING_RATE_DICT.keys()
+        if sampling_rate not in possible_sampling_rates:
+            self.hd.log.error(f"AWG {self.index}: Invalid sampling rate '{sampling_rate}', possible choices are {list(possible_sampling_rates)}")
             return
+
+        sampling_rate_index = SAMPLING_RATE_DICT[sampling_rate]
 
         self.hd.seti(f'awgs/{self.index}/time', sampling_rate_index)
         self.hd.log.info(
-            f"AWG {self.index}: Changed sampling rate \
-                 to index {sampling_rate_index}."
+            f"AWG {self.index}: Changed sampling rate to {sampling_rate}."
         )
 
     def start(self):
@@ -337,8 +360,7 @@ class AWGModule():
 
         # First check if all values have been replaced in sequence:
         if not sequence.is_ready():
-            self.log.error("Sequence is not ready:\
-                 Not all placeholders have been replaced.")
+            self.log.error("Sequence is not ready: Not all placeholders have been replaced.")
             return
 
         self.module.set('compiler/sourcestring', sequence.sequence)
@@ -354,17 +376,14 @@ class AWGModule():
 
         if self.module.getInt('compiler/status') == 0:
             self.hd.log.info(
-                "Compilation successful with no warnings, \
-                     will upload the program to the instrument."
+                "Compilation successful with no warnings, will upload the program to the instrument."
             )
         if self.module.getInt('compiler/status') == 2:
             self.hd.log.warn(
-                "Compilation successful with warnings, \
-                    will upload the program to the instrument."
+                "Compilation successful with warnings, will upload the program to the instrument."
             )
             self.hd.log.warn(
-                f"Compiler warning: \
-                     {self.module.getString('compiler/statusstring')}"
+                f"Compiler warning: {self.module.getString('compiler/statusstring')}"
             )
 
         # Wait for the waveform upload to finish

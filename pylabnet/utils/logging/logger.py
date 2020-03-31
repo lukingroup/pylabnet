@@ -3,6 +3,7 @@ import traceback
 import time
 import socket
 import pickle
+import logging
 
 
 class LogHandler:
@@ -261,7 +262,7 @@ class LogClient:
 
 
 class LogService(rpyc.Service):
-    
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.client_data = {}

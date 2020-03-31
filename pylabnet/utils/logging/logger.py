@@ -4,7 +4,9 @@ import time
 import socket
 import pickle
 import logging
-
+import time
+import os
+from pylabnet.utils.helper_methods import get_dated_subdirectory
 
 class LogHandler:
     """Protection wrapper for logger instance.
@@ -261,24 +263,60 @@ class LogClient:
                 return ret_code
 
 
+
 class LogService(rpyc.Service):
 
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
+
+    def __init__(self, name=None, log_file=False, directory=None, log_folder=None, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG):
+        super().__init__()
+
+        # Note: This is inspired by https://docs.python.org/3/howto/logging-cookbook.html
+
+        # Start instance og logging.logger
+        self.logger = logging.getLogger(name)
+        self.logger.setLevel(logging.DEBUG)
+
+        # create console handler and set level to debug
+        ch = logging.StreamHandler()
+        ch.setLevel(console_level)
+
+        formatting_string = '%(asctime)s - %(name)s - %(levelname)s - %(message)s' or form_string
+
+        # create formatter
+        formatter = logging.Formatter(formatting_string)
+
+        # create file handler which logs even debug messages
+        if log_file:
+            filename = get_dated_subdirectory(directory, log_folder, name)
+            fh = logging.FileHandler(filename)
+            fh.setLevel(file_level)
+
+            # add formatter to fh
+            fh.setFormatter(formatter)
+
+        # add formatter to ch
+        ch.setFormatter(formatter)
+
+        # add ch and fh to logger
+        self.logger.addHandler(ch)
+
         self.client_data = {}
 
     def on_connect(self, conn):
         # code that runs when a connection is created
         # (to init the service, if needed)
-        print('[LOG INFO] Client connected')
+        # print('[LOG INFO] Client connected')
+        self.logger.debug('[LOG INFO] Client connected')
 
     def on_disconnect(self, conn):
         # code that runs after the connection has already closed
         # (to finalize the service, if needed)
-        print('[LOG INFO] Client disconnected')
+        self.logger.debug('[LOG INFO] Client disconnected')
+        # print('[LOG INFO] Client disconnected')
 
     def exposed_log_msg(self, msg_str, level_str):
-        print(msg_str)
+        self.logger.debug(msg_str)
+        # print(msg_str)
         return 0
 
     def add_client_data(self, module_name, module_data):

@@ -1,3 +1,8 @@
+import unicodedata
+import os
+import time
+
+
 def str_to_float(in_val):
     """Convert human-readable exponential form to float.
 
@@ -95,5 +100,40 @@ def pwr_to_float(in_val):
 
     return str_to_float(in_val=in_val)
 
+def slugify(value):
+    """
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+    From: https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename
+    """
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = re.sub('[^\w\s-]', '', value).strip().lower()
+    value = re.sub('[-\s]+', '-', value)
+    return value
 
+
+def get_dated_subdirectory(directory, folder, filename):
+    '''Creates directory structure directory/log_fodler/YEAR/MONTH/DAY/filename
+
+    :directory: Upper level directory
+    :folder: Folder name behind which dated structure will be created
+    :filename: Name of file. Will be slugified.
+    '''
+
+    # Change directory if argument provided, if not use working directory
+    if directory:
+        path = os.path.join(directory, folder)
+    else:
+        path = os. getcwd()
+
+    # Create subdirectory structure: YEAR/MONTH/DAY
+    dated_path = os.path.join(path, time.strftime('%Y'), time.strftime('%m'), time.strftime('%d'))
+
+    # create folders if they don't exists yet
+    os.makedirs(dated_path, exist_ok=True)
+
+    # Define full file path
+    filename = os.path.join(dated_path, slugify(filename))
+
+    return filename
 

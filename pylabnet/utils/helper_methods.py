@@ -1,6 +1,7 @@
 import unicodedata
 import os
 import time
+import re
 
 
 def str_to_float(in_val):
@@ -100,40 +101,42 @@ def pwr_to_float(in_val):
 
     return str_to_float(in_val=in_val)
 
-def slugify(value):
+
+def slugify(value, allow_unicode=False):
     """
-    Normalizes string, converts to lowercase, removes non-alpha characters,
-    and converts spaces to hyphens.
-    From: https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces to hyphens.
+    Remove characters that aren't alphanumerics, underscores, or hyphens.
+    Convert to lowercase. Also strip leading and trailing whitespace.
+
+    From Django 2.2
     """
-    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = re.sub('[^\w\s-]', '', value).strip().lower()
-    value = re.sub('[-\s]+', '-', value)
-    return value
+    value = str(value)
+    if allow_unicode:
+        value = unicodedata.normalize('NFKC', value)
+    else:
+        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    value = re.sub(r'[^\w\s-]', '', value.lower()).strip()
+    return re.sub(r'[-\s]+', '-', value)
 
 
-def get_dated_subdirectory(directory, folder, filename):
-    '''Creates directory structure directory/log_fodler/YEAR/MONTH/DAY/filename
 
-    :directory: Upper level directory
-    :folder: Folder name behind which dated structure will be created
+def get_dated_subdirectory_filepath(directory, filename):
+    '''Creates directory structure folder_path/YEAR/MONTH/DAY/filename
+
+    :folder_path: Upper level directory
     :filename: Name of file. Will be slugified.
+
+    Return:
+    :filepath: Path to file in newly created structure.
     '''
 
-    # Change directory if argument provided, if not use working directory
-    if directory:
-        path = os.path.join(directory, folder)
-    else:
-        path = os. getcwd()
-
     # Create subdirectory structure: YEAR/MONTH/DAY
-    dated_path = os.path.join(path, time.strftime('%Y'), time.strftime('%m'), time.strftime('%d'))
+    dated_path = os.path.join(directory, time.strftime('%Y'), time.strftime('%m'), time.strftime('%d'))
 
     # create folders if they don't exists yet
     os.makedirs(dated_path, exist_ok=True)
 
     # Define full file path
-    filename = os.path.join(dated_path, slugify(filename))
+    filepath = os.path.join(dated_path, f'{slugify(filename)}.log')
 
-    return filename
-
+    return filepath

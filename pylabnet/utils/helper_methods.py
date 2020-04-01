@@ -119,7 +119,6 @@ def slugify(value, allow_unicode=False):
     return re.sub(r'[-\s]+', '-', value)
 
 
-
 def get_dated_subdirectory_filepath(directory, filename):
     '''Creates directory structure folder_path/YEAR/MONTH/DAY/filename
 

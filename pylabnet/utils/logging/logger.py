@@ -2,11 +2,9 @@ import rpyc
 import traceback
 import time
 import socket
-import pickle
 import logging
-import time
-import os
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
+
 
 class LogHandler:
     """Protection wrapper for logger instance.
@@ -235,9 +233,7 @@ class LogClient:
             return ret_code
 
 
-
 class LogService(rpyc.Service):
-
 
     def __init__(self, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG, log_output=False, name=None, dir_path=None):
         ''' Instanciate LogService
@@ -294,7 +290,7 @@ class LogService(rpyc.Service):
             # add formatter to fh
             fh.setFormatter(formatter)
 
-             # add fh to logger
+            # add fh to logger
             self.logger.addHandler(fh)
 
         self.client_data = {}

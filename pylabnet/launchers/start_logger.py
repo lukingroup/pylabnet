@@ -1,7 +1,6 @@
 import sys
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
-import os
 
 if __name__ == '__main__':
 

@@ -239,7 +239,25 @@ class LogClient:
 class LogService(rpyc.Service):
 
 
-    def __init__(self, name=None, log_output=False, dir_path=None, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG):
+    def __init__(self, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG, log_output=False, name=None, dir_path=None):
+        ''' Instanciate LogService
+
+        If the log_output flag is set to True, a .log file will be generated.
+
+        :form_string: String specifying the output format of the logger. If None, default styling is:
+            "%(asctime)s - %(levelname)s - %(message)s"
+        :console_level: The minimum message level which appears in the console.
+        :file_level: The minimum message level which appears in the log-file.
+        :log_output: Boolean indicating if a file output should be generated. If true, the following
+            two parameters must be provided:
+        :name: Name of the log-file.
+        :dir_path: Directory where the log files will be generated.
+
+        Note: A dated subdirectory structure will be automatically generated, such that the
+        log output will be logged in the following file:
+            'dir_path/YEAR/MONTH/DAY/name.log'
+        '''
+
         super().__init__()
 
         # Note: This is inspired by https://docs.python.org/3/howto/logging-cookbook.html
@@ -267,7 +285,7 @@ class LogService(rpyc.Service):
         if log_output:
 
             assert name, 'Please provide a name for the logger.'
-            assert dir_path, 'Please provide a directory path for the .log file'
+            assert dir_path, 'Please provide a directory path for the .log file.'
 
             filename = get_dated_subdirectory_filepath(dir_path, name)
             fh = logging.FileHandler(filename)

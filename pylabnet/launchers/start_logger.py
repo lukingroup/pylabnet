@@ -5,21 +5,10 @@ import os
 
 if __name__ == '__main__':
 
-    # TODO: Revert this to normal
-    #host = str(sys.argv[1])
-    #port = int(sys.argv[2])
-    host = 'localhost'
-    port = 12345
-
-    log_service_name = 'Global Logger'
-    log_folder = 'logs'
-
-    dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), log_folder)
+    host = str(sys.argv[1])
+    port = int(sys.argv[2])
 
     log_service = LogService(
-        name=log_service_name,
-        log_output=True,
-        dir_path=dir_path,
     )
 
     log_service = LogService()

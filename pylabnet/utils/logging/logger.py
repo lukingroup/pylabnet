@@ -113,9 +113,7 @@ class LogClient:
         self._module_tag = module_tag
 
         # Log test message
-        self.info('Started logging at {}'.format(
-            time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-        ))
+        self.info('Started logging')
 
     def connect(self, host='place_holder', port=-1):
 
@@ -226,7 +224,7 @@ class LogClient:
         else:
             # ------------- To be revised -------------
             # This block depended on specific implementation if the server.
-            message = '[{0}] {1}: {2}'.format(level_str, self._module_tag, msg_str)
+            message = ' {0}: {1}'.format(self._module_tag, msg_str)
             # Pickle message object if not just a string is sent
             # ------------- To be revised -------------
 
@@ -319,7 +317,7 @@ class LogService(rpyc.Service):
 
     def exposed_log_msg(self, msg_str, level_str):
 
-        if  level_str is 'DEBUG':
+        if level_str is 'DEBUG':
             self.logger.debug(msg_str)
 
         elif level_str is 'INFO':

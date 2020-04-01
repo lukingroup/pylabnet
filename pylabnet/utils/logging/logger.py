@@ -278,7 +278,7 @@ class LogService(rpyc.Service):
         ch = logging.StreamHandler()
         ch.setLevel(console_level)
 
-        formatting_string = '%(asctime)s - %(name)s - %(levelname)s - %(message)s' or form_string
+        formatting_string = '%(asctime)s - %(levelname)s - %(message)s' or form_string
 
         # create formatter
         formatter = logging.Formatter(formatting_string)
@@ -317,19 +317,18 @@ class LogService(rpyc.Service):
 
     def exposed_log_msg(self, msg_str, level_str):
 
-        if level_str is 'DEBUG':
+        if level_str == 'DEBUG':
             self.logger.debug(msg_str)
 
-        elif level_str is 'INFO':
+        elif level_str == 'INFO':
             self.logger.info(msg_str)
 
-        elif level_str is 'WARN':
+        elif level_str == 'WARN':
             self.logger.warning(msg_str)
 
-        elif level_str is 'ERROR':
+        elif level_str == 'ERROR':
             self.logger.error(msg_str)
 
-        # print(msg_str)
         return 0
 
     def add_client_data(self, module_name, module_data):

@@ -162,7 +162,7 @@ QtPy==1.9.0
 requests==2.22.0
 retrying==1.3.3
 rope==0.14.0
-rpyc==4.1.1
+rpyc==4.1.2
 ruamel-yaml==0.15.46
 scikit-image==0.15.0
 scikit-learn==0.21.3

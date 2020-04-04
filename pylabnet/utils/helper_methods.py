@@ -1,3 +1,9 @@
+import unicodedata
+import os
+import time
+import re
+
+
 def str_to_float(in_val):
     """Convert human-readable exponential form to float.
 
@@ -96,4 +102,40 @@ def pwr_to_float(in_val):
     return str_to_float(in_val=in_val)
 
 
+def slugify(value, allow_unicode=False):
+    """
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces to hyphens.
+    Remove characters that aren't alphanumerics, underscores, or hyphens.
+    Convert to lowercase. Also strip leading and trailing whitespace.
 
+    From Django 2.2
+    """
+    value = str(value)
+    if allow_unicode:
+        value = unicodedata.normalize('NFKC', value)
+    else:
+        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    value = re.sub(r'[^\w\s-]', '', value.lower()).strip()
+    return re.sub(r'[-\s]+', '-', value)
+
+
+def get_dated_subdirectory_filepath(directory, filename):
+    '''Creates directory structure folder_path/YEAR/MONTH/DAY/filename
+
+    :folder_path: Upper level directory
+    :filename: Name of file. Will be slugified.
+
+    Return:
+    :filepath: Path to file in newly created structure.
+    '''
+
+    # Create subdirectory structure: YEAR/MONTH/DAY
+    dated_path = os.path.join(directory, time.strftime('%Y'), time.strftime('%m'), time.strftime('%d'))
+
+    # create folders if they don't exists yet
+    os.makedirs(dated_path, exist_ok=True)
+
+    # Define full file path
+    filepath = os.path.join(dated_path, f'{slugify(filename)}.log')
+
+    return filepath

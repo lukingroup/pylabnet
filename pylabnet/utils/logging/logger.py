@@ -2,7 +2,8 @@ import rpyc
 import traceback
 import time
 import socket
-import pickle
+import logging
+from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
 
 class LogHandler:
@@ -94,25 +95,17 @@ class LogClient:
         self._level = 0
         self._module_tag = ''
 
-        # Set log level
-        self.set_level(level_str=level_str)
-
         # Set module alias to display with log messages
         self._module_tag = module_tag
 
         # Connect to log server
-        #   This call must be performed after set_level() call:
-        #       if host is None or port is None, connect() call
-        #       will automatically set _level_str to 'NOLOG'
         self.connect(host=host, port=port)
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
 
         # Log test message
-        self.info('Started logging at {}'.format(
-            time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-        ))
+        self.info('Started logging')
 
     def connect(self, host='place_holder', port=-1):
 
@@ -135,9 +128,7 @@ class LogClient:
         # Establish connection if
         if host is None or port is None:
             # 'No logging' was requested.
-            #   Do not establish connection to log server and
-            #   set level to 'NOLOG' to stop generating log messages
-            self.set_level(level_str='NOLOG')
+            #   Do not establish connection to log server
             return 0
 
         else:
@@ -164,16 +155,6 @@ class LogClient:
 
             self._service.add_client_data(self._module_tag, client_data_str)
             return 0
-
-    def set_level(self, level_str):
-        # Sanity check
-        if level_str not in self._level_dict:
-            return -1
-
-        self._level_str = level_str
-        self._level = self._level_dict[level_str]
-
-        return 0
 
     def debug(self, msg_str):
         return self._log_msg(
@@ -216,68 +197,130 @@ class LogClient:
 
     def _log_msg(self, msg_str, level_str):
 
-        if self._level_dict[level_str] < self._level:
-            # No need to send the message
-            return 0
+        # Prepending log message with module name.
+        message = ' {0}: {1}'.format(self._module_tag, msg_str)
 
-        else:
-            # ------------- To be revised -------------
-            # This block depended on specific implementation if the server.
-            message = '[{0}] {1}: {2}'.format(level_str, self._module_tag, msg_str)
-            # Pickle message object if not just a string is sent
-            # ------------- To be revised -------------
+        # Try sending message to the log server
+        try:
+            ret_code = self._service.exposed_log_msg(
+                msg_str=message,
+                level_str=level_str
+            )
+            return ret_code
 
-            # Try sending message to the log server
-            try:
-                ret_code = self._service.exposed_log_msg(
-                    msg_str=message,
-                    level_str=level_str
-                )
-                return ret_code
+        # If connection was lost (EOFError)
+        # or was not initialized (AttributeError),
+        # try to reconnect and send the message again
+        except (EOFError, AttributeError):
+            # Try reconnecting.
+            #   If an exception is risen at this step,
+            #   one cannot fix the problem automatically and
+            #   the exception should just be returned to the caller.
+            #   That is why no exception catch should be done here.
+            print('DEBUG: no connection. Trying to reconnect to log server')
+            self.connect()
 
-            # If connection was lost (EOFError)
-            # or was not initialized (AttributeError),
-            # try to reconnect and send the message again
-            except (EOFError, AttributeError):
-                # Try reconnecting.
-                #   If an exception is risen at this step,
-                #   one cannot fix the problem automatically and
-                #   the exception should just be returned to the caller.
-                #   That is why no exception catch should be done here.
-                print('DEBUG: no connection. Trying to reconnect to log server')
-                self.connect()
-
-                # Try sending message again.
-                #   If an exception is risen at this step,
-                #   one cannot fix problem automatically and
-                #   the exception should just be returned to the caller
-                #   That is why no exception catch should be done here.
-                print('DEBUG: Trying to resend the message')
-                ret_code = self._service.exposed_log_msg(
-                    msg_str=message,
-                    level_str=level_str
-                )
-                return ret_code
+            # Try sending message again.
+            #   If an exception is risen at this step,
+            #   one cannot fix problem automatically and
+            #   the exception should just be returned to the caller
+            #   That is why no exception catch should be done here.
+            print('DEBUG: Trying to resend the message')
+            ret_code = self._service.exposed_log_msg(
+                msg_str=message,
+                level_str=level_str
+            )
+            return ret_code
 
 
 class LogService(rpyc.Service):
-    
-    def __init__(self, *args, **kw):
-        super().__init__(*args, **kw)
+
+    def __init__(self, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG, log_output=False, name=None, dir_path=None):
+        ''' Instanciate LogService
+
+        If the log_output flag is set to True, a .log file will be generated.
+
+        :form_string: String specifying the output format of the logger. If None, default styling is:
+            "%(asctime)s - %(levelname)s - %(message)s"
+        :console_level: The minimum message level which appears in the console.
+        :file_level: The minimum message level which appears in the log-file.
+        :log_output: Boolean indicating if a file output should be generated. If true, the following
+            two parameters must be provided:
+        :name: Name of the log-file.
+        :dir_path: Directory where the log files will be generated.
+
+        Note: A dated subdirectory structure will be automatically generated, such that the
+        log output will be logged in the following file:
+            'dir_path/YEAR/MONTH/DAY/name.log'
+        '''
+
+        super().__init__()
+
+        # Note: This is inspired by https://docs.python.org/3/howto/logging-cookbook.html
+
+        # Start instance og logging.logger
+        self.logger = logging.getLogger(name)
+        self.logger.setLevel(logging.DEBUG)
+
+        # create console handler and set level to debug
+        ch = logging.StreamHandler()
+        ch.setLevel(console_level)
+
+        formatting_string = '%(asctime)s - %(levelname)s - %(message)s' or form_string
+
+        # create formatter
+        formatter = logging.Formatter(formatting_string)
+
+        # add formatter to ch
+        ch.setFormatter(formatter)
+
+        # add ch to logger
+        self.logger.addHandler(ch)
+
+        # create file handler which logs even debug messages
+        if log_output:
+
+            assert name, 'Please provide a name for the logger.'
+            assert dir_path, 'Please provide a directory path for the .log file.'
+
+            filename = get_dated_subdirectory_filepath(dir_path, name)
+            fh = logging.FileHandler(filename)
+            fh.setLevel(file_level)
+
+            # add formatter to fh
+            fh.setFormatter(formatter)
+
+            # add fh to logger
+            self.logger.addHandler(fh)
+
         self.client_data = {}
 
     def on_connect(self, conn):
         # code that runs when a connection is created
         # (to init the service, if needed)
-        print('[LOG INFO] Client connected')
+        # print('[LOG INFO] Client connected')
+        self.logger.info('Client connected')
 
     def on_disconnect(self, conn):
         # code that runs after the connection has already closed
         # (to finalize the service, if needed)
-        print('[LOG INFO] Client disconnected')
+        self.logger.debug('Client disconnected')
+        # print('[LOG INFO] Client disconnected')
 
     def exposed_log_msg(self, msg_str, level_str):
-        print(msg_str)
+
+        if level_str == 'DEBUG':
+            self.logger.debug(msg_str)
+
+        elif level_str == 'INFO':
+            self.logger.info(msg_str)
+
+        elif level_str == 'WARN':
+            self.logger.warning(msg_str)
+
+        elif level_str == 'ERROR':
+            self.logger.error(msg_str)
+
         return 0
 
     def add_client_data(self, module_name, module_data):

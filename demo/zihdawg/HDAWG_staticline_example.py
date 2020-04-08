@@ -17,13 +17,26 @@ logger = LogClient(
     module_tag=f'ZI HDAWG {dev_id}'
 )
 
+
 # Instanciate Hardware class
 hd = HDAWGDriver(dev_id, logger)
+awg = AWGModule(hd, 0)
 
+
+staticline_name = 'Laser Green'
+
+# Instantiate Log Client for staticline
+logger_staticline = LogClient(
+    host='localhost',
+    port=12346,
+    module_tag=staticline_name
+)
+
+# This will throw an error.
 sl = Staticline(
     name='DIO-1 HDAWG',
-    logger=logger,
-    hardware_module=hd,
+    logger=logger_staticline,
+    hardware_module=awg,
     some_param='lol',
     some_int=70
 )

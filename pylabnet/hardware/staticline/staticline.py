@@ -62,7 +62,13 @@ class StaticlineHardwareHandler():
         }
 
         # Depending on which module is used, automatically call the specific setup function
+        setup_successful = False
         for module_name, setup_function in registered_staticline_modules.items():
             if self.hardware_module_name == module_name:
                 setup_function(**kwargs)
+                self.log.info(f"Setup of staticline using module {module_name} successfull.")
+                setup_successful = True
+
+        if not setup_successful:
+            self.log.error(f"Setup of staticline using module {self.hardware_module_name} failed. Compatible modules are {list(registered_staticline_modules.keys())}")
 

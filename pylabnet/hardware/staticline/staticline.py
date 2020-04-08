@@ -51,7 +51,6 @@ class StaticlineHardwareHandler():
 
                 error_msg = f'Need to provide the following keyword argument to initialize {self.hardware_module_name}: {required_kwarg}'
                 self.log.error(error_msg)
-                raise Exception(error_msg)
 
     def setup_HDWAGDriver(self, **kwargs):
         ''' Setup a ZI HDAWG driver module to be used as a staticline toogle
@@ -63,7 +62,7 @@ class StaticlineHardwareHandler():
         necessary_kwargs = ['DIO_bit']
 
         # Check if all keyword arguments are given.
-        check_keyword_args(necessary_kwargs, **kwargs):
+        self.check_keyword_args(necessary_kwargs, **kwargs)
 
     def __init__(self, hardware_module, loghandler, **kwargs):
         '''TODO: Flesh this out
@@ -90,7 +89,6 @@ class StaticlineHardwareHandler():
             valid_modules = list(registered_staticline_modules.keys())
             error_msg = f"Setup of staticline using module {self.hardware_module_name} failed. Compatible modules are {valid_modules}."
             self.log.error(error_msg)
-            raise Exception(error_msg)
 
         # Depending on which module is used,
         # automatically call the hardware-specific setup function.

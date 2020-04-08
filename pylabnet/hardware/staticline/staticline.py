@@ -1,9 +1,9 @@
 from pylabnet.utils.logging.logger import LogHandler
 
 
-class GenericStaticline():
+class Staticline():
 
-    def __init__(self, hardware_handler,  name, logger, init_state=False):
+    def __init__(self, name, logger,  hardware_module,  **kwargs):
         ''' TODO: Flesh this out
 
         This is the hgih level generic TTL-striggered hardware class. This
@@ -13,10 +13,12 @@ class GenericStaticline():
         '''
 
         self.name = name
-        self.hardware_handler = hardware_handler
 
         # Instantiate log
         self.log = LogHandler(logger=logger)
+
+        # Instanciate Hardware_handler
+        self.hardware_handler = StaticlineHardwareHandler(hardware_module, self.log, **kwargs)
 
     def up(self):
         '''Set output to high'''
@@ -33,9 +35,14 @@ class GenericStaticline():
         )
 
 
-class TTLHardwareHandler():
 
-    def __init__(self, hardware_class, hardware_init_dict):
+class StaticlineHardwareHandler():
+
+    def setup_HDWAGDriver(self, **kwargs):
+        for key, value in kwargs.items():
+            self.log.info("%s == %s" %(key, value))
+
+    def __init__(self, hardware_module, loghandler, **kwargs):
         '''TODO: Flesh this out
 
         Handler connecting hardware class to GenericTTLStaticline
@@ -43,12 +50,19 @@ class TTLHardwareHandler():
         Main task of this instance is to define the device-specific function
         which should correspond to setting the staticline to high or low.
         '''
-        self.hardware_class = hardware_class
+        self.hardware_module = hardware_module
+        self.log = loghandler
 
-        # Register up and down functions
-        if hardware_class == A:
-            self.up = hardware_class.somefunction
-            self.down = hardware_class.some_other_function
-        elif hardware_class == B:
-            self.up = hardware_class.somefunction
-            self.down = hardware_class.some_other_function
+        self.hardware_module_name = type(hardware_module).__name__
+
+        # Dictionary listing all hardware modules which can address staticlines and their corresponding
+        # setup functions.
+        registered_staticline_modules = {
+            'HDAWGDriver':  self.setup_HDWAGDriver
+        }
+
+        # Depending on which module is used, automatically call the specific setup function
+        for module_name, setup_function in registered_staticline_modules.items():
+            if self.hardware_module_name == module_name:
+                setup_function(**kwargs)
+

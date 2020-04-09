@@ -7,6 +7,7 @@ from pylabnet.utils.logging.logger import LogClient
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 dev_id = 'dev8040'
 
@@ -20,7 +21,6 @@ logger = LogClient(
 
 # Instanciate Hardware class
 hd = HDAWGDriver(dev_id, logger)
-awg = AWGModule(hd, 0)
 
 
 staticline_name = 'HDAWG DIO'
@@ -32,11 +32,24 @@ logger_staticline = LogClient(
     module_tag=staticline_name
 )
 
-sl = Staticline(
-    name='DIO-1 HDAWG',
+
+all_DIOs =  [Staticline(
+    name=f'DIO-{i} HDAWG',
     logger=logger_staticline,
     hardware_module=hd,
-    DIO_bit=1,
-)
+    DIO_bit=i,
+) for i in range(32)]
 
-sl.up()
+for dio_staticline in all_DIOs:
+    dio_staticline.up()
+    time.sleep(0.3)
+
+for dio_staticline in all_DIOs[::-1]:
+    dio_staticline.down()
+    time.sleep(0.3)
+    dio_staticline.up()
+    time.sleep(0.3)
+
+
+hd.disable_everything()
+hd.reset_DIO_outputs()

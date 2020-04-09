@@ -36,12 +36,17 @@ SAMPLING_RATE_DICT = {
 
 class HDAWGDriver():
 
+    def reset_DIO_outputs(self):
+        """Sets all DIO outputs to low"""
+        self.seti('dios/0/output', 0)
+        self.log.info("Set all DIO outputs to low.")
+
     def disable_everything(self):
         """ Create a base configuration.
         Disable all available outputs, awgs, demods, scopes, etc.
         """
         zhinst.utils.disable_everything(self.daq, self.device_id)
-        self.log.info("Disabled all wave outputs.")
+        self.log.info("Disabled everything.")
 
     @log_standard_output
     def log_stdout(self, function):
@@ -99,6 +104,7 @@ class HDAWGDriver():
 
         # Create a base configuration
         self.disable_everything()
+        self.reset_DIO_outputs()
 
         # read out number of channels from property dictionary
         self.num_outputs = int(

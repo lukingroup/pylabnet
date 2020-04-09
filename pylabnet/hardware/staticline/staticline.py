@@ -36,33 +36,65 @@ class Staticline():
 
 class StaticlineHardwareHandler():
 
-    def check_keyword_args(self, required_kwargs, **kwargs):
-        ''' Checks if the provided keywords contain the required ones
+    def _HDAWG_toogle(self, DIO_bit, newval):
+        ''' Set DIO_bit to high or low
 
-        Provides an error message to the log handler check fails.
-
-        :required_kwargs: List of strings listing the names of
-            the required keyword parameters.
-        :**kwargs: The keyword arguments to be checked
+        :DIO_bit: Integer indicating the DIO bit
+        :newval: Either 0 or 1 indicating the new output state
         '''
 
-        for required_kwarg in required_kwargs:
-            if required_kwarg not in kwargs.keys():
+        # Get current output
+        current_output = self.hardware_module.geti('dios/0/output')
 
-                error_msg = f'Need to provide the following keyword argument to initialize {self.hardware_module_name}: {required_kwarg}'
-                self.log.error(error_msg)
+        if newval == 0:
+            # E.g., for DIO-bit 3: 1111 .... 0111
+            DIO_bit_bitshifted = ~(0b1 << DIO_bit)
+            # Binary AND generates new output.
+            new_output = current_output & DIO_bit_bitshifted
+        elif newval == 1:
+            # E.g., for DIO-bit 3: 0000 ... 1000
+            DIO_bit_bitshifted = (0b1 << DIO_bit)
+            # Binary OR generates new output.
+            new_output = current_output | DIO_bit_bitshifted
+
+        self.hardware_module.seti('dios/0/output', new_output)
 
     def setup_HDWAGDriver(self, **kwargs):
         ''' Setup a ZI HDAWG driver module to be used as a staticline toogle
 
-        :DIO_bit: Which bit to toggle
+        :DIO_bit: Which bit to toggle, in decimal notation.
         '''
 
-        # Explicitly specify which keyword arguments are needed
-        necessary_kwargs = ['DIO_bit']
+        # Retrieve arguments from keyword argument dictionary.
+        DIO_bit = kwargs['DIO_bit']
 
-        # Check if all keyword arguments are given.
-        self.check_keyword_args(necessary_kwargs, **kwargs)
+        # Drive 8-bit bus containing DIO_bit to be toggled.
+        # Note that the buses are enabled by using the decimal equivalent
+        # of a binary number indicating which bus is driven:
+        # 1101 = 11 corresponds to driving bus 1, 2, and 4.
+
+        if DIO_bit in range(8):
+            toggle_bit = 1  # 1000
+        elif DIO_bit in range(8, 16):
+            toggle_bit = 2  # 0100
+        elif DIO_bit in range(16, 24):
+            toggle_bit = 4  # 0010
+        elif DIO_bit in range(24, 32):
+            toggle_bit = 8  # 0001
+        else:
+            self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
+
+        # Read in current configuration of DIO-bus.
+        current_config = self.hardware_module.geti('dios/0/drive')
+
+        # Set new configuration by using the bitwise OR.
+        new_config = current_config | toggle_bit
+        self.hardware_module.seti('dios/0/drive', new_config)
+
+        # Register up/down function
+        self.up = lambda: self._HDAWG_toogle(DIO_bit, 1)
+        self.down = lambda: self._HDAWG_toogle(DIO_bit, 0)
+
 
     def __init__(self, hardware_module, loghandler, **kwargs):
         '''TODO: Flesh this out
@@ -92,7 +124,6 @@ class StaticlineHardwareHandler():
 
         # Depending on which module is used,
         # automatically call the hardware-specific setup function.
-        setup_successful = False
         for module_name, setup_function in registered_staticline_modules.items():
 
             if self.hardware_module_name == module_name:

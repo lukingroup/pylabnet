@@ -4,12 +4,18 @@ from pylabnet.utils.logging.logger import LogHandler
 class StaticLine():
 
     def __init__(self, name, logger,  hardware_module,  **kwargs):
-        ''' TODO: Flesh this out
+        '''High level staticline class.
 
-        This is the hgih level generic TTL-striggered hardware class. This
-        instance should be the highest level instance with which TTL signals can be send out.
-        Using an instance of o HardwareHandler, an instance of this class will be connected to an instance of a
-        hardware class
+        This class is used in conjunction with hardware modules to send out digital
+        signals ('voltage low' and 'voltage high'). This top level class is hardware agnostic.
+        With the use of a StaticLineHardwareHandler, this class will be associated with the necessary
+        setup functions and output functions of a hardware module.
+
+        :name: A easily recognizable name for this staticline, ideally referring to the device being controlled
+            by it, e.g. 'Shutter 1'.
+        :logger: An instance of a LogClient.
+        :hardware_module: An instance of a hardware module. Based on this, the corresponsind setup function is automatically
+            called.
         '''
 
         self.name = name
@@ -18,48 +24,52 @@ class StaticLine():
         self.log = LogHandler(logger=logger)
 
         # Instanciate Hardware_handler
-        self.hardware_handler = StaticlineHardwareHandler(hardware_module, self.log, name, **kwargs)
+        self.hardware_handler = StaticLineHardwareHandler(hardware_module, self.log, name, **kwargs)
 
     def up(self):
-        '''Set output to high'''
+        '''Set output to high.'''
         self.hardware_handler.up()
         self.log.info(
             f"Staticline {self.name} set to high."
         )
 
     def down(self):
-        '''Set output to low'''
+        '''Set output to low.'''
         self.hardware_handler.down()
         self.log.info(
             f"Staticline {self.name} set to low."
         )
 
-class StaticlineHardwareHandler():
+
+class StaticLineHardwareHandler():
 
     def _HDAWG_toogle(self, newval):
         ''' Set DIO_bit to high or low
 
-        :newval: Either 0 or 1 indicating the new output state
+        :newval: Either 0 or 1 indicating the new output state.
         '''
 
-        # Get current output
+        # Get current DIO output integer.
         current_output = self.hardware_module.geti('dios/0/output')
 
         if newval == 0:
-            # E.g., for DIO-bit 3: 1111 .... 0111
+            # E.g., for DIO-bit 3: 1111 .... 1110111
             DIO_bit_bitshifted = ~(0b1 << self.DIO_bit)
+
             # Binary AND generates new output.
             new_output = current_output & DIO_bit_bitshifted
+
         elif newval == 1:
-            # E.g., for DIO-bit 3: 0000 ... 1000
+            # E.g., for DIO-bit 3: 0000 ... 0001000
             DIO_bit_bitshifted = (0b1 << self.DIO_bit)
+
             # Binary OR generates new output.
             new_output = current_output | DIO_bit_bitshifted
 
         self.hardware_module.seti('dios/0/output', new_output)
 
-    def setup_HDWAGDriver(self, **kwargs):
-        ''' Setup a ZI HDAWG driver module to be used as a staticline toogle
+    def _setup_HDWAGDriver(self, **kwargs):
+        ''' Setup a ZI HDAWG driver module to be used as a staticline toggle.
 
         :DIO_bit: Which bit to toggle, in decimal notation.
         '''
@@ -84,7 +94,7 @@ class StaticlineHardwareHandler():
             self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
 
         self.DIO_bit = DIO_bit
-        self.log.info(f"DIO_bit {DIO_bit} succesfully assigned to staticline {self.name}.")
+        self.log.info(f"DIO_bit {DIO_bit} successfully assigned to staticline {self.name}.")
 
         # Read in current configuration of DIO-bus.
         current_config = self.hardware_module.geti('dios/0/drive')
@@ -93,20 +103,22 @@ class StaticlineHardwareHandler():
         new_config = current_config | toggle_bit
         self.hardware_module.seti('dios/0/drive', new_config)
 
-        # Register up/down function
+        # Register up/down function.
         self.up = lambda: self._HDAWG_toogle(1)
         self.down = lambda: self._HDAWG_toogle(0)
 
-
-
-
     def __init__(self, hardware_module, loghandler, name, **kwargs):
-        '''TODO: Flesh this out
-
-        Handler connecting hardware class to GenericTTLStaticline
+        '''Handler connecting hardware class to StaticLine instance
 
         Main task of this instance is to define the device-specific function
-        which should correspond to setting the staticline to high or low.
+        which should correspond to setting the staticline to high or low, and
+        to set up the hardware accordingly.
+
+        :hardware_module: Hardware module to be used to toggle the staticline.
+        :loghandler: Instance of loghandler.
+        :name: Name of StaticLine instance.
+        :**kwargs: Additional keyword arguments which depending on the hardware module
+            contain values needed to setup the hardware as a staticline.
         '''
         self.hardware_module = hardware_module
         self.name = name
@@ -118,7 +130,7 @@ class StaticlineHardwareHandler():
         # Dictionary listing all hardware modules which can address
         # staticlines and their corresponding setup functions.
         registered_staticline_modules = {
-            'HDAWGDriver':  self.setup_HDWAGDriver
+            'HDAWGDriver':  self._setup_HDWAGDriver
         }
 
         # Check if hardware module is registered.
@@ -133,11 +145,9 @@ class StaticlineHardwareHandler():
 
             if self.hardware_module_name == module_name:
 
-                # All setup function need to output a boolean indicating the
-                # setup success.
+                # Call hardware specific setup function.
                 setup_function(**kwargs)
 
                 self.log.info(
                     f"Setup of staticline {name} using module {module_name} successful."
                 )
-

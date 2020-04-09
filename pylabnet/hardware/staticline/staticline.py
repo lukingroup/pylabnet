@@ -1,7 +1,7 @@
 from pylabnet.utils.logging.logger import LogHandler
 
 
-class Staticline():
+class StaticLine():
 
     def __init__(self, name, logger,  hardware_module,  **kwargs):
         ''' TODO: Flesh this out
@@ -18,7 +18,7 @@ class Staticline():
         self.log = LogHandler(logger=logger)
 
         # Instanciate Hardware_handler
-        self.hardware_handler = StaticlineHardwareHandler(hardware_module, self.log, **kwargs)
+        self.hardware_handler = StaticlineHardwareHandler(hardware_module, self.log, name, **kwargs)
 
     def up(self):
         '''Set output to high'''
@@ -36,10 +36,9 @@ class Staticline():
 
 class StaticlineHardwareHandler():
 
-    def _HDAWG_toogle(self, DIO_bit, newval):
+    def _HDAWG_toogle(self, newval):
         ''' Set DIO_bit to high or low
 
-        :DIO_bit: Integer indicating the DIO bit
         :newval: Either 0 or 1 indicating the new output state
         '''
 
@@ -48,12 +47,12 @@ class StaticlineHardwareHandler():
 
         if newval == 0:
             # E.g., for DIO-bit 3: 1111 .... 0111
-            DIO_bit_bitshifted = ~(0b1 << DIO_bit)
+            DIO_bit_bitshifted = ~(0b1 << self.DIO_bit)
             # Binary AND generates new output.
             new_output = current_output & DIO_bit_bitshifted
         elif newval == 1:
             # E.g., for DIO-bit 3: 0000 ... 1000
-            DIO_bit_bitshifted = (0b1 << DIO_bit)
+            DIO_bit_bitshifted = (0b1 << self.DIO_bit)
             # Binary OR generates new output.
             new_output = current_output | DIO_bit_bitshifted
 
@@ -84,6 +83,9 @@ class StaticlineHardwareHandler():
         else:
             self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
 
+        self.DIO_bit = DIO_bit
+        self.log.info(f"DIO_bit {DIO_bit} succesfully assigned to staticline {self.name}.")
+
         # Read in current configuration of DIO-bus.
         current_config = self.hardware_module.geti('dios/0/drive')
 
@@ -92,11 +94,13 @@ class StaticlineHardwareHandler():
         self.hardware_module.seti('dios/0/drive', new_config)
 
         # Register up/down function
-        self.up = lambda: self._HDAWG_toogle(DIO_bit, 1)
-        self.down = lambda: self._HDAWG_toogle(DIO_bit, 0)
+        self.up = lambda: self._HDAWG_toogle(1)
+        self.down = lambda: self._HDAWG_toogle(0)
 
 
-    def __init__(self, hardware_module, loghandler, **kwargs):
+
+
+    def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''TODO: Flesh this out
 
         Handler connecting hardware class to GenericTTLStaticline
@@ -105,6 +109,7 @@ class StaticlineHardwareHandler():
         which should correspond to setting the staticline to high or low.
         '''
         self.hardware_module = hardware_module
+        self.name = name
         self.log = loghandler
 
         # Read string of module name (e.g. 'HDAWGDriver').
@@ -133,6 +138,6 @@ class StaticlineHardwareHandler():
                 setup_function(**kwargs)
 
                 self.log.info(
-                    f"Setup of staticline using module {module_name} successful."
+                    f"Setup of staticline {name} using module {module_name} successful."
                 )
 

@@ -52,9 +52,12 @@ class LogHandler:
 
     def error(self, msg_str):
         try:
-            return self._logger.error(msg_str=msg_str)
+            self._logger.error(msg_str=msg_str)
         except:
             return -1
+
+        # All errors will raise exceptions at the LogHandler level.
+        raise Exception(msg_str)
 
     def exception(self, msg_str):
         try:

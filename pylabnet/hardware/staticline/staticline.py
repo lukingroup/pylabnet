@@ -111,12 +111,10 @@ class StaticLineHardwareHandler():
         self.up = lambda: self._HDAWG_toogle(1)
         self.down = lambda: self._HDAWG_toogle(0)
 
-    def _setup_NiDaqMxDriver(self, )
-
+    def _setup_NiDaqMxDriver(self, **kwargs):
 
         # Retrieve arguments from keyword argument dictionary,
         # if not found apply default value.
-
         try:
             down_voltage = kwargs['down_voltage']
         except KeyError:
@@ -126,6 +124,12 @@ class StaticLineHardwareHandler():
             up_voltage = kwargs['up_voltage']
         except KeyError:
             up_voltage = 3.3
+
+        # Check if voltages are in bound.
+        if not -10 <= down_voltage <= 10:
+            self.log.error(f'Down voltage of {down_voltage} V is invalid, must be between -10 V and 10 V.')
+        if not -10 <= up_voltage <= 10:
+            self.log.error(f'Up voltage of {up_voltage} V is invalid, must be between -10 V and 10 V.')
 
         ao_output = kwargs['ao_output']
 
@@ -138,7 +142,7 @@ class StaticLineHardwareHandler():
         self.down()
 
         # Log successfull setup.
-        self.log.info(f"NiDaq {hardware_module.device_name} output {ao_output} successfully assigned to staticline {self.name}.")
+        self.log.info(f"NiDaq {self.hardware_module.dev} output {ao_output} successfully assigned to staticline {self.name}.")
 
 
     def __init__(self, hardware_module, loghandler, name, **kwargs):

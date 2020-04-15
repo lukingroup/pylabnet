@@ -1,5 +1,6 @@
 from pylabnet.utils.logging.logger import LogHandler
-
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 
 class StaticLine():
 
@@ -190,3 +191,21 @@ class StaticLineHardwareHandler():
                 self.log.info(
                     f"Setup of staticline {name} using module {module_name} successful."
                 )
+
+
+class StaticLineService(ServiceBase):
+
+    def exposed_up(self):
+        return self._module.up()
+
+    def exposed_down(self):
+        return self._module.down()
+
+
+class StaticLineClient(ClientBase):
+
+    def up(self):
+        return self._service.exposed_up()
+
+    def down(self):
+        return self._service.exposed_down()

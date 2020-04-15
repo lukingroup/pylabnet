@@ -1,4 +1,6 @@
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.core.service_base import ServiceBase
+from pylabnet.core.client_base import ClientBase
 
 
 class StaticLine():
@@ -23,8 +25,12 @@ class StaticLine():
         # Instantiate log
         self.log = LogHandler(logger=logger)
 
-        # Instanciate Hardware_handler
-        self.hardware_handler = StaticLineHardwareHandler(hardware_module, self.log, name, **kwargs)
+        # Instantiate Hardware_handler
+        self.hardware_handler = StaticLineHardwareHandler(
+            hardware_module,
+            self.log, name,
+            **kwargs
+        )
 
     def up(self):
         '''Set output to high.'''
@@ -43,7 +49,7 @@ class StaticLine():
 
 class StaticLineHardwareHandler():
 
-    def _HDAWG_toogle(self, newval):
+    def _HDAWG_toggle(self, newval):
         ''' Set DIO_bit to high or low
 
         :newval: Either 0 or 1 indicating the new output state.
@@ -104,8 +110,41 @@ class StaticLineHardwareHandler():
         self.hardware_module.seti('dios/0/drive', new_config)
 
         # Register up/down function.
-        self.up = lambda: self._HDAWG_toogle(1)
-        self.down = lambda: self._HDAWG_toogle(0)
+        self.up = lambda: self._HDAWG_toggle(1)
+        self.down = lambda: self._HDAWG_toggle(0)
+
+    def _setup_NiDaqMxDriver(self, **kwargs):
+
+        # Retrieve arguments from keyword argument dictionary,
+        # if not found apply default value.
+        try:
+            down_voltage = kwargs['down_voltage']
+        except KeyError:
+            down_voltage = 0
+
+        try:
+            up_voltage = kwargs['up_voltage']
+        except KeyError:
+            up_voltage = 3.3
+
+        # Check if voltages are in bound.
+        if not -10 <= down_voltage <= 10:
+            self.log.error(f'Down voltage of {down_voltage} V is invalid, must be between -10 V and 10 V.')
+        if not -10 <= up_voltage <= 10:
+            self.log.error(f'Up voltage of {up_voltage} V is invalid, must be between -10 V and 10 V.')
+
+        ao_output = kwargs['ao_output']
+
+        # Register up/down function.
+        ao_output = kwargs['ao_output']
+        self.up = lambda: self.hardware_module.set_ao_voltage(ao_output, up_voltage)
+        self.down = lambda: self.hardware_module.set_ao_voltage(ao_output, down_voltage)
+
+        # Set voltage to down.
+        self.down()
+
+        # Log successfull setup.
+        self.log.info(f"NiDaq {self.hardware_module.dev} output {ao_output} successfully assigned to staticline {self.name}.")
 
     def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''Handler connecting hardware class to StaticLine instance
@@ -130,7 +169,8 @@ class StaticLineHardwareHandler():
         # Dictionary listing all hardware modules which can address
         # staticlines and their corresponding setup functions.
         registered_staticline_modules = {
-            'HDAWGDriver':  self._setup_HDWAGDriver
+            'HDAWGDriver':  self._setup_HDWAGDriver,
+            'NiDaqMxDriver': self._setup_NiDaqMxDriver
         }
 
         # Check if hardware module is registered.
@@ -151,3 +191,21 @@ class StaticLineHardwareHandler():
                 self.log.info(
                     f"Setup of staticline {name} using module {module_name} successful."
                 )
+
+
+class StaticLineService(ServiceBase):
+
+    def exposed_up(self):
+        return self._module.up()
+
+    def exposed_down(self):
+        return self._module.down()
+
+
+class StaticLineClient(ClientBase):
+
+    def up(self):
+        return self._service.exposed_up()
+
+    def down(self):
+        return self._service.exposed_down()

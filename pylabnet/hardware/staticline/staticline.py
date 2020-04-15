@@ -23,8 +23,12 @@ class StaticLine():
         # Instantiate log
         self.log = LogHandler(logger=logger)
 
-        # Instanciate Hardware_handler
-        self.hardware_handler = StaticLineHardwareHandler(hardware_module, self.log, name, **kwargs)
+        # Instantiate Hardware_handler
+        self.hardware_handler = StaticLineHardwareHandler(
+            hardware_module,
+            self.log, name,
+            **kwargs
+        )
 
     def up(self):
         '''Set output to high.'''
@@ -107,6 +111,36 @@ class StaticLineHardwareHandler():
         self.up = lambda: self._HDAWG_toogle(1)
         self.down = lambda: self._HDAWG_toogle(0)
 
+    def _setup_NiDaqMxDriver(self, )
+
+
+        # Retrieve arguments from keyword argument dictionary,
+        # if not found apply default value.
+
+        try:
+            down_voltage = kwargs['down_voltage']
+        except KeyError:
+            down_voltage = 0
+
+        try:
+            up_voltage = kwargs['up_voltage']
+        except KeyError:
+            up_voltage = 3.3
+
+        ao_output = kwargs['ao_output']
+
+        # Register up/down function.
+        ao_output = kwargs['ao_output']
+        self.up = lambda: self.hardware_module.set_ao_voltage(ao_output, up_voltage)
+        self.down = lambda: self.hardware_module.set_ao_voltage(ao_output, down_voltage)
+
+        # Set voltage to down.
+        self.down()
+
+        # Log successfull setup.
+        self.log.info(f"NiDaq {hardware_module.device_name} output {ao_output} successfully assigned to staticline {self.name}.")
+
+
     def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''Handler connecting hardware class to StaticLine instance
 
@@ -130,7 +164,8 @@ class StaticLineHardwareHandler():
         # Dictionary listing all hardware modules which can address
         # staticlines and their corresponding setup functions.
         registered_staticline_modules = {
-            'HDAWGDriver':  self._setup_HDWAGDriver
+            'HDAWGDriver':  self._setup_HDWAGDriver,
+            'NiDaqMxDriver': self._setup_NiDaqMxDriver
         }
 
         # Check if hardware module is registered.

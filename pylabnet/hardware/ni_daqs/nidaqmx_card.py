@@ -14,7 +14,7 @@ from pylabnet.core.client_base import ClientBase
 import pickle
 
 
-class Driver:
+class NiDaqMxDriver:
     """Driver for NI DAQmx card. Currently only implements setting AO voltage"""
     # TODO implement counter
 
@@ -94,7 +94,7 @@ class Driver:
         )
 
 
-class Service(ServiceBase):
+class NiDaqMxService(ServiceBase):
 
     def exposed_set_ao_voltage(self, ao_channel, voltage_pickle):
         voltages = pickle.loads(voltage_pickle)
@@ -104,7 +104,7 @@ class Service(ServiceBase):
         )
 
 
-class Client(ClientBase):
+class NiDaqMxClient(ClientBase):
 
     def set_ao_voltage(self, ao_channel, voltages):
         voltage_pickle = pickle.dumps(voltages)

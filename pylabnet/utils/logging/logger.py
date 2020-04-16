@@ -3,6 +3,7 @@ import traceback
 import time
 import socket
 import logging
+import sys
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
 
@@ -238,8 +239,9 @@ class LogClient:
 
 class LogService(rpyc.Service):
 
-    def __init__(self, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG, log_output=False, name=None, dir_path=None):
-        ''' Instanciate LogService
+    def __init__(self, form_string=None, console_level=logging.DEBUG, file_level=logging.DEBUG, log_output=False,
+                 name=None, dir_path=None):
+        """ Instantiate LogService
 
         If the log_output flag is set to True, a .log file will be generated.
 
@@ -255,7 +257,7 @@ class LogService(rpyc.Service):
         Note: A dated subdirectory structure will be automatically generated, such that the
         log output will be logged in the following file:
             'dir_path/YEAR/MONTH/DAY/name.log'
-        '''
+        """
 
         super().__init__()
 
@@ -266,7 +268,7 @@ class LogService(rpyc.Service):
         self.logger.setLevel(logging.DEBUG)
 
         # create console handler and set level to debug
-        ch = logging.StreamHandler()
+        ch = logging.StreamHandler(stream=sys.stdout)
         ch.setLevel(console_level)
 
         formatting_string = '%(asctime)s - %(levelname)s - %(message)s' or form_string
@@ -301,14 +303,12 @@ class LogService(rpyc.Service):
     def on_connect(self, conn):
         # code that runs when a connection is created
         # (to init the service, if needed)
-        # print('[LOG INFO] Client connected')
         self.logger.info('Client connected')
 
     def on_disconnect(self, conn):
         # code that runs after the connection has already closed
         # (to finalize the service, if needed)
         self.logger.debug('Client disconnected')
-        # print('[LOG INFO] Client disconnected')
 
     def exposed_log_msg(self, msg_str, level_str):
 

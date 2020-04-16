@@ -2,6 +2,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
+
 class StaticLine():
 
     def __init__(self, name, logger,  hardware_module,  **kwargs):
@@ -48,7 +49,7 @@ class StaticLine():
 
 class StaticLineHardwareHandler():
 
-    def _HDAWG_toogle(self, newval):
+    def _HDAWG_toggle(self, newval):
         ''' Set DIO_bit to high or low
 
         :newval: Either 0 or 1 indicating the new output state.
@@ -109,8 +110,8 @@ class StaticLineHardwareHandler():
         self.hardware_module.seti('dios/0/drive', new_config)
 
         # Register up/down function.
-        self.up = lambda: self._HDAWG_toogle(1)
-        self.down = lambda: self._HDAWG_toogle(0)
+        self.up = lambda: self._HDAWG_toggle(1)
+        self.down = lambda: self._HDAWG_toggle(0)
 
     def _setup_NiDaqMxDriver(self, **kwargs):
 
@@ -144,7 +145,6 @@ class StaticLineHardwareHandler():
 
         # Log successfull setup.
         self.log.info(f"NiDaq {self.hardware_module.dev} output {ao_output} successfully assigned to staticline {self.name}.")
-
 
     def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''Handler connecting hardware class to StaticLine instance

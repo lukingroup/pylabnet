@@ -72,7 +72,7 @@ class NiDaqMxDriver:
         :voltages: (list of int) list of voltages which will be output
         """
 
-        # TODO: Understand the timing between ouput voltages (sample-wise?)
+        # TODO: Understand the timing between output voltages (sample-wise?)
         channel = self._gen_ch_path(ao_channel)
 
         with nidaqmx.Task() as task:

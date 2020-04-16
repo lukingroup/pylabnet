@@ -7,7 +7,7 @@ Can connect to the GUI and update data by creating a GUI client.
 Must tie the GUI to a .ui file that can be created in QtDesigner
 """
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
@@ -16,6 +16,13 @@ from pylabnet.utils.logging.logger import LogClient
 import sys
 import socket
 import numpy as np
+
+
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
 def main():

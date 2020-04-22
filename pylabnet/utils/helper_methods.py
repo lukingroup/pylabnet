@@ -2,6 +2,7 @@ import unicodedata
 import os
 import time
 import re
+import sys
 
 
 def str_to_float(in_val):
@@ -164,3 +165,15 @@ def remove_spaces(st):
     """
 
     return st.replace(' ', '')
+
+
+def parse_args():
+    """ Parses command line arguments into dictionary format, assuming keywords of the form --kw for each argument"""
+
+    arg_index = 1
+    arg_dict = {}
+    while arg_index < len(sys.argv) - 1:
+        arg_dict[sys.argv[arg_index][2:]] = sys.argv[arg_index + 1]
+        arg_index += 2
+
+    return arg_dict

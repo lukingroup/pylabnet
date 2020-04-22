@@ -120,9 +120,11 @@ class Controller:
     def update_connection(self):
         """ Checks if new/updated connections have been made and updates accordingly"""
 
+        # Figure out ports/clients to add
         port_to_add = [port for port in self.log_server._server.clients if port not in self.port_list.values()]
         client_to_add = [client for client in self.log_service.client_data if client not in self.client_list]
 
+        # Add client and update relevant directories + GUI
         if len(client_to_add) > 0:
             client = client_to_add[0]
             self.client_list[client] = QtWidgets.QListWidgetItem(client)
@@ -168,13 +170,8 @@ class Controller:
 
             client_index += 1
 
-        print(bash_cmd)
-        # process = subprocess.Popen('start "{}, {}" /wait python {} {} {}'.format(
-        #     script_to_run, launch_time, script_to_run, self.LOG_PORT, len(self.client_list), self.client_list.keys()
-        # ), shell=True, stdout=subprocess.PIPE)
-        subprocess.Popen('start "{}, {}" /wait python {}'.format(
-            script_to_run, launch_time, script_to_run
-        ), shell=True, stdout=subprocess.PIPE)
+        # Launch the new process
+        subprocess.Popen(bash_cmd, shell=True)
 
     def _start_logger(self):
         """ Starts the log server """

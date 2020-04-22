@@ -89,7 +89,7 @@ class LogClient:
         DEBUG=10
     )
 
-    def __init__(self, host, port, module_tag='', server_port=None):
+    def __init__(self, host, port, module_tag='', server_port=None, ui=None):
 
         # Declare all internal vars
         self._host = ''
@@ -100,6 +100,7 @@ class LogClient:
         self._level = 0
         self._module_tag = ''
         self._server_port = server_port  # Identifies a server running in client's thread
+        self._ui = ui  # Identifies a relevant .ui file for the client
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
@@ -160,6 +161,8 @@ class LogClient:
             )
             if self._server_port is not None:
                 client_data['port'] = self._server_port
+            if self._ui is not None:
+                client_data['ui'] = self._ui
 
             client_data_pickle = pickle.dumps(client_data)
             self._service.add_client_data(self._module_tag, client_data_pickle)

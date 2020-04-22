@@ -65,7 +65,8 @@ class Controller:
                 host='localhost',
                 port=self.LOG_PORT,
                 module_tag=self.GUI_NAME,
-                server_port=gui_port
+                server_port=gui_port,
+                ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
             raise
@@ -162,11 +163,17 @@ class Controller:
         )
         client_index = 1
         for client in self.client_list:
-            bash_cmd += ' --client{} {}'.format(client_index, remove_spaces(client))
+            bash_cmd += ' --client{} {} --ip{} {}'.format(
+                client_index, remove_spaces(client), client_index, self.log_service.client_data[client]['ip']
+            )
 
             # Add port of client's server, if applicable
             if 'port' in self.log_service.client_data[client]:
                 bash_cmd += ' --port{} {}'.format(client_index, self.log_service.client_data[client]['port'])
+
+            # If this client has relevant .ui file, pass this info
+            if 'ui' in self.log_service.client_data[client]:
+                bash_cmd += ' --ui{} {}'.format(client_index, self.log_service.client_data[client]['ui'])
 
             client_index += 1
 

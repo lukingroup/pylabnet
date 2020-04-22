@@ -49,7 +49,7 @@ class Window(QtWidgets.QMainWindow):
     """
 
     _gui_directory = "gui_templates"
-    _default_template = "mainwindow"
+    _default_template = "count_monitor"
 
     def __init__(self, app, gui_template=None, run=True):
         """ Instantiates main window object.
@@ -363,7 +363,6 @@ class Window(QtWidgets.QMainWindow):
         try:
             uic.loadUi(self._ui, self)
         except FileNotFoundError:
-            print('Could not find .ui file, please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
             raise
 
         self._initialize_step_sizes()

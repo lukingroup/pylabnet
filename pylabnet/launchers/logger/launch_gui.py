@@ -32,22 +32,23 @@ def main():
     # parse command line arguments
     args = parse_args()
     try:
-        log_port = args['logport']
+        log_port = int(args['logport'])
+        gui_port = int(args['guiport'])
     except IndexError:
         raise IndexError('Please provide command line arguments in the form\n"'
-                         'python launch_gui.py --logport 1234 --ui uifilename')
+                         'python launch_gui.py --logport 1234 --guiport 5678 --ui uifilename')
     if 'ui' in args:
         gui_template = args['ui']
     else:
-        gui_template = None
-        ui_file = _default_template
+        gui_template = _default_template
 
     # Instantiate logger
     gui_logger = LogClient(
         host='localhost',
         port=log_port,
-        module_tag='Counter GUI Server',
-        ui=ui_file
+        module_tag=gui_template,
+        ui=gui_template,
+        server_port=gui_port
     )
 
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
@@ -66,30 +67,27 @@ def main():
     gui_service.assign_module(module=main_window)
     gui_service.assign_logger(logger=gui_logger)
 
-    # Connect trying different port numbers if failed
-    connected = False
-    while not connected:
-        port_num = np.random.randint(1, 9999)
-        try:
-            gui_server = GenericServer(
-                service=gui_service,
-                host='localhost',
-                port=port_num
-            )
-            connected = True
-        except ConnectionRefusedError:
-            gui_logger.warn('Tried and failed to create server with \nIP:{}\nPort:{}'.format(
-                socket.gethostbyname(socket.gethostname()),
-                port_num
-            ))
-    gui_logger.update_data(data=dict(port=port_num))
+    # Make connection
+    try:
+        gui_server = GenericServer(
+            service=gui_service,
+            host='localhost',
+            port=gui_port
+        )
+        connected = True
+    except ConnectionRefusedError:
+        gui_logger.warn('Tried and failed to create server with \nIP:{}\nPort:{}'.format(
+            socket.gethostbyname(socket.gethostname()),
+            gui_port
+        ))
+        raise
     gui_server.start()
 
     # Update GUI with server-specific details
     main_window.ip_label.setText('IP Address: {}'.format(
         socket.gethostbyname(socket.gethostname())
     ))
-    main_window.port_label.setText('Port: {}'.format(port_num))
+    main_window.port_label.setText('Port: {}'.format(gui_port))
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

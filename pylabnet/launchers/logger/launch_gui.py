@@ -42,7 +42,7 @@ def main():
     main_window = Window(app, gui_template=gui_template)
 
     # Instantiate GUI server
-    port_num = np.random.randint(0, 9999)
+    port_num = np.random.randint(1, 9999)
     gui_service = Service()
     gui_service.assign_module(module=main_window)
     gui_service.assign_logger(logger=gui_logger)
@@ -51,6 +51,7 @@ def main():
         host='localhost',
         port=port_num
     )
+    gui_logger.update_data(data=dict(port=port_num))
     gui_server.start()
 
     # Update GUI with server-specific details

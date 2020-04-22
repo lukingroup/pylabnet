@@ -12,6 +12,8 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces
+import pickle
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -62,7 +64,8 @@ class Controller:
             self.gui_logger = LogClient(
                 host='localhost',
                 port=self.LOG_PORT,
-                module_tag=self.GUI_NAME
+                module_tag=self.GUI_NAME,
+                server_port=gui_port
             )
         except ConnectionRefusedError:
             raise
@@ -83,7 +86,7 @@ class Controller:
         self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
         self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
         self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
-        self.client_list[self.GUI_NAME].setToolTip(self.log_service.client_data[self.GUI_NAME])
+        self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
 
     def update_terminal(self):
         """ Updates terminal output on GUI """
@@ -115,7 +118,7 @@ class Controller:
             self.disconnection = False
 
     def update_connection(self):
-        """ Checks if new connections have been made and updates accordingly"""
+        """ Checks if new/updated connections have been made and updates accordingly"""
 
         port_to_add = [port for port in self.log_server._server.clients if port not in self.port_list.values()]
         client_to_add = [client for client in self.log_service.client_data if client not in self.client_list]
@@ -128,9 +131,16 @@ class Controller:
                 self.main_window.client_list.moveCursor(QtGui.QTextCursor.End)
             except TypeError:
                 pass
-            self.client_list[client].setToolTip(self.log_service.client_data[client])
+            self.client_list[client].setToolTip(dict_to_str(self.log_service.client_data[client]))
             if len(port_to_add) > 0:
                 self.port_list[client] = port_to_add[0]
+
+        # Check for updates to client data
+        while len(self.log_service.data_updated) > 0:
+            self.client_list[self.log_service.data_updated[0]].setToolTip(
+                dict_to_str(self.log_service.client_data[self.log_service.data_updated[0]])
+            )
+            del self.log_service.data_updated[0]
 
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
@@ -141,8 +151,30 @@ class Controller:
         script_to_run = list(self.script_list.keys())[list(self.script_list.values()).index(
             self.main_window.script_list.currentItem()
         )]
-        print('Launching {} at {}'.format(script_to_run, time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())))
-        subprocess.Popen('start "{}" /wait python {}'.format(script_to_run, script_to_run), shell=True)
+        launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+        print('Launching {} at {}'.format(script_to_run, launch_time))
+
+        # Build the bash command to input all active servers and relevant port numbers to script
+        bash_cmd = 'start "{}, {}" /wait python {} --logport {} --numclients {}'.format(
+            script_to_run, launch_time, script_to_run, self.LOG_PORT, len(self.client_list)
+        )
+        client_index = 1
+        for client in self.client_list:
+            bash_cmd += ' --client{} {}'.format(client_index, remove_spaces(client))
+
+            # Add port of client's server, if applicable
+            if 'port' in self.log_service.client_data[client]:
+                bash_cmd += ' --port{} {}'.format(client_index, self.log_service.client_data[client]['port'])
+
+            client_index += 1
+
+        print(bash_cmd)
+        # process = subprocess.Popen('start "{}, {}" /wait python {} {} {}'.format(
+        #     script_to_run, launch_time, script_to_run, self.LOG_PORT, len(self.client_list), self.client_list.keys()
+        # ), shell=True, stdout=subprocess.PIPE)
+        subprocess.Popen('start "{}, {}" /wait python {}'.format(
+            script_to_run, launch_time, script_to_run
+        ), shell=True, stdout=subprocess.PIPE)
 
     def _start_logger(self):
         """ Starts the log server """

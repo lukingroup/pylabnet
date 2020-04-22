@@ -4,6 +4,7 @@ import time
 import socket
 import logging
 import sys
+import pickle
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
 
@@ -88,7 +89,7 @@ class LogClient:
         DEBUG=10
     )
 
-    def __init__(self, host, port, module_tag='', level_str='INFO'):
+    def __init__(self, host, port, module_tag='', server_port=None):
 
         # Declare all internal vars
         self._host = ''
@@ -98,6 +99,7 @@ class LogClient:
         self._level_str = ''
         self._level = 0
         self._module_tag = ''
+        self._server_port = server_port  # Identifies a server running in client's thread
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
@@ -152,12 +154,15 @@ class LogClient:
 
                 raise exc_obj
 
-            client_data_str = 'IP Address: {}\nTimestamp: {}'.format(
-                socket.gethostbyname(socket.gethostname()),
-                time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+            client_data = dict(
+                ip=socket.gethostbyname(socket.gethostname()),
+                timestamp=time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
             )
+            if self._server_port is not None:
+                client_data['port'] = self._server_port
 
-            self._service.add_client_data(self._module_tag, client_data_str)
+            client_data_pickle = pickle.dumps(client_data)
+            self._service.add_client_data(self._module_tag, client_data_pickle)
             return 0
 
     def debug(self, msg_str):
@@ -198,6 +203,17 @@ class LogClient:
             msg_str=msg_str,
             level_str='CRITICAL'
         )
+
+    def update_data(self, data=None):
+        """ Updates client data with new information
+
+        :param data: (dict) containing client data
+            e.g. {'port': 4444, 'other-data': XYZ}
+        """
+
+        if data is not None:
+            client_data_pickle = pickle.dumps(data)
+            self._service.update_client_data(self._module_tag, client_data_pickle)
 
     def _log_msg(self, msg_str, level_str):
 
@@ -299,6 +315,7 @@ class LogService(rpyc.Service):
             self.logger.addHandler(fh)
 
         self.client_data = {}
+        self.data_updated = []  # Identifies which clients have updated data
 
     def on_connect(self, conn):
         # code that runs when a connection is created
@@ -326,11 +343,11 @@ class LogService(rpyc.Service):
 
         return 0
 
-    def add_client_data(self, module_name, module_data):
+    def add_client_data(self, module_name, module_data_pickle):
         """ Add new client info
 
         :param module_name: (str) name of the module
-        :param module_data: (dict) dictionary containing client data.
+        :param module_data_pickle: (pickle) pickled dictionary containing client data.
             e.g. {'ip_address':'0.0.0.0', 'timestamp':'2020-03-04, 12:12:12, 'data':None}
         """
 
@@ -342,5 +359,23 @@ class LogService(rpyc.Service):
             module_index += 1
 
         # Add client data to attribute of service
-        self.client_data[module_name] = module_data
+        self.client_data[module_name] = pickle.loads(module_data_pickle)
         return 0
+
+    def update_client_data(self, module_name, module_data_pickle):
+        """ Update client info
+
+        :param module_name: (str) name of module
+        :param module_data_pickle: (pickle) pickled dictionary containing client data.
+            e.g. {'port': 4444, 'other-data': XYZ}
+        """
+
+        try:
+            self.client_data[module_name].update(pickle.loads(module_data_pickle))
+            self.logger.info('Updated client data for {}'.format(module_name))
+            self.data_updated.append(module_name)
+        except IndexError:
+            self.logger.warning('Tried to update client data for {}, but could not find it in list of clients!'.format(
+                module_name
+            ))
+

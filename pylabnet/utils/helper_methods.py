@@ -139,3 +139,28 @@ def get_dated_subdirectory_filepath(directory, filename):
     filepath = os.path.join(dated_path, f'{slugify(filename)}.log')
 
     return filepath
+
+
+def dict_to_str(dic, separate='\n'):
+    """ Converts a dictionary to a nicely formatted string
+
+    :param dic: (dict) to convert
+    :param separate: (str) string to use to separate dictionary elements
+    :return: (str) of dictionary content
+    """
+
+    dict_str = ''
+    for key, value in dic.items():
+        dict_str += '{}: {}{}'.format(key, value, separate)
+
+    return dict_str.rstrip()
+
+
+def remove_spaces(st):
+    """ Removes spaces from a string
+
+    :param st: (str) input string with spaces
+    :return: (str) string without any spaces
+    """
+
+    return st.replace(' ', '')

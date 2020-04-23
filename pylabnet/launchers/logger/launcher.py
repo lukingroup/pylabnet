@@ -2,6 +2,7 @@ import time
 import subprocess
 import numpy as np
 import socket
+from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.gui.pyqt import external_gui
 
@@ -10,11 +11,17 @@ class Launcher:
 
     _GUI_LAUNCH_SCRIPT = 'launch_gui.py'
 
-    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True):
+    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None):
         """ Instantiates Launcher object
 
         :param script: script to launch
-        :param server_req: list of server module names to instantiate
+        :param server_req: dictionary of server modules required for running the script, in the format:
+            {'Module_name': ModuleObject, 'Module_name_2': ModuleObject2, ... }
+            Here, 'Module_name' is the name as understood by the Logger (e.g. the 'module_tag'), and
+            ModuleObject is the specific object on which we can call
+            >> ModuleObject.Service()
+            to instantiate a service and
+            >> ModuleObject.Client() to instantiate the client
         :param gui_req: list of gui names to instantiate
         :param auto_connect: (bool) whether or not to automatically connect if there is a single instance of the
             required server already running
@@ -24,6 +31,13 @@ class Launcher:
         self.server_req = server_req
         self.gui_req = gui_req
         self.auto_connect = auto_connect
+        if name is None:
+            if self.script is None:
+                self.name = 'Generic Launcher'
+            else:
+                self.name = self.script
+        else:
+            self.name = name
 
         # Get command line arguments as a dict
         self.args = parse_args()
@@ -33,6 +47,9 @@ class Launcher:
             self.num_clients = int(self.args['numclients'])
         except IndexError:
             raise
+
+        # Connect to logger
+        self.logger = self._connect_to_logger()
 
         # Find all servers with port numbers and store them as a dictionary
         self.connectors = {}
@@ -49,6 +66,10 @@ class Launcher:
             print(e)
             time.sleep(20)
             raise
+
+    def _connect_to_logger(self):
+        log_client = logger.LogClient(host='localhost', port=self.log_port, module_tag=self.name)
+        return logger.LogHandler(logger=log_client)
 
     def _scan_servers(self):
 
@@ -84,16 +105,26 @@ class Launcher:
                     gui_port,
                     gui
                 ), shell=True)
-                time.sleep(1)
                 connected = True
             except ConnectionRefusedError:
                 pass
 
-        # Connect to GUI, store client
-        try:
-            self.gui_clients[gui] = external_gui.Client(host='localhost', port=gui_port)
-        except ConnectionRefusedError:
-            raise
+        # Connect to GUI, store client. Try several times, since it may take some time to actually launch the server
+        connected = False
+        timeout = 0
+        while not connected and timeout < 1000:
+            try:
+                self.gui_clients[gui] = external_gui.Client(host='localhost', port=gui_port)
+                connected = True
+            except ConnectionRefusedError:
+                timeout += 1
+                time.sleep(0.01)
+
+        # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
+        if timeout == 1000:
+            self.logger.error('Failed to connect client to newly instantiated {} server at \nIP: localhost'
+                              '\nPort: {}'.format(gui, gui_port))
+            raise ConnectionRefusedError()
 
     def _connect_to_gui(self, gui, host, port):
         """ Connects to a GUI server with host and port details
@@ -104,12 +135,11 @@ class Launcher:
         """
         if host == socket.gethostbyname(socket.gethostname()):
             host = 'localhost'
-        print('Trying to connect to active GUI Server\nHost: {}\nPort: {}'.format(host, port))
+        self.logger.info('Trying to connect to active GUI Server\nHost: {}\nPort: {}'.format(host, port))
         try:
             self.gui_clients[gui] = external_gui.Client(host=host, port=port)
-            print('Successfully connected!')
         except ConnectionRefusedError:
-            print('Failed to connect. Instantiating new GUI instead')
+            self.logger.warn('Failed to connect. Instantiating new GUI instead')
             self._launch_new_gui(gui)
 
     def _launch_guis(self):
@@ -126,7 +156,7 @@ class Launcher:
 
             # If there are no matches, launch and connect to the GUI manually
             if num_matches == 0:
-                print('No active GUIs found. Instantiating a new GUI')
+                self.logger.info('No active GUIs matching {} were found. Instantiating a new GUI'.format(gui))
                 self._launch_new_gui(gui)
 
             # If there's 1 match, and we can connect automatically, try that
@@ -134,17 +164,22 @@ class Launcher:
                 host, port = matches[0].ip, matches[0].port
                 self._connect_to_gui(gui, host, port)
 
-            # If there are multiple matches, force the user to choose
+            # If there are multiple matches, force the user to choose in the launched console
             else:
-                print('Found relevant GUI(s) already running.\n')
+                msg_str = 'Found relevant GUI(s) already running.\n'
+                self.logger.info(msg_str)
+                print(msg_str)
                 for index, match in enumerate(matches):
-                    print('------------------------------------------\n'
-                          '                    ({})                   \n'.format(index + 1))
-                    print(match.summarize())
+                    msg_str = ('------------------------------------------\n'
+                               +'                    ({})                   \n'.format(index + 1)
+                               + match.summarize())
+                    print(msg_str)
+                    self.logger.info(msg_str)
                 print('------------------------------------------\n\n'
                       'Which GUI would you like to connect to?\n'
                       'Please enter a choice from {} to {}.'.format(1, len(matches)))
                 use_index = int(input('Entering any other value will launch a new GUI.\n\n>> '))
+                self.logger.info(f'User chose ({use_index})')
 
                 # If the user's choice falls within a relevant GUI, attempt to connect.
                 try:
@@ -153,8 +188,32 @@ class Launcher:
 
                 # If the user's choice did not exist, just launch a new GUI
                 except IndexError:
-                    'Launching new GUI'
+                    self.logger.info('Launching new GUI')
                     self._launch_new_gui(gui)
+
+    def _launch_new_server(self, server, module):
+        """ Launches a new server
+
+        :param server: (str) name of the server to launch
+        :param module: (obj) reference to the service object which can be launched via module.Service()
+        """
+
+    connected = False
+
+
+    def _launch_servers(self):
+        """ Searches through active servers and connects/launches them """
+
+        for server, module in self.server_req.items():
+            matches = {}
+            for connector in self.connectors.values():
+
+                # If we find a matching server, add it
+                if server == connector.name:
+                    matches[server] = module
+            num_matches = len(matches)
+
+            # If there are no matches, launch and connect to the server manually
 
 
 class Connector:
@@ -202,7 +261,7 @@ class Connector:
 
 
 def main():
-    launcher = Launcher(gui_req=['count_monitor'])
+    launcher = Launcher(gui_req=['count_monitor', 'wavemetermonitor_4ch'])
     # for connector in launcher.connectors.values():
     #     print(connector.summarize())
     # time.sleep(10)

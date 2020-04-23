@@ -154,3 +154,45 @@ class E4405BMarker():
         self._toggle_freq_count(0)
 
         return freq
+
+
+class E4405BService(ServiceBase):
+
+    def exposed_reset(self):
+        return self._module.reset()
+
+    def exposed_display_off(self):
+        return self.display_off()
+
+    def exposed_display_on(self):
+        return self.display_on()
+
+    def exposed_set_attenuation(self, db):
+        return self._module.set_attenuation(db)
+
+    def exposed_set_center_frequency(self, center_frequency):
+        return self._module.set_center_frequency(center_frequency)
+
+    def exposed_set_frequency_span(self, frequency_span):
+        return self._module.set_frequency_span(frequency_span)
+
+
+class E4405BClient(ClientBase):
+
+    def reset(self):
+        return self._service.exposed_reset()
+
+    def display_off(self):
+        return self._service.exposed_display_off()
+
+    def display_on(self):
+        return self._service.exposed_display_on()
+
+    def set_attenuation(self, db):
+        return self._service.exposed_set_attenuation(db)
+
+    def set_center_frequency(self, center_frequency):
+        return self._service.exposed_set_center_frequency(center_frequency)
+
+    def set_frequency_span(self, frequency_span):
+        return self._service.exposed_set_frequency_span(frequency_span)

@@ -37,6 +37,8 @@ import numpy as np
 import os
 import pickle
 import copy
+import sys
+import time
 
 
 class Window(QtWidgets.QMainWindow):
@@ -496,6 +498,7 @@ class Window(QtWidgets.QMainWindow):
             gui=self,
             event_widget=event_widget
         )
+
 
 class Service(ServiceBase):
 
@@ -990,3 +993,19 @@ class EventButton:
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
         return result
+
+
+def launch(logger=None):
+    # Create app and instantiate main window
+    app = QtWidgets.QApplication(sys.argv)
+    try:
+        main_window = Window(app)
+    except FileNotFoundError:
+        print('Could not find .ui file, '
+              'please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
+        raise
+    gui_service = Service()
+    gui_service.assign_module(module=main_window)
+    gui_service.assign_logger(logger=logger)
+    print('HELLO, JUST CHECKING IF THIS WORKS')
+    time.sleep(10)

@@ -1,0 +1,59 @@
+import sys
+import time
+
+from pylabnet.utils.helper_methods import parse_args
+from pylabnet.utils.logging.logger import LogClient
+from pylabnet.core.generic_server import GenericServer
+from pylabnet.gui.pyqt import external_gui
+
+DEFAULT_SERVER = 'external_gui'
+
+
+def main():
+
+    # parse command line arguments
+    args = parse_args()
+    try:
+        log_port = int(args['logport'])
+    except IndexError:
+        raise IndexError('Please provide command line arguments in the form\n"'
+                         'python launch_gui.py --logport 1234 --serverport 5678 --server servername --module Module')
+    if 'serverport' in args:
+        server_port = int(args['serverport'])
+    else:
+        server_port = int(input('Please enter a server port value: '))
+    if 'module' in args:
+        module = args['module']
+    else:
+        module = DEFAULT_SERVER
+    if 'server' in args:
+        server = args['server']
+    else:
+        server = module
+
+    # Instantiate logger
+    server_logger = LogClient(
+        host='localhost',
+        port=log_port,
+        module_tag=server,
+        server_port=server_port
+    )
+
+    # Instantiate module
+    try:
+        mod_inst = getattr(sys.modules[__name__], module)
+        mod_inst.launch()
+    except Exception as e:
+        print(module+e)
+        time.sleep(15)
+        raise
+
+
+    # Instantiate server
+    # service = Service()
+    # service.assign_module(module=main_window)
+    # gui_service.assign_logger(logger=gui_logger)
+
+
+if __name__ == '__main__':
+    main()

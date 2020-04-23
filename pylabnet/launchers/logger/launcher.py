@@ -10,6 +10,7 @@ from pylabnet.gui.pyqt import external_gui
 class Launcher:
 
     _GUI_LAUNCH_SCRIPT = 'launch_gui.py'
+    _SERVER_LAUNCH_SCRIPT = 'launch_server.py'
 
     def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None):
         """ Instantiates Launcher object
@@ -62,6 +63,7 @@ class Launcher:
     def launch(self):
         try:
             self._launch_guis()
+            self._launch_servers()
         except Exception as e:
             print(e)
             time.sleep(20)
@@ -94,7 +96,8 @@ class Launcher:
         """ Launches a new GUI and connects to it """
 
         connected = False
-        while not connected:
+        timeout = 0
+        while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
                 subprocess.Popen('start "{}, {}" /wait python {} --logport {} --guiport {} --ui {}'.format(
@@ -107,7 +110,12 @@ class Launcher:
                 ), shell=True)
                 connected = True
             except ConnectionRefusedError:
-                pass
+                self.logger.warn(f'Failed to start {gui} GUI server on localhost with port {gui_port}')
+                timeout += 1
+                time.sleep(0.01)
+        if timeout == 1000:
+            self.logger.error(f'Failed to start {gui} GUI server on localhost')
+            raise ConnectionRefusedError()
 
         # Connect to GUI, store client. Try several times, since it may take some time to actually launch the server
         connected = False
@@ -198,8 +206,55 @@ class Launcher:
         :param module: (obj) reference to the service object which can be launched via module.Service()
         """
 
-    connected = False
+        connected = False
+        timeout = 0
+        while not connected and timeout < 1000:
+            try:
+                server_port = np.random.randint(1, 9999)
+                subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}" /wait python '
+                                 f'{self._Server_LAUNCH_SCRIPT} --logport {self.log_port} --serverport {server_port} '
+                                 f'--server{server} --module {module}', shell=True)
+            except ConnectionRefusedError:
+                self.logger.warn(f'Failed to start {server} server on localhost with port {server_port}')
+                timeout += 1
+                time.sleep(0.01)
+            if timeout == 1000:
+                self.logger.error(f'Failed to start {server} server on localhost')
+                raise ConnectionRefusedError()
 
+        # Connect to server, store client. Try several times, since it may take some time to actually launch the server
+        connected = False
+        timeout = 0
+        while not connected and timeout < 1000:
+            try:
+                self.clients[server] = module.Client(host='localhost', port=server_port)
+                connected = True
+            except ConnectionRefusedError:
+                timeout += 1
+                time.sleep(0.01)
+
+        # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
+        if timeout == 1000:
+            self.logger.error('Failed to connect client to newly instantiated {} server at \nIP: localhost'
+                              '\nPort: {}'.format(server, server_port))
+            raise ConnectionRefusedError()
+
+    def _connect_to_server(self, server, module, host, port):
+        """ Connects to a new server 
+        
+        :param server: (str) name of server
+        :param module: (object) module from which client can be instantiated using module.Client()
+        :param host: (str) IP address of host
+        :param port: (int) port number of host
+        """
+        if host == socket.gethostbyname(socket.gethostname()):
+            host = 'localhost'
+        self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
+        try:
+            self.clients[server] = module.Client(host=host, port=port)
+        except ConnectionRefusedError:
+            self.logger.warn('Failed to connect. Instantiating new server instead')
+            self._launch_new_server(server, module)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """
@@ -214,6 +269,39 @@ class Launcher:
             num_matches = len(matches)
 
             # If there are no matches, launch and connect to the server manually
+            if num_matches == 0:
+                self._launch_new_server(server, module)
+
+            # If there is exactly 1 match, try to connect automatically
+            if num_matches == 1 and self.auto_connect:
+                self._connect_to_server(server, module, host=matches[0].ip, port=matches[0].port)
+
+            # If there are multiple matches, force the user to choose in the launched console
+            else:
+                msg_str = 'Found relevant server(s) already running.\n'
+                self.logger.info(msg_str)
+                print(msg_str)
+                for index, match in enumerate(matches):
+                    msg_str = ('------------------------------------------\n'
+                               + '                    ({})                   \n'.format(index + 1)
+                               + match.summarize())
+                    print(msg_str)
+                    self.logger.info(msg_str)
+                print('------------------------------------------\n\n'
+                      'Which server would you like to connect to?\n'
+                      'Please enter a choice from {} to {}.'.format(1, len(matches)))
+                use_index = int(input('Entering any other value will launch a new server.\n\n>> '))
+                self.logger.info(f'User chose ({use_index})')
+
+                # If the user's choice falls within a relevant GUI, attempt to connect.
+                try:
+                    host, port = matches[use_index - 1].ip, matches[use_index - 1].port
+                    self._connect_to_server(server, module, host, port)
+
+                # If the user's choice did not exist, just launch a new GUI
+                except IndexError:
+                    self.logger.info('Launching new server')
+                    self._launch_new_gui(server, module)
 
 
 class Connector:
@@ -261,10 +349,12 @@ class Connector:
 
 
 def main():
-    launcher = Launcher(gui_req=['count_monitor', 'wavemetermonitor_4ch'])
-    # for connector in launcher.connectors.values():
-    #     print(connector.summarize())
-    # time.sleep(10)
+    launcher = Launcher(
+        server_req=dict(LoggerGUIServer=external_gui),
+        gui_req=['count_monitor', 'wavemetermonitor_4ch']
+    )
+    for connector in launcher.connectors.values():
+        print(connector.summarize())
     launcher.launch()
     time.sleep(100)
 

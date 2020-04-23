@@ -9,6 +9,7 @@ from pylabnet.utils.helper_methods import parse_args
 # For operation of main
 from pylabnet.gui.pyqt import external_gui
 from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
+from pylabnet.scripts.counter import count_monitor
 
 
 class Launcher:
@@ -69,6 +70,7 @@ class Launcher:
         try:
             self._launch_guis()
             self._launch_servers()
+            self._launch_scripts()
         except Exception as e:
             print(e)
             time.sleep(20)
@@ -219,7 +221,7 @@ class Launcher:
                 server_port = np.random.randint(1, 9999)
                 subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}" /wait python '
                                  f'{self._SERVER_LAUNCH_SCRIPT} --logport {self.log_port} --serverport {server_port} '
-                                 f'--server {server} --module {module}', shell=True)
+                                 f'--server {server} --module {module.__name__}', shell=True)
                 time.sleep(20)
                 connected = True
             except ConnectionRefusedError:
@@ -235,7 +237,7 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 1000:
             try:
-                self.clients[server] = getattr(sys.modules[__name__], module).Client(host='localhost', port=server_port)
+                self.clients[server] = module.Client(host='localhost', port=server_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
@@ -259,7 +261,7 @@ class Launcher:
             host = 'localhost'
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
         try:
-            self.clients[server] = getattr(sys.modules[__name__], module).Client(host=host, port=port)
+            self.clients[server] = module.Client(host=host, port=port)
         except ConnectionRefusedError:
             self.logger.warn('Failed to connect. Instantiating new server instead')
             self._launch_new_server(server, module)
@@ -371,7 +373,8 @@ class Connector:
 
 def main():
     launcher = Launcher(
-        server_req=dict(CountMonitor='cnt_monitor'),
+        script=count_monitor,
+        server_req=dict(CountMonitor=cnt_monitor),
         gui_req=['count_monitor'],
         params=None
     )

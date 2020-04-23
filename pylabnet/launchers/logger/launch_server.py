@@ -6,6 +6,7 @@ from pylabnet.utils.logging.logger import LogClient
 
 # IMPORTANT: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
 from pylabnet.gui.pyqt import external_gui
+from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
 
 DEFAULT_SERVER = 'external_gui'
 

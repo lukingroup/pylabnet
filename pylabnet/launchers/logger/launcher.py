@@ -5,7 +5,10 @@ import socket
 import sys
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args
+
+# For operation of main
 from pylabnet.gui.pyqt import external_gui
+from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
 
 
 class Launcher:
@@ -64,6 +67,7 @@ class Launcher:
     def launch(self):
         try:
             self._launch_guis()
+            time.sleep(10)
             self._launch_servers()
         except Exception as e:
             print(e)
@@ -353,11 +357,17 @@ class Connector:
 
 
 def main():
-    launcher = Launcher(
-        server_req=dict(CountMonitor='external_gui')
-    )
-    for connector in launcher.connectors.values():
-        print(connector.summarize())
+    try:
+        launcher = Launcher(
+            server_req=dict(CountMonitor='cnt_monitor'),
+            gui_req=['count_monitor']
+        )
+    except Exception as e:
+        print(e)
+        time.sleep(100)
+        raise
+    # for connector in launcher.connectors.values():
+    #     print(connector.summarize())
     launcher.launch()
     time.sleep(100)
 

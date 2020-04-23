@@ -3,7 +3,8 @@ import time
 
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.core.generic_server import GenericServer
+
+# IMPORTANT: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
 from pylabnet.gui.pyqt import external_gui
 
 DEFAULT_SERVER = 'external_gui'
@@ -25,7 +26,7 @@ def main():
     if 'module' in args:
         module = args['module']
     else:
-        module = DEFAULT_SERVER
+        module = input('Please enter a server module name: ')
     if 'server' in args:
         server = args['server']
     else:
@@ -42,17 +43,11 @@ def main():
     # Instantiate module
     try:
         mod_inst = getattr(sys.modules[__name__], module)
-        mod_inst.launch()
+        mod_inst.launch(logger=server_logger, port=server_port, name=server)
     except Exception as e:
         print(module+e)
         time.sleep(15)
         raise
-
-
-    # Instantiate server
-    # service = Service()
-    # service.assign_module(module=main_window)
-    # gui_service.assign_logger(logger=gui_logger)
 
 
 if __name__ == '__main__':

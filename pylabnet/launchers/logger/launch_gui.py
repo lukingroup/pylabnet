@@ -77,7 +77,6 @@ def main():
             host='localhost',
             port=gui_port
         )
-        connected = True
     except ConnectionRefusedError:
         gui_logger.warn('Tried and failed to create server with \nIP:{}\nPort:{}'.format(
             socket.gethostbyname(socket.gethostname()),

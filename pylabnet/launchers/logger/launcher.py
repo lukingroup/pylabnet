@@ -2,6 +2,7 @@ import time
 import subprocess
 import numpy as np
 import socket
+import sys
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.gui.pyqt import external_gui
@@ -153,51 +154,52 @@ class Launcher:
     def _launch_guis(self):
         """ Searches through active GUIs to find and connect to/launch relevant ones """
 
-        for gui in self.gui_req:
-            matches = []
-            for connector in self.connectors.values():
+        if self.gui_req is not None:
+            for gui in self.gui_req:
+                matches = []
+                for connector in self.connectors.values():
 
-                # If we have a match, add it
-                if gui == connector.ui:
-                    matches.append(connector)
-            num_matches = len(matches)
+                    # If we have a match, add it
+                    if gui == connector.ui:
+                        matches.append(connector)
+                num_matches = len(matches)
 
-            # If there are no matches, launch and connect to the GUI manually
-            if num_matches == 0:
-                self.logger.info('No active GUIs matching {} were found. Instantiating a new GUI'.format(gui))
-                self._launch_new_gui(gui)
+                # If there are no matches, launch and connect to the GUI manually
+                if num_matches == 0:
+                    self.logger.info('No active GUIs matching {} were found. Instantiating a new GUI'.format(gui))
+                    self._launch_new_gui(gui)
 
-            # If there's 1 match, and we can connect automatically, try that
-            elif num_matches == 1 and self.auto_connect:
-                host, port = matches[0].ip, matches[0].port
-                self._connect_to_gui(gui, host, port)
-
-            # If there are multiple matches, force the user to choose in the launched console
-            else:
-                msg_str = 'Found relevant GUI(s) already running.\n'
-                self.logger.info(msg_str)
-                print(msg_str)
-                for index, match in enumerate(matches):
-                    msg_str = ('------------------------------------------\n'
-                               +'                    ({})                   \n'.format(index + 1)
-                               + match.summarize())
-                    print(msg_str)
-                    self.logger.info(msg_str)
-                print('------------------------------------------\n\n'
-                      'Which GUI would you like to connect to?\n'
-                      'Please enter a choice from {} to {}.'.format(1, len(matches)))
-                use_index = int(input('Entering any other value will launch a new GUI.\n\n>> '))
-                self.logger.info(f'User chose ({use_index})')
-
-                # If the user's choice falls within a relevant GUI, attempt to connect.
-                try:
-                    host, port = matches[use_index-1].ip, matches[use_index-1].port
+                # If there's 1 match, and we can connect automatically, try that
+                elif num_matches == 1 and self.auto_connect:
+                    host, port = matches[0].ip, matches[0].port
                     self._connect_to_gui(gui, host, port)
 
-                # If the user's choice did not exist, just launch a new GUI
-                except IndexError:
-                    self.logger.info('Launching new GUI')
-                    self._launch_new_gui(gui)
+                # If there are multiple matches, force the user to choose in the launched console
+                else:
+                    msg_str = 'Found relevant GUI(s) already running.\n'
+                    self.logger.info(msg_str)
+                    print(msg_str)
+                    for index, match in enumerate(matches):
+                        msg_str = ('------------------------------------------\n'
+                                   +'                    ({})                   \n'.format(index + 1)
+                                   + match.summarize())
+                        print(msg_str)
+                        self.logger.info(msg_str)
+                    print('------------------------------------------\n\n'
+                          'Which GUI would you like to connect to?\n'
+                          'Please enter a choice from {} to {}.'.format(1, len(matches)))
+                    use_index = int(input('Entering any other value will launch a new GUI.\n\n>> '))
+                    self.logger.info(f'User chose ({use_index})')
+
+                    # If the user's choice falls within a relevant GUI, attempt to connect.
+                    try:
+                        host, port = matches[use_index-1].ip, matches[use_index-1].port
+                        self._connect_to_gui(gui, host, port)
+
+                    # If the user's choice did not exist, just launch a new GUI
+                    except IndexError:
+                        self.logger.info('Launching new GUI')
+                        self._launch_new_gui(gui)
 
     def _launch_new_server(self, server, module):
         """ Launches a new server
@@ -212,8 +214,10 @@ class Launcher:
             try:
                 server_port = np.random.randint(1, 9999)
                 subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}" /wait python '
-                                 f'{self._Server_LAUNCH_SCRIPT} --logport {self.log_port} --serverport {server_port} '
-                                 f'--server{server} --module {module}', shell=True)
+                                 f'{self._SERVER_LAUNCH_SCRIPT} --logport {self.log_port} --serverport {server_port} '
+                                 f'--server {server} --module {module}', shell=True)
+                time.sleep(20)
+                connected = True
             except ConnectionRefusedError:
                 self.logger.warn(f'Failed to start {server} server on localhost with port {server_port}')
                 timeout += 1
@@ -227,7 +231,7 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 1000:
             try:
-                self.clients[server] = module.Client(host='localhost', port=server_port)
+                self.clients[server] = getattr(sys.modules[__name__], module).Client(host='localhost', port=server_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
@@ -251,7 +255,7 @@ class Launcher:
             host = 'localhost'
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
         try:
-            self.clients[server] = module.Client(host=host, port=port)
+            self.clients[server] = getattr(sys.modules[__name__], module).Client(host=host, port=port)
         except ConnectionRefusedError:
             self.logger.warn('Failed to connect. Instantiating new server instead')
             self._launch_new_server(server, module)
@@ -260,12 +264,12 @@ class Launcher:
         """ Searches through active servers and connects/launches them """
 
         for server, module in self.server_req.items():
-            matches = {}
+            matches = []
             for connector in self.connectors.values():
 
                 # If we find a matching server, add it
                 if server == connector.name:
-                    matches[server] = module
+                    matches.append(connector)
             num_matches = len(matches)
 
             # If there are no matches, launch and connect to the server manually
@@ -273,7 +277,7 @@ class Launcher:
                 self._launch_new_server(server, module)
 
             # If there is exactly 1 match, try to connect automatically
-            if num_matches == 1 and self.auto_connect:
+            elif num_matches == 1 and self.auto_connect:
                 self._connect_to_server(server, module, host=matches[0].ip, port=matches[0].port)
 
             # If there are multiple matches, force the user to choose in the launched console
@@ -350,8 +354,7 @@ class Connector:
 
 def main():
     launcher = Launcher(
-        server_req=dict(LoggerGUIServer=external_gui),
-        gui_req=['count_monitor', 'wavemetermonitor_4ch']
+        server_req=dict(CountMonitor='external_gui')
     )
     for connector in launcher.connectors.values():
         print(connector.summarize())

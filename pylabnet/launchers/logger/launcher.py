@@ -95,6 +95,23 @@ class Launcher:
         except ConnectionRefusedError:
             raise
 
+    def _connect_to_gui(self, gui, host, port):
+        """ Connects to a GUI server with host and port details
+
+        :param gui: (str) name of .ui file to use
+        :param host: (str) IP address of server to connect to
+        :param port: (int) port number of server to connect to
+        """
+        if host == socket.gethostbyname(socket.gethostname()):
+            host = 'localhost'
+        print('Trying to connect to active GUI Server\nHost: {}\nPort: {}'.format(host, port))
+        try:
+            self.gui_clients[gui] = external_gui.Client(host=host, port=port)
+            print('Successfully connected!')
+        except ConnectionRefusedError:
+            print('Failed to connect. Instantiating new GUI instead')
+            self._launch_new_gui(gui)
+
     def _launch_guis(self):
         """ Searches through active GUIs to find and connect to/launch relevant ones """
 
@@ -115,20 +132,29 @@ class Launcher:
             # If there's 1 match, and we can connect automatically, try that
             elif num_matches == 1 and self.auto_connect:
                 host, port = matches[0].ip, matches[0].port
-                if host == socket.gethostbyname(socket.gethostname()):
-                    host = 'localhost'
-                print('Trying to connect to active GUI Server\nHost: {}\nPort: {}'.format(host, port))
-                try:
-                    self.gui_clients[gui] = external_gui.Client(host=host, port=port)
-                    print('Successfully connected!')
-                except ConnectionRefusedError:
-                    print('Failed to connect. Instantiating new GUI instead')
-                    self._launch_new_gui(gui)
+                self._connect_to_gui(gui, host, port)
 
             # If there are multiple matches, force the user to choose
             else:
-                # TODO
-                pass
+                print('Found relevant GUI(s) already running.\n')
+                for index, match in enumerate(matches):
+                    print('------------------------------------------\n'
+                          '                    ({})                   \n'.format(index + 1))
+                    print(match.summarize())
+                print('------------------------------------------\n\n'
+                      'Which GUI would you like to connect to?\n'
+                      'Please enter a choice from {} to {}.'.format(1, len(matches)))
+                use_index = int(input('Entering any other value will launch a new GUI.\n\n>> '))
+
+                # If the user's choice falls within a relevant GUI, attempt to connect.
+                try:
+                    host, port = matches[use_index-1].ip, matches[use_index-1].port
+                    self._connect_to_gui(gui, host, port)
+
+                # If the user's choice did not exist, just launch a new GUI
+                except IndexError:
+                    'Launching new GUI'
+                    self._launch_new_gui(gui)
 
 
 class Connector:
@@ -177,11 +203,11 @@ class Connector:
 
 def main():
     launcher = Launcher(gui_req=['count_monitor'])
-    for connector in launcher.connectors.values():
-        print(connector.summarize())
-    time.sleep(10)
+    # for connector in launcher.connectors.values():
+    #     print(connector.summarize())
+    # time.sleep(10)
     launcher.launch()
-    time.sleep(10)
+    time.sleep(100)
 
 
 if __name__ == '__main__':

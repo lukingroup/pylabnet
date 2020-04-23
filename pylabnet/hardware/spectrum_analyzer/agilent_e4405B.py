@@ -1,9 +1,9 @@
 from pyvisa import VisaIOError, ResourceManager
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.hardware.interface.mw_src import MWSrcInterface, MWSrcError
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
+import time
 
 
 class E4405BDriver():
@@ -44,12 +44,10 @@ class E4405BDriver():
         self.device.write(':DISPlay:ENABle OFF')
         self.log.info("Display off.")
 
-
     def display_on(self):
         ''' Power on display '''
         self.device.write(':DISPlay:ENABle ON')
         self.log.info("Display on.")
-
 
     def set_attenuation(self, db):
         ''' Set input attenuation
@@ -85,14 +83,14 @@ class E4405BDriver():
 
 
 class E4405BMarker():
-
+    ''' Class handling assignment and read out of peak markers'''
 
     def __init__(self, e4405Bdevice, name, marker_num):
         ''' Initialized the marker
 
-        :e4405Bdevice: Instance of E4405BDriver
-        :name: A human readable name of the marker
-        :marker_num: Marker number from 1 to 4
+        :e4405Bdevice: Instance of E4405BDriver.
+        :name: A human readable name of the marker.
+        :marker_num: Marker number from 1 to 4.
         '''
         self.spectrum_analyzer = e4405Bdevice
         self.name = name
@@ -102,34 +100,57 @@ class E4405BMarker():
         self.set_as_position()
 
     def set_as_position(self):
+        '''Specify marker type as position marker (standard).'''
         self.spectrum_analyzer.device.write(f':CALCulate:MARKer{self.marker_num}:MODE POSition')
 
     def set_to_maximum(self):
+        '''Set marker to maximum peak value of trace.'''
         self.spectrum_analyzer.device.write(f':CALCulate:MARKer{self.marker_num}:MAXimum')
 
-    def set_to_bp_power(self):
-        self.spectrum_analyzer.device.write(f':CALCulate:MARKer{self.marker_num}:FUNCtion BPOWer')
+    def _toggle_freq_count(self, state):
+        '''Change frequency count setting
 
-    def toogle_freq_count(self, state):
+        :state (int): 1 to toggle frequency counting on, 0 to toggle it off
+        '''
         self.spectrum_analyzer.device.write(f':CALCulate:MARKer{self.marker_num}:FCOunt:STATe {state}')
 
-    def get_freq(self):
-        return self.spectrum_analyzer.device.query(f':CALCulate:MARKer{self.marker_num}:FCOunt:X?')
+    def _get_freq(self):
+        ''' Read out frequency
+
+        Note: Work only if _toggle_freq_count was called, outputs 9e15 if count state is off.
+        '''
+        return float(self.spectrum_analyzer.device.query(f':CALCulate:MARKer{self.marker_num}:FCOunt:X?'))
 
     def get_power(self):
-        return self.spectrum_analyzer.device.query(f':CALCulate:MARKer{self.marker_num}:Y?')
+        '''Reads out power of marker position (in dbm)'''
+        return float(self.spectrum_analyzer.device.query(f':CALCulate:MARKer{self.marker_num}:Y?'))
+
+    def look_left(self):
+        '''Focus marker on next peak left.'''
+        self.spectrum_analyzer.device.write(f':CALCulate:MARKer{self.marker_num}:MAXimum:LEFT')
+
+    def look_right(self):
+        '''Focus marker on next peak right.'''
+        self.spectrum_analyzer.device.write(f':CALCulate:MARKer{self.marker_num}:MAXimum:RIGHT')
 
     def read_freq(self):
+        ''' Read out frequency of maker.
+
+        This is done by first enabling count state, reading out the frequency
+        and disabling the count state.
+        '''
 
         # Turn on frequency capture
-        self.toogle_freq_count(1)
+        self._toggle_freq_count(1)
+
+        time.sleep(1)
 
         # Read off frequency
-        freq = self.get_freq()
+        freq = self._get_freq()
+
+        time.sleep(1)
 
         # Turn off frequency capture
-        self.toogle_freq_count(0)
+        self._toggle_freq_count(0)
 
         return freq
-
-

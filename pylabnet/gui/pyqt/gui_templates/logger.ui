@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>909</width>
-    <height>392</height>
+    <width>892</width>
+    <height>386</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,7 +30,7 @@ selection-color: rgb(255, 0, 0);</string>
      <height>400</height>
     </size>
    </property>
-   <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0" columnstretch="0,0,0,0,0">
+   <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0" columnstretch="0,0,0,0,0">
     <property name="leftMargin">
      <number>6</number>
     </property>
@@ -258,7 +258,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>909</width>
+     <width>892</width>
      <height>18</height>
     </rect>
    </property>

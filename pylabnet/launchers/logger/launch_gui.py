@@ -33,7 +33,6 @@ def main():
     args = parse_args()
     try:
         log_port = int(args['logport'])
-        gui_port = int(args['guiport'])
     except IndexError:
         raise IndexError('Please provide command line arguments in the form\n"'
                          'python launch_gui.py --logport 1234 --guiport 5678 --ui uifilename')
@@ -41,6 +40,10 @@ def main():
         gui_template = args['ui']
     else:
         gui_template = _default_template
+    if 'guiport' in args:
+        gui_port = int(args['guiport'])
+    else:
+        gui_port = int(input('Please enter a GUI port value: '))
 
     # Instantiate logger
     gui_logger = LogClient(

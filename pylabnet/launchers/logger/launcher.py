@@ -1,6 +1,7 @@
 import time
 import subprocess
 import numpy as np
+import socket
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.gui.pyqt import external_gui
 
@@ -84,7 +85,6 @@ class Launcher:
                     gui
                 ), shell=True)
                 time.sleep(1)
-                # subprocess.Popen('python launch_gui.py --logport {} --guiport {}'.format(self.log_port, gui_port), shell=True)
                 connected = True
             except ConnectionRefusedError:
                 pass
@@ -92,10 +92,8 @@ class Launcher:
         # Connect to GUI, store client
         try:
             self.gui_clients[gui] = external_gui.Client(host='localhost', port=gui_port)
-        except ConnectionRefusedError as e:
-            print('Failed for some reason')
-            print(e)
-            time.sleep(10)
+        except ConnectionRefusedError:
+            raise
 
     def _launch_guis(self):
         """ Searches through active GUIs to find and connect to/launch relevant ones """
@@ -105,20 +103,24 @@ class Launcher:
             for connector in self.connectors.values():
 
                 # If we have a match, add it
-                if gui is connector.ui:
+                if gui == connector.ui:
                     matches.append(connector)
             num_matches = len(matches)
 
             # If there are no matches, launch and connect to the GUI manually
             if num_matches == 0:
+                print('No active GUIs found. Instantiating a new GUI')
                 self._launch_new_gui(gui)
 
             # If there's 1 match, and we can connect automatically, try that
             elif num_matches == 1 and self.auto_connect:
                 host, port = matches[0].ip, matches[0].port
-                print('Trying to connect to GUI Server\nHost: {}\nPort: {}'.format(host, port))
+                if host == socket.gethostbyname(socket.gethostname()):
+                    host = 'localhost'
+                print('Trying to connect to active GUI Server\nHost: {}\nPort: {}'.format(host, port))
                 try:
                     self.gui_clients[gui] = external_gui.Client(host=host, port=port)
+                    print('Successfully connected!')
                 except ConnectionRefusedError:
                     print('Failed to connect. Instantiating new GUI instead')
                     self._launch_new_gui(gui)
@@ -127,12 +129,6 @@ class Launcher:
             else:
                 # TODO
                 pass
-
-
-# Static methods
-
-def create_client(self, module, ip, port):
-    return module.Client(host=ip, port=port)
 
 
 class Connector:
@@ -181,8 +177,10 @@ class Connector:
 
 def main():
     launcher = Launcher(gui_req=['count_monitor'])
+    for connector in launcher.connectors.values():
+        print(connector.summarize())
+    time.sleep(10)
     launcher.launch()
-    print('Great success')
     time.sleep(10)
 
 

@@ -16,7 +16,7 @@ class Launcher:
     _GUI_LAUNCH_SCRIPT = 'launch_gui.py'
     _SERVER_LAUNCH_SCRIPT = 'launch_server.py'
 
-    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None):
+    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None):
         """ Instantiates Launcher object
 
         :param script: script to launch
@@ -36,11 +36,12 @@ class Launcher:
         self.server_req = server_req
         self.gui_req = gui_req
         self.auto_connect = auto_connect
+        self.params = params
         if name is None:
             if self.script is None:
                 self.name = 'Generic Launcher'
             else:
-                self.name = self.script
+                self.name = str(self.script)
         else:
             self.name = name
 
@@ -67,7 +68,6 @@ class Launcher:
     def launch(self):
         try:
             self._launch_guis()
-            time.sleep(10)
             self._launch_servers()
         except Exception as e:
             print(e)
@@ -311,6 +311,19 @@ class Launcher:
                     self.logger.info('Launching new server')
                     self._launch_new_gui(server, module)
 
+    def _launch_scripts(self):
+        """ Launch the scripts to be run sequentially in this thread """
+
+        for script in self.script:
+
+            script.launch(
+                logger=self.logger,
+                clients=self.clients,
+                guis=self.gui_clients,
+                logport=self.log_port,
+                params=self.params
+            )
+
 
 class Connector:
 
@@ -357,17 +370,11 @@ class Connector:
 
 
 def main():
-    try:
-        launcher = Launcher(
-            server_req=dict(CountMonitor='cnt_monitor'),
-            gui_req=['count_monitor']
-        )
-    except Exception as e:
-        print(e)
-        time.sleep(100)
-        raise
-    # for connector in launcher.connectors.values():
-    #     print(connector.summarize())
+    launcher = Launcher(
+        server_req=dict(CountMonitor='cnt_monitor'),
+        gui_req=['count_monitor'],
+        params=None
+    )
     launcher.launch()
     time.sleep(100)
 

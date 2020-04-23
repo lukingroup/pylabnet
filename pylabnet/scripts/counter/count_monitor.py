@@ -2,6 +2,9 @@
 
 import numpy as np
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
+from pylabnet.utils.logging.logger import LogClient
+from pylabnet.scripts.pause_script import PauseService
+from pylabnet.core.generic_server import GenericServer
 
 
 # Static methods
@@ -181,3 +184,41 @@ class CountMonitor:
                 text='{:.4e}'.format(count_array[-1]),
                 label_label='Channel {}'.format(channel)
             )
+
+
+def launch(logger=None, clients=None, guis=None, logport=None, params=None):
+    """ Launches the count monitor script
+    """
+
+    # Instantiate CountMonitor
+    try:
+        monitor = CountMonitor(ctr_client=clients[0], gui_client=guis[0], logger_client=logger)
+    except KeyError:
+        print('Please provide kwargs ctr, gui, and log')
+
+    # Instantiate Pause server
+    try:
+        pause_logger = LogClient(host='localhost', port=logport, module_tag='Count Monitor Pause')
+    except ConnectionRefusedError:
+        logger.warn('Could not connect Count Monitor Pause server to logger')
+    pause_service = PauseService()
+    pause_service.assign_module(module=monitor)
+    pause_service.assign_logger(logger=pause_logger)
+
+    timeout = 0
+    while timeout < 1000:
+        try:
+            pause_server = GenericServer(host='localhost', port=port, service=pause_service)
+            timeout = 9999
+        except ConnectionRefusedError:
+            logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')
+            timeout += 1
+    pause_server.start()
+
+    # Set parameters
+    if params is None:
+        params = dict(bin_width=2e10, n_bins=1e3, ch_list=[1, 2], plot_list=[[1], [2]])
+    monitor.set_params(params)
+
+    # Run
+    monitor.run()

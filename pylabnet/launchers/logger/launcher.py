@@ -315,7 +315,7 @@ class Launcher:
                 # If the user's choice did not exist, just launch a new GUI
                 except IndexError:
                     self.logger.info('Launching new server')
-                    self._launch_new_gui(server, module)
+                    self._launch_new_server(server, module)
 
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """

@@ -178,6 +178,7 @@ class Controller:
             client_index += 1
 
         # Launch the new process
+        # raise Exception(bash_cmd)
         subprocess.Popen(bash_cmd, shell=True)
 
     def _start_logger(self):
@@ -204,9 +205,10 @@ class Controller:
         """ Loads all scripts from current working directory """
 
         # Get all relevant files
-        files = [file for file in os.listdir(os.getcwd()) if (
+        current_directory = os.path.dirname(os.path.realpath(__file__))
+        files = [file for file in os.listdir(current_directory) if (
             os.path.isfile(os.path.join(
-                os.getcwd(), file
+                current_directory, file
             )) and '__init__.py' not in file and 'log_display.py' not in file
         )]
 

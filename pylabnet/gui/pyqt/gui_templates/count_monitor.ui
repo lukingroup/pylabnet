@@ -130,7 +130,7 @@
           <property name="maximumSize">
            <size>
             <width>75</width>
-            <height>16777215</height>
+            <height>25</height>
            </size>
           </property>
           <property name="font">
@@ -365,7 +365,7 @@ color: rgb(0, 0, 0);</string>
           <property name="maximumSize">
            <size>
             <width>75</width>
-            <height>16777215</height>
+            <height>25</height>
            </size>
           </property>
           <property name="font">
@@ -554,7 +554,7 @@ color: rgb(0, 0, 0);</string>
      <x>0</x>
      <y>0</y>
      <width>789</width>
-     <height>26</height>
+     <height>18</height>
     </rect>
    </property>
   </widget>

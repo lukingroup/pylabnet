@@ -1,10 +1,15 @@
 import time
 import subprocess
 import numpy as np
+import sys
+import os
 import socket
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.gui.pyqt import external_gui
+
+# # For debugging
+# time.sleep(15)
 
 # For operation of main
 from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
@@ -110,10 +115,11 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start "{}, {}" /wait python {} --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start "{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
                     gui,
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
-                    self._GUI_LAUNCH_SCRIPT,
+                    sys.executable,
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)),self._GUI_LAUNCH_SCRIPT),
                     self.log_port,
                     gui_port,
                     gui
@@ -223,8 +229,10 @@ class Launcher:
             try:
                 time.sleep(10)
                 server_port = np.random.randint(1, 9999)
-                subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}" /wait python '
-                                 f'{self._SERVER_LAUNCH_SCRIPT} --logport {self.log_port} --serverport {server_port} '
+                subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
+                                 f'/wait {sys.executable} '
+                                 f'{os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT)} '
+                                 f'--logport {self.log_port} --serverport {server_port} '
                                  f'--server {server} --module {module.__name__.split(".")[-1]}', shell=True)
                 time.sleep(20)
                 connected = True

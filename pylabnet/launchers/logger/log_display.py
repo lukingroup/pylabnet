@@ -161,7 +161,7 @@ class Controller:
         bash_cmd = 'start "{}, {}" /wait {} {} --logport {} --numclients {}'.format(
             script_to_run, 
             launch_time,
-            sys.executable, 
+            sys.executable,
             os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
             self.LOG_PORT, 
             len(self.client_list)
@@ -183,10 +183,7 @@ class Controller:
             client_index += 1
 
         # Launch the new process
-        # raise Exception(bash_cmd)
-        sp = subprocess.Popen(bash_cmd, shell=True)
-        
-        pass
+        subprocess.Popen(bash_cmd, shell=True)
 
     def _start_logger(self):
         """ Starts the log server """

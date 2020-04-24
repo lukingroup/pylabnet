@@ -172,7 +172,7 @@ class Launcher:
                 for connector in self.connectors.values():
 
                     # If we have a match, add it
-                    if gui+'_GUI' == connector.ui:
+                    if gui == connector.ui:
                         matches.append(connector)
                 num_matches = len(matches)
 
@@ -281,7 +281,7 @@ class Launcher:
             for connector in self.connectors.values():
 
                 # If we find a matching server, add it
-                if module.__name__+'_server' == connector.name:
+                if module.__name__.split('.')[-1]+'_server' == connector.name:
                     matches.append(connector)
             num_matches = len(matches)
 

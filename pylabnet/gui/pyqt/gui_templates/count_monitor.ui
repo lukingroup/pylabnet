@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>721</width>
+    <width>789</width>
     <height>504</height>
    </rect>
   </property>
@@ -112,7 +112,7 @@
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <widget class="QGraphicsView" name="legend_widget_1">
+         <widget class="GraphicsView" name="legend_widget_1">
           <property name="minimumSize">
            <size>
             <width>150</width>
@@ -347,7 +347,7 @@ color: rgb(0, 0, 0);</string>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <widget class="QGraphicsView" name="legend_widget_2">
+         <widget class="GraphicsView" name="legend_widget_2">
           <property name="minimumSize">
            <size>
             <width>150</width>
@@ -553,8 +553,8 @@ color: rgb(0, 0, 0);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>721</width>
-     <height>18</height>
+     <width>789</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
@@ -566,6 +566,11 @@ color: rgb(0, 0, 0);</string>
    <extends>QWidget</extends>
    <header>pyqtgraph</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>GraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>

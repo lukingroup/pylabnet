@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1118</width>
+    <width>1809</width>
     <height>628</height>
    </rect>
   </property>
@@ -373,7 +373,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QGraphicsView" name="legend_widget_1">
+            <widget class="GraphicsView" name="legend_widget_1">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -622,7 +622,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QGraphicsView" name="legend_widget_3">
+            <widget class="GraphicsView" name="legend_widget_3">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -871,7 +871,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QGraphicsView" name="legend_widget_2">
+            <widget class="GraphicsView" name="legend_widget_2">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -1120,7 +1120,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="QGraphicsView" name="legend_widget_4">
+            <widget class="GraphicsView" name="legend_widget_4">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -1170,8 +1170,8 @@ color: rgb(0, 0, 0);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1118</width>
-     <height>18</height>
+     <width>1809</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
@@ -1183,6 +1183,11 @@ color: rgb(0, 0, 0);</string>
    <extends>QWidget</extends>
    <header>pyqtgraph</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>GraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>

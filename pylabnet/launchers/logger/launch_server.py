@@ -4,16 +4,16 @@ import time
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.utils.logging.logger import LogClient
 
-# For debugging
-print('Waiting for debugger to connect')
-time.sleep(30)
+# # For debugging
+# print('Waiting for debugger to connect')
+# time.sleep(30)
 
 # IMPORTANT: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
 try:
     from pylabnet.gui.pyqt import external_gui
     from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
 except Exception as e:
-    print(e)
+    print('Please make sure all necessary imports are possible')
     time.sleep(20)
     raise
 

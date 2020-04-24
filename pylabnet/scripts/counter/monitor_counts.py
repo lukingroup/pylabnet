@@ -5,6 +5,7 @@ from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.core.generic_server import GenericServer
+from pylabnet.utils.helper_methods import unpack_launcher
 
 
 # Static methods
@@ -185,10 +186,10 @@ class CountMonitor:
                 label_label='Channel {}'.format(channel)
             )
 
+def launch(**kwargs):
+    """ Launches the count monitor script """
 
-def launch(logger=None, clients=None, guis=None, logport=None, params=None):
-    """ Launches the count monitor script
-    """
+    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
 
     # Instantiate CountMonitor
     try:
@@ -201,7 +202,7 @@ def launch(logger=None, clients=None, guis=None, logport=None, params=None):
 
     # Instantiate Pause server
     try:
-        pause_logger = LogClient(host='localhost', port=logport, module_tag='Count Monitor Pause')
+        pause_logger = LogClient(host='localhost', port=logport, module_tag='count_monitor_pause_server')
     except ConnectionRefusedError:
         logger.warn('Could not connect Count Monitor Pause server to logger')
 

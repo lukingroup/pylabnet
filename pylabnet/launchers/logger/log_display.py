@@ -29,7 +29,7 @@ class Controller:
     LOGGER_UI = 'logger'
     LOG_PORT = 1234
     GUI_PORT = 5678
-    GUI_NAME = 'Logger GUI Server'
+    GUI_NAME = 'logger_GUI'
 
     def __init__(self, *args, **kwargs):
 

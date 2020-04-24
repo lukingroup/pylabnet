@@ -24,15 +24,12 @@ class Launcher:
     def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None):
         """ Instantiates Launcher object
 
-        :param script: script to launch
-        :param server_req: dictionary of server modules required for running the script, in the format:
-            {'Module_name': ModuleObject, 'Module_name_2': ModuleObject2, ... }
-            Here, 'Module_name' is the name as understood by the Logger (e.g. the 'module_tag'), and
-            ModuleObject is the specific object on which we can call
-            >> ModuleObject.Service()
-            to instantiate a service and
-            >> ModuleObject.Client() to instantiate the client
-        :param gui_req: list of gui names to instantiate
+        :param script: script module to launch. The module needs:
+            launch() method
+        :param server_req: list of modules containing necessary servers. The module needs:
+            (1) main() method to instantiate Service and run the server
+            (1) Client() class, so that we can instantiate a client from this thread and pass it to the script
+        :param gui_req: list of gui names to instantiate (names of .ui files, excluding .ui extension)
         :param auto_connect: (bool) whether or not to automatically connect if there is a single instance of the
             required server already running
         """
@@ -175,7 +172,7 @@ class Launcher:
                 for connector in self.connectors.values():
 
                     # If we have a match, add it
-                    if gui == connector.ui:
+                    if gui+'_GUI' == connector.ui:
                         matches.append(connector)
                 num_matches = len(matches)
 
@@ -216,10 +213,9 @@ class Launcher:
                         self.logger.info('Launching new GUI')
                         self._launch_new_gui(gui)
 
-    def _launch_new_server(self, server, module):
+    def _launch_new_server(self, module):
         """ Launches a new server
 
-        :param server: (str) name of the server to launch
         :param module: (obj) reference to the service object which can be launched via module.Service()
         """
 
@@ -228,11 +224,12 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 server_port = np.random.randint(1, 9999)
+                server = module.__name__
                 subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
                                  f'/wait {sys.executable} '
                                  f'{os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT)} '
                                  f'--logport {self.log_port} --serverport {server_port} '
-                                 f'--server {server} --module {module.__name__.split(".")[-1]}', shell=True)
+                                 f'--server {server} --module {server.split(".")[-1]}', shell=True)
                 connected = True
             except ConnectionRefusedError:
                 self.logger.warn(f'Failed to start {server} server on localhost with port {server_port}')
@@ -259,14 +256,15 @@ class Launcher:
                               '\nPort: {}'.format(server, server_port))
             raise ConnectionRefusedError()
 
-    def _connect_to_server(self, server, module, host, port):
+    def _connect_to_server(self, module, host, port):
         """ Connects to a new server 
-        
-        :param server: (str) name of server
+
         :param module: (object) module from which client can be instantiated using module.Client()
         :param host: (str) IP address of host
         :param port: (int) port number of host
         """
+
+        server = module.__name__
         if host == socket.gethostbyname(socket.gethostname()):
             host = 'localhost'
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
@@ -274,27 +272,27 @@ class Launcher:
             self.clients[server] = module.Client(host=host, port=port)
         except ConnectionRefusedError:
             self.logger.warn('Failed to connect. Instantiating new server instead')
-            self._launch_new_server(server, module)
+            self._launch_new_server(module)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """
 
-        for server, module in self.server_req.items():
+        for module in self.server_req:
             matches = []
             for connector in self.connectors.values():
 
                 # If we find a matching server, add it
-                if server == connector.name:
+                if module.__name__+'_server' == connector.name:
                     matches.append(connector)
             num_matches = len(matches)
 
             # If there are no matches, launch and connect to the server manually
             if num_matches == 0:
-                self._launch_new_server(server, module)
+                self._launch_new_server(module)
 
             # If there is exactly 1 match, try to connect automatically
             elif num_matches == 1 and self.auto_connect:
-                self._connect_to_server(server, module, host=matches[0].ip, port=matches[0].port)
+                self._connect_to_server(module, host=matches[0].ip, port=matches[0].port)
 
             # If there are multiple matches, force the user to choose in the launched console
             else:
@@ -316,12 +314,12 @@ class Launcher:
                 # If the user's choice falls within a relevant GUI, attempt to connect.
                 try:
                     host, port = matches[use_index - 1].ip, matches[use_index - 1].port
-                    self._connect_to_server(server, module, host, port)
+                    self._connect_to_server(module, host, port)
 
                 # If the user's choice did not exist, just launch a new GUI
                 except IndexError:
                     self.logger.info('Launching new server')
-                    self._launch_new_server(server, module)
+                    self._launch_new_server(module)
 
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """
@@ -385,7 +383,7 @@ def main():
 
     launcher = Launcher(
         script=[monitor_counts],
-        server_req=dict(CountMonitor=cnt_monitor),
+        server_req=[cnt_monitor],
         gui_req=['count_monitor'],
         params=None
     )

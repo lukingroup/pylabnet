@@ -112,7 +112,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min"{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start /min "{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
                     gui,
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,

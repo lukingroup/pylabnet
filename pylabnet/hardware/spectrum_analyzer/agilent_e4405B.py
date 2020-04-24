@@ -223,7 +223,7 @@ class E4405BClient(ClientBase):
         plt.figure()
         plt.plot(trace[:, 0]/1e9, trace[:, 1])
         plt.xlabel('Frequency [GHz]')
-        plt.ylabel('Power [dbM]')
+        plt.ylabel('Power [dBm]')
         plt.show()
 
 

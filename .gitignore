@@ -135,3 +135,4 @@ dmypy.json
 
 /.idea/
 pylabnet/hardware/zi_hdawg/zh_ex.py
+pylabnet/hardware/counter/swabian_instruments/__pycache__/*

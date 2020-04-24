@@ -49,7 +49,7 @@ def main():
     gui_logger = LogClient(
         host='localhost',
         port=log_port,
-        module_tag=gui_template,
+        module_tag=gui_template+'_GUI',
         ui=gui_template,
         server_port=gui_port
     )

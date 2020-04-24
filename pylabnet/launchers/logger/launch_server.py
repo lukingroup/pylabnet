@@ -37,7 +37,7 @@ def main():
     server_logger = LogClient(
         host='localhost',
         port=log_port,
-        module_tag=server,
+        module_tag=server+'_server',
         server_port=server_port
     )
 

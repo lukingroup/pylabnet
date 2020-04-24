@@ -227,14 +227,12 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 1000:
             try:
-                time.sleep(10)
                 server_port = np.random.randint(1, 9999)
                 subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
                                  f'/wait {sys.executable} '
                                  f'{os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT)} '
                                  f'--logport {self.log_port} --serverport {server_port} '
                                  f'--server {server} --module {module.__name__.split(".")[-1]}', shell=True)
-                time.sleep(20)
                 connected = True
             except ConnectionRefusedError:
                 self.logger.warn(f'Failed to start {server} server on localhost with port {server_port}')

@@ -153,7 +153,15 @@ def launch(**kwargs):
         :ch: (list) list of channels to count from 1 to 8, e.g. [1, 2, 4]
     """
     TT.setTimeTaggerChannelNumberScheme(TT.TT_CHANNEL_NUMBER_SCHEME_ONE)
-    tagger = TT.createTimeTagger()
+
+    # Connect to the device, otherwise instantiate virtual connection
+    try:
+        tagger = TT.createTimeTagger()
+    except RuntimeError:
+        kwargs['logger'].warn('Failed to connect to Swabian Instruments Time Tagger.'
+                              ' Instantiating virtual device instead')
+        tagger = TT.createTimeTaggerVirtual()
+
     if 'ch' not in kwargs:
         kwargs['ch'] = [1]
     cnt_trace_wrap = Wrap(

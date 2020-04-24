@@ -4,8 +4,9 @@ import time
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.utils.logging.logger import LogClient
 
-# # For debugging
-# time.sleep(30)
+# For debugging
+print('Waiting for debugger to connect')
+time.sleep(30)
 
 # IMPORTANT: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
 try:
@@ -54,7 +55,8 @@ def main():
         mod_inst = getattr(sys.modules[__name__], module)
         mod_inst.launch(logger=server_logger, port=server_port, name=server)
     except Exception as e:
-        print(module+e)
+        print(module)
+        print(e)
         time.sleep(15)
         raise
 

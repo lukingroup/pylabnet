@@ -112,7 +112,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start "{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start /min"{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
                     gui,
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -225,7 +225,7 @@ class Launcher:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
-                subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
+                subprocess.Popen(f'start /min "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
                                  f'/wait {sys.executable} '
                                  f'{os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT)} '
                                  f'--logport {self.log_port} --serverport {server_port} --server {server}', shell=True)
@@ -378,6 +378,7 @@ class Connector:
         return 'Name: {}\nIP: {}\nPort: {}\nUI: {}'.format(self.name, self.ip, self.port, self.ui)
 
 
+# Example implementation: launches full count monitor application
 def main():
 
     launcher = Launcher(
@@ -387,7 +388,6 @@ def main():
         params=None
     )
     launcher.launch()
-    time.sleep(100)
 
 
 if __name__ == '__main__':

@@ -263,7 +263,7 @@ class Launcher:
         :param port: (int) port number of host
         """
 
-        server = module.__name__
+        server = module.__name__.split('.')[-1]
         if host == socket.gethostbyname(socket.gethostname()):
             host = 'localhost'
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))

@@ -186,6 +186,7 @@ class CountMonitor:
                 label_label='Channel {}'.format(channel)
             )
 
+
 def launch(**kwargs):
     """ Launches the count monitor script """
 
@@ -197,7 +198,7 @@ def launch(**kwargs):
             ctr_client=clients['cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
         )
     except KeyError:
-        print('Please provide kwargs logger, logport, clients, guis, and params')
+        print('Please make sure the module names for required servers and GUIS are correct.')
         raise
 
     # Instantiate Pause server

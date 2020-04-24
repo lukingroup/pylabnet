@@ -192,15 +192,19 @@ def launch(logger=None, clients=None, guis=None, logport=None, params=None):
 
     # Instantiate CountMonitor
     try:
-        monitor = CountMonitor(ctr_client=clients[0], gui_client=guis[0], logger_client=logger)
+        monitor = CountMonitor(
+            ctr_client=clients['CountMonitor'], gui_client=guis['count_monitor'], logger_client=logger
+        )
     except KeyError:
-        print('Please provide kwargs ctr, gui, and log')
+        print('Please provide clients, guis, and logger')
+        raise
 
     # Instantiate Pause server
     try:
         pause_logger = LogClient(host='localhost', port=logport, module_tag='Count Monitor Pause')
     except ConnectionRefusedError:
         logger.warn('Could not connect Count Monitor Pause server to logger')
+
     pause_service = PauseService()
     pause_service.assign_module(module=monitor)
     pause_service.assign_logger(logger=pause_logger)
@@ -208,6 +212,7 @@ def launch(logger=None, clients=None, guis=None, logport=None, params=None):
     timeout = 0
     while timeout < 1000:
         try:
+            port = np.random.randint(1, 9999)
             pause_server = GenericServer(host='localhost', port=port, service=pause_service)
             timeout = 9999
         except ConnectionRefusedError:
@@ -218,7 +223,7 @@ def launch(logger=None, clients=None, guis=None, logport=None, params=None):
     # Set parameters
     if params is None:
         params = dict(bin_width=2e10, n_bins=1e3, ch_list=[1, 2], plot_list=[[1], [2]])
-    monitor.set_params(params)
+    monitor.set_params(**params)
 
     # Run
     monitor.run()

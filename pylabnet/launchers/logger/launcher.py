@@ -2,14 +2,13 @@ import time
 import subprocess
 import numpy as np
 import socket
-import sys
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args
+from pylabnet.gui.pyqt import external_gui
 
 # For operation of main
-from pylabnet.gui.pyqt import external_gui
 from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
-from pylabnet.scripts.counter import count_monitor
+from pylabnet.scripts.counter import monitor_counts
 
 
 class Launcher:
@@ -42,7 +41,11 @@ class Launcher:
             if self.script is None:
                 self.name = 'Generic Launcher'
             else:
-                self.name = str(self.script)
+                self.name = ''
+                for scr in script:
+                    self.name += scr.__name__.split('.')[-1]
+                    self.name += '_'
+                self.name += 'script'
         else:
             self.name = name
 
@@ -218,10 +221,11 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 1000:
             try:
+                time.sleep(10)
                 server_port = np.random.randint(1, 9999)
                 subprocess.Popen(f'start "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}" /wait python '
                                  f'{self._SERVER_LAUNCH_SCRIPT} --logport {self.log_port} --serverport {server_port} '
-                                 f'--server {server} --module {module.__name__}', shell=True)
+                                 f'--server {server} --module {module.__name__.split(".")[-1]}', shell=True)
                 time.sleep(20)
                 connected = True
             except ConnectionRefusedError:
@@ -372,8 +376,9 @@ class Connector:
 
 
 def main():
+
     launcher = Launcher(
-        script=count_monitor,
+        script=[monitor_counts],
         server_req=dict(CountMonitor=cnt_monitor),
         gui_req=['count_monitor'],
         params=None

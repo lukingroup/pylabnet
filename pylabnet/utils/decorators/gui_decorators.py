@@ -1,4 +1,4 @@
-from decorator_utils import get_signature
+from .decorator_utils import get_signature
 
 
 def handle_gui_errors(func):

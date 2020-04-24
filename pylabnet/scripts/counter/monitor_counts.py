@@ -190,6 +190,7 @@ def launch(**kwargs):
     """ Launches the count monitor script """
 
     logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+    print(logger, logport, clients, guis, params)
 
     # Instantiate CountMonitor
     try:
@@ -197,7 +198,7 @@ def launch(**kwargs):
             ctr_client=clients['CountMonitor'], gui_client=guis['count_monitor'], logger_client=logger
         )
     except KeyError:
-        print('Please provide clients, guis, and logger')
+        print('Please provide kwargs logger, logport, clients, guis, and params')
         raise
 
     # Instantiate Pause server

@@ -195,7 +195,7 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['CountMonitor'], gui_client=guis['count_monitor'], logger_client=logger
+            ctr_client=clients['cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
         )
     except KeyError:
         print('Please provide kwargs logger, logport, clients, guis, and params')

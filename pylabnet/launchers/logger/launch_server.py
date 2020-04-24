@@ -28,19 +28,15 @@ def main():
         log_port = int(args['logport'])
     except IndexError:
         raise IndexError('Please provide command line arguments in the form\n"'
-                         'python launch_gui.py --logport 1234 --serverport 5678 --server servername --module Module')
+                         'python launch_gui.py --logport 1234 --serverport 5678 --server servername')
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
         server_port = int(input('Please enter a server port value: '))
-    if 'module' in args:
-        module = args['module']
-    else:
-        module = input('Please enter a server module name: ')
     if 'server' in args:
         server = args['server']
     else:
-        server = module
+        server = input('Please enter a server module name: ')
 
     # Instantiate logger
     server_logger = LogClient(
@@ -52,10 +48,10 @@ def main():
 
     # Instantiate module
     try:
-        mod_inst = getattr(sys.modules[__name__], module)
+        mod_inst = getattr(sys.modules[__name__], server)
         mod_inst.launch(logger=server_logger, port=server_port, name=server)
     except Exception as e:
-        print(module)
+        print(server)
         print(e)
         time.sleep(15)
         raise

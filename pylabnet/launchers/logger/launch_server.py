@@ -47,14 +47,8 @@ def main():
     )
 
     # Instantiate module
-    try:
-        mod_inst = getattr(sys.modules[__name__], server)
-        mod_inst.launch(logger=server_logger, port=server_port, name=server)
-    except Exception as e:
-        print(server)
-        print(e)
-        time.sleep(15)
-        raise
+    mod_inst = getattr(sys.modules[__name__], server)
+    mod_inst.launch(logger=server_logger, port=server_port, name=server)
 
 
 if __name__ == '__main__':

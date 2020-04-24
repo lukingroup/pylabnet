@@ -190,7 +190,6 @@ def launch(**kwargs):
     """ Launches the count monitor script """
 
     logger, logport, clients, guis, params = unpack_launcher(**kwargs)
-    print(logger, logport, clients, guis, params)
 
     # Instantiate CountMonitor
     try:

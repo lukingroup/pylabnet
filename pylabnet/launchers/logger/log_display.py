@@ -158,7 +158,7 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start "{}, {}" /wait {} {} --logport {} --numclients {}'.format(
+        bash_cmd = 'start /min "{}, {}" /wait {} {} --logport {} --numclients {}'.format(
             script_to_run, 
             launch_time,
             sys.executable,

@@ -25,8 +25,8 @@ def handle_gui_errors(func):
                 return func(self, *args, **kwargs)
             except KeyError:
                 updated = False
-                self.gui_connected = False
-                self.logger_client.error(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
+                # self.gui_connected = False
+                self.logger_client.warn(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             except EOFError:
                 updated = False

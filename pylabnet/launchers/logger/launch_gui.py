@@ -26,6 +26,11 @@ if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
 
 _default_template = "count_monitor"
 
+# # For debugging
+# import time
+# time.sleep(30)
+# pass
+
 
 def main():
 

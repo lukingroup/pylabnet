@@ -158,8 +158,13 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start "{}, {}" /wait python {} --logport {} --numclients {}'.format(
-            script_to_run, launch_time, script_to_run, self.LOG_PORT, len(self.client_list)
+        bash_cmd = 'start "{}, {}" /wait {} {} --logport {} --numclients {}'.format(
+            script_to_run, 
+            launch_time,
+            sys.executable,
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
+            self.LOG_PORT, 
+            len(self.client_list)
         )
         client_index = 1
         for client in self.client_list:
@@ -178,7 +183,6 @@ class Controller:
             client_index += 1
 
         # Launch the new process
-        # raise Exception(bash_cmd)
         subprocess.Popen(bash_cmd, shell=True)
 
     def _start_logger(self):

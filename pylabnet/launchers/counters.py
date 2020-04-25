@@ -1,6 +1,3 @@
-import time
-time.sleep(25)
-
 """ Launches the continuous count monitor application """
 
 from pylabnet.launchers.launcher import Launcher

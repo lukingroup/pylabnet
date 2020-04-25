@@ -5,6 +5,7 @@ import socket
 import os
 import time
 import subprocess
+import numpy as np
 from io import StringIO
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
@@ -12,7 +13,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server
 import pickle
 
 
@@ -27,16 +28,21 @@ class Controller:
     """ Class for log system controller """
 
     LOGGER_UI = 'logger'
-    LOG_PORT = 1234
-    GUI_PORT = 5678
     GUI_NAME = 'logger_GUI'
 
+    # When kept as None, random port numbers will be used
+    # use these values to override and set manual port numbers if desired
+    LOG_PORT = None
+    GUI_PORT = None
+
     def __init__(self, *args, **kwargs):
+        """ Initializes launch control GUI """
 
         self.log_service = None
         self.log_server = None
         self.gui_logger = None
         self.gui_service = None
+        self.log_port = self.LOG_PORT
         self.gui_server = None
         self.client_list = {}
         self.port_list = {}
@@ -53,35 +59,36 @@ class Controller:
         self._start_logger()
         self._initialize_gui()
 
-    def start_gui_server(self, gui_port=None):
+    def start_gui_server(self):
+        """ Starts the launch controller GUI server """
 
-        # Assign the port to use
-        if gui_port is None:
-            gui_port = self.GUI_PORT
-
-        # Try to connect to the logger
-        try:
-            self.gui_logger = LogClient(
-                host='localhost',
-                port=self.LOG_PORT,
-                module_tag=self.GUI_NAME,
-                server_port=gui_port,
-                ui=self.LOGGER_UI
-            )
-        except ConnectionRefusedError:
-            raise
+        # connect to the logger
+        self.gui_logger = LogClient(
+            host='localhost',
+            port=self.LOG_PORT,
+            module_tag=self.GUI_NAME,
+            ui=self.LOGGER_UI
+        )
 
         # Instantiate GUI server and update GUI with port details
         self.gui_service = Service()
         self.gui_service.assign_module(module=self.main_window)
         self.gui_service.assign_logger(logger=self.gui_logger)
-        self.gui_server = GenericServer(
-            service=self.gui_service,
-            host='localhost',
-            port=gui_port
-        )
+        if self.GUI_PORT is None:
+            self.gui_server, gui_port = create_server(self.gui_service, logger=self.gui_logger)
+        else:
+            try:
+                self.gui_server = GenericServer(
+                    service=self.gui_service,
+                    host='localhost',
+                    port=self.GUI_PORT
+                )
+            except ConnectionRefusedError:
+                self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.GUI_PORT}')
+                raise
         self.gui_server.start()
         self.main_window.gui_label.setText('GUI Port: {}'.format(gui_port))
+        self.gui_logger.update_data(data=dict(port=gui_port))
 
         # Update internal attributes and add to list of log clients
         self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
@@ -151,6 +158,12 @@ class Controller:
         self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
 
     def _clicked(self):
+        """ Launches the script that has been double-clicked
+
+        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the 
+        relevant python script, passing all relevant LogClient information via the commandline
+        """
+
         script_to_run = list(self.script_list.keys())[list(self.script_list.values()).index(
             self.main_window.script_list.currentItem()
         )]
@@ -189,7 +202,14 @@ class Controller:
         """ Starts the log server """
 
         self.log_service = LogService()
-        self.log_server = GenericServer(service=self.log_service, host='localhost', port=self.LOG_PORT)
+        if self.LOG_PORT is None:
+            self.log_server, self.log_port = create_server(self.log_service)
+        else:
+            try:
+                self.log_server = GenericServer(service=self.log_service, host='localhost', port=self.LOG_PORT)
+            except ConnectionRefusedError:
+                print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
+                raise
         self.log_server.start()
 
     def _initialize_gui(self):
@@ -222,7 +242,7 @@ class Controller:
 
 
 def main():
-    """ Runs the log display """
+    """ Runs the launch controller """
 
     log_controller = Controller()
     log_controller.start_gui_server()

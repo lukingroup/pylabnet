@@ -2,7 +2,7 @@
 
 NOTE: Requires windows (TODO: make OS agnostic)
 NOTE: Only operational on a single machine (TODO: make network compatible)
-NOTE: the script module must have a launch() method can handle keyword arguments
+NOTE: the script module(s) must have a launch() method that can handle kwargs
         :param logger: instance of the LogClient object for logging
         :param logport: (int) port of the log server
         :param clients: dictionary containing all relevant clients in the form e.g.
@@ -11,6 +11,9 @@ NOTE: the script module must have a launch() method can handle keyword arguments
         :param guis: dictionary containing all relevant GUI clients in the form:
             {ui_filename_1: ui_client_1, ui_filename_2: ui_client_2, ...}
         :param params: arbitrary object containing all script parameters
+NOTE: the server module(s) must have a launch() method that can handle kwargs
+        :param logger: instance of the LogClient object for loggin
+        :param port: port number to use for opening a server
 
 Implements the Launcher class which is used to launch desired pylabnet script(s).
 If multiple scripts are provided, they are launched sequentially in this process.

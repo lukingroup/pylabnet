@@ -26,13 +26,14 @@ from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.utils.logging.logger import LogClient
 
 # NOTE: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
+# Modules that may only work on specific machines should be placed inside a try statement
+from pylabnet.gui.pyqt import external_gui
+from pylabnet.hardware.ni_daqs import nidaqmx_wlm
+from pylabnet.hardware.wavemeter import high_finesse_ws7
 try:
-    from pylabnet.gui.pyqt import external_gui
     from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
-except Exception as e:
-    print('Please make sure all necessary imports are possible')
-    time.sleep(20)
-    raise
+except:
+    pass
 
 DEFAULT_SERVER = 'external_gui'
 

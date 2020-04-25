@@ -898,7 +898,7 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=wlm_monitor)
     update_service.assign_logger(logger=log_client_update)
-    update_server = create_server(update_service, logger)
+    update_server = create_server(update_service, logger)[0]
     update_server.start()
 
     if params is None:

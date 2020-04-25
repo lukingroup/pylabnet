@@ -220,12 +220,14 @@ def hide_console():
 
     ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)
 
-def create_server(service, logger, host='localhost'):
+def create_server(service, logger=None, host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers
 
     :param service: service from which to launch a server
     :param logger: instance of LogClient for logging
     :param host: (optinal) IP address of host
+
+    :return: (tuple) instance of server created, port number (int) created on
     """
 
     timeout = 0
@@ -238,6 +240,10 @@ def create_server(service, logger, host='localhost'):
                 service=service
             )
         except ConnectionRefusedError:
-            logger.warn(f'Failed to create update server with port {port}')
+            msg_str = f'Failed to create update server with port {port}'
+            if logger is None:
+                print(msg_str)
+            else:
+                logger.warn(f'Failed to create update server with port {port}')
             timeout += 1
-    return server
+    return server, port

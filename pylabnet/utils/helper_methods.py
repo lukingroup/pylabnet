@@ -4,6 +4,8 @@ import time
 import re
 import sys
 import ctypes
+import numpy as np
+from pylabnet.core.generic_server import GenericServer
 
 
 def str_to_float(in_val):
@@ -217,3 +219,25 @@ def hide_console():
     """
 
     ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)
+
+def create_server(service, logger, host='localhost'):
+    """ Attempts to create a server with randomly chosen port numbers
+
+    :param service: service from which to launch a server
+    :param logger: instance of LogClient for logging
+    :param host: (optinal) IP address of host
+    """
+
+    timeout = 0
+    while timeout < 1000:
+        try:
+            port = np.random.randint(1, 9999)
+            server = GenericServer(
+                host='localhost',
+                port=port,
+                service=service
+            )
+        except ConnectionRefusedError:
+            logger.warn(f'Failed to create update server with port {port}')
+            timeout += 1
+    return server

@@ -1,6 +1,6 @@
 """ Script that launches a server.
 
-NOTE: MAKE SURE THAT THE SERVER MODULE IS IMPORTED IN THIS SCRIPT
+NOTE: MAKE SURE THAT THE SERVER MODULE IS IMPORTED IN THIS SCRIPT (see the try statement in imports)
 
 Normally, this is meant to be invoked from within a Launcher object (see launcher.py).
 However, you can also call this directly, with command-line arguments:
@@ -17,21 +17,15 @@ However, you can also call this directly, with command-line arguments:
     (3) module must have a launch(**kwargs) method for instantiating server (and prerequisites) with parameters
         :param logger: instance of LogClient class to use for logging
         :param port: (int) port number
-        :param name: (str) name to use as the server's module tag.
-            Recommended to use the module name itself (server.__name__)
 """
 
 import sys
 import time
 
-from pylabnet.utils.helper_methods import parse_args
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.utils.logging.logger import LogClient
 
-# # For debugging
-# print('Waiting for debugger to connect')
-# time.sleep(30)
-
-# IMPORTANT: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
+# NOTE: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
 try:
     from pylabnet.gui.pyqt import external_gui
     from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
@@ -55,11 +49,15 @@ def main():
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
+        show_console()
         server_port = int(input('Please enter a server port value: '))
+        hide_console()
     if 'server' in args:
         server = args['server']
     else:
+        show_console()
         server = input('Please enter a server module name: ')
+        hide_console()
 
     # Instantiate logger
     server_logger = LogClient(
@@ -71,7 +69,7 @@ def main():
 
     # Instantiate module
     mod_inst = getattr(sys.modules[__name__], server)
-    mod_inst.launch(logger=server_logger, port=server_port, name=server)
+    mod_inst.launch(logger=server_logger, port=server_port)
 
 
 if __name__ == '__main__':

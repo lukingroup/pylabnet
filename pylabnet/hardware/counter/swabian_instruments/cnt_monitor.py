@@ -150,8 +150,9 @@ def launch(**kwargs):
     :param kwargs: (dict) containing relevant kwargs
         :logger: instance of LogClient for logging purposes
         :port: (int) port number for the Cnt Monitor server
-        :ch: (list) list of channels to count from 1 to 8, e.g. [1, 2, 4]
     """
+    DEFAULT_CH_LIST = [1]
+
     TT.setTimeTaggerChannelNumberScheme(TT.TT_CHANNEL_NUMBER_SCHEME_ONE)
 
     # Connect to the device, otherwise instantiate virtual connection
@@ -162,11 +163,9 @@ def launch(**kwargs):
                               ' Instantiating virtual device instead')
         tagger = TT.createTimeTaggerVirtual()
 
-    if 'ch' not in kwargs:
-        kwargs['ch'] = [1]
     cnt_trace_wrap = Wrap(
         tagger=tagger,
-        ch_list=kwargs['ch'],
+        ch_list=DEFAULT_CH_LIST,
         logger=kwargs['logger']
     )
 

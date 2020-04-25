@@ -210,7 +210,7 @@ class Controller:
 
         # Get all relevant files
         current_directory = os.path.dirname(os.path.realpath(__file__))
-        files = [file for file in os.listdir(current_directory) if (
+        files = [file.split('.')[0] for file in os.listdir(current_directory) if (
             os.path.isfile(os.path.join(
                 current_directory, file
             )) and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file

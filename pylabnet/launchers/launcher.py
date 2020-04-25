@@ -170,7 +170,7 @@ class Launcher:
             try:
                 gui_port = np.random.randint(1, 9999)
                 subprocess.Popen('start /min "{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
-                    gui,
+                    gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
                     os.path.join(os.path.dirname(os.path.realpath(__file__)),self._GUI_LAUNCH_SCRIPT),
@@ -282,7 +282,7 @@ class Launcher:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
-                subprocess.Popen(f'start /min "{server}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
+                subprocess.Popen(f'start /min "{server+"_server"}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
                                  f'/wait {sys.executable} '
                                  f'{os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT)} '
                                  f'--logport {self.log_port} --serverport {server_port} --server {server}', shell=True)

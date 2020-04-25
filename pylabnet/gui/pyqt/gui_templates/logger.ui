@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Logger</string>
+   <string>Launch Control</string>
   </property>
   <property name="windowOpacity">
    <double>2.000000000000000</double>
@@ -253,7 +253,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <x>0</x>
      <y>0</y>
      <width>1128</width>
-     <height>26</height>
+     <height>18</height>
     </rect>
    </property>
   </widget>

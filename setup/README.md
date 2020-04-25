@@ -10,7 +10,7 @@
 	in conda shell and run command :
 		`conda env create -f env_file.yml`
 
-5. Make sure to activate pylabnet virtual environment to run Jypeter Notebook
+5. Make sure to activate pylabnet virtual environment to run Jupyter Notebook
     and configure PyCharm to use Python interpreter from pylabnet environment.
 
 - For Jupyter: run Jupyter Notebook in Pylabnet environment by using command:

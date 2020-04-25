@@ -56,3 +56,17 @@ The general experimental flow is the following. It generally consists of running
 (3) Program in script parameters for the desired experimental script.
 (4) Run the experiment!
 
+## New feature: Convenient software launching
+
+1. Make sure your Windows default `python` executable runs from the pylabnet environment. You can do this by modifying the `PATH` variable so that the path to the pylabnet python.exe is *before* any other paths that contain another python.exe file
+2. (Optional) make a shortcut for pylabnet.cmd and attach to Desktop
+3. Double-click your shortcut (or pylabnet.cmd). This should launch a minimzied shell and the pylabnet `Launch Control` GUI.
+4. From here, you can 
+- run any scripts in the pylabnet/launcher directory by double clicking on the desired script
+- view all active clients to the running `Logger`
+- view all client information, including port number (if the client is running its own server) and .ui file (if the client is a GUI)
+5. In addition to experimental scripts, you can launch:
+- an arbitrary GUI using the `pylabnet_GUI` script, which will prompt you to choose a ui template from the command line
+- an arbitrary module which contains an appropriate `launch(**kwargs)` method using the `pylabnet_server` script
+6. In order to debug scripts that you are launching via `Launch Control`, you can place a `time.sleep(x)` statement at the top of your script, and attach a debugger to the active process before it executes beyond the `sleep(x)` statement
+

@@ -65,7 +65,7 @@ class Controller:
         # connect to the logger
         self.gui_logger = LogClient(
             host='localhost',
-            port=self.LOG_PORT,
+            port=self.log_port,
             module_tag=self.GUI_NAME,
             ui=self.LOGGER_UI
         )
@@ -176,7 +176,7 @@ class Controller:
             launch_time,
             sys.executable,
             os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
-            self.LOG_PORT, 
+            self.log_port, 
             len(self.client_list)
         )
         client_index = 1
@@ -216,7 +216,7 @@ class Controller:
         """ Initializes basic GUI display """
 
         self.main_window.ip_label.setText('IP Address: {}'.format(socket.gethostbyname(socket.gethostname())))
-        self.main_window.logger_label.setText('Logger Port: {}'.format(self.LOG_PORT))
+        self.main_window.logger_label.setText('Logger Port: {}'.format(self.log_port))
         self.main_window.terminal.setText('Log messages will be displayed below \n')
 
         # Configure list of scripts to run and clicking actions

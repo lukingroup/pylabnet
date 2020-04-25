@@ -17,10 +17,14 @@ def launch(**kwargs):
 
     # Instantiate driver
     ni_daqmx_logger = kwargs['logger']
-    ni_driver = Driver(
-        device_name=NI_DEVICE_NAME,
-        logger=ni_daqmx_logger
-    )
+    try:
+        ni_driver = Driver(
+            device_name=NI_DEVICE_NAME,
+            logger=ni_daqmx_logger
+        )
+    except OSError:
+        ni_daqmx_logger.error(f'Did not find NI daqMX name {NI_DEVICE_NAME}')
+        raise
 
     # Instantiate server
     ni_daqmx_service = Service()

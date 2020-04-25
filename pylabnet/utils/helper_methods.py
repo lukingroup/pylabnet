@@ -239,6 +239,7 @@ def create_server(service, logger=None, host='localhost'):
                 port=port,
                 service=service
             )
+            timeout = 9999
         except ConnectionRefusedError:
             msg_str = f'Failed to create update server with port {port}'
             if logger is None:

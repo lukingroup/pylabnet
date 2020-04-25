@@ -35,8 +35,6 @@ try:
 except:
     pass
 
-DEFAULT_SERVER = 'external_gui'
-
 
 def main():
 

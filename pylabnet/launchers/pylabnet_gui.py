@@ -29,13 +29,6 @@ if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
 if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
-_default_template = "count_monitor"
-
-# # For debugging
-# import time
-# time.sleep(30)
-# pass
-
 
 def main():
 
@@ -49,7 +42,9 @@ def main():
     if 'ui' in args:
         gui_template = args['ui']
     else:
-        gui_template = _default_template
+        show_console()
+        gui_template = input('Please enter a GUI template to use: ')
+        hide_console()
     if 'guiport' in args:
         gui_port = int(args['guiport'])
     else:

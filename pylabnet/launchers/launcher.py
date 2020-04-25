@@ -1,3 +1,54 @@
+""" Generic module for launching pylabnet scripts
+
+NOTE: Requires windows (TODO: make OS agnostic)
+NOTE: Only operational on a single machine (TODO: make network compatible)
+NOTE: the script module must have a launch() method can handle keyword arguments
+        :param logger: instance of the LogClient object for logging
+        :param logport: (int) port of the log server
+        :param clients: dictionary containing all relevant clients in the form e.g.
+            {client_1_module.__name__: client_1_instance,
+            client_2_module.__name__: client_2_instance, ...}
+        :param guis: dictionary containing all relevant GUI clients in the form:
+            {ui_filename_1: ui_client_1, ui_filename_2: ui_client_2, ...}
+        :param params: arbitrary object containing all script parameters
+
+Implements the Launcher class which is used to launch desired pylabnet script(s).
+If multiple scripts are provided, they are launched sequentially in this process.
+Before launching the script(s), it will check the running GUI's and servers connected
+to the main LogServer, and try to instantiate any required servers and GUIs in
+separate processes using the pylabnet_gui.py and pylabnet_server.py scripts.
+
+This is meant to be executed by "double-click" action in the log_display GUI, but
+can in principle be invoked directly from the command line with appropriate 
+arguments containing information about the currently running LogServer and all of
+its active clients. See log_display.py, Controller._clicked() method for details
+
+Example useage of this class in order to make a script for launching an application
+script "monitor_counts.py" that requires a server to be running (provided in
+pylabnet.hardware.counter.swabian_instruments.cnt_monitor.py), as well as a GUI
+with the template 'count_monitor.ui'. The following .py file should be placed in the
+pylabnet.launchers directory
+
+    from .launcher import Launcher
+    from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
+    from pylabnet.scripts.counter import monitor_counts
+
+    def main():
+
+        launcher = Launcher(
+            script=[monitor_counts],
+            server_req=[cnt_monitor],
+            gui_req=['count_monitor'],
+            params=[None]
+        )
+        launcher.launch()
+
+
+    if __name__ == '__main__':
+        main()
+
+"""
+
 import time
 import subprocess
 import numpy as np
@@ -8,30 +59,25 @@ from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args
 from pylabnet.gui.pyqt import external_gui
 
-# # For debugging
-# time.sleep(15)
-
-# For operation of main
-from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
-from pylabnet.scripts.counter import monitor_counts
-
 
 class Launcher:
 
-    _GUI_LAUNCH_SCRIPT = 'launch_gui.py'
-    _SERVER_LAUNCH_SCRIPT = 'launch_server.py'
+    _GUI_LAUNCH_SCRIPT = 'pylabnet_gui.py'
+    _SERVER_LAUNCH_SCRIPT = 'pylabnet_server.py'
 
     def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None):
         """ Instantiates Launcher object
 
-        :param script: script module to launch. The module needs:
-            launch() method
+        :param script: script modules to launch. Each module needs to have a launch() method
         :param server_req: list of modules containing necessary servers. The module needs:
-            (1) main() method to instantiate Service and run the server
-            (1) Client() class, so that we can instantiate a client from this thread and pass it to the script
+            (1) launch() method to instantiate Service and run the server (see pylabnet_server.py for details)
+            (2) Client() class, so that we can instantiate a client from this thread and pass it to the script
         :param gui_req: list of gui names to instantiate (names of .ui files, excluding .ui extension)
         :param auto_connect: (bool) whether or not to automatically connect if there is a single instance of the
             required server already running
+        :param name: (str) desired name that will appear as the "process" name for the script invoking the
+            Launcher object. Can be left blank, and the names of the script module(s) will be used
+        :param params: (list) parameters for each script to launch
         """
 
         self.script = script
@@ -72,6 +118,8 @@ class Launcher:
         self.clients = {}
 
     def launch(self):
+        """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
+
         try:
             self._launch_guis()
             self._launch_servers()
@@ -82,10 +130,13 @@ class Launcher:
             raise
 
     def _connect_to_logger(self):
+        """ Connects to the LogServer"""
+
         log_client = logger.LogClient(host='localhost', port=self.log_port, module_tag=self.name)
         return logger.LogHandler(logger=log_client)
 
     def _scan_servers(self):
+        """ Scans all servers/GUIs connected as clients to the LogServer and adds them to internal attributes"""
 
         for client_index in range(self.num_clients):
 
@@ -105,7 +156,10 @@ class Launcher:
                 self.connectors[client_name].set_ui(self.args[ui_name])
 
     def _launch_new_gui(self, gui):
-        """ Launches a new GUI and connects to it """
+        """ Launches a new GUI and connects to it 
+        
+        :param gui: (str) name of the .ui file to use as a template
+        """
 
         connected = False
         timeout = 0
@@ -216,7 +270,7 @@ class Launcher:
     def _launch_new_server(self, module):
         """ Launches a new server
 
-        :param module: (obj) reference to the service object which can be launched via module.Service()
+        :param module: (obj) reference to the module which can invoke the relevant server via module.launch()
         """
 
         connected = False
@@ -256,7 +310,7 @@ class Launcher:
             raise ConnectionRefusedError()
 
     def _connect_to_server(self, module, host, port):
-        """ Connects to a new server 
+        """ Connects to a server and stores the client as an attribute, to be used in the main script(s)
 
         :param module: (object) module from which client can be instantiated using module.Client()
         :param host: (str) IP address of host
@@ -323,20 +377,28 @@ class Launcher:
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """
 
-        for script in self.script:
+        for index, script in enumerate(self.script):
 
             script.launch(
                 logger=self.logger,
                 clients=self.clients,
                 guis=self.gui_clients,
                 logport=self.log_port,
-                params=self.params
+                params=self.params[index]
             )
 
 
 class Connector:
+    """ Generic container for information about current clients to the LogServer"""
 
     def __init__(self, name=None, ip=None, port=None):
+        """ Instantiates connector
+
+        :param name: (str, optional) name of the client
+        :param ip: (str, optional) IP address of the client
+        :param port: (str, optional) port number of the client
+        """
+
         self.name = name
         self.ip = ip
         self.port = port
@@ -371,24 +433,8 @@ class Connector:
         self.ui = ui
 
     def summarize(self):
-        """ Summarizes connector properties
+        """ Summarizes connector properties. Useful for debugging/logging purposes
 
         :return: (str) summary of all properties
         """
         return 'Name: {}\nIP: {}\nPort: {}\nUI: {}'.format(self.name, self.ip, self.port, self.ui)
-
-
-# Example implementation: launches full count monitor application
-def main():
-
-    launcher = Launcher(
-        script=[monitor_counts],
-        server_req=[cnt_monitor],
-        gui_req=['count_monitor'],
-        params=None
-    )
-    launcher.launch()
-
-
-if __name__ == '__main__':
-    main()

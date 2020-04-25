@@ -1,10 +1,15 @@
-""" Runs a GUI window
+""" Script that launches and continuously runs a GUI window
 
-Instantiates client to connect to Logger. Runs a Window server
-Continuously updates GUI configuration and output. Can press the stop button + close the window to deactivate the GUI
-Can connect to the GUI and update data by creating a GUI client.
-
-Must tie the GUI to a .ui file that can be created in QtDesigner
+Normally, this is meant to be invoked from within a Launcher object (see launcher.py).
+However, you can also call this directly, with command-line arguments:
+:arg --logport: port number of log server
+:arg --guiport: (optional) port number to use for GUI server. Notes:
+    (1) if not provided, the user will be prompted to enter a port number in the commandline
+    (2) will raise a ConnectionRefusedError if port fails
+:arg --ui: (optional) the name of the server module. Notes:
+    (1) should be a valid .ui file (with .ui extension removed) within pylabnet/gui/pyqt/templates,
+        otherwise, FileNotFound error will be raised
+    (2) if not provided, _default_template will be used
 """
 
 from PyQt5 import QtWidgets, QtCore
@@ -12,7 +17,7 @@ from PyQt5 import QtWidgets, QtCore
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import parse_args
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 
 import sys
 import socket
@@ -39,7 +44,7 @@ def main():
     try:
         log_port = int(args['logport'])
     except IndexError:
-        raise IndexError('Please provide command line arguments in the form\n"'
+        raise IndexError('logport not provided. Please provide command line arguments in the form\n"'
                          'python launch_gui.py --logport 1234 --guiport 5678 --ui uifilename')
     if 'ui' in args:
         gui_template = args['ui']
@@ -48,7 +53,9 @@ def main():
     if 'guiport' in args:
         gui_port = int(args['guiport'])
     else:
+        show_console()
         gui_port = int(input('Please enter a GUI port value: '))
+        hide_console()
 
     # Instantiate logger
     gui_logger = LogClient(
@@ -83,7 +90,7 @@ def main():
             port=gui_port
         )
     except ConnectionRefusedError:
-        gui_logger.warn('Tried and failed to create server with \nIP:{}\nPort:{}'.format(
+        gui_logger.warn('Tried and failed to create GUI server with \nIP:{}\nPort:{}'.format(
             socket.gethostbyname(socket.gethostname()),
             gui_port
         ))

@@ -3,6 +3,7 @@ import os
 import time
 import re
 import sys
+import ctypes
 
 
 def str_to_float(in_val):
@@ -200,3 +201,19 @@ def unpack_launcher(**kwargs):
     params = kwargs['params']
 
     return (logger, logport, clients, guis, params)
+
+def show_console():
+    """ Shows the active console.
+
+    Useful for processes where console is typically hidden but user input is suddenly required
+    """
+
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
+
+def hide_console():
+    """ Hides the active console.
+
+    Useful for processes where console is not needed (isntead, there is a GUI to use)
+    """
+
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)

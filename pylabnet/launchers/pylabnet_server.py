@@ -1,3 +1,26 @@
+""" Script that launches a server.
+
+NOTE: MAKE SURE THAT THE SERVER MODULE IS IMPORTED IN THIS SCRIPT
+
+Normally, this is meant to be invoked from within a Launcher object (see launcher.py).
+However, you can also call this directly, with command-line arguments:
+:arg --logport: port number of log server
+:arg --serverport: (optional) port number to use for server. Notes:
+    (1) if not provided, the user will be prompted to enter a port number in the commandline
+    (2) this script does not explicitly provide ConnectionRefusedError handling. Two (non-exclusive) options:
+        (i) Implement in server.launch() method
+        (ii) Implement in launcher.py module (DONE)
+:arg --server: (optional) the name of the server module. Notes:
+    (1) should be the name of the module from which the desired server can be instantiated
+    (2) module must explicitly be imported in this script
+            (we could consider adding auto-import functionality for selected/all modules at a later time)
+    (3) module must have a launch(**kwargs) method for instantiating server (and prerequisites) with parameters
+        :param logger: instance of LogClient class to use for logging
+        :param port: (int) port number
+        :param name: (str) name to use as the server's module tag.
+            Recommended to use the module name itself (server.__name__)
+"""
+
 import sys
 import time
 

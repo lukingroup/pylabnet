@@ -40,6 +40,7 @@ import pickle
 import copy
 import sys
 import socket
+import ctypes
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -100,6 +101,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
+        self.showNormal()
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue

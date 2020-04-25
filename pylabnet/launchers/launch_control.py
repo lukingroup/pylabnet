@@ -1,4 +1,4 @@
-""" Launches the logger + graphical display """
+""" Initializes the logger + graphical display for launching pylabnet scripts """
 
 import sys
 import socket
@@ -206,14 +206,14 @@ class Controller:
         self.main_window.force_update()
 
     def _load_scripts(self):
-        """ Loads all scripts from current working directory """
+        """ Loads all relevant scripts from current working directory """
 
         # Get all relevant files
         current_directory = os.path.dirname(os.path.realpath(__file__))
         files = [file for file in os.listdir(current_directory) if (
             os.path.isfile(os.path.join(
                 current_directory, file
-            )) and '__init__.py' not in file and 'log_display.py' not in file
+            )) and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file
         )]
 
         for file in files:

@@ -233,7 +233,7 @@ class Controller:
         files = [file for file in os.listdir(current_directory) if (
             os.path.isfile(os.path.join(
                 current_directory, file
-            )) and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file
+            )) and '.py' in file and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file
         )]
 
         for file in files:

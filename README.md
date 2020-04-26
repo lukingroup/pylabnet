@@ -61,8 +61,11 @@ The general experimental flow is the following. It generally consists of running
 ### Using the feature
 
 1. Make sure your Windows default `python` executable runs from the pylabnet environment. You can do this by modifying the `PATH` variable so that the path to the pylabnet python.exe is *before* any other paths that contain another python.exe file
-2. (Optional) make a shortcut for pylabnet.cmd and attach to Desktop
-3. Double-click your shortcut (or pylabnet.cmd). This should launch a minimzied shell and the pylabnet `Launch Control` GUI.
+2. Modify the shortcut with the device icon in the main pylabnet directory
+    1. Right-click on the shortcut, and select properties
+    2. In the "Start in" field, replace whatever is entered with the local machine's path to the pylabnet/launchers/ directory. This should be already listed in the "Target" field. *Still trying to come up with a more elegant way to do this, but this is simplest for now*
+    3. You can now copy the shortcut wherever you like on the local machine (e.g. Desktop)
+3. Double-click your shortcut. This should launch a minimzied shell and the pylabnet `Launch Control` GUI.
 4. From here, you can 
     1. Run any scripts in the pylabnet/launcher directory by double clicking on the desired script
     2. View all active clients to the running `Logger`
@@ -70,7 +73,6 @@ The general experimental flow is the following. It generally consists of running
 5. In addition to experimental scripts, you can launch:
     1. An arbitrary GUI using the `pylabnet_GUI` script, which will prompt you to choose a ui template from the command line
     2. An arbitrary module which contains an appropriate `launch(**kwargs)` method using the `pylabnet_server` script
-6
 
 ### Developing within the new framework
 

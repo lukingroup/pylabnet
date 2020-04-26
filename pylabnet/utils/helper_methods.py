@@ -235,7 +235,7 @@ def create_server(service, logger=None, host='localhost'):
         try:
             port = np.random.randint(1, 9999)
             server = GenericServer(
-                host='localhost',
+                host=host,
                 port=port,
                 service=service
             )

@@ -64,7 +64,7 @@ class Controller:
 
         # connect to the logger
         self.gui_logger = LogClient(
-            host='localhost',
+            host=socket.gethostbyname(socket.gethostname()),
             port=self.log_port,
             module_tag=self.GUI_NAME,
             ui=self.LOGGER_UI
@@ -75,7 +75,11 @@ class Controller:
         self.gui_service.assign_module(module=self.main_window)
         self.gui_service.assign_logger(logger=self.gui_logger)
         if self.GUI_PORT is None:
-            self.gui_server, gui_port = create_server(self.gui_service, logger=self.gui_logger)
+            self.gui_server, gui_port = create_server(
+                self.gui_service, 
+                logger=self.gui_logger, 
+                host=socket.gethostbyname(socket.gethostname())
+                )
         else:
             try:
                 self.gui_server = GenericServer(
@@ -203,10 +207,17 @@ class Controller:
 
         self.log_service = LogService()
         if self.LOG_PORT is None:
-            self.log_server, self.log_port = create_server(self.log_service)
+            self.log_server, self.log_port = create_server(
+                self.log_service, 
+                host=socket.gethostbyname(socket.gethostname())
+                )
         else:
             try:
-                self.log_server = GenericServer(service=self.log_service, host='localhost', port=self.LOG_PORT)
+                self.log_server = GenericServer(
+                    service=self.log_service,
+                    host=socket.gethostname(socket.gethostname()), 
+                    port=self.LOG_PORT
+                    )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
                 raise

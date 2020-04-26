@@ -93,7 +93,7 @@ The general experimental flow is the following. It generally consists of running
         3. **A list of required GUI modules to be running.** The logic is very similar to item (2) above, but in this case one just needs to provide a list of .ui files, and the necessary GUI servers will be launched in separate processes, with corresponding clients instantiated in the main thread to be passed to the experimental scripts
         4. **A list of parameter dictionaries for each script**, to enable passing arbitrary parameters to each script via `kwargs['params']` in the scripts `launcher(**kwargs)` function (see `count_monitor.launcher(**kwargs)` for an example)
     3. Call Launcher.launch(). That's it.
-2. Make sure launch_server.py imports all of the server modules your script(s) require, since this will be the script used to launch them. *We can potentially come up with a better way of doing this, perhaps by consolidating dedicated server launching scripts in a unique location.*
+2. Make sure pylabnet_server.py imports all of the server modules your script(s) require, since this will be the script used to launch them. *We can potentially come up with a better way of doing this, perhaps by consolidating dedicated server launching scripts in a unique location.*
 3. Now you should be able to launch your script and requisite servers with a simple double-click from the Launch Control!
 4. In practice, everything may fail, and it may seem to be difficult to trace what is happening. In order to debug scripts that you are launching via `Launch Control`:
     1. Place a `time.sleep(x)` statement at the top of your script.

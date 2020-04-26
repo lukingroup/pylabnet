@@ -1,1 +1,0 @@
-start /min "Launch control" python ./pylabnet/launchers/launch_control.py

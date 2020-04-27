@@ -13,7 +13,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
 import pickle
 
 
@@ -49,15 +49,14 @@ class Controller:
         self.script_list = {}
         self.disconnection = False
         self.current_output = ''
+        self.slave = False
+        self.host = 'localhost'
 
         sys.stdout = StringIO()
 
         # Instantiate GUI application
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
-
-        self._start_logger()
-        self._initialize_gui()
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server """
@@ -156,6 +155,50 @@ class Controller:
             )
             del self.log_service.data_updated[0]
 
+    def start_logger(self):
+        """ Starts the log server """
+
+        self.log_service = LogService()
+        if self.LOG_PORT is None:
+            self.log_server, self.log_port = create_server(
+                self.log_service, 
+                host=socket.gethostbyname(socket.gethostname())
+                )
+        else:
+            try:
+                self.log_server = GenericServer(
+                    service=self.log_service,
+                    host=socket.gethostname(socket.gethostname()), 
+                    port=self.LOG_PORT
+                    )
+            except ConnectionRefusedError:
+                print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
+                raise
+        self.log_server.start()
+    
+    def initialize_gui(self):
+        """ Initializes basic GUI display """
+
+        ip_str, ip_str_2, log_str = '', '', ''
+        if self.slave:
+            ip_str = 'Local (Master)'
+            ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
+            log_str = 'Master '
+        self.main_window.ip_label.setText(
+            f'{ip_str}IP Address: {socket.gethostbyname(socket.gethostname())}'+ip_str_2
+            )
+        self.main_window.logger_label.setText(f'{log_str} Logger Port: {self.log_port}')
+
+        if self.slave:
+            self.main_window.terminal.setText('Connected to master Log Server. \n')
+        self.main_window.terminal.setText('Log messages will be displayed below \n')
+
+        # Configure list of scripts to run and clicking actions
+        self._load_scripts()
+        self._configure_clicks()
+
+        self.main_window.force_update()
+    
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
 
@@ -202,40 +245,6 @@ class Controller:
         # Launch the new process
         subprocess.Popen(bash_cmd, shell=True)
 
-    def _start_logger(self):
-        """ Starts the log server """
-
-        self.log_service = LogService()
-        if self.LOG_PORT is None:
-            self.log_server, self.log_port = create_server(
-                self.log_service, 
-                host=socket.gethostbyname(socket.gethostname())
-                )
-        else:
-            try:
-                self.log_server = GenericServer(
-                    service=self.log_service,
-                    host=socket.gethostname(socket.gethostname()), 
-                    port=self.LOG_PORT
-                    )
-            except ConnectionRefusedError:
-                print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
-                raise
-        self.log_server.start()
-
-    def _initialize_gui(self):
-        """ Initializes basic GUI display """
-
-        self.main_window.ip_label.setText('IP Address: {}'.format(socket.gethostbyname(socket.gethostname())))
-        self.main_window.logger_label.setText('Logger Port: {}'.format(self.log_port))
-        self.main_window.terminal.setText('Log messages will be displayed below \n')
-
-        # Configure list of scripts to run and clicking actions
-        self._load_scripts()
-        self._configure_clicks()
-
-        self.main_window.force_update()
-
     def _load_scripts(self):
         """ Loads all relevant scripts from current working directory """
 
@@ -256,6 +265,27 @@ def main():
     """ Runs the launch controller """
 
     log_controller = Controller()
+    
+    # Check if we are running in slave mode
+    try:
+        if sys.argv[1] is '-s':
+            log_controller.slave = True
+    except IndexError:
+        pass
+
+    # We must find the logger
+    if log_controller.slave:
+        try:
+            log_controller.host = sys.argv[2]
+        except IndexError:
+            show_console()
+            log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
+        log_controller.log_port = input('Please enter the master Logger Port:\n>> ')
+        gui_port = input('Please enter the master GUI Port:\n>> ')
+
+    else:
+        log_controller.start_logger()
+    log_controller.initialize_gui()
     log_controller.start_gui_server()
     while not log_controller.main_window.stop_button.isChecked():
 

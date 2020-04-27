@@ -1,6 +1,7 @@
 """ Generic script for monitoring counts from a counter """
 
 import numpy as np
+import time
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
@@ -43,7 +44,6 @@ class CountMonitor:
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
-
         # Instanciate gui handler
         self.gui_handler = GUIHandler(gui_client, logger_client)
 
@@ -81,6 +81,9 @@ class CountMonitor:
 
             # Start the counter with desired parameters
             self._initialize_display()
+
+            # Give time to initialize
+            time.sleep(0.05)
             self._is_running = True
             self._ctr.start_counting(bin_width=self._bin_width, n_bins=self._n_bins)
 
@@ -151,7 +154,6 @@ class CountMonitor:
                 label_widget=self._number_widgets[channel - 1],
                 label_label='Channel {}'.format(channel)
             )
-
 
     def _update_output(self):
         """ Updates the output to all current values"""

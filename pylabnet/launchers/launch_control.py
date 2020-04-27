@@ -10,7 +10,7 @@ from io import StringIO
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
 from PyQt5 import QtWidgets, QtGui, QtCore
-from pylabnet.gui.pyqt.external_gui import Window, Service
+from pylabnet.gui.pyqt.external_gui import Window, Service, Client
 from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
@@ -40,15 +40,17 @@ class Controller:
 
         self.log_service = None
         self.log_server = None
+        self.gui_client = None
         self.gui_logger = None
         self.gui_service = None
         self.log_port = self.LOG_PORT
+        self.gui_port = self.GUI_PORT
         self.gui_server = None
         self.client_list = {}
         self.port_list = {}
         self.script_list = {}
         self.disconnection = False
-        self.current_output = ''
+        self.current_update_index = 0
         self.slave = False
         self.host = 'localhost'
 
@@ -59,7 +61,7 @@ class Controller:
         self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):
-        """ Starts the launch controller GUI server """
+        """ Starts the launch controller GUI server, or connects to the server """
 
         # connect to the logger
         self.gui_logger = LogClient(
@@ -69,29 +71,42 @@ class Controller:
             ui=self.LOGGER_UI
         )
 
-        # Instantiate GUI server and update GUI with port details
-        self.gui_service = Service()
-        self.gui_service.assign_module(module=self.main_window)
-        self.gui_service.assign_logger(logger=self.gui_logger)
-        if self.GUI_PORT is None:
-            self.gui_server, gui_port = create_server(
-                self.gui_service, 
-                logger=self.gui_logger, 
-                host=socket.gethostbyname(socket.gethostname())
-                )
-        else:
+        gui_str = ''
+        if self.slave:
+            gui_str = 'Master '
+
+            # Connect to the GUI server
             try:
-                self.gui_server = GenericServer(
-                    service=self.gui_service,
-                    host='localhost',
-                    port=self.GUI_PORT
-                )
+                self.gui_client = Client(host=self.host, port=self.gui_port)
             except ConnectionRefusedError:
-                self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.GUI_PORT}')
-                raise
-        self.gui_server.start()
-        self.main_window.gui_label.setText('GUI Port: {}'.format(gui_port))
-        self.gui_logger.update_data(data=dict(port=gui_port))
+                self.gui_logger.error(f'Failed to connect to GUI Server with IP: {')
+
+        else:
+            # Instantiate GUI server and update GUI with port details
+            self.gui_service = Service()
+            self.gui_service.assign_module(module=self.main_window)
+            self.gui_service.assign_logger(logger=self.gui_logger)
+            if self.gui_port is None:
+                self.gui_server, gui_port = create_server(
+                    self.gui_service, 
+                    logger=self.gui_logger, 
+                    host=socket.gethostbyname(socket.gethostname())
+                    )
+            else:
+                try:
+                    self.gui_server = GenericServer(
+                        service=self.gui_service,
+                        host='localhost',
+                        port=self.gui_port
+                    )
+                except ConnectionRefusedError:
+                    self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
+                    raise
+            self.gui_server.start()
+            self.gui_logger.update_data(data=dict(port=gui_port))
+
+        self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, gui_port))
+
 
         # Update internal attributes and add to list of log clients
         self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
@@ -109,6 +124,8 @@ class Controller:
             pass
         sys.stdout.truncate(0)
         sys.stdout.seek(0)
+        self.current_update_index += 1
+        self.main_window.current_update_index.data = self.current_update_index
 
     def check_disconnection(self):
         """ Checks if a client has disconnected and raises a flag if so"""
@@ -192,6 +209,10 @@ class Controller:
         if self.slave:
             self.main_window.terminal.setText('Connected to master Log Server. \n')
         self.main_window.terminal.setText('Log messages will be displayed below \n')
+
+        # Hide current update status widget, and assign it (for bookkeeping)
+        self.main_window.current_update_index.hide()
+        self.main_window.assign_scalar('current_update_index','current_update_index')
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -280,8 +301,9 @@ def main():
         except IndexError:
             show_console()
             log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
-        log_controller.log_port = input('Please enter the master Logger Port:\n>> ')
-        gui_port = input('Please enter the master GUI Port:\n>> ')
+        log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
+        log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))
+
 
     else:
         log_controller.start_logger()

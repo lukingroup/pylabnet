@@ -171,9 +171,10 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'conda activate pylabnet && start /min "{}, {}" /wait python "{}" --logport {} --numclients {}'.format(
+        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logport {} --numclients {}'.format(
             script_to_run,
             launch_time,
+            sys.executable,
             os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run),
             self.log_port,
             len(self.client_list)
@@ -242,6 +243,7 @@ class Controller:
 
 def main():
     """ Runs the launch controller """
+
 
     log_controller = Controller()
     log_controller.start_gui_server()

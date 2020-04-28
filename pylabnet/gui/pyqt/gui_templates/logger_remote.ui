@@ -265,6 +265,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
+      <property name="overwriteMode">
+       <bool>false</bool>
+      </property>
      </widget>
     </item>
    </layout>

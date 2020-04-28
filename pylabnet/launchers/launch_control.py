@@ -7,6 +7,7 @@ import time
 import subprocess
 import numpy as np
 from io import StringIO
+import re
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -87,7 +88,11 @@ class Controller:
                 raise
 
             # Now update GUI to mirror clients
-            self._copy_master() 
+            self._copy_master()
+
+            # Get the latest update index
+            buffer = self.gui_client.get_text('buffer')
+            self.update_index = int(buffer[buffer.rfind('~!')-1])
 
         else:
             # Instantiate GUI server and update GUI with port details
@@ -134,7 +139,7 @@ class Controller:
         sys.stdout.seek(0)
 
         # Update buffer terminal
-        buffer_str = f'!!{self.update_index}!!{to_append}'
+        buffer_str = f'!~{self.update_index}~!{to_append}'
         self.main_window.buffer_terminal.append(buffer_str)
         self.update_index += 1
 
@@ -220,10 +225,11 @@ class Controller:
         if self.proxy:
             self.main_window.terminal.setText('Connected to master Log Server. \n')
         self.main_window.terminal.setText('Log messages will be displayed below \n')
+        self.main_window.update_terminal.document().setMaximumBlockCount(100)
 
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
-        self.main_window.assign_scalar('buffer_terminal', 'buffer')
+        self.main_window.assign_label('buffer_terminal', 'buffer')
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -233,7 +239,32 @@ class Controller:
 
     def update_proxy(self):
         """ Updates the proxy with new content using the buffer terminal"""
-        pass
+        
+        # Check clients and update
+        self._pull_connections()
+        
+        # Get buffer terminal
+        buffer_terminal = self.gui_client.get_text('buffer')
+
+        # Parse buffer terminal to get part of the message that is new
+        new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.update_index+1}~!'):-1]
+
+        # Check if this failed
+        if new_msg is '':
+            
+            # Check if the buffer is ahead of our last update
+            up_in = int(buffer_terminal[buffer_terminal.find('!~')+2])
+            if up_in > self.update_index:
+                new_msg = buffer_terminal
+
+        # If we have a new message to add, add it
+        if new_msg is not '':
+
+            self.main_window.terminal.append(re.sub(r'!~\d~!', '', new_msg))
+            try:
+                self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+            except TypeError:
+                pass
     
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
@@ -308,6 +339,27 @@ class Controller:
             self.main_window.client_list.addItem(self.client_list[client])
             self.client_list[client].setToolTip(info)
 
+    def _pull_connections(self):
+        """ Updates the proxy's client list """
+
+        # Get a dictionary of all client names and tooltip info
+        clients = self.gui_client.get_container_info('clients')
+
+        # Update the proxy GUI to reflect the client list of the main GUI
+        add_clients = list(set(clients.keys()) - set(self.client_list.keys()))
+        remove_clients = list(set(self.client_list.keys()) - set(clients.keys()))
+
+        # Add clients
+        for client in add_clients:
+            self.client_list[client] = QtWidgets.QListWidgetItem(client)
+            self.main_window.client_list.addItem(self.client_list[client])
+            self.client_list[client].setToolTip(clients[client])
+
+        # Remove clients
+        for client in remove_clients:
+            self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
+            del self.client_list[client]
+
 
 def main():
     """ Runs the launch controller """
@@ -331,23 +383,25 @@ def main():
         log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
         log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))
 
-
+    # Otherwise, just start the logger
     else:
         log_controller.start_logger()
+
+    # Instantiate GUI
     log_controller.initialize_gui()
     log_controller.start_gui_server()
-    while not log_controller.main_window.stop_button.isChecked():
 
-        # Handle external configuration
-        log_controller.main_window.configure_widgets()
-        log_controller.main_window.update_widgets()
+    # Standard operation
+    while not log_controller.main_window.stop_button.isChecked():
 
         # For proxy launch controller, just check main GUI for updates
         if log_controller.proxy:
             log_controller.update_proxy()
-
-        # On the main Log server, check for updates
         else:
+
+            # Handle external configuration via GUI server
+            log_controller.main_window.configure_widgets()
+            log_controller.main_window.update_widgets()
 
             # New terminal input
             if sys.stdout.getvalue() is not '':

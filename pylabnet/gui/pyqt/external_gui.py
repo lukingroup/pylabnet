@@ -220,6 +220,11 @@ class Window(QtWidgets.QMainWindow):
         """
         self.labels[label_label].set_label(text)
 
+    def get_text(self, label_label):
+        """ Returns the text in a textual label widget """
+
+        return self.labels[label_label].get_label()
+    
     def was_button_pressed(self, event_label):
         """ Returns whether or not an event button was pressed
 
@@ -626,6 +631,9 @@ class Service(ServiceBase):
             label_label=label_label
         )
 
+    def exposed_get_text(self, label_label):
+        return pickle.dumps(self._module.get_text(label_label))
+    
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
@@ -716,6 +724,9 @@ class Client(ClientBase):
             label_label=label_label
         )
 
+    def get_text(self, label_label):
+        return pickle.loads(self._service.exposed_get_text(label_label))
+    
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
 
@@ -991,7 +1002,7 @@ class Scalar:
 
 
 class Label:
-    """ A text label display object"""
+    """ A text label display object. Currently supports QLabel"""
 
     def __init__(self, gui, label_widget):
         """ Constructor for label object
@@ -1009,7 +1020,13 @@ class Label:
         :param label_text: (str, optional) text string to set the label to
         """
 
+        self.text = label_text
         self.widget.setText(label_text)
+
+    def get_label(self):
+        """ Returns label text """
+        
+        return self.widget.text()
 
 
 class EventButton:

@@ -27,7 +27,7 @@ if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
 class Controller:
     """ Class for log system controller """
 
-    LOGGER_UI = 'logger'
+    LOGGER_UI = 'logger_remote'
     GUI_NAME = 'logger_GUI'
 
     # When kept as None, random port numbers will be used
@@ -50,9 +50,9 @@ class Controller:
         self.port_list = {}
         self.script_list = {}
         self.disconnection = False
-        self.current_update_index = 0
         self.proxy = False
         self.host = 'localhost'
+        self.update_index = 0
 
         sys.stdout = StringIO()
 
@@ -87,7 +87,7 @@ class Controller:
                 raise
 
             # Now update GUI to mirror clients
-            self._copy_master()
+            self._copy_master() 
 
         else:
             # Instantiate GUI server and update GUI with port details
@@ -116,10 +116,6 @@ class Controller:
             self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
             self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
             self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
-
-            # Assign GUI object to client callable attribute
-            # TODO: check that this statement works inside external_gui.py, otherwise modify naming to find this widget
-            self.main_window.assign_scalar(f'client_list.{self.GUI_NAME}', f'client{len(self.client_list)}')
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
 
         self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, gui_port))
@@ -127,15 +123,20 @@ class Controller:
     def update_terminal(self):
         """ Updates terminal output on GUI """
 
-        self.main_window.terminal.append(sys.stdout.getvalue())
+        to_append = sys.stdout.getValue()
+        self.main_window.terminal.append(to_append)
+        self.main_window.new_input.append(to_append)
         try:
             self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
         except TypeError:
             pass
         sys.stdout.truncate(0)
         sys.stdout.seek(0)
-        self.current_update_index += 1
-        self.main_window.current_update_index.data = self.current_update_index
+
+        # Update buffer terminal
+        buffer_str = f'!!{self.update_index}!!{to_append}'
+        self.main_window.buffer_terminal.append(buffer_str)
+        self.update_index += 1
 
     def check_disconnection(self):
         """ Checks if a client has disconnected and raises a flag if so"""
@@ -220,15 +221,19 @@ class Controller:
             self.main_window.terminal.setText('Connected to master Log Server. \n')
         self.main_window.terminal.setText('Log messages will be displayed below \n')
 
-        # Hide current update status widget, and assign it (for bookkeeping)
-        self.main_window.current_update_index.hide()
-        self.main_window.assign_scalar('current_update_index','cui')
+        # Assign widgets for remote access
+        self.main_window.assign_container('client_list', 'clients')
+        self.main_window.assign_scalar('buffer_terminal', 'buffer')
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
 
         self.main_window.force_update()
+
+    def update_proxy(self):
+        """ Updates the proxy with new content using the buffer terminal"""
+        pass
     
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
@@ -294,8 +299,14 @@ class Controller:
     def _copy_master(self):
         """ Updates the GUI to copy the GUI of the master GUI server """
 
-        
+        # Get a dictionary of all client names and tooltip info
+        clients = self.gui_client.get_container_info('clients')
 
+        # Update the proxy GUI to reflect the client list of the main GUI
+        for client, info in clients.items():
+            self.client_list[client] = QtWidgets.QListWidgetItem(client)
+            self.main_window.client_list.addItem(self.client_list[client])
+            self.client_list[client].setToolTip(info)
 
 
 def main():
@@ -305,7 +316,7 @@ def main():
     
     # Check if we are running in proxy mode
     try:
-        if sys.argv[1] is '-s':
+        if sys.argv[1] is '-p':
             log_controller.proxy = True
     except IndexError:
         pass
@@ -331,21 +342,28 @@ def main():
         log_controller.main_window.configure_widgets()
         log_controller.main_window.update_widgets()
 
-        # New terminal input
-        if sys.stdout.getvalue() is not '':
+        # For proxy launch controller, just check main GUI for updates
+        if log_controller.proxy:
+            log_controller.update_proxy()
 
-            # Check for disconnection events
-            log_controller.check_disconnection()
+        # On the main Log server, check for updates
+        else:
 
-            # Handle new connections
-            log_controller.update_connection()
+            # New terminal input
+            if sys.stdout.getvalue() is not '':
 
-            # Update terminal
-            log_controller.update_terminal()
+                # Check for disconnection events
+                log_controller.check_disconnection()
 
-        # Handle disconnection events
-        if log_controller.disconnection:
-            log_controller.disconnect()
+                # Handle new connections
+                log_controller.update_connection()
+
+                # Update terminal
+                log_controller.update_terminal()
+
+            # Handle disconnection events
+            if log_controller.disconnection:
+                log_controller.disconnect()
 
         # Update display
         log_controller.main_window.force_update()

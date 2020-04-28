@@ -241,6 +241,9 @@ class Window(QtWidgets.QMainWindow):
         """
         self.event_buttons[event_label].change_background_color(color)
 
+    def get_container_info(self, container_label):
+        return self.containers[container_label].get_items()
+    
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -340,7 +343,7 @@ class Window(QtWidgets.QMainWindow):
 
             try:
                 self._assign_container(container_widget, container_label)
-                self._containers_to_assign.remove(lis)
+                self._containers_to_assign.remove(cont)
             except KeyError:
                 pass
     
@@ -588,6 +591,9 @@ class Service(ServiceBase):
 
         )
 
+    def exposed_assign_container(self, container_widget, container_label):
+        return self._module.assign_container(self, container_widget, container_label)
+    
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
         error = pickle.loads(error_pickle)
@@ -625,6 +631,9 @@ class Service(ServiceBase):
 
     def exposed_change_button_background_color(self, event_label, color):
         return self._module.change_button_background_color(self, event_label, color)
+
+    def exposed_get_container_info(self, container_label):
+        return pickle.dumps(self._module.get_container_info(container_label))
 
 
 class Client(ClientBase):
@@ -672,6 +681,9 @@ class Client(ClientBase):
             event_label=event_label,
         )
 
+    def assign_container(self, container_widget, container_label):
+        return self._service.exposed_assign_container(container_widget, container_label)
+    
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -709,6 +721,9 @@ class Client(ClientBase):
 
     def change_button_background_color(self, event_label, color):
         return self._service.exposed_change_button_background_color(self, event_label, color)
+
+    def get_container_info(self, container_label):
+        return pickle.loads(self._service.exposed_get_container_info(container_label))
 
 
 class Plot:
@@ -1055,10 +1070,13 @@ class Container:
         """ Returns all QListWidget items and tooltips as a dictionary """
         
         item_info = {}
-        for index in range(widget.count()):
-            current_item = widget.item(index)
-            item_info[current_item.text]
-            # TODO implement
+        for index in range(self.widget.count()):
+
+            # Get the current item and store its name and tooltip text
+            current_item = self.widget.item(index)
+            item_info[current_item.text()] = current_item.toolTip()
+
+        return item_info
 
 
 

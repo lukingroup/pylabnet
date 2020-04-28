@@ -112,32 +112,16 @@ selection-color: rgb(255, 0, 0);</string>
       </property>
      </widget>
     </item>
-    <item row="0" column="3" rowspan="2">
-     <widget class="QLabel" name="label">
-      <property name="maximumSize">
-       <size>
-        <width>200</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="font">
-       <font>
-        <family>Calibri Light</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(85, 170, 255);</string>
-      </property>
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Log Clients:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QPushButton" name="stop_button">
       <property name="enabled">
        <bool>true</bool>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>100</width>
+        <height>100</height>
+       </size>
       </property>
       <property name="font">
        <font>
@@ -229,6 +213,28 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </item>
      </layout>
     </item>
+    <item row="0" column="3" rowspan="2">
+     <widget class="QLabel" name="label">
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Calibri Light</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(85, 170, 255);</string>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Log Clients:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
     <item row="3" column="1" colspan="2">
      <widget class="QTextBrowser" name="terminal">
       <property name="enabled">
@@ -249,12 +255,15 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </widget>
     </item>
     <item row="3" column="0">
-     <widget class="QLCDNumber" name="current_update_index">
-      <property name="enabled">
-       <bool>true</bool>
+     <widget class="QTextBrowser" name="buffer_terminal">
+      <property name="maximumSize">
+       <size>
+        <width>100</width>
+        <height>16777215</height>
+       </size>
       </property>
-      <property name="digitCount">
-       <number>1</number>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>

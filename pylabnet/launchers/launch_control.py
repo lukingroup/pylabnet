@@ -87,6 +87,9 @@ class Controller:
                                       f'Port: {self:gui_port}')
                 raise
 
+            # For debugging
+            time.sleep(1)
+            
             # Now update GUI to mirror clients
             self._copy_master()
 
@@ -123,14 +126,14 @@ class Controller:
             self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
 
-        self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, gui_port))
+        self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, self.gui_port))
 
     def update_terminal(self):
         """ Updates terminal output on GUI """
 
-        to_append = sys.stdout.getValue()
+        to_append = sys.stdout.getvalue()
         self.main_window.terminal.append(to_append)
-        self.main_window.new_input.append(to_append)
+        self.main_window.buffer_terminal.append(to_append)
         try:
             self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
         except TypeError:
@@ -214,7 +217,7 @@ class Controller:
 
         ip_str, ip_str_2, log_str = '', '', ''
         if self.proxy:
-            ip_str = 'Local (Master)'
+            ip_str = 'Local (Master) '
             ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
@@ -225,7 +228,7 @@ class Controller:
         if self.proxy:
             self.main_window.terminal.setText('Connected to master Log Server. \n')
         self.main_window.terminal.setText('Log messages will be displayed below \n')
-        self.main_window.update_terminal.document().setMaximumBlockCount(100)
+        self.main_window.buffer_terminal.document().setMaximumBlockCount(100)
 
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
@@ -285,11 +288,12 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait {} {} --logport {} --numclients {}'.format(
+        bash_cmd = 'start /min "{}, {}" /wait {} {} --logip {} --logport {} --numclients {}'.format(
             script_to_run, 
             launch_time,
             sys.executable,
             os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
+            socket.gethostbyname(socket.gethostname()),
             self.log_port, 
             len(self.client_list)
         )
@@ -368,7 +372,7 @@ def main():
     
     # Check if we are running in proxy mode
     try:
-        if sys.argv[1] is '-p':
+        if sys.argv[1] == '-p':
             log_controller.proxy = True
     except IndexError:
         pass
@@ -378,7 +382,8 @@ def main():
         try:
             log_controller.host = sys.argv[2]
         except IndexError:
-            show_console()
+            #show_console()
+            print('THIS IS A TEST')
             log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
         log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
         log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))

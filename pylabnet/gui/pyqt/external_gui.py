@@ -1026,7 +1026,14 @@ class Label:
     def get_label(self):
         """ Returns label text """
         
-        return self.widget.text()
+        try:
+            
+            # Ordinary labels 
+            return self.widget.text()
+        except AttributeError:
+
+            # Fancy labels
+            return self.widget.toPlainText()
 
 
 class EventButton:

@@ -160,7 +160,7 @@ class Controller:
     def _clicked(self):
         """ Launches the script that has been double-clicked
 
-        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the 
+        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the
         relevant python script, passing all relevant LogClient information via the commandline
         """
 
@@ -171,12 +171,11 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait {} {} --logport {} --numclients {}'.format(
-            script_to_run, 
+        bash_cmd = 'conda activate pylabnet && start /min "{}, {}" /wait python "{}" --logport {} --numclients {}'.format(
+            script_to_run,
             launch_time,
-            sys.executable,
-            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
-            self.log_port, 
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run),
+            self.log_port,
             len(self.client_list)
         )
         client_index = 1

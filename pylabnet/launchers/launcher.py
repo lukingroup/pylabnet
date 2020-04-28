@@ -22,7 +22,7 @@ to the main LogServer, and try to instantiate any required servers and GUIs in
 separate processes using the pylabnet_gui.py and pylabnet_server.py scripts.
 
 This is meant to be executed by "double-click" action in the log_display GUI, but
-can in principle be invoked directly from the command line with appropriate 
+can in principle be invoked directly from the command line with appropriate
 arguments containing information about the currently running LogServer and all of
 its active clients. See log_display.py, Controller._clicked() method for details
 
@@ -159,8 +159,8 @@ class Launcher:
                 self.connectors[client_name].set_ui(self.args[ui_name])
 
     def _launch_new_gui(self, gui):
-        """ Launches a new GUI and connects to it 
-        
+        """ Launches a new GUI and connects to it
+
         :param gui: (str) name of the .ui file to use as a template
         """
 
@@ -169,7 +169,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min "{}, {}" /wait {} {} --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logport {} --guiport {} --ui {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,

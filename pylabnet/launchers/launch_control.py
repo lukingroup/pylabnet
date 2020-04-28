@@ -51,7 +51,7 @@ class Controller:
         self.script_list = {}
         self.disconnection = False
         self.current_update_index = 0
-        self.slave = False
+        self.proxy = False
         self.host = 'localhost'
 
         sys.stdout = StringIO()
@@ -61,25 +61,33 @@ class Controller:
         self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):
-        """ Starts the launch controller GUI server, or connects to the server """
+        """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
 
+        module_str = ''
+        if self.proxy:
+            module_str = '_proxy'
         # connect to the logger
         self.gui_logger = LogClient(
             host=socket.gethostbyname(socket.gethostname()),
             port=self.log_port,
-            module_tag=self.GUI_NAME,
+            module_tag=self.GUI_NAME+module_str,
             ui=self.LOGGER_UI
         )
 
         gui_str = ''
-        if self.slave:
+        if self.proxy:
             gui_str = 'Master '
 
             # Connect to the GUI server
             try:
                 self.gui_client = Client(host=self.host, port=self.gui_port)
             except ConnectionRefusedError:
-                self.gui_logger.error(f'Failed to connect to GUI Server with IP: {')
+                self.gui_logger.error(f'Failed to connect to GUI Server with IP address: {self.host}, '
+                                      f'Port: {self:gui_port}')
+                raise
+
+            # Now update GUI to mirror clients
+            self._copy_master()
 
         else:
             # Instantiate GUI server and update GUI with port details
@@ -104,15 +112,17 @@ class Controller:
                     raise
             self.gui_server.start()
             self.gui_logger.update_data(data=dict(port=gui_port))
+            # Update internal attributes and add to list of log clients
+            self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
+            self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
+            self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
+
+            # Assign GUI object to client callable attribute
+            # TODO: check that this statement works inside external_gui.py, otherwise modify naming to find this widget
+            self.main_window.assign_scalar(f'client_list.{self.GUI_NAME}', f'client{len(self.client_list)}')
+            self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
 
         self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, gui_port))
-
-
-        # Update internal attributes and add to list of log clients
-        self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
-        self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
-        self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
-        self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
 
     def update_terminal(self):
         """ Updates terminal output on GUI """
@@ -197,7 +207,7 @@ class Controller:
         """ Initializes basic GUI display """
 
         ip_str, ip_str_2, log_str = '', '', ''
-        if self.slave:
+        if self.proxy:
             ip_str = 'Local (Master)'
             ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
             log_str = 'Master '
@@ -206,13 +216,13 @@ class Controller:
             )
         self.main_window.logger_label.setText(f'{log_str} Logger Port: {self.log_port}')
 
-        if self.slave:
+        if self.proxy:
             self.main_window.terminal.setText('Connected to master Log Server. \n')
         self.main_window.terminal.setText('Log messages will be displayed below \n')
 
         # Hide current update status widget, and assign it (for bookkeeping)
         self.main_window.current_update_index.hide()
-        self.main_window.assign_scalar('current_update_index','current_update_index')
+        self.main_window.assign_scalar('current_update_index','cui')
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -281,21 +291,27 @@ class Controller:
             self.script_list[file] = QtWidgets.QListWidgetItem(file.split('.')[0])
             self.main_window.script_list.addItem(self.script_list[file])
 
+    def _copy_master(self):
+        """ Updates the GUI to copy the GUI of the master GUI server """
+
+        
+
+
 
 def main():
     """ Runs the launch controller """
 
     log_controller = Controller()
     
-    # Check if we are running in slave mode
+    # Check if we are running in proxy mode
     try:
         if sys.argv[1] is '-s':
-            log_controller.slave = True
+            log_controller.proxy = True
     except IndexError:
         pass
 
     # We must find the logger
-    if log_controller.slave:
+    if log_controller.proxy:
         try:
             log_controller.host = sys.argv[2]
         except IndexError:

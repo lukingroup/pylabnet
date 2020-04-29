@@ -243,7 +243,7 @@ class Controller:
 
         ip_str, ip_str_2, log_str = '', '', ''
         if self.proxy:
-            ip_str = 'Local (Master) '
+            ip_str = 'Master (Local) '
             ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
             log_str = 'Master '
         self.main_window.ip_label.setText(

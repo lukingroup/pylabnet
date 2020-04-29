@@ -128,9 +128,8 @@ class Launcher:
             self._launch_servers()
             self._launch_scripts()
         except Exception as e:
-            print(e)
-            time.sleep(20)
-            raise
+            self.logger.error(e)
+
 
     def _connect_to_logger(self):
         """ Connects to the LogServer"""
@@ -282,10 +281,19 @@ class Launcher:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
-                subprocess.Popen(f'start /min "{server+"_server"}, {time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())}"'
-                                 f'/wait {sys.executable} '
-                                 f'{os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT)} '
-                                 f'--logport {self.log_port} --serverport {server_port} --server {server}', shell=True)
+
+                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logport {} --serverport {} --server {}'.format(
+                    server+"_server",
+                    time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
+                    sys.executable,
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT),
+                    self.log_port,
+                    server_port,
+                    server
+
+                )
+
+                subprocess.Popen(cmd, shell=True)
                 connected = True
             except ConnectionRefusedError:
                 self.logger.warn(f'Failed to start {server} server on localhost with port {server_port}')

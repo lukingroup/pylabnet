@@ -1,6 +1,7 @@
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
+from pylabnet.core.generic_server import GenericServer
 
 
 class Driver():
@@ -45,6 +46,9 @@ class Driver():
         self.log.info(
             f"Staticline {self.name} set to low."
         )
+
+    def get_name(self):
+        return self.name
 
 
 class StaticLineHardwareHandler():
@@ -201,6 +205,9 @@ class Service(ServiceBase):
     def exposed_down(self):
         return self._module.down()
 
+    def exposed_get_name(self):
+        return self._module.get_name()
+
 
 class Client(ClientBase):
 
@@ -209,3 +216,43 @@ class Client(ClientBase):
 
     def down(self):
         return self._service.exposed_down()
+
+    def get_name(self):
+        return self._service.exposed_get_name()
+
+
+def launch(**kwargs):
+    """ Connects to a NI DAQ as staticline
+
+    :param kwargs: (dict) containing relevant kwargs
+        :logger: instance of LogClient for logging purposes
+        :port: (int) port number for the Cnt Monitor server
+    """
+
+    import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
+
+    device_name = 'cDAQ1Mod1'
+    daq = nidaqmx.Driver(device_name=device_name, logger=kwargs['logger'])
+
+    test_staticline = Driver(
+        name='Test staticline',
+        logger=kwargs['logger'],
+        hardware_module=daq,
+        ao_output='ao2',
+
+        down_voltage=0,
+        up_voltage=3.3,
+    )
+
+    # Instantiate Server
+    # Staticline server
+    staticline_service = Service()
+    staticline_service.assign_module(module=test_staticline)
+    staticline_service.assign_logger(logger=kwargs['logger'])
+    staticline_service_server = GenericServer(
+        service=staticline_service,
+        host='localhost',
+        port=kwargs['port']
+    )
+
+    staticline_service_server.start()

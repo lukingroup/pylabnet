@@ -30,6 +30,8 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.gui.pyqt import external_gui
 from pylabnet.hardware.ni_daqs import nidaqmx_wlm
 from pylabnet.hardware.wavemeter import high_finesse_ws7
+from pylabnet.hardware.staticline import staticline
+
 try:
     from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
 except:

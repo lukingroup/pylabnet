@@ -306,7 +306,7 @@ class Controller:
     def _clicked(self):
         """ Launches the script that has been double-clicked
 
-        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the 
+        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the
         relevant python script, passing all relevant LogClient information via the commandline
         """
 
@@ -317,13 +317,13 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait {} {} --logip {} --logport {} --numclients {}'.format(
-            script_to_run, 
+        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {}'.format(
+            script_to_run,
             launch_time,
             sys.executable,
-            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run),
             self.host,
-            self.log_port, 
+            self.log_port,
             len(self.client_list)
         )
         client_index = 1
@@ -419,6 +419,7 @@ class Controller:
 
 def main():
     """ Runs the launch controller """
+
 
     log_controller = Controller()
 

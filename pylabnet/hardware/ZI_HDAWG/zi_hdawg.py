@@ -34,7 +34,7 @@ SAMPLING_RATE_DICT = {
 }
 
 
-class HDAWGDriver():
+class Driver():
 
     def reset_DIO_outputs(self):
         """Sets all DIO outputs to low"""

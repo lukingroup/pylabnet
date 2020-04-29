@@ -1,33 +1,48 @@
-""" Launches the logger + graphical display """
+""" Initializes the logger + graphical display for launching pylabnet scripts """
 
 import sys
 import socket
 import os
 import time
 import subprocess
+import numpy as np
 from io import StringIO
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.core.generic_server import GenericServer
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 from pylabnet.gui.pyqt.external_gui import Window, Service
 from pylabnet.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server
+import pickle
+
+
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
 class Controller:
     """ Class for log system controller """
 
     LOGGER_UI = 'logger'
-    LOG_PORT = 1234
-    GUI_PORT = 5678
-    GUI_NAME = 'Logger GUI Server'
+    GUI_NAME = 'logger_GUI'
+
+    # When kept as None, random port numbers will be used
+    # use these values to override and set manual port numbers if desired
+    LOG_PORT = None
+    GUI_PORT = None
 
     def __init__(self, *args, **kwargs):
+        """ Initializes launch control GUI """
 
         self.log_service = None
         self.log_server = None
         self.gui_logger = None
         self.gui_service = None
+        self.log_port = self.LOG_PORT
         self.gui_server = None
         self.client_list = {}
         self.port_list = {}
@@ -44,39 +59,42 @@ class Controller:
         self._start_logger()
         self._initialize_gui()
 
-    def start_gui_server(self, gui_port=None):
+    def start_gui_server(self):
+        """ Starts the launch controller GUI server """
 
-        # Assign the port to use
-        if gui_port is None:
-            gui_port = self.GUI_PORT
-
-        # Try to connect to the logger
-        try:
-            self.gui_logger = LogClient(
-                host='localhost',
-                port=self.LOG_PORT,
-                module_tag=self.GUI_NAME
-            )
-        except ConnectionRefusedError:
-            raise
+        # connect to the logger
+        self.gui_logger = LogClient(
+            host='localhost',
+            port=self.log_port,
+            module_tag=self.GUI_NAME,
+            ui=self.LOGGER_UI
+        )
 
         # Instantiate GUI server and update GUI with port details
         self.gui_service = Service()
         self.gui_service.assign_module(module=self.main_window)
         self.gui_service.assign_logger(logger=self.gui_logger)
-        self.gui_server = GenericServer(
-            service=self.gui_service,
-            host='localhost',
-            port=gui_port
-        )
+        if self.GUI_PORT is None:
+            self.gui_server, gui_port = create_server(self.gui_service, logger=self.gui_logger)
+        else:
+            try:
+                self.gui_server = GenericServer(
+                    service=self.gui_service,
+                    host='localhost',
+                    port=self.GUI_PORT
+                )
+            except ConnectionRefusedError:
+                self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.GUI_PORT}')
+                raise
         self.gui_server.start()
         self.main_window.gui_label.setText('GUI Port: {}'.format(gui_port))
+        self.gui_logger.update_data(data=dict(port=gui_port))
 
         # Update internal attributes and add to list of log clients
         self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
         self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
         self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
-        self.client_list[self.GUI_NAME].setToolTip(self.log_service.client_data[self.GUI_NAME])
+        self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
 
     def update_terminal(self):
         """ Updates terminal output on GUI """
@@ -108,11 +126,13 @@ class Controller:
             self.disconnection = False
 
     def update_connection(self):
-        """ Checks if new connections have been made and updates accordingly"""
+        """ Checks if new/updated connections have been made and updates accordingly"""
 
+        # Figure out ports/clients to add
         port_to_add = [port for port in self.log_server._server.clients if port not in self.port_list.values()]
         client_to_add = [client for client in self.log_service.client_data if client not in self.client_list]
 
+        # Add client and update relevant directories + GUI
         if len(client_to_add) > 0:
             client = client_to_add[0]
             self.client_list[client] = QtWidgets.QListWidgetItem(client)
@@ -121,9 +141,16 @@ class Controller:
                 self.main_window.client_list.moveCursor(QtGui.QTextCursor.End)
             except TypeError:
                 pass
-            self.client_list[client].setToolTip(self.log_service.client_data[client])
+            self.client_list[client].setToolTip(dict_to_str(self.log_service.client_data[client]))
             if len(port_to_add) > 0:
                 self.port_list[client] = port_to_add[0]
+
+        # Check for updates to client data
+        while len(self.log_service.data_updated) > 0:
+            self.client_list[self.log_service.data_updated[0]].setToolTip(
+                dict_to_str(self.log_service.client_data[self.log_service.data_updated[0]])
+            )
+            del self.log_service.data_updated[0]
 
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
@@ -131,24 +158,65 @@ class Controller:
         self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
 
     def _clicked(self):
+        """ Launches the script that has been double-clicked
+
+        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the
+        relevant python script, passing all relevant LogClient information via the commandline
+        """
+
         script_to_run = list(self.script_list.keys())[list(self.script_list.values()).index(
             self.main_window.script_list.currentItem()
         )]
-        print('Launching {} at {}'.format(script_to_run, time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())))
-        subprocess.Popen('start "{}" /wait python {}'.format(script_to_run, script_to_run), shell=True)
+        launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+        print('Launching {} at {}'.format(script_to_run, launch_time))
+
+        # Build the bash command to input all active servers and relevant port numbers to script
+        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logport {} --numclients {}'.format(
+            script_to_run,
+            launch_time,
+            sys.executable,
+            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run),
+            self.log_port,
+            len(self.client_list)
+        )
+        client_index = 1
+        for client in self.client_list:
+            bash_cmd += ' --client{} {} --ip{} {}'.format(
+                client_index, remove_spaces(client), client_index, self.log_service.client_data[client]['ip']
+            )
+
+            # Add port of client's server, if applicable
+            if 'port' in self.log_service.client_data[client]:
+                bash_cmd += ' --port{} {}'.format(client_index, self.log_service.client_data[client]['port'])
+
+            # If this client has relevant .ui file, pass this info
+            if 'ui' in self.log_service.client_data[client]:
+                bash_cmd += ' --ui{} {}'.format(client_index, self.log_service.client_data[client]['ui'])
+
+            client_index += 1
+
+        # Launch the new process
+        subprocess.Popen(bash_cmd, shell=True)
 
     def _start_logger(self):
         """ Starts the log server """
 
         self.log_service = LogService()
-        self.log_server = GenericServer(service=self.log_service, host='localhost', port=self.LOG_PORT)
+        if self.LOG_PORT is None:
+            self.log_server, self.log_port = create_server(self.log_service)
+        else:
+            try:
+                self.log_server = GenericServer(service=self.log_service, host='localhost', port=self.LOG_PORT)
+            except ConnectionRefusedError:
+                print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
+                raise
         self.log_server.start()
 
     def _initialize_gui(self):
         """ Initializes basic GUI display """
 
         self.main_window.ip_label.setText('IP Address: {}'.format(socket.gethostbyname(socket.gethostname())))
-        self.main_window.logger_label.setText('Logger Port: {}'.format(self.LOG_PORT))
+        self.main_window.logger_label.setText('Logger Port: {}'.format(self.log_port))
         self.main_window.terminal.setText('Log messages will be displayed below \n')
 
         # Configure list of scripts to run and clicking actions
@@ -158,22 +226,24 @@ class Controller:
         self.main_window.force_update()
 
     def _load_scripts(self):
-        """ Loads all scripts from current working directory """
+        """ Loads all relevant scripts from current working directory """
 
         # Get all relevant files
-        files = [file for file in os.listdir(os.getcwd()) if (
+        current_directory = os.path.dirname(os.path.realpath(__file__))
+        files = [file for file in os.listdir(current_directory) if (
             os.path.isfile(os.path.join(
-                os.getcwd(), file
-            )) and '__init__.py' not in file and 'log_display.py' not in file
+                current_directory, file
+            )) and '.py' in file and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file
         )]
 
         for file in files:
-            self.script_list[file] = QtWidgets.QListWidgetItem(file)
+            self.script_list[file] = QtWidgets.QListWidgetItem(file.split('.')[0])
             self.main_window.script_list.addItem(self.script_list[file])
 
 
 def main():
-    """ Runs the log display """
+    """ Runs the launch controller """
+
 
     log_controller = Controller()
     log_controller.start_gui_server()

@@ -1,7 +1,12 @@
 """ Generic script for monitoring counts from a counter """
 
 import numpy as np
+import time
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
+from pylabnet.utils.logging.logger import LogClient
+from pylabnet.scripts.pause_script import PauseService
+from pylabnet.core.generic_server import GenericServer
+from pylabnet.utils.helper_methods import unpack_launcher
 
 
 # Static methods
@@ -38,7 +43,6 @@ class CountMonitor:
         self._ch_list = None
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
-
 
         # Instanciate gui handler
         self.gui_handler = GUIHandler(gui_client, logger_client)
@@ -77,6 +81,9 @@ class CountMonitor:
 
             # Start the counter with desired parameters
             self._initialize_display()
+
+            # Give time to initialize
+            time.sleep(0.05)
             self._is_running = True
             self._ctr.start_counting(bin_width=self._bin_width, n_bins=self._n_bins)
 
@@ -148,7 +155,6 @@ class CountMonitor:
                 label_label='Channel {}'.format(channel)
             )
 
-
     def _update_output(self):
         """ Updates the output to all current values"""
 
@@ -181,3 +187,47 @@ class CountMonitor:
                 text='{:.4e}'.format(count_array[-1]),
                 label_label='Channel {}'.format(channel)
             )
+
+
+def launch(**kwargs):
+    """ Launches the count monitor script """
+
+    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+
+    # Instantiate CountMonitor
+    try:
+        monitor = CountMonitor(
+            ctr_client=clients['cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
+        )
+    except KeyError:
+        print('Please make sure the module names for required servers and GUIS are correct.')
+        raise
+
+    # Instantiate Pause server
+    try:
+        pause_logger = LogClient(host='localhost', port=logport, module_tag='count_monitor_pause_server')
+    except ConnectionRefusedError:
+        logger.warn('Could not connect Count Monitor Pause server to logger')
+
+    pause_service = PauseService()
+    pause_service.assign_module(module=monitor)
+    pause_service.assign_logger(logger=pause_logger)
+
+    timeout = 0
+    while timeout < 1000:
+        try:
+            port = np.random.randint(1, 9999)
+            pause_server = GenericServer(host='localhost', port=port, service=pause_service)
+            timeout = 9999
+        except ConnectionRefusedError:
+            logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')
+            timeout += 1
+    pause_server.start()
+
+    # Set parameters
+    if params is None:
+        params = dict(bin_width=2e10, n_bins=1e3, ch_list=[1, 2], plot_list=[[1], [2]])
+    monitor.set_params(**params)
+
+    # Run
+    monitor.run()

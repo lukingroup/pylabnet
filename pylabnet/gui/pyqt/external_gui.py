@@ -27,16 +27,26 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtCore
 import pyqtgraph as pg
 
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
+from pylabnet.core.generic_server import GenericServer
 
 import numpy as np
 import os
 import pickle
 import copy
+import sys
+import socket
+import ctypes
+
+# Should help with scaling issues on monitors of differing resolution
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
 class Window(QtWidgets.QMainWindow):
@@ -49,7 +59,7 @@ class Window(QtWidgets.QMainWindow):
     """
 
     _gui_directory = "gui_templates"
-    _default_template = "mainwindow"
+    _default_template = "count_monitor"
 
     def __init__(self, app, gui_template=None, run=True):
         """ Instantiates main window object.
@@ -91,6 +101,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
+        self.showNormal()
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
@@ -363,7 +374,6 @@ class Window(QtWidgets.QMainWindow):
         try:
             uic.loadUi(self._ui, self)
         except FileNotFoundError:
-            print('Could not find .ui file, please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
             raise
 
         self._initialize_step_sizes()
@@ -497,6 +507,7 @@ class Window(QtWidgets.QMainWindow):
             gui=self,
             event_widget=event_widget
         )
+
 
 class Service(ServiceBase):
 
@@ -991,3 +1002,48 @@ class EventButton:
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
         return result
+
+
+def launch(logger=None, port=None, name=None):
+    """ Instantiates a default main window + server
+
+    :param logger: (LogClient) instance of LogClient for logging purposes
+    :param port: (int) port number for the GUI server
+    :param name: (str) name of server to display
+    """
+
+    # Create app and instantiate main window
+    app = QtWidgets.QApplication(sys.argv)
+    ui = input('Please enter the .ui file to use as a template:\n>> ')
+    try:
+        main_window = Window(app, gui_template=ui)
+    except FileNotFoundError:
+        print('Could not find .ui file, '
+              'please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
+        raise
+    gui_service = Service()
+    gui_service.assign_module(module=main_window)
+    gui_service.assign_logger(logger=logger)
+
+    if port is None:
+        port = np.random.randint(1, 9999)
+    gui_server = GenericServer(
+        service=gui_service,
+        host='localhost',
+        port=port
+    )
+
+    gui_server.start()
+
+    # Update GUI with server-specific details
+    main_window.ip_label.setText('IP Address: {}'.format(
+        socket.gethostbyname(socket.gethostname())
+    ))
+    main_window.port_label.setText('Port: {}'.format(port))
+
+    # Run the GUI until the stop button is clicked
+    while not main_window.stop_button.isChecked():
+        main_window.configure_widgets()
+        main_window.update_widgets()
+        main_window.force_update()
+    sys.exit(app.exec_())

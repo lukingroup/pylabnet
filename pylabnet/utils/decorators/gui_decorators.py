@@ -1,4 +1,4 @@
-from decorator_utils import get_signature
+from .decorator_utils import get_signature
 
 
 def handle_gui_errors(func):
@@ -25,8 +25,9 @@ def handle_gui_errors(func):
                 return func(self, *args, **kwargs)
             except KeyError:
                 updated = False
-                self.gui_connected = False
-                self.logger_client.error(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
+
+                # Note that we should use a warning here, since KeyErrors can happen during normal operation
+                self.logger_client.warn(f"KeyError in calling {func.__name__}({get_signature(*args, **kwargs)}), trying again {try_num}/{timeout}.")
 
             except EOFError:
                 updated = False

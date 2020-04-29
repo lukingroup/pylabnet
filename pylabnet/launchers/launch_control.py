@@ -50,9 +50,10 @@ class Controller:
         self.client_list = {}
         self.port_list = {}
         self.script_list = {}
+        self.client_data = {}
         self.disconnection = False
         self.proxy = False
-        self.host = 'localhost'
+        self.host = socket.gethostbyname(socket.gethostname())
         self.update_index = 0
 
         sys.stdout = StringIO()
@@ -95,7 +96,7 @@ class Controller:
 
             # Get the latest update index
             buffer = self.gui_client.get_text('buffer')
-            self.update_index = int(buffer[buffer.rfind('~!')-1])
+            self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', buffer)[-1])[0])
 
         else:
             # Instantiate GUI server and update GUI with port details
@@ -103,7 +104,7 @@ class Controller:
             self.gui_service.assign_module(module=self.main_window)
             self.gui_service.assign_logger(logger=self.gui_logger)
             if self.gui_port is None:
-                self.gui_server, gui_port = create_server(
+                self.gui_server, self.gui_port = create_server(
                     self.gui_service, 
                     logger=self.gui_logger, 
                     host=socket.gethostbyname(socket.gethostname())
@@ -119,12 +120,13 @@ class Controller:
                     self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
                     raise
             self.gui_server.start()
-            self.gui_logger.update_data(data=dict(port=gui_port))
+            self.gui_logger.update_data(data=dict(port=self.gui_port))
             # Update internal attributes and add to list of log clients
             self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
             self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
             self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
+            self.client_data[self.GUI_NAME+module_str] = self.log_service.client_data[self.GUI_NAME]
 
         self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, self.gui_port))
 
@@ -162,6 +164,7 @@ class Controller:
             del self.client_list[client]
             del self.port_list[client]
             del self.log_service.client_data[client]
+            del self.client_data[client]
             self.disconnection = False
 
     def update_connection(self):
@@ -183,6 +186,7 @@ class Controller:
             self.client_list[client].setToolTip(dict_to_str(self.log_service.client_data[client]))
             if len(port_to_add) > 0:
                 self.port_list[client] = port_to_add[0]
+            self.client_data[client] = self.log_service.client_data[client]
 
         # Check for updates to client data
         while len(self.log_service.data_updated) > 0:
@@ -256,18 +260,21 @@ class Controller:
         if new_msg is '':
             
             # Check if the buffer is ahead of our last update
-            up_in = int(buffer_terminal[buffer_terminal.find('!~')+2])
-            if up_in > self.update_index:
-                new_msg = buffer_terminal
+            up_str = re.findall(r'!~\d+~!', new_msg)
+            if len(up_str) > 0:
+                up_in = int(re.findall(r'\d+', up_str[0]))
+                if up_in > self.update_index:
+                    new_msg = buffer_terminal
 
         # If we have a new message to add, add it
         if new_msg is not '':
 
-            self.main_window.terminal.append(re.sub(r'!~\d~!', '', new_msg))
+            self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
             except TypeError:
                 pass
+            self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
     
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
@@ -285,7 +292,7 @@ class Controller:
             self.main_window.script_list.currentItem()
         )]
         launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-        print('Launching {} at {}'.format(script_to_run, launch_time))
+        print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
 
         # Build the bash command to input all active servers and relevant port numbers to script
         bash_cmd = 'start /min "{}, {}" /wait {} {} --logip {} --logport {} --numclients {}'.format(
@@ -293,23 +300,23 @@ class Controller:
             launch_time,
             sys.executable,
             os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run), 
-            socket.gethostbyname(socket.gethostname()),
+            self.host,
             self.log_port, 
             len(self.client_list)
         )
         client_index = 1
         for client in self.client_list:
             bash_cmd += ' --client{} {} --ip{} {}'.format(
-                client_index, remove_spaces(client), client_index, self.log_service.client_data[client]['ip']
+                client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
             )
 
             # Add port of client's server, if applicable
-            if 'port' in self.log_service.client_data[client]:
-                bash_cmd += ' --port{} {}'.format(client_index, self.log_service.client_data[client]['port'])
+            if 'port' in self.client_data[client]:
+                bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
 
             # If this client has relevant .ui file, pass this info
-            if 'ui' in self.log_service.client_data[client]:
-                bash_cmd += ' --ui{} {}'.format(client_index, self.log_service.client_data[client]['ui'])
+            if 'ui' in self.client_data[client]:
+                bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
 
             client_index += 1
 
@@ -343,6 +350,17 @@ class Controller:
             self.main_window.client_list.addItem(self.client_list[client])
             self.client_list[client].setToolTip(info)
 
+            # Add client data
+            self.client_data[client] = {}
+            if 'ip: ' in info:
+                self.client_data[client]['ip'] = info.split('ip: ')[1].split('\n')[0]
+            if 'timestamp: ' in info:
+                self.client_data[client]['timestamp'] = info.split('timestamp: ')[1].split('\n')[0]
+            if 'ui: ' in info:
+                self.client_data[client]['ui'] = info.split('ui: ')[1].split('\n')[0]
+            if 'port: ' in info:
+                self.client_data[client]['port'] = info.split('port: ')[1].split('\n')[0]
+
     def _pull_connections(self):
         """ Updates the proxy's client list """
 
@@ -358,6 +376,18 @@ class Controller:
             self.client_list[client] = QtWidgets.QListWidgetItem(client)
             self.main_window.client_list.addItem(self.client_list[client])
             self.client_list[client].setToolTip(clients[client])
+
+            # Add client data
+            self.client_data[client] = {}
+            print('Client: '+client)
+            if 'ip: ' in clients[client]:
+                self.client_data[client]['ip'] = clients[client].split('ip: ')[1].split('\n')[0]
+            if 'timestamp: ' in clients[client]:
+                self.client_data[client]['timestamp'] = clients[client].split('timestamp: ')[1].split('\n')[0]
+            if 'ui: ' in clients[client]:
+                self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
+            if 'port: ' in clients[client]:
+                self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
 
         # Remove clients
         for client in remove_clients:

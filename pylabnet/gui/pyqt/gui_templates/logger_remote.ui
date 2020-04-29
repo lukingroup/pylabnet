@@ -265,6 +265,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
       <property name="overwriteMode">
        <bool>false</bool>
       </property>
@@ -278,7 +284,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <x>0</x>
      <y>0</y>
      <width>1526</width>
-     <height>38</height>
+     <height>31</height>
     </rect>
    </property>
   </widget>

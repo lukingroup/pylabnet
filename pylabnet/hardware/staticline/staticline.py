@@ -3,7 +3,7 @@ from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
 
 
-class StaticLine():
+class Driver():
 
     def __init__(self, name, logger,  hardware_module,  **kwargs):
         '''High level staticline class.
@@ -164,13 +164,13 @@ class StaticLineHardwareHandler():
         self.log = loghandler
 
         # Read string of module name (e.g. 'HDAWGDriver').
-        self.hardware_module_name = type(hardware_module).__name__
+        self.hardware_module_name = str(hardware_module.__class__).split('.')[-2]
 
         # Dictionary listing all hardware modules which can address
         # staticlines and their corresponding setup functions.
         registered_staticline_modules = {
-            'HDAWGDriver':  self._setup_HDWAGDriver,
-            'NiDaqMxDriver': self._setup_NiDaqMxDriver
+            'zi_hdawg':  self._setup_HDWAGDriver,
+            'nidaqmx_card': self._setup_NiDaqMxDriver
         }
 
         # Check if hardware module is registered.
@@ -193,7 +193,7 @@ class StaticLineHardwareHandler():
                 )
 
 
-class StaticLineService(ServiceBase):
+class Service(ServiceBase):
 
     def exposed_up(self):
         return self._module.up()
@@ -202,7 +202,7 @@ class StaticLineService(ServiceBase):
         return self._module.down()
 
 
-class StaticLineClient(ClientBase):
+class Client(ClientBase):
 
     def up(self):
         return self._service.exposed_up()

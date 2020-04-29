@@ -106,7 +106,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </item>
     </layout>
    </widget>
-   <widget class="QPushButton" name="wave_ff_button">
+   <widget class="QPushButton" name="wave_of_button">
     <property name="enabled">
      <bool>true</bool>
     </property>

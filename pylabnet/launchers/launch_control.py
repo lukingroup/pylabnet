@@ -217,9 +217,9 @@ class Controller:
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
+        sys.stdout = StringIO()
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
-        sys.stdout = StringIO()
 
         ip_str, ip_str_2, log_str = '', '', ''
         if self.proxy:

@@ -60,7 +60,7 @@ The general experimental flow is the following. It generally consists of running
 
 ### Using the feature
 
-1. Make sure your Windows default `python` executable runs from the pylabnet environment. You can do this by modifying the `PATH` variable so that the path to the pylabnet python.exe is *before* any other paths that contain another python.exe file
+1. Make sure your Windows default your PATH environment variable contains the directory to conda.exe (e.g. make sure you can rund "conda activate pylabnet" from the command line)
 2. Modify the shortcut with the device icon in the main pylabnet directory
     1. Copy the shortcut to your desktop.
     2. Right-click on the shortcut, and select properties

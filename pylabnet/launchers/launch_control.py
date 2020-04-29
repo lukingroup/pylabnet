@@ -68,7 +68,7 @@ class Controller:
             module_str = '_proxy'
         # connect to the logger
         self.gui_logger = LogClient(
-            host=socket.gethostbyname(socket.gethostname()),
+            host=self.host,
             port=self.log_port,
             module_tag=self.GUI_NAME+module_str,
             ui=self.LOGGER_UI
@@ -415,8 +415,7 @@ def main():
             log_controller.host = sys.argv[2]
         except IndexError:
             #show_console()
-            print('THIS IS A TEST')
-            host = input('Please enter the master Launch Control IP address:\n>> ')
+            log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
         log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
         log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))
 

@@ -52,13 +52,33 @@ class Controller:
         self.script_list = {}
         self.client_data = {}
         self.disconnection = False
-        self.proxy = False
+        try:
+            if sys.argv[1] == '-p':
+                self.proxy = True
+            else:
+                self.proxy = False
+        except IndexError:
+            self.proxy = False
         self.host = socket.gethostbyname(socket.gethostname())
         self.update_index = 0
 
+        # Find logger if applicable
+        if self.proxy:
+            try:
+                self.host = sys.argv[2]
+            except IndexError:
+                show_console()
+                self.host = input('Please enter the master Launch Control IP address:\n>> ')
+            show_console()
+            self.log_port = int(input('Please enter the master Logger Port:\n>> '))
+            self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
+            hide_console()
+        
+        sys.stdout = StringIO()
+        
         # Instantiate GUI application
-        self.app = None
-        self.main_window = None
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
@@ -217,9 +237,9 @@ class Controller:
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
-        sys.stdout = StringIO()
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
+        # sys.stdout = StringIO()
+        # self.app = QtWidgets.QApplication(sys.argv)
+        # self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
 
         ip_str, ip_str_2, log_str = '', '', ''
         if self.proxy:
@@ -401,30 +421,10 @@ def main():
     """ Runs the launch controller """
 
     log_controller = Controller()
-    
-    # Check if we are running in proxy mode
-    try:
-        if sys.argv[1] == '-p':
-            log_controller.proxy = True
-    except IndexError:
-        pass
-
-    # We must find the logger
-    if log_controller.proxy:
-        try:
-            log_controller.host = sys.argv[2]
-        except IndexError:
-            show_console()
-            log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
-        log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
-        log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))
-        hide_console()
-
-    # Otherwise, just start the logger
-    else:
-        log_controller.start_logger()
 
     # Instantiate GUI
+    if not log_controller.proxy:
+        log_controller.start_logger()
     log_controller.initialize_gui()
     log_controller.start_gui_server()
 

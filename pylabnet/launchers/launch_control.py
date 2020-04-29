@@ -247,7 +247,7 @@ class Controller:
             ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
-            f'{ip_str}IP Address: {socket.gethostbyname(socket.gethostname())}'+ip_str_2
+            f'{ip_str}IP Address: {self.host}'+ip_str_2
             )
         self.main_window.logger_label.setText(f'{log_str} Logger Port: {self.log_port}')
 

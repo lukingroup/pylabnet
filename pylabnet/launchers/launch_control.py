@@ -414,10 +414,11 @@ def main():
         try:
             log_controller.host = sys.argv[2]
         except IndexError:
-            #show_console()
+            show_console()
             log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
         log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
         log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))
+        hide_console()
 
     # Otherwise, just start the logger
     else:

@@ -56,11 +56,9 @@ class Controller:
         self.host = socket.gethostbyname(socket.gethostname())
         self.update_index = 0
 
-        sys.stdout = StringIO()
-
         # Instantiate GUI application
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
+        self.app = None
+        self.main_window = None
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
@@ -218,6 +216,10 @@ class Controller:
     
     def initialize_gui(self):
         """ Initializes basic GUI display """
+
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
+        sys.stdout = StringIO()
 
         ip_str, ip_str_2, log_str = '', '', ''
         if self.proxy:
@@ -414,7 +416,7 @@ def main():
         except IndexError:
             #show_console()
             print('THIS IS A TEST')
-            log_controller.host = input('Please enter the master Launch Control IP address:\n>> ')
+            host = input('Please enter the master Launch Control IP address:\n>> ')
         log_controller.log_port = int(input('Please enter the master Logger Port:\n>> '))
         log_controller.gui_port = int(input('Please enter the master GUI Port:\n>> '))
 

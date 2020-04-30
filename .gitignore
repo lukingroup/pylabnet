@@ -137,5 +137,4 @@ dmypy.json
 pylabnet/hardware/zi_hdawg/zh_ex.py
 pylabnet/hardware/counter/swabian_instruments/__pycache__/*
 *.pyc
-pylabnet/launchers/staticline_gui_test.py
 pylabnet/scripts/staticline_gui_test/test.py

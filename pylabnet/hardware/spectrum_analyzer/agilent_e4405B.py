@@ -9,7 +9,7 @@ import pickle
 import time
 
 
-class E4405BDriver():
+class Driver():
     '''Driver class for GPIB controlled Agilent EE405 Spectrum analyser'''
 
     def reset(self):
@@ -151,7 +151,7 @@ class E4405BDriver():
         return trace
 
 
-class E4405BService(ServiceBase):
+class Service(ServiceBase):
 
     def exposed_reset(self):
         return self._module.reset()
@@ -183,7 +183,7 @@ class E4405BService(ServiceBase):
         return self._module.device.write(command)
 
 
-class E4405BClient(ClientBase):
+class Client(ClientBase):
 
     def reset(self):
         return self._service.exposed_reset()

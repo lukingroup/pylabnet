@@ -104,6 +104,7 @@ class Launcher:
         self.args = parse_args()
 
         try:
+            self.log_ip = self.args['logip']
             self.log_port = int(self.args['logport'])
             self.num_clients = int(self.args['numclients'])
         except IndexError:
@@ -134,7 +135,7 @@ class Launcher:
     def _connect_to_logger(self):
         """ Connects to the LogServer"""
 
-        log_client = logger.LogClient(host='localhost', port=self.log_port, module_tag=self.name)
+        log_client = logger.LogClient(host=self.log_ip, port=self.log_port, module_tag=self.name)
         return logger.LogHandler(logger=log_client)
 
     def _scan_servers(self):
@@ -165,25 +166,27 @@ class Launcher:
 
         connected = False
         timeout = 0
+        host = socket.gethostbyname(socket.gethostname)
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
                     os.path.join(os.path.dirname(os.path.realpath(__file__)),self._GUI_LAUNCH_SCRIPT),
+                    self.log_ip,
                     self.log_port,
                     gui_port,
                     gui
                 ), shell=True)
                 connected = True
             except ConnectionRefusedError:
-                self.logger.warn(f'Failed to start {gui} GUI server on localhost with port {gui_port}')
+                self.logger.warn(f'Failed to start {gui} GUI server on {host} with port {gui_port}')
                 timeout += 1
                 time.sleep(0.01)
         if timeout == 1000:
-            self.logger.error(f'Failed to start {gui} GUI server on localhost')
+            self.logger.error(f'Failed to start {gui} GUI server on {host}')
             raise ConnectionRefusedError()
 
         # Connect to GUI, store client. Try several times, since it may take some time to actually launch the server
@@ -191,7 +194,7 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 1000:
             try:
-                self.gui_clients[gui] = external_gui.Client(host='localhost', port=gui_port)
+                self.gui_clients[gui] = external_gui.Client(host=host, port=gui_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
@@ -199,8 +202,8 @@ class Launcher:
 
         # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
         if timeout == 1000:
-            self.logger.error('Failed to connect client to newly instantiated {} server at \nIP: localhost'
-                              '\nPort: {}'.format(gui, gui_port))
+            self.logger.error(f'Failed to connect client to newly instantiated {gui} server at \nIP: {host}'
+                              f'\nPort: {gui_port}')
             raise ConnectionRefusedError()
 
     def _connect_to_gui(self, gui, host, port):
@@ -210,8 +213,7 @@ class Launcher:
         :param host: (str) IP address of server to connect to
         :param port: (int) port number of server to connect to
         """
-        if host == socket.gethostbyname(socket.gethostname()):
-            host = 'localhost'
+
         self.logger.info('Trying to connect to active GUI Server\nHost: {}\nPort: {}'.format(host, port))
         try:
             self.gui_clients[gui] = external_gui.Client(host=host, port=port)
@@ -277,16 +279,18 @@ class Launcher:
 
         connected = False
         timeout = 0
+        host = socket.gethostbyname(socket.gethostname())
         while not connected and timeout < 1000:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logport {} --serverport {} --server {}'.format(
+                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip{} --logport {} --serverport {} --server {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
                     os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT),
+                    self.log_ip,
                     self.log_port,
                     server_port,
                     server
@@ -296,11 +300,11 @@ class Launcher:
                 subprocess.Popen(cmd, shell=True)
                 connected = True
             except ConnectionRefusedError:
-                self.logger.warn(f'Failed to start {server} server on localhost with port {server_port}')
+                self.logger.warn(f'Failed to start {server} server on {host} with port {server_port}')
                 timeout += 1
                 time.sleep(0.01)
             if timeout == 1000:
-                self.logger.error(f'Failed to start {server} server on localhost')
+                self.logger.error(f'Failed to start {server} server on {host}')
                 raise ConnectionRefusedError()
 
         # Connect to server, store client. Try several times, since it may take some time to actually launch the server
@@ -308,7 +312,7 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 1000:
             try:
-                self.clients[server] = module.Client(host='localhost', port=server_port)
+                self.clients[server] = module.Client(host=host, port=server_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
@@ -316,8 +320,8 @@ class Launcher:
 
         # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
         if timeout == 1000:
-            self.logger.error('Failed to connect client to newly instantiated {} server at \nIP: localhost'
-                              '\nPort: {}'.format(server, server_port))
+            self.logger.error(f'Failed to connect client to newly instantiated {server} server at \nIP: {host}'
+                              f'\nPort: {server_port}')
             raise ConnectionRefusedError()
 
     def _connect_to_server(self, module, host, port):
@@ -329,8 +333,6 @@ class Launcher:
         """
 
         server = module.__name__.split('.')[-1]
-        if host == socket.gethostbyname(socket.gethostname()):
-            host = 'localhost'
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
         try:
             self.clients[server] = module.Client(host=host, port=port)

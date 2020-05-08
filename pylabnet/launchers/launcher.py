@@ -166,7 +166,7 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname)
+        host = socket.gethostbyname(socket.gethostname())
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)

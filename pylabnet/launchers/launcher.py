@@ -59,7 +59,7 @@ import sys
 import os
 import socket
 from pylabnet.utils.logging import logger
-from pylabnet.utils.helper_methods import parse_args
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.gui.pyqt import external_gui
 
 
@@ -131,7 +131,6 @@ class Launcher:
         except Exception as e:
             self.logger.error(e)
 
-
     def _connect_to_logger(self):
         """ Connects to the LogServer"""
 
@@ -146,17 +145,21 @@ class Launcher:
             # Check if there is a port for this client, instantiate connector if so
             port_name = 'port{}'.format(client_index + 1)
             client_name = self.args['client{}'.format(client_index+1)]
-            if port_name in self.args:
+            try:
                 self.connectors[client_name] = Connector(
-                    name=client_name,
-                    ip=self.args['ip{}'.format(client_index+1)],
-                    port=self.args[port_name]
-                )
+                            name=client_name,
+                            ip=self.args['ip{}'.format(client_index+1)],
+                            port=self.args[port_name]
+                        )
+            except KeyError:
+                pass
 
             # Check for a ui file as well, if it is a GUI
             ui_name = 'ui{}'.format(client_index + 1)
-            if ui_name in self.args:
+            try:
                 self.connectors[client_name].set_ui(self.args[ui_name])
+            except KeyError:
+                pass
 
     def _launch_new_gui(self, gui):
         """ Launches a new GUI and connects to it
@@ -248,6 +251,7 @@ class Launcher:
                 else:
                     msg_str = 'Found relevant GUI(s) already running.\n'
                     self.logger.info(msg_str)
+                    show_console()
                     print(msg_str)
                     for index, match in enumerate(matches):
                         msg_str = ('------------------------------------------\n'
@@ -270,6 +274,7 @@ class Launcher:
                     except IndexError:
                         self.logger.info('Launching new GUI')
                         self._launch_new_gui(gui)
+                    hide_console()
 
     def _launch_new_server(self, module):
         """ Launches a new server
@@ -285,7 +290,7 @@ class Launcher:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip{} --logport {} --serverport {} --server {}'.format(
+                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -294,7 +299,6 @@ class Launcher:
                     self.log_port,
                     server_port,
                     server
-
                 )
 
                 subprocess.Popen(cmd, shell=True)
@@ -310,13 +314,12 @@ class Launcher:
         # Connect to server, store client. Try several times, since it may take some time to actually launch the server
         connected = False
         timeout = 0
-        while not connected and timeout < 1000:
+        while not connected and timeout < 10:
             try:
                 self.clients[server] = module.Client(host=host, port=server_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
-                time.sleep(0.01)
 
         # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
         if timeout == 1000:
@@ -354,6 +357,8 @@ class Launcher:
 
             # If there are no matches, launch and connect to the server manually
             if num_matches == 0:
+                self.logger.info(f'No active servers matching {module.__name__.split(".")[-1]}'
+                                 'were found. Instantiating a new server')
                 self._launch_new_server(module)
 
             # If there is exactly 1 match, try to connect automatically
@@ -362,6 +367,7 @@ class Launcher:
 
             # If there are multiple matches, force the user to choose in the launched console
             else:
+                show_console()
                 msg_str = 'Found relevant server(s) already running.\n'
                 self.logger.info(msg_str)
                 print(msg_str)
@@ -386,6 +392,7 @@ class Launcher:
                 except IndexError:
                     self.logger.info('Launching new server')
                     self._launch_new_server(module)
+                hide_console()
 
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """
@@ -394,6 +401,7 @@ class Launcher:
 
             script.launch(
                 logger=self.logger,
+                loghost=self.log_ip,
                 clients=self.clients,
                 guis=self.gui_clients,
                 logport=self.log_port,

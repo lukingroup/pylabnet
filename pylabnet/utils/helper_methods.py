@@ -181,14 +181,15 @@ def parse_args():
 
     return arg_dict
 
+
 def unpack_launcher(**kwargs):
     """ Unpacks the launcher kwargs for easy use in launcher method definition within script modules.
     Copy paste the following implementation at the top of script.launch() method:
 
-    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger, loghost logport, clients, guis, params = unpack_launcher(**kwargs)
 
     :param kwargs: (dict) contains all keyword arguments required for launching a script from launcher module
-        e.g.: dict(logger=log, clients=[client1, client2], guis=[gui_client1, gui_client2]),
+        e.g.: dict(logger=log, loghost='localhost', clients=[client1, client2], guis=[gui_client1, gui_client2]),
                    logport=1234, params=experimental_parameters_container)
         Note that experimental parameters should go in "params" and can be customized to contain all other
         script specific stuff
@@ -197,12 +198,14 @@ def unpack_launcher(**kwargs):
     """
 
     logger = kwargs['logger']
+    loghost = kwargs['loghost']
     clients = kwargs['clients']
     guis = kwargs['guis']
     logport = kwargs['logport']
     params = kwargs['params']
 
-    return (logger, logport, clients, guis, params)
+    return logger, loghost, logport, clients, guis, params
+
 
 def show_console():
     """ Shows the active console.

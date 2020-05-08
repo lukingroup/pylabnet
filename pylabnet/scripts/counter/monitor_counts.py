@@ -2,6 +2,7 @@
 
 import numpy as np
 import time
+import socket
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
@@ -192,7 +193,7 @@ class CountMonitor:
 def launch(**kwargs):
     """ Launches the count monitor script """
 
-    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
     # Instantiate CountMonitor
     try:
@@ -205,7 +206,11 @@ def launch(**kwargs):
 
     # Instantiate Pause server
     try:
-        pause_logger = LogClient(host='localhost', port=logport, module_tag='count_monitor_pause_server')
+        pause_logger = LogClient(
+            host=loghost,
+            port=logport,
+            module_tag='count_monitor_pause_server'
+        )
     except ConnectionRefusedError:
         logger.warn('Could not connect Count Monitor Pause server to logger')
 
@@ -217,7 +222,10 @@ def launch(**kwargs):
     while timeout < 1000:
         try:
             port = np.random.randint(1, 9999)
-            pause_server = GenericServer(host='localhost', port=port, service=pause_service)
+            pause_server = GenericServer(
+                host=socket.gethostbyname(socket.gethostname()),
+                port=port,
+                service=pause_service)
             timeout = 9999
         except ConnectionRefusedError:
             logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')

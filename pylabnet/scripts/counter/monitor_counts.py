@@ -226,6 +226,7 @@ def launch(**kwargs):
                 host=socket.gethostbyname(socket.gethostname()),
                 port=port,
                 service=pause_service)
+            pause_logger.update_data(data=dict(port=port))
             timeout = 9999
         except ConnectionRefusedError:
             logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')

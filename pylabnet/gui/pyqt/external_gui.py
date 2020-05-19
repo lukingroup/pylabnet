@@ -1,4 +1,4 @@
-""" Module for creating a GUI window that can be accessed remotely via the pylabnet client-server interface.
+""" Module for creating a GUI window.
 
 Templates for the GUI window can be configured using Qt Designer and should be stored as .ui files in the
 ./gui_templates directory.
@@ -29,11 +29,6 @@ would be thrown in case the GUI crashes. This enables scripts to continue runnin
 
 from PyQt5 import QtWidgets, uic, QtCore
 import pyqtgraph as pg
-
-from pylabnet.network.core.service_base import ServiceBase
-from pylabnet.network.core.client_base import ClientBase
-from pylabnet.network.core.generic_server import GenericServer
-
 import numpy as np
 import os
 import pickle

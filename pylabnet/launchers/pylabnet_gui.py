@@ -13,15 +13,16 @@ However, you can also call this directly, with command-line arguments:
 """
 
 from PyQt5 import QtWidgets, QtCore
+import sys
+import socket
+import numpy as np
 
-from pylabnet.gui.pyqt.external_gui import Window, Service
+from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.network.client_server.external_gui import Service
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 
-import sys
-import socket
-import numpy as np
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):

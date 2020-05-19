@@ -15,7 +15,7 @@ However, you can also call this directly, with command-line arguments:
 from PyQt5 import QtWidgets, QtCore
 
 from pylabnet.gui.pyqt.external_gui import Window, Service
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 

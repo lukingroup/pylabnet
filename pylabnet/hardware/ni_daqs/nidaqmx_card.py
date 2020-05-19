@@ -8,8 +8,8 @@ import nidaqmx
 from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 
 import pickle
 

@@ -3,13 +3,13 @@
 
 
 # Imports of qudi's modules
-from core.module import Base, ConfigOption, Connector
+from network.core.module import Base, ConfigOption, Connector
 from logic.generic_logic import GenericLogic
 
 # Import of pylabnet's modules
 # (make sure that pylabnet location is in qudi's sys.path)
-from pylabnet.core.generic_server import GenericServer
-from pylabnet.core.service_base import ServiceBase
+from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.network.core.service_base import ServiceBase
 
 
 class RefocusService(ServiceBase):

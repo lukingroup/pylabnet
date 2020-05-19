@@ -1,7 +1,7 @@
 """ Implements connection and server launching of NI-daqMX card for wavemeter locking"""
 
 from pylabnet.hardware.ni_daqs import nidaqmx_card
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.generic_server import GenericServer
 
 # Parameters
 NI_DEVICE_NAME = 'cDAQ1Mod1'

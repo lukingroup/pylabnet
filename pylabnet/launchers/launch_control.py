@@ -8,10 +8,10 @@ import subprocess
 import numpy as np
 from io import StringIO
 from pylabnet.utils.logging.logger import LogService
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.generic_server import GenericServer
 from PyQt5 import QtWidgets, QtGui, QtCore
 from pylabnet.gui.pyqt.external_gui import Window, Service
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server
 import pickle

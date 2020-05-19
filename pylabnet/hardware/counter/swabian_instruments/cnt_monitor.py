@@ -3,9 +3,9 @@
 import TimeTagger as TT
 import pickle
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
+from pylabnet.network.core.generic_server import GenericServer
 
 
 class Wrap:

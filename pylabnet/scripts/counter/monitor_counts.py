@@ -5,7 +5,7 @@ import time
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.helper_methods import unpack_launcher
 
 

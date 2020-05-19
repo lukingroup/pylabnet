@@ -11,7 +11,7 @@ Steps:
 - in qudi, instantiate SlowCtrClient as one of the hardware modules
 """
 
-from core.module import Base, ConfigOption
+from network.core.module import Base, ConfigOption
 from interface.slow_counter_interface import SlowCounterInterface, SlowCounterConstraints, CountingMode
 import rpyc
 import pickle

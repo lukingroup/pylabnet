@@ -11,8 +11,8 @@ import numpy as np
 from ftplib import FTP
 import copy
 
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 
 
 class Driver:

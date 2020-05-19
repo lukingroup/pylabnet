@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, uic, QtCore
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.external_gui import Service
 from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.utils.helper_methods import show_console, hide_console
 
 
 def launch(logger=None, port=None, name=None):
@@ -18,7 +19,9 @@ def launch(logger=None, port=None, name=None):
 
     # Create app and instantiate main window
     app = QtWidgets.QApplication(sys.argv)
+    show_console()
     ui = input('Please enter the .ui file to use as a template:\n>> ')
+    hide_console()
     try:
         main_window = Window(app, gui_template=ui)
     except FileNotFoundError:

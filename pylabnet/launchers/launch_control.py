@@ -73,9 +73,9 @@ class Controller:
             self.log_port = int(input('Please enter the master Logger Port:\n>> '))
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
             hide_console()
-        
+
         sys.stdout = StringIO()
-        
+
         # Instantiate GUI application
         self.app = QtWidgets.QApplication(sys.argv)
         self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
@@ -108,7 +108,7 @@ class Controller:
 
             # For debugging
             time.sleep(1)
-            
+
             # Now update GUI to mirror clients
             self._copy_master()
 
@@ -123,8 +123,8 @@ class Controller:
             self.gui_service.assign_logger(logger=self.gui_logger)
             if self.gui_port is None:
                 self.gui_server, self.gui_port = create_server(
-                    self.gui_service, 
-                    logger=self.gui_logger, 
+                    self.gui_service,
+                    logger=self.gui_logger,
                     host=socket.gethostbyname(socket.gethostname())
                     )
             else:
@@ -219,21 +219,21 @@ class Controller:
         self.log_service = LogService()
         if self.LOG_PORT is None:
             self.log_server, self.log_port = create_server(
-                self.log_service, 
+                self.log_service,
                 host=socket.gethostbyname(socket.gethostname())
                 )
         else:
             try:
                 self.log_server = GenericServer(
                     service=self.log_service,
-                    host=socket.gethostname(socket.gethostname()), 
+                    host=socket.gethostname(socket.gethostname()),
                     port=self.LOG_PORT
                     )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
                 raise
         self.log_server.start()
-    
+
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
@@ -260,19 +260,21 @@ class Controller:
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
         self.main_window.assign_label('buffer_terminal', 'buffer')
+        self.main_window.assign_event_button('debug_radio_button', 'debug')
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
+        self._configure_debug()
 
         self.main_window.force_update()
 
     def update_proxy(self):
         """ Updates the proxy with new content using the buffer terminal"""
-        
+
         # Check clients and update
         self._pull_connections()
-        
+
         # Get buffer terminal
         buffer_terminal = self.gui_client.get_text('buffer')
 
@@ -281,7 +283,7 @@ class Controller:
 
         # Check if this failed
         if new_msg is '':
-            
+
             # Check if the buffer is ahead of our last update
             up_str = re.findall(r'!~\d+~!', new_msg)
             if len(up_str) > 0:
@@ -298,7 +300,7 @@ class Controller:
             except TypeError:
                 pass
             self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
-    
+
     def _configure_clicks(self):
         """ Configures what to do if script is clicked """
 
@@ -416,6 +418,18 @@ class Controller:
         for client in remove_clients:
             self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
             del self.client_list[client]
+
+    # Defines what to do if debug radio button is clicked
+    def _configure_debug(self):
+        self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
+
+    def _update_debug_settings(self):
+        if self.main_window.debug_radio_button.isChecked():
+            self.debug = True
+            self.main_window.debug_comboBox.setEnabled(False)
+        else:
+            self.debug = False
+            self.main_window.debug_comboBox.setEnabled(False)
 
 
 def main():

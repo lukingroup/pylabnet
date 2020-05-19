@@ -199,7 +199,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </widget>
     </item>
     <item row="2" column="0">
-     <widget class="QRadioButton" name="radioButton">
+     <widget class="QRadioButton" name="debug_radio_button">
       <property name="styleSheet">
        <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
@@ -292,8 +292,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <string notr="true">background-color: rgb(255, 255, 255)</string>
       </property>
       <property name="currentText">
-       <string/>
+       <string>launch_control</string>
       </property>
+      <item>
+       <property name="text">
+        <string>launch_control</string>
+       </property>
+      </item>
      </widget>
     </item>
     <item row="3" column="0">

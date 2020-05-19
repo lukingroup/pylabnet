@@ -291,6 +291,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       <property name="enabled">
        <bool>false</bool>
       </property>
+        <property name="visible">
+        <bool>false</bool>
+        </property>
       <property name="styleSheet">
        <string notr="true">background-color: rgb(255, 255, 255)</string>
       </property>
@@ -304,7 +307,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </item>
       <item>
        <property name="text">
-        <string>test</string>
+        <string>launched_server</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>launched_gui</string>
        </property>
       </item>
      </widget>
@@ -314,6 +322,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       <property name="enabled">
        <bool>false</bool>
       </property>
+        <property name="visible">
+        <bool>false</bool>
+        </property>
       <property name="styleSheet">
        <string notr="true">color: rgb(255, 255, 255);</string>
       </property>

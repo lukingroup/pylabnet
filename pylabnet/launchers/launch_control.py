@@ -322,13 +322,19 @@ class Controller:
         launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
         print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
 
-        if self.debug and self.debug_level=="launcher_script":
-            debug_flag = '1'
+        # Read debug state and set flag value accordingly.
+        if self.debug:
+            if self.debug_level=="launcher_script":
+                debug_flag = '1'
+            if self.debug_level=="launched_server":
+                server_debug_flag == '1'
+            if self.debug_level=="launched_gui":
+                gui_debug_flag == '1'
         else:
-            debug_flag = '0'
+            debug_flag, server_debug_flag, gui_debug_flag = '0', '0', '0'
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {}'.format(
+        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
             script_to_run,
             launch_time,
             sys.executable,
@@ -336,7 +342,9 @@ class Controller:
             self.host,
             self.log_port,
             len(self.client_list),
-            debug_flag
+            debug_flag,
+            server_debug_flag,
+            gui_debug_flag
         )
         client_index = 1
         for client in self.client_list:

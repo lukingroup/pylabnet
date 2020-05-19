@@ -82,7 +82,6 @@ class Launcher:
             Launcher object. Can be left blank, and the names of the script module(s) will be used
         :param params: (list) parameters for each script to launch
         """
-
         self.script = script
         self.server_req = server_req
         self.gui_req = gui_req
@@ -112,6 +111,16 @@ class Launcher:
 
         # Connect to logger
         self.logger = self._connect_to_logger()
+
+        # Halt execution and wait for debugger connection if debug flag is up.
+        if int(self.args['debug']) == 1:
+            import ptvsd
+            import os
+            # 5678 is the default attach port in the VS Code debug configurations
+            self.logger.info(f"Waiting for debugger attach to PID {os.getpid()}")
+            ptvsd.enable_attach(address=('localhost', 5678))
+            ptvsd.wait_for_attach()
+            breakpoint()
 
         # Find all servers with port numbers and store them as a dictionary
         self.connectors = {}

@@ -295,11 +295,11 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <string notr="true">background-color: rgb(255, 255, 255)</string>
       </property>
       <property name="currentText">
-       <string>launch_control</string>
+       <string>launcher_script</string>
       </property>
       <item>
        <property name="text">
-        <string>launch_control</string>
+        <string>launcher_script</string>
        </property>
       </item>
       <item>

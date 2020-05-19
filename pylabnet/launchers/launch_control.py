@@ -52,6 +52,8 @@ class Controller:
         self.script_list = {}
         self.client_data = {}
         self.disconnection = False
+        self.debug = False
+        self.debug_level = None
         try:
             if sys.argv[1] == '-p':
                 self.proxy = True
@@ -320,15 +322,21 @@ class Controller:
         launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
         print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
 
+        if self.debug and self.debug_level=="launcher_script":
+            debug_flag = '1'
+        else:
+            debug_flag = '0'
+
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {}'.format(
+        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {}'.format(
             script_to_run,
             launch_time,
             sys.executable,
             os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run),
             self.host,
             self.log_port,
-            len(self.client_list)
+            len(self.client_list),
+            debug_flag
         )
         client_index = 1
         for client in self.client_list:
@@ -436,6 +444,7 @@ class Controller:
             self.main_window.debug_comboBox.setEnabled(True)
             self.main_window.debug_label.setHidden(False)
             self.main_window.debug_comboBox.setHidden(False)
+
         else:
             self.debug = False
             # Disable and hide combobox.
@@ -443,9 +452,15 @@ class Controller:
             self.main_window.debug_label.setHidden(True)
             self.main_window.debug_comboBox.setHidden(True)
 
-    def _update_debug_level(self, i):
+        # Update debug level.
+        self._update_debug_level(self)
+
+    def _update_debug_level(self, i=0):
         # Set debug level according to combo-box selection.
+        # Levels are:
+        # launcher_script
         self.debug_level = self.main_window.debug_comboBox.currentText()
+
 
 
 def main():

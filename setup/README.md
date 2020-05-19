@@ -2,15 +2,13 @@
 
 1. Clone pylabnet from GitHub (C:/Users/Username is the recommended location)
 
-2. Clone pulseblock from GitHub (C:/Users/Username is the recommended location)
+2. add pylabnet location to PYTHONPATH environment variable.
 
-3. add pylabnet and pulseblock locations to PYTHONPATH environment variable.
-
-4. Create pylabnet environment according to `pylabnet/setup/env_file.yml` (navigate to pylabnet/setup
+3. Create pylabnet environment according to `pylabnet/setup/env_file.yml` (navigate to pylabnet/setup
 	in conda shell and run command :
 		`conda env create -f env_file.yml`
 
-5. Make sure to activate pylabnet virtual environment to run Jupyter Notebook
+4. Make sure to activate pylabnet virtual environment to run Jupyter Notebook
     and configure PyCharm to use Python interpreter from pylabnet environment.
 
 - For Jupyter: run Jupyter Notebook in Pylabnet environment by using command:

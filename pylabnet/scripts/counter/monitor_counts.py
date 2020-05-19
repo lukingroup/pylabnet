@@ -198,10 +198,11 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
+            ctr_client=clients['si_tt_cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
+        time.sleep(15)
         raise
 
     # Instantiate Pause server

@@ -1,3 +1,5 @@
+import socket
+
 from pylabnet.hardware.wavemeter.high_finesse_ws7 import Driver
 from pylabnet.network.client_server.high_finesse_ws7 import Service
 from pylabnet.network.core.generic_server import GenericServer
@@ -23,7 +25,7 @@ def launch(**kwargs):
     wavemeter_service.assign_logger(logger=wavemeter_logger)
     wavemeter_server = GenericServer(
         service=wavemeter_service,
-        host='localhost',
+        host=socket.gethostbyname(socket.gethostname()),
         port=kwargs['port']
     )
 

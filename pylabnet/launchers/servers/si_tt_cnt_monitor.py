@@ -1,3 +1,5 @@
+import socket
+
 IMPORT_STATUS = True
 
 try:
@@ -7,7 +9,7 @@ except ModuleNotFoundError:
 
 from pylabnet.hardware.counter.swabian_instruments.cnt_monitor import Wrap
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.si_tt_cnt_monitor import Service
+from pylabnet.network.client_server.si_tt_cnt_monitor import Service, Client
 
 
 def launch(**kwargs):
@@ -46,7 +48,7 @@ def launch(**kwargs):
     cnt_trace_service.assign_logger(logger=kwargs['logger'])
     cnt_trace_server = GenericServer(
         service=cnt_trace_service,
-        host='localhost',
+        host=socket.gethostbyname(socket.gethostname()),
         port=kwargs['port']
     )
     cnt_trace_server.start()

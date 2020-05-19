@@ -33,7 +33,7 @@ def launch(logger=None, port=None, name=None):
         port = np.random.randint(1, 9999)
     gui_server = GenericServer(
         service=gui_service,
-        host='localhost',
+        host=socket.gethostbyname(socket.gethostname()),
         port=port
     )
 

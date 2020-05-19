@@ -366,7 +366,7 @@ class AWGModule():
 
         # First check if all values have been replaced in sequence:
         if not sequence.is_ready():
-            self.log.error("Sequence is not ready: Not all placeholders have been replaced.")
+            self.hd.log.error("Sequence is not ready: Not all placeholders have been replaced.")
             return
 
         self.module.set('compiler/sourcestring', sequence.sequence)

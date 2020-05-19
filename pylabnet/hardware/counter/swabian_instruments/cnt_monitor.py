@@ -3,9 +3,6 @@
 import TimeTagger as TT
 import pickle
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.network.core.service_base import ServiceBase
-from pylabnet.network.core.client_base import ClientBase
-from pylabnet.network.core.generic_server import GenericServer
 
 
 class Wrap:
@@ -15,7 +12,7 @@ class Wrap:
 
         :param tagger: instance of TimeTagger class
         :param ch_list: list of channels to count
-        :param logger: instance of LogClient class
+        :param logger: instance of LogClient class, optional
         """
 
         # Log
@@ -92,4 +89,3 @@ class Wrap:
 
         # Set attribute to validated ch_list
         self._ch_list = ch_list
-

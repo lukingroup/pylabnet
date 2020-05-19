@@ -1,14 +1,17 @@
 """ Implements connection and server launching of NI-daqMX card for wavemeter locking"""
 
 from pylabnet.hardware.ni_daqs import nidaqmx_card
+from pylabnet.network.client_server.nidaqmx_card import Client as ni_client
+from pylabnet.network.client_server.nidaqmx_card import Service
 from pylabnet.network.core.generic_server import GenericServer
 
 # Parameters
 NI_DEVICE_NAME = 'cDAQ1Mod1'
 
 
-class Client(nidaqmx_card.Client):
+class Client(ni_client):
     pass
+# TODO: Check whether this is necessary if we remove as statement
 
 
 def launch(**kwargs):
@@ -31,7 +34,7 @@ def launch(**kwargs):
         raise
 
     # Instantiate server
-    ni_daqmx_service = nidaqmx_card.Service()
+    ni_daqmx_service = Service()
     ni_daqmx_service.assign_module(module=ni_driver)
     ni_daqmx_service.assign_logger(logger=ni_daqmx_logger)
     ni_daqmx_server = GenericServer(

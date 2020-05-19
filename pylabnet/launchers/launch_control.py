@@ -107,9 +107,6 @@ class Controller:
                 self.gui_logger.error(f'Failed to connect to GUI Server with IP address: {self.host}, '
                                       f'Port: {self:gui_port}')
                 raise
-
-            # For debugging
-            time.sleep(1)
             
             # Now update GUI to mirror clients
             self._copy_master()

@@ -875,7 +875,7 @@ class Channel:
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
-    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
     wavemeter_client = clients['high_finesse_ws7']
     ao_client = clients['nidaqmx_wlm']
@@ -891,7 +891,7 @@ def launch(**kwargs):
 
     # Instantiate pause+update service & connect to logger
     log_client_update = LogClient(
-        host='localhost',
+        host=loghost,
         port=logport,
         module_tag='wavemeter_update_server'
     )

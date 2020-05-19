@@ -51,6 +51,9 @@ class Service(ServiceBase):
 
         )
 
+    def exposed_assign_container(self, container_widget, container_label):
+        return self._module.assign_container(self, container_widget, container_label)
+    
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
         error = pickle.loads(error_pickle)
@@ -83,11 +86,17 @@ class Service(ServiceBase):
             label_label=label_label
         )
 
+    def exposed_get_text(self, label_label):
+        return pickle.dumps(self._module.get_text(label_label))
+    
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
     def exposed_change_button_background_color(self, event_label, color):
         return self._module.change_button_background_color(self, event_label, color)
+
+    def exposed_get_container_info(self, container_label):
+        return pickle.dumps(self._module.get_container_info(container_label))
 
 
 class Client(ClientBase):
@@ -135,6 +144,9 @@ class Client(ClientBase):
             event_label=event_label,
         )
 
+    def assign_container(self, container_widget, container_label):
+        return self._service.exposed_assign_container(container_widget, container_label)
+    
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -167,8 +179,15 @@ class Client(ClientBase):
             label_label=label_label
         )
 
+    def get_text(self, label_label):
+        return pickle.loads(self._service.exposed_get_text(label_label))
+    
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
 
     def change_button_background_color(self, event_label, color):
         return self._service.exposed_change_button_background_color(self, event_label, color)
+
+    def get_container_info(self, container_label):
+        return pickle.loads(self._service.exposed_get_container_info(container_label))
+

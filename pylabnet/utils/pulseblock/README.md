@@ -20,8 +20,7 @@ Since the "boxes" do not necessarily cover the entire duration, there are
 some gaps. To specify what is happening during the gaps, one uses `DfltPulse`
 objects - "default pulses" (a single `DfltPulse` per channel).
 
-`PulseBlock` logic handles everything related to keeping the "boxes" time-ordered
-when new elements are added: it has methods for inserting additional "boxes"
+`PulseBlock` logic handles everything related to keeping the "boxes" time-ordered when new elements are added: it has methods for inserting additional "boxes"
 into arbitrary (empty) places on the "shelf" and for merging several smaller
 `PulseBlock` objects into a large one.
 

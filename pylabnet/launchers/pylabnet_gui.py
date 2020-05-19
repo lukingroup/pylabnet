@@ -39,7 +39,11 @@ def main():
         log_port = int(args['logport'])
     except IndexError:
         raise IndexError('logport not provided. Please provide command line arguments in the form\n"'
-                         'python launch_gui.py --logport 1234 --guiport 5678 --ui uifilename')
+                         'python launch_gui.py --logip 000.000.000.000 --logport 1234 --guiport 5678 --ui uifilename')
+    if 'logip' in args:
+        log_ip = args['logip']
+    else:
+        log_ip = 'localhost'
     if 'ui' in args:
         gui_template = args['ui']
     else:
@@ -55,7 +59,7 @@ def main():
 
     # Instantiate logger
     gui_logger = LogClient(
-        host='localhost',
+        host=log_ip,
         port=log_port,
         module_tag=gui_template+'_GUI',
         ui=gui_template,
@@ -82,7 +86,7 @@ def main():
     try:
         gui_server = GenericServer(
             service=gui_service,
-            host='localhost',
+            host=socket.gethostbyname(socket.gethostname()),
             port=gui_port
         )
     except ConnectionRefusedError:

@@ -9,23 +9,23 @@ import pickle
 import time
 
 
-class E4405BDriver():
-    '''Driver class for GPIB controlled Agilent EE405 Spectrum analyser'''
+class Driver():
+    """Driver class for GPIB controlled Agilent EE405 Spectrum analyser"""
 
     def reset(self):
-        ''' Create factory reset'''
+        """ Create factory reset"""
         self.device.write('*RST')
         self.log.info("Reset to factory settings successfull.")
 
     def __init__(self, gpib_address, logger):
-        '''Instantiate driver class
+        """Instantiate driver class
 
         :gpib_address: GPIB-address of spectrum analyzer, e.g. 'GPIB0::12::INSTR'
             Can be read out by using
                 rm = pyvisa.ResourceManager()
                 rm.list_resources()
         :logger: And instance of a LogClient
-        '''
+        """
 
         # Instantiate log
         self.log = LogHandler(logger=logger)
@@ -43,19 +43,19 @@ class E4405BDriver():
         self.reset()
 
     def display_off(self):
-        ''' Power off display '''
+        """ Power off display """
         self.device.write(':DISPlay:ENABle OFF')
         self.log.info("Display off.")
 
     def display_on(self):
-        ''' Power on display '''
+        """ Power on display """
         self.device.write(':DISPlay:ENABle ON')
         self.log.info("Display on.")
 
     def set_attenuation(self, db):
-        ''' Set input attenuation
+        """ Set input attenuation
         :db: Target attenuation in dB, must be between 0 and 75
-        '''
+        """
 
         if not 0 <= db <= 75:
             self.log.error(
@@ -65,10 +65,10 @@ class E4405BDriver():
         self.log.info(f'Input attenuation set to {db}dB.')
 
     def set_center_frequency(self, center_frequency):
-        ''' Set center frequency of trace.
+        """ Set center frequency of trace.
 
         :center_frequency: Frequency in Hz (from 0 to 13.3 GHz)
-        '''
+        """
         if not 0 <= center_frequency <= 13.2*1e9:
             self.log.error(
                 f'Invalid center frequency ({center_frequency} Hz). Must be within 0 and 13.2 GHz'
@@ -78,10 +78,10 @@ class E4405BDriver():
         self.log.info(f'Center frequency set to {center_frequency} Hz')
 
     def set_frequency_span(self, frequency_span):
-        ''' Set frequency span of trace.
+        """ Set frequency span of trace.
 
         :frequency_span: Frequency span in Hz (from 0 to 13.3 GHz)
-        '''
+        """
         if not 0 <= frequency_span <= 13.2*1e9:
             self.log.error(
                 f'Invalid frequency span ({frequency_span} Hz). Must be within 0 and 13.2 GHz'
@@ -91,14 +91,14 @@ class E4405BDriver():
         self.log.info(f'Frequency span set {frequency_span} Hz')
 
     def toggle_cont(self, target_state):
-        '''Switch between single shot and continuous acquisition mode
+        """Switch between single shot and continuous acquisition mode
 
         :target_state: Index of targe stat. 1 for continuous mode, 0 for single shot mode.
-        '''
+        """
         self.device.write(f'INIT:CONT {target_state}')
 
     def get_frequency_array(self):
-        '''Constructs array of frequencies associated with trace points'''
+        """Constructs array of frequencies associated with trace points"""
 
         # Sweep start frequency.
         start_freq = float(self.device.query(':SENSe:FREQuency:STARt?'))
@@ -115,11 +115,11 @@ class E4405BDriver():
         return frequencies
 
     def read_trace(self):
-        ''' Read and return trace
+        """ Read and return trace
 
         Retruns array trace contaning frequencies (in Hz) of data points in
         trace[:,0] and power levels (in dBm) in trace[:,1]
-        '''
+        """
 
         # Set to single shot mode.
         self.toggle_cont(0)
@@ -150,8 +150,37 @@ class E4405BDriver():
 
         return trace
 
+    def acquire_background_spectrum(self, num_points=100):
+        """Acquires an average background trace.
 
-class E4405BService(ServiceBase):
+        :num_traces: How many traces to sample.
+        :nocheck: Boolean indicating if user confirmation that no
+            input signal is present will be omitted.
+        """
+
+        traces = []
+        self.display_off()
+        for i in range(num_points):
+            traces.append(self.read_trace())
+        self.display_on()
+
+        noise_average = np.average(np.asarray(traces)[:, :, 1], 0)
+        noise_trace = np.array([traces[0][:, 0], noise_average])
+
+        self.noise_trace = np.transpose(noise_trace)
+
+    def get_background(self):
+
+        try:
+            noise_trace = self.noise_trace
+            return noise_trace
+        except AttributeError:
+            error_msg = 'No background acquired. Run acquire_background_spectrum() to acquire background.'
+            self.log.warn(error_msg)
+            return error_msg
+
+
+class Service(ServiceBase):
 
     def exposed_reset(self):
         return self._module.reset()
@@ -182,8 +211,15 @@ class E4405BService(ServiceBase):
     def exposed_write(self, command):
         return self._module.device.write(command)
 
+    def exposed_acquire_background_spectrum(self, num_point):
+        return self._module.acquire_background_spectrum(num_point)
 
-class E4405BClient(ClientBase):
+    def exposed_get_background(self):
+        background = self._module.get_background()
+        return pickle.dumps(background)
+
+
+class Client(ClientBase):
 
     def reset(self):
         return self._service.exposed_reset()
@@ -214,29 +250,85 @@ class E4405BClient(ClientBase):
         pickled_query = self._service.exposed_query(command)
         return pickle.loads(pickled_query)
 
-    def plot_trace(self):
-        '''Reads and plots trace'''
+    def acquire_background_spectrum(self, num_point=100, nocheck=True):
 
-        trace = self.read_trace()
+        if not nocheck:
+            print("Please make sure that spectrum analyzer is measuring noise floor, i.e. no input signals are switched on. Type 'y' to confirm.")
+            a = input()
+            if a == 'y':
+                return self._service.acquire_background_spectrum(num_point)
+            else:
+                print('Wrong input, returns.')
+                return
+
+    def get_background(self):
+        pickled_background = self._service.exposed_get_background()
+
+        background = pickle.loads(pickled_background)
+
+        if not type(background) == np.ndarray:
+            print('No background acquired. Run acquire_background_spectrum() to acquire background.')
+
+        return pickle.loads(pickled_background)
+
+    def plot_trace(self, trace=None, background_substract=False):
+        """Reads and plots trace
+
+        :trace: Trace to plot. If none, acquire new trace.
+        :background_substract: If True, substract background from trace
+        """
+
+        # If not trace furnished, acquired trace.
+        if trace is None:
+            trace = self.read_trace()
+
+        # Substract background
+        if background_substract:
+
+            # Try to retrieve background
+            background = self.get_background()
+
+            # Check if background was successfully retrieved
+            if not type(background) == np.ndarray:
+                print()
+                return
+
+            trace[:, 1] = trace[:, 1] - background[:, 1]
+            ylabel = 'Power ratio above noise floor [dB]'
+        else:
+            ylabel = 'Power [dBm]'
 
         # Plot trace
         plt.figure()
         plt.plot(trace[:, 0]/1e9, trace[:, 1])
         plt.xlabel('Frequency [GHz]')
-        plt.ylabel('Power [dBm]')
+        plt.ylabel(ylabel)
         plt.show()
+
+    def plot_background(self):
+        """Reads and plots background trace"""
+
+        # Try to retrieve background.
+        background = self.get_background()
+
+        # Check if background was successfully retrieved.
+        if not type(background) == np.ndarray:
+            print('No background acquired. Run acquire_background_spectrum() to acquire background.')
+            return
+
+        self.plot_trace(background, background_substract=False)
 
 
 class E4405BMarker():
-    ''' Class handling assignment and read out of peak markers.'''
+    """ Class handling assignment and read out of peak markers."""
 
     def __init__(self, e4405Bclient, name, marker_num):
-        ''' Initialized the marker
+        """ Initialized the marker
 
         :e4405Bclient: Instance of E4405BClient.
         :name: A human readable name of the marker.
         :marker_num: Marker number from 1 to 4.
-        '''
+        """
         self.client = e4405Bclient
         self.marker_num = marker_num
         self.name = name
@@ -245,48 +337,48 @@ class E4405BMarker():
         self.set_as_position()
 
     def set_as_position(self):
-        '''Specify marker type as position marker (standard).'''
+        """Specify marker type as position marker (standard)."""
         self.client.write(f':CALCulate:MARKer{self.marker_num}:MODE POSition;*WAI')
 
     def set_to_maximum(self):
-        '''Set marker to maximum peak value of trace.'''
+        """Set marker to maximum peak value of trace."""
         self.client.write(f':CALCulate:MARKer{self.marker_num}:MAXimum;*WAI')
 
     def _toggle_freq_count(self, state):
-        '''Change frequency count setting
+        """Change frequency count setting
 
         :state (int): 1 to toggle frequency counting on, 0 to toggle it off.
-        '''
+        """
         self.client.write(f':CALCulate:MARKer{self.marker_num}:FCOunt:STATe {state};*WAI')
 
     def _get_freq(self):
-        ''' Read out frequency
+        """ Read out frequency
 
         Note: Work only if _toggle_freq_count was called, outputs 9e15 if count state is off.
-        '''
+        """
         return float(self.client.query(f':CALCulate:MARKer{self.marker_num}:FCOunt:X?;*WAI'))
 
     def get_power(self):
-        '''Reads out power of marker position (in dbm)'''
+        """Reads out power of marker position (in dbm)"""
         return float(self.client.query(f':CALCulate:MARKer{self.marker_num}:Y?;*WAI'))
 
     def look_left(self):
-        '''Focus marker on next peak left.'''
+        """Focus marker on next peak left."""
         self.client.write(f':CALCulate:MARKer{self.marker_num}:MAXimum:LEFT;*WAI')
         time.sleep(0.1)
 
     def look_right(self):
-        '''Focus marker on next peak right.'''
+        """Focus marker on next peak right."""
         self.client.write(f':CALCulate:MARKer{self.marker_num}:MAXimum:RIGHT;*WAI')
         time.sleep(0.1)
 
     def read_freq(self):
-        ''' Read out frequency of maker.
+        """ Read out frequency of maker.
 
         This is done by first enabling count state, reading out the frequency
         and disabling the count state. For some reason, very long sleep times
         between commands are necessary to ensure correct readout of the frequency.
-        '''
+        """
 
         # Turn on frequency capture
         self._toggle_freq_count(1)

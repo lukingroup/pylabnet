@@ -2,6 +2,7 @@
 
 import TimeTagger as TT
 import pickle
+import socket
 from pylabnet.utils.logging.logger import LogHandler
 
 

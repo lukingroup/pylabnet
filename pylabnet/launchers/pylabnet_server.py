@@ -47,10 +47,14 @@ def main():
         show_console()
         server = input('Please enter a server module name: ')
         hide_console()
+    if 'logip' in args:
+        host = args['logip']
+    else:
+        host = 'localhost'
 
     # Instantiate logger
     server_logger = LogClient(
-        host='localhost',
+        host=host,
         port=log_port,
         module_tag=server+'_server',
         server_port=server_port

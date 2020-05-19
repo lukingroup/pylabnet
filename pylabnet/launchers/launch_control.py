@@ -266,6 +266,7 @@ class Controller:
         self._load_scripts()
         self._configure_clicks()
         self._configure_debug()
+        self._configure_debug_combo_select()
 
         self.main_window.force_update()
 
@@ -419,17 +420,32 @@ class Controller:
             self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
             del self.client_list[client]
 
-    # Defines what to do if debug radio button is clicked
+    # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):
         self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
+
+    # Defines what to do if combobox is changed.
+    def _configure_debug_combo_select(self):
+        self.main_window.debug_comboBox.currentIndexChanged.connect(self._update_debug_level)
 
     def _update_debug_settings(self):
         if self.main_window.debug_radio_button.isChecked():
             self.debug = True
-            self.main_window.debug_comboBox.setEnabled(False)
+
+            # Enable and show combobox.
+            self.main_window.debug_comboBox.setEnabled(True)
+            self.main_window.debug_label.setHidden(False)
+            self.main_window.debug_comboBox.setHidden(False)
         else:
             self.debug = False
+            # Disable and hide combobox.
             self.main_window.debug_comboBox.setEnabled(False)
+            self.main_window.debug_label.setHidden(True)
+            self.main_window.debug_comboBox.setHidden(True)
+
+    def _update_debug_level(self, i):
+        # Set debug level according to combo-box selection.
+        self.debug_level = self.main_window.debug_comboBox.currentText()
 
 
 def main():

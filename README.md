@@ -61,11 +61,11 @@ The general experimental flow is the following. It generally consists of running
 ### Using the feature
 
 1. Make sure your Windows default your PATH environment variable contains the directory to conda.exe (e.g. make sure you can rund "conda activate pylabnet" from the command line)
-2. Modify the shortcut with the device icon in the main pylabnet directory
-    1. Copy the shortcut to your desktop.
+2. Modify the shortcuts with the device icon in the main pylabnet directory
+    1. Copy the shortcuts to your desktop.
     2. Right-click on the shortcut, and select properties
     3. In the "Start in" field, replace whatever is entered with the local machine's path to the pylabnet/launchers/ directory. This should be already listed in the "Target" field. *Still trying to come up with a more elegant way to do this, but this is simplest for now*
-3. Double-click your new desktop shortcut. This should launch a minimzied shell and the pylabnet `Launch Control` GUI.
+3. Double-click your new desktop shortcut. This should launch a minimzied shell and the pylabnet `Launch Control` GUI. Note that you can use pylabnet to launch the main Log Server, and pylabnet_proxy to launch a proxy launcher that will connect to an already running Log Server and Launch Control GUI
 4. From here, you can 
     1. Run any scripts in the pylabnet/launcher directory by double clicking on the desired script
     2. View all active clients to the running `Logger`

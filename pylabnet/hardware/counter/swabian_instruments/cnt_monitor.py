@@ -2,6 +2,7 @@
 
 import TimeTagger as TT
 import pickle
+import socket
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.core.service_base import ServiceBase
 from pylabnet.core.client_base import ClientBase
@@ -175,7 +176,7 @@ def launch(**kwargs):
     cnt_trace_service.assign_logger(logger=kwargs['logger'])
     cnt_trace_server = GenericServer(
         service=cnt_trace_service,
-        host='localhost',
+        host=socket.gethostbyname(socket.gethostname()),
         port=kwargs['port']
     )
     cnt_trace_server.start()

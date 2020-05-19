@@ -83,6 +83,7 @@ class Window(QtWidgets.QMainWindow):
         self.scalars = {}
         self.labels = {}
         self.event_buttons = {}
+        self.containers = {}
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -94,6 +95,7 @@ class Window(QtWidgets.QMainWindow):
         self._scalars_to_assign = []
         self._labels_to_assign = []
         self._buttons_to_assign = []
+        self._containers_to_assign = []
         self._curves_to_remove = []
 
         # List of Numerical widgets for future use in dynamical step size updating
@@ -163,6 +165,15 @@ class Window(QtWidgets.QMainWindow):
         """
         self._buttons_to_assign.append((event_widget, event_label))
 
+    def assign_container(self, container_widget, container_label):
+        """ Adds Container assignment request to the queue
+
+        Only QListWidget supported so far
+        :param container_widget: (str) physical widget name on the .ui file
+        :param container_label: (str) keyname to assign to the widget for future reference
+        """
+        self._containers_to_assign.append((container_widget, container_label))
+    
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
 
@@ -209,6 +220,11 @@ class Window(QtWidgets.QMainWindow):
         """
         self.labels[label_label].set_label(text)
 
+    def get_text(self, label_label):
+        """ Returns the text in a textual label widget """
+
+        return self.labels[label_label].get_label()
+    
     def was_button_pressed(self, event_label):
         """ Returns whether or not an event button was pressed
 
@@ -230,6 +246,9 @@ class Window(QtWidgets.QMainWindow):
         """
         self.event_buttons[event_label].change_background_color(color)
 
+    def get_container_info(self, container_label):
+        return self.containers[container_label].get_items()
+    
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -322,6 +341,17 @@ class Window(QtWidgets.QMainWindow):
             except KeyError:
                 pass
 
+        for cont in self._containers_to_assign:
+
+            # Unpack parameters
+            container_widget, container_label = cont
+
+            try:
+                self._assign_container(container_widget, container_label)
+                self._containers_to_assign.remove(cont)
+            except KeyError:
+                pass
+    
     def update_widgets(self):
         """ Updates all widgets on the physical GUI to current data"""
 
@@ -508,6 +538,17 @@ class Window(QtWidgets.QMainWindow):
             event_widget=event_widget
         )
 
+    def _assign_container(self, container_widget, container_label):
+        """ Assigns physical ;ost
+
+        :param container_widget: (str) name of physical container widget on GUI
+        :param container_label: (str) key name for reference to the container
+        """
+
+        self.containers[container_label] = Container(
+            gui=self,
+            widget=container_widget
+        )
 
 class Service(ServiceBase):
 
@@ -555,6 +596,9 @@ class Service(ServiceBase):
 
         )
 
+    def exposed_assign_container(self, container_widget, container_label):
+        return self._module.assign_container(self, container_widget, container_label)
+    
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
         error = pickle.loads(error_pickle)
@@ -587,11 +631,17 @@ class Service(ServiceBase):
             label_label=label_label
         )
 
+    def exposed_get_text(self, label_label):
+        return pickle.dumps(self._module.get_text(label_label))
+    
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
     def exposed_change_button_background_color(self, event_label, color):
         return self._module.change_button_background_color(self, event_label, color)
+
+    def exposed_get_container_info(self, container_label):
+        return pickle.dumps(self._module.get_container_info(container_label))
 
 
 class Client(ClientBase):
@@ -639,6 +689,9 @@ class Client(ClientBase):
             event_label=event_label,
         )
 
+    def assign_container(self, container_widget, container_label):
+        return self._service.exposed_assign_container(container_widget, container_label)
+    
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         data_pickle = pickle.dumps(data)
         error_pickle = pickle.dumps(error)
@@ -671,11 +724,17 @@ class Client(ClientBase):
             label_label=label_label
         )
 
+    def get_text(self, label_label):
+        return pickle.loads(self._service.exposed_get_text(label_label))
+    
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
 
     def change_button_background_color(self, event_label, color):
         return self._service.exposed_change_button_background_color(self, event_label, color)
+
+    def get_container_info(self, container_label):
+        return pickle.loads(self._service.exposed_get_container_info(container_label))
 
 
 class Plot:
@@ -943,7 +1002,7 @@ class Scalar:
 
 
 class Label:
-    """ A text label display object"""
+    """ A text label display object. Currently supports QLabel"""
 
     def __init__(self, gui, label_widget):
         """ Constructor for label object
@@ -961,7 +1020,20 @@ class Label:
         :param label_text: (str, optional) text string to set the label to
         """
 
+        self.text = label_text
         self.widget.setText(label_text)
+
+    def get_label(self):
+        """ Returns label text """
+        
+        try:
+            
+            # Ordinary labels 
+            return self.widget.text()
+        except AttributeError:
+
+            # Fancy labels
+            return self.widget.toPlainText()
 
 
 class EventButton:
@@ -1002,6 +1074,34 @@ class EventButton:
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
         return result
+
+
+class Container:
+    """ Class for generic containers with elements added within
+
+    Idea being that all that needs to be referenced is the top level
+    and methods here can be invoked to get information about containing elements
+
+    Only QListWidget supported
+    """
+
+    def __init__(self, gui, widget):
+        """ Instantiates event button """
+
+        self.widget = getattr(gui, widget)  # Get physical widget instance
+
+    def get_items(self):
+        """ Returns all QListWidget items and tooltips as a dictionary """
+        
+        item_info = {}
+        for index in range(self.widget.count()):
+
+            # Get the current item and store its name and tooltip text
+            current_item = self.widget.item(index)
+            item_info[current_item.text()] = current_item.toolTip()
+
+        return item_info
+
 
 
 def launch(logger=None, port=None, name=None):

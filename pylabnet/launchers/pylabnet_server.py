@@ -1,7 +1,5 @@
 """ Script that launches a server.
 
-NOTE: MAKE SURE THAT THE SERVER MODULE IS IMPORTED IN THIS SCRIPT (see the try statement in imports)
-
 Normally, this is meant to be invoked from within a Launcher object (see launcher.py).
 However, you can also call this directly, with command-line arguments:
 :arg --logport: port number of log server
@@ -64,7 +62,7 @@ def main():
     except ModuleNotFoundError:
         server_logger.error(f'No module found in pylabnet.launchers.servers named {server}.py')
         raise
-    
+
     mod_inst.launch(logger=server_logger, port=server_port)
 
 

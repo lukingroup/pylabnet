@@ -13,7 +13,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.network.client_server.external_gui import Service
+from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console

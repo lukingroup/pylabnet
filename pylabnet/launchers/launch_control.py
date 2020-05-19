@@ -6,6 +6,7 @@ import os
 import time
 import subprocess
 import numpy as np
+import re
 from io import StringIO
 from PyQt5 import QtWidgets, QtGui, QtCore
 

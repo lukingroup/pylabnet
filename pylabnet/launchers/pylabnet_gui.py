@@ -21,7 +21,6 @@ from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 
 import sys
 import socket
-import numpy as np
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):

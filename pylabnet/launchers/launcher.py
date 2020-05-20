@@ -189,7 +189,7 @@ class Launcher:
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
-                    os.path.join(os.path.dirname(os.path.realpath(__file__)),self._GUI_LAUNCH_SCRIPT),
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)), self._GUI_LAUNCH_SCRIPT),
                     self.log_ip,
                     self.log_port,
                     gui_port,
@@ -268,7 +268,7 @@ class Launcher:
                     print(msg_str)
                     for index, match in enumerate(matches):
                         msg_str = ('------------------------------------------\n'
-                                   +'                    ({})                   \n'.format(index + 1)
+                                   + '                    ({})                   \n'.format(index + 1)
                                    + match.summarize())
                         print(msg_str)
                         self.logger.info(msg_str)
@@ -307,7 +307,7 @@ class Launcher:
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
-                    os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT),
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)), self._SERVER_LAUNCH_SCRIPT),
                     self.log_ip,
                     self.log_port,
                     server_port,

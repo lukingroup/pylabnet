@@ -72,6 +72,19 @@ def main():
         server_port=server_port
     )
 
+    # Retrieve debug flag.
+    debug = int(args['debug'])
+
+    # Halt execution and wait for debugger connection if debug flag is up.
+    if debug:
+        import ptvsd
+        import os
+        # 5678 is the default attach port in the VS Code debug configurations
+        server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
+        ptvsd.enable_attach(address=('localhost', 5678))
+        ptvsd.wait_for_attach()
+        breakpoint()
+
     # Instantiate module
     mod_inst = getattr(sys.modules[__name__], server)
     mod_inst.launch(logger=server_logger, port=server_port)

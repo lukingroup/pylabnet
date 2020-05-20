@@ -276,3 +276,4 @@ dependencies:
     - retrying==1.3.3
     - rpyc==4.1.1
     - zhinst==20.1.1211
+    - ptvsd==4.3.2

@@ -298,21 +298,21 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <string notr="true">background-color: rgb(255, 255, 255)</string>
       </property>
       <property name="currentText">
-       <string>launcher_script</string>
+       <string>launcher</string>
       </property>
       <item>
        <property name="text">
-        <string>launcher_script</string>
+        <string>launcher</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>launched_server</string>
+        <string>pylabnet_gui</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>launched_gui</string>
+        <string>pylabnet_server</string>
        </property>
       </item>
      </widget>
@@ -329,7 +329,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
-       <string>Debug Level:</string>
+       <string>Module:</string>
       </property>
      </widget>
     </item>

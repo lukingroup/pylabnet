@@ -75,6 +75,7 @@ def main():
     # Retrieve debug flag.
     debug = int(args['debug'])
 
+    # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
         import ptvsd
         import os

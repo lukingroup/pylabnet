@@ -329,11 +329,11 @@ class Controller:
 
         # Raise flags if selected in combobox
         if self.debug:
-            if self.debug_level == "launcher_script":
+            if self.debug_level == "launcher":
                 debug_flag = '1'
-            elif self.debug_level == "launched_server":
+            elif self.debug_level == "pylabnet_server":
                 server_debug_flag = '1'
-            elif self.debug_level == "launched_gui":
+            elif self.debug_level == "pylabnet_gui":
                 gui_debug_flag = '1'
 
         # Build the bash command to input all active servers and relevant port numbers to script
@@ -469,7 +469,7 @@ class Controller:
     def _update_debug_level(self, i=0):
         # Set debug level according to combo-box selection.
         # Levels are:
-        # launcher_script
+        # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
 
 

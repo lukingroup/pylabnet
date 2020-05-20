@@ -80,7 +80,7 @@ def main():
         import ptvsd
         import os
         # 5678 is the default attach port in the VS Code debug configurations
-        server_logger.info(f"Waiting for debugger attach to PID {os.getpid()} (pylabnet_server)")
+        server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
         ptvsd.enable_attach(address=('localhost', 5678))
         ptvsd.wait_for_attach()
         breakpoint()

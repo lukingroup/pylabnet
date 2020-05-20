@@ -106,6 +106,9 @@ class Launcher:
             self.log_ip = self.args['logip']
             self.log_port = int(self.args['logport'])
             self.num_clients = int(self.args['numclients'])
+            self.debug = int(self.args['debug'])
+            self.server_debug = int(self.args['server_debug'])
+            self.gui_debug = int(self.args['gui_debug'])
         except IndexError:
             raise
 
@@ -113,11 +116,11 @@ class Launcher:
         self.logger = self._connect_to_logger()
 
         # Halt execution and wait for debugger connection if debug flag is up.
-        if int(self.args['debug']) == 1:
+        if self.debug == 1:
             import ptvsd
             import os
             # 5678 is the default attach port in the VS Code debug configurations
-            self.logger.info(f"Waiting for debugger attach to PID {os.getpid()}")
+            self.logger.info(f"Waiting for debugger attach to PID {os.getpid()} (launcher_script)")
             ptvsd.enable_attach(address=('localhost', 5678))
             ptvsd.wait_for_attach()
             breakpoint()
@@ -182,7 +185,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -190,7 +193,8 @@ class Launcher:
                     self.log_ip,
                     self.log_port,
                     gui_port,
-                    gui
+                    gui,
+                    self.gui_debug
                 ), shell=True)
                 connected = True
             except ConnectionRefusedError:
@@ -299,7 +303,7 @@ class Launcher:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {}'.format(
+                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -307,7 +311,8 @@ class Launcher:
                     self.log_ip,
                     self.log_port,
                     server_port,
-                    server
+                    server,
+                    self.server_debug
                 )
 
                 subprocess.Popen(cmd, shell=True)

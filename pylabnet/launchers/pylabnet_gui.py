@@ -65,6 +65,18 @@ def main():
         server_port=gui_port
     )
 
+    # Retrieve debug flag.
+    debug = int(args['debug'])
+
+    if debug:
+        import ptvsd
+        import os
+        # 5678 is the default attach port in the VS Code debug configurations
+        gui_logger.info(f"Waiting for debugger attach to PID {os.getpid()} (pylabnet_gui)")
+        ptvsd.enable_attach(address=('localhost', 5678))
+        ptvsd.wait_for_attach()
+        breakpoint()
+
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 
     # Create app and instantiate main window

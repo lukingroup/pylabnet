@@ -323,15 +323,18 @@ class Controller:
         print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
 
         # Read debug state and set flag value accordingly.
+
+        # Initial configurations: All flags down.
+        debug_flag, server_debug_flag, gui_debug_flag = '0', '0', '0'
+
+        # Raise flags if selected in combobox
         if self.debug:
-            if self.debug_level=="launcher_script":
+            if self.debug_level == "launcher_script":
                 debug_flag = '1'
-            if self.debug_level=="launched_server":
-                server_debug_flag == '1'
-            if self.debug_level=="launched_gui":
-                gui_debug_flag == '1'
-        else:
-            debug_flag, server_debug_flag, gui_debug_flag = '0', '0', '0'
+            elif self.debug_level == "launched_server":
+                server_debug_flag = '1'
+            elif self.debug_level == "launched_gui":
+                gui_debug_flag = '1'
 
         # Build the bash command to input all active servers and relevant port numbers to script
         bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(

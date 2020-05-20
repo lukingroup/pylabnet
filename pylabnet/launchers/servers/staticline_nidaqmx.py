@@ -4,9 +4,8 @@ import socket
 
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
-import pylabnet.network.client_server.staticline as staticline_server
 
-from pylabnet.network.client_server.staticline import Client
+from pylabnet.network.client_server.staticline import Service, Client
 
 from pylabnet.network.core.generic_server import GenericServer
 
@@ -36,7 +35,7 @@ def launch(**kwargs):
 
     # Instantiate Server
     # Staticline server
-    staticline_service = staticline_server.Service()
+    staticline_service = Service()
     staticline_service.assign_module(module=test_staticline)
     staticline_service.assign_logger(logger=staticline_logger)
     staticline_service_server = GenericServer(

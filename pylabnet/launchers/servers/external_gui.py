@@ -4,7 +4,7 @@ import sys
 from PyQt5 import QtWidgets, uic, QtCore
 
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.external_gui import Service
+from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import show_console, hide_console
 

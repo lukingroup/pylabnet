@@ -1,7 +1,7 @@
 import socket
 
 from pylabnet.hardware.wavemeter.high_finesse_ws7 import Driver
-from pylabnet.network.client_server.high_finesse_ws7 import Service
+from pylabnet.network.client_server.high_finesse_ws7 import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 
 

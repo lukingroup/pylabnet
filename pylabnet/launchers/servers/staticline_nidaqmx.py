@@ -6,16 +6,12 @@ import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
 import pylabnet.network.client_server.staticline as staticline_server
 
-from pylabnet.network.client_server.staticline import Client as staticline_client
+from pylabnet.network.client_server.staticline import Client
 
 from pylabnet.network.core.generic_server import GenericServer
 
 # Parameters
 NI_DEVICE_NAME = 'cDAQ1Mod1'
-
-
-class Client(staticline_client):
-    pass
 
 
 def launch(**kwargs):

@@ -3,17 +3,11 @@
 import socket
 
 from pylabnet.hardware.ni_daqs import nidaqmx_card
-from pylabnet.network.client_server.nidaqmx_card import Client as ni_client
-from pylabnet.network.client_server.nidaqmx_card import Service
+from pylabnet.network.client_server.nidaqmx_card import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 
 # Parameters
 NI_DEVICE_NAME = 'cDAQ1Mod1'
-
-
-class Client(ni_client):
-    pass
-# TODO: Check whether this is necessary if we remove as statement
 
 
 def launch(**kwargs):

@@ -2,7 +2,7 @@
 """
 
 
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.client_base import ClientBase
 
 
 class RefocusClient(ClientBase):

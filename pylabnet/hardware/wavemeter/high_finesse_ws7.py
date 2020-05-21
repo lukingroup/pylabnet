@@ -1,9 +1,7 @@
+import ctypes
+
 from pylabnet.hardware.interface.wavemeter import WavemeterInterface, WavemeterError
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.generic_server import GenericServer
-from pylabnet.core.client_base import ClientBase
-import ctypes
 
 
 class Driver(WavemeterInterface):
@@ -12,7 +10,7 @@ class Driver(WavemeterInterface):
     def __init__(self, logger=None):
         """ Instantiate wavemeter
 
-        :param logger: instance of LogClient class
+        :param logger: instance of LogClient class (optional)
         """
 
         # Log
@@ -66,45 +64,3 @@ class Driver(WavemeterInterface):
 
         else:
             return self._wavemeterdll.GetFrequencyNum(channel, 0)
-
-
-class Service(ServiceBase):
-
-    def exposed_get_wavelength(self, channel, units):
-        return self._module.get_wavelength(
-            channel=channel,
-            units=units
-        )
-
-
-class Client(ClientBase, WavemeterInterface):
-
-    def get_wavelength(self, channel=1, units="Frequency(THz)"):
-        return self._service.exposed_get_wavelength(channel, units)
-
-
-def launch(**kwargs):
-    """ Connects to HF WS7 Wavemeter and launches server
-
-    :param kwargs: (dict) containing relevant kwargs
-        :logger: instance of LogClient for logging purposes
-        :port: (int) port number for the Cnt Monitor server
-    """
-
-    # Instantiate Logger
-    wavemeter_logger = kwargs['logger']
-
-    # Instantiate Wavemeter object
-    hf_wlm = Driver(logger=wavemeter_logger)
-
-    # Instantiate Server
-    wavemeter_service = Service()
-    wavemeter_service.assign_module(module=hf_wlm)
-    wavemeter_service.assign_logger(logger=wavemeter_logger)
-    wavemeter_server = GenericServer(
-        service=wavemeter_service,
-        host='localhost',
-        port=kwargs['port']
-    )
-
-    wavemeter_server.start()

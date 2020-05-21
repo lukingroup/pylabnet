@@ -1,7 +1,5 @@
 """ Script that launches a server.
 
-NOTE: MAKE SURE THAT THE SERVER MODULE IS IMPORTED IN THIS SCRIPT (see the try statement in imports)
-
 Normally, this is meant to be invoked from within a Launcher object (see launcher.py).
 However, you can also call this directly, with command-line arguments:
 :arg --logport: port number of log server
@@ -19,23 +17,10 @@ However, you can also call this directly, with command-line arguments:
         :param port: (int) port number
 """
 
-import sys
-import time
+import importlib
 
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.utils.logging.logger import LogClient
-
-# NOTE: make sure all relevant modules are imported, otherwise you will not be able to use them via this launcher!
-# Modules that may only work on specific machines should be placed inside a try statement
-from pylabnet.gui.pyqt import external_gui
-from pylabnet.hardware.ni_daqs import nidaqmx_wlm
-from pylabnet.hardware.wavemeter import high_finesse_ws7
-from pylabnet.hardware.staticline import staticline
-
-try:
-    from pylabnet.hardware.counter.swabian_instruments import cnt_monitor
-except:
-    pass
 
 
 def main():
@@ -86,7 +71,12 @@ def main():
         breakpoint()
 
     # Instantiate module
-    mod_inst = getattr(sys.modules[__name__], server)
+    try:
+        mod_inst = importlib.import_module(f'servers.{server}')
+    except ModuleNotFoundError:
+        server_logger.error(f'No module found in pylabnet.launchers.servers named {server}.py')
+        raise
+
     mod_inst.launch(logger=server_logger, port=server_port)
 
 

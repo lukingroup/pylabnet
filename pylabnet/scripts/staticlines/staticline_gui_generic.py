@@ -28,7 +28,7 @@ class StaticLineGUIGeneric():
 
         # store shutter client
         self.staticline = staticline_client
-        #self.staticline_HDAWG = staticline_hdawg
+        # self.staticline_HDAWG = staticline_hdawg
 
     def initialize_button(
         self,
@@ -101,12 +101,12 @@ class StaticLineGUIGeneric():
 def launch(**kwargs):
     """Launches the script."""
 
-    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
     # Instantiate StaticLineGUIGeneric
     try:
         staticline_gui = StaticLineGUIGeneric(
-            staticline_client=clients['staticline'], gui_client=guis['staticline_generic'], logger_client=logger
+            staticline_client=clients['staticline_nidaqmx'], gui_client=guis['staticline_generic'], logger_client=logger
         )
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

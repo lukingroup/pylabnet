@@ -9,8 +9,11 @@ from io import StringIO
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
-from pylabnet.gui.pyqt.external_gui import Window, Service, Client
-from pylabnet.core.generic_server import GenericServer
+
+from pylabnet.utils.logging.logger import LogService
+from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
 
@@ -104,9 +107,6 @@ class Controller:
                 self.gui_logger.error(f'Failed to connect to GUI Server with IP address: {self.host}, '
                                       f'Port: {self:gui_port}')
                 raise
-
-            # For debugging
-            time.sleep(1)
 
             # Now update GUI to mirror clients
             self._copy_master()

@@ -499,3 +499,195 @@ class Sequence():
         self.placeholders = placeholders
         # Keeps track of which placeholders has not been replaced yet.
         self.unresolved_placeholders = copy.deepcopy(placeholders)
+
+import pulseblock.pulse as po
+import pulseblock.pulse_block as pb
+from pulseblock.pb_iplot import iplot
+from pulseblock.pb_sample import pb_sample
+
+class DIOPulseBlockHandler():
+
+    def __init__(self, pb, assignment_dict, samp_rate=300e6, hd=None):
+        """ Initializes the pulse block handler for DIO
+
+        :hd: (object) And instance of the zi_hdawg.Driver()
+        :pb: (object) An instance of a pb.PulseBlock()
+        :samp_rate: (float) Sampling rate of HDAWG DIO (50 MHz)
+
+        :assignment_dict: (dictionary) Dictionary mapping the channel names in the
+            pulse block to DIO channels. e.g.
+            {
+                'mw_gate' : 1,
+                'ctr' : 2
+            }
+            assigns the channel mw_gate to DIO bit 1, etc.
+        """
+
+        self.hd = hd
+        self.pb = pb
+        self.assignment_dict = assignment_dict
+
+        # Read in remapped samples
+        self.sample_dict, self.num_samples, self.num_traces = self._get_remapped_samples(samp_rate=samp_rate)
+
+        # TODO implement some error checking,
+        # e.g. check if number of traces and
+        # number if entries in assignment_dict coincide.
+
+
+    def _get_remapped_samples(self, samp_rate):
+        """ Get sample dictionary
+
+        :samp_rate: (float) Sampling rate of HDAWG DIO (50 MHz)
+
+        Returnes dictionary with keys corresponding to DIO bit numbers and
+        values to the desired digital waveform
+        """
+
+        # Turn pulse block into sample dictionary
+        sampled_pb = pb_sample(self.pb, samp_rate=samp_rate)
+
+        # Number of samples per pulse
+        num_samples = sampled_pb[-2]
+        traces = sampled_pb[0]
+
+        # Number of different traces
+        num_traces = len(traces)
+
+        # Create dictionary with channel names replaces by DIO bit
+        sample_dict = {}
+        for channel_name in traces.keys():
+            sample_dict.update(
+                {self.assignment_dict[channel_name]: traces[channel_name]}
+            )
+
+        return sample_dict, num_samples, num_traces
+
+    def gen_codewords(self):
+        """Generate array of DIO codewords
+
+        Given the remapped sample array, translate it into an
+        array of DIO codewords.
+        """
+
+        # # Combine samples array into one 2D array.
+        # combined_samples = np.zeros((self.num_traces, self.num_samples))
+        # for i in range(self.num_traces):
+        #     combined_samples[i:] = self.sample_dict[i]
+
+        dio_bits = self.sample_dict.keys()
+
+        # Array storing one codeword per sample.
+        self.dio_codewords = np.zeros(self.num_samples)
+
+        for sample_num in range(self.num_samples):
+
+            # Initial codeword: 00000 ... 0000
+            codeword = 0b0
+
+            for dio_bit in dio_bits:
+
+                sample_val = self.sample_dict[dio_bit][sample_num]
+
+                # If value is True, add 1 at  dio_bit-th position
+                if sample_val:
+
+                    # E.g., for DIO-bit 3: 0000 ... 0001000
+                    bitshifted_dio_bit = (0b1 << int(dio_bit))
+
+                 # If value is False, do nothing.
+                else:
+                    bitshifted_dio_bit = 0b0
+
+                # Binary OR updates codeword.
+                codeword = codeword | bitshifted_dio_bit
+
+            # Store codeword.
+            self.dio_codewords[sample_num] = codeword
+
+    def prepare_DIO_sequence(self):
+
+        raw_snippet = "setDIO(_d_);"
+        self.seq_c_codeword = ""
+
+        for codeword in self.dio_codewords:
+            self.seq_c_codeword = self.seq_c_codeword + raw_snippet.replace("_d_", str(int(codeword)))
+
+        self.seq_c_codeword
+
+    # def setup_hd(self):
+
+    #     for DIO_bit in self.D
+    #     if DIO_bit in range(8):
+    #         toggle_bit = 1  # 1000
+    #     elif DIO_bit in range(8, 16):
+    #         toggle_bit = 2  # 0100
+    #     elif DIO_bit in range(16, 24):
+    #         toggle_bit = 4  # 0010
+    #     elif DIO_bit in range(24, 32):
+    #         toggle_bit = 8  # 0001
+    #     else:
+    #         self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
+
+    #     self.DIO_bit = DIO_bit
+    #     self.log.info(f"DIO_bit {DIO_bit} successfully assigned to staticline {self.name}.")
+
+    #     # Read in current configuration of DIO-bus.
+    #     current_config = self.hardware_module.geti('dios/0/drive')
+
+    #     # Set new configuration by using the bitwise OR.
+    #     new_config = current_config | toggle_bit
+    #     self.hardware_module.seti('dios/0/drive', new_config)
+
+
+def main():
+
+    def rabi_element(tau=0, aom_offset=0):
+        rabi_element = pb.PulseBlock(
+            p_obj_list=[
+                po.PTrue(ch='aom', dur=1.1e-6),
+                po.PTrue(ch='ctr', t0=0.5e-6, dur=0.5e-6)
+            ]
+        )
+        temp_t = rabi_element.dur
+
+        rabi_element.insert(
+            p_obj=po.PTrue(ch='mw_gate', dur=tau, t0=temp_t+0.7e-6)
+        )
+        temp_t = rabi_element.dur
+
+        rabi_element.insert(
+            p_obj=po.PTrue(ch='aom', t0=temp_t+aom_offset, dur=2e-6)
+        )
+        rabi_element.insert(
+            p_obj=po.PTrue(ch='ctr', t0=temp_t, dur=0.5e-6)
+        )
+
+        rabi_element.dflt_dict = dict(
+            aom=po.DFalse(),
+            ctr=po.DFalse(),
+            mw_gate=po.DFalse()
+        )
+
+        return rabi_element
+
+    rabi_pulseblock = rabi_element(1000e-9)
+
+    as_dict = {
+        'mw_gate':   1,
+        'ctr':      17,
+        'aom':      15,
+
+    }
+
+    pb_handler = DIOPulseBlockHandler(rabi_pulseblock, as_dict)
+    pb_handler.gen_codewords()
+    pb_handler.prepare_DIO_sequence()
+    pb_handler.prepare_dio_settings()
+
+
+
+
+
+if __name__ == "__main__":
+    main()

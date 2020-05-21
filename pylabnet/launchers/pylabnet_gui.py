@@ -23,6 +23,8 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 
+import sys
+import socket
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -65,6 +67,19 @@ def main():
         ui=gui_template,
         server_port=gui_port
     )
+
+    # Retrieve debug flag.
+    debug = int(args['debug'])
+
+    # Halt execution and wait for debugger connection if debug flag is up.
+    if debug:
+        import ptvsd
+        import os
+        # 5678 is the default attach port in the VS Code debug configurations
+        gui_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_gui)")
+        ptvsd.enable_attach(address=('localhost', 5678))
+        ptvsd.wait_for_attach()
+        breakpoint()
 
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 

@@ -82,7 +82,6 @@ class Launcher:
             Launcher object. Can be left blank, and the names of the script module(s) will be used
         :param params: (list) parameters for each script to launch
         """
-
         self.script = script
         self.server_req = server_req
         self.gui_req = gui_req
@@ -107,11 +106,24 @@ class Launcher:
             self.log_ip = self.args['logip']
             self.log_port = int(self.args['logport'])
             self.num_clients = int(self.args['numclients'])
+            self.debug = int(self.args['debug'])
+            self.server_debug = int(self.args['server_debug'])
+            self.gui_debug = int(self.args['gui_debug'])
         except IndexError:
             raise
 
-        # Connect to logger
+        # Connect to logger.
         self.logger = self._connect_to_logger()
+
+        # Halt execution and wait for debugger connection if debug flag is up.
+        if self.debug == 1:
+            import ptvsd
+            import os
+            # 5678 is the default attach port in the VS Code debug configurations
+            self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
+            ptvsd.enable_attach(address=('localhost', 5678))
+            ptvsd.wait_for_attach()
+            breakpoint()
 
         # Find all servers with port numbers and store them as a dictionary
         self.connectors = {}
@@ -174,7 +186,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {}'.format(
+                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -182,7 +194,8 @@ class Launcher:
                     self.log_ip,
                     self.log_port,
                     gui_port,
-                    gui
+                    gui,
+                    self.gui_debug
                 ), shell=True)
                 connected = True
             except ConnectionRefusedError:
@@ -256,7 +269,7 @@ class Launcher:
                     print(msg_str)
                     for index, match in enumerate(matches):
                         msg_str = ('------------------------------------------\n'
-                                   +'                    ({})                   \n'.format(index + 1)
+                                   + '                    ({})                   \n'.format(index + 1)
                                    + match.summarize())
                         print(msg_str)
                         self.logger.info(msg_str)
@@ -292,7 +305,7 @@ class Launcher:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {}'.format(
+                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -300,7 +313,8 @@ class Launcher:
                     self.log_ip,
                     self.log_port,
                     server_port,
-                    server
+                    server,
+                    self.server_debug
                 )
 
                 subprocess.Popen(cmd, shell=True)

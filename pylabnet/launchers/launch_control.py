@@ -5,8 +5,9 @@ import socket
 import os
 import time
 import subprocess
-import re
 from io import StringIO
+import re
+from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogService
@@ -51,6 +52,8 @@ class Controller:
         self.script_list = {}
         self.client_data = {}
         self.disconnection = False
+        self.debug = False
+        self.debug_level = None
         try:
             if sys.argv[1] == '-p':
                 self.proxy = True
@@ -256,10 +259,13 @@ class Controller:
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
         self.main_window.assign_label('buffer_terminal', 'buffer')
+        self.main_window.assign_event_button('debug_radio_button', 'debug')
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
+        self._configure_debug()
+        self._configure_debug_combo_select()
 
         self.main_window.force_update()
 
@@ -313,15 +319,32 @@ class Controller:
         launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
         print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
 
+        # Read debug state and set flag value accordingly.
+
+        # Initial configurations: All flags down.
+        debug_flag, server_debug_flag, gui_debug_flag = '0', '0', '0'
+
+        # Raise flags if selected in combobox
+        if self.debug:
+            if self.debug_level == "launcher":
+                debug_flag = '1'
+            elif self.debug_level == "pylabnet_server":
+                server_debug_flag = '1'
+            elif self.debug_level == "pylabnet_gui":
+                gui_debug_flag = '1'
+
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {}'.format(
+        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
             script_to_run,
             launch_time,
             sys.executable,
-            os.path.join(os.path.dirname(os.path.realpath(__file__)),script_to_run),
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
             self.host,
             self.log_port,
-            len(self.client_list)
+            len(self.client_list),
+            debug_flag,
+            server_debug_flag,
+            gui_debug_flag
         )
         client_index = 1
         for client in self.client_list:
@@ -412,6 +435,39 @@ class Controller:
         for client in remove_clients:
             self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
             del self.client_list[client]
+
+    # Defines what to do if debug radio button is clicked.
+    def _configure_debug(self):
+        self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
+
+    # Defines what to do if combobox is changed.
+    def _configure_debug_combo_select(self):
+        self.main_window.debug_comboBox.currentIndexChanged.connect(self._update_debug_level)
+
+    def _update_debug_settings(self):
+        if self.main_window.debug_radio_button.isChecked():
+            self.debug = True
+
+            # Enable and show combobox.
+            self.main_window.debug_comboBox.setEnabled(True)
+            self.main_window.debug_label.setHidden(False)
+            self.main_window.debug_comboBox.setHidden(False)
+
+        else:
+            self.debug = False
+            # Disable and hide combobox.
+            self.main_window.debug_comboBox.setEnabled(False)
+            self.main_window.debug_label.setHidden(True)
+            self.main_window.debug_comboBox.setHidden(True)
+
+        # Update debug level.
+        self._update_debug_level(self)
+
+    def _update_debug_level(self, i=0):
+        # Set debug level according to combo-box selection.
+        # Levels are:
+        # pylabnet_server, pylabnet_gui, launcher
+        self.debug_level = self.main_window.debug_comboBox.currentText()
 
 
 def main():

@@ -124,6 +124,7 @@ class Launcher:
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
+
         try:
             self._launch_guis()
             self._launch_servers()
@@ -178,7 +179,7 @@ class Launcher:
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
-                    os.path.join(os.path.dirname(os.path.realpath(__file__)),self._GUI_LAUNCH_SCRIPT),
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)), self._GUI_LAUNCH_SCRIPT),
                     self.log_ip,
                     self.log_port,
                     gui_port,
@@ -361,7 +362,7 @@ class Launcher:
             # If there are no matches, launch and connect to the server manually
             if num_matches == 0:
                 self.logger.info(f'No active servers matching {module.__name__.split(".")[-1]}'
-                                 'were found. Instantiating a new server')
+                                 ' were found. Instantiating a new server')
                 self._launch_new_server(module)
 
             # If there is exactly 1 match, try to connect automatically

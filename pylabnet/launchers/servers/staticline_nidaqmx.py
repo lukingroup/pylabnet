@@ -1,8 +1,21 @@
 ''' Configures a Staticline instance to use a NIDaqmx output'''
 
-from pylabnet.hardware.ni_daqs import nidaqmx_card
-from pylabnet.network.client_server.nidaqmx_card import Service
+import socket
+
+import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
+import pylabnet.hardware.staticline.staticline as staticline
+import pylabnet.network.client_server.staticline as staticline_server
+
+from pylabnet.network.client_server.staticline import Client as staticline_client
+
 from pylabnet.network.core.generic_server import GenericServer
+
+# Parameters
+NI_DEVICE_NAME = 'cDAQ1Mod1'
+
+
+class Client(staticline_client):
+    pass
 
 
 def launch(**kwargs):
@@ -13,29 +26,26 @@ def launch(**kwargs):
         :port: (int) port number for the Cnt Monitor server
     """
 
-    import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
+    staticline_logger = kwargs['logger']
+    daq = nidaqmx.Driver(device_name=NI_DEVICE_NAME, logger=staticline_logger)
 
-    device_name = 'cDAQ1Mod1'
-    daq = nidaqmx.Driver(device_name=device_name, logger=kwargs['logger'])
-
-    test_staticline = nidaqmx_card.Driver(
+    test_staticline = staticline.Driver(
         name='Test staticline',
         logger=kwargs['logger'],
         hardware_module=daq,
         ao_output='ao2',
-
         down_voltage=0,
         up_voltage=3.3,
     )
 
     # Instantiate Server
     # Staticline server
-    staticline_service = Service()
+    staticline_service = staticline_server.Service()
     staticline_service.assign_module(module=test_staticline)
-    staticline_service.assign_logger(logger=kwargs['logger'])
+    staticline_service.assign_logger(logger=staticline_logger)
     staticline_service_server = GenericServer(
         service=staticline_service,
-        host='localhost',
+        host=socket.gethostbyname(socket.gethostname()),
         port=kwargs['port']
     )
 

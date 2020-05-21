@@ -310,16 +310,6 @@ class Controller:
         relevant python script, passing all relevant LogClient information via the commandline
         """
 
-        import ptvsd
-        import os
-        # 5678 is the default attach port in the VS Code debug configurations
-        #self.logger.info(f"Waiting for debugger attach to PID {os.getpid()}")
-        #self.logger.info(f"Waiting for debugger attach to PID {os.getpid()} (launcher_script)")
-        ptvsd.enable_attach(address=('localhost', 5678))
-        ptvsd.wait_for_attach()
-        breakpoint()
-
-
         script_to_run = list(self.script_list.keys())[list(self.script_list.values()).index(
             self.main_window.script_list.currentItem()
         )]

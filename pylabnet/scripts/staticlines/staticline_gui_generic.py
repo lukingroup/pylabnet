@@ -28,7 +28,7 @@ class StaticLineGUIGeneric():
 
         # store shutter client
         self.staticline = staticline_client
-        #self.staticline_HDAWG = staticline_hdawg
+        # self.staticline_HDAWG = staticline_hdawg
 
     def initialize_button(
         self,

@@ -5,7 +5,6 @@ import socket
 import os
 import time
 import subprocess
-import numpy as np
 import re
 from io import StringIO
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -14,10 +13,8 @@ from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
-from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
-import pickle
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -279,7 +276,7 @@ class Controller:
         new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.update_index+1}~!'):-1]
 
         # Check if this failed
-        if new_msg is '':
+        if new_msg == '':
 
             # Check if the buffer is ahead of our last update
             up_str = re.findall(r'!~\d+~!', new_msg)
@@ -289,7 +286,7 @@ class Controller:
                     new_msg = buffer_terminal
 
         # If we have a new message to add, add it
-        if new_msg is not '':
+        if new_msg != '':
 
             self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
             try:
@@ -441,7 +438,7 @@ def main():
             log_controller.main_window.update_widgets()
 
             # New terminal input
-            if sys.stdout.getvalue() is not '':
+            if sys.stdout.getvalue() != '':
 
                 # Check for disconnection events
                 log_controller.check_disconnection()

@@ -1,7 +1,5 @@
 from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
-from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import unpack_launcher, create_server
 from pylabnet.utils.logging.logger import LogClient
@@ -544,7 +542,6 @@ class WlmMonitor:
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
                 self.clear_channel(channel=channel.number)
 
-
     def _get_channels(self):
         """ Returns all active channel numbers
 
@@ -903,11 +900,11 @@ def launch(**kwargs):
 
     if params is None:
         params = dict(channel_params=[dict(
-            channel=1, 
+            channel=1,
             name="Velocity",
             AO=dict(client='cDAQ1', channel='ao0'),
-            PID=dict(p=0.15, i=0.01, d=0), 
-            memory=100, 
+            PID=dict(p=0.15, i=0.01, d=0),
+            memory=100,
             voltage_monitor=True
             )])
 

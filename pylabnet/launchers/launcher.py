@@ -124,7 +124,6 @@ class Launcher:
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
-
         try:
             self._launch_guis()
             self._launch_servers()
@@ -297,7 +296,7 @@ class Launcher:
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
-                    os.path.join(os.path.dirname(os.path.realpath(__file__)),self._SERVER_LAUNCH_SCRIPT),
+                    os.path.join(os.path.dirname(os.path.realpath(__file__)), self._SERVER_LAUNCH_SCRIPT),
                     self.log_ip,
                     self.log_port,
                     server_port,

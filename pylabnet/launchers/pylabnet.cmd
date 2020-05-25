@@ -1,1 +1,1 @@
-conda activate pylabnet && start /min "Launch control" python launch_control.py
+conda activate test-env && start /min "Launch control" python launch_control.py

@@ -1,15 +1,19 @@
 # pylabnet
 Client-server, python-based laboratory software
 
-This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed initially for use in solid-state quantum optics + quantum network experiments in the Lukin group. 
+This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group. 
 
-## Using and developing the package properly with github
+## Installation
 
-If you are an external user and you would like to use the package, please fork the package to your own personal or group repository. See below for a description of the package.
+TODO
+
+## Using and developing the package
+
+If you are an external user and you would like to use the package, please fork the package to your own personal or group repository. 
 
 If you are an internal user (SiV Lukin lab team), and you would like to setup the package on a new machine, you can follow the steps below:
 
-1. First, clone the repository onto the local machine. Make sure github is installed on the local machine! Go to the command line, in your home user directory and use the command "git clone XXX" (insert the link above). Follow instructions in setup/readme.txt as well.
+1. First, clone the repository onto the local machine. Make sure git is installed on the local machine! This can be done from the command line, (preferrably in your home user directory) and use the command "git clone https://github.com/lukingroup/pylabnet.git". Follow instructions in setup/readme.txt as well.
 
 If you plan on developing the package (e.g. writing new drivers or scripts that do not exist yet), then please follow steps 2-6. If you plan on immediately using the package for expeirmental control without development, skip to step 7.
 

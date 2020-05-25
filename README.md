@@ -3,21 +3,46 @@ Client-server, python-based laboratory software
 
 This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group. 
 
-## Installation
+## For users
 
-TODO
+### Installation
 
-## Using and developing the package
+The package can be installed from the commandline using
+```bash
+pip install pylabnet
+```
 
-If you are an external user and you would like to use the package, please fork the package to your own personal or group repository. 
+You can now `import pylabnet` and its submodules in your own scripts and notebooks.
 
-If you are an internal user (SiV Lukin lab team), and you would like to setup the package on a new machine, you can follow the steps below:
+### Standard usage
 
-1. First, clone the repository onto the local machine. Make sure git is installed on the local machine! This can be done from the command line, (preferrably in your home user directory) and use the command "git clone https://github.com/lukingroup/pylabnet.git". Follow instructions in setup/readme.txt as well.
+The general workflow is the following
 
-If you plan on developing the package (e.g. writing new drivers or scripts that do not exist yet), then please follow steps 2-6. If you plan on immediately using the package for expeirmental control without development, skip to step 7.
+1. Launch a `LogServer`. This is sort of the brain of the entire software; everything subsequent will be a client to the `LogServer`
+2. Connect to hardware locally.
+3. Instantiate a `GenericServer` for each device (or logical module) to allow remote programming from anywhere in the network
+4. Create clients for the hardware servers, which can be used to perform arbitrary functions on devices present across the network
 
-2. Create a new working branch "new-branch" (insert a relevant name) for your changes. Within the local github repository, use the command "git checkout -b XXX" (insert relevant branch name). This simultaneously creates a new branch and switches over to it. **Please do not make the changes directly in the master branch!**
+For maximal convenience, this can be coordinated via the Launch Control GUI. After `pip` installation of pylabnet, two executables will be created in the system PATH: `pylabnet.exe` and `pylabnet_proxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over pylabnet. 
+
+The master Launch Control runs the `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master and mirror its information for convenience on remote machines.
+
+using the pylabnet shortcut provided in the main directory. This launches the master `LogServer`, and from this GUI, additional hardware servers and scripts can be launched. To program devices and run scripts on remote machines with access to all of the same servers, the pylabnet_proxy shortcut can be used as a proxy for the master `LogServer`.
+
+## For developers
+
+### Installation
+
+1. Clone the repository onto the local machine. Make sure git is installed. Cloning can be done from the command line, (preferrably in your home user directory) with the command 
+```bash
+git clone https://github.com/lukingroup/pylabnet.git
+```
+
+**Environment-independent installation (recommended)**
+
+2. Navigate to the 
+
+Create a new working branch "new-branch" (insert a relevant name) for your changes. Within the local github repository, use the command "git checkout -b XXX" (insert relevant branch name). This simultaneously creates a new branch and switches over to it. **Please do not make the changes directly in the master branch!**
 
 3. Make changes to (or add new) relevant modules: pylabnet/hardware, pylabnet/gui, and pylabnet/script.
 

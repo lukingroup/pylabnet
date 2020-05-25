@@ -29,6 +29,7 @@ setup(
     author_email='b16lukin@gmail.com',
     license='MIT',
     packages=find_packages(),
+    include_package_data=True,
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

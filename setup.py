@@ -30,6 +30,7 @@ setup(
     license='MIT',
     packages=find_packages(),
     include_package_data=True,
+    entry_points={'console_scripts': ['pylabnet=pylabnet.launchers.launch_control:main']},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

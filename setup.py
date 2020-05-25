@@ -30,7 +30,12 @@ setup(
     license='MIT',
     packages=find_packages(),
     include_package_data=True,
-    entry_points={'console_scripts': ['pylabnet=pylabnet.launchers.launch_control:main']},
+    entry_points={
+        'console_scripts': [
+            'pylabnet=pylabnet.launchers.launch_control:main',
+            'pylabnet_proxy=pylabnet.launchers.launch_control:main_proxy'
+            ]
+        },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",
@@ -156,6 +161,7 @@ setup(
         'prometheus-client>=0.7.1',
         'prompt-toolkit>=2.0.10',
         'psutil>=5.6.3',
+        'ptvsd>=4.3.2',
         'py>=1.8.0',
         'pycodestyle>=2.5.0',
         'pycosat>=0.6.3',

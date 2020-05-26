@@ -2,7 +2,7 @@
 
 Client-server, python-based laboratory software
 
- ![Devices](devices.ico)
+ ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/packaging/devices.ico)
 
 This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group. 
 
@@ -94,7 +94,7 @@ and `pylabnet_proxy.cmd` similarly
 
 3. Run the following from the commandline
 ```bash
-python setup.py sdist
+python setup.py sdist bdist_wheel
 ```
 This will create a pylabnet/dist directory (which should not be tracked by github) containing the build files for this version
 

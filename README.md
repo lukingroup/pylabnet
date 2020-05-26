@@ -23,6 +23,8 @@ pip install --upgrade pylabnet
 
  After `pip` installation of pylabnet, two executables will be created in the system `PATH`: `pylabnet.exe` and `pylabnet_proxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over pylabnet. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
 
+ > **_NOTE:_** You will likely need to allow python through Windows firewall the first time you run Launch Control on a new machine.
+
 The master Launch Control runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master and mirror its information for convenience on remote machines.
 
 The general workflow is the following
@@ -47,9 +49,22 @@ git clone https://github.com/lukingroup/pylabnet.git
 
 Once cloned, navigate to the root directory in the commandline, and run the command
 ```bash
-python setup.py develop
+python setup.py develop --exclude-scripts
 ```
-This will create the same packaged executables in the system `PATH` as if the standard `pip install pylabnet` were carried out, but these executables will link to the current directory, which can then be developed and tested
+This will allow you to `import pylabnet` from your scripts. It also creates a `pylabnet.egg-info` file which can be safely deleted (it should not be tracked by github). 
+
+It is recommended to use the shortcuts provided in the root directory for launching. **The "start in" fields need to be modified to the machine-specific path, see `pylabnet/launchers/README.md` for details**
+
+---
+**NOTE**
+
+If you performed installation in a specific environment `my-env`, you will needed to modify `pylanbet.cmd` to read
+```bash
+conda activate my-env && start /min "Launch control" python launch_control.py -p
+```
+and `pylabnet_proxy.cmd` similarly
+
+---
 
 ### Development
 
@@ -69,9 +84,11 @@ This will create the same packaged executables in the system `PATH` as if the st
 
 ### Publishing a new version to pip
 
-1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here. The preferred format is to use `>=` and `>` to constrain package versions, rather than `==`.
+1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here. 
+ > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts
 
-2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. *Note: the current version is 0.2.2 and we plan on releasing 1.0.0 once the software core is stable and in steady use by the experiment*
+2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. 
+ > **_NOTE:_** The current version is 0.2.2 and we plan on releasing 1.0.0 once the software core is stable and in steady use by the experiment
 
 3. Run the following from the commandline
 ```bash
@@ -81,3 +98,17 @@ This will create a pylabnet/dist directory (which should not be tracked by githu
 
 4. To upload to pip, run the command
 ```bash
+twine upload dist/*
+```
+> **_NOTE:_** This requires credentials on https://pypi.org, as well as the twine package which can be installed with `pip install twine`
+---
+**NOTE**
+
+If you are done using a particular machine for development and would like to use and update the package the standard way via pip, you can remove the pylabnet installation by running the command
+```bash
+python setup.py develop --uninstall
+```
+
+Your local repository can now be deleted and pylabnet can be installed, used, and maintained via pip.
+
+---

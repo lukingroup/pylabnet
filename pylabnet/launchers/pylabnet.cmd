@@ -1,1 +1,1 @@
-conda activate test-env && start /min "Launch control" python launch_control.py
+start /min "Launch control" python launch_control.py

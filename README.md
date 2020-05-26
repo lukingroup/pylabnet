@@ -69,7 +69,15 @@ This will create the same packaged executables in the system `PATH` as if the st
 
 ### Publishing a new version to pip
 
-1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages.
+1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here. The preferred format is to use `>=` and `>` to constrain package versions, rather than `==`.
 
-2. Update the version number in `__init__.py` in the root module.
+2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. *Note: the current version is 0.2.2 and we plan on releasing 1.0.0 once the software core is stable and in steady use by the experiment*
 
+3. Run the following from the commandline
+```bash
+python setup.py sdist
+```
+This will create a pylabnet/dist directory (which should not be tracked by github) containing the build files for this version
+
+4. To upload to pip, run the command
+```bash

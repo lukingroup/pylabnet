@@ -51,7 +51,7 @@ Once cloned, navigate to the root directory in the commandline, and run the comm
 ```bash
 python setup.py develop --exclude-scripts
 ```
-> **_NOTE_** You will need to have the `setuptools` library installed (run `pip install setuptools`)
+> **_NOTE:_** You will need to have the `setuptools` library installed (run `pip install setuptools`)
 
 This will allow you to `import pylabnet` from your scripts. It also creates a `pylabnet.egg-info` file which can be safely deleted (it should not be tracked by github). 
 

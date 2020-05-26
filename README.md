@@ -51,6 +51,8 @@ Once cloned, navigate to the root directory in the commandline, and run the comm
 ```bash
 python setup.py develop --exclude-scripts
 ```
+> **_NOTE_** You will need to have the `setuptools` library installed (run `pip install setuptools`)
+
 This will allow you to `import pylabnet` from your scripts. It also creates a `pylabnet.egg-info` file which can be safely deleted (it should not be tracked by github). 
 
 It is recommended to use the shortcuts provided in the root directory for launching. **The "start in" fields need to be modified to the machine-specific path, see `pylabnet/launchers/README.md` for details**

@@ -500,10 +500,11 @@ class Sequence():
         # Keeps track of which placeholders has not been replaced yet.
         self.unresolved_placeholders = copy.deepcopy(placeholders)
 
-import pulseblock.pulse as po
-import pulseblock.pulse_block as pb
-from pulseblock.pb_iplot import iplot
-from pulseblock.pb_sample import pb_sample
+import pylabnet.utils.pulseblock.pulse as po
+import pylabnet.utils.pulseblock.pulse_block as pb
+import numpy as np
+#from pylabnet.pulseblock.pb_iplot import iplot
+from pylabnet.utils.pulseblock.pb_sample import pb_sample
 
 class DIOPulseBlockHandler():
 
@@ -512,7 +513,7 @@ class DIOPulseBlockHandler():
 
         :hd: (object) And instance of the zi_hdawg.Driver()
         :pb: (object) An instance of a pb.PulseBlock()
-        :samp_rate: (float) Sampling rate of HDAWG DIO (50 MHz)
+        :samp_rate: (float) Sampling rate of HDAWG sequencer (300 MHz)
 
         :assignment_dict: (dictionary) Dictionary mapping the channel names in the
             pulse block to DIO channels. e.g.
@@ -578,7 +579,7 @@ class DIOPulseBlockHandler():
         dio_bits = self.sample_dict.keys()
 
         # Array storing one codeword per sample.
-        self.dio_codewords = np.zeros(self.num_samples)
+        self.dio_codewords = np.zeros(self.num_samples, dtype='int64')
 
         for sample_num in range(self.num_samples):
 
@@ -615,19 +616,39 @@ class DIOPulseBlockHandler():
 
         self.seq_c_codeword
 
+    def zip_dio_commands(self, wait_offset=4):
+        """Generate zipped version of DIO commands.
+
+        This will reduce the digital waveform to
+        specify the times, when the DIO output changes, and
+        corresponsing waittimes in between.
+
+        :wait_offest: (int) How much to offset the waittimes in order to account for
+            execution times of the setDIO command (calibrated to 4 samples)
+        """
+
+        # FInd out where the the codewords change:
+        dio_change_index = np.where(self.dio_codewords[:-1] != self.dio_codewords[1:])[0]
+
+        # Use difference of array to get waittimes, prepend first sample.
+        waitimes = np.insert(np.diff(dio_change_index), 0, dio_change_index[0])
+
+        # Store DIO values occuring after state change
+        dio_vals = np.insert(self.dio_codewords[dio_change_index+1], 0 , self.dio_codewords[0])
+
     # def setup_hd(self):
 
-    #     for DIO_bit in self.D
-    #     if DIO_bit in range(8):
-    #         toggle_bit = 1  # 1000
-    #     elif DIO_bit in range(8, 16):
-    #         toggle_bit = 2  # 0100
-    #     elif DIO_bit in range(16, 24):
-    #         toggle_bit = 4  # 0010
-    #     elif DIO_bit in range(24, 32):
-    #         toggle_bit = 8  # 0001
-    #     else:
-    #         self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
+    #     for DIO_bit in self.DIO_bit:
+    #         if DIO_bit in range(8):
+    #             toggle_bit = 1  # 1000
+    #         elif DIO_bit in range(8, 16):
+    #             toggle_bit = 2  # 0100
+    #         elif DIO_bit in range(16, 24):
+    #             toggle_bit = 4  # 0010
+    #         elif DIO_bit in range(24, 32):
+    #             toggle_bit = 8  # 0001
+    #         else:
+    #             self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
 
     #     self.DIO_bit = DIO_bit
     #     self.log.info(f"DIO_bit {DIO_bit} successfully assigned to staticline {self.name}.")
@@ -674,16 +695,17 @@ def main():
     rabi_pulseblock = rabi_element(1000e-9)
 
     as_dict = {
-        'mw_gate':   1,
+        'mw_gate':   15,
         'ctr':      17,
-        'aom':      15,
+        'aom':      31,
 
     }
 
     pb_handler = DIOPulseBlockHandler(rabi_pulseblock, as_dict)
     pb_handler.gen_codewords()
+    pb_handler.zip_dio_commands()
     pb_handler.prepare_DIO_sequence()
-    pb_handler.prepare_dio_settings()
+    #pb_handler.prepare_dio_settings()
 
 
 

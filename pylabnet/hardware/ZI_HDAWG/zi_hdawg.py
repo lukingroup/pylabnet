@@ -616,6 +616,30 @@ class DIOPulseBlockHandler():
 
         self.seq_c_codeword
 
+
+    def reconstruct_dio_waveform(self, waittimes, dio_vals, wait_offset):
+
+        waveform = np.zeros(np.sum(waittimes), dtype='int64')
+        waveform[0] = dio_vals[0]
+
+        sequence = ""
+        set_dio_raw = "setDIO(_d_);"
+        wait_raw = "wait(_w_);"
+
+
+        for i, waittime in enumerate(waittimes):
+            summed_waittime = np.sum(waittimes[0:i]) + 1
+            waveform[summed_waittime:summed_waittime+waittime] = dio_vals[i]
+
+            # Add setDIO command to sequence
+            sequence += set_dio_raw.replace("_d_", str(int(dio_vals[i])))
+
+            # Add waittime to sequence
+            sequence += wait_raw.replace("_w_", str(int(max(waittime-wait_offset, 0))))
+
+        return waveform, sequence
+
+        waveform = np.zeros()
     def zip_dio_commands(self, wait_offset=4):
         """Generate zipped version of DIO commands.
 
@@ -627,14 +651,26 @@ class DIOPulseBlockHandler():
             execution times of the setDIO command (calibrated to 4 samples)
         """
 
-        # FInd out where the the codewords change:
+        # Find out where the the codewords change:
         dio_change_index = np.where(self.dio_codewords[:-1] != self.dio_codewords[1:])[0]
 
-        # Use difference of array to get waittimes, prepend first sample.
-        waitimes = np.insert(np.diff(dio_change_index), 0, dio_change_index[0])
+        # Use difference of array to get waittimes, prepend first sample, append the waittime to match sequence length.
+
+        num_samples = len(self.dio_codewords)
+
+        waittimes = np.concatenate([[dio_change_index[0]], np.diff(dio_change_index), [num_samples - dio_change_index[-1]]])
+
+        assert sum(waittimes) == num_samples, "Mismatch between sum of waittimes and waveform length."
 
         # Store DIO values occuring after state change
-        dio_vals = np.insert(self.dio_codewords[dio_change_index+1], 0 , self.dio_codewords[0])
+        dio_vals = np.concatenate([[self.dio_codewords[0]], self.dio_codewords[dio_change_index+1]])
+
+        rec_waveform, sequence = self.reconstruct_dio_waveform(waittimes, dio_vals, wait_offset)
+
+        # Sanity check if waveform is reproducable using dio vals and waittimes
+        assert (self.dio_codewords == rec_waveform).all()
+
+
 
     # def setup_hd(self):
 

@@ -17,13 +17,12 @@ class nanopositioners():
         self._nanopositionersdll.SA_CTL_FindDevices.restype = ctypes.POINTER(ctypes.c_uint32)
         self._nanopositionersdll.SA_CTL_FindDevices.argtype = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_ulonglong)]
 
-        # finding devices connected to controller
-        # define C pointers
-        buffer = ctypes.create_string_buffer(4096) #buffer is c_wchar, using byref in argument
+        # finding devices connected to controlle
+        buffer = ctypes.create_string_buffer(4096)  #the way to have a mutable buffer
         #buffer = ctypes.c_byte*4096
-        buffersize = ctypes.c_size_t(ctypes.sizeof(buffer))
-        result = self._nanopositionersdll.SA_CTL_FindDevices(None, ctypes.POINTER(buffer),ctypes.POINTER(buffersize))
-        print(library_str)
+        buffersize = ctypes.c_size_t(ctypes.sizeof(buffer)) #size _t gives c_ulonglong, not as in manual
+        result = self._nanopositionersdll.SA_CTL_FindDevices(None, ctypes.pointer(buffer),ctypes.pointer(buffersize))
+        print(library_str)  #for debugging with breakpoint here
 
 def main():
     nanpos = nanopositioners()

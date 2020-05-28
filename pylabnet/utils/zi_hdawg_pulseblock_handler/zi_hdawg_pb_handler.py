@@ -27,26 +27,36 @@ class DIOPulseBlockHandler():
             assigns the channel mw_gate to DIO bit 1, etc.
         """
 
-        # Store arguments.
+
+        # Use the log client of the HDAWG
         self.hd = hd
+        self.log = hd.log
+
+        # Store arguments.
         self.pb = pb
         self.assignment_dict = assignment_dict
         self.DIO_bits = assignment_dict.values()
 
-        # Use the log client of the HDAWG
-        self.log = hd.log
+        # Check key value integrity of assignment dict
+        self._check_key_assignments()
 
-        # Check if key values in assignment dict coincide with keys in pulseblock
-        if not assignment_dict.keys() == pb.p_dict.keys():
-            for assignment_key in assignment_dict.keys():
-                if assignment_key not in pb.p_dict.keys():
-                    self.log.error(f"Key '{assignment_key}' in assignment dictionary not found in pulseblock instance. Available keys are {pb.p_dict.keys()}.")
-            for pb_key in pb.p_dict.keys():
-                if pb_key not in assignment_dict.keys():
-                    self.log.error(f"Key {pb_key} in pulseblock instance not found in assignment dictionary.")
-        # Read in remapped samples
+        # Store remapped samples, number of samples and number of traces
         self.sample_dict, self.num_samples, self.num_traces = self._get_remapped_samples(samp_rate=samp_rate)
 
+    def _check_key_assignments(self):
+        """Check if key values in assignment dict coincide with keys in pulseblock"""
+
+        if not self.assignment_dict.keys() == self.pb.p_dict.keys():
+            for assignment_key in self.assignment_dict.keys():
+                if assignment_key not in self.pb.p_dict.keys():
+                    self.log.error(
+                        f"Key '{assignment_key}' in assignment dictionary not found in pulseblock instance. Available keys are {self.pb.p_dict.keys()}."
+                    )
+            for pb_key in self.pb.p_dict.keys():
+                if pb_key not in self.assignment_dict.keys():
+                    self.log.error(
+                        f"Key '{pb_key}' in pulseblock instance not found in assignment dictionary."
+                    )
 
 
     def _get_remapped_samples(self, samp_rate):

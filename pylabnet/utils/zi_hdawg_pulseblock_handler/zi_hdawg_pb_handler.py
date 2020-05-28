@@ -1,13 +1,13 @@
 
-import pylabnet.utils.pulseblock.pulse as po
-import pylabnet.utils.pulseblock.pulse_block as pb
 import numpy as np
-#from pylabnet.pulseblock.pb_iplot import iplot
 from pylabnet.utils.pulseblock.pb_sample import pb_sample
 
 
-# Sampling rate of HDWAG sequencer (200 MHZ)
+# Sampling rate of HDWAG sequencer (300 MHZ)
 SEQ_SAMP_RATE = 300e6
+
+# Duration of setDIO() commands to be used as offset in wait() commands
+SETDIO_OFFSET = 4
 
 class DIOPulseBlockHandler():
 
@@ -26,7 +26,6 @@ class DIOPulseBlockHandler():
             }
             assigns the channel mw_gate to DIO bit 1, etc.
         """
-
 
         # Use the log client of the HDAWG
         self.hd = hd
@@ -58,7 +57,6 @@ class DIOPulseBlockHandler():
                         f"Key '{pb_key}' in pulseblock instance not found in assignment dictionary."
                     )
 
-
     def _get_remapped_samples(self, samp_rate):
         """Transforms pulsblock object into dictionary of sample-wise defined digital waveforms.
 
@@ -87,21 +85,16 @@ class DIOPulseBlockHandler():
         return sample_dict, num_samples, num_traces
 
     def gen_codewords(self):
-        """Generate array of DIO codewords
+        """Generate array of DIO codewords.
 
         Given the remapped sample array, translate it into an
-        array of DIO codewords.
+        array of DIO codewords, sample by sample.
         """
-
-        # # Combine samples array into one 2D array.
-        # combined_samples = np.zeros((self.num_traces, self.num_samples))
-        # for i in range(self.num_traces):
-        #     combined_samples[i:] = self.sample_dict[i]
 
         dio_bits = self.sample_dict.keys()
 
         # Array storing one codeword per sample.
-        self.dio_codewords = np.zeros(self.num_samples, dtype='int64')
+        dio_codewords = np.zeros(self.num_samples, dtype='int64')
 
         for sample_num in range(self.num_samples):
 
@@ -126,18 +119,9 @@ class DIOPulseBlockHandler():
                 codeword = codeword | bitshifted_dio_bit
 
             # Store codeword.
-            self.dio_codewords[sample_num] = codeword
+            dio_codewords[sample_num] = codeword
 
-    def prepare_DIO_sequence(self):
-
-        raw_snippet = "setDIO(_d_);"
-        self.seq_c_codeword = ""
-
-        for codeword in self.dio_codewords:
-            self.seq_c_codeword = self.seq_c_codeword + raw_snippet.replace("_d_", str(int(codeword)))
-
-        self.seq_c_codeword
-
+        return dio_codewords
 
     def reconstruct_dio_waveform(self, waittimes, dio_vals, wait_offset):
 
@@ -162,7 +146,7 @@ class DIOPulseBlockHandler():
         return waveform, sequence
 
         waveform = np.zeros()
-    def zip_dio_commands(self, wait_offset=4):
+    def zip_dio_commands(self, dio_codewords):
         """Generate zipped version of DIO commands.
 
         This will reduce the digital waveform to
@@ -174,23 +158,46 @@ class DIOPulseBlockHandler():
         """
 
         # Find out where the the codewords change:
-        dio_change_index = np.where(self.dio_codewords[:-1] != self.dio_codewords[1:])[0]
+        dio_change_index = np.where(dio_codewords[:-1] != dio_codewords[1:])[0]
 
         # Use difference of array to get waittimes, prepend first sample, append the waittime to match sequence length.
-
-        num_samples = len(self.dio_codewords)
-
+        num_samples = len(dio_codewords)
         waittimes = np.concatenate([[dio_change_index[0]], np.diff(dio_change_index), [num_samples - dio_change_index[-1]]])
 
-        assert sum(waittimes) == num_samples, "Mismatch between sum of waittimes and waveform length."
+        if not sum(waittimes) == num_samples,
+            self.log.error("Mismatch between sum of waittimes and waveform length.")
 
         # Store DIO values occuring after state change
-        dio_vals = np.concatenate([[self.dio_codewords[0]], self.dio_codewords[dio_change_index+1]])
+        switching_codewords = np.concatenate([[dio_codewords[0]], dio_codewords[dio_change_index+1]])
 
-        rec_waveform, sequence = self.reconstruct_dio_waveform(waittimes, dio_vals, wait_offset)
+        return switching_codewords, waittimes
 
-        # Sanity check if waveform is reproducable using dio vals and waittimes
-        assert (self.dio_codewords == rec_waveform).all()
+    def construct_dio_sequence(self, switching_codewords, waittimes, wait_offset=SETDIO_OFFSET):
+
+        # Reconstruct sequence from switching codewords and waittimes.
+        rec_waveform, sequence = self.reconstruct_dio_waveform(waittimes, switching_codewords, wait_offset)
+
+        # Sanity check if waveform is reproducable from switching codewords and waittimes.
+        assert (dio_codewords == rec_waveform).all()
+
+        if not (self.dio_codewords == rec_waveform).all():
+            self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
+
+        return sequence
+
+    def get_dio_sequence():
+
+        # Get sample-wise sets of codewords.
+        codewords = gen_codewords()
+
+        # Reduce this array to a set of codewords + waittimes.
+        switching_codewords, waittimes = self.zip_dio_commands(codewords)
+
+        # Reconstruct set of .seqc instructions representing the digital waveform.
+        sequence = self.construct_dio_sequence(
+            switching_codewords=switching_codewords,
+            waittimes=waittimes
+        )
 
         return sequence
 

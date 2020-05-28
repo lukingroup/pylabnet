@@ -528,6 +528,8 @@ class DIOPulseBlockHandler():
         self.pb = pb
         self.assignment_dict = assignment_dict
 
+        self.DIO_bits = assignment_dict.values()
+
         # Read in remapped samples
         self.sample_dict, self.num_samples, self.num_traces = self._get_remapped_samples(samp_rate=samp_rate)
 
@@ -670,31 +672,31 @@ class DIOPulseBlockHandler():
         # Sanity check if waveform is reproducable using dio vals and waittimes
         assert (self.dio_codewords == rec_waveform).all()
 
+        return sequence
 
+    def setup_hd(self):
 
-    # def setup_hd(self):
+        # Read in current configuration of DIO-bus.
+        current_config = self.hd.geti('dios/0/drive')
 
-    #     for DIO_bit in self.DIO_bit:
-    #         if DIO_bit in range(8):
-    #             toggle_bit = 1  # 1000
-    #         elif DIO_bit in range(8, 16):
-    #             toggle_bit = 2  # 0100
-    #         elif DIO_bit in range(16, 24):
-    #             toggle_bit = 4  # 0010
-    #         elif DIO_bit in range(24, 32):
-    #             toggle_bit = 8  # 0001
-    #         else:
-    #             self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
+        for DIO_bit in self.DIO_bits:
+            if DIO_bit in range(8):
+                toggle_bit = 1  # 1000
+            elif DIO_bit in range(8, 16):
+                toggle_bit = 2  # 0100
+            elif DIO_bit in range(16, 24):
+                toggle_bit = 4  # 0010
+            elif DIO_bit in range(24, 32):
+                toggle_bit = 8  # 0001
+            else:
+                self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
 
-    #     self.DIO_bit = DIO_bit
-    #     self.log.info(f"DIO_bit {DIO_bit} successfully assigned to staticline {self.name}.")
+            # Set new configuration by using the bitwise OR.
+            new_config = current_config | toggle_bit
+            self.hd.seti('dios/0/drive', new_config)
 
-    #     # Read in current configuration of DIO-bus.
-    #     current_config = self.hardware_module.geti('dios/0/drive')
-
-    #     # Set new configuration by using the bitwise OR.
-    #     new_config = current_config | toggle_bit
-    #     self.hardware_module.seti('dios/0/drive', new_config)
+            # Update current configuration
+            current_config = new_config
 
 
 def main():
@@ -731,13 +733,25 @@ def main():
     rabi_pulseblock = rabi_element(1000e-9)
 
     as_dict = {
-        'mw_gate':   15,
+        'mw_gate':   1,
         'ctr':      17,
         'aom':      31,
 
     }
 
-    pb_handler = DIOPulseBlockHandler(rabi_pulseblock, as_dict)
+    dev_id = 'dev8040'
+    from pylabnet.utils.logging.logger import LogClient
+
+    # Instantiate
+    logger = LogClient(
+        host='192.168.1.2',
+        port=2056,
+        module_tag=f'ZI HDAWG {dev_id}'
+    )
+
+    hd = Driver(dev_id, logger=logger)
+    pb_handler = DIOPulseBlockHandler(rabi_pulseblock, as_dict, hd=hd)
+    pb_handler.setup_hd()
     pb_handler.gen_codewords()
     pb_handler.zip_dio_commands()
     pb_handler.prepare_DIO_sequence()

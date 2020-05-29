@@ -3,16 +3,16 @@ import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample
 
 
-# Sampling rate of HDWAG sequencer (300 MHZ)
+# Sampling rate of HDWAG sequencer (300 MHz).
 SEQ_SAMP_RATE = 300e6
 
-# Duration of setDIO() commands to be used as offset in wait() commands
+# Duration of setDIO() commands to be used as offset in wait() commands.
 SETDIO_OFFSET = 4
 
 
 class DIOPulseBlockHandler():
 
-    def __init__(self, pb, assignment_dict, samp_rate=SEQ_SAMP_RATE, hd=None):
+    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, hd=None):
         """ Initializes the pulse block handler for DIO
 
         :hd: (object) And instance of the zi_hdawg.Driver()
@@ -26,22 +26,66 @@ class DIOPulseBlockHandler():
                 'ctr' : 2
             }
             assigns the channel mw_gate to DIO bit 1, etc.
+
+            The assignment dictionary can be incomplete,
+            in which case the user will be asked to provide the
+            missing values. If no assignment dictionary is
+            provided, user is asked to provide all DIO bit values.
         """
 
-        # Use the log client of the HDAWG
+        # Use the log client of the HDAWG.
         self.hd = hd
         self.log = hd.log
 
         # Store arguments.
         self.pb = pb
-        self.assignment_dict = assignment_dict
-        self.DIO_bits = assignment_dict.values()
 
-        # Check key value integrity of assignment dict
-        self._check_key_assignments()
+        # Ask user for bit assignment if no dictionary provided.
+        if assignment_dict is None:
 
-        # Store remapped samples, number of samples and number of traces
+            # Initiate empty dictionary
+            self.assignment_dict = {}
+
+            # Ask user to assign all channels
+            self._aks_for_dio_assignment(self.pb.p_dict.keys())
+
+        # Store assignment dict if provided.
+        else:
+            self.assignment_dict = assignment_dict
+
+            # Check key value integrity of assignment dict.
+            self._check_key_assignments()
+
+        self.DIO_bits = self.assignment_dict.values()
+
+        # Store remapped samples, number of samples and number of traces.
         self.sample_dict, self.num_samples, self.num_traces = self._get_remapped_samples(samp_rate=samp_rate)
+
+    def _aks_for_dio_assignment(self, keys_to_assign):
+        """Ask user to provide DIO bit for trace
+
+        :keys_to_assign: (np.array) Array of keys in pulseblock dictionary
+            (trace names).
+        """
+
+        for trace_name in keys_to_assign:
+            dio_bit = input(f"Please assign a DIO bit (0-31) to pulse trace '{trace_name}':")
+
+            # Check if user has entered a int.
+            wrong_int_msg = "Please enter an integer from 0-31."
+            try:
+                dio_bit = int(dio_bit)
+            except ValueError:
+                self.log.error(wrong_int_msg)
+
+            if dio_bit not in range(32):
+                self.log.error(wrong_int_msg)
+
+            # Check if DIO bit is already assigned
+            if dio_bit in self.assignment_dict.values():
+                self.log.error(f"DIO bit is {dio_bit} already in use.")
+
+            self.assignment_dict[trace_name] = dio_bit
 
     def _check_key_assignments(self):
         """Check if key values in assignment dict coincide with keys in pulseblock"""
@@ -54,9 +98,12 @@ class DIOPulseBlockHandler():
                     )
             for pb_key in self.pb.p_dict.keys():
                 if pb_key not in self.assignment_dict.keys():
-                    self.log.error(
-                        f"Key '{pb_key}' in pulseblock instance not found in assignment dictionary."
+                    self.log.warn(
+                        f"Key '{pb_key}' in pulseblock instance not found in assignment dictionary, please specify."
                     )
+
+                    # Ask user to provide DIO bit for key.
+                    self._aks_for_dio_assignment([pb_key])
 
     def _get_remapped_samples(self, samp_rate):
         """Transforms pulsblock object into dictionary of sample-wise defined digital waveforms.

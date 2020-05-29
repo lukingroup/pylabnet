@@ -9,6 +9,7 @@ SEQ_SAMP_RATE = 300e6
 # Duration of setDIO() commands to be used as offset in wait() commands
 SETDIO_OFFSET = 4
 
+
 class DIOPulseBlockHandler():
 
     def __init__(self, pb, assignment_dict, samp_rate=SEQ_SAMP_RATE, hd=None):
@@ -111,7 +112,7 @@ class DIOPulseBlockHandler():
                     # E.g., for DIO-bit 3: 0000 ... 0001000
                     bitshifted_dio_bit = (0b1 << int(dio_bit))
 
-                 # If value is False, do nothing.
+                # If value is False, do nothing.
                 else:
                     bitshifted_dio_bit = 0b0
 
@@ -123,29 +124,6 @@ class DIOPulseBlockHandler():
 
         return dio_codewords
 
-    def reconstruct_dio_waveform(self, waittimes, dio_vals, wait_offset):
-
-        waveform = np.zeros(np.sum(waittimes), dtype='int64')
-        waveform[0] = dio_vals[0]
-
-        sequence = ""
-        set_dio_raw = "setDIO(_d_);"
-        wait_raw = "wait(_w_);"
-
-
-        for i, waittime in enumerate(waittimes):
-            summed_waittime = np.sum(waittimes[0:i]) + 1
-            waveform[summed_waittime:summed_waittime+waittime] = dio_vals[i]
-
-            # Add setDIO command to sequence
-            sequence += set_dio_raw.replace("_d_", str(int(dio_vals[i])))
-
-            # Add waittime to sequence
-            sequence += wait_raw.replace("_w_", str(int(max(waittime-wait_offset, 0))))
-
-        return waveform, sequence
-
-        waveform = np.zeros()
     def zip_dio_commands(self, dio_codewords):
         """Generate zipped version of DIO commands.
 
@@ -153,55 +131,96 @@ class DIOPulseBlockHandler():
         specify the times, when the DIO output changes, and
         corresponsing waittimes in between.
 
-        :wait_offest: (int) How much to offset the waittimes in order to account for
-            execution times of the setDIO command (calibrated to 4 samples)
+        :wait_offest: (int) Number of samples to adjust the waittime in order to
+            account for duration of setDIO() command.
         """
 
-        # Find out where the the codewords change:
+        # Find out where the the codewords changes.
         dio_change_index = np.where(dio_codewords[:-1] != dio_codewords[1:])[0]
 
-        # Use difference of array to get waittimes, prepend first sample, append the waittime to match sequence length.
+        # Use difference of array to get waittimes,
+        # prepend first sample, append the waittime to match sequence length.
         num_samples = len(dio_codewords)
-        waittimes = np.concatenate([[dio_change_index[0]], np.diff(dio_change_index), [num_samples - dio_change_index[-1]]])
+        waittimes = np.concatenate(
+            [
+                [dio_change_index[0]],
+                np.diff(dio_change_index),
+                [num_samples - dio_change_index[-1]]
+            ]
+        )
 
-        if not sum(waittimes) == num_samples,
+        if not sum(waittimes) == num_samples:
             self.log.error("Mismatch between sum of waittimes and waveform length.")
 
-        # Store DIO values occuring after state change
-        switching_codewords = np.concatenate([[dio_codewords[0]], dio_codewords[dio_change_index+1]])
+        # Store DIO values occuring after state change, prepend first codeword.
+        reduced_codewords = np.concatenate([[dio_codewords[0]], dio_codewords[dio_change_index+1]])
 
-        return switching_codewords, waittimes
+        return reduced_codewords, waittimes
 
-    def construct_dio_sequence(self, switching_codewords, waittimes, wait_offset=SETDIO_OFFSET):
+    def construct_dio_sequence(self, codewords, reduced_codewords, waittimes, wait_offset=SETDIO_OFFSET):
+        """Construct .seqc sequence representing digital waveform
 
-        # Reconstruct sequence from switching codewords and waittimes.
-        rec_waveform, sequence = self.reconstruct_dio_waveform(waittimes, switching_codewords, wait_offset)
+        This function also checks if the initial waveform can be reconstructed by the
+        reduced codewords and the waittimes.
+
+        :codewords: (np.array) The full, sample-by-sample array of DIO codewords
+            representing the waveform.
+        :reduced_codewords: (np.array) Array of unique codewords
+            (without repetitions) played back, in sequential order.
+        :waittimes: (np.array) Array of waittimes between setDIO() commands,
+            in sequential order.
+        :wait_offset: (int) Number of samples to adjust the waittime in order to
+            account for duration of setDIO() command.
+        """
+
+        waveform = np.zeros(np.sum(waittimes), dtype='int64')
+        waveform[0] = reduced_codewords[0]
+
+        sequence = ""
+        set_dio_raw = "setDIO(_d_);"
+        wait_raw = "wait(_w_);"
+
+        for i, waittime in enumerate(waittimes):
+            summed_waittime = np.sum(waittimes[0:i]) + 1
+            waveform[summed_waittime:summed_waittime+waittime] = reduced_codewords[i]
+
+            # Add setDIO command to sequence
+            sequence += set_dio_raw.replace("_d_", str(int(reduced_codewords[i])))
+
+            # Add waittime to sequence
+            sequence += wait_raw.replace("_w_", str(int(max(waittime-wait_offset, 0))))
 
         # Sanity check if waveform is reproducable from switching codewords and waittimes.
-        assert (dio_codewords == rec_waveform).all()
-
-        if not (self.dio_codewords == rec_waveform).all():
+        if not (codewords == waveform).all():
             self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
 
         return sequence
 
-    def get_dio_sequence():
+    def get_dio_sequence(self):
+        """Generate a set of .seqc instructions for digital waveform
+
+        Returns a string containing a series of setDIO() and wait() .seqc
+        commands which will reproduce the waveform defined
+        by the pulseblock object.
+        """
 
         # Get sample-wise sets of codewords.
-        codewords = gen_codewords()
+        codewords = self.gen_codewords()
 
         # Reduce this array to a set of codewords + waittimes.
-        switching_codewords, waittimes = self.zip_dio_commands(codewords)
+        reduced_codewords, waittimes = self.zip_dio_commands(codewords)
 
         # Reconstruct set of .seqc instructions representing the digital waveform.
         sequence = self.construct_dio_sequence(
-            switching_codewords=switching_codewords,
+            codewords=codewords,
+            reduced_codewords=reduced_codewords,
             waittimes=waittimes
         )
 
         return sequence
 
     def setup_hd(self):
+        """Enable driving of DIO buses of relevant DIO bits."""
 
         # Read in current configuration of DIO-bus.
         current_config = self.hd.geti('dios/0/drive')
@@ -216,7 +235,9 @@ class DIOPulseBlockHandler():
             elif DIO_bit in range(24, 32):
                 toggle_bit = 8  # 0001
             else:
-                self.log.error(f"DIO_bit {DIO_bit} invalid, must be in range 0-31.")
+                self.log.error(
+                    f"DIO_bit {DIO_bit} invalid, must be in range 0-31."
+                )
 
             # Set new configuration by using the bitwise OR.
             new_config = current_config | toggle_bit

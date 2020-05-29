@@ -106,7 +106,7 @@ class DIOPulseBlockHandler():
 
                 sample_val = self.sample_dict[dio_bit][sample_num]
 
-                # If value is True, add 1 at  dio_bit-th position
+                # If value is True, add 1 at dio_bit-th position
                 if sample_val:
 
                     # E.g., for DIO-bit 3: 0000 ... 0001000
@@ -153,7 +153,12 @@ class DIOPulseBlockHandler():
             self.log.error("Mismatch between sum of waittimes and waveform length.")
 
         # Store DIO values occuring after state change, prepend first codeword.
-        reduced_codewords = np.concatenate([[dio_codewords[0]], dio_codewords[dio_change_index+1]])
+        reduced_codewords = np.concatenate(
+            [
+                [dio_codewords[0]],
+                dio_codewords[dio_change_index+1]
+            ]
+        )
 
         return reduced_codewords, waittimes
 
@@ -190,7 +195,7 @@ class DIOPulseBlockHandler():
             # Add waittime to sequence
             sequence += wait_raw.replace("_w_", str(int(max(waittime-wait_offset, 0))))
 
-        # Sanity check if waveform is reproducable from switching codewords and waittimes.
+        # Sanity check if waveform is reproducible from reduced codewords and waittimes.
         if not (codewords == waveform).all():
             self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
 

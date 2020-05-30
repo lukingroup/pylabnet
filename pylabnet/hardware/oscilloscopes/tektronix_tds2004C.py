@@ -86,3 +86,52 @@ class Driver():
             ).match(res).group(1)
 
         return float(timing_res)
+
+    def set_single_run_acq(self):
+        """Set acquisition mode to single run"""
+
+        self.device.write('acquire:stopafter sequence')
+
+    def acquire_single_run(self):
+        """ Run single acquisition"""
+
+        self.device.write('acquire:state on')
+
+    def read_out_trace(self, channel):
+        """ Read out trace
+
+        :channel: Channel to read out (must be in CHANNEL_LIST)
+
+        Returns np.array of sample points (in unit of Voltage divisions) and
+        corresponding array of times (in seconds).
+        """
+
+        # TODO: Check if trace is activated.
+
+        if channel not in CHANNEL_LIST:
+            self.log.error(f"The channel '{channel}' is not available, available channels are {CHANNEL_LIST}.")
+
+        # Set trace we want to look at
+        self.device.write(f'DATa:SOUrce {channel}')
+
+        # Set encoding
+        self.device.write('data:encdg ascii')
+
+        # Read out trace
+        res = self.device.query('curve?')
+
+        # Tidy up curve
+        raw_curve = res.replace(':CURVE', '').replace(' ', '').replace('\n', '')
+
+        # Transform in numpy array
+        curve = np.fromstring(raw_curve,  dtype=int, sep=',')
+
+        # Reconstruct time axis
+        timebase = self.get_timing_scale()
+        num_samples = len(curve)
+
+        ts = np.arange(num_samples) *  timebase / int(num_samples/10)
+
+        #TODO Rad out voltage divs
+
+        return curve, ts

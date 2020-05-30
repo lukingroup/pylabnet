@@ -1,14 +1,16 @@
 from pyvisa import VisaIOError, ResourceManager
 import re
+import time
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 
 # Available input channels
-CHANNEL_LIST = np.array([f'CH{i}' for i in range(1,5)])
+CHANNEL_LIST = np.array([f'CH{i}' for i in range(1, 5)])
 
 # Available trigger channels
 TRIGGER_SOURCE_LIST = np.append(CHANNEL_LIST, ['EXT', 'EXT5', 'LINE'])
+
 
 class Driver():
 
@@ -41,6 +43,9 @@ class Driver():
 
         # reset to factory settings
         self.reset()
+
+        # Add waittimes to make sure instrument is ready.
+        time.sleep(5)
 
     def get_trigger_source(self):
         """ Return Trigger source"""
@@ -97,6 +102,12 @@ class Driver():
 
         self.device.write('acquire:state on')
 
+    def _check_channel(self, channel):
+        """ CHeck if channel is in CHANNEL list"""
+
+        if channel not in CHANNEL_LIST:
+            self.log.error(f"The channel '{channel}' is not available, available channels are {CHANNEL_LIST}.")
+
     def read_out_trace(self, channel):
         """ Read out trace
 
@@ -106,10 +117,10 @@ class Driver():
         corresponding array of times (in seconds).
         """
 
-        # TODO: Check if trace is activated.
+        self._check_channel(channel)
 
-        if channel not in CHANNEL_LIST:
-            self.log.error(f"The channel '{channel}' is not available, available channels are {CHANNEL_LIST}.")
+        # Enable trace
+        self.show_trace(channel)
 
         # Set trace we want to look at
         self.device.write(f'DATa:SOUrce {channel}')
@@ -130,8 +141,25 @@ class Driver():
         timebase = self.get_timing_scale()
         num_samples = len(curve)
 
-        ts = np.arange(num_samples) *  timebase / int(num_samples/10)
+        ts = np.arange(num_samples) * timebase / int(num_samples/10)
 
         #TODO Rad out voltage divs
 
         return curve, ts
+
+    def show_trace(self, channel):
+        """Display trace
+
+        Required for trace readout.
+        """
+
+        self._check_channel(channel)
+
+        self.device.write(f'SELect:{channel} 1')
+
+    def hide_trace(self, channel):
+        """Hide trace."""
+
+        self._check_channel(channel)
+
+        self.device.write(f'SELect:{channel} 0')

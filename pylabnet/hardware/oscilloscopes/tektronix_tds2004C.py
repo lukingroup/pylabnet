@@ -12,6 +12,9 @@ CHANNEL_LIST = np.array([f'CH{i}' for i in range(1, 5)])
 # Available trigger channels
 TRIGGER_SOURCE_LIST = np.append(CHANNEL_LIST, ['EXT', 'EXT5', 'LINE'])
 
+# Available signal attenuation settings
+ATTENUATIONS = [1, 10, 20, 50, 100, 200, 500, 1000]
+
 
 class Driver():
 
@@ -42,12 +45,17 @@ class Driver():
         except VisaIOError:
             self.log.error(f"Connection to {gpib_address} failed.")
 
-        # reset to factory settings
+
 
         # We set a more forgiving timeout of 10s (default: 2s).
         self.device.timeout = 10000
 
+        # reset to factory settings
         self.reset()
+
+        # Set all attenuations to 1x
+        for channel in CHANNEL_LIST:
+            self.set_channel_attenuation(channel, 1)
 
         # Add waittimes to make sure instrument is ready.
         time.sleep(5)
@@ -172,25 +180,54 @@ class Driver():
         if not num_channels == 1 and staggered:
 
             if staggered:
-                fig, axs = plt.subplots(num_channels, sharex=True, sharey=True)
+                fig, axs = plt.subplots(
+                    num_channels,
+                    figsize=(8, 6),
+                    sharex=True,
+                    # sharey=True
+                    )
 
                 for i, channel in enumerate(channel_list):
-                    trace_dict = self.read_out_trace(channel, curve_res)
-                    axs[i].plot(trace_dict['ts']*1e6, trace_dict['trace'], label=channel)
+                    trace_dict = self.read_out_trace(
+                        channel,
+                        curve_res
+                    )
+                    axs[i].plot(
+                        trace_dict['ts']*1e6,
+                        trace_dict['trace'],
+                        label=channel
+                    )
                     fig.tight_layout()
 
                     axs[i].legend()
 
                 y_unit = trace_dict['y_unit']
-                fig.text(0.5, -0.04, r'Time since trigger [$\mu$s]', ha='center')
-                fig.text(-0.04, 0.5, f"Signal [{y_unit}]", va='center', rotation='vertical')
+
+                fig.text(
+                    0.5,
+                    -0.04,
+                    r'Time since trigger [$\mu$s]',
+                    ha='center'
+                )
+
+                fig.text(
+                    -0.04,
+                    0.5,
+                    f"Signal [{y_unit}]",
+                    va='center',
+                    rotation='vertical'
+                )
 
         else:
 
             for i, channel in enumerate(channel_list):
 
                 trace_dict = self.read_out_trace(channel, curve_res)
-                plt.plot(trace_dict['ts']*1e6, trace_dict['trace'], label=channel)
+                plt.figure(figsize=(8, 6))
+                plt.plot(
+                    trace_dict['ts']*1e6, trace_dict['trace'],
+                    label=channel
+                )
                 y_unit = trace_dict['y_unit']
                 plt.xlabel(r'Time since trigger [$\mu$s]')
                 plt.ylabel(f"Signal [{y_unit}]")
@@ -259,3 +296,69 @@ class Driver():
         self._check_channel(channel)
 
         self.device.write(f'SELect:{channel} 0')
+
+    def _check_channel_attenuation(self, attenuation):
+        """Check if attenuation is within option set."""
+
+        if attenuation not in ATTENUATIONS:
+            self.log.error(
+                f"The attenuation '{attenuation}x' is not available, available attenuations are {ATTENUATIONS}."
+            )
+
+    def get_channel_attenuation(self, channel):
+        """Get the attenuation of the channel.
+
+        :channel: (str) Channel, possible values see CHANNEL_LIST.
+        """
+
+        # Check if channel and attenuation is valid.
+        self._check_channel(channel)
+
+        # Set attenuation
+        attenuation = self.device.query(f'{channel}:PRObe?')
+
+        return attenuation
+
+    def set_channel_attenuation(self, channel, attenuation):
+        """Set the attenuation of the channel.
+
+        This setting will scale the y-axis unit accordingly
+
+        :channel: (str) Channel, possible values see CHANNEL_LIST.
+        :attenuation: (int) Attenuation, possible values see ATTENUATIONS.
+        """
+
+        # Check if channel and attenuation is valid.
+        self._check_channel(channel)
+        self._check_channel_attenuation(attenuation)
+
+        # Set attenuation
+        self.device.write(f'{channel}:PRObe {attenuation}')
+
+    def get_channel_scale(self, channel):
+        """ Return vertical scale of channel.
+
+        :channel: (str) Channel, possible values see CHANNEL_LIST.
+        """
+
+        self._check_channel(channel)
+
+        scale = self.device.query(f'{channel}:SCAle?')
+        return scale
+
+    def set_channel_scale(self, channel, range):
+        """ Return vertical scale of channel.
+
+        :channel: (str) Channel, possible values see CHANNEL_LIST.
+        :range: (float) Vertical range, in Volt/vertical division.
+            Corresponds to 'Scale' turning knob.
+            Must be between 5 mv/div and 5 V/div.
+        """
+
+        self._check_channel(channel)
+
+        if not (5e-3 <= range <= 5):
+            self.log.error('Range must be between 5 mv/div and 5 V/div.')
+
+        scale = self.device.write(f'{channel}:SCAle {range}')
+        return scale

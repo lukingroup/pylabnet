@@ -457,4 +457,18 @@ class Driver():
         """Set main trigger level to 50%"""
         self.device.write('TRIGger:MAIn SETLEVel')
 
+    def get_trigger_level(self):
+        """Get trigger level."""
 
+        trig_level = self.device.query(':TRIGGER:MAIN:LEVEL?')
+        trig_level = self.extract_params(':TRIGGER:MAIN:LEVEL', trig_level)
+
+        return trig_level
+
+    def set_trigger_level(self, trigger_level):
+        """Set trigger level.
+
+        :trigger_level: (float) Trigger level in Volts.
+        """
+
+        self.device.write(f':TRIGGER:MAIN:LEVEL {trigger_level}')

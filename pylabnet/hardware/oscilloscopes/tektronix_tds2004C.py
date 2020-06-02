@@ -407,11 +407,28 @@ class Driver():
 
         self.device.write(f'{channel}:POS {pos}')
 
-    def get_horizontal_position(self, channel):
+    def get_horizontal_position(self):
+        """Get the horizontal position of the traces.
 
-        command = f":{channel}:POS"
+        The return value in seconds is the difference between
+        the trigger point ant the center graticule.
+        """
+
+        command = ":HORIZONTAL:MAIN:POSITION"
         hor_pos = self.device.query(f"{command}?")
 
         hor_pos = self.extract_params(command, hor_pos)
 
         return hor_pos
+
+    def set_horizontal_position(self, hor_pos):
+        """Set the horizontal position of the traces.
+
+        The return value in seconds is the difference between
+        the trigger point ant the center graticule.
+
+        :hor_pos: (float) Horizontal position in s.
+        """
+
+        command = ":HORIZONTAL:MAIN:POSITION"
+        self.device.write(f"{command} {hor_pos}")

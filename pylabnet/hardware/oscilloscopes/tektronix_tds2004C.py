@@ -344,6 +344,7 @@ class Driver():
         self._check_channel(channel)
 
         scale = self.device.query(f'{channel}:SCAle?')
+
         return scale
 
     def set_channel_scale(self, channel, range):
@@ -360,5 +361,29 @@ class Driver():
         if not (5e-3 <= range <= 5):
             self.log.error('Range must be between 5 mv/div and 5 V/div.')
 
-        scale = self.device.write(f'{channel}:SCAle {range}')
-        return scale
+        # Set scale.
+        self.device.write(f'{channel}:SCAle {range}')
+
+    def get_channel_pos(self, channel):
+        """Get vertical position of channel trace.
+
+        :channel: (str) Channel, possible values see CHANNEL_LIST.
+        """
+
+        self._check_channel(channel)
+
+        pos = self.device.query(f'{channel}:POS?')
+        return pos
+
+    def set_channel_pos(self, channel, pos):
+        """Set vertical position of channel trace.
+
+        :channel: (str) Channel, possible values see CHANNEL_LIST.
+        :pos: (str) Vertical postion, in divs above center graticule.
+            The maximum and minimum value of pos
+            depends on the channel scale.
+        """
+
+        self._check_channel(channel)
+
+        self.device.write(f'{channel}:POS {pos}')

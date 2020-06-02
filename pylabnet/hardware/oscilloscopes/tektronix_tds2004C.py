@@ -432,3 +432,7 @@ class Driver():
 
         command = ":HORIZONTAL:MAIN:POSITION"
         self.device.write(f"{command} {hor_pos}")
+
+    def trig_level_to_fifty(self):
+        """Set main trigger level to 50%"""
+        self.device.write('TRIGger:MAIn SETLEVel')

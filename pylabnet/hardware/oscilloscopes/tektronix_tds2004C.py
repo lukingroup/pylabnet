@@ -172,10 +172,14 @@ class Driver():
 
         return trace_dict
 
-    def plot_traces(self, channel_list, curve_res=1, staggered=True):
+    def plot_traces(self, channel_list, curve_res=1, staggered=True, reps=1):
         """Plot traces.
 
         :channel_list: (list or string) List of channel names.
+        :curve_res: (int) Bit resolution of signal value (1 or 2).
+        :staggered: (boolean) If true, plot every trace in a subplot, if false,
+            plot all traces in one plot.
+        :reps: How many traces to acquire and plot.
         """
 
         # If only one channel provided, make a list out of it.
@@ -183,6 +187,21 @@ class Driver():
             channel_list = [channel_list]
 
         num_channels = len(channel_list)
+
+        # Read out number of points per trace.
+        num_points = self.device.query('WFMPre:NR_Pt?')
+        num_points = int(self.extract_params(':WFMPRE:NR_PT', num_points))
+
+        results_array = np.zeros((num_channels, reps, num_points))
+
+        # Retrieve results.
+        for i, channel in enumerate(channel_list):
+            for j in range(reps):
+                trace_dict = self.read_out_trace(
+                        channel,
+                        curve_res
+                    )
+                results_array[i, j, :] =  trace_dict['trace']
 
         if not num_channels == 1 and staggered:
 
@@ -195,18 +214,16 @@ class Driver():
                     )
 
                 for i, channel in enumerate(channel_list):
-                    trace_dict = self.read_out_trace(
-                        channel,
-                        curve_res
-                    )
-                    axs[i].plot(
-                        trace_dict['ts']*1e6,
-                        trace_dict['trace'],
-                        label=channel
-                    )
-                    fig.tight_layout()
+                    for j in range(reps):
 
-                    axs[i].legend()
+                        axs[i].plot(
+                            trace_dict['ts']*1e6,
+                            results_array[i, j],
+                            label=channel
+                        )
+                        fig.tight_layout()
+
+                        axs[i].legend()
 
                 y_unit = trace_dict['y_unit']
 
@@ -226,19 +243,18 @@ class Driver():
                 )
 
         else:
-
+            plt.figure(figsize=(8, 6))
             for i, channel in enumerate(channel_list):
-
-                trace_dict = self.read_out_trace(channel, curve_res)
-                plt.figure(figsize=(8, 6))
-                plt.plot(
-                    trace_dict['ts']*1e6, trace_dict['trace'],
-                    label=channel
-                )
-                y_unit = trace_dict['y_unit']
-                plt.xlabel(r'Time since trigger [$\mu$s]')
-                plt.ylabel(f"Signal [{y_unit}]")
-                plt.legend()
+                for j in range(reps):
+                    plt.plot(
+                        trace_dict['ts']*1e6,
+                        results_array[i, j],
+                        label=channel
+                    )
+                    y_unit = trace_dict['y_unit']
+                    plt.xlabel(r'Time since trigger [$\mu$s]')
+                    plt.ylabel(f"Signal [{y_unit}]")
+                    plt.legend()
 
         plt.show()
 
@@ -258,11 +274,15 @@ class Driver():
         # Enable trace
         self.show_trace(channel)
 
+        # Run acquisition
+        self.acquire_single_run()
+
         if curve_res not in [1, 2]:
             self.log.error("The bit resolution of the curve data must be either 1 or 2.")
 
         # Set curve data to desired bit
         self.device.write(f'DATa:WIDth {curve_res}')
+
 
         # Set trace we want to look at
         self.device.write(f'DATa:SOUrce {channel}')
@@ -436,3 +456,5 @@ class Driver():
     def trig_level_to_fifty(self):
         """Set main trigger level to 50%"""
         self.device.write('TRIGger:MAIn SETLEVel')
+
+

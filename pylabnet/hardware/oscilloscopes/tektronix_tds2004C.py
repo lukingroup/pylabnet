@@ -45,8 +45,6 @@ class Driver():
         except VisaIOError:
             self.log.error(f"Connection to {gpib_address} failed.")
 
-
-
         # We set a more forgiving timeout of 10s (default: 2s).
         self.device.timeout = 10000
 
@@ -56,9 +54,6 @@ class Driver():
         # Set all attenuations to 1x
         for channel in CHANNEL_LIST:
             self.set_channel_attenuation(channel, 1)
-
-        # Add waittimes to make sure instrument is ready.
-        time.sleep(5)
 
     def get_trigger_source(self):
         """ Return Trigger source"""
@@ -94,16 +89,28 @@ class Driver():
         """
         self.device.write(":HORIZONTAL:MAIN:SCALE {:e}".format(scale))
 
+    def extract_params(self, command, value):
+        """ Uses regex to extract float values from return values.
+
+        :command: The command used to query, without the final '?'
+        :value: The return value of a query.
+        """
+
+        value = float(re.compile(
+             f'{command}[ ]([0-9\.\+Ee-]+)'
+            ).match(value).group(1))
+
+        return value
+
     def get_timing_scale(self):
         """ Get time base in secs per division"""
 
-        res = self.device.query(":HORIZONTAL:MAIN:SCALE?")
+        command = ":HORIZONTAL:MAIN:SCALE"
+        timing_res = self.device.query(f"{command}?")
 
-        timing_res = re.compile(
-             ':HORIZONTAL:MAIN:SCALE[ ]([0-9\.\+Ee-]+)'
-            ).match(res).group(1)
+        timing_res = self.extract_params(command, timing_res)
 
-        return float(timing_res)
+        return timing_res
 
     def set_single_run_acq(self):
         """Set acquisition mode to single run"""
@@ -314,8 +321,12 @@ class Driver():
         # Check if channel and attenuation is valid.
         self._check_channel(channel)
 
-        # Set attenuation
-        attenuation = self.device.query(f'{channel}:PRObe?')
+        # Get attenuation
+        command = f":{channel}:PROBE"
+        attenuation = self.device.query(f"{command}?")
+
+        # Extract float
+        attenuation = self.extract_params(command, attenuation)
 
         return attenuation
 
@@ -342,8 +353,11 @@ class Driver():
         """
 
         self._check_channel(channel)
+        command = f":{channel}:SCALE"
+        scale = self.device.query(f"{command}?")
 
-        scale = self.device.query(f'{channel}:SCAle?')
+        # Extract float
+        scale = self.extract_params(command, scale)
 
         return scale
 
@@ -372,7 +386,12 @@ class Driver():
 
         self._check_channel(channel)
 
-        pos = self.device.query(f'{channel}:POS?')
+        command = f":{channel}:POSITION"
+        pos = self.device.query(f"{command}?")
+
+        # Extract float
+        pos = self.extract_params(command, pos)
+
         return pos
 
     def set_channel_pos(self, channel, pos):
@@ -387,3 +406,12 @@ class Driver():
         self._check_channel(channel)
 
         self.device.write(f'{channel}:POS {pos}')
+
+    def get_horizontal_position(self, channel):
+
+        command = f":{channel}:POS"
+        hor_pos = self.device.query(f"{command}?")
+
+        hor_pos = self.extract_params(command, hor_pos)
+
+        return hor_pos

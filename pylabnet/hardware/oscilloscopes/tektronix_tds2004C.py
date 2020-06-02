@@ -1,10 +1,8 @@
 from pyvisa import VisaIOError, ResourceManager
 import re
-import time
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
-import matplotlib.pyplot as plt
 
 # Available input channels
 CHANNEL_LIST = np.array([f'CH{i}' for i in range(1, 5)])
@@ -172,92 +170,6 @@ class Driver():
 
         return trace_dict
 
-    def plot_traces(self, channel_list, curve_res=1, staggered=True, reps=1):
-        """Plot traces.
-
-        :channel_list: (list or string) List of channel names.
-        :curve_res: (int) Bit resolution of signal value (1 or 2).
-        :staggered: (boolean) If true, plot every trace in a subplot, if false,
-            plot all traces in one plot.
-        :reps: How many traces to acquire and plot.
-        """
-
-        # If only one channel provided, make a list out of it.
-        if type(channel_list) is not list:
-            channel_list = [channel_list]
-
-        num_channels = len(channel_list)
-
-        # Read out number of points per trace.
-        num_points = self.device.query('WFMPre:NR_Pt?')
-        num_points = int(self.extract_params(':WFMPRE:NR_PT', num_points))
-
-        results_array = np.zeros((num_channels, reps, num_points))
-
-        # Retrieve results.
-        for i, channel in enumerate(channel_list):
-            for j in range(reps):
-                trace_dict = self.read_out_trace(
-                        channel,
-                        curve_res
-                    )
-                results_array[i, j, :] =  trace_dict['trace']
-
-        if not num_channels == 1 and staggered:
-
-            if staggered:
-                fig, axs = plt.subplots(
-                    num_channels,
-                    figsize=(8, 6),
-                    sharex=True,
-                    # sharey=True
-                    )
-
-                for i, channel in enumerate(channel_list):
-                    for j in range(reps):
-
-                        axs[i].plot(
-                            trace_dict['ts']*1e6,
-                            results_array[i, j],
-                            label=channel
-                        )
-                        fig.tight_layout()
-
-                        axs[i].legend()
-
-                y_unit = trace_dict['y_unit']
-
-                fig.text(
-                    0.5,
-                    -0.04,
-                    r'Time since trigger [$\mu$s]',
-                    ha='center'
-                )
-
-                fig.text(
-                    -0.04,
-                    0.5,
-                    f"Signal [{y_unit}]",
-                    va='center',
-                    rotation='vertical'
-                )
-
-        else:
-            plt.figure(figsize=(8, 6))
-            for i, channel in enumerate(channel_list):
-                for j in range(reps):
-                    plt.plot(
-                        trace_dict['ts']*1e6,
-                        results_array[i, j],
-                        label=channel
-                    )
-                    y_unit = trace_dict['y_unit']
-                    plt.xlabel(r'Time since trigger [$\mu$s]')
-                    plt.ylabel(f"Signal [{y_unit}]")
-                    plt.legend()
-
-        plt.show()
-
     def read_out_trace(self, channel, curve_res=1):
         """ Read out trace
 
@@ -282,7 +194,6 @@ class Driver():
 
         # Set curve data to desired bit
         self.device.write(f'DATa:WIDth {curve_res}')
-
 
         # Set trace we want to look at
         self.device.write(f'DATa:SOUrce {channel}')

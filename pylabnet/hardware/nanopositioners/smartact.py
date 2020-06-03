@@ -22,18 +22,18 @@ class Nanopositioners():
         result = self._nanopositionersdll.SA_CTL_FindDevices(None, buffer,buffersize)
         buffervalue = buffer.value.decode("utf-8")
         print('device found: '+ buffervalue)  #for debugging with breakpoint her
-        print(library_str)
+
         #Establishes a connection to a device
         self._nanopositionersdll.SA_CTL_Open.restypes = ctypes.POINTER(ctypes.c_uint32)
-        self._nanopositionersdll.SA_CTL_Open.argtypes = [ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char)]
+        #self._nanopositionersdll.SA_CTL_Open.argtypes = [ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char)]
         dhandle =  ctypes.c_uint32()
-        connect = self._nanopositionersdll.SA_CTL_Open(dhandle, buffer, None)
-        print(library_str)
+        connect = self._nanopositionersdll.SA_CTL_Open(ctypes.byref(dhandle), ctypes.byref(buffer), None)
+        print(str(dhandle.value))
         #closes connection to device
         self._nanopositionersdll.SA_CTL_Close.argtype = ctypes.POINTER(ctypes.c_uint32)
         self._nanopositionersdll.SA_CTL_Close.restype = ctypes.POINTER(ctypes.c_uint32)
         connect = self._nanopositionersdll.SA_CTL_Close(dhandle)
-        print(library_str)
+        print(str(connect))
 
 
 def main():

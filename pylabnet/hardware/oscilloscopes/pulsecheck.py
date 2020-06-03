@@ -176,7 +176,7 @@ aom_data = scope.read_out_trace('CH3', curve_res=2)
 # Construct data dict
 data_dict = {
     'mw_gate':  [mw_gate_data['ts'], mw_gate_data['trace']],
-    'ctr':      [ctr_data['ts'], ctr_data['trace']],
+    #'ctr':      [ctr_data['ts'], ctr_data['trace']],
     #'aom':      [aom_data['ts'], aom_data['trace']]
 }
 
@@ -186,7 +186,7 @@ data_dict = {
 x_tol = 1*3.33e-9  # in s
 y_tol = 0.1  # in V
 
-sampling_rate = 300e-6
+sampling_rate = 300e6  # 300 MHz
 
 pb_check = PbChecker(
     pb=rabi_pulse,
@@ -196,3 +196,6 @@ pb_check = PbChecker(
     y_tol=y_tol,
     logger=logger
 )
+
+
+pb_check.check_traces()

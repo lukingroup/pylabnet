@@ -1,6 +1,10 @@
 '''Module checking if measured pulse sequence coincides with desired one'''
 
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.utils.pulseblock.pb_sample import pb_sample
+from pylabnet.utils.trace_compare.trace_compare import trace_compare
+
+
 import numpy as np
 
 class PbChecker():
@@ -22,7 +26,6 @@ class PbChecker():
         else:
             self.log.info('Will check all traces.')
 
-
     def __init__(self, pb, sampling_rate, data_dict, x_tol, y_tol, logger):
         """Initialize the pulseblock checker instance.
 
@@ -36,18 +39,42 @@ class PbChecker():
         :ytol: Allowed deviation in y-direction on target trace.
         """
 
-         # Instantiate log
+        # Instantiate log
         self.log = LogHandler(logger=logger)
 
+        # Store parameters
         self.pb = pb
+        self.sampling_rate = sampling_rate
         self.data_dict = data_dict
         self.x_tol = x_tol
         self.y_tol = y_tol
-
-        data_dict.keys()
+        self.traces_to_check = data_dict.keys()
 
         # Check for keys
         self._check_key_assignments()
+
+    def check_traces(self):
+        """Check traces"""
+
+        # Turn pulse block into sample dictionary
+        sampled_pb = pb_sample(self.pb, samp_rate=self.sampling_rate)
+
+        # Construct times array of reference waveform
+        reference_times = np.arange(sampled_pb[1]) / self.sampling_rate
+
+        for trace in self.traces_to_check:
+            reference_trace = np.array([reference_times, sampled_pb[0][trace]])
+            trace_to_check = self.data_dict[trace]
+
+            trace_compare(
+                trace_to_check=trace_to_check,
+                reference_trace=reference_trace,
+                x_tol=self.x_tol,
+                y_tol=self.y_tol
+                )
+
+
+
 
 
 

@@ -189,7 +189,7 @@ class MultiTraceFig(MultiTraceInterface):
         ]
 
         # If a certain number of arrays to be allocated is not assigned,
-        # just allocate the number as given by number of elements in 
+        # just allocate the number as given by number of elements in
         if num_arrays is not None:
             for index in range(num_arrays):
                 if self._shot_noise:

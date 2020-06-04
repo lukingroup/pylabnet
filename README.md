@@ -93,10 +93,14 @@ This will now allow you to `import pylabnet` from your scripts, and ensures you 
 
 ### Publishing a new version to pip
 
+Generally, not every commit or even merge into master needs to be published to pip as a new version. However, if substantial functionality is added that could be useful to other users (especially ones that are not actively developing the platform), it is a good idea to release a new version on pip. In this case, you can do this with the following steps:
+
 1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here. 
  > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts. As an example of this poor practice, the latest version of spyder has a conflict with the latest versions of pyqt5.
 
 2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. 
+
+3. Update `CHANGELOG.md`
 
 3. Run the following from the commandline
 ```bash

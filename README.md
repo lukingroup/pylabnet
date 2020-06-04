@@ -106,7 +106,7 @@ Generally, not every commit or even merge into master needs to be published to p
 ```bash
 python setup.py sdist bdist_wheel
 ```
-This will create a pylabnet/dist directory (which should not be tracked by github) containing the build files for this version
+This will create a pylabnet/dist directory (which should not be tracked by github) containing the build files for this version. Note that this requires one to `pip install wheel`.
 
 4. To upload to pip, run the command
 ```bash

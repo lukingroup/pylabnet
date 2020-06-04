@@ -45,9 +45,9 @@ First, clone the repository onto the local machine. Make sure git is installed. 
 git clone https://github.com/lukingroup/pylabnet.git
 ```
 ---
-**NOTE**
+**NOTE ON DEVELOPMENT IN DEDICATED ENVIRONMENT**
 
-For installation in a dedicated pip virtual environment, create the virtual environment - can be done from the command line using
+For installation in a dedicated pip virtual environment to prevent conflicts with the base python package, create a virtual environment - can be done from the command line using
 ```bash
 python -m venv /path/to/new/virtual/testenv
 ```
@@ -56,26 +56,24 @@ Activate the development environment using the command
 ```bash
 /path/to/new/virtual/testenv/Scripts/activate
 ```
----
-Next, navigate to the root directory in the commandline, and run the command
-```bash
-python setup.py develop --exclude-scripts
-```
+Be sure to set the interpreter in your IDE to `/path/to/new/virtual/testenv/Scripts/python.exe` if you will be launching pylabnet scripts directly from the IDE.
 
-This will allow you to `import pylabnet` from your scripts. It also creates a `pylabnet.egg-info` file which can be safely deleted (it should not be tracked by github). 
-
-It is often desirable to use the shortcuts provided in the root directory for launching. **The "start in" fields need to be modified to the machine-specific path, see `pylabnet/launchers/README.md` for details**
-
----
-**NOTE**
-
-If you performed installation in a a pip virtual enviornment, the launching scripts need to be modified to activate the environment prior to launching. This can be done by modifying `pylabnet/launchers/pylabnet.cmd` to read
+Additionally, the dedicated launching bash scripts need to be modified to activate the environment. This can be done by modifying `pylabnet/launchers/pylabnet.cmd` to read
 ```bash
 /path/to/virtual-env/Scripts/activate && start /min "Launch control" python launch_control.py
 ```
 and modify `pylabnet/launchers/pylabnet_proxy.cmd` similarly, but with the `-p` argument after `launch_control.py`.
 
 ---
+Next, navigate to the root directory in the commandline, and run the command
+```bash
+python setup.py develop --exclude-scripts
+```
+> **_NOTE:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
+
+This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github). 
+
+ > **_NOTE:_** It is often desirable to use the shortcuts provided in the root directory for launching. The "start in" fields need to be modified to the machine-specific path to `pylabnet/launchers/pylabnet.cmd` and `pylabnet/launchers/pylabnet_proxy.cmd`, see `pylabnet/launchers/README.md` for details.
 
 ### Development
 
@@ -96,7 +94,7 @@ and modify `pylabnet/launchers/pylabnet_proxy.cmd` similarly, but with the `-p` 
 ### Publishing a new version to pip
 
 1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here. 
- > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts
+ > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts. As an example of this poor practice, the latest version of spyder has a conflict with the latest versions of pyqt5.
 
 2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. 
 

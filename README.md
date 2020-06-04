@@ -44,27 +44,36 @@ First, clone the repository onto the local machine. Make sure git is installed. 
 ```bash
 git clone https://github.com/lukingroup/pylabnet.git
 ```
+---
+**NOTE**
 
-**Environment-independent installation (recommended)**. For installation in a dedicated conda environment, see `pylabnet/setup/README.md`
+For installation in a dedicated pip virtual environment, create the virtual environment - can be done from the command line using
+```bash
+python -m venv /path/to/new/virtual/testenv
+```
 
-Once cloned, navigate to the root directory in the commandline, and run the command
+Activate the development environment using the command
+```bash
+/path/to/new/virtual/testenv/Scripts/activate
+```
+---
+Next, navigate to the root directory in the commandline, and run the command
 ```bash
 python setup.py develop --exclude-scripts
 ```
-> **_NOTE:_** You will need to have the `setuptools` library installed (run `pip install setuptools`)
 
 This will allow you to `import pylabnet` from your scripts. It also creates a `pylabnet.egg-info` file which can be safely deleted (it should not be tracked by github). 
 
-It is recommended to use the shortcuts provided in the root directory for launching. **The "start in" fields need to be modified to the machine-specific path, see `pylabnet/launchers/README.md` for details**
+It is often desirable to use the shortcuts provided in the root directory for launching. **The "start in" fields need to be modified to the machine-specific path, see `pylabnet/launchers/README.md` for details**
 
 ---
 **NOTE**
 
-If you performed installation in a specific environment `my-env`, you will needed to modify `pylanbet.cmd` to read
+If you performed installation in a a pip virtual enviornment, the launching scripts need to be modified to activate the environment prior to launching. This can be done by modifying `pylabnet/launchers/pylabnet.cmd` to read
 ```bash
-conda activate my-env && start /min "Launch control" python launch_control.py -p
+/path/to/virtual-env/Scripts/activate && start /min "Launch control" python launch_control.py
 ```
-and `pylabnet_proxy.cmd` similarly
+and modify `pylabnet/launchers/pylabnet_proxy.cmd` similarly, but with the `-p` argument after `launch_control.py`.
 
 ---
 
@@ -90,7 +99,6 @@ and `pylabnet_proxy.cmd` similarly
  > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts
 
 2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. 
- > **_NOTE:_** The current version is 0.2.2 and we plan on releasing 1.0.0 once the software core is stable and in steady use by the experiment
 
 3. Run the following from the commandline
 ```bash

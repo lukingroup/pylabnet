@@ -30,7 +30,8 @@ if len(sys.argv) == 4:
     pn.write(sys.argv[3]+' && '+content), pnp.write(sys.argv[3]+' && '+content_p)
     del sys.argv[3]
 else:
-    pn.write(content), pnp.write(content)
+    if sys.argv[1] != 'sdist':
+        pn.write(content), pnp.write(content)
 
 setup(
     name='pylabnet',

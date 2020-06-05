@@ -67,10 +67,12 @@ and modify `pylabnet/launchers/pylabnet_proxy.cmd` similarly, but with the `-p` 
 ---
 Next, navigate to the root directory in the commandline and run the command
 ```bash
-python setup.py develop --exclude-scripts /path/to/new/virtual/testenv/Scripts/activate
+python setup.py develop /path/to/new/virtual/testenv/Scripts/activate
 ```
 where the final argument is only required if you are using a virtual environment
-> **_NOTE:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
+> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked
+
+> **_NOTE 2:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 
 This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github). 
 

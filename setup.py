@@ -1,6 +1,10 @@
 import codecs
 import os, sys
+import subprocess
 from setuptools import setup, find_packages
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
 def read(rel_path):
     here = os.path.abspath(os.path.dirname(__file__))
@@ -27,12 +31,13 @@ if sys.argv[1] != 'sdist':
     content = 'start /min "Launch control" python launch_control.py'
 
     # If we have a virtual environment
-    if len(sys.argv) == 4:
-        pn.write(sys.argv[3]+' && '+content), pnp.write(sys.argv[3]+' && '+content_p)
-        del sys.argv[3]
+    if len(sys.argv) > 2 and sys.argv[2] != 'bdist_wheel':
+        pn.write(sys.argv[2]+' && '+content), pnp.write(sys.argv[2]+' && '+content_p)
+        del sys.argv[2]
     else:
         pn.write(content), pnp.write(content)
 
+install('jupyter')  # Needed for jupyter notebook in developer mode
 setup(
     name='pylabnet',
     version=get_version('pylabnet/__init__.py'),
@@ -62,7 +67,6 @@ setup(
     ],
     install_requires=[
         'decorator>=4.4.0',
-        'IPython>=7.12.0',
         'ipywidgets>=7.5.1',
         'matplotlib>=3.1.3',
         'nidaqmx>=0.5.7',

@@ -1,1 +1,0 @@
-start /min "Launch control" python launch_control.py

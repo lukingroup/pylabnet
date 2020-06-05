@@ -19,8 +19,8 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 # Build the executables
-pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'r+')
-pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'r+')
+pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'w+')
+pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'w+')
 pn.seek(0, 0), pnp.seek(0, 0)
 content_p = 'start /min "Launch control" python launch_control.py -p'
 content = 'start /min "Launch control" python launch_control.py'

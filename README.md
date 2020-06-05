@@ -70,7 +70,7 @@ Next, navigate to the root directory in the commandline and run the command
 python setup.py develop --exclude-scripts /path/to/new/virtual/testenv/Scripts/activate
 ```
 where the final argument is only required if you are using a virtual environment
-> **_NOTE:_** this command (without the final argument `/path/to...etc`) can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
+> **_NOTE:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 
 This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github). 
 

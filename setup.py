@@ -1,5 +1,5 @@
 import codecs
-import os.path
+import os, sys
 from setuptools import setup, find_packages
 
 def read(rel_path):
@@ -17,6 +17,16 @@ def get_version(rel_path):
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
+
+# If we have a virtual environment
+if len(sys.argv) == 4:
+    pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'r+')
+    pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'r+')
+    content, content_p = pn.read(), pnp.read()
+    pn.seek(0, 0), pnp.seek(0, 0)
+    # print(content)
+    pn.write(sys.argv[3]+' && '+content), pnp.write(sys.argv[3]+' && '+content_p)
+    del sys.argv[3]
 
 setup(
     name='pylabnet',

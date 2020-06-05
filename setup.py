@@ -23,7 +23,7 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 # Build the executables unless we are packaging for pip
-if sys.argv[1] != 'sdist':
+if sys.argv[1] == 'developer':
     pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'w+')
     pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'w+')
     pn.seek(0, 0), pnp.seek(0, 0)
@@ -36,8 +36,8 @@ if sys.argv[1] != 'sdist':
         del sys.argv[2]
     else:
         pn.write(content), pnp.write(content)
+    install('jupyter')  # Needed for jupyter notebook in developer mode
 
-install('jupyter')  # Needed for jupyter notebook in developer mode
 setup(
     name='pylabnet',
     version=get_version('pylabnet/__init__.py'),

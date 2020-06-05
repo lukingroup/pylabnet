@@ -18,19 +18,19 @@ def get_version(rel_path):
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-# Build the executables
-pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'w+')
-pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'w+')
-pn.seek(0, 0), pnp.seek(0, 0)
-content_p = 'start /min "Launch control" python launch_control.py -p'
-content = 'start /min "Launch control" python launch_control.py'
+# Build the executables unless we are packaging for pip
+if sys.argv[1] != 'sdist':
+    pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'w+')
+    pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'w+')
+    pn.seek(0, 0), pnp.seek(0, 0)
+    content_p = 'start /min "Launch control" python launch_control.py -p'
+    content = 'start /min "Launch control" python launch_control.py'
 
-# If we have a virtual environment
-if len(sys.argv) == 4:
-    pn.write(sys.argv[3]+' && '+content), pnp.write(sys.argv[3]+' && '+content_p)
-    del sys.argv[3]
-else:
-    if sys.argv[1] != 'sdist':
+    # If we have a virtual environment
+    if len(sys.argv) == 4:
+        pn.write(sys.argv[3]+' && '+content), pnp.write(sys.argv[3]+' && '+content_p)
+        del sys.argv[3]
+    else:
         pn.write(content), pnp.write(content)
 
 setup(

@@ -1,4 +1,6 @@
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+
 from pylabnet.gui.output_interface import MultiTraceInterface, TraceInterface, HeatMapInterface, PBarInterface
 import ipywidgets as iwdgt
 from IPython.display import display
@@ -251,6 +253,140 @@ class MultiTraceFig(MultiTraceInterface):
                     )
                 self._num_ch += 1
 
+        def set_data(self, x_ar=None, y_ar=None, trace=0, ind=0, noise=None):
+            """ Sets data to MultiTraceFig instance
+
+            :param x_ar: np array of x-axis data values
+            :param y_ar: np array of y-axis data values
+            :param ind: index of channels to assign data to
+                (index starts from 0)
+            :param noise: np array of y-axis error bar sizes
+            """
+
+            # First check that data array at particular index has
+            # already been allocated, and if not, allocate the
+            # previous data arrays
+            to_allocate = ind - self._num_ch
+            if to_allocate >= 0:
+                self._allocate_arrays(
+                    num_arrays=to_allocate+1
+                )
+
+            # Update figure
+            if x_ar is not None and y_ar is not None:
+
+                if self._shot_noise:
+
+                    if noise is None:
+                        noise = 0*y_ar
+
+                    # Input shot noise
+                    x_rev = x_ar[::-1]
+                    y_upper = y_ar + noise
+                    y_lower = y_ar - noise
+                    y_lower = y_lower[::-1]
+                    with self._fig.batch_update():
+                        self._fig.data[ind*2].x = np.hstack((x_ar, x_rev))
+                        self._fig.data[ind*2].y = np.hstack((y_upper, y_lower))
+
+                    # Now data
+                    with self._fig.batch_update():
+                        self._fig.data[2*ind+1].x = x_ar
+                        self._fig.data[2*ind+1].y = y_ar
+
+                else:
+                    with self._fig.batch_update():
+                        self._fig.data[ind].x = x_ar
+                        self._fig.data[ind].y = y_ar
+
+
+
+class StaggeredTraceFig():
+    """Plot multiple traces in seperate subplots.
+
+    :param ch_names: list of channel name strings for multi
+        -channel plot
+    """
+
+    def __init__(self, ch_names=None, legend_orientation=None):
+
+        self._num_plots = len(ch_names)
+        self._fig = make_subplots(
+            rows=self._num_plots,
+            cols=1,
+            shared_xaxes=True
+        )
+        self._ch_names = ch_names
+
+        if title_str is not None:
+            self._fig.layout.update(title=title_str)
+
+        if ch_names is not None:
+            self._fig.update_layout(
+                legend=dict(x=-0.2, y=0),
+                legend_orientation=legend_orientation
+            )
+
+        self._fig['layout'].update(height=100 + 100 * self._num_plots, width=800)
+        self._fig['layout']['yaxis'].update(showticklabels=False)
+        self._fig['layout']['legend'].update(traceorder='reversed')
+        self._fig['layout'].update(hovermode='closest')
+
+    def add_plot_trace(self, x_ar=None, y_ar=None, channel_index=None):
+        """Adds plot and sets data to StaggeredTraceFig instance
+
+        :param x_ar: np array of x-axis data values
+        :param y_ar: np array of y-axis data values
+        :channel_index: index of channels to assign data to
+            (index starts from 0)
+        """
+
+        # Color-list
+        dflt_plotly_colors = [
+            'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
+            'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
+            'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
+            'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
+            'rgb(188, 189, 34)', 'rgb(23, 190, 207)'
+        ]
+        dflt_plotly_colors_lo = [
+            'rgba(31, 119, 180, 0.2)', 'rgba(255, 127, 14, 0.2)',
+            'rgba(44, 160, 44, 0.2)', 'rgba(214, 39, 40, 0.2)',
+            'rgba(148, 103, 189, 0.2)', 'rgba(140, 86, 75, 0.2)',
+            'rgba(227, 119, 194, 0.2)', 'rgba(127, 127, 127, 0.2)',
+            'rgba(188, 189, 34, 0.2)', 'rgba(23, 190, 207, 0.2)'
+        ]
+
+        self._fig.append_trace(
+            go.Scatter(
+                    x=x_ar,
+                    y=y_ar,
+                    mode='lines',
+                    name=self._ch_names[channel_index]
+            ),
+            row=channel_index+1,
+            col=1
+        )
+
+    def show(self):
+        display(self._fig)
+
+
+    def set_lbls(self, x_str=None, y_str=None):
+        """
+
+        :param x_str: x_axis label
+        :param y_str: y_axis label
+        """
+
+        # Set titles of x and y axes as desired
+        if x_str is not None:
+            # Update xaxis properties
+            self._fig.update_xaxes(title_text=x_str, row=self._num_plots, col=1)
+
+        if y_str is not None:
+            self._fig.update_yaxes(title_text=y_str, row=int(self._num_plots / 2)+1, col=1)
+
 
 class HeatMapFig(HeatMapInterface):
 
@@ -382,5 +518,16 @@ class ComboTraceHMapPBar:
     def show(self):
         display(self._grid)
 
+def main():
+    ch_names = ['CH1', 'CH2']
+    iplt = StaggeredTraceFig(ch_names=ch_names)
 
+    iplt.show()
+    iplt.add_plot_trace(
+        x_ar=np.zeros(5),
+        y_ar=np.zeros(5),
+        channel_index=0
+    )
 
+if __name__ == '__main__':
+    main()

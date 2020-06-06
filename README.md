@@ -19,7 +19,7 @@ You can now `import pylabnet` and its submodules in your own scripts and noteboo
 pip install --upgrade pylabnet
 ```
 
-### Usage
+### <a name="executable"></a>Usage
 
  After `pip` installation of pylabnet, two executables will be created in the system `PATH`: `pylabnet.exe` and `pylabnet_proxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over pylabnet. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
 
@@ -58,25 +58,18 @@ Activate the development environment using the command
 ```
 Be sure to set the interpreter in your IDE to `/path/to/new/virtual/testenv/Scripts/python.exe` if you will be launching pylabnet scripts directly from the IDE.
 
-Additionally, the dedicated launching bash scripts need to be modified to activate the environment. This can be done by modifying `pylabnet/launchers/pylabnet.cmd` to read
-```bash
-/path/to/virtual-env/Scripts/activate && start /min "Launch control" python launch_control.py
-```
-and modify `pylabnet/launchers/pylabnet_proxy.cmd` similarly, but with the `-p` argument after `launch_control.py`.
-
 ---
 Next, navigate to the root directory in the commandline and run the command
 ```bash
-python setup.py develop /path/to/new/virtual/testenv/Scripts/activate
+python setup.py develop
 ```
-where the final argument is only required if you are using a virtual environment
-> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked
+> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked.
 
 > **_NOTE 2:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 
 This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github). 
 
- > **_NOTE:_** It is often desirable to use the shortcuts provided in the root directory for launching. The "start in" fields need to be modified to the machine-specific path to `pylabnet/launchers/pylabnet.cmd` and `pylabnet/launchers/pylabnet_proxy.cmd`, see `pylabnet/launchers/README.md` for details.
+This also creates the standard pylabnet executables which can be used for launching (see [above](#executable)). Just be careful that you are using the correct execuatable if you have installed pylabnet in environments.
 
 ### Development
 
@@ -119,10 +112,7 @@ twine upload dist/*
 ---
 **NOTE**
 
-If you are done using a particular machine for development and would like to use and update the package the standard way via pip, you can remove the pylabnet installation by running the command
-```bash
-python setup.py develop --uninstall
-```
+If you are done using a particular machine for development and would like to use and update the package the standard way via pip, you can remove the pylabnet installation by running the command `pip uninstall pylabnet` from a directory that does not have `pylabnet` inside it.
 
 Your local repository can now be deleted and pylabnet can be installed, used, and maintained via pip.
 

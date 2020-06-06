@@ -22,21 +22,9 @@ def get_version(rel_path):
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
-# Build the executables unless we are packaging for pip
-if sys.argv[1] == 'develop':
-    pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'w+')
-    pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'w+')
-    pn.seek(0, 0), pnp.seek(0, 0)
-    content_p = 'start /min "Launch control" python launch_control.py -p'
-    content = 'start /min "Launch control" python launch_control.py'
-
-    # If we have a virtual environment
-    if len(sys.argv) > 2 and sys.argv[2] != 'bdist_wheel':
-        pn.write(sys.argv[2]+' && '+content), pnp.write(sys.argv[2]+' && '+content_p)
-        del sys.argv[2]
-    else:
-        pn.write(content), pnp.write(content)
-    install('jupyter')  # Needed for jupyter notebook in developer mode
+# Needed for jupyter notebook in developer mode
+if len(sys.argv) > 1 and sys.argv[1] == 'develop':
+    install('jupyter')  
 
 setup(
     name='pylabnet',

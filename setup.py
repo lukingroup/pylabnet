@@ -23,7 +23,7 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 # Build the executables unless we are packaging for pip
-if sys.argv[1] == 'developer':
+if sys.argv[1] == 'develop':
     pn = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet.cmd'), 'w+')
     pnp = open(os.path.join(os.getcwd(),'pylabnet','launchers','pylabnet_proxy.cmd'), 'w+')
     pn.seek(0, 0), pnp.seek(0, 0)

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 0.2.6
+### Changed
+- Fixed bugs with developer mode installation and jupyter notebook support
+- Updated README.md
+
+### Removed
+- Depreciated `.cmd` launching in favor of `.exe` launching even in developer mode
+
 ## 0.2.5
 ### Added
 - Automatic generation of .cmd launching script

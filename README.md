@@ -108,7 +108,7 @@ This will create a pylabnet/dist directory (which should not be tracked by githu
 ```bash
 twine upload dist/*
 ```
-> **_NOTE:_** This requires credentials on https://pypi.org, as well as the twine package which can be installed with `pip install twine`
+> **_NOTE:_** This requires credentials on https://pypi.org, as well as the twine package which can be installed with `pip install twine`. You may also run into issues if your `dist/` folder has older distributions, these should be deleted prior to upload.
 ---
 **NOTE**
 

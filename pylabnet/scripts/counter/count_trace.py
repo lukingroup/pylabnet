@@ -1,8 +1,8 @@
 from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
 from pylabnet.hardware.interface.simple_p_gen import SimplePGenInterface
 from pylabnet.gui.output_interface import TraceInterface, HeatMapInterface, PBarInterface
-import pulseblock.pulse as po
-import pulseblock.pulse_block as pb
+import pylabnet.utils.pulseblock.pulse as po
+import pylabnet.utilspulseblock.pulse_block as pb
 import numpy as np
 import time
 

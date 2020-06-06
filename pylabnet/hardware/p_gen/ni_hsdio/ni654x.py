@@ -4,7 +4,7 @@ from pylabnet.hardware.p_gen.ni_hsdio.c_headers import NITypes, NIConst, build_c
 from pylabnet.hardware.interface.p_gen import PGenError
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
-from pulseblock.pb_sample import pb_sample
+from pylabnet.utils.pulseblock.pb_sample import pb_sample
 from pylabnet.utils.logging.logger import LogHandler
 import numpy as np
 import copy

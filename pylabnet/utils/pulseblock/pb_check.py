@@ -59,7 +59,7 @@ class PbChecker():
         # Turn pulse block into sample dictionary
         sampled_pb = pb_sample(self.pb, samp_rate=self.sampling_rate)
 
-        # Construct times array of reference waveform
+        # Use time time array of data as timebase
         reference_times = np.arange(sampled_pb[1]) / self.sampling_rate
 
         for trace in self.traces_to_check:

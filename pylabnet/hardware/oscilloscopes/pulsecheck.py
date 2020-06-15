@@ -26,7 +26,7 @@ from pylabnet.network.client_server.tektronix_tds2004C import Client
 # Instantiate logger.
 logger = LogClient(
     host='192.168.1.2',
-    port=2000,
+    port=7502,
     module_tag='Pulsechecker'
 )
 
@@ -169,14 +169,14 @@ scope.set_horizontal_position(+2.5e-6)
 
 # Read out traces
 
-mw_gate_data = scope.read_out_trace('CH1', curve_res=2)
+#mw_gate_data = scope.read_out_trace('CH1', curve_res=2)
 ctr_data = scope.read_out_trace('CH2', curve_res=2)
-aom_data = scope.read_out_trace('CH3', curve_res=2)
+#aom_data = scope.read_out_trace('CH3', curve_res=2)
 
 # Construct data dict
 data_dict = {
-    'mw_gate':  [mw_gate_data['ts'], mw_gate_data['trace']],
-    #'ctr':      [ctr_data['ts'], ctr_data['trace']],
+    #'mw_gate':  [mw_gate_data['ts'], mw_gate_data['trace']],
+    'ctr':      [ctr_data['ts'], ctr_data['trace']],
     #'aom':      [aom_data['ts'], aom_data['trace']]
 }
 

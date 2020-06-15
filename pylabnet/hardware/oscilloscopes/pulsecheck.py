@@ -26,7 +26,7 @@ from pylabnet.network.client_server.tektronix_tds2004C import Client
 # Instantiate logger.
 logger = LogClient(
     host='192.168.1.2',
-    port=7502,
+    port=5517,
     module_tag='Pulsechecker'
 )
 

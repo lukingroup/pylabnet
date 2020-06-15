@@ -35,8 +35,8 @@ class PbChecker():
             according to pulseblock objects, and as values a np.array
             containing the measured trace in the folllowing form: [x_values, y_values],
             where x_values and y_values are np.arrays.
-        :xtol: Allowed deviation in x-diraction of target trace.
-        :ytol: Allowed deviation in y-direction on target trace.
+        :x_tol: Allowed deviation in x-diraction of target trace.
+        :y_tol: Allowed deviation in y-direction on target trace.
         """
 
         # Instantiate log

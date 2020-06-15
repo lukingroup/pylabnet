@@ -1,8 +1,7 @@
 """Generic Module used to compare a measured timestrace with an expected one"""
 
-import scipy.signal as sg
-import matplotlib.pyplot as plt
-import numpy as np
+from pylabnet.gui.igui.iplot import MultiTraceFig
+
 
 def trace_compare(trace_to_check, reference_trace, x_tol, y_tol, amplitude=3.3):
     """Compare two timetraces.
@@ -23,6 +22,8 @@ def trace_compare(trace_to_check, reference_trace, x_tol, y_tol, amplitude=3.3):
     ref_time, ref_signal = reference_trace[0], reference_trace[1] * amplitude
     check_time, check_signal = trace_to_check[0], trace_to_check[1]
 
+    # TODO: Use time lag analysis to overlay traces
+
     # Define acceptance region
     max_accept_signal = ref_signal + y_tol
     min_accept_signal = ref_signal - y_tol
@@ -30,26 +31,19 @@ def trace_compare(trace_to_check, reference_trace, x_tol, y_tol, amplitude=3.3):
     left_timeshift = ref_time - x_tol
     right_timeshift = ref_time + x_tol
 
-    # Rudimentary acceptance plot
-    # TODO: Improve this
-    fig, ax = plt.subplots()
-    ax.plot(ref_time/1e-9, ref_signal, '-', label="Reference")
-    ax.plot(check_time/1e-9, check_signal, 'o-', label="Measured")
-    ax.plot(right_timeshift/1e-9, min_accept_signal, '-', label="min")
-    ax.plot(left_timeshift/1e-9, max_accept_signal, '-', label="max")
-    #ax.fill_between(left_timeshift, max_accept_signal, 3.3)
-    ax.set_xlabel("Time since trigger [ns]")
-    ax.set_ylabel("Signal [V]")
-    plt.legend()
-    plt.show()
+    ch_names = ["Reference", "Measured", "min", "max"]
+    multi_trace = MultiTraceFig(ch_names=ch_names)
 
-    # Very rudimentary: Count timing violations
-    # TODO: Improve this
-    num_signal_overshoot = np.sum(check_signal > max_accept_signal)
-    num_signal_undershoot = np.sum(check_signal < max_accept_signal)
+    multi_trace.set_data(ref_time/1e-9, ref_signal, 0)
+    multi_trace.set_data(check_time/1e-9, check_signal, 1)
+    multi_trace.set_data(right_timeshift/1e-9, min_accept_signal, 2)
+    multi_trace.set_data(left_timeshift/1e-9, max_accept_signal, 3)
 
-    return num_signal_undershoot, num_signal_overshoot
+    multi_trace.set_lbls(
+        x_str='Time since trigger [ns]',
+        y_str='Signal [V]'
+    )
 
+    multi_trace.show()
 
-
-
+    # TODO: Perform timing violation check.

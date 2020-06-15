@@ -308,7 +308,7 @@ class StaggeredTraceFig():
         -channel plot
     """
 
-    def __init__(self, ch_names=None, legend_orientation=None):
+    def __init__(self, ch_names=None, legend_orientation=None, title_str=None):
 
         self._num_plots = len(ch_names)
         self._fig = make_subplots(
@@ -370,7 +370,6 @@ class StaggeredTraceFig():
 
     def show(self):
         display(self._fig)
-
 
     def set_lbls(self, x_str=None, y_str=None):
         """

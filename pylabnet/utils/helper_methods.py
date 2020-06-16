@@ -251,3 +251,17 @@ def create_server(service, logger=None, host='localhost'):
                 logger.warn(f'Failed to create update server with port {port}')
             timeout += 1
     return server, port
+
+def value_to_bitval(value, bits=8, min=0, max=1):
+    """ Converts a value to a bits-bit number for range min to max
+
+    :param value: (double) value to convert
+    :param bits: (int) number of bits of resolution
+    :param min: (double) minimum of range
+    :param max: (double) maximum of range
+    """
+
+    # Convert value to scale of 0 to 1
+    scaled_value = (value-min)/(max-min)
+
+    return int(scaled_value * (2**bits - 1))

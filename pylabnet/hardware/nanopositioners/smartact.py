@@ -1,6 +1,7 @@
 import ctypes
 
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.utils.helper_methods import value_to_bitval
 
 
 class Nanopositioners():
@@ -10,8 +11,11 @@ class Nanopositioners():
     PKEY_NUM_CH = int('0x020F0017', 16)
     PKEY_NUM_BUS_CH = int('0x02030017', 16)
     PKEY_MOVE_MODE = int('0x03050087', 16)
+    PKEY_STEP_FREQ = int('0x0305002E', 16)
+    PKEY_STEP_AMP = int('0x03050030', 16)
     MOVE_MODE_STEP = 4
     MOVE_MODE_DC = 3
+    SCALE = 65535
 
     def __init__(self, logger=None):
         """ Instantiate Nanopositioners"""
@@ -69,66 +73,67 @@ class Nanopositioners():
         else:
             self.log.info(f'Disconnected from {self.dev_name}')
 
-    def move(self):
-
-        #defines arguments and results for c functions in move function
-        self._nanopositionersdll.SA_CTL_SetProperty_i32.argtypes = [ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_int8),ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_int32)]
-        #self._nanopositionersdll.SA_CTL_SetProperty_i32.restype = ctypes.POINTER(ctypes.c_uint32)
-        #self._nanopositionersdll.SA_CTL_Move.argtypes = [ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_int8), ctypes.POINTER(ctypes.c_int64),ctypes.POINTER(ctypes.c_uint32)]
-        #self._nanopositionersdll.SA_CTL_Stop.argtypes = [ctypes.POINTER(ctypes.c_uint32), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint32)]
-
-        #define movement parameters to input in c functions
-        channel = ctypes.c_int8(0)
-        stepmode = ctypes.c_int32(4)
-        #stepnumber = ctyeps.uint64(1)
-        freq = ctypes.c_int32(100)
-        amp = ctypes.c_int32(100)
-
-        # set mode to relative movement and define frequency and amplitude
-        resultmode = self._nanopositionersdll.SA_CTL_SetProperty_i32(self.dhandle, channel, modetype, stepmode) #define move mode SA_CTL_MOVE_MODE_STEP
-        resultfreq = self._nanopositionersdll.SA_CTL_SetProperty_i32(self.dhandle, channel, profreq, freq)
-        resultamp = self._nanopositionersdll.SA_CTL_SetProperty_i32(self.dhandle, channel, proamp,  amp)
-
-        #move command to positioner in a specific channel
-        #moveresult = self._nanopositionersdll.SA_CTL_Move(self.dhandle, channel, stepnumber, 0)
-        #if moveresult == 0:
-        #    print('Positioner moving in channel ' + str(channel))
-
     def set_parameters(self, channel, mode=None, frequency=None, amplitude=None):
         """ Sets parameters for motion
 
         Leave parameter as None in order to leave un-changed
+
         :param channel: (int) index of channel from 0 to self.num_ch
         :param mode: (str) default is 'step', can use 'dc' to set DC voltage
-        :param freq:
-        :param amp:
+        :param freq: (int) frequency in Hz from 1 to 20000
+        :param amp: (float) amplitude in volts from 0 to 100
         """
 
+        # Set movement mode
         if mode is not None:
             if mode == 'dc':
                 result_mode = self._nanopositionersdll.SA_CTL_SetProperty_i32(
-                    self.dhandle,
-                    channel,
-                    self.PKEY_MOVE_MODE,
-                    self.MOVE_MODE_DC
+                    self.dhandle, channel, self.PKEY_MOVE_MODE, self.MOVE_MODE_DC
                 )
                 if result_mode:
                     self.log.warn(
                         f'Failed to set mode to DC for positioner {self.dev_name},'
-                        f'channel {channel}'
+                        f' channel {channel}'
                     )
             else:
                 result_mode = self._nanopositionersdll.SA_CTL_SetProperty_i32(
-                    self.dhandle,
-                    channel,
-                    self.PKEY_MOVE_MODE,
-                    self.MOVE_MODE_STEP
+                    self.dhandle, channel, self.PKEY_MOVE_MODE, self.MOVE_MODE_STEP
                 )
                 if result_mode:
                     self.log.warn(
                         f'Failed to set mode to step for positioner {self.dev_name},'
-                        f'channel {channel}'
+                        f' channel {channel}'
                     )
+
+        # Set frequency
+        if frequency is not None:
+
+            # Check for reasonable range
+            if 1 <= frequency <= 20000:
+                result_freq = self._nanopositionersdll.SA_CTL_SetProperty_i32(
+                    self.dhandle, channel, self.PKEY_STEP_FREQ, frequency
+                )
+                if result_freq:
+                    self.log.warn(
+                        f'Failed to set step frequency to {frequency} for positioner '
+                        f'{self.dev_name}, channel {channel}'
+                    )
+
+            # Handle out of range request
+            else:
+                self.log.warn('Warning, can only set frequency within 1 Hz and 20 kHz')
+
+        # Set amplitude
+        if amplitude is not None:
+
+            # Check for reasonable range
+            bit_amp = value_to_bitval(amplitude, bits=16, min=0, max=100)
+            if 1 <= bit_amp <= 65535:
+                result_amp = self._nanopositionersdll.SA_CTL_SetProperty_i32(
+                    self.dhandle, channel, self.PKEY_STEP_AMP, bit_amp
+                )
+            else:
+                self.log.warn('Warning, can only set amplitude in the range of 0 to 100 V')
 
     # Technical methods
 
@@ -174,29 +179,6 @@ class Nanopositioners():
         ]
         self._nanopositionersdll.SA_CTL_SetProperty_i32.restype = ctypes.c_uint32   # result status
 
-    def _get_module_info(self):
-        """ Gets baseline device properties """
-
-        bus_buffer = ctypes.c_int32()
-        bus_buffer_size = ctypes.c_size_t(ctypes.sizeof(bus_buffer))
-        bus_result = self._nanopositionersdll.SA_CTL_GetProperty_i32(
-            self.dhandle, 0, self.PKEY_NUM_BUS, bus_buffer, bus_buffer_size
-        )
-
-        channel_buffer = ctypes.c_int32()
-        channel_buffer_size = ctypes.c_size_t(ctypes.sizeof(channel_buffer))
-        channel_result = self._nanopositionersdll.SA_CTL_GetProperty_i32(
-            self.dhandle.value, 0, self.PKEY_NUM_CH, channel_buffer, channel_buffer_size
-        )
-
-        bus_channel_buffer = ctypes.c_int32()
-        bus_channel_buffer_size = ctypes.c_size_t(ctypes.sizeof(bus_channel_buffer))
-        bus_channel_result = self._nanopositionersdll.SA_CTL_GetProperty_i32(
-            self.dhandle, 3, self.PKEY_NUM_BUS_CH, bus_channel_buffer, bus_channel_buffer_size
-        )
-
-        pass
-
 
 def main():
     nanopos = Nanopositioners()
@@ -206,7 +188,3 @@ def main():
 if __name__ == "__main__":
 
     main()
-
-
-
-

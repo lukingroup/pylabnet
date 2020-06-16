@@ -1,46 +1,44 @@
 import ctypes
 
+from pylabnet.utils.logging.logger import LogHandler
+
+
 class Nanopositioners():
 
-    def __init__(self):
-        """ Instantiate Nanopositiners"""
+    def __init__(self, logger=None):
+        """ Instantiate Nanopositioners"""
 
+        self.log = LogHandler(logger)
 
-        #Loads Nanopositioners DLL and
+        # Loads Nanopositioners DLL and define arguments and result types for c function
         self._nanopositionersdll = ctypes.windll.LoadLibrary('SmarActCTL.dll')
-
-        #Defines arguments and results for c function
-        self._nanopositionersdll.SA_CTL_GetFullVersionString.restype = ctypes.c_char_p
-        self._nanopositionersdll.SA_CTL_FindDevices.restype = ctypes.POINTER(ctypes.c_uint32)
-        self._nanopositionersdll.SA_CTL_FindDevices.argtypes = [ctypes.c_char_p, ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_ulonglong)]
-        self._nanopositionersdll.SA_CTL_Open.restypes = ctypes.POINTER(ctypes.c_uint32)
-        self._nanopositionersdll.SA_CTL_Open.argtypes = [ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_char),ctypes.POINTER(ctypes.c_char)]
-        self._nanopositionersdll.SA_CTL_Close.argtype = ctypes.POINTER(ctypes.c_uint32)
-        self._nanopositionersdll.SA_CTL_Close.restype = ctypes.POINTER(ctypes.c_uint32)
-
-        #Checks that library was loaded properly
-        library_string = self._nanopositionersdll.SA_CTL_GetFullVersionString()
-        library_str = library_string.decode("utf-8")
-        print(library_str)
+        self._configure_functions()
 
         #Finds devices connected to controller
         buffer = ctypes.create_string_buffer(4096)  #the way to have a mutable buffer
         buffersize = ctypes.c_size_t(ctypes.sizeof(buffer)) #size _t gives c_ulonglong, not as in manual
         result = self._nanopositionersdll.SA_CTL_FindDevices(None, buffer,buffersize)
+
+        # Handle errors
+        if result:
+            msg_str = 'No MCS2 devices found'
+            self.log.error('')
+
         buffervalue = buffer.value.decode("utf-8")
         print('Device found at: '+ buffervalue)  #for debugging with breakpoint her
 
         #Establishes a connection to a device
-        self.dhandle =  ctypes.c_uint32()
-        connect = self._nanopositionersdll.SA_CTL_Open(self.dhandle, buffer, None)
+        self.dhandle =  ctypes.c_uint32(4096)
+        connect = self._nanopositionersdll.SA_CTL_Open(self.dhandle, buffer.value, None)
         #print('device dhanlde: ' + str(dhandle.value))
         if connect == 0:
             print('Success: device is connected')
 
-        #Terminates connection to device
+    def close(self):
+        """ Closes connection to device"""
+
         connect = self._nanopositionersdll.SA_CTL_Close(self.dhandle)
         print('connect result: ' + str(connect))
-
 
     def move(self):
 
@@ -70,12 +68,39 @@ class Nanopositioners():
         #if moveresult == 0:
         #    print('Positioner moving in channel ' + str(channel))
 
+    # Technical methods
+
+    def _configure_functions(self):
+        """ Defines arguments and results for c functions """
+
+        # Device connection, disconnection
+        self._nanopositionersdll.SA_CTL_GetFullVersionString.restype = ctypes.c_char_p
+        self._nanopositionersdll.SA_CTL_FindDevices.argtypes = [
+            ctypes.c_char_p,
+            ctypes.POINTER(ctypes.c_char),
+            ctypes.POINTER(ctypes.c_ulonglong)
+        ]
+        self._nanopositionersdll.SA_CTL_FindDevices.restype = ctypes.POINTER(ctypes.c_uint32)
+
+        self._nanopositionersdll.SA_CTL_Open.restypes = ctypes.POINTER(ctypes.c_uint32)
+        self._nanopositionersdll.SA_CTL_Open.argtypes = [ctypes.POINTER(ctypes.c_uint32), ctypes.c_char_p, ctypes.POINTER(ctypes.c_char)]
+        self._nanopositionersdll.SA_CTL_Close.argtype = ctypes.c_uint32
+        self._nanopositionersdll.SA_CTL_Close.restype = ctypes.c_uint32
+
+        # Device property interfacing
+        self._nanopositionersdll.SA_CTL_SetProperty_i32.argtypes = [
+            ctypes.c_uint32,    # device handle
+            ctypes.c_int8,      # index of addressed device, module, or channel
+            ctypes.c_uint32,    # property key
+            ctypes.c_int32,     # value to write
+        ]
 
 
 def main():
     nanpos = Nanopositioners()
 
-    nanpos.move()
+    #nanpos.move()
+    nanpos.close()
 
 if __name__ == "__main__":
 

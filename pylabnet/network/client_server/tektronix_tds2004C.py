@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
+from pylabnet.gui.igui.iplot import StaggeredTraceFig, MultiTraceFig
 
 
 class Service(ServiceBase):
@@ -188,67 +189,58 @@ class Client(ClientBase):
         num_points = self.query('WFMPre:NR_Pt?')
         num_points = int(self.extract_params(':WFMPRE:NR_PT', num_points))
 
-        results_array = np.zeros((num_channels, reps, num_points))
+        results_array = np.zeros((num_channels, reps, 2, num_points))
 
         # Retrieve results.
+
+        # List containing channel names.
+        ch_names = []
         for i, channel in enumerate(channel_list):
             for j in range(reps):
                 trace_dict = self.read_out_trace(
                         channel,
                         curve_res
                     )
-                results_array[i, j, :] = trace_dict['trace']
+                results_array[i, j, 0, :] = trace_dict['ts']
+                results_array[i, j, 1, :] = trace_dict['trace']
+                ch_names.append(channel)
 
         if not num_channels == 1 and staggered:
 
-            if staggered:
-                fig, axs = plt.subplots(
-                    num_channels,
-                    figsize=(8, 6),
-                    sharex=True,
-                    )
+            staggered_trace = StaggeredTraceFig(ch_names=channel_list)
 
-                for i, channel in enumerate(channel_list):
-                    for j in range(reps):
-
-                        axs[i].plot(
-                            trace_dict['ts']*1e6,
-                            results_array[i, j],
-                            label=channel
-                        )
-                        fig.tight_layout()
-
-                        axs[i].legend()
-
-                y_unit = trace_dict['y_unit']
-
-                fig.text(
-                    0.5,
-                    -0.04,
-                    r'Time since trigger [$\mu$s]',
-                    ha='center'
-                )
-
-                fig.text(
-                    -0.04,
-                    0.5,
-                    f"Signal [{y_unit}]",
-                    va='center',
-                    rotation='vertical'
-                )
-
-        else:
-            plt.figure(figsize=(8, 6))
             for i, channel in enumerate(channel_list):
                 for j in range(reps):
-                    plt.plot(
-                        trace_dict['ts']*1e6,
-                        results_array[i, j],
-                        label=channel
+                    staggered_trace.add_plot_trace(
+                        x_ar=results_array[i, j, 0, :],
+                        y_ar=results_array[i, j, 1, :],
+                        channel_index=i
                     )
-                    y_unit = trace_dict['y_unit']
-                    plt.xlabel(r'Time since trigger [$\mu$s]')
-                    plt.ylabel(f"Signal [{y_unit}]")
-                    plt.legend()
 
-        plt.show()
+            staggered_trace.set_lbls(
+                    x_str='Time since trigger [s]',
+                    y_str='Signal [V]'
+            )
+            staggered_trace.show()
+
+        else:
+
+            # Index counter for iplot.
+            ctr = 0
+
+            # Now build up the plot.
+            multi_trace = MultiTraceFig(ch_names=ch_names)
+            for i, channel in enumerate(channel_list):
+                for j in range(reps):
+                    multi_trace.set_data(
+                        results_array[i, j, 0, :],
+                        results_array[i, j, 1, :],
+                        ctr
+                    )
+                    multi_trace.set_lbls(
+                        x_str='Time since trigger [s]',
+                        y_str='Signal [V]'
+                    )
+                    ctr += 1
+
+            multi_trace.show()

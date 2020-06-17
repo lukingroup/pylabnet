@@ -255,13 +255,31 @@ def create_server(service, logger=None, host='localhost'):
 def value_to_bitval(value, bits=8, min=0, max=1):
     """ Converts a value to a bits-bit number for range min to max
 
-    :param value: (double) value to convert
+    :param value: (float) value to convert
     :param bits: (int) number of bits of resolution
-    :param min: (double) minimum of range
-    :param max: (double) maximum of range
+    :param min: (float) minimum of range
+    :param max: (float) maximum of range
+
+    :return: (int) value in bits-bit (e.g. 8-bit from 0 to 2^8-1)
     """
 
     # Convert value to scale of 0 to 1
     scaled_value = (value-min)/(max-min)
 
     return int(scaled_value * (2**bits - 1))
+
+def bitval_to_value(bitval, bits=8, min=0, max=1):
+    """ Converts a bits-bit number into its physical value for range from min to max
+
+    :param bitval: (int)  value in bits-bit (e.g. 8-bit from 0 to 2^8-1)
+    :param bits: (int) number of bits of resolution
+    :param min: (float) minimum of range
+    :param max: (float) maximum of range
+
+    :return: (float) physical value
+    """
+
+    # Convert value to scale of 0 to 1
+    scaled_value = bitval/(2**bits - 1)
+
+    return scaled_value*(max-min) + min

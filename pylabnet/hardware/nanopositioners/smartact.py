@@ -132,6 +132,11 @@ class Nanopositioners():
                 result_amp = self._nanopositionersdll.SA_CTL_SetProperty_i32(
                     self.dhandle, channel, self.PKEY_STEP_AMP, bit_amp
                 )
+                if result_amp:
+                    self.log.warn(
+                        f'Failed to set step amplitude to {amplitude} for positioner '
+                        f'{self.dev_name}, channel {channel}'
+                    )
             else:
                 self.log.warn('Warning, can only set amplitude in the range of 0 to 100 V')
 
@@ -183,6 +188,8 @@ class Nanopositioners():
 def main():
     nanopos = Nanopositioners()
     nanopos.set_parameters(channel=0, mode='step')
+    nanopos.set_parameters(channel=0, frequency=100)
+    nanopos.set_parameters(channel=0, amplitude=101)
     nanopos.close()
 
 if __name__ == "__main__":

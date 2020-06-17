@@ -140,6 +140,21 @@ class Nanopositioners():
             else:
                 self.log.warn('Warning, can only set amplitude in the range of 0 to 100 V')
 
+    def step(self, channel):
+        """ Takes a single step
+
+        :param channel: (int) channel to move counting from 0
+        """
+
+        # Take the step
+        self.set_parameters(channel, mode='step')
+        result_step = self._nanopositionersdll.SA_CTL_Move(self.dhandle, channel, 1, 0)
+
+        # Handle error
+        if result_step:
+            self.log.warn(f'Failed to take step on device {self.dev_name}, channel {channel}')
+
+
     # Technical methods
 
     def _configure_functions(self):
@@ -184,12 +199,21 @@ class Nanopositioners():
         ]
         self._nanopositionersdll.SA_CTL_SetProperty_i32.restype = ctypes.c_uint32   # result status
 
+        # Movement
+        self._nanopositionersdll.SA_CTL_Move.argtypes = [
+            ctypes.c_uint32,    # device handle
+            ctypes.c_int8,      # index of addressed device, module, or channel
+            ctypes.c_int64,     # move value
+            ctypes.c_uint32     # transmit handle
+        ]
+        self._nanopositionersdll.SA_CTL_Move.restype = ctypes.c_uint32  # result status
+
 
 def main():
     nanopos = Nanopositioners()
-    nanopos.set_parameters(channel=0, mode='step')
     nanopos.set_parameters(channel=0, frequency=100)
-    nanopos.set_parameters(channel=0, amplitude=101)
+    nanopos.set_parameters(channel=0, amplitude=50)
+    nanopos.step(channel=0)
     nanopos.close()
 
 if __name__ == "__main__":

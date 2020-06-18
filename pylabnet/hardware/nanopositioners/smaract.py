@@ -2,6 +2,7 @@
 
 import ctypes
 
+from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import value_to_bitval, bitval_to_value
 
@@ -230,7 +231,7 @@ class MCS2:
                 f'Failed to set DC voltage to {voltage} V on channel {channel} of {self.dev_name}'
             )
 
-    def n_steps(self, channel, n):
+    def n_steps(self, channel, n=1):
         """ Takes n steps
 
         :param channel: (int) channel index (from 0)
@@ -352,23 +353,3 @@ class MCS2:
             ctypes.c_uint32     # transmit handle
         ]
         self._nanopositionersdll.SA_CTL_Stop.restype = ctypes.c_uint32  # result status
-
-
-class Service:
-
-    def exposed_close(self):
-        return self.
-
-def main():
-    nanopos = MCS2()
-    nanopos.set_parameters(channel=0, frequency=100)
-    nanopos.set_parameters(channel=0, amplitude=50)
-    nanopos.set_parameters(channel=0, dc_vel=100)
-    nanopos.step(channel=0)
-    nanopos.set_voltage(channel=0, voltage=50)
-    nanopos.get_voltage(channel=0)
-    nanopos.close()
-
-if __name__ == "__main__":
-
-    main()

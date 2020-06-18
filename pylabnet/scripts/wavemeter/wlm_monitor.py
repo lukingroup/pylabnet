@@ -875,7 +875,7 @@ class Channel:
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
-    logger, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
     wavemeter_client = clients['high_finesse_ws7']
     ao_client = clients['nidaqmx_wlm']
@@ -891,7 +891,7 @@ def launch(**kwargs):
 
     # Instantiate pause+update service & connect to logger
     log_client_update = LogClient(
-        host='localhost',
+        host=loghost,
         port=logport,
         module_tag='wavemeter_update_server'
     )
@@ -903,11 +903,11 @@ def launch(**kwargs):
 
     if params is None:
         params = dict(channel_params=[dict(
-            channel=1, 
+            channel=1,
             name="Velocity",
             AO=dict(client='cDAQ1', channel='ao0'),
-            PID=dict(p=0.15, i=0.01, d=0), 
-            memory=100, 
+            PID=dict(p=0.15, i=0.01, d=0),
+            memory=100,
             voltage_monitor=True
             )])
 

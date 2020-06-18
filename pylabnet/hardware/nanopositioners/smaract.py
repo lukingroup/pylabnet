@@ -6,7 +6,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import value_to_bitval, bitval_to_value
 
 
-class Nanopositioners():
+class MCS2():
 
     # property keys and other constants
     PKEY_NUM_BUS = int("0x020F0016", 16)
@@ -355,7 +355,7 @@ class Nanopositioners():
 
 
 def main():
-    nanopos = Nanopositioners()
+    nanopos = MCS2()
     nanopos.set_parameters(channel=0, frequency=100)
     nanopos.set_parameters(channel=0, amplitude=50)
     nanopos.set_parameters(channel=0, dc_vel=100)

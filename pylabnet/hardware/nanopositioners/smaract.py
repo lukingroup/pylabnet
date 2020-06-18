@@ -6,7 +6,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import value_to_bitval, bitval_to_value
 
 
-class MCS2():
+class MCS2:
 
     # property keys and other constants
     PKEY_NUM_BUS = int("0x020F0016", 16)
@@ -353,6 +353,11 @@ class MCS2():
         ]
         self._nanopositionersdll.SA_CTL_Stop.restype = ctypes.c_uint32  # result status
 
+
+class Service:
+
+    def exposed_close(self):
+        return self.
 
 def main():
     nanopos = MCS2()

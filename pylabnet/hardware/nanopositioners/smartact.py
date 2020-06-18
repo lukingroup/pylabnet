@@ -176,7 +176,7 @@ class Nanopositioners():
                               f'{self.DC_VEL_MIN} to {self.DC_VEL_MAX} V/s')
 
     def step(self, channel):
-        """ Takes a single step
+        """ Takes a single step forward
 
         :param channel: (int) channel to move counting from 0
         """
@@ -230,7 +230,51 @@ class Nanopositioners():
                 f'Failed to set DC voltage to {voltage} V on channel {channel} of {self.dev_name}'
             )
 
+    def n_steps(self, channel, n):
+        """ Takes n steps
 
+        :param channel: (int) channel index (from 0)
+        :param n: (int) number of steps to take, negative is in opposite direction
+        """
+
+        # Take the step
+        self.set_parameters(channel, mode='step')
+        result_step = self._nanopositionersdll.SA_CTL_Move(self.dhandle, channel, n, 0)
+
+        # Handle error
+        if result_step:
+            self.log.warn(f'Failed to take {n} steps on device {self.dev_name}, channel {channel}')
+
+    def move(self, channel, backward=False):
+        """ Takes the maximum number of steps (quasi continuous)
+
+        :param channel: (int) channel index (from 0)
+        :param backward: (bool) whether or not to step in backwards direction (default False)
+        """
+
+        # Configure move
+        self.set_parameters(channel, mode='step')
+        if backward:
+            MOVE_STEPS = -100000
+        else:
+            MOVE_STEPS = 100000
+
+        # Send move command
+        result_move = self._nanopositionersdll.SA_CTL_MOVE(self.dhandle, channel, MOVE_STEPS)
+
+        # Handle error
+        if result_move:
+            self.log.warn(f'Failed to take move on device {self.dev_name}, channel {channel}')
+
+    def stop(self, channel):
+        """ Terminates any ongoing movement
+
+        :param channel: (int) channel index (from 0)
+        """
+
+        result_stop = self._nanopositionersdll.SA_CTL_Stop(self.dhandle, channel, 0)
+        if result_stop:
+            self.log.warn(f'Failed to stop movement on device {self.dev_name}, channel {channel}')
 
     # Technical methods
 
@@ -301,6 +345,13 @@ class Nanopositioners():
             ctypes.c_uint32     # transmit handle
         ]
         self._nanopositionersdll.SA_CTL_Move.restype = ctypes.c_uint32  # result status
+
+        self._nanopositionersdll.SA_CTL_Stop.argtypes = [
+            ctypes.c_uint32,    # device handle
+            ctypes.c_int8,      # index of addressed device, module, or channel
+            ctypes.c_uint32     # transmit handle
+        ]
+        self._nanopositionersdll.SA_CTL_Stop.restype = ctypes.c_uint32  # result status
 
 
 def main():

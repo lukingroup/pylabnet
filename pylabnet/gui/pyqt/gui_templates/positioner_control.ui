@@ -4138,9 +4138,9 @@ color: rgb(255, 255, 255);</string>
     <property name="geometry">
      <rect>
       <x>410</x>
-      <y>10</y>
+      <y>0</y>
       <width>831</width>
-      <height>22</height>
+      <height>34</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_84">
@@ -4168,7 +4168,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="logger_label">
+      <widget class="QLabel" name="positioner_label">
        <property name="font">
         <font>
          <family>Calibri Light</family>
@@ -4204,6 +4204,40 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        </property>
        <property name="text">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;GUI Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="stop_button">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>50</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri Light</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="mouseTracking">
+        <bool>false</bool>
+       </property>
+       <property name="autoFillBackground">
+        <bool>false</bool>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(170, 170, 255);</string>
+       </property>
+       <property name="text">
+        <string>STOP</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

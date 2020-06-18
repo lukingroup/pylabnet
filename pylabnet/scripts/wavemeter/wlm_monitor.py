@@ -1,7 +1,5 @@
 from pylabnet.scripts.pid import PID
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.generic_server import GenericServer
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import unpack_launcher, create_server
 from pylabnet.utils.logging.logger import LogClient
@@ -543,7 +541,6 @@ class WlmMonitor:
 
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
                 self.clear_channel(channel=channel.number)
-
 
     def _get_channels(self):
         """ Returns all active channel numbers

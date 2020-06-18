@@ -60,7 +60,7 @@ import os
 import socket
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
-from pylabnet.gui.pyqt import external_gui
+from pylabnet.network.client_server import external_gui
 
 
 class Launcher:
@@ -182,6 +182,7 @@ class Launcher:
         connected = False
         timeout = 0
         host = socket.gethostbyname(socket.gethostname())
+
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
@@ -208,16 +209,16 @@ class Launcher:
         # Connect to GUI, store client. Try several times, since it may take some time to actually launch the server
         connected = False
         timeout = 0
-        while not connected and timeout < 1000:
+        while not connected and timeout < 10:
             try:
                 self.gui_clients[gui] = external_gui.Client(host=host, port=gui_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
-                time.sleep(0.01)
+                time.sleep(1)
 
         # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
-        if timeout == 1000:
+        if timeout == 10:
             self.logger.error(f'Failed to connect client to newly instantiated {gui} server at \nIP: {host}'
                               f'\nPort: {gui_port}')
             raise ConnectionRefusedError()
@@ -298,6 +299,7 @@ class Launcher:
         connected = False
         timeout = 0
         host = socket.gethostbyname(socket.gethostname())
+
         while not connected and timeout < 1000:
             try:
                 server_port = np.random.randint(1, 9999)
@@ -326,6 +328,7 @@ class Launcher:
                 raise ConnectionRefusedError()
 
         # Connect to server, store client. Try several times, since it may take some time to actually launch the server
+
         connected = False
         timeout = 0
         while not connected and timeout < 10:
@@ -336,7 +339,7 @@ class Launcher:
                 timeout += 1
 
         # If we could connect after roughly 10 seconds, something is wrong and we should raise an error
-        if timeout == 1000:
+        if timeout == 10:
             self.logger.error(f'Failed to connect client to newly instantiated {server} server at \nIP: {host}'
                               f'\nPort: {server_port}')
             raise ConnectionRefusedError()
@@ -372,7 +375,7 @@ class Launcher:
             # If there are no matches, launch and connect to the server manually
             if num_matches == 0:
                 self.logger.info(f'No active servers matching {module.__name__.split(".")[-1]}'
-                                 'were found. Instantiating a new server')
+                                 ' were found. Instantiating a new server')
                 self._launch_new_server(module)
 
             # If there is exactly 1 match, try to connect automatically

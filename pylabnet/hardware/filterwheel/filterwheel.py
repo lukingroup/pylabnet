@@ -7,8 +7,8 @@ Is is essentially a wrapper for the class FW102C in fw102c.py writen by Gilles S
 
 from pylabnet.hardware.filterwheel.fw102c import FW102C
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 
 
 class FW102CFilterWheel:

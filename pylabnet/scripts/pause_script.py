@@ -11,8 +11,8 @@ Steps:
 - call of PauseClient.pause() will call pause() method of the script
 """
 
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 
 
 class PauseService(ServiceBase):

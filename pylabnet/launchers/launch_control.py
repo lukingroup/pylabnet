@@ -9,8 +9,11 @@ from io import StringIO
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
-from pylabnet.gui.pyqt.external_gui import Window, Service, Client
-from pylabnet.core.generic_server import GenericServer
+
+from pylabnet.utils.logging.logger import LogService
+from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
 
@@ -33,7 +36,7 @@ class Controller:
     LOG_PORT = None
     GUI_PORT = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, proxy=False):
         """ Initializes launch control GUI """
 
         self.log_service = None
@@ -52,12 +55,15 @@ class Controller:
         self.debug = False
         self.debug_level = None
         try:
-            if sys.argv[1] == '-p':
+            if sys.argv[1] == '-p' or proxy:
                 self.proxy = True
             else:
                 self.proxy = False
         except IndexError:
-            self.proxy = False
+            if proxy:
+                self.proxy = True
+            else:
+                self.proxy = False
         self.host = socket.gethostbyname(socket.gethostname())
         self.update_index = 0
 
@@ -104,9 +110,6 @@ class Controller:
                 self.gui_logger.error(f'Failed to connect to GUI Server with IP address: {self.host}, '
                                       f'Port: {self:gui_port}')
                 raise
-
-            # For debugging
-            time.sleep(1)
 
             # Now update GUI to mirror clients
             self._copy_master()
@@ -474,6 +477,16 @@ def main():
     """ Runs the launch controller """
 
     log_controller = Controller()
+    run(log_controller)
+
+def main_proxy():
+    """ Runs the launch controller overriding commandline arguments in proxy mode """
+
+    log_controller = Controller(proxy=True)
+    run(log_controller)
+
+def run(log_controller):
+    """ Runs the launch controller once a Controller is instantiated"""
 
     # Instantiate GUI
     if not log_controller.proxy:

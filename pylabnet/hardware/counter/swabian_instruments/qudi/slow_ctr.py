@@ -12,7 +12,7 @@ Steps:
 - in qudi, instantiate SlowCtrClient as one of the hardware modules
 """
 
-from pylabnet.core.service_base import ServiceBase
+from pylabnet.network.core.service_base import ServiceBase
 import TimeTagger as TT
 import time
 import copy

@@ -1,8 +1,8 @@
 """Wrapper for NI654x driver to implement SimplePGenInterface"""
 
 from pylabnet.hardware.interface.simple_p_gen import SimplePGenInterface
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 import pickle
 
 # TODO: add automatic frequency setting

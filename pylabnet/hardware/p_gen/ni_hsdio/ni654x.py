@@ -2,9 +2,9 @@ import ctypes
 from pylabnet.hardware.p_gen.ni_hsdio import NI_HSDIO_DLL_PATH
 from pylabnet.hardware.p_gen.ni_hsdio.c_headers import NITypes, NIConst, build_c_func_prototypes
 from pylabnet.hardware.interface.p_gen import PGenError
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
-from pulseblock.pb_sample import pb_sample
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
+from pylabnet.utils.pulseblock.pb_sample import pb_sample
 from pylabnet.utils.logging.logger import LogHandler
 import numpy as np
 import copy

@@ -5,7 +5,7 @@ import re
 import sys
 import ctypes
 import numpy as np
-from pylabnet.core.generic_server import GenericServer
+from pylabnet.network.core.generic_server import GenericServer
 
 
 def str_to_float(in_val):

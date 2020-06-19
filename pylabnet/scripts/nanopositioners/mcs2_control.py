@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogHandler
@@ -186,7 +187,7 @@ class Controller:
         if params[3] != self.prev_frequency:
             self.pos.set_parameters(channel, frequency=params[3])
         if params[4] != self.prev_velocity:
-            self.pos.set_parameters(channel, velocity=params[4])
+            self.pos.set_parameters(channel, dc_vel=params[4])
 
     def _walk(self, channel, walker, params, left=False):
         """ Performs a walk until the button is released
@@ -218,7 +219,7 @@ def launch(**kwargs):
 
     # Unpack and assign parameters
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    nanopos_client = clients['smaract_mcs2']
+    nanopos_client = clients['mcs2']
     gui_client = guis['positioner_control']
 
     # Instantiate controller

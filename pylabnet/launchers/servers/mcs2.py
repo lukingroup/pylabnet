@@ -2,7 +2,7 @@ import socket
 
 from pylabnet.hardware.nanopositioners.smaract import MCS2
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.smaract_mcs2 import Service
+from pylabnet.network.client_server.smaract_mcs2 import Service, Client
 
 
 def launch(**kwargs):

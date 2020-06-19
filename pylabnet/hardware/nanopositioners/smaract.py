@@ -130,7 +130,7 @@ class MCS2:
             # Check for reasonable range
             if 1 <= frequency <= 20000:
                 result_freq = self._nanopositionersdll.SA_CTL_SetProperty_i32(
-                    self.dhandle, channel, self.PKEY_STEP_FREQ, frequency
+                    self.dhandle, channel, self.PKEY_STEP_FREQ, int(frequency)
                 )
                 if result_freq:
                     self.log.warn(

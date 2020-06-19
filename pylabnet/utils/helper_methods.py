@@ -294,6 +294,6 @@ def generate_widgets(widget_dict):
     """
 
     widgets = ()
-    for widget_name, instances in widget_dict.items:
-        widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in instances],)
+    for widget_name, instances in widget_dict.items():
+        widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
     return widgets

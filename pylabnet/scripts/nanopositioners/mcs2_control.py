@@ -6,6 +6,8 @@ from pylabnet.utils.helper_methods import unpack_launcher
 class Controller:
     """ A script class for controlling MCS2 positioners + interfacing with GUI"""
 
+    NUM_CHANNELS = 9
+
     def __init__(self, nanopos_client, gui_client, log_client=None):
         """ Instantiates the controller
 
@@ -21,7 +23,17 @@ class Controller:
     def initialize_gui(self):
         """ Initializes the GUI (assigns channels)"""
 
-        #TODO
+        # Iterate through channels
+        for channel_index in range(self.NUM_CHANNELS):
+
+            self._initialize_channel()
+
+    # Technical methods
+
+    def _initialize_channel(self):
+        """ Initializes GUI for a given channel"""
+
+
 
 
 def launch(**kwargs):

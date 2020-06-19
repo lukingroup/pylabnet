@@ -27,6 +27,9 @@ class Service(ServiceBase):
     def exposed_stop(self, channel):
         return self._module.stop(channel)
 
+    def exposed_is_moving(self, channel):
+        return self._module.is_moving(channel)
+
 
 class Client(ClientBase):
 
@@ -52,4 +55,7 @@ class Client(ClientBase):
 
     def stop(self, channel):
         return self._service.exposed_stop(channel)
+
+    def is_moving(self, channel):
+        return self._service.exposed_is_moving(channel)
 

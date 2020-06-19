@@ -680,7 +680,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -762,7 +762,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1148,7 +1148,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1230,7 +1230,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2091,7 +2091,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2173,7 +2173,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2559,7 +2559,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2641,7 +2641,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -3034,7 +3034,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -3116,7 +3116,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -3502,7 +3502,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <property name="autoDefault">
                  <bool>false</bool>
@@ -3590,7 +3590,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -3976,7 +3976,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -4058,7 +4058,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>

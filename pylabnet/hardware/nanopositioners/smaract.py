@@ -18,6 +18,7 @@ class MCS2:
     PKEY_STEP_AMP = int('0x03050030', 16)
     PKEY_VOLT = int('0x0305001F', 16)
     PKEY_DC_VEL = int('0x0305002A', 16)
+    PKEY_CURRENT_STATE = int('0x0305000F', 16)
     MOVE_MODE_STEP = 4
     MOVE_MODE_DC_REL = 3
     MOVE_MODE_DC_ABS = 2
@@ -276,6 +277,34 @@ class MCS2:
         result_stop = self._nanopositionersdll.SA_CTL_Stop(self.dhandle, channel, 0)
         if result_stop:
             self.log.warn(f'Failed to stop movement on device {self.dev_name}, channel {channel}')
+
+    def is_moving(self, channel):
+        """ Returns whether or not the positioner is moving
+
+        :param channel: (int) channel index (from 0)
+
+        :return: (bool) true if moving
+        """
+
+        # Get the state bit
+        current_state_buffer = ctypes.c_int32()
+        current_state_buffer_size = ctypes.c_size_t(ctypes.sizeof(current_state_buffer))
+        state_result = self._nanopositionersdll.SA_CTL_GetProperty_i32(
+            self.dhandle, channel, self.PKEY_CURRENT_STATE,
+            current_state_buffer, current_state_buffer_size
+        )
+
+        # Handle an error
+        if state_result:
+            self.log.warn(f'Failed to check if positioner {self.dev_name} is moving on'
+                          f'Channel {channel}')
+
+        # Decode state bit
+        if current_state_buffer.value % 2 == 0:
+            return False
+        else:
+            return True
+
 
     # Technical methods
 

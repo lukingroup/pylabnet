@@ -39,6 +39,7 @@ class Controller:
         self.prev_amplitude = [50]*self.NUM_CHANNELS
         self.prev_frequency = [30]*self.NUM_CHANNELS
         self.prev_velocity = [100]*self.NUM_CHANNELS
+        self.prev_voltage = [50]*self.NUM_CHANNELS
 
     def initialize_gui(self):
         """ Initializes the GUI (assigns channels)"""
@@ -73,14 +74,25 @@ class Controller:
                     self.pos.n_steps(channel_index, n=params[0])
 
                 # Handle walk event
-                # TODO implement walk until release or hit end of range
+                walker = self.walk_left[channel_index]
+                if self.gui.was_button_pressed(walker):
+                    self._walk(channel_index, walker, params, left=True)
+                walker = self.walk_right[channel_index]
+                if self.gui.was_button_pressed(walker):
+                    self._walk(channel_index,walker, params, left=False)
+
+                # Handle DC change
+                if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
+                    self.pos.set_voltage(channel_index, params[5])
+
 
             # Update the previous values for future use
             (
                 self.prev_amplitude[channel_index],
                 self.prev_frequency[channel_index],
-                self.prev_velocity[channel_index]
-            ) = params[2], params[3], params[4]
+                self.prev_velocity[channel_index],
+                self.prev_voltage[channel_index]
+            ) = params[2], params[3], params[4], params[5]
 
 
     def get_GUI_parameters(self, channel):
@@ -176,6 +188,29 @@ class Controller:
         if params[4] != self.prev_velocity:
             self.pos.set_parameters(channel, velocity=params[4])
 
+    def _walk(self, channel, walker, params, left=False):
+        """ Performs a walk until the button is released
+
+        :param channel: (int) channel index (from 0)
+        :param walker: (str) event button label of walk button
+        :param params: (tuple) params in order n_steps, is_moving, amplitude, frequency, velocity,
+            voltage
+        :param left: (bool) whether or not to walk left
+        """
+
+        walking = True
+        while walking:
+
+            # Check for button release
+            if self.gui.was_button_released(walker):
+                self.pos.stop(channel)
+                walking = False
+            else:
+
+                # Update channel and move
+                self._update_channel(channel, params)
+                if not self.moving_flag:
+                    self.pos.move(channel, backward=left)
 
 
 

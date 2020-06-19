@@ -233,6 +233,14 @@ class Window(QtWidgets.QMainWindow):
         except KeyError:
             return False
 
+    def was_button_released(self, event_label):
+        """ Returns whether or not an event button was released
+
+        :param event_label: (str) key for button to check
+        """
+
+        return self.event_button[event_label].get_release_state()
+
     def change_button_background_color(self, event_label, color):
         """ Change background color of button
 
@@ -851,17 +859,24 @@ class EventButton:
         """ Instantiates event button """
 
         self.was_pushed = False  # Keeps track of whether the button has been pushed
+        self.was_released = False
         self.widget = getattr(gui, event_widget)  # Get physical widget instance
 
         self.disabled = False  # Check if button is disabled
 
         # Connect event to flag raising
         self.widget.pressed.connect(self.button_pressed)
+        self.widget.released.connect(self.button_released)
 
     def button_pressed(self):
         """ Raises flag when button is pushed """
 
         self.was_pushed = True
+
+    def button_released(self):
+        """ Raises flag when button is released """
+
+        self.was_released = True
 
     def reset_button(self):
         """ Resets pushed state to False """
@@ -881,6 +896,16 @@ class EventButton:
 
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
+        return result
+
+    def get_release_state(self):
+        """ Returns whether or not the button has been released and resets this flag
+
+        :return: bool self._was_released
+        """
+
+        result = copy.deepcopy(self.was_released)
+        self.was_released = False
         return result
 
 

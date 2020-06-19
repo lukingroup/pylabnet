@@ -67,8 +67,13 @@ class Controller:
                 self._update_parameters(channel_index, params)
 
                 # Handle a step event
+                if self.gui.was_button_pressed(self.step_left[channel_index]):
+                    self.pos.n_steps(channel_index, n=-params[0])
+                if self.gui.was_button_pressed(self.step_right[channel_index]):
+                    self.pos.n_steps(channel_index, n=params[0])
 
                 # Handle walk event
+                # TODO implement walk until release or hit end of range
 
             # Update the previous values for future use
             (

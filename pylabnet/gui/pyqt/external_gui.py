@@ -168,7 +168,7 @@ class Window(QtWidgets.QMainWindow):
         :param container_label: (str) keyname to assign to the widget for future reference
         """
         self._containers_to_assign.append((container_widget, container_label))
-    
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
 
@@ -219,7 +219,7 @@ class Window(QtWidgets.QMainWindow):
         """ Returns the text in a textual label widget """
 
         return self.labels[label_label].get_label()
-    
+
     def was_button_pressed(self, event_label):
         """ Returns whether or not an event button was pressed
 
@@ -243,7 +243,7 @@ class Window(QtWidgets.QMainWindow):
 
     def get_container_info(self, container_label):
         return self.containers[container_label].get_items()
-    
+
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -346,7 +346,7 @@ class Window(QtWidgets.QMainWindow):
                 self._containers_to_assign.remove(cont)
             except KeyError:
                 pass
-    
+
     def update_widgets(self):
         """ Updates all widgets on the physical GUI to current data"""
 
@@ -833,10 +833,10 @@ class Label:
 
     def get_label(self):
         """ Returns label text """
-        
+
         try:
-            
-            # Ordinary labels 
+
+            # Ordinary labels
             return self.widget.text()
         except AttributeError:
 
@@ -900,7 +900,7 @@ class Container:
 
     def get_items(self):
         """ Returns all QListWidget items and tooltips as a dictionary """
-        
+
         item_info = {}
         for index in range(self.widget.count()):
 

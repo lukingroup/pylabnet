@@ -137,7 +137,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -3034,7 +3034,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -3116,7 +3116,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -3502,7 +3502,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                 <property name="autoDefault">
                  <bool>false</bool>
@@ -3590,7 +3590,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -3976,7 +3976,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -4058,7 +4058,7 @@ color: rgb(255, 255, 255);</string>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>

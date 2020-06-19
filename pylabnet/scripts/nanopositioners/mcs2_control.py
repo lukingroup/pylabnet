@@ -213,7 +213,6 @@ class Controller:
                     self.pos.move(channel, backward=left)
 
 
-
 def launch(**kwargs):
     """ Launches the full nanopositioner control + GUI script """
 
@@ -232,3 +231,7 @@ def launch(**kwargs):
 
         if not control.gui.is_paused:
             control.run()
+
+    # Mitigate warnings about unused variables
+    if loghost and logport and params:
+        pass

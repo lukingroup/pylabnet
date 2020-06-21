@@ -36,11 +36,11 @@ class Controller:
          self.velocity, self.voltage) = generate_widgets(self.WIDGET_DICT)
 
         # Additional attributes
-        self.moving_flag = False
         self.prev_amplitude = [50]*self.NUM_CHANNELS
         self.prev_frequency = [30]*self.NUM_CHANNELS
         self.prev_velocity = [100]*self.NUM_CHANNELS
         self.prev_voltage = [50]*self.NUM_CHANNELS
+        self.voltage_override = False
 
     def initialize_gui(self):
         """ Initializes the GUI (assigns channels)"""
@@ -63,13 +63,7 @@ class Controller:
         self.pos.set_parameters(channel, dc_vel=params[4])
 
         # Measure DC voltage and set it in the GUI
-        voltage = self.pos.get_voltage(channel)
-        self.gui.activate_scalar(self.voltage[channel])
-        self.gui.set_scalar(voltage, self.voltage[channel])
-        self.gui.deactivate_scalar(self.voltage[channel])
-
-        # Give some time for GUI updating
-        time.sleep(0.05)
+        self._set_voltage_display(channel)
 
     def run(self):
         """ Runs the Positioner control (takes any necessary action) """
@@ -83,38 +77,39 @@ class Controller:
             # Update current status on GUI
             self._update_channel(channel_index, params)
 
-            # Handle other requests assuming the positioner is not moving
-            if not self.moving_flag:
+            # Handle parameter updates
+            self._update_parameters(channel_index, params)
 
-                # Handle parameter updates
-                self._update_parameters(channel_index, params)
+            # Handle DC change
+            if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
+                self.pos.set_voltage(channel_index, params[5])
 
-                # Handle a step event
-                if self.gui.was_button_pressed(self.step_left[channel_index]):
-                    self.pos.n_steps(channel_index, n=-params[0])
-                if self.gui.was_button_pressed(self.step_right[channel_index]):
-                    self.pos.n_steps(channel_index, n=params[0])
+            # Handle a step event
+            if self.gui.was_button_pressed(self.step_left[channel_index]):
+                self.pos.n_steps(channel_index, n=-params[0])
+            if self.gui.was_button_pressed(self.step_right[channel_index]):
+                self.pos.n_steps(channel_index, n=params[0])
 
-                # Handle walk event
-                walker = self.walk_left[channel_index]
-                if self.gui.was_button_pressed(walker):
-                    self._walk(channel_index, walker, params, left=True)
-                walker = self.walk_right[channel_index]
-                if self.gui.was_button_pressed(walker):
-                    self._walk(channel_index,walker, params, left=False)
-
-                # Handle DC change
-                if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
-                    self.pos.set_voltage(channel_index, params[5])
-
+            # Handle walk event
+            walker = self.walk_left[channel_index]
+            if self.gui.was_button_pressed(walker):
+                self._walk(channel_index, walker, params, left=True)
+            walker = self.walk_right[channel_index]
+            if self.gui.was_button_pressed(walker):
+                self._walk(channel_index,walker, params, left=False)
 
             # Update the previous values for future use
             (
                 self.prev_amplitude[channel_index],
                 self.prev_frequency[channel_index],
-                self.prev_velocity[channel_index],
-                self.prev_voltage[channel_index]
-            ) = params[2], params[3], params[4], params[5]
+                self.prev_velocity[channel_index]
+            ) = params[2], params[3], params[4]
+
+            # If we want to override the previous DC voltage reading
+            if not self.voltage_override:
+                self.prev_voltage[channel_index] = params[5]
+            else:
+                self.voltage_override = False
 
     def get_GUI_parameters(self, channel):
         """ Gets the current GUI parameters for a given channel
@@ -134,6 +129,22 @@ class Controller:
         )
 
     # Technical methods
+
+    def _set_voltage_display(self, channel):
+        """ Sets the voltage on the GUI to the current value measured by the controller
+
+        :param channel: (int) channel index (from 0)
+        """
+
+        voltage = self.pos.get_voltage(channel)
+        self.prev_voltage[channel] = voltage
+        self.gui.activate_scalar(self.voltage[channel])
+        self.gui.set_scalar(voltage, self.voltage[channel])
+        self.voltage_override = True
+
+        # Give some time for GUI updating
+        time.sleep(0.05)
+        self.gui.deactivate_scalar(self.voltage[channel])
 
     def _initialize_channel(self, index):
         """ Initializes GUI for a given channel"""
@@ -181,11 +192,9 @@ class Controller:
         # Update status of positioner
         move = self.pos.is_moving(channel)
         if move:
-            self.moving_flag = True
             if not params[1]:
                 self.gui.set_scalar(True, self.is_moving[channel])
         else:
-            self.moving_flag = False
             if params[1]:
                 self.gui.set_scalar(False, self.is_moving[channel])
 
@@ -215,17 +224,22 @@ class Controller:
         """
 
         walking = True
+        self.gui.change_button_background_color(walker, 'red')
         while walking:
 
             # Check for button release
             if self.gui.was_button_released(walker):
                 self.pos.stop(channel)
+                self.gui.set_scalar(False, self.is_moving[channel])
+                self.gui.change_button_background_color(walker, 'black')
+                time.sleep(0.05)
+                self._set_voltage_display(channel)
                 walking = False
             else:
 
                 # Update channel and move
                 self._update_channel(channel, params)
-                if not self.moving_flag:
+                if not self.gui.get_scalar(self.is_moving[channel]):
                     self.pos.move(channel, backward=left)
 
 

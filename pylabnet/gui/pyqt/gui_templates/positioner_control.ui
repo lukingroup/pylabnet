@@ -202,13 +202,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -284,13 +283,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -338,13 +336,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -410,13 +407,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -670,17 +666,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -752,17 +747,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -806,13 +800,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -878,13 +871,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -1138,17 +1130,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -1220,17 +1211,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -1274,13 +1264,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -1346,13 +1335,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -1613,13 +1601,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -1695,13 +1682,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -1749,13 +1735,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -1821,13 +1806,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -2081,17 +2065,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -2163,17 +2146,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -2217,13 +2199,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -2289,13 +2270,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -2549,17 +2529,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -2631,17 +2610,16 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
-                 <bool>true</bool>
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -2685,13 +2663,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -2757,13 +2734,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3024,13 +3000,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3106,13 +3081,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3160,13 +3134,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3232,13 +3205,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3492,13 +3464,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3580,13 +3551,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3634,13 +3604,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3706,13 +3675,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -3966,13 +3934,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -4048,13 +4015,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -4102,13 +4068,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_left.svg</normaloff>
-                  <normalon>red_left.svg</normalon>green_left.svg</iconset>
+                  <normaloff>left_arrow.svg</normaloff>left_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -4174,13 +4139,12 @@ color: rgb(255, 255, 255);</string>
                 </property>
                 <property name="icon">
                  <iconset>
-                  <normaloff>green_right.svg</normaloff>
-                  <normalon>red_right.svg</normalon>green_right.svg</iconset>
+                  <normaloff>right_arrow.svg</normaloff>right_arrow.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
-                  <width>64</width>
-                  <height>64</height>
+                  <width>36</width>
+                  <height>36</height>
                  </size>
                 </property>
                 <property name="checkable">
@@ -4388,7 +4352,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1302</width>
-     <height>38</height>
+     <height>31</height>
     </rect>
    </property>
   </widget>

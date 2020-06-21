@@ -86,9 +86,17 @@ class Controller:
 
             # Handle a step event
             if self.gui.was_button_pressed(self.step_left[channel_index]):
+                self.gui.change_button_background_color(self.step_left[channel_index], color='red')
                 self.pos.n_steps(channel_index, n=-params[0])
+                time.sleep(0.15)
+                self.gui.change_button_background_color(self.step_left[channel_index], color='black')
+                self._set_voltage_display(channel_index)
             if self.gui.was_button_pressed(self.step_right[channel_index]):
+                self.gui.change_button_background_color(self.step_right[channel_index], color='red')
                 self.pos.n_steps(channel_index, n=params[0])
+                time.sleep(0.15)
+                self.gui.change_button_background_color(self.step_right[channel_index], color='black')
+                self._set_voltage_display(channel_index)
 
             # Handle walk event
             walker = self.walk_left[channel_index]

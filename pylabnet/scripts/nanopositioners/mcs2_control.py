@@ -68,6 +68,9 @@ class Controller:
         self.gui.set_scalar(voltage, self.voltage[channel])
         self.gui.deactivate_scalar(self.voltage[channel])
 
+        # Give some time for GUI updating
+        time.sleep(0.05)
+
     def run(self):
         """ Runs the Positioner control (takes any necessary action) """
 
@@ -214,11 +217,13 @@ class Controller:
         """
 
         walking = True
+        print(f'Walking {"left" if left else "right"} on channel {channel}')
         while walking:
 
             # Check for button release
             if self.gui.was_button_released(walker):
                 self.pos.stop(channel)
+                print(f'Stopped walking on channel {channel}')
                 walking = False
             else:
 

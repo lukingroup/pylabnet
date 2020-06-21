@@ -262,7 +262,7 @@ class MCS2:
             MOVE_STEPS = 100000
 
         # Send move command
-        result_move = self._nanopositionersdll.SA_CTL_MOVE(self.dhandle, channel, MOVE_STEPS)
+        result_move = self._nanopositionersdll.SA_CTL_Move(self.dhandle, channel, MOVE_STEPS, 0)
 
         # Handle error
         if result_move:

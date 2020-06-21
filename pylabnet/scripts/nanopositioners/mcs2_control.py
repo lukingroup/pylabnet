@@ -56,7 +56,7 @@ class Controller:
         # Iterate through channels
         for channel_index in range(self.NUM_CHANNELS):
 
-            # Get previous GUI values
+            # Get GUI values
             params = self.get_GUI_parameters(channel_index)
 
             # Update current status on GUI
@@ -94,7 +94,6 @@ class Controller:
                 self.prev_velocity[channel_index],
                 self.prev_voltage[channel_index]
             ) = params[2], params[3], params[4], params[5]
-
 
     def get_GUI_parameters(self, channel):
         """ Gets the current GUI parameters for a given channel
@@ -169,11 +168,6 @@ class Controller:
             if params[1]:
                 self.gui.set_scalar(False, self.is_moving[channel])
 
-        # Update DC voltage
-        voltage = self.pos.get_voltage(channel)
-        if np.abs(voltage-params[5]) > self.DC_TOLERANCE:
-            self.gui.set_scalar(self.pos.get_voltage(channel), self.voltage[channel])
-
     def _update_parameters(self, channel, params):
         """ Updates current parameters on device
 
@@ -182,11 +176,11 @@ class Controller:
             voltage
         """
 
-        if params[2] != self.prev_amplitude:
+        if params[2] != self.prev_amplitude[channel]:
             self.pos.set_parameters(channel, amplitude=params[2])
-        if params[3] != self.prev_frequency:
+        if params[3] != self.prev_frequency[channel]:
             self.pos.set_parameters(channel, frequency=params[3])
-        if params[4] != self.prev_velocity:
+        if params[4] != self.prev_velocity[channel]:
             self.pos.set_parameters(channel, dc_vel=params[4])
 
     def _walk(self, channel, walker, params, left=False):

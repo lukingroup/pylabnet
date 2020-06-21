@@ -119,6 +119,10 @@ class Controller:
             else:
                 self.voltage_override = False
 
+            if self.gui.was_button_pressed('emergency_button'):
+                self.stop_all()
+                walking = False
+
     def get_GUI_parameters(self, channel):
         """ Gets the current GUI parameters for a given channel
 
@@ -135,6 +139,12 @@ class Controller:
             self.gui.get_scalar(self.velocity[channel]),
             self.gui.get_scalar(self.voltage[channel])
         )
+
+    def stop_all(self):
+        """ Stops all channels """
+
+        for channel in range(self.NUM_CHANNELS):
+            self.pos.stop(channel)
 
     # Technical methods
 
@@ -187,6 +197,9 @@ class Controller:
         )
         self.gui.assign_event_button(
             event_widget=self.walk_right[index], event_label=self.walk_right[index]
+        )
+        self.gui.assign_event_button(
+            event_widget='emergency_button', event_label='emergency_button'
         )
 
     def _update_channel(self, channel, params):
@@ -249,6 +262,10 @@ class Controller:
                 self._update_channel(channel, params)
                 if not self.gui.get_scalar(self.is_moving[channel]):
                     self.pos.move(channel, backward=left)
+
+            if self.gui.was_button_pressed('emergency_button'):
+                self.stop_all()
+                walking = False
 
 
 def launch(**kwargs):

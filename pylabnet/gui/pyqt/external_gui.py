@@ -239,7 +239,7 @@ class Window(QtWidgets.QMainWindow):
         :param event_label: (str) key for button to check
         """
 
-        return self.event_button[event_label].get_release_state()
+        return self.event_buttons[event_label].get_release_state()
 
     def change_button_background_color(self, event_label, color):
         """ Change background color of button

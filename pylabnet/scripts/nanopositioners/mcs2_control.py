@@ -167,7 +167,7 @@ class Controller:
             event_widget=self.walk_left[index], event_label=self.walk_left[index]
         )
         self.gui.assign_event_button(
-            event_widget=self.walk_left[index], event_label=self.walk_left[index]
+            event_widget=self.walk_right[index], event_label=self.walk_right[index]
         )
 
     def _update_channel(self, channel, params):
@@ -201,10 +201,8 @@ class Controller:
             self.pos.set_parameters(channel, amplitude=params[2])
         if params[3] != self.prev_frequency[channel]:
             self.pos.set_parameters(channel, frequency=params[3])
-            print(f'Updating frequency to {params[3]} for channel {channel}')
         if params[4] != self.prev_velocity[channel]:
             self.pos.set_parameters(channel, dc_vel=params[4])
-            print(f'Updating veloc to {params[4]} for channel {channel}')
 
     def _walk(self, channel, walker, params, left=False):
         """ Performs a walk until the button is released
@@ -217,13 +215,11 @@ class Controller:
         """
 
         walking = True
-        print(f'Walking {"left" if left else "right"} on channel {channel}')
         while walking:
 
             # Check for button release
             if self.gui.was_button_released(walker):
                 self.pos.stop(channel)
-                print(f'Stopped walking on channel {channel}')
                 walking = False
             else:
 

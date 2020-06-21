@@ -53,6 +53,11 @@ class Controller:
     def run(self):
         """ Runs the Positioner control (takes any necessary action) """
 
+        # Initialize parameters
+        for channel_index in range(self.NUM_CHANNELS):
+            params = self.get_GUI_parameters(channel_index)
+            self._initialize_parameters(channel_index, params)
+
         # Iterate through channels
         for channel_index in range(self.NUM_CHANNELS):
 
@@ -180,8 +185,23 @@ class Controller:
             self.pos.set_parameters(channel, amplitude=params[2])
         if params[3] != self.prev_frequency[channel]:
             self.pos.set_parameters(channel, frequency=params[3])
+            print(f'Updating frequency to {params[3]} for channel {channel}')
         if params[4] != self.prev_velocity[channel]:
             self.pos.set_parameters(channel, dc_vel=params[4])
+            print(f'Updating veloc to {params[4]} for channel {channel}')
+
+    def _initialize_parameters(self, channel, params):
+        """ Initializes all parameters to values given by params
+
+        :param channel: (int) channel index (from 0)
+        :param params: (tuple) params in order n_steps, is_moving, amplitude, frequency, velocity,
+            voltage
+        """
+
+        self.pos.set_parameters(channel, amplitude=params[2])
+        self.pos.set_parameters(channel, frequency=params[3])
+        self.pos.set_parameters(channel, velocity=params[4])
+        self.pos.set_parameters(channel, dc_vel=params[5])
 
     def _walk(self, channel, walker, params, left=False):
         """ Performs a walk until the button is released

@@ -177,20 +177,6 @@ class MCS2:
                 self.log.warn('Warning, can only set velocity in the range of '
                               f'{self.DC_VEL_MIN} to {self.DC_VEL_MAX} V/s')
 
-    def step(self, channel):
-        """ Takes a single step forward
-
-        :param channel: (int) channel to move counting from 0
-        """
-
-        # Take the step
-        self.set_parameters(channel, mode='step')
-        result_step = self._nanopositionersdll.SA_CTL_Move(self.dhandle, channel, 1, 0)
-
-        # Handle error
-        if result_step:
-            self.log.warn(f'Failed to take step on device {self.dev_name}, channel {channel}')
-
     def get_voltage(self, channel):
         """ Returns the current DC voltage on a piezo
 

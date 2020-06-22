@@ -121,7 +121,6 @@ class Controller:
 
             if self.gui.was_button_pressed('emergency_button'):
                 self.stop_all()
-                walking = False
 
     def get_GUI_parameters(self, channel):
         """ Gets the current GUI parameters for a given channel

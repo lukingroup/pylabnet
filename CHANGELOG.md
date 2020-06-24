@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 0.2.7
+### Added
+- Driver support for Smaract MCS2 nanopositioners
+- GUI control for 9-axis Smaract MCS2 stepper
+- GUI functionality for using button "press" and "release" events
+- Support for scope plotting and checking via pulseblock
+
+### Removed
+- Explicit support for dedicated conda environment
+
 ## 0.2.6
 ### Changed
 - Fixed bugs with developer mode installation and jupyter notebook support

@@ -44,7 +44,6 @@ class MCS2:
         if result:
             msg_str = 'No MCS2 devices found'
             self.log.error(msg_str)
-            raise(msg_str)
 
         #Establishes a connection to a device
         self.dev_name = buffer.value.decode("utf-8")
@@ -56,7 +55,6 @@ class MCS2:
         else:
             msg_str = f'Failed to connect to device {self.dev_name}'
             self.log.error(msg_str)
-            raise(msg_str)
 
         # Get channel information
         channel_buffer = ctypes.c_int32()
@@ -70,7 +68,6 @@ class MCS2:
         else:
             msg_str = f'Failed to find channels on {self.dev_name}'
             self.log.error(msg_str)
-            raise(msg_str)
 
     def close(self):
         """ Closes connection to device"""

@@ -251,3 +251,49 @@ def create_server(service, logger=None, host='localhost'):
                 logger.warn(f'Failed to create update server with port {port}')
             timeout += 1
     return server, port
+
+def value_to_bitval(value, bits=8, min=0, max=1):
+    """ Converts a value to a bits-bit number for range min to max
+
+    :param value: (float) value to convert
+    :param bits: (int) number of bits of resolution
+    :param min: (float) minimum of range
+    :param max: (float) maximum of range
+
+    :return: (int) value in bits-bit (e.g. 8-bit from 0 to 2^8-1)
+    """
+
+    # Convert value to scale of 0 to 1
+    scaled_value = (value-min)/(max-min)
+
+    return int(scaled_value * (2**bits - 1))
+
+def bitval_to_value(bitval, bits=8, min=0, max=1):
+    """ Converts a bits-bit number into its physical value for range from min to max
+
+    :param bitval: (int)  value in bits-bit (e.g. 8-bit from 0 to 2^8-1)
+    :param bits: (int) number of bits of resolution
+    :param min: (float) minimum of range
+    :param max: (float) maximum of range
+
+    :return: (float) physical value
+    """
+
+    # Convert value to scale of 0 to 1
+    scaled_value = bitval/(2**bits - 1)
+
+    return scaled_value*(max-min) + min
+
+def generate_widgets(widget_dict):
+    """ Generates a list of widget names based on a supplied dictionary
+
+    Assumes widgets follow a naming convention of "widget_base_name_i" where i is the index
+    (this function is helpful when one has many widgets with the same base_name)
+    :param widget_dict: (dict) containing widget base names as keys, and number of instances as
+        values
+    """
+
+    widgets = ()
+    for widget_name, instances in widget_dict.items():
+        widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
+    return widgets

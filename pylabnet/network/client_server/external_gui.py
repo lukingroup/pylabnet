@@ -91,8 +91,11 @@ class Service(ServiceBase):
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
+    def exposed_was_button_released(self, event_label):
+        return self._module.was_button_released(event_label)
+
     def exposed_change_button_background_color(self, event_label, color):
-        return self._module.change_button_background_color(self, event_label, color)
+        return self._module.change_button_background_color(event_label, color)
 
     def exposed_get_container_info(self, container_label):
         return pickle.dumps(self._module.get_container_info(container_label))
@@ -184,8 +187,11 @@ class Client(ClientBase):
     def was_button_pressed(self, event_label):
         return self._service.exposed_was_button_pressed(event_label)
 
+    def was_button_released(self, event_label):
+        return self._service.exposed_was_button_released(event_label)
+
     def change_button_background_color(self, event_label, color):
-        return self._service.exposed_change_button_background_color(self, event_label, color)
+        return self._service.exposed_change_button_background_color(event_label, color)
 
     def get_container_info(self, container_label):
         return pickle.loads(self._service.exposed_get_container_info(container_label))

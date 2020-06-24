@@ -2,9 +2,9 @@
 
 Client-server, python-based laboratory software
 
- ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/packaging/devices.ico)
+ ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/master/devices.ico)
 
-This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group. 
+This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group.
 
 ## For users
 
@@ -40,7 +40,7 @@ Steps 2-4 can also be done manually from an interactive python notebook or custo
 
 ### Installation
 
-First, clone the repository onto the local machine. Make sure git is installed. Cloning can be done from the command line, (preferrably in your home user directory) with the command 
+First, clone the repository onto the local machine. Make sure git is installed. Cloning can be done from the command line, (preferrably in your home user directory) with the command
 ```bash
 git clone https://github.com/lukingroup/pylabnet.git
 ```
@@ -67,17 +67,17 @@ python setup.py develop
 
 > **_NOTE 2:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 
-This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github). 
+This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github).
 
 This also creates the standard pylabnet executables which can be used for launching (see [above](#executable)). Just be careful that you are using the correct execuatable if you have installed pylabnet in environments.
 
 ### Development
 
-1. **Create a new working branch before making any changes to the repository. Please do not make the changes directly in the master branch!** This can be done either from your IDE of choice, or from the commandline within the local github repository, using `git checkout -b new-branch-name`  
+1. **Create a new working branch before making any changes to the repository. Please do not make the changes directly in the master branch!** This can be done either from your IDE of choice, or from the commandline within the local github repository, using `git checkout -b new-branch-name`
 
 2. Implement and test your changes.
 
-3. For GUI-based applications, it is recommended to create a launcher module (see pylabnet/launchers/README.md for more details. 
+3. For GUI-based applications, it is recommended to create a launcher module (see pylabnet/launchers/README.md for more details.
 
 4. For non-GUI applications, please make a Jupyter notebook in the pylabnet/demo folder in order to demonstrate and test the added functionality.
 
@@ -85,16 +85,16 @@ This also creates the standard pylabnet executables which can be used for launch
 
 6. Try to keep the your local repository up to date with the online repository to avoid unnecessary merge conflicts down the line.
 
-7. Once stable + working, submit a pull request. 
+7. Once stable + working, submit a pull request.
 
 ### Publishing a new version to pip
 
 Generally, not every commit or even merge into master needs to be published to pip as a new version. However, if substantial functionality is added that could be useful to other users (especially ones that are not actively developing the platform), it is a good idea to release a new version on pip. In this case, you can do this with the following steps:
 
-1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here. 
+1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here.
  > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts. As an example of this poor practice, the latest version of spyder has a conflict with the latest versions of pyqt5.
 
-2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes. 
+2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes.
 
 3. Update `CHANGELOG.md`
 

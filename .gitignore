@@ -138,6 +138,8 @@ pylabnet/hardware/zi_hdawg/zh_ex.py
 pylabnet/hardware/counter/swabian_instruments/__pycache__/*
 *.pyc
 pylabnet/scripts/staticline_gui_test/test.py
+pylabnet/hardware/smartact/SmarActCTL.dll
+pylabnet/hardware/smartact/zlib1.dll
 
 # Bash scripts
 pylabnet/launchers/pylabnet_proxy.cmd

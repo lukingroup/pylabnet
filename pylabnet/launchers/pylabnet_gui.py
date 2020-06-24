@@ -113,10 +113,13 @@ def main():
     gui_server.start()
 
     # Update GUI with server-specific details
-    main_window.ip_label.setText('IP Address: {}'.format(
-        socket.gethostbyname(socket.gethostname())
-    ))
-    main_window.port_label.setText('Port: {}'.format(gui_port))
+    try:
+        main_window.ip_label.setText('IP Address: {}'.format(
+            socket.gethostbyname(socket.gethostname())
+        ))
+        main_window.port_label.setText('Port: {}'.format(gui_port))
+    except AttributeError:
+        gui_logger.warn(f'Could not set IP Address and port labels on {gui_template}')
 
     # Run the GUI until the stop button is clicked
     while not main_window.stop_button.isChecked():

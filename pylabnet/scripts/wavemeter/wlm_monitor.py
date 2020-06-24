@@ -1,5 +1,6 @@
 from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import unpack_launcher, create_server
 from pylabnet.utils.logging.logger import LogClient

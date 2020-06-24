@@ -168,7 +168,7 @@ class Window(QtWidgets.QMainWindow):
         :param container_label: (str) keyname to assign to the widget for future reference
         """
         self._containers_to_assign.append((container_widget, container_label))
-    
+
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
 
@@ -219,7 +219,7 @@ class Window(QtWidgets.QMainWindow):
         """ Returns the text in a textual label widget """
 
         return self.labels[label_label].get_label()
-    
+
     def was_button_pressed(self, event_label):
         """ Returns whether or not an event button was pressed
 
@@ -233,6 +233,14 @@ class Window(QtWidgets.QMainWindow):
         except KeyError:
             return False
 
+    def was_button_released(self, event_label):
+        """ Returns whether or not an event button was released
+
+        :param event_label: (str) key for button to check
+        """
+
+        return self.event_buttons[event_label].get_release_state()
+
     def change_button_background_color(self, event_label, color):
         """ Change background color of button
 
@@ -243,7 +251,7 @@ class Window(QtWidgets.QMainWindow):
 
     def get_container_info(self, container_label):
         return self.containers[container_label].get_items()
-    
+
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -346,7 +354,7 @@ class Window(QtWidgets.QMainWindow):
                 self._containers_to_assign.remove(cont)
             except KeyError:
                 pass
-    
+
     def update_widgets(self):
         """ Updates all widgets on the physical GUI to current data"""
 
@@ -833,10 +841,10 @@ class Label:
 
     def get_label(self):
         """ Returns label text """
-        
+
         try:
-            
-            # Ordinary labels 
+
+            # Ordinary labels
             return self.widget.text()
         except AttributeError:
 
@@ -851,17 +859,24 @@ class EventButton:
         """ Instantiates event button """
 
         self.was_pushed = False  # Keeps track of whether the button has been pushed
+        self.was_released = False
         self.widget = getattr(gui, event_widget)  # Get physical widget instance
 
         self.disabled = False  # Check if button is disabled
 
         # Connect event to flag raising
         self.widget.pressed.connect(self.button_pressed)
+        self.widget.released.connect(self.button_released)
 
     def button_pressed(self):
         """ Raises flag when button is pushed """
 
         self.was_pushed = True
+
+    def button_released(self):
+        """ Raises flag when button is released """
+
+        self.was_released = True
 
     def reset_button(self):
         """ Resets pushed state to False """
@@ -883,6 +898,16 @@ class EventButton:
         self.reset_button()
         return result
 
+    def get_release_state(self):
+        """ Returns whether or not the button has been released and resets this flag
+
+        :return: bool self._was_released
+        """
+
+        result = copy.deepcopy(self.was_released)
+        self.was_released = False
+        return result
+
 
 class Container:
     """ Class for generic containers with elements added within
@@ -900,7 +925,7 @@ class Container:
 
     def get_items(self):
         """ Returns all QListWidget items and tooltips as a dictionary """
-        
+
         item_info = {}
         for index in range(self.widget.count()):
 

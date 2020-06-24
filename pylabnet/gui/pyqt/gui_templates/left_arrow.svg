@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   version="1"
+   x="0.00000000"
+   y="0.00000000"
+   width="48pt"
+   height="48pt"
+   id="svg548"
+   sodipodi:version="0.32"
+   sodipodi:docname="left.svg"
+   sodipodi:docbase="/home/mula/Desktop/Mis Iconos/48x48"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="0.37">
+  <sodipodi:namedview
+     id="base"
+     inkscape:zoom="9.65625000"
+     inkscape:cx="16.0000000"
+     inkscape:cy="20.1423948"
+     inkscape:window-width="1014"
+     inkscape:window-height="696"
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
+  <defs
+     id="defs550">
+    <linearGradient
+       x1="0.00000000"
+       y1="0.00000000"
+       x2="1.00000000"
+       y2="0.00000000"
+       id="linearGradient556"
+       gradientUnits="objectBoundingBox"
+       spreadMethod="pad">
+      <stop
+         style="stop-color:#ff8700;stop-opacity:1;"
+         offset="0.00000000"
+         id="stop557" />
+      <stop
+         style="stop-color:#ffff8d;stop-opacity:0;"
+         offset="1.00000000"
+         id="stop558" />
+    </linearGradient>
+    <linearGradient
+       x1="0.00000000"
+       y1="0.00000000"
+       x2="1.00000000"
+       y2="0.00000000"
+       id="linearGradient559"
+       xlink:href="#linearGradient556"
+       gradientUnits="objectBoundingBox"
+       spreadMethod="pad" />
+  </defs>
+  <g
+     id="g572"
+     transform="matrix(1.046252,1.436184,-1.436184,1.046252,51.70954,-19.10073)">
+    <g
+       transform="matrix(1.008714,0.000000,0.000000,1.008714,-45.46822,-0.252175)"
+       style="font-size:12;"
+       id="g584">
+      <path
+         d="M 51.9665 36.0486 C 53.9602 37.0454 65.4724 34.7713 65.7572 32.6353 C 66.8738 29.0839 63.8447 27.7777 64.064 26.2358 C 64.4912 24.8117 69.3897 19.3094 68.8358 17.5805 C 67.2423 14.4362 62.9702 10.5668 59.9594 12.4381 C 57.3645 14.7813 55.6307 20.7151 54.0642 20.1455 C 52.4977 19.5759 51.1121 20.0634 50.6849 21.0602 C 50.2577 22.057 49.6881 35.3365 51.9665 36.0486 z "
+         transform="matrix(1.369638,0.000000,0.000000,1.207417,-21.85404,-4.997635)"
+         style="fill:#0d3c07;fill-rule:evenodd;stroke-width:1pt;"
+         id="path582" />
+      <path
+         d="M 51.5506 35.4589 C 53.5443 36.4557 64.2247 34.8892 64.5095 32.7532 C 64.7943 30.6171 61.6614 29.193 62.0886 27.769 C 62.5158 26.3449 69.4937 17.6582 68.212 16.519 C 66.9304 15.3797 62.6582 11.3924 61.519 12.674 C 60.3797 13.9557 55.1108 23.7816 53.5443 23.212 C 51.9778 22.6424 50.6962 21.3608 50.269 22.3576 C 49.8418 23.3544 49.2722 34.7468 51.5506 35.4589 z "
+         style="fill:#2aaf18;fill-rule:evenodd;stroke-width:1pt;"
+         id="path581" />
+      <path
+         d="M 67.6424 15.9494 C 67.6424 15.9494 69.0665 16.8038 68.0696 18.5127 C 67.0728 20.2215 61.519 27.769 61.9462 28.3386 C 63.5126 29.6202 65.3639 32.7531 64.3671 33.6076 C 62.6583 35.174 52.8323 36.3133 51.693 35.7437 C 50.5538 35.174 60.0949 33.4652 60.2373 31.0443 C 60.3797 28.6234 57.8165 27.6266 58.6709 26.2025 C 59.5253 24.7785 65.3639 14.9525 66.2184 15.2373 C 67.0728 15.5221 67.7848 16.519 67.6424 15.9494 z "
+         style="fill:#208c11;fill-rule:evenodd;stroke-width:1pt;"
+         id="path583" />
+    </g>
+    <path
+       d="M 16.9462 4.6519 C 16.9462 4.6519 9.25633 14.193 9.54114 15.0475 C 9.82595 15.9019 17.3734 8.49683 16.9462 4.6519 z "
+       transform="matrix(1.008714,0.000000,0.000000,1.008714,0.929487,8.797523)"
+       style="font-size:12;fill:#ffffff;fill-rule:evenodd;stroke-width:1pt;"
+       id="path588" />
+    <path
+       d="M 5.41139 24.019 C 5.41139 24.019 4.41456 17.4684 4.84177 16.3291 C 5.26899 15.1899 6.69304 17.0411 6.69304 17.0411 C 6.69304 17.0411 4.98418 23.1646 5.41139 24.019 z "
+       transform="matrix(1.008714,0.000000,0.000000,1.008714,0.929487,8.797523)"
+       style="font-size:12;fill:#ffffff;fill-rule:evenodd;stroke-width:1pt;"
+       id="path589" />
+  </g>
+</svg>

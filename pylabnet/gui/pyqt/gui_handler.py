@@ -148,3 +148,11 @@ class GUIHandler():
     @handle_gui_errors
     def was_button_pressed(self, event_label):
         return self.gui_client.was_button_pressed(event_label)
+
+    @handle_gui_errors
+    def was_button_released(self, event_label):
+        return self.gui_client.was_button_released(event_label)
+
+    @handle_gui_errors
+    def change_button_background_color(self, event_label, color):
+        return self.gui_client.change_button_background_color(event_label, color)

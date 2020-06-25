@@ -5,14 +5,12 @@ This file contains the pylabnet Hardware module class for a generic NI DAQ mx ca
 """
 
 import nidaqmx
-from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
+import time
 
+from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
-
-import pickle
-
 
 class Driver:
     """Driver for NI DAQmx card. Currently only implements setting AO voltage"""
@@ -151,10 +149,16 @@ class GatedCounter(GatedCtrInterface):
 
         self._status = 'Counting'
         try:
+            current_time = time.time()
             self.task.start()
+            while time.time() - current_time < self.duration:
+                pass
+            self.task.stop()
             self.current_count = self.task.read()
         except nidaqmx.DaqError:
             raise
+
+        pass
 
     def terminate_counting(self):
         pass

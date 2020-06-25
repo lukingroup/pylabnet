@@ -909,6 +909,7 @@ def launch(**kwargs):
             AO=dict(client='cDAQ1', channel='ao0'),
             PID=dict(p=0.15, i=0.01, d=0),
             memory=100,
+            setpoint=406.7,
             voltage_monitor=True
             )])
 

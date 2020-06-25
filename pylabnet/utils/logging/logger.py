@@ -73,6 +73,12 @@ class LogHandler:
         except:
             return -1
 
+    def update_data(self, data):
+        try:
+            return self._logger.update_data(data)
+        except:
+            return -1
+
 
 class ILog:
     pass

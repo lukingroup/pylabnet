@@ -9,6 +9,7 @@ import numpy as np
 import time
 import copy
 import pickle
+import socket
 
 
 # Static methods
@@ -332,6 +333,7 @@ class WlmMonitor:
             scalar_widget=self._boolean_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 1],
             scalar_label=channel.error_name
         )
+        print(f'Assigned {channel.error_name}')
 
         # Assign pushbutton for clearing data
         self.gui_handler.assign_event_button(
@@ -896,7 +898,8 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=wlm_monitor)
     update_service.assign_logger(logger=log_client_update)
-    update_server = create_server(update_service, logger)[0]
+    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname(socket.gethostname()))
+    log_client_update.update_data(data={'port': update_port})
     update_server.start()
 
     if params is None:

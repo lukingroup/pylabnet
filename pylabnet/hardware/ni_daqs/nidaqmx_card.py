@@ -6,6 +6,7 @@ This file contains the pylabnet Hardware module class for a generic NI DAQ mx ca
 
 import nidaqmx
 import time
+import numpy as np
 
 from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
 from pylabnet.utils.logging.logger import LogHandler
@@ -101,6 +102,8 @@ class GatedCounter(GatedCtrInterface):
         self.duration = 0.1
         self._status = 'Inactive'
         self.current_count = 0
+        self.n_bins = 1000
+        self.count_ar = np.zeros(1000)
 
     def activate_interface(self, counter_channel='Dev1/ctr0', physical_channel='/Dev1/20MHzTimebase'):
         """ Activates counter interface (creates a task, does not start it)
@@ -123,13 +126,15 @@ class GatedCounter(GatedCtrInterface):
             print('Failed to activate counter')
             raise
 
-    def init_ctr(self, bin_number=0.1, gate_type=None):
+    def init_ctr(self, bin_number=0.1, n_bins=1000, gate_type=None):
         """ Initializes gated counter parameters
 
         :param bin_number: (double) number of seconds to read for
         :param gate_type: (not used)
         """
         self.duration = bin_number
+        self.n_bins = n_bins
+        self.count_ar = np.zeros(self.n_bins)
         pass
 
     def close_ctr(self):
@@ -158,10 +163,15 @@ class GatedCounter(GatedCtrInterface):
         except nidaqmx.DaqError:
             raise
 
-        pass
-
     def terminate_counting(self):
-        pass
+        """ Terminates the counter """
+
+        try:
+            self.task.stop()
+        except nidaqmx.DaqError:
+            raise
+
+        self._status = 'Active, but not counting'
 
     def get_status(self):
         """ Returns status of the counter
@@ -178,7 +188,10 @@ class GatedCounter(GatedCtrInterface):
 def main():
     counter = GatedCounter()
     counter.activate_interface()
-    counter.start_counting()
+    array = np.zeros(100)
+    for i in range(100):
+        counter.start_counting()
+        array[i] = counter.current_count
     counter.close_ctr()
 
 

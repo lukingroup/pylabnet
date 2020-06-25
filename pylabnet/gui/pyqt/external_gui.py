@@ -1,4 +1,4 @@
-""" Module for creating a GUI window that can be accessed remotely via the pylabnet client-server interface.
+""" Module for creating a GUI window.
 
 Templates for the GUI window can be configured using Qt Designer and should be stored as .ui files in the
 ./gui_templates directory.
@@ -27,16 +27,21 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtCore
 import pyqtgraph as pg
-
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
-
 import numpy as np
 import os
 import pickle
 import copy
+import sys
+import socket
+import ctypes
+
+# Should help with scaling issues on monitors of differing resolution
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 
 class Window(QtWidgets.QMainWindow):
@@ -49,7 +54,7 @@ class Window(QtWidgets.QMainWindow):
     """
 
     _gui_directory = "gui_templates"
-    _default_template = "mainwindow"
+    _default_template = "count_monitor"
 
     def __init__(self, app, gui_template=None, run=True):
         """ Instantiates main window object.
@@ -73,6 +78,7 @@ class Window(QtWidgets.QMainWindow):
         self.scalars = {}
         self.labels = {}
         self.event_buttons = {}
+        self.containers = {}
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -84,6 +90,7 @@ class Window(QtWidgets.QMainWindow):
         self._scalars_to_assign = []
         self._labels_to_assign = []
         self._buttons_to_assign = []
+        self._containers_to_assign = []
         self._curves_to_remove = []
 
         # List of Numerical widgets for future use in dynamical step size updating
@@ -91,6 +98,7 @@ class Window(QtWidgets.QMainWindow):
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
+        self.showNormal()
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
@@ -109,10 +117,15 @@ class Window(QtWidgets.QMainWindow):
         """
         self._plots_to_remove.append(plot_widget)
 
-    def assign_curve(self, plot_label, curve_label):
-        """Adds curve assignment to the queue"""
+    def assign_curve(self, plot_label, curve_label, error=False):
+        """Adds curve assignment to the queue
 
-        self._curves_to_assign.append((plot_label, curve_label))
+        :param plot_label: (str) key of plot to assign curve to
+        :param curve_label: (str) key to use for curve assignment + legend
+        :param error: (bool, optional) whether or not to use error bars
+        """
+
+        self._curves_to_assign.append((plot_label, curve_label, error))
 
     def remove_curve(self, plot_label, curve_label):
         """ Adds a curve removal request to the queue
@@ -146,6 +159,15 @@ class Window(QtWidgets.QMainWindow):
         :param event_label: (str) keyname to assign to this button for future reference
         """
         self._buttons_to_assign.append((event_widget, event_label))
+
+    def assign_container(self, container_widget, container_label):
+        """ Adds Container assignment request to the queue
+
+        Only QListWidget supported so far
+        :param container_widget: (str) physical widget name on the .ui file
+        :param container_label: (str) keyname to assign to the widget for future reference
+        """
+        self._containers_to_assign.append((container_widget, container_label))
 
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         """ Sets data to a specific curve (does not update GUI directly)
@@ -193,6 +215,11 @@ class Window(QtWidgets.QMainWindow):
         """
         self.labels[label_label].set_label(text)
 
+    def get_text(self, label_label):
+        """ Returns the text in a textual label widget """
+
+        return self.labels[label_label].get_label()
+
     def was_button_pressed(self, event_label):
         """ Returns whether or not an event button was pressed
 
@@ -206,6 +233,14 @@ class Window(QtWidgets.QMainWindow):
         except KeyError:
             return False
 
+    def was_button_released(self, event_label):
+        """ Returns whether or not an event button was released
+
+        :param event_label: (str) key for button to check
+        """
+
+        return self.event_buttons[event_label].get_release_state()
+
     def change_button_background_color(self, event_label, color):
         """ Change background color of button
 
@@ -213,6 +248,9 @@ class Window(QtWidgets.QMainWindow):
         :param color: (str) color to change to
         """
         self.event_buttons[event_label].change_background_color(color)
+
+    def get_container_info(self, container_label):
+        return self.containers[container_label].get_items()
 
     # Methods to be called by the process launching the GUI
 
@@ -249,11 +287,11 @@ class Window(QtWidgets.QMainWindow):
         for curve_params in self._curves_to_assign:
 
             # Unpack parameters
-            plot_label, curve_label = curve_params
+            plot_label, curve_label, error = curve_params
 
             # Assign curve to physical plot widget in GUI
             try:
-                self._assign_curve(plot_label, curve_label)
+                self._assign_curve(plot_label, curve_label, error)
                 self._curves_to_assign.remove(curve_params)
             except KeyError:
                 pass
@@ -303,6 +341,17 @@ class Window(QtWidgets.QMainWindow):
             try:
                 self._assign_event_button(event_widget, event_label)
                 self._buttons_to_assign.remove(event_button)
+            except KeyError:
+                pass
+
+        for cont in self._containers_to_assign:
+
+            # Unpack parameters
+            container_widget, container_label = cont
+
+            try:
+                self._assign_container(container_widget, container_label)
+                self._containers_to_assign.remove(cont)
             except KeyError:
                 pass
 
@@ -358,7 +407,6 @@ class Window(QtWidgets.QMainWindow):
         try:
             uic.loadUi(self._ui, self)
         except FileNotFoundError:
-            print('Could not find .ui file, please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
             raise
 
         self._initialize_step_sizes()
@@ -448,13 +496,14 @@ class Window(QtWidgets.QMainWindow):
         if plot_to_delete is not None:
             del self.plots[plot_to_delete]
 
-    def _assign_curve(self, plot_label, curve_label):
+    def _assign_curve(self, plot_label, curve_label, error=False):
         """ Assigns a curve to a plot
 
         :param plot_label: (str) label of the plot to assign
         :param curve_label: (str) label of curve to use for indexing in the self.plots[plot_label].curves dictionary
+        :param error: (bool, optional) whether or not to use error bars
         """
-        self.plots[plot_label].add_curve(curve_label)
+        self.plots[plot_label].add_curve(curve_label, error)
 
     def _remove_curve(self, plot_label, curve_label):
         """ Removes a curve from a plot
@@ -492,172 +541,17 @@ class Window(QtWidgets.QMainWindow):
             event_widget=event_widget
         )
 
-class Service(ServiceBase):
+    def _assign_container(self, container_widget, container_label):
+        """ Assigns physical ;ost
 
-    def exposed_assign_plot(self, plot_widget, plot_label, legend_widget):
-        return self._module.assign_plot(
-            plot_widget=plot_widget,
-            plot_label=plot_label,
-            legend_widget=legend_widget
+        :param container_widget: (str) name of physical container widget on GUI
+        :param container_label: (str) key name for reference to the container
+        """
+
+        self.containers[container_label] = Container(
+            gui=self,
+            widget=container_widget
         )
-
-    def exposed_clear_plot(self, plot_widget):
-        return self._module.clear_plot(
-            plot_widget=plot_widget
-        )
-
-    def exposed_assign_curve(self, plot_label, curve_label):
-        return self._module.assign_curve(
-            plot_label=plot_label,
-            curve_label=curve_label
-        )
-
-    def exposed_remove_curve(self, plot_label, curve_label):
-        self._module.remove_curve(
-            plot_label=plot_label,
-            curve_label=curve_label
-        )
-
-    def exposed_assign_scalar(self, scalar_widget, scalar_label):
-        return self._module.assign_scalar(
-            scalar_widget=scalar_widget,
-            scalar_label=scalar_label
-        )
-
-    def exposed_assign_label(self, label_widget, label_label):
-        return self._module.assign_label(
-            label_widget=label_widget,
-            label_label=label_label
-        )
-
-    def exposed_assign_event_button(self, event_widget, event_label):
-        return self._module.assign_event_button(
-            event_widget=event_widget,
-            event_label=event_label,
-
-        )
-
-    def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
-        data = pickle.loads(data_pickle)
-        error = pickle.loads(error_pickle)
-        return self._module.set_curve_data(
-            data=data,
-            plot_label=plot_label,
-            curve_label=curve_label,
-            error=error
-        )
-
-    def exposed_set_scalar(self, value_pickle, scalar_label):
-        value = pickle.loads(value_pickle)
-        return self._module.set_scalar(
-            value=value,
-            scalar_label=scalar_label
-        )
-
-    def exposed_get_scalar(self, scalar_label):
-        return pickle.dumps(self._module.get_scalar(scalar_label))
-
-    def exposed_activate_scalar(self, scalar_label):
-        return self._module.activate_scalar(scalar_label)
-
-    def exposed_deactivate_scalar(self, scalar_label):
-        return self._module.deactivate_scalar(scalar_label)
-
-    def exposed_set_label(self, text, label_label):
-        return self._module.set_label(
-            text=text,
-            label_label=label_label
-        )
-
-    def exposed_was_button_pressed(self, event_label):
-        return self._module.was_button_pressed(event_label)
-
-    def exposed_change_button_background_color(self, event_label, color):
-        return self._module.change_button_background_color(self, event_label, color)
-
-
-class Client(ClientBase):
-
-    def assign_plot(self, plot_widget, plot_label, legend_widget):
-        return self._service.exposed_assign_plot(
-            plot_widget=plot_widget,
-            plot_label=plot_label,
-            legend_widget=legend_widget
-        )
-
-    def clear_plot(self, plot_widget):
-        return self._service.exposed_clear_plot(
-            plot_widget=plot_widget
-        )
-
-    def assign_curve(self, plot_label, curve_label):
-        return self._service.exposed_assign_curve(
-            plot_label=plot_label,
-            curve_label=curve_label
-        )
-
-    def remove_curve(self, plot_label, curve_label):
-        return self._service.exposed_remove_curve(
-            plot_label=plot_label,
-            curve_label=curve_label
-        )
-
-    def assign_scalar(self, scalar_widget, scalar_label):
-        self._service.exposed_assign_scalar(
-            scalar_widget=scalar_widget,
-            scalar_label=scalar_label
-        )
-
-    def assign_label(self, label_widget, label_label):
-        return self._service.exposed_assign_label(
-            label_widget=label_widget,
-            label_label=label_label
-        )
-
-    def assign_event_button(self, event_widget, event_label):
-        return self._service.exposed_assign_event_button(
-            event_widget=event_widget,
-            event_label=event_label,
-        )
-
-    def set_curve_data(self, data, plot_label, curve_label, error=None):
-        data_pickle = pickle.dumps(data)
-        error_pickle = pickle.dumps(error)
-        return self._service.exposed_set_curve_data(
-            data_pickle=data_pickle,
-            plot_label=plot_label,
-            curve_label=curve_label,
-            error_pickle=error_pickle
-        )
-
-    def set_scalar(self, value, scalar_label):
-        value_pickle = pickle.dumps(value)
-        return self._service.exposed_set_scalar(
-            value_pickle=value_pickle,
-            scalar_label=scalar_label
-        )
-
-    def get_scalar(self, scalar_label):
-        return pickle.loads(self._service.exposed_get_scalar(scalar_label))
-
-    def activate_scalar(self, scalar_label):
-        return self._service.exposed_activate_scalar(scalar_label)
-
-    def deactivate_scalar(self, scalar_label):
-        return self._service.exposed_deactivate_scalar(scalar_label)
-
-    def set_label(self, text, label_label):
-        return self._service.exposed_set_label(
-            text=text,
-            label_label=label_label
-        )
-
-    def was_button_pressed(self, event_label):
-        return self._service.exposed_was_button_pressed(event_label)
-
-    def change_button_background_color(self, event_label, color):
-        return self._service.exposed_change_button_background_color(self, event_label, color)
-
 
 class Plot:
     """ Class for plot widgets inside of a Window
@@ -690,18 +584,20 @@ class Plot:
         # Set up legend
         self._set_legend(legend_widget=legend_widget)
 
-    def add_curve(self, curve_label):
+    def add_curve(self, curve_label, error=False):
         """ Adds a curve to the plot
 
         TODO (if someone wants...): implement custom curve property override (e.g. custom color, line style, etc)
 
         :param curve_label: (str) curve label key to attach to this curve for future reference + naming purposes
+        :param error: (bool, optional) whether or not to use error bars
         """
 
         # Add a new curve to self.curves dictionary for this plot
         self.curves[curve_label] = Curve(
             self.widget,
-            pen=pg.mkPen(color=self._color_list[len(self.curves)])  # Instantiate a Pen for curve properties
+            pen=pg.mkPen(color=self._color_list[len(self.curves)]),  # Instantiate a Pen for curve properties
+            error=error
         )
 
         # Configure legend
@@ -726,10 +622,18 @@ class Plot:
         """ Updates plot output to latest data"""
 
         for curve in self.curves.values():
+
+            # Set data without error bars
             curve.widget.setData(
-                curve.data,
-                error=curve.error
+                curve.data
             )
+
+            if curve.error_data is not None:
+                curve.error.setData(
+                    x=np.arange(len(curve.data)),
+                    y=curve.data,
+                    height=2*curve.error_data
+                )
 
     # Technical methods
 
@@ -783,30 +687,36 @@ class Curve:
         :param error: (bool, optional) whether or not to add error bars to this plot
         """
 
-        # Instantiate new curve in the plot
+        # Instantiate error bar plot
         self.widget = plot_widget.plot(pen=pen)
 
-        # Instantiate error bars
-        self.error = None
         if error:
             self.error = pg.ErrorBarItem(
+                x=np.array([]),
+                y=np.array([]),
                 pen=pen
             )
             plot_widget.addItem(self.error)
+            self.error_data = np.array([])
+
+        # Instantiate new curve in the plot without error bars
+        else:
+            self.widget = plot_widget.plot(pen=pen)
+            self.error = None
+            self.error_data = None
 
         self.data = np.array([])
-        self.error_data = np.array([])
 
     def set_curve_data(self, data, error=None):
         """ Stores data to a new curve
 
         :param data: (np.array) either a 1D (only y-axis) or 2D (x-axis, y-axis) numpy array
-        :param error: (np.array, optional) 1D array for error bars
+        :param error: (np.array, optional) 1D array for error bars (standard deviation)
         """
 
         self.data = data
 
-        if self.error is not None:
+        if self.error_data is not None:
             self.error_data = error
 
 
@@ -908,7 +818,7 @@ class Scalar:
 
 
 class Label:
-    """ A text label display object"""
+    """ A text label display object. Currently supports QLabel"""
 
     def __init__(self, gui, label_widget):
         """ Constructor for label object
@@ -926,7 +836,20 @@ class Label:
         :param label_text: (str, optional) text string to set the label to
         """
 
+        self.text = label_text
         self.widget.setText(label_text)
+
+    def get_label(self):
+        """ Returns label text """
+
+        try:
+
+            # Ordinary labels
+            return self.widget.text()
+        except AttributeError:
+
+            # Fancy labels
+            return self.widget.toPlainText()
 
 
 class EventButton:
@@ -936,17 +859,24 @@ class EventButton:
         """ Instantiates event button """
 
         self.was_pushed = False  # Keeps track of whether the button has been pushed
+        self.was_released = False
         self.widget = getattr(gui, event_widget)  # Get physical widget instance
 
         self.disabled = False  # Check if button is disabled
 
         # Connect event to flag raising
         self.widget.pressed.connect(self.button_pressed)
+        self.widget.released.connect(self.button_released)
 
     def button_pressed(self):
         """ Raises flag when button is pushed """
 
         self.was_pushed = True
+
+    def button_released(self):
+        """ Raises flag when button is released """
+
+        self.was_released = True
 
     def reset_button(self):
         """ Resets pushed state to False """
@@ -967,3 +897,40 @@ class EventButton:
         result = copy.deepcopy(self.was_pushed)
         self.reset_button()
         return result
+
+    def get_release_state(self):
+        """ Returns whether or not the button has been released and resets this flag
+
+        :return: bool self._was_released
+        """
+
+        result = copy.deepcopy(self.was_released)
+        self.was_released = False
+        return result
+
+
+class Container:
+    """ Class for generic containers with elements added within
+
+    Idea being that all that needs to be referenced is the top level
+    and methods here can be invoked to get information about containing elements
+
+    Only QListWidget supported
+    """
+
+    def __init__(self, gui, widget):
+        """ Instantiates event button """
+
+        self.widget = getattr(gui, widget)  # Get physical widget instance
+
+    def get_items(self):
+        """ Returns all QListWidget items and tooltips as a dictionary """
+
+        item_info = {}
+        for index in range(self.widget.count()):
+
+            # Get the current item and store its name and tooltip text
+            current_item = self.widget.item(index)
+            item_info[current_item.text()] = current_item.toolTip()
+
+        return item_info

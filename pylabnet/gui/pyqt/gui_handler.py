@@ -28,8 +28,7 @@ class GUIHandler():
         self.logger_client = logger_client
 
     def assign_gui(self, gui_client):
-        """
-        Assigns a GUI client to the GUI handler
+        """Assigns a GUI client to the GUI handler
 
         :param client:
             (obj) instance of GUI client
@@ -70,7 +69,7 @@ class GUIHandler():
         )
 
     @handle_gui_errors
-    def assign_curve(self, plot_label, curve_label):
+    def assign_curve(self, plot_label, curve_label, error=False):
         return self.gui_client.assign_curve(
             plot_label=plot_label,
             curve_label=curve_label
@@ -149,3 +148,11 @@ class GUIHandler():
     @handle_gui_errors
     def was_button_pressed(self, event_label):
         return self.gui_client.was_button_pressed(event_label)
+
+    @handle_gui_errors
+    def was_button_released(self, event_label):
+        return self.gui_client.was_button_released(event_label)
+
+    @handle_gui_errors
+    def change_button_background_color(self, event_label, color):
+        return self.gui_client.change_button_background_color(event_label, color)

@@ -1,8 +1,9 @@
 from pylabnet.scripts.pid import PID
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
-
+from pylabnet.utils.helper_methods import unpack_launcher, create_server
+from pylabnet.utils.logging.logger import LogClient
 
 import numpy as np
 import time
@@ -48,6 +49,7 @@ class WlmMonitor:
 
         :param wlm_client: (obj) instance of wavemeter client
         :param gui_client: (obj) instance of GUI client.
+        :param logger_client: (obj) instance of logger client.
         :param ao_clients: (dict, optional) dictionary of AO client objects with keys to identify. Exmaple:
             {'ni_usb_1': nidaqmx_usb_client_1, 'ni_usb_2': nidaqmx_usb_client_2, 'ni_pxi_multi': nidaqmx_pxi_client}
         :param display_pts: (int, optional) number of points to display on plot
@@ -237,7 +239,7 @@ class WlmMonitor:
         Should be called if the GUI connection has been lost, once a new GUI client with the same access parameters has
         been reinstantiated
         """
-        self._gui_reconnect = True
+        self.gui_handler.gui_reconnect = True
 
     def zero_voltage(self, channel):
         """ Zeros the output voltage for this channel
@@ -501,7 +503,7 @@ class WlmMonitor:
                         channel.label_updated = True
 
             # If GUI is not connected, check if we should try reconnecting to the GUI
-            elif self._gui_reconnect:
+            elif  self.gui_handler.gui_reconnect:
 
                 self.gui_handler.gui_connected = True
                 # self.gui_handler.connect() # Commented by CK, unsure what that does.
@@ -523,7 +525,7 @@ class WlmMonitor:
                     scalar_label=channel.lock_name
                 )
                 self._update_channels()
-                self._gui_reconnect = False
+                self.gui_handler.gui_reconnect = False
 
     def _get_gui_data(self):
         """ Updates setpoint and lock parameters with data pulled from GUI
@@ -540,7 +542,6 @@ class WlmMonitor:
 
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
                 self.clear_channel(channel=channel.number)
-
 
     def _get_channels(self):
         """ Returns all active channel numbers
@@ -867,3 +868,59 @@ class Channel:
         # Otherwise just use the default widget (populates in order)
         else:
             self.plot_widget_offset = 0
+
+
+def launch(**kwargs):
+    """ Launches the WLM monitor + lock script """
+
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+
+    wavemeter_client = clients['high_finesse_ws7']
+    ao_client = clients['nidaqmx_wlm']
+    gui_client = guis['wavemeter_monitor']
+
+    # Instantiate Monitor script
+    wlm_monitor = WlmMonitor(
+        wlm_client=wavemeter_client,
+        gui_client=gui_client,
+        ao_clients={'cDAQ1': ao_client},
+        logger_client=logger
+    )
+
+    # Instantiate pause+update service & connect to logger
+    log_client_update = LogClient(
+        host=loghost,
+        port=logport,
+        module_tag='wavemeter_update_server'
+    )
+    update_service = Service()
+    update_service.assign_module(module=wlm_monitor)
+    update_service.assign_logger(logger=log_client_update)
+    update_server = create_server(update_service, logger)[0]
+    update_server.start()
+
+    if params is None:
+        params = dict(channel_params=[dict(
+            channel=1,
+            name="Velocity",
+            AO=dict(client='cDAQ1', channel='ao0'),
+            PID=dict(p=0.15, i=0.01, d=0),
+            memory=100,
+            voltage_monitor=True
+            )])
+
+    # Set parameters
+    # Can use these as default parameters for loading up the monitor initially. New parameters can be input afterwards
+    # using an update client
+    wlm_monitor.set_parameters(**params)
+
+    # Initialize channels to GUI
+    wlm_monitor.initialize_channels()
+
+    # Run continuously
+    # Note that the actual operation inside run() can be paused using the update server
+    while True:
+
+        # Make sure the WlmMonitor is not paused, otherwise run it
+        if not wlm_monitor.gui_handler.is_paused:
+            wlm_monitor.run()

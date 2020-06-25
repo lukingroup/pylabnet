@@ -5,7 +5,8 @@ class PID:
     """Generic class for PID locking"""
 
     def __init__(self, p=0, i=0, d=0, setpoint=0, memory=20):
-        """
+        """ Constructor for PID class
+        
         :rtype: object
         :param p: proportional gain
         :param i: integral
@@ -24,8 +25,7 @@ class PID:
         self.error = 0
 
     def set_parameters(self, p=None, i=None, d=None, setpoint=None, memory=None):
-        """
-        Sets parameters of PID controller
+        """ Sets parameters of PID controller
 
         :param p: proportional gain
         :param i: integral
@@ -53,8 +53,7 @@ class PID:
             self._pv = np.hstack((np.ones(self.memory-pv_length)*self._pv[0], self._pv))
 
     def set_pv(self, pv=np.zeros(10)):
-        """
-        Sets process variable
+        """ Sets process variable
 
         :param pv: process variable (measured value of process to be locked).
             This should ideally be a numpy array of recent data points

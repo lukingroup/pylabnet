@@ -1,8 +1,7 @@
+import ctypes
+
 from pylabnet.hardware.interface.wavemeter import WavemeterInterface, WavemeterError
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.core.service_base import ServiceBase
-from pylabnet.core.client_base import ClientBase
-import ctypes
 
 
 class Driver(WavemeterInterface):
@@ -11,7 +10,7 @@ class Driver(WavemeterInterface):
     def __init__(self, logger=None):
         """ Instantiate wavemeter
 
-        :param logger: instance of LogClient class
+        :param logger: instance of LogClient class (optional)
         """
 
         # Log
@@ -65,18 +64,3 @@ class Driver(WavemeterInterface):
 
         else:
             return self._wavemeterdll.GetFrequencyNum(channel, 0)
-
-
-class Service(ServiceBase):
-
-    def exposed_get_wavelength(self, channel, units):
-        return self._module.get_wavelength(
-            channel=channel,
-            units=units
-        )
-
-
-class Client(ClientBase, WavemeterInterface):
-
-    def get_wavelength(self, channel=1, units="Frequency(THz)"):
-        return self._service.exposed_get_wavelength(channel, units)

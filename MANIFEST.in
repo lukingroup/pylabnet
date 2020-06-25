@@ -1,0 +1,2 @@
+include *.lnk *.md
+recursive-include . *.ui *.svg *.py *.cmd *.md

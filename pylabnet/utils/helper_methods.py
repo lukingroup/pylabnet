@@ -1,3 +1,13 @@
+import unicodedata
+import os
+import time
+import re
+import sys
+import ctypes
+import numpy as np
+from pylabnet.network.core.generic_server import GenericServer
+
+
 def str_to_float(in_val):
     """Convert human-readable exponential form to float.
 
@@ -96,4 +106,194 @@ def pwr_to_float(in_val):
     return str_to_float(in_val=in_val)
 
 
+def slugify(value, allow_unicode=False):
+    """
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces to hyphens.
+    Remove characters that aren't alphanumerics, underscores, or hyphens.
+    Convert to lowercase. Also strip leading and trailing whitespace.
 
+    From Django 2.2
+    """
+    value = str(value)
+    if allow_unicode:
+        value = unicodedata.normalize('NFKC', value)
+    else:
+        value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    value = re.sub(r'[^\w\s-]', '', value.lower()).strip()
+    return re.sub(r'[-\s]+', '-', value)
+
+
+def get_dated_subdirectory_filepath(directory, filename):
+    '''Creates directory structure folder_path/YEAR/MONTH/DAY/filename
+
+    :folder_path: Upper level directory
+    :filename: Name of file. Will be slugified.
+
+    Return:
+    :filepath: Path to file in newly created structure.
+    '''
+
+    # Create subdirectory structure: YEAR/MONTH/DAY
+    dated_path = os.path.join(directory, time.strftime('%Y'), time.strftime('%m'), time.strftime('%d'))
+
+    # create folders if they don't exists yet
+    os.makedirs(dated_path, exist_ok=True)
+
+    # Define full file path
+    filepath = os.path.join(dated_path, f'{slugify(filename)}.log')
+
+    return filepath
+
+
+def dict_to_str(dic, separate='\n'):
+    """ Converts a dictionary to a nicely formatted string
+
+    :param dic: (dict) to convert
+    :param separate: (str) string to use to separate dictionary elements
+    :return: (str) of dictionary content
+    """
+
+    dict_str = ''
+    for key, value in dic.items():
+        dict_str += '{}: {}{}'.format(key, value, separate)
+
+    return dict_str.rstrip()
+
+
+def remove_spaces(st):
+    """ Removes spaces from a string
+
+    :param st: (str) input string with spaces
+    :return: (str) string without any spaces
+    """
+
+    return st.replace(' ', '')
+
+
+def parse_args():
+    """ Parses command line arguments into dictionary format, assuming keywords of the form --kw for each argument"""
+
+    arg_index = 1
+    arg_dict = {}
+    while arg_index < len(sys.argv) - 1:
+        arg_dict[sys.argv[arg_index][2:]] = sys.argv[arg_index + 1]
+        arg_index += 2
+
+    return arg_dict
+
+
+def unpack_launcher(**kwargs):
+    """ Unpacks the launcher kwargs for easy use in launcher method definition within script modules.
+    Copy paste the following implementation at the top of script.launch() method:
+
+    logger, loghost logport, clients, guis, params = unpack_launcher(**kwargs)
+
+    :param kwargs: (dict) contains all keyword arguments required for launching a script from launcher module
+        e.g.: dict(logger=log, loghost='localhost', clients=[client1, client2], guis=[gui_client1, gui_client2]),
+                   logport=1234, params=experimental_parameters_container)
+        Note that experimental parameters should go in "params" and can be customized to contain all other
+        script specific stuff
+
+    :return: (tuple) logger, logport, clients, guis, params
+    """
+
+    logger = kwargs['logger']
+    loghost = kwargs['loghost']
+    clients = kwargs['clients']
+    guis = kwargs['guis']
+    logport = kwargs['logport']
+    params = kwargs['params']
+
+    return logger, loghost, logport, clients, guis, params
+
+
+def show_console():
+    """ Shows the active console.
+
+    Useful for processes where console is typically hidden but user input is suddenly required
+    """
+
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
+
+def hide_console():
+    """ Hides the active console.
+
+    Useful for processes where console is not needed (isntead, there is a GUI to use)
+    """
+
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)
+
+def create_server(service, logger=None, host='localhost'):
+    """ Attempts to create a server with randomly chosen port numbers
+
+    :param service: service from which to launch a server
+    :param logger: instance of LogClient for logging
+    :param host: (optinal) IP address of host
+
+    :return: (tuple) instance of server created, port number (int) created on
+    """
+
+    timeout = 0
+    while timeout < 1000:
+        try:
+            port = np.random.randint(1, 9999)
+            server = GenericServer(
+                host=host,
+                port=port,
+                service=service
+            )
+            timeout = 9999
+        except ConnectionRefusedError:
+            msg_str = f'Failed to create update server with port {port}'
+            if logger is None:
+                print(msg_str)
+            else:
+                logger.warn(f'Failed to create update server with port {port}')
+            timeout += 1
+    return server, port
+
+def value_to_bitval(value, bits=8, min=0, max=1):
+    """ Converts a value to a bits-bit number for range min to max
+
+    :param value: (float) value to convert
+    :param bits: (int) number of bits of resolution
+    :param min: (float) minimum of range
+    :param max: (float) maximum of range
+
+    :return: (int) value in bits-bit (e.g. 8-bit from 0 to 2^8-1)
+    """
+
+    # Convert value to scale of 0 to 1
+    scaled_value = (value-min)/(max-min)
+
+    return int(scaled_value * (2**bits - 1))
+
+def bitval_to_value(bitval, bits=8, min=0, max=1):
+    """ Converts a bits-bit number into its physical value for range from min to max
+
+    :param bitval: (int)  value in bits-bit (e.g. 8-bit from 0 to 2^8-1)
+    :param bits: (int) number of bits of resolution
+    :param min: (float) minimum of range
+    :param max: (float) maximum of range
+
+    :return: (float) physical value
+    """
+
+    # Convert value to scale of 0 to 1
+    scaled_value = bitval/(2**bits - 1)
+
+    return scaled_value*(max-min) + min
+
+def generate_widgets(widget_dict):
+    """ Generates a list of widget names based on a supplied dictionary
+
+    Assumes widgets follow a naming convention of "widget_base_name_i" where i is the index
+    (this function is helpful when one has many widgets with the same base_name)
+    :param widget_dict: (dict) containing widget base names as keys, and number of instances as
+        values
+    """
+
+    widgets = ()
+    for widget_name, instances in widget_dict.items():
+        widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
+    return widgets

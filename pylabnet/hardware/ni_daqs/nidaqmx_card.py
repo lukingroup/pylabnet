@@ -154,7 +154,7 @@ class GatedCounter(GatedCtrInterface):
             self.task.start()
             self.current_count = self.task.read()
         except nidaqmx.DaqError:
-            pass
+            raise
 
     def terminate_counting(self):
         pass
@@ -169,3 +169,14 @@ class GatedCounter(GatedCtrInterface):
 
     def get_count_ar(self, timeout=-1):
         pass
+
+
+def main():
+    counter = GatedCounter()
+    counter.activate_interface()
+    counter.start_counting()
+    counter.close_ctr()
+
+
+if __name__ == '__main__':
+    main()

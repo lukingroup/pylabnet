@@ -93,24 +93,30 @@ class Driver:
         )
 
 
-class GatedCounter(GatedCtrInterface):
+class TimedCounter:
     """ Hardware class for NI gated counter """
 
-    def __init__(self):
+    def __init__(self, logger=None, counter_channel='Dev1/ctr0', physical_channel='/Dev1/20MHzTimebase'):
+        """ Activates counter interface (creates a task, does not start it)
+
+        :param logger: instance of logclient
+        :param counter_channel: (str) channel of counter to use, e.g. 'Dev1/ctr0'
+        :param physical_channel: (str) channel of physical counter input, e.g. 'Dev1/PFI0'
+        """
+
+        self.log = LogHandler(logger)
         self.ci_channel = None
         self.task = None
         self.duration = 0.1
         self._status = 'Inactive'
-        self.current_count = 0
-        self.n_bins = 1000
-        self.count_ar = np.zeros(1000)
+        self.count = 0
 
-    def activate_interface(self, counter_channel='Dev1/ctr0', physical_channel='/Dev1/20MHzTimebase'):
-        """ Activates counter interface (creates a task, does not start it)
+        # Create a task - note we have to be careful and close the task if something goes wrong
+        self.task = None
+        self.activate_task(counter_channel, physical_channel='/Dev1/20MHzTimebase')
 
-        :param counter_channel: (str) channel of counter to use, e.g. 'Dev1/ctr0'
-        :param physical_channel: (str) channel of physical counter input, e.g. 'Dev1/PFI0'
-        """
+    def activate_task(self, counter_channel='Dev1/ctr0', physical_channel='/Dev1/20MHzTimebase'):
+        """ Activates task. Must be used to restart counting if the close command is called """
 
         # Create a task - note we have to be careful and close the task if something goes wrong
         self.task = nidaqmx.Task()
@@ -123,21 +129,18 @@ class GatedCounter(GatedCtrInterface):
         except nidaqmx.DaqError:
             self.task.close()
             self._status = 'Inactive'
-            print('Failed to activate counter')
-            raise
-
-    def init_ctr(self, bin_number=0.1, n_bins=1000, gate_type=None):
+            msg_str = f'Failed to activate counter {counter_channel} with physical channel {physical_channel}'
+            self.log.error(msg_str)
+    
+    def set_parameters(self, duration=0.1):
         """ Initializes gated counter parameters
 
-        :param bin_number: (double) number of seconds to read for
-        :param gate_type: (not used)
+        :param duration: (float) number of seconds to read for
         """
-        self.duration = bin_number
-        self.n_bins = n_bins
-        self.count_ar = np.zeros(self.n_bins)
-        pass
 
-    def close_ctr(self):
+        self.duration = duration
+
+    def close(self):
         """ Stops the task and closes it.
 
         The interface must be reactivated using activate_interface command in order to resume counting """
@@ -145,11 +148,11 @@ class GatedCounter(GatedCtrInterface):
         try:
             self.task.stop()
         except nidaqmx.DaqError:
-            pass
+            self.log.warn(f'Failed to stop NI DAQmx task {self.task.name}')
         self._status = 'Inactive'
         self.task.close()
 
-    def start_counting(self):
+    def start(self):
         """ Starts the counter """
 
         self._status = 'Counting'
@@ -159,9 +162,9 @@ class GatedCounter(GatedCtrInterface):
             while time.time() - current_time < self.duration:
                 pass
             self.task.stop()
-            self.current_count = self.task.read()
+            self.count = self.task.read()
         except nidaqmx.DaqError:
-            raise
+            self.log.warn(f'Failed to count on {self.task.name}')
 
     def terminate_counting(self):
         """ Terminates the counter """
@@ -169,7 +172,7 @@ class GatedCounter(GatedCtrInterface):
         try:
             self.task.stop()
         except nidaqmx.DaqError:
-            raise
+            self.log.warn(f'Failed to stop {self.task.name}')
 
         self._status = 'Active, but not counting'
 
@@ -180,20 +183,3 @@ class GatedCounter(GatedCtrInterface):
         """
 
         return self._status
-
-    def get_count_ar(self, timeout=-1):
-        pass
-
-
-def main():
-    counter = GatedCounter()
-    counter.activate_interface()
-    array = np.zeros(100)
-    for i in range(100):
-        counter.start_counting()
-        array[i] = counter.current_count
-    counter.close_ctr()
-
-
-if __name__ == '__main__':
-    main()

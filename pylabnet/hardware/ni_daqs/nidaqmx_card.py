@@ -134,6 +134,15 @@ class Driver:
         """
 
         self.counters[name].close()
+
+    def get_count(self, name):
+        """ Returns the count
+
+        :param name: (str) name of the counter to use
+        :return: (int) value of the count
+        """
+
+        return int(self.counters[name].count)
     
     # Technical methods
 

@@ -29,6 +29,9 @@ class Service(ServiceBase):
     def exposed_close_timed_counter(self, name):
         return self._module.close_timed_counter(name)
 
+    def exposed_get_count(self, name):
+        return self._module.get_count(name)
+
 
 class Client(ClientBase):
 
@@ -54,3 +57,6 @@ class Client(ClientBase):
 
     def close_timed_counter(self, name):
         return self._service.exposed_close_timed_counter(name)
+
+    def get_count(self, name):
+        return self._service.exposed_get_count(name)

@@ -13,6 +13,22 @@ class Service(ServiceBase):
             voltages=voltages
         )
 
+    def exposed_create_timed_counter(
+        self, counter_channel, physical_channel, duration=0.1, name=None
+    ):
+        return self._module.create_timed_counter(
+            counter_channel=counter_channel,
+            physical_channel=physical_channel,
+            duration=duration,
+            name=name
+        )
+
+    def exposed_start_timed_counter(self, name):
+        return self._module.start_timed_counter(name)
+
+    def exposed_close_timed_counter(self, name):
+        return self._module.close_timed_counter(name)
+
 
 class Client(ClientBase):
 
@@ -22,3 +38,19 @@ class Client(ClientBase):
             ao_channel=ao_channel,
             voltage_pickle=voltage_pickle
         )
+
+    def create_timed_counter(
+        self, counter_channel, physical_channel, duration=0.1, name=None
+    ):
+        return self._service.exposed_create_timed_counter(
+            counter_channel=counter_channel,
+            physical_channel=physical_channel,
+            duration=duration,
+            name=name
+        )
+
+    def start_timed_counter(self, name):
+        return self._service.exposed_start_timed_counter(name)
+
+    def close_timed_counter(self, name):
+        return self._service.exposed_close_timed_counter(name)

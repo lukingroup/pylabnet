@@ -1,6 +1,7 @@
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.gui.igui.iplot import SingleTraceFig
 
 
 class Sweep1D:
@@ -20,7 +21,7 @@ class Sweep1D:
         self.y_data = np.zeros(self.pts)
         self.experiment = None
         self.fixed_params = {}
-
+        self.iplot_fwd = None
 
     def set_parameters(self, **kwargs):
         """ Configures all parameters
@@ -67,8 +68,18 @@ class Sweep1D:
         )
         return result
 
-    def run(self):
-        """ Runs the sweeper """
+    def run(self, plot=False):
+        """ Runs the sweeper 
+        
+        :param plot: (bool) whether or not to interactively plot in notebook
+        """
+
+        if plot:
+            self.iplot_fwd = SingleTraceFig(title_str='Forward Scan')
+            self.iplot_fwd.show()
+            self.iplot_fwd.set_data(x_ar=self.x_data)
+            self.iplot_fwd.set_data(y_ar=np.array([]))
 
         for index, x_value in enumerate(self.x_data):
             self.y_data[index] = self.run_once(x_value)
+            self.iplot_fwd.append_data(y_ar=np.array([self.y_data[index]]))

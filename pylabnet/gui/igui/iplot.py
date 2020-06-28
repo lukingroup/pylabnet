@@ -253,53 +253,6 @@ class MultiTraceFig(MultiTraceInterface):
                     )
                 self._num_ch += 1
 
-        def set_data(self, x_ar=None, y_ar=None, trace=0, ind=0, noise=None):
-            """ Sets data to MultiTraceFig instance
-
-            :param x_ar: np array of x-axis data values
-            :param y_ar: np array of y-axis data values
-            :param ind: index of channels to assign data to
-                (index starts from 0)
-            :param noise: np array of y-axis error bar sizes
-            """
-
-            # First check that data array at particular index has
-            # already been allocated, and if not, allocate the
-            # previous data arrays
-            to_allocate = ind - self._num_ch
-            if to_allocate >= 0:
-                self._allocate_arrays(
-                    num_arrays=to_allocate+1
-                )
-
-            # Update figure
-            if x_ar is not None and y_ar is not None:
-
-                if self._shot_noise:
-
-                    if noise is None:
-                        noise = 0*y_ar
-
-                    # Input shot noise
-                    x_rev = x_ar[::-1]
-                    y_upper = y_ar + noise
-                    y_lower = y_ar - noise
-                    y_lower = y_lower[::-1]
-                    with self._fig.batch_update():
-                        self._fig.data[ind*2].x = np.hstack((x_ar, x_rev))
-                        self._fig.data[ind*2].y = np.hstack((y_upper, y_lower))
-
-                    # Now data
-                    with self._fig.batch_update():
-                        self._fig.data[2*ind+1].x = x_ar
-                        self._fig.data[2*ind+1].y = y_ar
-
-                else:
-                    with self._fig.batch_update():
-                        self._fig.data[ind].x = x_ar
-                        self._fig.data[ind].y = y_ar
-
-
 
 class StaggeredTraceFig():
     """Plot multiple traces in seperate subplots.
@@ -342,20 +295,20 @@ class StaggeredTraceFig():
         """
 
         # Color-list
-        dflt_plotly_colors = [
-            'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
-            'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
-            'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
-            'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
-            'rgb(188, 189, 34)', 'rgb(23, 190, 207)'
-        ]
-        dflt_plotly_colors_lo = [
-            'rgba(31, 119, 180, 0.2)', 'rgba(255, 127, 14, 0.2)',
-            'rgba(44, 160, 44, 0.2)', 'rgba(214, 39, 40, 0.2)',
-            'rgba(148, 103, 189, 0.2)', 'rgba(140, 86, 75, 0.2)',
-            'rgba(227, 119, 194, 0.2)', 'rgba(127, 127, 127, 0.2)',
-            'rgba(188, 189, 34, 0.2)', 'rgba(23, 190, 207, 0.2)'
-        ]
+        # dflt_plotly_colors = [
+        #     'rgb(31, 119, 180)', 'rgb(255, 127, 14)',
+        #     'rgb(44, 160, 44)', 'rgb(214, 39, 40)',
+        #     'rgb(148, 103, 189)', 'rgb(140, 86, 75)',
+        #     'rgb(227, 119, 194)', 'rgb(127, 127, 127)',
+        #     'rgb(188, 189, 34)', 'rgb(23, 190, 207)'
+        # ]
+        # dflt_plotly_colors_lo = [
+        #     'rgba(31, 119, 180, 0.2)', 'rgba(255, 127, 14, 0.2)',
+        #     'rgba(44, 160, 44, 0.2)', 'rgba(214, 39, 40, 0.2)',
+        #     'rgba(148, 103, 189, 0.2)', 'rgba(140, 86, 75, 0.2)',
+        #     'rgba(227, 119, 194, 0.2)', 'rgba(127, 127, 127, 0.2)',
+        #     'rgba(188, 189, 34, 0.2)', 'rgba(23, 190, 207, 0.2)'
+        # ]
 
         self._fig.append_trace(
             go.Scatter(

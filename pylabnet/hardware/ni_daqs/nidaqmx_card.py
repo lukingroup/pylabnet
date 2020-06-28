@@ -41,7 +41,7 @@ class Driver:
             )
 
         # If failed, provide info about connected DAQs
-        except nidaqmx.DaqError as exc_obj:
+        except nidaqmx.DaqError:
 
             # Log exception message
 
@@ -50,7 +50,7 @@ class Driver:
                 DeviceCollection().device_names
 
             # - exception message
-            self.log.exception(
+            self.log.error(
                 "NI DAQ card {} not found. \n"
                 "There are {} NI DAQs available: \n "
                 "    {}"
@@ -61,8 +61,8 @@ class Driver:
                 )
             )
 
-            # Raise exception
-            raise exc_obj
+        self.counters = {}
+        
 
     def set_ao_voltage(self, ao_channel, voltages):
         """Set analog output of NI DAQ mx card to a series of voltages
@@ -78,6 +78,63 @@ class Driver:
             task.ao_channels.add_ao_voltage_chan(channel)
             task.write(voltages, auto_start=True)
 
+    def create_timed_counter(
+        self, counter_channel, physical_channel, duration=0.1, name=None
+    ):
+        """ Creates a software timed counter channel
+
+        :param counter_channel: (str) channel of counter to use 
+            e.g. 'Dev1/ctr0'
+        :param physical_channel: (str) physical channel of counter
+            e.g. 'Dev1/PFI0'
+        :param duration: (float) number of seconds for software-timed
+            counting inverval
+        :param name: (str) Name to use as a reference for counter in
+            future calls
+
+        :return: (str) name of the counter to use in future calls
+        """
+
+        # Create a default name if necessary
+        if name is None:
+            name = f'counter_{len(self.counters)}'
+        
+        # Create counter task and assign parameters
+        self.counters[name] = TimedCounter(
+            logger=self.log, 
+            counter_channel=counter_channel, 
+            physical_channel=physical_channel
+        )
+        self.counters[name].set_parameters(duration)
+
+        return name
+
+    def start_timed_counter(self, name):
+        """ Starts a timed counter
+
+        :param name: (str) name of counter to start
+            Should be return value of create_timed_counter()
+        """
+
+        self.counters[name].start()
+
+    def stop_timed_counter(self, name):
+        """ Stops a timed counter
+
+        :param name: (str) name of counter to stop
+            Should be return value of create_timed_counter()
+        """
+
+        self.counters[name].terminate_counting()
+
+    def close_timed_counter(self, name):
+        """ Closes a timed counter
+
+        :param name: (str) name of counter to close
+        """
+
+        self.counters[name].close()
+    
     # Technical methods
 
     def _gen_ch_path(self, channel):
@@ -99,12 +156,12 @@ class TimedCounter:
     def __init__(self, logger=None, counter_channel='Dev1/ctr0', physical_channel='/Dev1/20MHzTimebase'):
         """ Activates counter interface (creates a task, does not start it)
 
-        :param logger: instance of logclient
+        :param logger: instance of LogHandler
         :param counter_channel: (str) channel of counter to use, e.g. 'Dev1/ctr0'
         :param physical_channel: (str) channel of physical counter input, e.g. 'Dev1/PFI0'
         """
 
-        self.log = LogHandler(logger)
+        self.log = logger
         self.ci_channel = None
         self.task = None
         self.duration = 0.1
@@ -125,6 +182,8 @@ class TimedCounter:
             self.ci_channel = self.task.ci_channels.add_ci_count_edges_chan(counter_channel)
             self.ci_channel.ci_count_edges_term = physical_channel
             self._status = 'Active, but not counting'
+            self.log.info(f'Created counter {counter_channel} on '
+                          f'physical channel {physical_channel}')
 
         except nidaqmx.DaqError:
             self.task.close()

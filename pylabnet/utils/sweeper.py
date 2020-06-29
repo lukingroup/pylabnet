@@ -82,4 +82,5 @@ class Sweep1D:
 
         for index, x_value in enumerate(self.x_data):
             self.y_data[index] = self.run_once(x_value)
-            self.iplot_fwd.append_data(y_ar=np.array([self.y_data[index]]))
+            if plot:
+                self.iplot_fwd.append_data(y_ar=np.array([self.y_data[index]]))

@@ -92,6 +92,8 @@ class Sweep1D:
         reps_done = 0
         while reps_done < self.reps or self.reps <= 0:
 
+            self._reset_plots()
+
             for x_value in sweep_points:
                 self._run_and_plot(x_value)
             
@@ -146,7 +148,6 @@ class Sweep1D:
                 z_ar=np.array([[]])
             )
 
-
     def _run_and_plot(self, x_value, backward=False):
         """ Runs the experiment for an x value and adds to plot
 
@@ -177,6 +178,13 @@ class Sweep1D:
                     z_ar=[self.iplot_bwd._y_ar]
                 )
         else:
-            self.hplot_fwd.append_row(y_val=reps_done, z_ar=self.iplot_fwd)
+            self.hplot_fwd.append_row(y_val=reps_done, z_ar=self.iplot_fwd._y_ar)
             if self.sweep_type != 'sawtooth':
                 self.hplot_bwd.append_row(y_val=reps_done, z_ar=self.iplot_bwd._y_ar)
+
+    def _reset_plots(self):
+        """ Resets single scan traces """
+
+        self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
+        if self.sweep_type != 'sawtooth':
+            self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]))

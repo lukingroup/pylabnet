@@ -1,7 +1,7 @@
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.gui.igui.iplot import SingleTraceFig
+from pylabnet.gui.igui.iplot import SingleTraceFig, HeatMapFig
 
 
 class Sweep1D:
@@ -20,7 +20,9 @@ class Sweep1D:
         self.experiment = None
         self.fixed_params = {}
         self.iplot_fwd = None
+        self.hplot_fwd = None
         self.iplot_bwd = None
+        self.hplot_bwd = None
         self.sweep_type = 'triangle'
         self.reps = 0
 
@@ -98,6 +100,7 @@ class Sweep1D:
                     self._run_and_plot(x_value, backward=True)
 
             reps_done += 1
+            self._update_hmaps(reps_done)
 
     def _generate_x_axis(self, backward=False):
         """ Generates an x-axis based on the type of sweep 
@@ -115,16 +118,33 @@ class Sweep1D:
     def _configure_plots(self):
         """ Configures all plots """
 
+        # single-trace scans        
         self.iplot_fwd = SingleTraceFig(title_str='Forward Scan')
         self.iplot_fwd.show()
-        self.iplot_fwd.set_data(x_ar=np.array([]))
-        self.iplot_fwd.set_data(y_ar=np.array([]))
+        self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
+
+        # heat map
+        self.hplot_fwd = HeatMapFig(title_str='Forward Scans')
+        self.hplot_fwd.show()
+        self.hplot_fwd.set_data(
+            x_ar=np.linspace(self.min, self.max, self.pts), 
+            y_ar=np.array([]), 
+            z_ar=np.array([[]])
+        )
 
         if self.sweep_type != 'sawtooth':
             self.iplot_bwd = SingleTraceFig(title_str='Backward Scan')
             self.iplot_bwd.show()
-            self.iplot_bwd.set_data(x_ar=np.array([]))
-            self.iplot_bwd.set_data(y_ar=np.array([]))
+            self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
+
+            # heat map
+            self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
+            self.hplot_bwd.show()
+            self.hplot_bwd.set_data(
+                x_ar=np.linspace(self.max, self.min, self.pts), 
+                y_ar=np.array([]), 
+                z_ar=np.array([[]])
+            )
 
 
     def _run_and_plot(self, x_value, backward=False):
@@ -136,8 +156,27 @@ class Sweep1D:
 
         y_value = self.run_once(x_value)
         if backward:
-            self.iplot_bwd.append_data(x_ar=x_value)
-            self.iplot_bwd.append_data(y_ar=y_value)
+            self.iplot_bwd.append_data(x_ar=x_value, y_ar=y_value)
         else:
-            self.iplot_fwd.append_data(x_ar=x_value)
-            self.iplot_fwd.append_data(y_ar=y_value)
+            self.iplot_fwd.append_data(x_ar=x_value, y_ar=y_value)
+
+    def _update_hmaps(self, reps_done):
+        """ Updates heat map plots 
+        
+        :param reps_done: (int) number of repetitions done
+        """
+
+        if reps_done == 1:
+            self.hplot_fwd.set_data(
+                y_ar=np.array([1]),
+                z_ar=[self.iplot_fwd._y_ar]
+            )
+            if self.sweep_type != 'sawtooth':
+                self.hplot_bwd.set_data(
+                    y_ar=np.array([1]),
+                    z_ar=[self.iplot_bwd._y_ar]
+                )
+        else:
+            self.hplot_fwd.append_row(y_val=reps_done, z_ar=self.iplot_fwd)
+            if self.sweep_type != 'sawtooth':
+                self.hplot_bwd.append_row(y_val=reps_done, z_ar=self.iplot_bwd._y_ar)

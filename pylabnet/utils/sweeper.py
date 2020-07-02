@@ -214,14 +214,16 @@ class Sweep1D:
         else:
             self.iplot_fwd.set_data(
                 x_ar=np.linspace(self.min, self.max, self.pts),
-                y_ar=(self.iplot_fwd._fig.data[1].y*(reps_done-1)/reps_done)+self.iplot_fwd._fig.data[0].y,
+                y_ar=((self.iplot_fwd._fig.data[1].y*(reps_done-1)/reps_done)
+                      +self.iplot_fwd._fig.data[0].y/reps_done),
                 ind=1
             )
         
             if self.sweep_type != 'sawtooth':
                 self.iplot_bwd.set_data(
                     x_ar=np.linspace(self.max, self.min, self.pts),
-                    y_ar=(self.iplot_bwd._fig.data[1].y*(reps_done-1)/reps_done)+self.iplot_bwd._fig.data[0].y,
+                    y_ar=((self.iplot_bwd._fig.data[1].y*(reps_done-1)/reps_done)
+                          +self.iplot_bwd._fig.data[0].y/reps_done),
                     ind=1
                 )
 

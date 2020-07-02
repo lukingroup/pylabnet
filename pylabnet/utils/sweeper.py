@@ -1,7 +1,7 @@
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.gui.igui.iplot import SingleTraceFig, HeatMapFig
+from pylabnet.gui.igui.iplot import MultiTraceFig, HeatMapFig
 
 
 class Sweep1D:
@@ -103,6 +103,7 @@ class Sweep1D:
 
             reps_done += 1
             self._update_hmaps(reps_done)
+            self._update_integrated(reps_done)
 
     def _generate_x_axis(self, backward=False):
         """ Generates an x-axis based on the type of sweep 
@@ -121,9 +122,10 @@ class Sweep1D:
         """ Configures all plots """
 
         # single-trace scans        
-        self.iplot_fwd = SingleTraceFig(title_str='Forward Scan')
+        self.iplot_fwd = MultiTraceFig(title_str='Forward Scan', ch_names=['Single', 'Average'])
         self.iplot_fwd.show()
-        self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
+        self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
+        self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
 
         # heat map
         self.hplot_fwd = HeatMapFig(title_str='Forward Scans')
@@ -135,9 +137,10 @@ class Sweep1D:
         )
 
         if self.sweep_type != 'sawtooth':
-            self.iplot_bwd = SingleTraceFig(title_str='Backward Scan')
+            self.iplot_bwd = MultiTraceFig(title_str='Backward Scan', ch_names=['Single', 'Average'])
             self.iplot_bwd.show()
-            self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
+            self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
+            self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
 
             # heat map
             self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
@@ -157,9 +160,9 @@ class Sweep1D:
 
         y_value = self.run_once(x_value)
         if backward:
-            self.iplot_bwd.append_data(x_ar=x_value, y_ar=y_value)
+            self.iplot_bwd.append_data(x_ar=x_value, y_ar=y_value, ind=0)
         else:
-            self.iplot_fwd.append_data(x_ar=x_value, y_ar=y_value)
+            self.iplot_fwd.append_data(x_ar=x_value, y_ar=y_value, ind=0)
 
     def _update_hmaps(self, reps_done):
         """ Updates heat map plots 
@@ -178,9 +181,9 @@ class Sweep1D:
                     z_ar=[self.iplot_bwd._y_ar]
                 )
         else:
-            self.hplot_fwd.append_row(y_val=reps_done, z_ar=self.iplot_fwd._y_ar)
+            self.hplot_fwd.append_row(y_val=reps_done, z_ar=self.iplot_fwd._fig.data[0].y)
             if self.sweep_type != 'sawtooth':
-                self.hplot_bwd.append_row(y_val=reps_done, z_ar=self.iplot_bwd._y_ar)
+                self.hplot_bwd.append_row(y_val=reps_done, z_ar=self.iplot_bwd._fig.data[0].y)
 
     def _reset_plots(self):
         """ Resets single scan traces """
@@ -188,3 +191,37 @@ class Sweep1D:
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
         if self.sweep_type != 'sawtooth':
             self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
+
+    def _update_integrated(self, reps_done):
+        """ Updates integrated plots 
+        
+        :param reps_done: (int) number of repetitions completed
+        """
+  
+        if reps_done==1:
+            self.iplot_fwd.set_data(
+                x_ar=np.linspace(self.min, self.max, self.pts),
+                y_ar=self.iplot_fwd._fig.data[0].y,
+                ind=1
+            )
+            if self.sweep_type != 'sawtooth':
+                self.iplot_bwd.set_data(
+                    x_ar=np.linspace(self.max, self.min, self.pts),
+                    y_ar=self.iplot_bwd._fig.data[0].y,
+                    ind=1
+                )
+
+        else:
+            self.iplot_fwd.set_data(
+                x_ar=np.linspace(self.min, self.max, self.pts),
+                y_ar=(self.iplot_fwd._fig.data[1].y*(reps_done-1)/reps_done)+self.iplot_fwd._fig.data[0].y,
+                ind=1
+            )
+        
+            if self.sweep_type != 'sawtooth':
+                self.iplot_bwd.set_data(
+                    x_ar=np.linspace(self.max, self.min, self.pts),
+                    y_ar=(self.iplot_bwd._fig.data[1].y*(reps_done-1)/reps_done)+self.iplot_bwd._fig.data[0].y,
+                    ind=1
+                )
+

@@ -152,6 +152,27 @@ class MultiTraceFig(MultiTraceInterface):
                     self._fig.data[ind].x = x_ar
                     self._fig.data[ind].y = y_ar
 
+    def append_data(self, x_ar=None, y_ar=None, ind=0):
+
+        # Append new data to internal arrays
+        if x_ar is not None:
+            self._x_ar = np.append(self._fig.data[ind].x, x_ar)
+
+        if y_ar is not None:
+            self._y_ar = np.append(self._fig.data[ind].y, y_ar)
+
+        # Apply changes to the figure
+        if x_ar is not None or y_ar is not None:
+
+            if self._shot_noise:
+                # NOTE: Not implemented yet 
+                pass
+            
+            else:
+                with self._fig.batch_update():
+                    self._fig.data[ind].x = self._x_ar
+                    self._fig.data[ind].y = self._y_ar
+
     def set_lbls(self, x_str=None, y_str=None):
         """
 

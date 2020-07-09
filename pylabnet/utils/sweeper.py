@@ -78,13 +78,16 @@ class Sweep1D:
         )
         return result
 
-    def run(self):
-        """ Runs the sweeper """
+    def run(self, plot=False):
+        """ Runs the sweeper 
+        
+        :param plot: (bool) whether or not to display the plotly plot
+        """
 
         sweep_points = self._generate_x_axis()
         if self.sweep_type != 'sawtooth':
             bw_sweep_points = self._generate_x_axis(backward=True)
-        self._configure_plots()
+        self._configure_plots(plot)
 
         reps_done = 0
         while reps_done < self.reps or self.reps <= 0:
@@ -115,38 +118,46 @@ class Sweep1D:
         else:
             return np.linspace(self.min, self.max, self.pts)
 
-    def _configure_plots(self):
-        """ Configures all plots """
+    def _configure_plots(self, plot):
+        """ Configures all plots 
+        
+        :param plot: (bool) whether or not to display the plotly plot
+        """
 
         # single-trace scans        
         self.iplot_fwd = MultiTraceFig(title_str='Forward Scan', ch_names=['Single', 'Average'])
-        self.iplot_fwd.show()
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
 
         # heat map
         self.hplot_fwd = HeatMapFig(title_str='Forward Scans')
-        self.hplot_fwd.show()
         self.hplot_fwd.set_data(
             x_ar=np.linspace(self.min, self.max, self.pts), 
             y_ar=np.array([]), 
             z_ar=np.array([[]])
         )
 
+        # Show plots if enabled
+        if plot:
+            self.iplot_fwd.show()
+            self.hplot_fwd.show()
+
         if self.sweep_type != 'sawtooth':
             self.iplot_bwd = MultiTraceFig(title_str='Backward Scan', ch_names=['Single', 'Average'])
-            self.iplot_bwd.show()
             self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
             self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
 
             # heat map
             self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
-            self.hplot_bwd.show()
             self.hplot_bwd.set_data(
                 x_ar=np.linspace(self.max, self.min, self.pts), 
                 y_ar=np.array([]), 
                 z_ar=np.array([[]])
             )
+
+            # Show plots if enabled
+            self.iplot_bwd.show()
+            self.hplot_bwd.show()
 
     def _run_and_plot(self, x_value, backward=False):
         """ Runs the experiment for an x value and adds to plot
@@ -227,10 +238,157 @@ class Sweep1D:
 
 class MultiChSweep1D(Sweep1D):
     
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, channels=None):
         """ Instantiates sweeper
 
-        :param loggeR: instance of LogClient
+        :param logger: instance of LogClient
+        :param channels: (list) list of channel names
         """
 
         super().__init__(logger)
+        self.channels = channels
+
+    def _configure_plots(self, plot):
+        """ Configures all plots 
+        
+        :param plot: (bool) whether or not to display the plotly plot
+        """
+
+        # Configure channel names
+        if self.channels is None:
+            self.channels = ['']
+
+        # single-trace scans
+        self.iplot_fwd = []
+        self.hplot_fwd = []
+        if self.sweep_type != 'sawtooth':
+            self.iplot_bwd = []
+            self.hplot_bwd = []
+        for index, channel in enumerate(self.channels):
+            self.iplot_fwd.append(MultiTraceFig(title_str='Forward Scan', ch_names=[
+                f'{channel} Single', f'{channel} Average'
+            ]))
+            self.iplot_fwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
+            self.iplot_fwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
+
+            # heat map
+            self.hplot_fwd.append(HeatMapFig(title_str='Forward Scans'))
+            self.hplot_fwd[index].set_data(
+                x_ar=np.linspace(self.min, self.max, self.pts), 
+                y_ar=np.array([]), 
+                z_ar=np.array([[]])
+            )
+
+            # Show plots if enabled
+            if plot:
+                self.iplot_fwd[index].show()
+                self.hplot_fwd[index].show()
+
+            if self.sweep_type != 'sawtooth':
+                self.iplot_bwd.append(MultiTraceFig(
+                    title_str='Backward Scan', 
+                    ch_names=[f'{channel} Single', f'{channel} Average']
+                ))
+                self.iplot_bwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
+                self.iplot_bwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
+
+                # heat map
+                self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
+                self.hplot_bwd[index].set_data(
+                    x_ar=np.linspace(self.max, self.min, self.pts), 
+                    y_ar=np.array([]), 
+                    z_ar=np.array([[]])
+                )
+
+                # Show plots if enabled
+                if plot:
+                    self.iplot_bwd[index].show()
+                    self.hplot_bwd[index].show()
+
+    def _reset_plots(self):
+        """ Resets single scan traces """
+
+        for index, plot in self.iplot_fwd:
+            plot.set_data(x_ar=np.array([]), y_ar=np.array([]))
+            if self.sweep_type != 'sawtooth':
+                self.iplot_bwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]))
+
+    def _run_and_plot(self, x_value, backward=False):
+        """ Runs the experiment for an x value and adds to plot
+
+        :param x_value: (double) experiment parameter
+        :param backward: (bool) whether or not backward or forward
+        """
+
+        y_values = self.run_once(x_value)
+        for index, y_value in enumerate(y_values):
+            if backward:
+                self.iplot_bwd[index].append_data(x_ar=x_value, y_ar=y_value, ind=0)
+            else:
+                self.iplot_fwd[index].append_data(x_ar=x_value, y_ar=y_value, ind=0)
+
+    def _update_hmaps(self, reps_done):
+        """ Updates heat map plots 
+        
+        :param reps_done: (int) number of repetitions done
+        """
+
+        for index, fwd_plot in enumerate(self.iplot_fwd):
+        
+            if reps_done == 1:
+                self.hplot_fwd[index].set_data(
+                    y_ar=np.array([1]),
+                    z_ar=[fwd_plot._y_ar]
+                )
+                if self.sweep_type != 'sawtooth':
+                    self.hplot_bwd[index].set_data(
+                        y_ar=np.array([1]),
+                        z_ar=[self.iplot_bwd[index]._y_ar]
+                    )
+            else:
+                self.hplot_fwd[index].append_row(
+                    y_val=reps_done, 
+                    z_ar=fwd_plot._fig.data[0].y
+                )
+                if self.sweep_type != 'sawtooth':
+                    self.hplot_bwd[index].append_row(
+                        y_val=reps_done, 
+                        z_ar=self.iplot_bwd[index]._fig.data[0].y
+                    )
+
+    def _update_integrated(self, reps_done):
+        """ Updates integrated plots 
+        
+        :param reps_done: (int) number of repetitions completed
+        """
+  
+        for index, fwd_plot in enumerate(self.iplot_fwd):
+        
+            if reps_done==1:
+                fwd_plot.set_data(
+                    x_ar=np.linspace(self.min, self.max, self.pts),
+                    y_ar=fwd_plot._fig.data[0].y,
+                    ind=1
+                )
+                if self.sweep_type != 'sawtooth':
+                    self.iplot_bwd[index].set_data(
+                        x_ar=np.linspace(self.max, self.min, self.pts),
+                        y_ar=self.iplot_bwd[index]._fig.data[0].y,
+                        ind=1
+                    )
+
+            else:
+                fwd_plot.set_data(
+                    x_ar=np.linspace(self.min, self.max, self.pts),
+                    y_ar=((fwd_plot._fig.data[1].y*(reps_done-1)/reps_done)
+                        +fwd_plot._fig.data[0].y/reps_done),
+                    ind=1
+                )
+            
+                if self.sweep_type != 'sawtooth':
+                    self.iplot_bwd[index].set_data(
+                        x_ar=np.linspace(self.max, self.min, self.pts),
+                        y_ar=((self.iplot_bwd[index]._fig.data[1].y*(reps_done-1)/reps_done)
+                            +self.iplot_bwd[index]._fig.data[0].y/reps_done),
+                        ind=1
+                    )

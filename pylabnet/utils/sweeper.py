@@ -78,11 +78,8 @@ class Sweep1D:
         )
         return result
 
-    def run(self, plot=False):
-        """ Runs the sweeper 
-        
-        :param plot: (bool) whether or not to interactively plot in notebook
-        """
+    def run(self):
+        """ Runs the sweeper """
 
         sweep_points = self._generate_x_axis()
         if self.sweep_type != 'sawtooth':
@@ -227,3 +224,13 @@ class Sweep1D:
                     ind=1
                 )
 
+
+class MultiChSweep1D(Sweep1D):
+    
+    def __init__(self, logger=None):
+        """ Instantiates sweeper
+
+        :param loggeR: instance of LogClient
+        """
+
+        super().__init__(logger)

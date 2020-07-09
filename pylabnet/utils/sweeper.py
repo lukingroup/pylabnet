@@ -293,7 +293,7 @@ class MultiChSweep1D(Sweep1D):
                 self.iplot_bwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
 
                 # heat map
-                self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
+                self.hplot_bwd.append(HeatMapFig(title_str='Backward Scans'))
                 self.hplot_bwd[index].set_data(
                     x_ar=np.linspace(self.max, self.min, self.pts), 
                     y_ar=np.array([]), 
@@ -308,7 +308,7 @@ class MultiChSweep1D(Sweep1D):
     def _reset_plots(self):
         """ Resets single scan traces """
 
-        for index, plot in self.iplot_fwd:
+        for index, plot in enumerate(self.iplot_fwd):
             plot.set_data(x_ar=np.array([]), y_ar=np.array([]))
             if self.sweep_type != 'sawtooth':
                 self.iplot_bwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]))

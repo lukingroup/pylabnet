@@ -25,6 +25,7 @@ class Sweep1D:
         self.hplot_bwd = None
         self.sweep_type = 'triangle'
         self.reps = 0
+        self.stop_flag = False
 
     def set_parameters(self, **kwargs):
         """ Configures all parameters
@@ -90,20 +91,32 @@ class Sweep1D:
         self._configure_plots(plot)
 
         reps_done = 0
-        while reps_done < self.reps or self.reps <= 0:
+        self.stop_flag = False
+        while (reps_done < self.reps or self.reps <= 0 and not self.stop_flag):
 
             self._reset_plots()
 
             for x_value in sweep_points:
+                if self.stop_flag:
+                    break
                 self._run_and_plot(x_value)
             
             if self.sweep_type != 'sawtooth':
                 for x_value in bw_sweep_points:
+                    if self.stop_flag:
+                        break
                     self._run_and_plot(x_value, backward=True)
 
+            if self.stop_flag:
+                break
             reps_done += 1
             self._update_hmaps(reps_done)
             self._update_integrated(reps_done)
+
+    def stop(self):
+        """ Terminates the sweeper immediately """
+
+        self.stop_flag = True
 
     def _generate_x_axis(self, backward=False):
         """ Generates an x-axis based on the type of sweep 

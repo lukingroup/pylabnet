@@ -26,6 +26,7 @@ class Sweep1D:
         self.sweep_type = 'triangle'
         self.reps = 0
         self.stop_flag = False
+        self.stop_end_flag = False
 
     def set_parameters(self, **kwargs):
         """ Configures all parameters
@@ -117,6 +118,14 @@ class Sweep1D:
         """ Terminates the sweeper immediately """
 
         self.stop_flag = True
+
+    def set_reps(self, reps=1):
+        """ Sets the repetitions to be done
+
+        :param reps: (int) number of refs
+            default = 1, can be used to terminate at end of current rep
+        """
+        self.reps = reps
 
     def _generate_x_axis(self, backward=False):
         """ Generates an x-axis based on the type of sweep 

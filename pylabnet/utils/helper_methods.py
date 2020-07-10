@@ -5,7 +5,7 @@ import re
 import sys
 import ctypes
 import numpy as np
-from datetime import date
+from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 
 
@@ -310,10 +310,15 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     if directory is None:
         directory = os.getcwd()
     if date_dir:
-        directory = os.path.join(directory, date.today())
+        directory = os.path.join(directory, str(date.today()))
     if filename is None:
-        directory = os.path.join(directory, date.ctime())
+        filename = str(datetime.now().strftime('%H_%M_%S'))
     else:
-        filepath = os.path.join(directory, filename)
+        filename += str(datetime.now().strftime('_%H_%M_%S'))
+    filepath = os.path.join(directory, filename)
 
-    np.savetxt(filepath, data)
+    try:
+        np.savetxt(filepath, data)
+    except OSError:
+        os.mkdir(directory)
+        np.savetxt(filepath, data)

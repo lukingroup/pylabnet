@@ -81,10 +81,14 @@ class Sweep1D:
         )
         return result
 
-    def run(self, plot=False):
+    def run(self, plot=False, autosave=False, filename=None, directory=None, date_dir=True):
         """ Runs the sweeper 
         
         :param plot: (bool) whether or not to display the plotly plot
+        :param autosave: (bool) whether or not to autosave
+        :param filename: (str) name of file identifier
+        :param directory: (str) filepath to save to
+        :param date_dir: (bool) whether or not to store in date-specific sub-directory
         """
 
         sweep_points = self._generate_x_axis()
@@ -115,6 +119,9 @@ class Sweep1D:
             self._update_hmaps(reps_done)
             self._update_integrated(reps_done)
 
+        if autosave:
+            self.save(filename, directory, date_dir)
+
     def stop(self):
         """ Terminates the sweeper immediately """
 
@@ -128,7 +135,7 @@ class Sweep1D:
         """
         self.reps = reps
 
-    def save(self, filename=None, directory=None, date_dir=False):
+    def save(self, filename=None, directory=None, date_dir=True):
         """ Saves the dataset
 
         :param filename: (str) name of file identifier
@@ -141,14 +148,14 @@ class Sweep1D:
 
         # Save heatmap
         generic_save(
-            data=self.hplot_fwd._fig.data[0],
+            data=self.hplot_fwd._fig.data[0].z,
             filename=f'{filename}_fwd_scans',
             directory=directory,
             date_dir=date_dir
         )
         # Save average
         generic_save(
-            data=self.iplot_fwd._fig.data[1],
+            data=self.iplot_fwd._fig.data[1].y,
             filename=f'{filename}_fwd_avg',
             directory=directory,
             date_dir=date_dir
@@ -158,14 +165,14 @@ class Sweep1D:
             
             # Save heatmap
             generic_save(
-                data=self.hplot_bwd._fig.data[0],
+                data=self.hplot_bwd._fig.data[0].z,
                 filename=f'{filename}_bwd_scans',
                 directory=directory,
                 date_dir=date_dir
             )
             # Save average
             generic_save(
-                data=self.iplot_bwd._fig.data[1],
+                data=self.iplot_bwd._fig.data[1].y,
                 filename=f'{filename}_bwd_avg',
                 directory=directory,
                 date_dir=date_dir

@@ -1,6 +1,7 @@
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.utils.helper_methods import generic_save
 from pylabnet.gui.igui.iplot import MultiTraceFig, HeatMapFig
 
 
@@ -127,6 +128,49 @@ class Sweep1D:
         """
         self.reps = reps
 
+    def save(self, filename=None, directory=None, date_dir=False):
+        """ Saves the dataset
+
+        :param filename: (str) name of file identifier
+        :param directory: (str) filepath to save to
+        :param date_dir: (bool) whether or not to store in date-specific sub-directory
+        """
+
+        if filename is None:
+            filename = 'sweeper_data'
+
+        # Save heatmap
+        generic_save(
+            data=self.hplot_fwd._fig.data[0],
+            filename=f'{filename}_fwd_scans',
+            directory=directory,
+            date_dir=date_dir
+        )
+        # Save average
+        generic_save(
+            data=self.iplot_fwd._fig.data[1],
+            filename=f'{filename}_fwd_avg',
+            directory=directory,
+            date_dir=date_dir
+        )
+
+        if self.sweep_type != 'sawtooth':
+            
+            # Save heatmap
+            generic_save(
+                data=self.hplot_bwd._fig.data[0],
+                filename=f'{filename}_bwd_scans',
+                directory=directory,
+                date_dir=date_dir
+            )
+            # Save average
+            generic_save(
+                data=self.iplot_bwd._fig.data[1],
+                filename=f'{filename}_bwd_avg',
+                directory=directory,
+                date_dir=date_dir
+            )
+    
     def _generate_x_axis(self, backward=False):
         """ Generates an x-axis based on the type of sweep 
         
@@ -270,6 +314,53 @@ class MultiChSweep1D(Sweep1D):
         super().__init__(logger)
         self.channels = channels
 
+    def save(self, filename=None, directory=None, date_dir=False):
+        """ Saves the dataset
+
+        :param filename: (str) name of file identifier
+        :param directory: (str) filepath to save to
+        :param date_dir: (bool) whether or not to store in date-specific sub-directory
+        """
+
+        if filename is None:
+            filename = 'sweeper_data'
+
+        for channel in self.channels:
+
+            filename = f'{filename}_{channel}'
+        
+            # Save heatmap
+            generic_save(
+                data=self.hplot_fwd._fig.data[0],
+                filename=f'{filename}_fwd_scans',
+                directory=directory,
+                date_dir=date_dir
+            )
+            # Save average
+            generic_save(
+                data=self.iplot_fwd._fig.data[1],
+                filename=f'{filename}_fwd_avg',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+            if self.sweep_type != 'sawtooth':
+                
+                # Save heatmap
+                generic_save(
+                    data=self.hplot_bwd._fig.data[0],
+                    filename=f'{filename}_bwd_scans',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+                # Save average
+                generic_save(
+                    data=self.iplot_bwd._fig.data[1],
+                    filename=f'{filename}_bwd_avg',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+    
     def _configure_plots(self, plot):
         """ Configures all plots 
         

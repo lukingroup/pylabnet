@@ -1,3 +1,19 @@
+""" Module for sweep-based experiments
+
+Currently only supported in notebook format. Example usage:
+>> exp = Sweep1D(logger=log_client)
+>> exp.set_parameters(min=5, max=10, pts=51)
+>> def my_experiment(**kwargs):
+        client1.set_some_parameter(kwargs['param1'])
+        return client2.get_some_values()
+>> exp.configure_experiment(my_experiment, experiment_params=param_dict)
+>> exp.set_reps(10)
+>> exp.run(plot=True, autosave=True)
+
+Note that some client-server functionality for termination is implemented,
+see pylabnet.network.client_server.sweeper
+"""
+
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler

@@ -40,3 +40,4 @@ class Driver:
 
         power = self.device.query(f':POW[{channel}]:VAL?')
         return float(power)
+        

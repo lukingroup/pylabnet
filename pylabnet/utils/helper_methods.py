@@ -5,6 +5,7 @@ import re
 import sys
 import ctypes
 import numpy as np
+from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 
 
@@ -297,3 +298,28 @@ def generate_widgets(widget_dict):
     for widget_name, instances in widget_dict.items():
         widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
     return widgets
+
+def generic_save(data, filename=None, directory=None, date_dir=False):
+    """ Saves data as txt file
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    if directory is None:
+        directory = os.getcwd()
+    if filename is None:
+        filename = str(datetime.now().strftime('%H_%M_%S'))
+    else:
+        filename += str(datetime.now().strftime('_%H_%M_%S'))
+    if date_dir:
+        filepath = get_dated_subdirectory_filepath(directory, filename)
+    else:
+        filepath = os.path.join(directory, filename)
+
+    try:
+        np.savetxt(filepath, data)
+    except OSError:
+        os.mkdir(directory)
+        np.savetxt(filepath, data)

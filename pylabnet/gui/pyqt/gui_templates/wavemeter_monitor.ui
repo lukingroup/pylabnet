@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Wavemeter Monitor</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(0, 0, 0);</string>
@@ -93,7 +93,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QLabel" name="label_3">
+         <widget class="QLabel" name="step_size_labl">
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -189,7 +189,7 @@ selection-color: rgb(255, 255, 255);</string>
             <enum>QLayout::SetDefaultConstraint</enum>
            </property>
            <item>
-            <widget class="QLabel" name="label_4">
+            <widget class="QLabel" name="label_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -244,7 +244,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_5">
+            <widget class="QLabel" name="label_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -438,7 +438,7 @@ color: rgb(0, 0, 0);</string>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
-            <widget class="QLabel" name="label_8">
+            <widget class="QLabel" name="label_5">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -493,7 +493,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_9">
+            <widget class="QLabel" name="label_6">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -687,7 +687,7 @@ color: rgb(0, 0, 0);</string>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
-            <widget class="QLabel" name="label_6">
+            <widget class="QLabel" name="label_3">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -742,7 +742,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_7">
+            <widget class="QLabel" name="label_4">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -936,7 +936,7 @@ color: rgb(0, 0, 0);</string>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>
-            <widget class="QLabel" name="label_10">
+            <widget class="QLabel" name="label_7">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -991,7 +991,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_11">
+            <widget class="QLabel" name="label_8">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -1171,7 +1171,7 @@ color: rgb(0, 0, 0);</string>
      <x>0</x>
      <y>0</y>
      <width>1809</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

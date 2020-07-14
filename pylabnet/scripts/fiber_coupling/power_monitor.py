@@ -39,9 +39,9 @@ class Monitor:
             values = [p_in, p_ref, efficiency]
 
             plot_label_list = [
-                f'input_graph_{channel}',
-                f'reflection_graph_{channel}',
-                f'coupling_graph_{channel}'
+                f'Input {channel+1}',
+                f'Reflection {channel+1}',
+                f'Coupling Efficiency {channel+1}'
             ]
             number_label_list = [
                 f'input_power_{channel}',
@@ -75,9 +75,9 @@ class Monitor:
             # Graphs
             channel_plots = []
             plot_label_list = [
-                f'input_graph_{channel}',
-                f'reflection_graph_{channel}',
-                f'coupling_graph_{channel}'
+                f'Input {channel+1}',
+                f'Reflection {channel+1}',
+                f'Coupling Efficiency {channel+1}'
             ]
             for index, label in enumerate(plot_label_list):
                 self.gui.assign_plot(

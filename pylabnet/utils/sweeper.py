@@ -64,10 +64,11 @@ class Sweep1D:
             self.pts = kwargs['pts']
         if 'sweep_type' in kwargs:
             sweep_str = kwargs['sweep_type']
-            if sweep_str == 'sawtooth':
-                self.sweep_type = sweep_str
-            else:
-                self.sweep_type = 'triangle'
+            if sweep_str not in ['sawtooth',  'triangle']:
+                self.log.error(
+                    'Sweep type must be either "sawtooth" or "triangle".'
+                )
+            self.sweep_type = sweep_str
         if 'reps' in kwargs:
             self.reps = kwargs['reps']
 
@@ -85,21 +86,21 @@ class Sweep1D:
         self.fixed_params = experiment_params
 
     def run_once(self, param_value):
-        """ Runs the experiment once for a parameter value 
+        """ Runs the experiment once for a parameter value
 
         :param_value: (float) value of parameter to use
         :return: (float) value resulting from experiment call
         """
 
         result = self.experiment(
-            param_value, 
+            param_value,
             **self.fixed_params
         )
         return result
 
     def run(self, plot=False, autosave=False, filename=None, directory=None, date_dir=True):
-        """ Runs the sweeper 
-        
+        """ Runs the sweeper
+
         :param plot: (bool) whether or not to display the plotly plot
         :param autosave: (bool) whether or not to autosave
         :param filename: (str) name of file identifier
@@ -122,7 +123,7 @@ class Sweep1D:
                 if self.stop_flag:
                     break
                 self._run_and_plot(x_value)
-            
+
             if self.sweep_type != 'sawtooth':
                 for x_value in bw_sweep_points:
                     if self.stop_flag:
@@ -178,7 +179,7 @@ class Sweep1D:
         )
 
         if self.sweep_type != 'sawtooth':
-            
+
             # Save heatmap
             generic_save(
                 data=self.hplot_bwd._fig.data[0].z,
@@ -193,10 +194,10 @@ class Sweep1D:
                 directory=directory,
                 date_dir=date_dir
             )
-    
+
     def _generate_x_axis(self, backward=False):
-        """ Generates an x-axis based on the type of sweep 
-        
+        """ Generates an x-axis based on the type of sweep
+
         Currently only implements triangle
         :param backward: (bool) whether or not it is a backward scan
         :return: (np.array) containing points to scan over
@@ -208,12 +209,12 @@ class Sweep1D:
             return np.linspace(self.min, self.max, self.pts)
 
     def _configure_plots(self, plot):
-        """ Configures all plots 
-        
+        """ Configures all plots
+
         :param plot: (bool) whether or not to display the plotly plot
         """
 
-        # single-trace scans        
+        # single-trace scans
         self.iplot_fwd = MultiTraceFig(title_str='Forward Scan', ch_names=['Single', 'Average'])
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
@@ -221,8 +222,8 @@ class Sweep1D:
         # heat map
         self.hplot_fwd = HeatMapFig(title_str='Forward Scans')
         self.hplot_fwd.set_data(
-            x_ar=np.linspace(self.min, self.max, self.pts), 
-            y_ar=np.array([]), 
+            x_ar=np.linspace(self.min, self.max, self.pts),
+            y_ar=np.array([]),
             z_ar=np.array([[]])
         )
 
@@ -239,8 +240,8 @@ class Sweep1D:
             # heat map
             self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
             self.hplot_bwd.set_data(
-                x_ar=np.linspace(self.max, self.min, self.pts), 
-                y_ar=np.array([]), 
+                x_ar=np.linspace(self.max, self.min, self.pts),
+                y_ar=np.array([]),
                 z_ar=np.array([[]])
             )
 
@@ -262,8 +263,8 @@ class Sweep1D:
             self.iplot_fwd.append_data(x_ar=x_value, y_ar=y_value, ind=0)
 
     def _update_hmaps(self, reps_done):
-        """ Updates heat map plots 
-        
+        """ Updates heat map plots
+
         :param reps_done: (int) number of repetitions done
         """
 
@@ -290,11 +291,11 @@ class Sweep1D:
             self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]))
 
     def _update_integrated(self, reps_done):
-        """ Updates integrated plots 
-        
+        """ Updates integrated plots
+
         :param reps_done: (int) number of repetitions completed
         """
-  
+
         if reps_done==1:
             self.iplot_fwd.set_data(
                 x_ar=np.linspace(self.min, self.max, self.pts),
@@ -315,7 +316,7 @@ class Sweep1D:
                       +self.iplot_fwd._fig.data[0].y/reps_done),
                 ind=1
             )
-        
+
             if self.sweep_type != 'sawtooth':
                 self.iplot_bwd.set_data(
                     x_ar=np.linspace(self.max, self.min, self.pts),
@@ -326,7 +327,7 @@ class Sweep1D:
 
 
 class MultiChSweep1D(Sweep1D):
-    
+
     def __init__(self, logger=None, channels=None):
         """ Instantiates sweeper
 
@@ -351,7 +352,7 @@ class MultiChSweep1D(Sweep1D):
         for channel in self.channels:
 
             filename = f'{filename}_{channel}'
-        
+
             # Save heatmap
             generic_save(
                 data=self.hplot_fwd._fig.data[0],
@@ -368,7 +369,7 @@ class MultiChSweep1D(Sweep1D):
             )
 
             if self.sweep_type != 'sawtooth':
-                
+
                 # Save heatmap
                 generic_save(
                     data=self.hplot_bwd._fig.data[0],
@@ -383,10 +384,10 @@ class MultiChSweep1D(Sweep1D):
                     directory=directory,
                     date_dir=date_dir
                 )
-    
+
     def _configure_plots(self, plot):
-        """ Configures all plots 
-        
+        """ Configures all plots
+
         :param plot: (bool) whether or not to display the plotly plot
         """
 
@@ -410,8 +411,8 @@ class MultiChSweep1D(Sweep1D):
             # heat map
             self.hplot_fwd.append(HeatMapFig(title_str='Forward Scans'))
             self.hplot_fwd[index].set_data(
-                x_ar=np.linspace(self.min, self.max, self.pts), 
-                y_ar=np.array([]), 
+                x_ar=np.linspace(self.min, self.max, self.pts),
+                y_ar=np.array([]),
                 z_ar=np.array([[]])
             )
 
@@ -422,7 +423,7 @@ class MultiChSweep1D(Sweep1D):
 
             if self.sweep_type != 'sawtooth':
                 self.iplot_bwd.append(MultiTraceFig(
-                    title_str='Backward Scan', 
+                    title_str='Backward Scan',
                     ch_names=[f'{channel} Single', f'{channel} Average']
                 ))
                 self.iplot_bwd[index].set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
@@ -431,8 +432,8 @@ class MultiChSweep1D(Sweep1D):
                 # heat map
                 self.hplot_bwd.append(HeatMapFig(title_str='Backward Scans'))
                 self.hplot_bwd[index].set_data(
-                    x_ar=np.linspace(self.max, self.min, self.pts), 
-                    y_ar=np.array([]), 
+                    x_ar=np.linspace(self.max, self.min, self.pts),
+                    y_ar=np.array([]),
                     z_ar=np.array([[]])
                 )
 
@@ -464,13 +465,13 @@ class MultiChSweep1D(Sweep1D):
                 self.iplot_fwd[index].append_data(x_ar=x_value, y_ar=y_value, ind=0)
 
     def _update_hmaps(self, reps_done):
-        """ Updates heat map plots 
-        
+        """ Updates heat map plots
+
         :param reps_done: (int) number of repetitions done
         """
 
         for index, fwd_plot in enumerate(self.iplot_fwd):
-        
+
             if reps_done == 1:
                 self.hplot_fwd[index].set_data(
                     y_ar=np.array([1]),
@@ -483,23 +484,23 @@ class MultiChSweep1D(Sweep1D):
                     )
             else:
                 self.hplot_fwd[index].append_row(
-                    y_val=reps_done, 
+                    y_val=reps_done,
                     z_ar=fwd_plot._fig.data[0].y
                 )
                 if self.sweep_type != 'sawtooth':
                     self.hplot_bwd[index].append_row(
-                        y_val=reps_done, 
+                        y_val=reps_done,
                         z_ar=self.iplot_bwd[index]._fig.data[0].y
                     )
 
     def _update_integrated(self, reps_done):
-        """ Updates integrated plots 
-        
+        """ Updates integrated plots
+
         :param reps_done: (int) number of repetitions completed
         """
-  
+
         for index, fwd_plot in enumerate(self.iplot_fwd):
-        
+
             if reps_done==1:
                 fwd_plot.set_data(
                     x_ar=np.linspace(self.min, self.max, self.pts),
@@ -520,7 +521,7 @@ class MultiChSweep1D(Sweep1D):
                         +fwd_plot._fig.data[0].y/reps_done),
                     ind=1
                 )
-            
+
                 if self.sweep_type != 'sawtooth':
                     self.iplot_bwd[index].set_data(
                         x_ar=np.linspace(self.max, self.min, self.pts),

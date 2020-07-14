@@ -309,13 +309,14 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
 
     if directory is None:
         directory = os.getcwd()
-    if date_dir:
-        directory = os.path.join(directory, str(date.today()))
     if filename is None:
         filename = str(datetime.now().strftime('%H_%M_%S'))
     else:
         filename += str(datetime.now().strftime('_%H_%M_%S'))
-    filepath = os.path.join(directory, filename)
+    if date_dir:
+        filepath = get_dated_subdirectory_filepath(directory, filename)
+    else:
+        filepath = os.path.join(directory, filename)
 
     try:
         np.savetxt(filepath, data)

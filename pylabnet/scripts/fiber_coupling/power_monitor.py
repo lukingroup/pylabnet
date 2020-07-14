@@ -29,36 +29,37 @@ class Monitor:
     def run(self):
 
         self.running = True
-        while self.running:
 
-            for channel, pm in enumerate(self.pm):
-            
-                # Get all current values
-                p_in = pm.get_power(0)
-                p_ref = pm.get_power(1)
-                efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
-                values = [p_in, p_ref, efficiency]
+        for channel, pm in enumerate(self.pm):
+        
+            # Get all current values
+            p_in = pm.get_power(0)
+            p_ref = pm.get_power(1)
+            efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
+            values = [p_in, p_ref, efficiency]
 
-                plot_label_list = [
-                    f'input_graph_{channel}',
-                    f'reflection_graph_{channel}',
-                    f'coupling_graph_{channel}'
-                ]
-                number_label_list = [
-                    f'input_power_{channel}',
-                    f'reflection_power_{channel}',
-                    f'coupling_{channel}'
-                ]
+            plot_label_list = [
+                f'input_graph_{channel}',
+                f'reflection_graph_{channel}',
+                f'coupling_graph_{channel}'
+            ]
+            number_label_list = [
+                f'input_power_{channel}',
+                f'reflection_power_{channel}',
+                f'coupling_{channel}'
+            ]
 
-                # Update GUI
-                for plot_no, plot in enumerate(plot_label_list):
-                    self.gui.set_scalar(values[plot_no], number_label_list[plot_no])
-                    self.plots[plot_no] = np.append(self.plots[plot_no][:-1], values[plot_no])
-                    self.gui.set_curve_data(
-                        data=self.plots[plot_no],
-                        plot_label=plot,
-                        curve_label=plot,
-                    )
+            # Update GUI
+            for plot_no, plot in enumerate(plot_label_list):
+                self.gui.set_scalar(values[plot_no], number_label_list[plot_no])
+                self.plots[plot_no] = np.append(self.plots[plot_no][:-1], values[plot_no])
+                self.gui.set_curve_data(
+                    data=self.plots[plot_no],
+                    plot_label=plot,
+                    curve_label=plot,
+                )
+
+        self.running = False
 
 
     def _initialize_gui(self):
@@ -100,3 +101,28 @@ class Monitor:
                     scalar_widget=self.numbers[index],
                     scalar_label=label
                 )
+
+
+def launch(**kwargs):
+    """ Launches the full fiber controll + GUI script """
+
+    # Unpack and assign parameters
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    pm_client = clients['thorlabs_pm320e']
+    gui_client = guis['fiber_coupling']
+
+    # Instantiate controller
+    control = Monitor(
+        pm_clients=[pm_client],
+        gui_client=gui_client,
+        logger=logger
+    )
+
+    while True:
+
+        if not control.gui.is_paused:
+            control.run()
+
+    # Mitigate warnings about unused variables
+    if loghost and logport and params:
+        pass

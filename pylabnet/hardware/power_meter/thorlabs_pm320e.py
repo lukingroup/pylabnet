@@ -6,7 +6,7 @@ from pylabnet.utils.logging.logger import LogHandler
 
 class Driver:
 
-    def __init__(self, gpib_address, logger):
+    def __init__(self, gpib_address=None, logger=None):
         """Instantiate driver class.
 
         :gpib_address: GPIB-address of the scope, e.g. 'GPIB0::12::INSTR'
@@ -27,6 +27,9 @@ class Driver:
             self.log.info(f"Successfully connected to {device_id}.")
         except VisaIOError:
             self.log.error(f"Connection to {gpib_address} failed.")
+        except:
+            self.log.info('No GPIB address provided, entering dummy mode for PM320E')
+            self.device = None
 
         # We set a more forgiving timeout of 10s (default: 2s).
         self.device.timeout = 10000
@@ -38,6 +41,11 @@ class Driver:
         :return: (float) power in watts
         """
 
-        power = self.device.query(f':POW[{channel}]:VAL?')
-        return float(power)
+        try:
+            power = self.device.query(f':POW[{channel}]:VAL?')
+            return float(power)
+
+        # For dummy mode testing
+        except:
+            return np.random.normal()
         

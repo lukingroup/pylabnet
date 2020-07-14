@@ -1,4 +1,5 @@
 import socket
+import time
 
 from pylabnet.hardware.power_meter.thorlabs_pm320e import Driver
 from pylabnet.network.core.generic_server import GenericServer
@@ -13,6 +14,9 @@ def launch(**kwargs):
         :port: (int) port number for the Cnt Monitor server
     """
 
+    # print('Yahooo')
+    # time.sleep(10)
+    #try:
     pm = Driver(logger=kwargs['logger'], gpib_address=None)
     pm_service = Service()
     pm_service.assign_module(module=pm)
@@ -23,3 +27,7 @@ def launch(**kwargs):
         port=kwargs['port']
     )
     pm_server.start()
+    # except Exception as e:
+    #     print(e)
+    #     time.sleep(20)
+

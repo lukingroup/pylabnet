@@ -25,14 +25,15 @@ class Driver:
             self.device = self.rm.open_resource(gpib_address)
             device_id = self.device.query('*IDN?')
             self.log.info(f"Successfully connected to {device_id}.")
+            # We set a more forgiving timeout of 10s (default: 2s).
+            self.device.timeout = 10000
         except VisaIOError:
             self.log.error(f"Connection to {gpib_address} failed.")
         except:
             self.log.info('No GPIB address provided, entering dummy mode for PM320E')
             self.device = None
 
-        # We set a more forgiving timeout of 10s (default: 2s).
-        self.device.timeout = 10000
+        
 
     def get_power(self, channel):
         """ Returns the current power in watts on a desired channel

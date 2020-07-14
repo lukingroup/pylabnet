@@ -2,7 +2,7 @@ import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
-from pylabnet.utils.helper_methods import generate_widgets
+from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
 
 
 class Monitor:
@@ -52,9 +52,9 @@ class Monitor:
             # Update GUI
             for plot_no, plot in enumerate(plot_label_list):
                 self.gui.set_scalar(values[plot_no], number_label_list[plot_no])
-                self.plots[plot_no] = np.append(self.plots[plot_no][:-1], values[plot_no])
+                self.plots[channel][plot_no] = np.append(self.plots[channel][plot_no][1:], values[plot_no])
                 self.gui.set_curve_data(
-                    data=self.plots[plot_no],
+                    data=self.plots[channel][plot_no],
                     plot_label=plot,
                     curve_label=plot,
                 )
@@ -73,6 +73,7 @@ class Monitor:
         for channel in range(len(self.pm)):
 
             # Graphs
+            channel_plots = []
             plot_label_list = [
                 f'input_graph_{channel}',
                 f'reflection_graph_{channel}',
@@ -88,7 +89,8 @@ class Monitor:
                     plot_label=label,
                     curve_label=label
                 )
-            self.plots.append(np.zeros(1000))
+                channel_plots.append(np.zeros(1000))
+            self.plots.append(channel_plots)
 
             # Numbers
             number_label_list = [

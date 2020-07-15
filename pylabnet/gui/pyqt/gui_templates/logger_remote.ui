@@ -275,7 +275,7 @@ selection-color: rgb(255, 0, 0);</string>
        <bool>false</bool>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(170, 170, 255);</string>
+       <string notr="true">background-color: rgb(211, 211, 211);</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
@@ -372,7 +372,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
 background-color: green;</string>
       </property>
       <property name="text">
-       <string>Start Logging</string>
+       <string>Start logging to file</string>
       </property>
       <property name="checkable">
        <bool>true</bool>

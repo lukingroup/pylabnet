@@ -9,13 +9,14 @@ from io import StringIO
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
+from datetime import datetime
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -277,6 +278,7 @@ class Controller:
         self._configure_debug()
         self._configure_debug_combo_select()
         self._configure_logfile()
+        self._configure_logging()
 
         self.main_window.force_update()
 
@@ -485,7 +487,6 @@ class Controller:
     def _update_logfile_status(self):
         """ Updates the status of whether or not we are using a logfile """
         if self.main_window.log_file_button.isChecked():
-            self.log_file = True
             
             # Enable and show file browser
             self.main_window.file_viewer.setEnabled(True)
@@ -493,14 +494,16 @@ class Controller:
             self.main_window.logfile_status_button.setEnabled(True)
             self.main_window.logfile_status_button.setHidden(False)
             
-            # Assign a file system model
-            model = QtWidgets.QFileSystemModel()
-            model.setRootPath(QtCore.QDir.rootPath())
-            self.main_window.file_viewer.setModel(model)
-            self.main_window.file_viewer.setRootIndex(model.index(QtCore.QDir.homePath()))
+            # Assign a file system model if we're not already logging
+            if not self.main_window.logfile_status_button.isChecked():
+                model = QtWidgets.QFileSystemModel()
+                model.setRootPath(QtCore.QDir.rootPath())
+                self.main_window.file_viewer.setModel(model)
+                self.main_window.file_viewer.setRootIndex(model.index(QtCore.QDir.homePath()))
+                # selection_model = QtCore.QItemSelectionModel()
+                # self.main_window.file_viewer.setSelectionModel(selection_model)
 
         else:
-            self.log_file = False
 
             # Disable and hide file browser
             self.main_window.file_viewer.setHidden(True)
@@ -516,7 +519,37 @@ class Controller:
 
     def _start_stop_logging(self):
         """ Starts or stops logging to file depending on situation """
-        
+
+        if self.main_window.logfile_status_button.isChecked():
+
+            # Actually start logging
+            self.log_file = True
+            # filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
+            try:
+                # self.log_service.add_logfile(
+                #     name=filename,
+                #     dir_path=os.path.dirname(get_dated_subdirectory_filepath(os.getcwd(), filename))
+                # )
+                print(
+                    self.main_window.file_viewer.model().filePath(
+                        self.main_window.file_viewer.selectionModel().currentIndex()
+                    )
+                )
+            except Exception as e:
+                print(e)
+
+            # Change button color and text
+            self.main_window.logfile_status_button.setStyleSheet("background-color: red")
+            self.main_window.logfile_status_button.setText('Stop logging to file')
+
+        else:
+
+            # Change button color and text
+            self.main_window.logfile_status_button.setStyleSheet("background-color: green")
+            self.main_window.logfile_status_button.setText('Start logging to file')
+
+            # Actually stop logging
+            self.log_file = False
 
 
 def main():

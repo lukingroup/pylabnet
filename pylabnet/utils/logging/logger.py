@@ -388,3 +388,4 @@ class LogService(rpyc.Service):
                 module_name
             ))
 
+    # TODO: implement switching to log-file

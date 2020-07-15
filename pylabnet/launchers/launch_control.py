@@ -54,6 +54,7 @@ class Controller:
         self.disconnection = False
         self.debug = False
         self.debug_level = None
+        self.log_file = False
         try:
             if sys.argv[1] == '-p' or proxy:
                 self.proxy = True
@@ -264,11 +265,18 @@ class Controller:
         self.main_window.assign_label('buffer_terminal', 'buffer')
         self.main_window.assign_event_button('debug_radio_button', 'debug')
 
+        # Hide some buttons
+        self.main_window.file_viewer.setHidden(True)
+        self.main_window.file_viewer.setEnabled(False)
+        self.main_window.logfile_status_button.setHidden(True)
+        self.main_window.logfile_status_button.setEnabled(False)
+
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
         self._configure_debug()
         self._configure_debug_combo_select()
+        self._configure_logfile()
 
         self.main_window.force_update()
 
@@ -443,6 +451,14 @@ class Controller:
     def _configure_debug(self):
         self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
 
+    def _configure_logging(self):
+        """ Defines what to do if the Start/Stop Logging button is clicked """
+        self.main_window.logfile_status_button.toggled.connect(self._start_stop_logging)
+
+    def _configure_logfile(self):
+        """ Defines what to do if the logfile radio button is clicked """
+        self.main_window.log_file_button.toggled.connect(self._update_logfile_status)
+    
     # Defines what to do if combobox is changed.
     def _configure_debug_combo_select(self):
         self.main_window.debug_comboBox.currentIndexChanged.connect(self._update_debug_level)
@@ -464,13 +480,43 @@ class Controller:
             self.main_window.debug_comboBox.setHidden(True)
 
         # Update debug level.
-        self._update_debug_level(self)
+        self._update_debug_level()
+
+    def _update_logfile_status(self):
+        """ Updates the status of whether or not we are using a logfile """
+        if self.main_window.log_file_button.isChecked():
+            self.log_file = True
+            
+            # Enable and show file browser
+            self.main_window.file_viewer.setEnabled(True)
+            self.main_window.file_viewer.setHidden(False)
+            self.main_window.logfile_status_button.setEnabled(True)
+            self.main_window.logfile_status_button.setHidden(False)
+            
+            # Assign a file system model
+            model = QtWidgets.QFileSystemModel()
+            model.setRootPath(QtCore.QDir.rootPath())
+            self.main_window.file_viewer.setModel(model)
+            self.main_window.file_viewer.setRootIndex(model.index(QtCore.QDir.homePath()))
+
+        else:
+            self.log_file = False
+
+            # Disable and hide file browser
+            self.main_window.file_viewer.setHidden(True)
+            self.main_window.file_viewer.setEnabled(False)
+            self.main_window.logfile_status_button.setHidden(True)
+            self.main_window.logfile_status_button.setEnabled(False)
 
     def _update_debug_level(self, i=0):
         # Set debug level according to combo-box selection.
         # Levels are:
         # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
+
+    def _start_stop_logging(self):
+        """ Starts or stops logging to file depending on situation """
+        
 
 
 def main():

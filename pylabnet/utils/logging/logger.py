@@ -263,6 +263,14 @@ class LogClient:
             )
             return ret_code
 
+    def close_server(self):
+        """ Closes the server to which the LogClient is connected"""
+
+        try: 
+            self._service.close_server()
+        except EOFError:
+            pass
+
 
 class LogService(rpyc.Service):
 

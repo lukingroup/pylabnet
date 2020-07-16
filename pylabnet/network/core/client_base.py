@@ -51,3 +51,11 @@ class ClientBase:
             self._connection = None
             self._service = None
             raise exc_obj
+
+    def close_server(self):
+        """ Closes the server to which the LogClient is connected"""
+
+        try: 
+            self._service.close_server()
+        except EOFError:
+            pass

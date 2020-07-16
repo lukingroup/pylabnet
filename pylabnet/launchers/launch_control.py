@@ -525,8 +525,9 @@ def run(log_controller):
         # Update display
         log_controller.main_window.force_update()
 
-    # Exit app (does not close servers)
-    sys.exit(log_controller.app.exec_())
+    # Exit, close servers
+    log_controller.gui_server.stop()
+    log_controller.log_server.stop()
 
 
 if __name__ == '__main__':

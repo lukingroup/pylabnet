@@ -13,6 +13,7 @@ from datetime import datetime
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
@@ -316,10 +317,28 @@ class Controller:
             self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
     def _configure_clicks(self):
-        """ Configures what to do if script is clicked """
+        """ Configures what to do upon clicks """
 
         self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
+        self.main_window.close_server.pressed.connect(self._stop_server)
 
+    def _stop_server(self):
+        """ Stops the highlighted server, if applicable """
+
+        client_to_stop = self.main_window.client_list.currentItem().text()
+        server_data = self.client_data[client_to_stop]
+        if 'port' in server_data:
+            try:
+                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                stop_client.close_server()
+            except:
+                self.gui_logger.warn(
+                    f'Failed to shutdown server {client_to_stop}'
+                    f'on host: {server_data["ip"]}, port: {server_data["port"]}'
+                )
+        else:
+            self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
+    
     def _clicked(self):
         """ Launches the script that has been double-clicked
 
@@ -348,7 +367,19 @@ class Controller:
                 gui_debug_flag = '1'
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
+        # bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
+        #     script_to_run,
+        #     launch_time,
+        #     sys.executable,
+        #     os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
+        #     self.host,
+        #     self.log_port,
+        #     len(self.client_list),
+        #     debug_flag,
+        #     server_debug_flag,
+        #     gui_debug_flag
+        # )
+        bash_cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
             script_to_run,
             launch_time,
             sys.executable,
@@ -563,6 +594,7 @@ class Controller:
 def main():
     """ Runs the launch controller """
 
+    hide_console()
     log_controller = Controller()
     run(log_controller)
 

@@ -186,7 +186,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {}'.format(
+                subprocess.Popen('start "{}, {}" "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -305,7 +305,7 @@ class Launcher:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
+                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1809</width>
-    <height>628</height>
+    <width>2822</width>
+    <height>891</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -45,6 +45,9 @@
         </property>
         <property name="text">
          <string>Stop</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -1170,8 +1173,8 @@ color: rgb(0, 0, 0);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1809</width>
-     <height>21</height>
+     <width>2822</width>
+     <height>38</height>
     </rect>
    </property>
   </widget>

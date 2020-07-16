@@ -24,7 +24,7 @@ class GenericServer:
         self._server_thread.start()
 
     def stop(self):
-        pass
+        self._server.close()
 
     @staticmethod
     def _start_server(server_obj):

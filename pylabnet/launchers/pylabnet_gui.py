@@ -126,7 +126,8 @@ def main():
         main_window.configure_widgets()
         main_window.update_widgets()
         main_window.force_update()
-    sys.exit(app.exec_())
+
+    gui_server.stop()
 
 
 if __name__ == '__main__':

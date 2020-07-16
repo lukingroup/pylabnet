@@ -9,13 +9,14 @@ from io import StringIO
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
+from datetime import datetime
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -264,11 +265,21 @@ class Controller:
         self.main_window.assign_label('buffer_terminal', 'buffer')
         self.main_window.assign_event_button('debug_radio_button', 'debug')
 
+        # Hide some buttons
+        self.main_window.file_viewer.setHidden(True)
+        self.main_window.logfile_status_button.setHidden(True)
+        self.main_window.debug_label.setHidden(True)
+        self.main_window.debug_comboBox.setHidden(True)
+        self.main_window.logfile_status_button.setHidden(True)
+        self.main_window.log_previous.setHidden(True)
+
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
         self._configure_debug()
         self._configure_debug_combo_select()
+        self._configure_logfile()
+        self._configure_logging()
 
         self.main_window.force_update()
 
@@ -443,6 +454,14 @@ class Controller:
     def _configure_debug(self):
         self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
 
+    def _configure_logging(self):
+        """ Defines what to do if the Start/Stop Logging button is clicked """
+        self.main_window.logfile_status_button.toggled.connect(self._start_stop_logging)
+
+    def _configure_logfile(self):
+        """ Defines what to do if the logfile radio button is clicked """
+        self.main_window.log_file_button.toggled.connect(self._update_logfile_status)
+    
     # Defines what to do if combobox is changed.
     def _configure_debug_combo_select(self):
         self.main_window.debug_comboBox.currentIndexChanged.connect(self._update_debug_level)
@@ -464,13 +483,81 @@ class Controller:
             self.main_window.debug_comboBox.setHidden(True)
 
         # Update debug level.
-        self._update_debug_level(self)
+        self._update_debug_level()
+
+    def _update_logfile_status(self):
+        """ Updates the status of whether or not we are using a logfile """
+        if self.main_window.log_file_button.isChecked():
+            
+            # Enable and show file browser
+            self.main_window.file_viewer.setEnabled(True)
+            self.main_window.file_viewer.setHidden(False)
+            self.main_window.logfile_status_button.setEnabled(True)
+            self.main_window.logfile_status_button.setHidden(False)
+            self.main_window.log_previous.setEnabled(True)
+            self.main_window.log_previous.setHidden(False)
+            
+            # Assign a file system model if we're not already logging
+            if not self.main_window.logfile_status_button.isChecked():
+                model = QtWidgets.QFileSystemModel()
+                model.setRootPath(QtCore.QDir.rootPath())
+                self.main_window.file_viewer.setModel(model)
+                self.main_window.file_viewer.setRootIndex(model.index(QtCore.QDir.homePath()))
+                self.main_window.file_viewer.setColumnWidth(0, 200)
+
+        else:
+
+            # Disable and hide file browser
+            self.main_window.file_viewer.setHidden(True)
+            self.main_window.file_viewer.setEnabled(False)
+            self.main_window.logfile_status_button.setHidden(True)
+            self.main_window.logfile_status_button.setEnabled(False)
+            self.main_window.log_previous.setEnabled(False)
+            self.main_window.log_previous.setHidden(True)
 
     def _update_debug_level(self, i=0):
         # Set debug level according to combo-box selection.
         # Levels are:
         # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
+
+    def _start_stop_logging(self):
+        """ Starts or stops logging to file depending on situation """
+
+        if self.main_window.logfile_status_button.isChecked():
+
+            # Actually start logging
+            filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
+            try:
+                filepath = self.main_window.file_viewer.model().filePath(
+                    self.main_window.file_viewer.selectionModel().currentIndex()
+                )
+                self.log_service.add_logfile(
+                    name=filename,
+                    dir_path=filepath
+                )
+            except Exception as error_msg:
+                print(f'Failed to start logging to file {os.path.join(filepath, filename)}.\n{error_msg}')
+
+            # Change button color and text
+            self.main_window.logfile_status_button.setStyleSheet("background-color: red")
+            self.main_window.logfile_status_button.setText('Stop logging to file')
+
+            # Add previous text to logfile
+            if self.main_window.log_previous.isChecked():
+                self.log_service.logger.info(
+                    f'Previous log terminal content: \n{self.main_window.terminal.toPlainText()}'
+                    f'\n---------------------------'
+                )
+
+        else:
+
+            # Change button color and text
+            self.main_window.logfile_status_button.setStyleSheet("background-color: green")
+            self.main_window.logfile_status_button.setText('Start logging to file')
+
+            # Actually stop logging
+            self.log_service.stop_latest_logfile()
 
 
 def main():

@@ -500,8 +500,6 @@ class Controller:
                 model.setRootPath(QtCore.QDir.rootPath())
                 self.main_window.file_viewer.setModel(model)
                 self.main_window.file_viewer.setRootIndex(model.index(QtCore.QDir.homePath()))
-                # selection_model = QtCore.QItemSelectionModel()
-                # self.main_window.file_viewer.setSelectionModel(selection_model)
 
         else:
 
@@ -524,19 +522,17 @@ class Controller:
 
             # Actually start logging
             self.log_file = True
-            # filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
+            filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
             try:
-                # self.log_service.add_logfile(
-                #     name=filename,
-                #     dir_path=os.path.dirname(get_dated_subdirectory_filepath(os.getcwd(), filename))
-                # )
-                print(
-                    self.main_window.file_viewer.model().filePath(
-                        self.main_window.file_viewer.selectionModel().currentIndex()
-                    )
+                filepath = self.main_window.file_viewer.model().filePath(
+                    self.main_window.file_viewer.selectionModel().currentIndex()
                 )
-            except Exception as e:
-                print(e)
+                self.log_service.add_logfile(
+                    name=filename,
+                    dir_path=filepath
+                )
+            except Exception as error_msg:
+                print(f'Failed to start logging to file {os.path.join(filepath, filename)}.\n{error_msg}')
 
             # Change button color and text
             self.main_window.logfile_status_button.setStyleSheet("background-color: red")

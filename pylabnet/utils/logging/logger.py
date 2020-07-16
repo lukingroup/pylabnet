@@ -388,7 +388,7 @@ class LogService(rpyc.Service):
                 module_name
             ))
 
-    def add_logfile(self, name, dir_path, file_level=logging.debug, form_string=None):
+    def add_logfile(self, name, dir_path, file_level=logging.DEBUG, form_string=None):
         """ Adds a log-file for all future logging
 
         :name: Name of the log-file.

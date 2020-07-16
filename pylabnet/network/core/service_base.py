@@ -1,4 +1,6 @@
 import rpyc
+import os
+import ctypes
 from pylabnet.utils.logging.logger import LogHandler
 
 
@@ -22,3 +24,11 @@ class ServiceBase(rpyc.Service):
 
     def assign_logger(self, logger=None):
         self.log = LogHandler(logger=logger)
+
+    def close_server(self):
+        """ Closes the server for which the service is running """
+
+        pid = os.getpid()
+        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+        ctypes.windll.kernel32.TerminateProcess(handle, -1)
+        ctypes.windll.kernel32.CloseHandle(handle)

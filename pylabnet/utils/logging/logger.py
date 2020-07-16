@@ -4,6 +4,8 @@ import time
 import socket
 import logging
 import sys
+import os
+import ctypes
 import pickle
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
@@ -388,3 +390,10 @@ class LogService(rpyc.Service):
                 module_name
             ))
 
+    def close_server(self):
+        """ Closes the server for which the service is running """
+
+        pid = os.getpid()
+        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+        ctypes.windll.kernel32.TerminateProcess(handle, -1)
+        ctypes.windll.kernel32.CloseHandle(handle)

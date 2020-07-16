@@ -55,7 +55,6 @@ class Controller:
         self.disconnection = False
         self.debug = False
         self.debug_level = None
-        self.log_file = False
         try:
             if sys.argv[1] == '-p' or proxy:
                 self.proxy = True
@@ -268,9 +267,11 @@ class Controller:
 
         # Hide some buttons
         self.main_window.file_viewer.setHidden(True)
-        self.main_window.file_viewer.setEnabled(False)
         self.main_window.logfile_status_button.setHidden(True)
-        self.main_window.logfile_status_button.setEnabled(False)
+        self.main_window.debug_label.setHidden(True)
+        self.main_window.debug_comboBox.setHidden(True)
+        self.main_window.logfile_status_button.setHidden(True)
+        self.main_window.log_previous.setHidden(True)
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -493,6 +494,8 @@ class Controller:
             self.main_window.file_viewer.setHidden(False)
             self.main_window.logfile_status_button.setEnabled(True)
             self.main_window.logfile_status_button.setHidden(False)
+            self.main_window.log_previous.setEnabled(True)
+            self.main_window.log_previous.setHidden(False)
             
             # Assign a file system model if we're not already logging
             if not self.main_window.logfile_status_button.isChecked():
@@ -508,6 +511,8 @@ class Controller:
             self.main_window.file_viewer.setEnabled(False)
             self.main_window.logfile_status_button.setHidden(True)
             self.main_window.logfile_status_button.setEnabled(False)
+            self.main_window.log_previous.setEnabled(False)
+            self.main_window.log_previous.setHidden(True)
 
     def _update_debug_level(self, i=0):
         # Set debug level according to combo-box selection.
@@ -521,7 +526,6 @@ class Controller:
         if self.main_window.logfile_status_button.isChecked():
 
             # Actually start logging
-            self.log_file = True
             filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
             try:
                 filepath = self.main_window.file_viewer.model().filePath(
@@ -538,6 +542,13 @@ class Controller:
             self.main_window.logfile_status_button.setStyleSheet("background-color: red")
             self.main_window.logfile_status_button.setText('Stop logging to file')
 
+            # Add previous text to logfile
+            if self.main_window.log_previous.isChecked():
+                self.log_service.logger.info(
+                    f'Previous log terminal content: \n{self.main_window.terminal.toPlainText()}'
+                    f'\n---------------------------'
+                )
+
         else:
 
             # Change button color and text
@@ -545,7 +556,7 @@ class Controller:
             self.main_window.logfile_status_button.setText('Start logging to file')
 
             # Actually stop logging
-            self.log_file = False
+            self.log_service.stop_latest_logfile()
 
 
 def main():

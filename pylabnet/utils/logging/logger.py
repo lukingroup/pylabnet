@@ -410,3 +410,7 @@ class LogService(rpyc.Service):
         # add fh to logger
         self.logger.addHandler(fh)
 
+    def stop_latest_logfile(self):
+        """ Stops the latest logfile """
+
+        self.logger.removeHandler(self.logger.handlers[-1])

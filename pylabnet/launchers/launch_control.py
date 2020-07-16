@@ -503,6 +503,7 @@ class Controller:
                 model.setRootPath(QtCore.QDir.rootPath())
                 self.main_window.file_viewer.setModel(model)
                 self.main_window.file_viewer.setRootIndex(model.index(QtCore.QDir.homePath()))
+                self.main_window.file_viewer.setColumnWidth(0, 200)
 
         else:
 

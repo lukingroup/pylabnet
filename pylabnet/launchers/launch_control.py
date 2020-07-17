@@ -6,6 +6,7 @@ import os
 import time
 import subprocess
 from io import StringIO
+import copy
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -26,6 +27,27 @@ if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
 if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
+
+class LaunchWindow(Window):
+    """ Child class of GUI Window enabling killing of all servers """
+
+    def __init__(self, app, controller, gui_template=None, run=True):
+        """ Instantiates LaunchWindow
+
+        :param app: GUI application
+        :param controller: Controller object
+        :param gui_template: (str) name of .ui file to use
+        :param run: whether or not to run GUI on instantiation
+        """
+
+        super().__init__(app, gui_template=gui_template)
+        self.controller = controller
+
+    def closeEvent(self, event):
+        """ Occurs when window is closed. Overwrites parent class method"""
+
+        self.controller.kill_servers()
+        self.stop_button.setChecked(True)
 
 class Controller:
     """ Class for log system controller """
@@ -85,7 +107,7 @@ class Controller:
 
         # Instantiate GUI application
         self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
+        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
@@ -316,6 +338,19 @@ class Controller:
                 pass
             self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
+    def kill_servers(self):
+        """ Kills all servers connected to the logger, including the Log GUI and Log Server"""
+
+        client_data = copy.deepcopy(self.client_data)
+        del client_data['logger_GUI']
+        for server_data in client_data:
+            if 'port' in server_data:
+                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                stop_client.close_server()
+        self.gui_server.stop()
+        self.log_server.stop()
+        self.gui_logger.info(f'{self.client_data.pop("logger_GUI")}')
+    
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
@@ -645,6 +680,7 @@ def run(log_controller):
         log_controller.main_window.force_update()
 
     # Exit, close servers
+    log_controller.kill_servers()
     log_controller.gui_server.stop()
     log_controller.log_server.stop()
 

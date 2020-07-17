@@ -12,10 +12,12 @@ However, you can also call this directly, with command-line arguments:
     (2) if not provided, _default_template will be used
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
 import socket
+import ctypes
 import numpy as np
+import os
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service
@@ -74,7 +76,6 @@ def main():
     # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
         import ptvsd
-        import os
         # 5678 is the default attach port in the VS Code debug configurations
         gui_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_gui)")
         ptvsd.enable_attach(address=('localhost', 5678))
@@ -83,8 +84,12 @@ def main():
 
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 
-    # Create app and instantiate main window
+    # # Create app and instantiate main window
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
     try:
         main_window = Window(app, gui_template=gui_template)
     except FileNotFoundError:

@@ -7,6 +7,7 @@ import time
 import subprocess
 from io import StringIO
 import copy
+import ctypes
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -106,7 +107,11 @@ class Controller:
         sys.stdout = StringIO()
 
         # Instantiate GUI application
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         self.app = QtWidgets.QApplication(sys.argv)
+        self.app.setWindowIcon(
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        )
         self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):

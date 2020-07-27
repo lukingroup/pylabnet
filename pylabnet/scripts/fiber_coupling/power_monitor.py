@@ -4,6 +4,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
 
+# from si_prefix import split, prefix
 
 class Monitor:
     CALIBRATION = [1e-4]
@@ -37,6 +38,13 @@ class Monitor:
             p_ref = pm.get_power(1)
             efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
             values = [p_in, p_ref, efficiency]
+
+            # For the two power readings, reformat.
+            # E.g., split(0.003) will return (3, -3)
+            # And prefix(-3) will return 'm'
+            # formatted_values = [split(p_in)[0], split(p_ref)[0]]
+            # value_powers = np.array([split(p_in)[1], split(p_ref)[1]])
+            # value_prefixes = prefix(value_powers)
 
             plot_label_list = [
                 f'Input {channel+1}',

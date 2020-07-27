@@ -6,6 +6,8 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.thorlabs_pm320e import Service, Client
 
 
+GPIB = 'USB0::0x1313::0x8022::M00580034::INSTR'
+
 def launch(**kwargs):
     """ Connects to PM320E and instantiates server
 
@@ -14,10 +16,10 @@ def launch(**kwargs):
         :port: (int) port number for the Cnt Monitor server
     """
 
-    # print('Yahooo')
-    # time.sleep(10)
-    #try:
-    pm = Driver(logger=kwargs['logger'], gpib_address=None)
+    pm = Driver(
+        logger=kwargs['logger'], 
+        gpib_address=GPIB
+    )
     pm_service = Service()
     pm_service.assign_module(module=pm)
     pm_service.assign_logger(logger=kwargs['logger'])
@@ -27,7 +29,3 @@ def launch(**kwargs):
         port=kwargs['port']
     )
     pm_server.start()
-    # except Exception as e:
-    #     print(e)
-    #     time.sleep(20)
-

@@ -42,11 +42,6 @@ class Driver:
         :return: (float) power in watts
         """
 
-        try:
-            power = self.device.query(f':POW[{channel}]:VAL?')
-            return float(power)
-
-        # For dummy mode testing
-        except:
-            return np.random.normal()
+        power = self.device.query(f':POW{channel+1}:VAL?')
+        return float(power)
         

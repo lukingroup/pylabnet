@@ -1,10 +1,9 @@
 import numpy as np
+from si_prefix import split, prefix
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
-
-# from si_prefix import split, prefix
 
 class Monitor:
     CALIBRATION = [1e-4]
@@ -42,9 +41,9 @@ class Monitor:
             # For the two power readings, reformat.
             # E.g., split(0.003) will return (3, -3)
             # And prefix(-3) will return 'm'
-            # formatted_values = [split(p_in)[0], split(p_ref)[0]]
-            # value_powers = np.array([split(p_in)[1], split(p_ref)[1]])
-            # value_prefixes = prefix(value_powers)
+            split_in, split_ref = split(p_in), split(p_ref)
+            formatted_values = [split_in[0], split_ref[0], efficiency]
+            value_prefixes = prefix(np.array([split_in[1], split_ref[1]]))
 
             plot_label_list = [
                 f'Input {channel+1}',
@@ -59,13 +58,15 @@ class Monitor:
 
             # Update GUI
             for plot_no, plot in enumerate(plot_label_list):
-                self.gui.set_scalar(values[plot_no], number_label_list[plot_no])
+                self.gui.set_scalar(formatted_values[plot_no], number_label_list[plot_no])
                 self.plots[channel][plot_no] = np.append(self.plots[channel][plot_no][1:], values[plot_no])
                 self.gui.set_curve_data(
                     data=self.plots[channel][plot_no],
                     plot_label=plot,
                     curve_label=plot,
                 )
+                if plot_no < 2:
+                    self.gui.set_label(text=f'{value_prefixes[plot_no]}W', label_label=self.labels[plot_no])
 
         self.running = False
 
@@ -73,8 +74,8 @@ class Monitor:
     def _initialize_gui(self):
         """ Instantiates GUI by assigning widgets """
 
-        self.graphs, self.legends, self.numbers = generate_widgets(
-            dict(graph_widget=3, legend_widget=3, number_widget=3)
+        self.graphs, self.legends, self.numbers, self.labels = generate_widgets(
+            dict(graph_widget=3, legend_widget=3, number_widget=3, label_widgets=2)
         )
         self.plots = []
 
@@ -112,6 +113,12 @@ class Monitor:
                     scalar_label=label
                 )
 
+            # Assign prefix labels
+            for label in self.labels:
+                self.gui.assign_label(
+                    label_widget=label,
+                    label_label=label
+                )
 
 def launch(**kwargs):
     """ Launches the full fiber controll + GUI script """

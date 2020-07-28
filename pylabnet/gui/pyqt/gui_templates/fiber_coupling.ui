@@ -293,6 +293,28 @@ selection-color: rgb(255, 255, 255);</string>
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_widget_1">
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>W</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="label_5">
         <property name="font">
          <font>
@@ -347,6 +369,28 @@ selection-color: rgb(255, 255, 255);</string>
         </property>
         <property name="singleStep">
          <double>0.000010000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_widget_2">
+        <property name="maximumSize">
+         <size>
+          <width>100</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>W</string>
         </property>
        </widget>
       </item>

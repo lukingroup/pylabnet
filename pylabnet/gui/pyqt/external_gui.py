@@ -252,6 +252,15 @@ class Window(QtWidgets.QMainWindow):
     def get_container_info(self, container_label):
         return self.containers[container_label].get_items()
 
+    def get_item_text(self, container_label):
+        return self.containers[container_label].get_current_text()
+    
+    def get_item_index(self, container_label):
+        return self.containers[container_label].get_current_index()
+    
+    def set_item_index(self, container_label, index):
+        self.containers[container_label].set_item_index(index)
+    
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -454,7 +463,6 @@ class Window(QtWidgets.QMainWindow):
         """Runs the GUI. Displays the main window"""
 
         self.show()
-
 
     def _assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Assigns a plot to a particular plot widget
@@ -915,7 +923,8 @@ class Container:
     Idea being that all that needs to be referenced is the top level
     and methods here can be invoked to get information about containing elements
 
-    Only QListWidget supported
+    Partially supported widgets: QListWidget, QComboBox
+    Read method docstrings for details
     """
 
     def __init__(self, gui, widget):
@@ -934,3 +943,21 @@ class Container:
             item_info[current_item.text()] = current_item.toolTip()
 
         return item_info
+
+    def get_current_text(self):
+        """ Returns current text of a QComboBox"""
+
+        return self.widget.currentText()
+
+    def get_current_index(self):
+        """ Returns current index of a QComboBox"""
+
+        return self.widget.currentIndex()
+
+    def set_item_index(self, index):
+        """ Sets the current index of a QComboBox
+        
+        :param index: (int) index to set to
+        """
+
+        self.widget.setCurrentIndex(index)

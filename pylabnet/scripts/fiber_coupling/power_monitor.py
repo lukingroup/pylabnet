@@ -1,5 +1,6 @@
 import numpy as np
 from si_prefix import split, prefix
+import time
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
@@ -7,6 +8,10 @@ from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
 
 class Monitor:
     CALIBRATION = [1e-4]
+    RANGE_LIST = [
+        'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW', 'R1MW',
+        'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
+    ]
 
     def __init__(self, pm_clients, gui_client, logger=None): 
         """ Instantiates a monitor for 2-ch power meter with GUI
@@ -18,6 +23,8 @@ class Monitor:
 
         self.log = LogHandler(logger)
         self.gui = GUIHandler(gui_client=gui_client, logger_client=self.log)
+        self.wavelength = []
+        self.ir_index, self.rr_index = [], []
         if isinstance(pm_clients, list):
             self.pm = pm_clients
         else:
@@ -26,15 +33,66 @@ class Monitor:
         self.running = False
         self._initialize_gui()
 
+    def sync_settings(self):
+        """ Pulls current settings from PM and sets them to GUI """
+
+        for channel, pm in enumerate(self.pm):
+
+            # Configure wavelength
+            self.wavelength.append(pm.get_wavelength(1))
+            try:
+                pm.set_wavelength(2, self.wavelength[channel])
+            except:
+                self.log.warn('Failed to set the wavelength to channel 2')
+            self.gui.activate_scalar(scalar_label=f'wavelength_{channel}')
+            self.gui.set_scalar(
+                value=self.wavelength[channel],
+                scalar_label=f'wavelength_{channel}'
+            )
+            self.gui.deactivate_scalar(scalar_label=f'wavelength_{channel}')
+
+            # Configure Range
+            self.ir_index.append(self.RANGE_LIST.index(pm.get_range(1).strip()))
+            self.rr_index.append(self.RANGE_LIST.index(pm.get_range(2).strip()))
+            self.gui.set_item_index(f'ir_{channel}', self.ir_index[channel])
+            self.gui.set_item_index(f'rr_{channel}', self.rr_index[channel])
+
+    def update_settings(self, channel=0):
+        """ Checks GUI for settings updates and implements
+
+        :param channel: (int) channel of power meter to use
+        """
+
+        gui_wl = self.gui.get_scalar(f'wavelength_{channel}')
+        if self.wavelength[channel] != gui_wl:
+            self.wavelength[channel] = gui_wl
+            self.pm[channel].set_wavelength(1, self.wavelength[channel])
+            self.pm[channel].set_wavelength(2, self.wavelength[channel])
+        
+        gui_ir = self.gui.get_item_index(f'ir_{channel}')
+        if self.ir_index[channel] != gui_ir:
+            self.ir_index[channel] = gui_ir
+            self.pm[channel].set_range(channel+1, self.RANGE_LIST[self.ir_index[channel]])
+
+        gui_rr = self.gui.get_item_index(f'rr_{channel}')
+        if self.rr_index[channel] != gui_rr:
+            self.rr_index[channel] = gui_rr
+            self.pm[channel].set_range(channel+1, self.RANGE_LIST[self.rr_index[channel]])
+
+    
     def run(self):
+        """ Runs the power monitor """
 
         self.running = True
 
         for channel, pm in enumerate(self.pm):
         
+            # Check for/implement changes to settings
+            self.update_settings(channel)
+            
             # Get all current values
-            p_in = pm.get_power(0)
-            p_ref = pm.get_power(1)
+            p_in = pm.get_power(1)
+            p_ref = pm.get_power(2)
             efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
             values = [p_in, p_ref, efficiency]
 
@@ -70,12 +128,11 @@ class Monitor:
 
         self.running = False
 
-
     def _initialize_gui(self):
         """ Instantiates GUI by assigning widgets """
 
-        self.graphs, self.legends, self.numbers, self.labels = generate_widgets(
-            dict(graph_widget=3, legend_widget=3, number_widget=3, label_widget=2)
+        self.graphs, self.legends, self.numbers, self.labels, self.combos = generate_widgets(
+            dict(graph_widget=3, legend_widget=3, number_widget=4, label_widget=2, combo_widget=2)
         )
         self.plots = []
 
@@ -112,6 +169,12 @@ class Monitor:
                     scalar_widget=self.numbers[index],
                     scalar_label=label
                 )
+                last_index = index
+
+            self.gui.assign_scalar(
+                scalar_widget=self.numbers[last_index+1],
+                scalar_label=f'wavelength_{channel}'
+            )
 
             # Assign prefix labels
             for label in self.labels:
@@ -119,6 +182,16 @@ class Monitor:
                     label_widget=label,
                     label_label=label
                 )
+
+            self.gui.assign_container(
+                container_widget=self.combos[0], 
+                container_label=f'ir_{channel}'
+            )
+            self.gui.assign_container(
+                container_widget=self.combos[1],
+                container_label=f'rr_{channel}'
+            )
+            
 
 def launch(**kwargs):
     """ Launches the full fiber controll + GUI script """
@@ -135,6 +208,8 @@ def launch(**kwargs):
         logger=logger
     )
 
+    time.sleep(2)
+    control.sync_settings()
     while True:
 
         if not control.gui.is_paused:

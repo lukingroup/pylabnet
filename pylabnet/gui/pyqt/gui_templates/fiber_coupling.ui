@@ -454,6 +454,265 @@ selection-color: rgb(255, 255, 255);</string>
       </item>
      </layout>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>Wavelength (nm):</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="number_widget_4">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="frame">
+         <bool>false</bool>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::NoButtons</enum>
+        </property>
+        <property name="decimals">
+         <number>0</number>
+        </property>
+        <property name="maximum">
+         <double>2000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_7">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input Range:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="combo_widget_1">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);
+font: 25 16pt &quot;Calibri Light&quot;;</string>
+        </property>
+        <property name="editable">
+         <bool>true</bool>
+        </property>
+        <item>
+         <property name="text">
+          <string>Auto</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 nW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 nW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 nW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 uW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 uW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 uW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 mW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 mW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 mW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 W</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 W</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 W</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 kW</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_8">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reflection range:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="combo_widget_2">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>16</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);
+font: 25 16pt &quot;Calibri Light&quot;;</string>
+        </property>
+        <property name="editable">
+         <bool>true</bool>
+        </property>
+        <item>
+         <property name="text">
+          <string>Auto</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 nW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 nW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 nW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 uW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 uW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 uW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 mW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 mW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 mW</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 W</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>10 W</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100 W</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>1 kW</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -462,7 +721,7 @@ selection-color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2084</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

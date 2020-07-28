@@ -37,6 +37,44 @@ class Driver:
         :return: (float) power in watts
         """
 
-        power = self.device.query(f':POW{channel+1}:VAL?')
+        power = self.device.query(f':POW{channel}:VAL?')
         return float(power)
-        
+
+    def get_wavelength(self, channel):
+        """ Returns the current wavelength in nm for the desired channel
+
+        :param channel: (int) channel to read wavelength of
+        :return: (int) wavelength
+        """
+
+        wavelength = self.device.query(f':WAVEL{channel}:VAL?')
+        return int(float(wavelength))
+
+    def get_range(self, channel):
+        """ Returns the current power range for the channel
+
+        :param channel: (int) channel to read range of
+        :return: (str) range
+        """
+
+        pr = self.device.query(f':PRANGE{channel}?')
+        return pr
+
+    def set_wavelength(self, channel, wavelength):
+        """ Sets the wavelength
+
+        :param channel: (int) channel to set wavelength of
+        """
+
+        self.device.write(f':WAVEL{channel}:VAL {wavelength}')
+
+    def set_range(self, channel, p_range):
+        """ Sets the range
+
+        :param channel: (int) channel to set range of
+        :param p_range: (str) range string identifier, can be anything in
+            'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW', 'R1MW',
+            'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
+        """
+
+        self.device.write(f':PRANGE{channel} {p_range}')

@@ -388,3 +388,29 @@ class LogService(rpyc.Service):
                 module_name
             ))
 
+    def add_logfile(self, name, dir_path, file_level=logging.DEBUG, form_string=None):
+        """ Adds a log-file for all future logging
+
+        :name: Name of the log-file.
+        :dir_path: Directory where the log files will be generated.
+        :file_level: The minimum message level which appears in the log-file.
+        :form_string: String specifying the output format of the logger. If None, default styling is:
+            "%(asctime)s - %(levelname)s - %(message)s"
+        """
+
+        formatting_string = '%(asctime)s - %(levelname)s - %(message)s' or form_string
+        formatter = logging.Formatter(formatting_string)
+        filename = get_dated_subdirectory_filepath(dir_path, name)
+        fh = logging.FileHandler(filename)
+        fh.setLevel(file_level)
+
+        # add formatter to fh
+        fh.setFormatter(formatter)
+
+        # add fh to logger
+        self.logger.addHandler(fh)
+
+    def stop_latest_logfile(self):
+        """ Stops the latest logfile """
+
+        self.logger.removeHandler(self.logger.handlers[-1])

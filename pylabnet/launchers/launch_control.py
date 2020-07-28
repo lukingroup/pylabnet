@@ -272,6 +272,7 @@ class Controller:
         self.main_window.debug_comboBox.setHidden(True)
         self.main_window.logfile_status_button.setHidden(True)
         self.main_window.log_previous.setHidden(True)
+        self.main_window.logfile_status_indicator.setEnabled(False)
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -542,6 +543,7 @@ class Controller:
             # Change button color and text
             self.main_window.logfile_status_button.setStyleSheet("background-color: red")
             self.main_window.logfile_status_button.setText('Stop logging to file')
+            self.main_window.logfile_status_indicator.setChecked(True)
 
             # Add previous text to logfile
             if self.main_window.log_previous.isChecked():
@@ -555,6 +557,7 @@ class Controller:
             # Change button color and text
             self.main_window.logfile_status_button.setStyleSheet("background-color: green")
             self.main_window.logfile_status_button.setText('Start logging to file')
+            self.main_window.logfile_status_indicator.setChecked(False)
 
             # Actually stop logging
             self.log_service.stop_latest_logfile()

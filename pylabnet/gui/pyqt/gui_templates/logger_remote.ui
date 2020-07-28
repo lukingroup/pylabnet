@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1526</width>
-    <height>731</height>
+    <height>784</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,80 @@ selection-color: rgb(255, 0, 0);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="8" column="0">
+    <item row="3" column="0" colspan="2">
+     <widget class="QComboBox" name="debug_comboBox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="visible">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(255, 255, 255)</string>
+      </property>
+      <property name="currentText">
+       <string>launcher</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>launcher</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>pylabnet_gui</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>pylabnet_server</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="5" column="0" colspan="2">
+     <widget class="QTreeView" name="file_viewer">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(211, 211, 211);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" colspan="2">
+     <widget class="QLabel" name="debug_label">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="visible">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Module:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" colspan="2">
+     <widget class="QRadioButton" name="log_file_button">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Log File Setup</string>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0" rowspan="2" colspan="2">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QPushButton" name="logfile_status_button">
@@ -60,34 +133,41 @@ background-color: green;</string>
         </property>
        </widget>
       </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Logging to file?</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="logfile_status_indicator">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>green_LED_off.svg</normaloff>
+            <normalon>green_LED_on.svg</normalon>
+            <disabledoff>green_LED_off.svg</disabledoff>
+            <disabledon>green_LED_on.svg</disabledon>
+            <activeoff>green_LED_on.svg</activeoff>green_LED_off.svg</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
      </layout>
     </item>
-    <item row="2" column="2" rowspan="8">
-     <widget class="QListWidget" name="client_list">
-      <property name="maximumSize">
-       <size>
-        <width>200</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="font">
-       <font>
-        <family>Calibri Light</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="toolTip">
-       <string/>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(85, 170, 255);</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
+    <item row="0" column="2">
      <layout class="QHBoxLayout" name="horizontalLayout_5">
       <property name="spacing">
        <number>100</number>
@@ -154,7 +234,42 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
+    <item row="0" column="4">
+     <widget class="QLabel" name="label_2">
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Calibri Light</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(0, 170, 127);</string>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Scripts to launch:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QRadioButton" name="debug_radio_button">
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Debug</string>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0" colspan="2">
      <widget class="QPushButton" name="stop_button">
       <property name="enabled">
        <bool>true</bool>
@@ -188,38 +303,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="0">
-     <widget class="QComboBox" name="debug_comboBox">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="visible">
-       <bool>true</bool>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255)</string>
-      </property>
-      <property name="currentText">
-       <string>launcher</string>
-      </property>
-      <item>
-       <property name="text">
-        <string>launcher</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>pylabnet_gui</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>pylabnet_server</string>
-       </property>
-      </item>
-     </widget>
-    </item>
-    <item row="1" column="2">
+    <item row="0" column="3">
      <widget class="QLabel" name="label">
       <property name="maximumSize">
        <size>
@@ -241,8 +325,49 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="3">
-     <widget class="QLabel" name="label_2">
+    <item row="8" column="0">
+     <widget class="QTextBrowser" name="buffer_terminal">
+      <property name="maximumSize">
+       <size>
+        <width>100</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="overwriteMode">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" rowspan="8">
+     <widget class="QTextBrowser" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <family>Courier New</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3" rowspan="8">
+     <widget class="QListWidget" name="client_list">
       <property name="maximumSize">
        <size>
         <width>200</width>
@@ -255,41 +380,18 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
         <pointsize>12</pointsize>
        </font>
       </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(0, 170, 127);</string>
-      </property>
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Scripts to launch:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QRadioButton" name="debug_radio_button">
-      <property name="styleSheet">
-       <string notr="true">color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="text">
-       <string>Debug</string>
-      </property>
-      <property name="autoExclusive">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="7" column="0">
-     <widget class="QTreeView" name="file_viewer">
-      <property name="enabled">
-       <bool>false</bool>
+      <property name="toolTip">
+       <string/>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(211, 211, 211);</string>
+       <string notr="true">color: rgb(85, 170, 255);</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>
-    <item row="2" column="3" rowspan="8">
+    <item row="1" column="4" rowspan="8">
      <widget class="QListWidget" name="script_list">
       <property name="enabled">
        <bool>true</bool>
@@ -320,76 +422,6 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </property>
       <property name="viewMode">
        <enum>QListView::IconMode</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0">
-     <widget class="QRadioButton" name="log_file_button">
-      <property name="styleSheet">
-       <string notr="true">color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="text">
-       <string>Log File</string>
-      </property>
-      <property name="autoExclusive">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="9" column="0">
-     <widget class="QTextBrowser" name="buffer_terminal">
-      <property name="maximumSize">
-       <size>
-        <width>100</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="overwriteMode">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="debug_label">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="visible">
-       <bool>true</bool>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="text">
-       <string>Module:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1" rowspan="8">
-     <widget class="QTextBrowser" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <family>Courier New</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>

@@ -8,7 +8,7 @@ from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
 class Monitor:
     CALIBRATION = [1e-4]
 
-    def __init__(self, pm_clients, gui_client, logger=None):
+    def __init__(self, pm_clients, gui_client, logger=None): 
         """ Instantiates a monitor for 2-ch power meter with GUI
 
         :param pm_clients: (client, list of clients) clients of power meter
@@ -43,7 +43,7 @@ class Monitor:
             # And prefix(-3) will return 'm'
             split_in, split_ref = split(p_in), split(p_ref)
             formatted_values = [split_in[0], split_ref[0], efficiency]
-            value_prefixes = prefix(np.array([split_in[1], split_ref[1]]))
+            value_prefixes =  [prefix(split_val[1]) for split_val in [split_in, split_ref]]
 
             plot_label_list = [
                 f'Input {channel+1}',
@@ -75,7 +75,7 @@ class Monitor:
         """ Instantiates GUI by assigning widgets """
 
         self.graphs, self.legends, self.numbers, self.labels = generate_widgets(
-            dict(graph_widget=3, legend_widget=3, number_widget=3, label_widgets=2)
+            dict(graph_widget=3, legend_widget=3, number_widget=3, label_widget=2)
         )
         self.plots = []
 

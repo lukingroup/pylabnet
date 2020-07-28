@@ -527,8 +527,8 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-font: 25 16pt &quot;Calibri Light&quot;;</string>
+         <string notr="true">font: 25 16pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
         </property>
         <property name="editable">
          <bool>true</bool>

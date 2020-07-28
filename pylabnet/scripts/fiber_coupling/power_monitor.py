@@ -72,12 +72,12 @@ class Monitor:
         gui_ir = self.gui.get_item_index(f'ir_{channel}')
         if self.ir_index[channel] != gui_ir:
             self.ir_index[channel] = gui_ir
-            self.pm[channel].set_range(channel+1, self.RANGE_LIST[self.ir_index[channel]])
+            self.pm[channel].set_range(2*channel+1, self.RANGE_LIST[self.ir_index[channel]])
 
         gui_rr = self.gui.get_item_index(f'rr_{channel}')
         if self.rr_index[channel] != gui_rr:
             self.rr_index[channel] = gui_rr
-            self.pm[channel].set_range(channel+1, self.RANGE_LIST[self.rr_index[channel]])
+            self.pm[channel].set_range(2*channel+2, self.RANGE_LIST[self.rr_index[channel]])
 
     
     def run(self):

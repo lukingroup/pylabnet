@@ -54,8 +54,16 @@ class Monitor:
             # Configure Range
             self.ir_index.append(self.RANGE_LIST.index(pm.get_range(1).strip()))
             self.rr_index.append(self.RANGE_LIST.index(pm.get_range(2).strip()))
-            self.gui.set_item_index(f'ir_{channel}', self.ir_index[channel])
-            self.gui.set_item_index(f'rr_{channel}', self.rr_index[channel])
+            try:
+                self.gui.set_item_index(f'ir_{channel}', self.ir_index[channel])
+                self.gui.set_item_index(f'rr_{channel}', self.rr_index[channel])
+
+            # If device settings are weird, you may get an error, so just overwrite to AUTO
+            except:
+                pm.set_range(1, self.RANGE_LIST[0])
+                pm.set_range(2, self.RANGE_LIST[0])
+                self.gui.set_item_index(f'ir_{channel}', 0)
+                self.gui.set_item_index(f'rr_{channel}', 0)
 
     def update_settings(self, channel=0):
         """ Checks GUI for settings updates and implements

@@ -30,3 +30,22 @@ class GenericServer:
     def _start_server(server_obj):
         server_obj.start()
 
+
+class SecureServer(GenericServer):
+
+    def __init__(self, service, port, key='pylabnet.pem', host='localhost'):
+
+        
+        self._server = rpyc.ThreadedServer(
+            service=service,
+            port=port,
+            hostname=host,
+            authenticator=rpyc.utils.authenticators.SSLAuthenticator(
+                key, key
+            )
+        )
+
+        self._server_thread = threading.Thread(
+            target=self._start_server,
+            args=(self._server,)
+        )

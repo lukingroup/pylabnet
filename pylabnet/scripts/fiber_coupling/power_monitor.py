@@ -51,19 +51,11 @@ class Monitor:
             )
             self.gui.deactivate_scalar(scalar_label=f'wavelength_{channel}')
 
-            # Configure Range
-            self.ir_index.append(self.RANGE_LIST.index(pm.get_range(1).strip()))
-            self.rr_index.append(self.RANGE_LIST.index(pm.get_range(2).strip()))
-            try:
-                self.gui.set_item_index(f'ir_{channel}', self.ir_index[channel])
-                self.gui.set_item_index(f'rr_{channel}', self.rr_index[channel])
-
-            # If device settings are weird, you may get an error, so just overwrite to AUTO
-            except:
-                pm.set_range(1, self.RANGE_LIST[0])
-                pm.set_range(2, self.RANGE_LIST[0])
-                self.gui.set_item_index(f'ir_{channel}', 0)
-                self.gui.set_item_index(f'rr_{channel}', 0)
+            # Configure Range to be Auto
+            pm.set_range(1, self.RANGE_LIST[0])
+            pm.set_range(2, self.RANGE_LIST[0])
+            self.ir_index.append(0)
+            self.rr_index.append(0)
 
     def update_settings(self, channel=0):
         """ Checks GUI for settings updates and implements
@@ -99,15 +91,26 @@ class Monitor:
             self.update_settings(channel)
             
             # Get all current values
-            p_in = pm.get_power(1)
-            p_ref = pm.get_power(2)
+            try:
+                p_in = pm.get_power(1)
+                split_in = split(p_in)
+
+            # Handle zero error
+            except OverflowError:
+                p_in = 0
+                split_in = (0, 0)
+            try:
+                p_ref = pm.get_power(2)
+                split_ref = split(p_ref)
+            except OverflowError:
+                p_ref = 0
+                split_ref = (0, 0)
             efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
             values = [p_in, p_ref, efficiency]
 
             # For the two power readings, reformat.
             # E.g., split(0.003) will return (3, -3)
             # And prefix(-3) will return 'm'
-            split_in, split_ref = split(p_in), split(p_ref)
             formatted_values = [split_in[0], split_ref[0], efficiency]
             value_prefixes =  [prefix(split_val[1]) for split_val in [split_in, split_ref]]
 

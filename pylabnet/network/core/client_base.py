@@ -1,4 +1,5 @@
 import rpyc
+import os
 
 
 class ClientBase:
@@ -70,6 +71,8 @@ class SecureClient(ClientBase):
             self._host = host
         if port != -1:
             self._port = port
+
+        key = os.path.join(os.environ['WINDIR'], 'System32', key)
 
         # Clean-up old connection if it exists
         if self._connection is not None or self._service is not None:

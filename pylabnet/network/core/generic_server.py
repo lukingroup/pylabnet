@@ -1,5 +1,6 @@
 import rpyc
 import threading
+import os
 
 
 class GenericServer:
@@ -35,6 +36,8 @@ class SecureServer(GenericServer):
 
     def __init__(self, service, port, key='pylabnet.pem', host='localhost'):
 
+        
+        key = os.path.join(os.environ['WINDIR'], 'System32', key)
         
         self._server = rpyc.ThreadedServer(
             service=service,

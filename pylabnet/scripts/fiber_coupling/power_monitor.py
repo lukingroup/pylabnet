@@ -7,7 +7,7 @@ from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
 
 class Monitor:
-    CALIBRATION = [1e-4]
+    CALIBRATION = [1.464e-4]
     RANGE_LIST = [
         'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW', 'R1MW',
         'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'

@@ -117,7 +117,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <string notr="true"/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -126,12 +126,6 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <layout class="QHBoxLayout" name="horizontalLayout_29">
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_2">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -590,12 +584,6 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_3">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -1054,12 +1042,6 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_4">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -1525,12 +1507,6 @@ color: rgb(255, 255, 255);</string>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_5">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -1989,12 +1965,6 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_6">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -2453,12 +2423,6 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_7">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -2924,12 +2888,6 @@ color: rgb(255, 255, 255);</string>
        <layout class="QHBoxLayout" name="horizontalLayout_85">
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_8">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -3388,12 +3346,6 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_9">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -3858,12 +3810,6 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item>
          <widget class="QGroupBox" name="verticalGroupBox_10">
-          <property name="maximumSize">
-           <size>
-            <width>400</width>
-            <height>300</height>
-           </size>
-          </property>
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -4348,7 +4294,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1302</width>
-     <height>31</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

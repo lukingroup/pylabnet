@@ -105,7 +105,10 @@ class Monitor:
             except OverflowError:
                 p_ref = 0
                 split_ref = (0, 0)
-            efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
+            try:
+                efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
+            except ZeroDivisionError:
+                efficiency = 0
             values = [p_in, p_ref, efficiency]
 
             # For the two power readings, reformat.

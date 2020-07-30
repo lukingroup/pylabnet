@@ -1,7 +1,7 @@
 
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.launchers.servers import mcs2
-from pylabnet.scripts.nanopositioners import mcs2_control
+from pylabnet.scripts.fiber_coupling import mcs2_control
 
 
 def main():

@@ -23,7 +23,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server
 
 import sys
 import socket
@@ -57,9 +57,7 @@ def main():
     if 'guiport' in args:
         gui_port = int(args['guiport'])
     else:
-        show_console()
-        gui_port = int(input('Please enter a GUI port value: '))
-        hide_console()
+        gui_port = None
 
     # Instantiate logger
     gui_logger = LogClient(
@@ -104,11 +102,18 @@ def main():
 
     # Make connection
     try:
-        gui_server = GenericServer(
-            service=gui_service,
-            host=socket.gethostbyname(socket.gethostname()),
-            port=gui_port
-        )
+        if gui_port is None:
+            gui_server, gui_port = create_server(
+                service=gui_service,
+                logger=gui_logger,
+                host=socket.gethostbyname(socket.gethostname())
+            )
+        else:
+            gui_server = GenericServer(
+                service=gui_service,
+                host=socket.gethostbyname(socket.gethostname()),
+                port=gui_port
+            )
     except ConnectionRefusedError:
         gui_logger.warn('Tried and failed to create GUI server with \nIP:{}\nPort:{}'.format(
             socket.gethostbyname(socket.gethostname()),

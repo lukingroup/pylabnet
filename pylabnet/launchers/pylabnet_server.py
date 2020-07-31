@@ -18,6 +18,7 @@ However, you can also call this directly, with command-line arguments:
 """
 
 import importlib
+import numpy as np
 
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.utils.logging.logger import LogClient
@@ -35,9 +36,7 @@ def main():
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
-        show_console()
-        server_port = int(input('Please enter a server port value: '))
-        hide_console()
+        server_port = None
     if 'server' in args:
         server = args['server']
     else:
@@ -77,7 +76,16 @@ def main():
         server_logger.error(f'No module found in pylabnet.launchers.servers named {server}.py')
         raise
 
-    mod_inst.launch(logger=server_logger, port=server_port)
+    tries = 0
+    while tries < 10:
+        if server_port is None:
+            server_port = np.random.randint(1024, 49151)
+        try:
+            mod_inst.launch(logger=server_logger, port=server_port)
+            tries = 10
+        except OSError:
+            server_logger.warn(f'Failed to launch server at port: {server_port}')
+            tries += 1
 
 
 if __name__ == '__main__':

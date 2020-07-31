@@ -14,6 +14,9 @@ openssl req -new -x509 -days -365 -nodes -out my_key.pem -keyout my_key.pem
 ```
 which generates a keyfile automatically in C:/Windows/System32 named my_key.pm that is valid for
 365 days.
+
+NOTE: this module defaults to using a key as described above. If you would like to run the
+software without authentication, change the default value to key=None here and in ClientBase
 """
 
 

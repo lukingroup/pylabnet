@@ -240,7 +240,7 @@ def create_server(service, logger=None, host='localhost'):
     timeout = 0
     while timeout < 1000:
         try:
-            port = np.random.randint(1, 9999)
+            port = np.random.randint(1024, 49151)
             server = GenericServer(
                 host=host,
                 port=port,

@@ -19,6 +19,9 @@ However, you can also call this directly, with command-line arguments:
 
 import importlib
 import numpy as np
+import os
+import ptvsd
+import time
 
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.utils.logging.logger import LogClient
@@ -40,8 +43,25 @@ def main():
     if 'server' in args:
         server = args['server']
     else:
+        # Get all relevant files
+        server_directory = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'servers'
+        )
+        try:
+            files = [file for file in os.listdir(server_directory) if (
+                os.path.isfile(os.path.join(
+                    server_directory, file
+                )) and '.py' in file and '__init__.py' not in file
+            )]
+        except Exception as e:
+            print(e)
+            time.sleep(15)
         show_console()
-        server = input('Please enter a server module name: ')
+        print('Available servers to launch:\n')
+        for file in files:
+            print(file[:-3])
+        server = input('\nPlease enter a server module name: ')
         hide_console()
     if 'logip' in args:
         host = args['logip']
@@ -61,8 +81,6 @@ def main():
 
     # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
-        import ptvsd
-        import os
         # 5678 is the default attach port in the VS Code debug configurations
         server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
         ptvsd.enable_attach(address=('localhost', 5678))

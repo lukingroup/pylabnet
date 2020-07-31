@@ -108,6 +108,7 @@ def main():
                 logger=gui_logger,
                 host=socket.gethostbyname(socket.gethostname())
             )
+            gui_logger.update_data(data=dict(port=gui_port))
         else:
             gui_server = GenericServer(
                 service=gui_service,

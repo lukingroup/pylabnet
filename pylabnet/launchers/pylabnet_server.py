@@ -48,15 +48,11 @@ def main():
             os.path.dirname(os.path.realpath(__file__)),
             'servers'
         )
-        try:
-            files = [file for file in os.listdir(server_directory) if (
-                os.path.isfile(os.path.join(
-                    server_directory, file
-                )) and '.py' in file and '__init__.py' not in file
-            )]
-        except Exception as e:
-            print(e)
-            time.sleep(15)
+        files = [file for file in os.listdir(server_directory) if (
+            os.path.isfile(os.path.join(
+                server_directory, file
+            )) and '.py' in file and '__init__.py' not in file
+        )]
         show_console()
         print('Available servers to launch:\n')
         for file in files:
@@ -95,11 +91,15 @@ def main():
         raise
 
     tries = 0
+    update_flag = False
     while tries < 10:
         if server_port is None:
             server_port = np.random.randint(1024, 49151)
+            update_flag = True
         try:
             mod_inst.launch(logger=server_logger, port=server_port)
+            if update_flag:
+                server_logger.update_data(data=dict(port=server_port))
             tries = 10
         except OSError:
             server_logger.warn(f'Failed to launch server at port: {server_port}')

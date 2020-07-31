@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import show_console, hide_console
+from pylabnet.utils.helper_methods import show_console, hide_console, create_server
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -47,12 +47,18 @@ def launch(logger=None, port=None, name=None):
     gui_service.assign_logger(logger=logger)
 
     if port is None:
-        port = np.random.randint(1, 9999)
-    gui_server = GenericServer(
-        service=gui_service,
-        host=socket.gethostbyname(socket.gethostname()),
-        port=port
-    )
+        gui_server, port = create_server(
+            service=gui_service,
+            logger=logger,
+            host=socket.gethostbyname(socket.gethostname())
+        )
+    else:
+        gui_server = GenericServer(
+            service=gui_service,
+            host=socket.gethostbyname(socket.gethostname()),
+            port=port
+        )
+    logger.update_data(data=dict(ui=ui, port=port))
 
     gui_server.start()
 

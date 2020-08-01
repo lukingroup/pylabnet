@@ -81,8 +81,8 @@ class Controller:
             self._update_parameters(channel_index, params)
 
             # Handle DC change
-            if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
-                self.pos.set_voltage(channel_index, params[5])
+            # if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
+            #     self.pos.set_voltage(channel_index, params[5])
 
             # Handle a step event
             if self.gui.was_button_pressed(self.step_left[channel_index]):

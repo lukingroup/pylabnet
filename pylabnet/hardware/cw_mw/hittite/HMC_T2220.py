@@ -43,11 +43,14 @@ class Driver():
         """ Turn output on."""
 
         res = self.device.write('OUTPut ON')
+        return res
 
     def output_off(self):
         """ Turn output off."""
 
         res = self.device.write('OUTP OFF')
+        return res
+
 
     def set_frequency(self, freq):
         """ Set frequency (in Hz)

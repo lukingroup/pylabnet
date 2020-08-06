@@ -5,6 +5,7 @@ import re
 import sys
 import ctypes
 import numpy as np
+from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 
 
@@ -123,11 +124,11 @@ def slugify(value, allow_unicode=False):
     return re.sub(r'[-\s]+', '-', value)
 
 
-def get_dated_subdirectory_filepath(directory, filename):
+def get_dated_subdirectory_filepath(directory, filename=None):
     '''Creates directory structure folder_path/YEAR/MONTH/DAY/filename
 
     :folder_path: Upper level directory
-    :filename: Name of file. Will be slugified.
+    :filename: Name of file. Will be slugified. If None just returns directory
 
     Return:
     :filepath: Path to file in newly created structure.
@@ -140,7 +141,10 @@ def get_dated_subdirectory_filepath(directory, filename):
     os.makedirs(dated_path, exist_ok=True)
 
     # Define full file path
-    filepath = os.path.join(dated_path, f'{slugify(filename)}.log')
+    if filename is None:
+        filepath = dated_path
+    else:
+        filepath = os.path.join(dated_path, f'{slugify(filename)}')
 
     return filepath
 
@@ -297,3 +301,28 @@ def generate_widgets(widget_dict):
     for widget_name, instances in widget_dict.items():
         widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
     return widgets
+
+def generic_save(data, filename=None, directory=None, date_dir=False):
+    """ Saves data as txt file
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    if directory is None:
+        directory = os.getcwd()
+    if filename is None:
+        filename = str(datetime.now().strftime('%H_%M_%S'))
+    else:
+        filename += str(datetime.now().strftime('_%H_%M_%S'))
+    if date_dir:
+        filepath = get_dated_subdirectory_filepath(directory, filename)
+    else:
+        filepath = os.path.join(directory, filename)
+
+    try:
+        np.savetxt(filepath, data)
+    except OSError:
+        os.mkdir(directory)
+        np.savetxt(filepath, data)

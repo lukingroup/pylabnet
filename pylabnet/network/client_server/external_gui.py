@@ -51,7 +51,7 @@ class Service(ServiceBase):
         )
 
     def exposed_assign_container(self, container_widget, container_label):
-        return self._module.assign_container(self, container_widget, container_label)
+        return self._module.assign_container(container_widget, container_label)
 
     def exposed_set_curve_data(self, data_pickle, plot_label, curve_label, error_pickle=None):
         data = pickle.loads(data_pickle)
@@ -99,6 +99,15 @@ class Service(ServiceBase):
 
     def exposed_get_container_info(self, container_label):
         return pickle.dumps(self._module.get_container_info(container_label))
+
+    def exposed_get_item_text(self, container_label):
+        return self._module.get_item_text(container_label)
+
+    def exposed_get_item_index(self, container_label):
+        return self._module.get_item_index(container_label)
+
+    def exposed_set_item_index(self, container_label, index):
+        return self._module.set_item_index(container_label, index)
 
 
 class Client(ClientBase):
@@ -196,3 +205,11 @@ class Client(ClientBase):
     def get_container_info(self, container_label):
         return pickle.loads(self._service.exposed_get_container_info(container_label))
 
+    def get_item_text(self, container_label):
+        return self._service.exposed_get_item_text(container_label)
+
+    def get_item_index(self, container_label):
+        return self._service.exposed_get_item_index(container_label)
+
+    def set_item_index(self, container_label, index):
+        return self._service.exposed_set_item_index(container_label, index)

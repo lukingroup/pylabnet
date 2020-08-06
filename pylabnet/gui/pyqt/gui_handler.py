@@ -111,6 +111,12 @@ class GUIHandler():
         )
 
     @handle_gui_errors
+    def assign_container(self, container_widget, container_label):
+        return self.gui_client.assign_container(
+            container_widget, container_label
+        )
+
+    @handle_gui_errors
     def set_curve_data(self, data, plot_label, curve_label, error=None):
         return self.gui_client.set_curve_data(
             data=data,
@@ -156,3 +162,11 @@ class GUIHandler():
     @handle_gui_errors
     def change_button_background_color(self, event_label, color):
         return self.gui_client.change_button_background_color(event_label, color)
+
+    @handle_gui_errors
+    def get_item_index(self, container_label):
+        return self.gui_client.get_item_index(container_label)
+    
+    @handle_gui_errors
+    def set_item_index(self, container_label, index):
+        return self.gui_client.set_item_index(container_label, index)

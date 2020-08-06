@@ -7,8 +7,11 @@ from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
 
 class Monitor:
-    #CALIBRATION = [1.464e-4]
-    CALIBRATION = [1e-1]
+    # Current calibration values (8/4/20)
+    # FRONT_SNSSPD_PORT = [1.112e-2]
+    # FRONT_PROBE_PORT = [?]
+    # BACK_5050BS = [0.44]
+    CALIBRATION = [1.112e-2]
     RANGE_LIST = [
         'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW', 'R1MW',
         'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'

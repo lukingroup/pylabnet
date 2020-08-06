@@ -25,7 +25,7 @@ def launch(**kwargs):
     daq = nidaqmx.Driver(device_name=NI_DEVICE_NAME, logger=staticline_logger)
 
     test_staticline = staticline.Driver(
-        name='Test staticline',
+        name='Laser Green',
         logger=kwargs['logger'],
         hardware_module=daq,
         ao_output='ao2',

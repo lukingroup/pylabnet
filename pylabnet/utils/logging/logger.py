@@ -4,6 +4,8 @@ import time
 import socket
 import logging
 import sys
+import os
+import ctypes
 import pickle
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
@@ -95,7 +97,7 @@ class LogClient:
         DEBUG=10
     )
 
-    def __init__(self, host, port, module_tag='', server_port=None, ui=None):
+    def __init__(self, host, port, key='pylabnet.pem', module_tag='', server_port=None, ui=None):
 
         # Declare all internal vars
         self._host = ''
@@ -112,7 +114,7 @@ class LogClient:
         self._module_tag = module_tag
 
         # Connect to log server
-        self.connect(host=host, port=port)
+        self.connect(host=host, port=port, key=key)
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
@@ -120,7 +122,7 @@ class LogClient:
         # Log test message
         self.info('Started logging')
 
-    def connect(self, host='place_holder', port=-1):
+    def connect(self, host='place_holder', port=-1, key='pylabnet.pem'):
 
         # Update server address if new values are given
         if host != 'place_holder':
@@ -147,11 +149,21 @@ class LogClient:
         else:
             # Connect to log server
             try:
-                self._connection = rpyc.connect(
-                    host=self._host,
-                    port=self._port,
-                    config={'allow_public_attrs': True}
-                )
+                if key is None:
+                    self._connection = rpyc.connect(
+                        host=self._host,
+                        port=self._port,
+                        config={'allow_public_attrs': True}
+                    )
+                else:
+                    key = os.path.join(os.environ['WINDIR'], 'System32', key)
+                    self._connection = rpyc.ssl_connect(
+                        host=self._host,
+                        port=self._port,
+                        config={'allow_public_attrs': True},
+                        keyfile=key,
+                        certfile=key
+                    )
                 self._service = self._connection.root
 
             except Exception as exc_obj:
@@ -260,6 +272,14 @@ class LogClient:
                 level_str=level_str
             )
             return ret_code
+
+    def close_server(self):
+        """ Closes the server to which the LogClient is connected"""
+
+        try: 
+            self._service.close_server()
+        except EOFError:
+            pass
 
 
 class LogService(rpyc.Service):
@@ -388,6 +408,14 @@ class LogService(rpyc.Service):
                 module_name
             ))
 
+    def close_server(self):
+        """ Closes the server for which the service is running """
+
+        pid = os.getpid()
+        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+        ctypes.windll.kernel32.TerminateProcess(handle, -1)
+        ctypes.windll.kernel32.CloseHandle(handle)
+        
     def add_logfile(self, name, dir_path, file_level=logging.DEBUG, form_string=None):
         """ Adds a log-file for all future logging
 

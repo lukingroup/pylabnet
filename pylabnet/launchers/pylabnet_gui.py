@@ -12,16 +12,18 @@ However, you can also call this directly, with command-line arguments:
     (2) if not provided, _default_template will be used
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
 import socket
+import ctypes
 import numpy as np
+import os
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server
 
 import sys
 import socket
@@ -55,9 +57,7 @@ def main():
     if 'guiport' in args:
         gui_port = int(args['guiport'])
     else:
-        show_console()
-        gui_port = int(input('Please enter a GUI port value: '))
-        hide_console()
+        gui_port = None
 
     # Instantiate logger
     gui_logger = LogClient(
@@ -74,7 +74,6 @@ def main():
     # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
         import ptvsd
-        import os
         # 5678 is the default attach port in the VS Code debug configurations
         gui_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_gui)")
         ptvsd.enable_attach(address=('localhost', 5678))
@@ -83,8 +82,12 @@ def main():
 
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 
-    # Create app and instantiate main window
+    # # Create app and instantiate main window
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
     try:
         main_window = Window(app, gui_template=gui_template)
     except FileNotFoundError:
@@ -99,11 +102,19 @@ def main():
 
     # Make connection
     try:
-        gui_server = GenericServer(
-            service=gui_service,
-            host=socket.gethostbyname(socket.gethostname()),
-            port=gui_port
-        )
+        if gui_port is None:
+            gui_server, gui_port = create_server(
+                service=gui_service,
+                logger=gui_logger,
+                host=socket.gethostbyname(socket.gethostname())
+            )
+            gui_logger.update_data(data=dict(port=gui_port))
+        else:
+            gui_server = GenericServer(
+                service=gui_service,
+                host=socket.gethostbyname(socket.gethostname()),
+                port=gui_port
+            )
     except ConnectionRefusedError:
         gui_logger.warn('Tried and failed to create GUI server with \nIP:{}\nPort:{}'.format(
             socket.gethostbyname(socket.gethostname()),
@@ -126,7 +137,8 @@ def main():
         main_window.configure_widgets()
         main_window.update_widgets()
         main_window.force_update()
-    sys.exit(app.exec_())
+
+    gui_server.stop()
 
 
 if __name__ == '__main__':

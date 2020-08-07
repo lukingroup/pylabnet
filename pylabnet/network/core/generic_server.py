@@ -55,19 +55,25 @@ class GenericServer:
             # identify key
             key = os.path.join(os.environ['WINDIR'], 'System32', key)
 
-            # Add SSL authentication
-            self._server = rpyc.ThreadedServer(
-                service=service,
-                hostname=host,
-                port=port,
-                protocol_config={
-                    'allow_public_attrs': True,
-                    'sync_request_timeout': 300
-                },
-                authenticator=rpyc.utils.authenticators.SSLAuthenticator(
-                    key, key
+            if os.path.exists(key):
+            
+                # Add SSL authentication
+                self._server = rpyc.ThreadedServer(
+                    service=service,
+                    hostname=host,
+                    port=port,
+                    protocol_config={
+                        'allow_public_attrs': True,
+                        'sync_request_timeout': 300
+                    },
+                    authenticator=rpyc.utils.authenticators.SSLAuthenticator(
+                        key, key
+                    )
                 )
-            )
+
+            else:
+                msg_str = f'No keyfile found, please check that {key} exists.'
+                raise FileNotFoundError(msg_str)
 
         self._server_thread = threading.Thread(
             target=self._start_server,

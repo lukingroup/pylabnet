@@ -145,5 +145,8 @@ pylabnet/hardware/smartact/zlib1.dll
 pylabnet/launchers/pylabnet_proxy.cmd
 pylabnet/launchers/pylabnet.cmd
 
+
+
+projects/*
 # SSL keys
 *.pem

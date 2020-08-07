@@ -148,3 +148,5 @@ pylabnet/launchers/pylabnet.cmd
 
 
 projects/*
+# SSL keys
+*.pem

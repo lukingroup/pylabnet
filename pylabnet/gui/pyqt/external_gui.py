@@ -100,6 +100,11 @@ class Window(QtWidgets.QMainWindow):
         self._load_gui(gui_template=gui_template, run=run)
         self.showNormal()
 
+    def closeEvent(self, event):
+        """ Occurs when window is closed. Overwrites parent class method"""
+
+        self.stop_button.setChecked(True)
+    
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
 

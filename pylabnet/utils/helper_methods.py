@@ -225,7 +225,7 @@ def hide_console():
     Useful for processes where console is not needed (isntead, there is a GUI to use)
     """
 
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 6)
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
 def create_server(service, logger=None, host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers
@@ -240,7 +240,7 @@ def create_server(service, logger=None, host='localhost'):
     timeout = 0
     while timeout < 1000:
         try:
-            port = np.random.randint(1, 9999)
+            port = np.random.randint(1024, 49151)
             server = GenericServer(
                 host=host,
                 port=port,

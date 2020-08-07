@@ -6,6 +6,8 @@ import os
 import time
 import subprocess
 from io import StringIO
+import copy
+import ctypes
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -13,6 +15,7 @@ from datetime import datetime
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
@@ -25,6 +28,27 @@ if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
 if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
+
+class LaunchWindow(Window):
+    """ Child class of GUI Window enabling killing of all servers """
+
+    def __init__(self, app, controller, gui_template=None, run=True):
+        """ Instantiates LaunchWindow
+
+        :param app: GUI application
+        :param controller: Controller object
+        :param gui_template: (str) name of .ui file to use
+        :param run: whether or not to run GUI on instantiation
+        """
+
+        super().__init__(app, gui_template=gui_template)
+        self.controller = controller
+
+    def closeEvent(self, event):
+        """ Occurs when window is closed. Overwrites parent class method"""
+
+        self.controller.kill_servers()
+        self.stop_button.setChecked(True)
 
 class Controller:
     """ Class for log system controller """
@@ -83,8 +107,12 @@ class Controller:
         sys.stdout = StringIO()
 
         # Instantiate GUI application
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
+        self.app.setWindowIcon(
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        )
+        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
@@ -316,11 +344,42 @@ class Controller:
                 pass
             self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
+    def kill_servers(self):
+        """ Kills all servers connected to the logger, including the Log GUI and Log Server"""
+
+        client_data = copy.deepcopy(self.client_data)
+        del client_data['logger_GUI']
+        for server_data in client_data:
+            if 'port' in server_data:
+                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                stop_client.close_server()
+        self.gui_server.stop()
+        self.log_server.stop()
+        self.gui_logger.info(f'{self.client_data.pop("logger_GUI")}')
+    
     def _configure_clicks(self):
-        """ Configures what to do if script is clicked """
+        """ Configures what to do upon clicks """
 
         self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
+        self.main_window.close_server.pressed.connect(self._stop_server)
 
+    def _stop_server(self):
+        """ Stops the highlighted server, if applicable """
+
+        client_to_stop = self.main_window.client_list.currentItem().text()
+        server_data = self.client_data[client_to_stop]
+        if 'port' in server_data:
+            try:
+                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                stop_client.close_server()
+            except:
+                self.gui_logger.warn(
+                    f'Failed to shutdown server {client_to_stop}'
+                    f'on host: {server_data["ip"]}, port: {server_data["port"]}'
+                )
+        else:
+            self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
+    
     def _clicked(self):
         """ Launches the script that has been double-clicked
 
@@ -349,7 +408,19 @@ class Controller:
                 gui_debug_flag = '1'
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
+        # bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
+        #     script_to_run,
+        #     launch_time,
+        #     sys.executable,
+        #     os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
+        #     self.host,
+        #     self.log_port,
+        #     len(self.client_list),
+        #     debug_flag,
+        #     server_debug_flag,
+        #     gui_debug_flag
+        # )
+        bash_cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
             script_to_run,
             launch_time,
             sys.executable,
@@ -566,6 +637,7 @@ class Controller:
 def main():
     """ Runs the launch controller """
 
+    hide_console()
     log_controller = Controller()
     run(log_controller)
 
@@ -615,8 +687,10 @@ def run(log_controller):
         # Update display
         log_controller.main_window.force_update()
 
-    # Exit app (does not close servers)
-    sys.exit(log_controller.app.exec_())
+    # Exit, close servers
+    log_controller.kill_servers()
+    log_controller.gui_server.stop()
+    log_controller.log_server.stop()
 
 
 if __name__ == '__main__':

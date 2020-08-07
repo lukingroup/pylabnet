@@ -81,8 +81,13 @@ class Controller:
             self._update_parameters(channel_index, params)
 
             # Handle DC change
-            if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
-                self.pos.set_voltage(channel_index, params[5])
+            # this line of code was throwing an error (params[5] comes up None), so we handle it here
+            voltage_failure = False
+            try:
+                if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
+                    self.pos.set_voltage(channel_index, params[5])
+            except:
+                voltage_failure = True
 
             # Handle a step event
             if self.gui.was_button_pressed(self.step_left[channel_index]):
@@ -114,7 +119,7 @@ class Controller:
             ) = params[2], params[3], params[4]
 
             # If we want to override the previous DC voltage reading
-            if not self.voltage_override:
+            if not self.voltage_override and not voltage_failure:
                 self.prev_voltage[channel_index] = params[5]
             else:
                 self.voltage_override = False

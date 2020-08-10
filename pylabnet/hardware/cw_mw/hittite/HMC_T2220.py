@@ -12,10 +12,8 @@ class Driver():
     def __init__(self, gpib_address, logger):
         """Instantiate driver class.
 
-        :gpib_address: GPIB-address of the scope, e.g. 'GPIB0::12::INSTR'
-            Can be read out by using
-                rm = pyvisa.ResourceManager()
-                rm.list_resources()
+        :gpib_address: GPIB-address of the device, e.g. 'COM8'
+            Can ba found in the Windows device manager.
         :logger: And instance of a LogClient.
         """
 
@@ -34,7 +32,7 @@ class Driver():
         # Reset to factory settings.
         self.reset()
 
-        # Read and store min and max power
+        # Read and store min and max power.
         self.power_min, self.power_max = [
             float(
                 self.device.query(f'pow? {string}')
@@ -42,7 +40,7 @@ class Driver():
             for string in ['min', 'max']
         ]
 
-        # Read and store min and max frequency
+        # Read and store min and max frequency.
         self.freq_min, self.freq_max = [
             float(
                 self.device.query(f'freq? {string}')
@@ -63,7 +61,7 @@ class Driver():
         self.log.info(f"Output of {self.device_id} turned off.")
 
     def check_power_out_of_range(self):
-        """ Returns true if current power is outside of calibration range, False otherwise"""
+        """ Returns True if current power is outside of calibration range, False otherwise"""
 
         if not self.is_output_on():
             warn = "Please enable output to check if calibration out of range"
@@ -79,7 +77,7 @@ class Driver():
         return power_out_of_range
 
     def is_output_on(self):
-        """Returns True1 if output is enabled, False otherwise)"""
+        """Returns True if output is enabled, False otherwise."""
         return bool(int(self.device.query('OUTPut?')))
 
     def set_freq(self, freq):
@@ -88,26 +86,30 @@ class Driver():
         :freq: Target frequency in Hz
         """
         if not self.freq_min <= freq <= self.freq_max:
-            self.log.error(f"Frequency must be between {self.freq_min} Hz and {self.freq_max} Hz")
+            self.log.error(
+                f"Frequency must be between {self.freq_min} Hz and {self.freq_max} Hz"
+            )
         self.device.write(f'freq {freq}')
         self.log.info(f"Frequency of {self.device_id} set to {freq} Hz.")
 
     def get_freq(self):
-        """Returns current frequency setting"""
+        """Returns current frequency setting."""
         return float(self.device.query('freq?'))
 
     def set_power(self, power):
-        """ Set output power (in dBm)
+        """Set output power (in dBm)
 
         :power: Target power in dBm
         """
 
         if not self.power_min <= power <= self.power_max:
-            self.log.error(f"Power must be between {self.power_min} dBm and {self.power_max} dBm")
+            self.log.error(
+                f"Power must be between {self.power_min} dBm and {self.power_max} dBm"
+            )
 
         self.device.write(f'pow {power}')
         self.log.info(f"Output power of {self.device_id} set to {power} dBm.")
 
     def get_power(self):
-        """Returns current output power setting"""
+        """Returns current output power setting."""
         return float(self.device.query('pow?'))

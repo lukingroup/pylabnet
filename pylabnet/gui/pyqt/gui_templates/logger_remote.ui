@@ -347,25 +347,6 @@ background-color: green;</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="3" rowspan="8">
-     <widget class="QTextBrowser" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <family>Courier New</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
     <item row="10" column="4">
      <widget class="QPushButton" name="close_server">
       <property name="styleSheet">
@@ -424,6 +405,25 @@ color: rgb(255, 255, 255);</string>
       </item>
      </widget>
     </item>
+    <item row="1" column="3" rowspan="9">
+     <widget class="QTextBrowser" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <family>Courier New</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -432,7 +432,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1580</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

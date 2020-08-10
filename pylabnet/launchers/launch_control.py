@@ -498,6 +498,7 @@ class Controller:
         # Update the proxy GUI to reflect the client list of the main GUI
         add_clients = list(set(clients.keys()) - set(self.client_list.keys()))
         remove_clients = list(set(self.client_list.keys()) - set(clients.keys()))
+        other_clients = list(set(clients.keys()) - set(add_clients) - set(remove_clients))
 
         # Add clients
         for client in add_clients:
@@ -521,6 +522,20 @@ class Controller:
         for client in remove_clients:
             self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
             del self.client_list[client]
+
+        # Update any other changes
+        for client in other_clients:
+            if self.client_list[client].toolTip() != clients[client]:
+                self.client_list[client].setToolTip(clients[client])
+                if 'ip: ' in clients[client]:
+                    self.client_data[client]['ip'] = clients[client].split('ip: ')[1].split('\n')[0]
+                if 'timestamp: ' in clients[client]:
+                    self.client_data[client]['timestamp'] = clients[client].split('timestamp: ')[1].split('\n')[0]
+                if 'ui: ' in clients[client]:
+                    self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
+                if 'port: ' in clients[client]:
+                    self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+
 
     # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):

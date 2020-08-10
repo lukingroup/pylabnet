@@ -20,7 +20,10 @@ However, you can also call this directly, with command-line arguments:
 import importlib
 import numpy as np
 import os
-import ptvsd
+try:
+    import ptvsd
+except:
+    pass
 import time
 
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console

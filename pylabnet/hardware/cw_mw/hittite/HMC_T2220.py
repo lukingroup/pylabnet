@@ -49,17 +49,11 @@ class Driver():
             )
             for string in ['min', 'max']
         ]
-    
+
     def output_on(self):
         """ Turn output on."""
 
         self.device.write('OUTPut ON')
-
-        if self.check_power_out_of_range():
-            self.log.warn(
-            f"Choosen power level of {self.get_power()} lies outside of calibration range."
-        )
-
         self.log.info(f"Output of {self.device_id} turned on.")
 
     def output_off(self):
@@ -72,8 +66,9 @@ class Driver():
         """ Returns true if current power is outside of calibration range, False otherwise"""
 
         if not self.is_output_on():
-            self.log.warn("Please enable output on to check if calibration out of range")
-            return
+            warn = "Please enable output to check if calibration out of range"
+            self.log.warn(warn)
+            return warn
 
         # Query status register and do bitwise AND to check status of bit 3
         if int(self.device.query('Status:Questionable:Condition?')) & 8:
@@ -102,7 +97,7 @@ class Driver():
         return float(self.device.query('freq?'))
 
     def set_power(self, power):
-        """ Set output power (in dBm) 
+        """ Set output power (in dBm)
 
         :power: Target power in dBm
         """
@@ -112,13 +107,6 @@ class Driver():
 
         self.device.write(f'pow {power}')
         self.log.info(f"Output power of {self.device_id} set to {power} dBm.")
-
-        # If output enabled, check if power is outside of calibration range.
-        if self.is_output_on():
-            if self.check_power_out_of_range():
-                    self.log.warn(
-                        f"Choosen power level of {self.get_power()} lies outside of calibration range."
-                    )
 
     def get_power(self):
         """Returns current output power setting"""

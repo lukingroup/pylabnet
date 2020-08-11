@@ -92,6 +92,7 @@ class ClientBase:
                 'Connection was refused.\n'
                 f'Please check that the server is running with hostname: {host}, port: {port}'
             )
+            raise
 
         # Error if we did not provide any key
         except ConnectionResetError:

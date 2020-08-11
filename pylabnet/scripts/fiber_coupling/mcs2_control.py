@@ -288,12 +288,13 @@ def launch(**kwargs):
     # Initialize parameters
     for channel_index in range(control.NUM_CHANNELS):
         params = control.get_GUI_parameters(channel_index)
-        control.initialize_parameters(channel_index, params)
+        # control.initialize_parameters(channel_index, params)
 
     while True:
 
         if not control.gui.is_paused:
-            control.run()
+            # control.run()
+            pass
 
     # Mitigate warnings about unused variables
     if loghost and logport and params:

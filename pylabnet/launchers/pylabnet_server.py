@@ -108,6 +108,8 @@ def main():
             server_logger.warn(f'Failed to launch server at port: {server_port}')
             tries += 1
 
+    hide_console()
+
 
 if __name__ == '__main__':
     main()

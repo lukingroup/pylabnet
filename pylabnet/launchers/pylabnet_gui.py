@@ -133,6 +133,7 @@ def main():
         gui_logger.warn(f'Could not set IP Address and port labels on {gui_template}')
 
     # Run the GUI until the stop button is clicked
+    hide_console()
     while not main_window.stop_button.isChecked():
         main_window.configure_widgets()
         main_window.update_widgets()

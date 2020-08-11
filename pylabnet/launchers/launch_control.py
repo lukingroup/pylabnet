@@ -349,13 +349,13 @@ class Controller:
 
         client_data = copy.deepcopy(self.client_data)
         del client_data['logger_GUI']
-        for server_data in client_data:
+
+        for server_data in client_data.values():
             if 'port' in server_data:
                 stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
                 stop_client.close_server()
         self.gui_server.stop()
         self.log_server.stop()
-        self.gui_logger.info(f'{self.client_data.pop("logger_GUI")}')
     
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
@@ -704,8 +704,6 @@ def run(log_controller):
 
     # Exit, close servers
     log_controller.kill_servers()
-    log_controller.gui_server.stop()
-    log_controller.log_server.stop()
 
 
 if __name__ == '__main__':

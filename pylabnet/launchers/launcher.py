@@ -59,8 +59,10 @@ import sys
 import os
 import socket
 from pylabnet.utils.logging import logger
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server
 from pylabnet.network.client_server import external_gui
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.generic_server import GenericServer
 
 
 class Launcher:
@@ -133,12 +135,17 @@ class Launcher:
         self.gui_clients = {}
         self.clients = {}
 
+        # Script server
+        self.script_server_port = None
+        self.script_server = None
+
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
         try:
             self._launch_guis()
             self._launch_servers()
+            self._launch_script_server()
             self._launch_scripts()
             hide_console()
         except Exception as e:
@@ -425,6 +432,27 @@ class Launcher:
                 logport=self.log_port,
                 params=self.params[index]
             )
+
+    def _launch_script_server(self, service=None):
+        """ Launches a GenericServer attached to this script to enable closing 
+        
+        :param service: (optional), child of ServiceBase to enable server functionality
+            NOTE: not yet implemented, can be used in future e.g. for pause server
+        """
+
+        if service is None:
+            service = ServiceBase()
+
+        self.script_server, self.script_server_port = create_server(
+            service=service,
+            logger=self.logger,
+            host=socket.gethostbyname(socket.gethostname())
+        )
+        self.script_server.start()
+
+        self.logger.update_data(data=dict(
+            port=self.script_server_port
+        ))
 
 
 class Connector:

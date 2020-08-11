@@ -47,7 +47,8 @@ class LaunchWindow(Window):
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
-        self.controller.kill_servers()
+        if not self.controller.proxy:
+            self.controller.kill_servers()
         self.stop_button.setChecked(True)
 
 class Controller:
@@ -702,8 +703,11 @@ def run(log_controller):
         # Update display
         log_controller.main_window.force_update()
 
-    # Exit, close servers
-    log_controller.kill_servers()
+    # Exit, close servers if necessary
+    if log_controller.proxy:
+        pass
+    else:
+        log_controller.kill_servers()
 
 
 if __name__ == '__main__':

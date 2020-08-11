@@ -68,7 +68,7 @@ selection-color: rgb(255, 0, 0);</string>
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">color: rgb(85, 170, 255);</string>
+       <string notr="true">color: rgb(0, 170, 127);</string>
       </property>
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Log Clients:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -432,7 +432,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1580</width>
-     <height>26</height>
+     <height>38</height>
     </rect>
    </property>
   </widget>

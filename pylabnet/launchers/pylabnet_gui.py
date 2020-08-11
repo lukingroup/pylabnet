@@ -51,8 +51,21 @@ def main():
     if 'ui' in args:
         gui_template = args['ui']
     else:
+        # Get all relevant files
+        ui_directory = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'gui', 'pyqt', 'gui_templates'
+        )
+        files = [file for file in os.listdir(ui_directory) if (
+            os.path.isfile(os.path.join(
+                ui_directory, file
+            )) and '.ui' in file
+        )]
         show_console()
-        gui_template = input('Please enter a GUI template to use: ')
+        print('Available UIs to launch:\n')
+        for file in files:
+            print(file[:-3])
+        gui_template = input('\nPlease enter a UI name: ')
         hide_console()
     if 'guiport' in args:
         gui_port = int(args['guiport'])

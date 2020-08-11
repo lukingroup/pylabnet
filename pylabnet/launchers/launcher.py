@@ -146,8 +146,8 @@ class Launcher:
             self._launch_guis()
             self._launch_servers()
             self._launch_script_server()
-            self._launch_scripts()
             hide_console()
+            self._launch_scripts()
         except Exception as e:
             self.logger.error(e)
 

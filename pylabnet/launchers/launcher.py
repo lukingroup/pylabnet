@@ -85,7 +85,7 @@ class Launcher:
         :config: (str) Name of the configuration json file stored in the config folder.
         """
         self.script = script
-        self.server_req = server_req 
+        self.server_req = server_req
         self.gui_req = gui_req
         self.auto_connect = auto_connect
         self.config = config
@@ -433,12 +433,13 @@ class Launcher:
                 clients=self.clients,
                 guis=self.gui_clients,
                 logport=self.log_port,
-                params=self.params[index]
+                params=self.params[index],
+                config=self.config
             )
 
     def _launch_script_server(self, service=None):
-        """ Launches a GenericServer attached to this script to enable closing 
-        
+        """ Launches a GenericServer attached to this script to enable closing
+
         :param service: (optional), child of ServiceBase to enable server functionality
             NOTE: not yet implemented, can be used in future e.g. for pause server
         """

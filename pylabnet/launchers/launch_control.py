@@ -47,7 +47,8 @@ class LaunchWindow(Window):
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
-        self.controller.kill_servers()
+        if not self.controller.proxy:
+            self.controller.kill_servers()
         self.stop_button.setChecked(True)
 
 class Controller:
@@ -349,13 +350,13 @@ class Controller:
 
         client_data = copy.deepcopy(self.client_data)
         del client_data['logger_GUI']
-        for server_data in client_data:
+
+        for server_data in client_data.values():
             if 'port' in server_data:
                 stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
                 stop_client.close_server()
         self.gui_server.stop()
         self.log_server.stop()
-        self.gui_logger.info(f'{self.client_data.pop("logger_GUI")}')
     
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
@@ -498,6 +499,7 @@ class Controller:
         # Update the proxy GUI to reflect the client list of the main GUI
         add_clients = list(set(clients.keys()) - set(self.client_list.keys()))
         remove_clients = list(set(self.client_list.keys()) - set(clients.keys()))
+        other_clients = list(set(clients.keys()) - set(add_clients) - set(remove_clients))
 
         # Add clients
         for client in add_clients:
@@ -521,6 +523,20 @@ class Controller:
         for client in remove_clients:
             self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
             del self.client_list[client]
+
+        # Update any other changes
+        for client in other_clients:
+            if self.client_list[client].toolTip() != clients[client]:
+                self.client_list[client].setToolTip(clients[client])
+                if 'ip: ' in clients[client]:
+                    self.client_data[client]['ip'] = clients[client].split('ip: ')[1].split('\n')[0]
+                if 'timestamp: ' in clients[client]:
+                    self.client_data[client]['timestamp'] = clients[client].split('timestamp: ')[1].split('\n')[0]
+                if 'ui: ' in clients[client]:
+                    self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
+                if 'port: ' in clients[client]:
+                    self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+
 
     # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):
@@ -687,10 +703,11 @@ def run(log_controller):
         # Update display
         log_controller.main_window.force_update()
 
-    # Exit, close servers
-    log_controller.kill_servers()
-    log_controller.gui_server.stop()
-    log_controller.log_server.stop()
+    # Exit, close servers if necessary
+    if log_controller.proxy:
+        pass
+    else:
+        log_controller.kill_servers()
 
 
 if __name__ == '__main__':

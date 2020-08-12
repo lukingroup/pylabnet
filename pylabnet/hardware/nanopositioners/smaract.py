@@ -30,44 +30,51 @@ class MCS2:
         """ Instantiate Nanopositioners"""
 
         self.log = LogHandler(logger)
+        self.dummy = False
 
-        # Loads Nanopositioners DLL and define arguments and result types for c function
-        self._nanopositionersdll = ctypes.windll.LoadLibrary('SmarActCTL.dll')
-        self._configure_functions()
+        try:
 
-        #Finds devices connected to controller
-        buffer = ctypes.create_string_buffer(4096)  #the way to have a mutable buffer
-        buffersize = ctypes.c_size_t(ctypes.sizeof(buffer)) #size _t gives c_ulonglong, not as in manual
-        result = self._nanopositionersdll.SA_CTL_FindDevices(None, buffer, buffersize)
+            # Loads Nanopositioners DLL and define arguments and result types for c function
+            self._nanopositionersdll = ctypes.windll.LoadLibrary('SmarActCTL.dll')
+            self._configure_functions()
 
-        # Handle errors
-        if result:
-            msg_str = 'No MCS2 devices found'
-            self.log.error(msg_str)
+            #Finds devices connected to controller
+            buffer = ctypes.create_string_buffer(4096)  #the way to have a mutable buffer
+            buffersize = ctypes.c_size_t(ctypes.sizeof(buffer)) #size _t gives c_ulonglong, not as in manual
+            result = self._nanopositionersdll.SA_CTL_FindDevices(None, buffer, buffersize)
 
-        #Establishes a connection to a device
-        self.dev_name = buffer.value.decode("utf-8")
-        dhandle =  ctypes.c_uint32()
-        connect = self._nanopositionersdll.SA_CTL_Open(dhandle, buffer.value, None)
-        if connect == 0:
-            self.dhandle = dhandle.value
-            self.log.info(f'Connected to device {self.dev_name} with handle {self.dhandle}')
-        else:
-            msg_str = f'Failed to connect to device {self.dev_name}'
-            self.log.error(msg_str)
+            # Handle errors
+            if result:
+                msg_str = 'No MCS2 devices found'
+                self.log.error(msg_str)
 
-        # Get channel information
-        channel_buffer = ctypes.c_int32()
-        channel_buffer_size = ctypes.c_size_t(ctypes.sizeof(channel_buffer))
-        channel_result = self._nanopositionersdll.SA_CTL_GetProperty_i32(
-            self.dhandle, 0, self.PKEY_NUM_CH, channel_buffer, channel_buffer_size
-        )
-        self.num_ch = channel_buffer.value
-        if channel_result == 0 and self.num_ch > 0:
-            self.log.info(f'Found {self.num_ch} channels on {self.dev_name}')
-        else:
-            msg_str = f'Failed to find channels on {self.dev_name}'
-            self.log.error(msg_str)
+            #Establishes a connection to a device
+            self.dev_name = buffer.value.decode("utf-8")
+            dhandle =  ctypes.c_uint32()
+            connect = self._nanopositionersdll.SA_CTL_Open(dhandle, buffer.value, None)
+            if connect == 0:
+                self.dhandle = dhandle.value
+                self.log.info(f'Connected to device {self.dev_name} with handle {self.dhandle}')
+            else:
+                msg_str = f'Failed to connect to device {self.dev_name}'
+                self.log.error(msg_str)
+
+            # Get channel information
+            channel_buffer = ctypes.c_int32()
+            channel_buffer_size = ctypes.c_size_t(ctypes.sizeof(channel_buffer))
+            channel_result = self._nanopositionersdll.SA_CTL_GetProperty_i32(
+                self.dhandle, 0, self.PKEY_NUM_CH, channel_buffer, channel_buffer_size
+            )
+            self.num_ch = channel_buffer.value
+            if channel_result == 0 and self.num_ch > 0:
+                self.log.info(f'Found {self.num_ch} channels on {self.dev_name}')
+            else:
+                msg_str = f'Failed to find channels on {self.dev_name}'
+                self.log.error(msg_str)
+
+        except WindowsError:
+            self.log.warn('Did not find MCS2 DLL, entering dummy mode')
+            self.dummy = True
 
     def close(self):
         """ Closes connection to device"""

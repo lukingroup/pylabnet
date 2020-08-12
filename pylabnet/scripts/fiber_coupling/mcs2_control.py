@@ -294,6 +294,7 @@ def launch(**kwargs):
 
         if not control.gui.is_paused:
             control.run()
+            pass
 
     # Mitigate warnings about unused variables
     if loghost and logport and params:

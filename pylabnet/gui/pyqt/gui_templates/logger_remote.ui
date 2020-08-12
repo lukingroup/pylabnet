@@ -68,7 +68,7 @@ selection-color: rgb(255, 0, 0);</string>
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true">color: rgb(85, 170, 255);</string>
+       <string notr="true">color: rgb(0, 170, 127);</string>
       </property>
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Log Clients:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -347,25 +347,6 @@ background-color: green;</string>
       </property>
      </widget>
     </item>
-    <item row="1" column="3" rowspan="8">
-     <widget class="QTextBrowser" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <family>Courier New</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
     <item row="10" column="4">
      <widget class="QPushButton" name="close_server">
       <property name="styleSheet">
@@ -422,6 +403,25 @@ color: rgb(255, 255, 255);</string>
         <string>pylabnet_server</string>
        </property>
       </item>
+     </widget>
+    </item>
+    <item row="1" column="3" rowspan="9">
+     <widget class="QTextBrowser" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <family>Courier New</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
      </widget>
     </item>
    </layout>

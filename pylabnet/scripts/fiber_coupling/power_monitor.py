@@ -14,13 +14,14 @@ class Monitor:
         'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
     ]
 
-    def __init__(self, pm_clients, gui_client, logger=None, calibration=None):
+    def __init__(self, pm_clients, gui_client, logger=None, calibration=None, name=None):
         """ Instantiates a monitor for 2-ch power meter with GUI
 
         :param pm_clients: (client, list of clients) clients of power meter
         :param gui_client: client of monitor GUI
         :param logger: instance of LogClient
-        :calibration: Calibration value for power meter.
+        :calibration: (float) Calibration value for power meter.
+        :name: (str) Humand-readable name of the power meter.
         """
 
 
@@ -28,6 +29,7 @@ class Monitor:
         self.gui = GUIHandler(gui_client=gui_client, logger_client=self.log)
         self.wavelength = []
         self.calibration = calibration
+        self.name = name
         self.ir_index, self.rr_index = [], []
         if isinstance(pm_clients, list):
             self.pm = pm_clients
@@ -210,6 +212,14 @@ class Monitor:
                 container_label=f'rr_{channel}'
             )
 
+            # Assign name to name_label and set value.
+            self.gui.assign_label(
+                    label_widget='name_label',
+                    label_label='name_label'
+            )
+
+            self.gui.set_label(self.name, label_label='name_label')
+
 
 def launch(**kwargs):
     """ Launches the full fiber controll + GUI script """
@@ -227,13 +237,15 @@ def launch(**kwargs):
     )
 
     calibration = [float(settings['calibration'])]
+    name = settings['name']
 
     # Instantiate controller
     control = Monitor(
         pm_clients=[pm_client],
         gui_client=gui_client,
         logger=logger,
-        calibration=calibration
+        calibration=calibration,
+        name=name
     )
 
     time.sleep(2)

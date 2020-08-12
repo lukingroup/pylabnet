@@ -1,7 +1,6 @@
 
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase

@@ -144,3 +144,6 @@ pylabnet/hardware/smartact/zlib1.dll
 # Bash scripts
 pylabnet/launchers/pylabnet_proxy.cmd
 pylabnet/launchers/pylabnet.cmd
+
+# Projects
+projects/

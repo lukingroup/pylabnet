@@ -6,7 +6,7 @@ from pylabnet.utils.logging.logger import LogHandler
 
 class Driver:
 
-    def __init__(self, gpib_address=None, logger=None, name=None):
+    def __init__(self, gpib_address=None, logger=None):
         """Instantiate driver class.
 
         :gpib_address: GPIB-address of the scope, e.g. 'GPIB0::12::INSTR'
@@ -14,14 +14,10 @@ class Driver:
                 rm = pyvisa.ResourceManager()
                 rm.list_resources()
         :logger: An instance of a LogClient.
-        :name: Some human readable name of the device.
         """
 
         # Instantiate log.
         self.log = LogHandler(logger=logger)
-
-        # Store name
-        self.name =name
 
         self.rm = ResourceManager()
 

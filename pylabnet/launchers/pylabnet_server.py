@@ -18,6 +18,10 @@ However, you can also call this directly, with command-line arguments:
 """
 
 import importlib
+import numpy as np
+import os
+import ptvsd
+import time
 
 from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
 from pylabnet.utils.logging.logger import LogClient
@@ -35,14 +39,25 @@ def main():
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
-        show_console()
-        server_port = int(input('Please enter a server port value: '))
-        hide_console()
+        server_port = None
     if 'server' in args:
         server = args['server']
     else:
+        # Get all relevant files
+        server_directory = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'servers'
+        )
+        files = [file for file in os.listdir(server_directory) if (
+            os.path.isfile(os.path.join(
+                server_directory, file
+            )) and '.py' in file and '__init__.py' not in file
+        )]
         show_console()
-        server = input('Please enter a server module name: ')
+        print('Available servers to launch:\n')
+        for file in files:
+            print(file[:-3])
+        server = input('\nPlease enter a server module name: ')
         hide_console()
     if 'logip' in args:
         host = args['logip']
@@ -62,8 +77,6 @@ def main():
 
     # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
-        import ptvsd
-        import os
         # 5678 is the default attach port in the VS Code debug configurations
         server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
         ptvsd.enable_attach(address=('localhost', 5678))
@@ -77,7 +90,22 @@ def main():
         server_logger.error(f'No module found in pylabnet.launchers.servers named {server}.py')
         raise
 
-    mod_inst.launch(logger=server_logger, port=server_port)
+    tries = 0
+    update_flag = False
+    while tries < 10:
+        if server_port is None:
+            server_port = np.random.randint(1024, 49151)
+            update_flag = True
+        try:
+            mod_inst.launch(logger=server_logger, port=server_port)
+            if update_flag:
+                server_logger.update_data(data=dict(port=server_port))
+            tries = 10
+        except OSError:
+            server_logger.warn(f'Failed to launch server at port: {server_port}')
+            tries += 1
+
+    hide_console()
 
 
 if __name__ == '__main__':

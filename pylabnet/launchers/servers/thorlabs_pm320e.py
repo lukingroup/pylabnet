@@ -10,7 +10,8 @@ from pylabnet.utils.helper_methods import show_console, hide_console
 
 GPIB_FRONT = 'USB0::0x1313::0x8022::M00580034::INSTR'
 GPIB_REAR =  'USB0::0x1313::0x8022::M00579698::INSTR'
-GPIB = GPIB_REAR
+GPIB = None
+name= 'Fiber Rear'
 
 def launch(**kwargs):
     """ Connects to PM320E and instantiates server
@@ -19,11 +20,13 @@ def launch(**kwargs):
         :logger: instance of LogClient for logging purposes
         :port: (int) port number for the Cnt Monitor server
     """
+    
 
     try:
         pm = Driver(
             logger=kwargs['logger'], 
-            gpib_address=GPIB
+            name=name,
+            gpib_address=GPIB, 
         )
 
     # Handle error of wrong GPIB address by allowing user to select

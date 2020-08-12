@@ -70,7 +70,7 @@ class Launcher:
     _GUI_LAUNCH_SCRIPT = 'pylabnet_gui.py'
     _SERVER_LAUNCH_SCRIPT = 'pylabnet_server.py'
 
-    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None):
+    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None, config=None):
         """ Instantiates Launcher object
 
         :param script: script modules to launch. Each module needs to have a launch() method
@@ -82,13 +82,14 @@ class Launcher:
             required server already running
         :param name: (str) desired name that will appear as the "process" name for the script invoking the
             Launcher object. Can be left blank, and the names of the script module(s) will be used
-        :param params: (list) parameters for each script to launch
+        :config: (str) Name of the configuration json file stored in the config folder.
         """
         self.script = script
-        self.server_req = server_req
+        self.server_req = server_req 
         self.gui_req = gui_req
         self.auto_connect = auto_connect
-        self.params = params
+        self.config = config
+        self.params=params
         if name is None:
             if self.script is None:
                 self.name = 'Generic Launcher'
@@ -194,7 +195,7 @@ class Launcher:
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start "{}, {}" "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {}'.format(
+                subprocess.Popen('start "{}, {}" "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {} --config {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -203,7 +204,8 @@ class Launcher:
                     self.log_port,
                     gui_port,
                     gui,
-                    self.gui_debug
+                    self.gui_debug,
+                    self.config
                 ), shell=True)
                 connected = True
             except ConnectionRefusedError:
@@ -313,7 +315,7 @@ class Launcher:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
+                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {} --config {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -322,7 +324,8 @@ class Launcher:
                     self.log_port,
                     server_port,
                     server,
-                    self.server_debug
+                    self.server_debug,
+                    self.config
                 )
 
                 subprocess.Popen(cmd, shell=True)

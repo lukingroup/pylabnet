@@ -8,7 +8,9 @@ from pylabnet.network.client_server.thorlabs_pm320e import Service, Client
 from pylabnet.utils.helper_methods import show_console, hide_console
 
 
-GPIB = 'USB0::0x1313::0x8022::M00580034::INSTR'
+GPIB_FRONT = 'USB0::0x1313::0x8022::M00580034::INSTR'
+GPIB_REAR =  'USB0::0x1313::0x8022::M00579698::INSTR'
+GPIB = GPIB_REAR
 
 def launch(**kwargs):
     """ Connects to PM320E and instantiates server

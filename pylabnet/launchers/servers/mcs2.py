@@ -1,4 +1,5 @@
 import socket
+import sys
 
 from pylabnet.hardware.nanopositioners.smaract import MCS2
 from pylabnet.network.core.generic_server import GenericServer
@@ -12,6 +13,15 @@ def launch(**kwargs):
         :logger: instance of LogClient for logging purposes
         :port: (int) port number for the Cnt Monitor server
     """
+
+    logger=kwargs['logger']
+
+    # Register new exception hook.
+    def log_exceptions(exc_type, exc_value, exc_traceback):
+        """Handler for unhandled exceptions that will write to the logs"""
+        logger.error(f"Uncaugth exception: {exc_type}, {exc_value}, {exc_traceback}")
+        
+    sys.excepthook = log_exceptions
 
     mcs2 = MCS2(logger=kwargs['logger'])
     mcs2_service = Service()

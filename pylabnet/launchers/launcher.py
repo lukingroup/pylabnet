@@ -117,12 +117,7 @@ class Launcher:
         # Connect to logger.
         self.logger = self._connect_to_logger()
 
-        def handle_unhandled_exception(exc_type, exc_value, exc_traceback):
-            """Handler for unhandled exceptions that will write to the logs"""
-            self.logger.warn(f"Uncaugth exception: {exc_type}, {exc_value}, {exc_traceback}")
-
-        sys.excepthook = handle_unhandled_exception
-        
+             
         # Halt execution and wait for debugger connection if debug flag is up.
         if self.debug == 1:
             import ptvsd
@@ -132,6 +127,13 @@ class Launcher:
             ptvsd.enable_attach(address=('localhost', 5678))
             ptvsd.wait_for_attach()
             breakpoint()
+
+        # Register new exception hook.
+        def log_exceptions(exc_type, exc_value, exc_traceback):
+            """Handler for unhandled exceptions that will write to the logs"""
+            self.logger.error(f"Uncaugth exception: {exc_type}, {exc_value}, {exc_traceback}")
+            
+        sys.excepthook = log_exceptions
 
         # Find all servers with port numbers and store them as a dictionary
         self.connectors = {}

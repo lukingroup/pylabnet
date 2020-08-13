@@ -1,5 +1,6 @@
 from pylabnet.utils.decorators.gui_decorators import handle_gui_errors
 import pickle
+import sys
 
 
 class GUIHandler():

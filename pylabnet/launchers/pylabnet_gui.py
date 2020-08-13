@@ -95,6 +95,13 @@ def main():
 
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 
+    # Register new exception hook.
+    def log_exceptions(exc_type, exc_value, exc_traceback):           
+        """Handler for unhandled exceptions that will write to the logs"""
+        gui_logger.error(f"Uncaugth exception: {exc_type}, {exc_value}, {exc_traceback}")
+    
+    sys.excepthook = log_exceptions
+
     # # Create app and instantiate main window
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
     app = QtWidgets.QApplication(sys.argv)

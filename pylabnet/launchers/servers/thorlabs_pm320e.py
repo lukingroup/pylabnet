@@ -15,10 +15,13 @@ def launch(**kwargs):
         :port: (int) port number for the Cnt Monitor server
     """
 
-    settings = load_config(
-        kwargs['config'],
-        logger=kwargs['logger']
-    )
+    try:
+        settings = load_config(
+            kwargs['config'],
+            logger=kwargs['logger']
+        )
+    except KeyError:
+        kwargs['logger'].warn('No config file was provided')
 
     try:
         pm = Driver(

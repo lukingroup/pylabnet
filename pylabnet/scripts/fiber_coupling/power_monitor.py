@@ -85,7 +85,6 @@ class Monitor:
             self.rr_index[channel] = gui_rr
             self.pm[channel].set_range(2*channel+2, self.RANGE_LIST[self.rr_index[channel]])
 
-
     def run(self):
         """ Runs the power monitor """
 

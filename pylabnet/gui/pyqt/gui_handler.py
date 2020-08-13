@@ -152,6 +152,12 @@ class GUIHandler():
         )
 
     @handle_gui_errors
+    def get_text(self, label_label):
+        return self.gui_client.get_text(
+            label_label
+        )
+
+    @handle_gui_errors
     def was_button_pressed(self, event_label):
         return self.gui_client.was_button_pressed(event_label)
 
@@ -166,7 +172,15 @@ class GUIHandler():
     @handle_gui_errors
     def get_item_index(self, container_label):
         return self.gui_client.get_item_index(container_label)
-    
+
     @handle_gui_errors
     def set_item_index(self, container_label, index):
         return self.gui_client.set_item_index(container_label, index)
+
+    @handle_gui_errors
+    def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
+        return self.gui_client.save_gui(config_filename, folder_root, logger, scalars, labels)
+
+    @handle_gui_errors
+    def load_gui(self, config_filename, folder_root=None, logger=None):
+        return self.gui_client.load_gui(config_filename, folder_root, logger)

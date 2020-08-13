@@ -340,17 +340,7 @@ def load_config(config_filename, folder_root=None, logger=None):
     Returns data as python dictionary, or None if
     """
 
-    if folder_root is None:
-        filepath = os.path.abspath(
-            os.path.join(
-                os.path.dirname( __file__ ),
-                '..',
-                'configs',
-                f'{config_filename}.json'
-            )
-        )
-    else:
-        filepath = os.path.join(folder_root, f'{config_filename}.json')
+    filepath = get_config_filepath(config_filename, folder_root)
 
     try:
         # Opening JSON file
@@ -365,3 +355,26 @@ def load_config(config_filename, folder_root=None, logger=None):
         logger.error(f'Settings file {filepath} not found.')
 
     return data
+
+def get_config_filepath(config_filename, folder_root=None):
+    """ Gets the config filepath
+
+    :param config_filename: (str) name of configuration file to save.
+        Can be an existing config file with other configuration parameters
+    :folder_root: (str) Name of folder where the config files are stored. If None,
+       use pylabnet/config
+    """
+
+    if folder_root is None:
+        filepath = os.path.abspath(
+            os.path.join(
+                os.path.dirname( __file__ ),
+                '..',
+                'configs',
+                f'{config_filename}.json'
+            )
+        )
+    else:
+        filepath = os.path.join(folder_root, f'{config_filename}.json')
+
+    return filepath

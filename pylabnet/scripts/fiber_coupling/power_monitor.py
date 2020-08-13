@@ -236,7 +236,7 @@ def launch(**kwargs):
         logger=logger
     )
 
-    calibration = [float(settings['calibration'])]
+    calibration = [settings['calibration']]
     name = settings['name']
 
     # Instantiate controller

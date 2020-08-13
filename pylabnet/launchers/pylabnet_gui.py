@@ -120,6 +120,7 @@ def main():
     # Implement config related updates
     if 'window_title' in settings:
         main_window.setWindowTitle(settings['window_title'])
+        gui_logger.info(f'Set window title to {settings["window_title"]}')
 
     # Instantiate GUI server
     gui_service = Service()

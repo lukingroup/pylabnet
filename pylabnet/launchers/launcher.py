@@ -131,7 +131,7 @@ class Launcher:
         # Register new exception hook.
         def log_exceptions(exc_type, exc_value, exc_traceback):
             """Handler for unhandled exceptions that will write to the logs"""
-            self.logger.error(f"Uncaugth exception: {exc_type}, {exc_value}, {exc_traceback}")
+            self.logger.error(f"Uncaught exception: {exc_type}, {exc_value}, {exc_traceback}")
             
         sys.excepthook = log_exceptions
 

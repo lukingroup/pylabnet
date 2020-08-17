@@ -150,3 +150,7 @@ projects/
 # SSL keys
 *.pem
 
+
+# Config files
+configs/*
+configs

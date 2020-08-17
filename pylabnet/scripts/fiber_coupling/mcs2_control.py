@@ -3,7 +3,7 @@ import time
 
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, generate_widgets
+from pylabnet.utils.helper_methods import unpack_launcher, generate_widgets, load_config
 from pylabnet.network.client_server import smaract_mcs2
 
 
@@ -18,12 +18,13 @@ class Controller:
     )
     DC_TOLERANCE = 0.1
 
-    def __init__(self, nanopos_client: smaract_mcs2.Client , gui_client, log_client=None):
+    def __init__(self, nanopos_client: smaract_mcs2.Client , gui_client, log_client=None, config=None):
         """ Instantiates the controller
 
         :param nanopos_client: (pylabnet.network.client_server.smaract_mcs2.Client)
         :param gui_client: (pylabnet.network.client_server.external_gui.Client)
         :param log_client: (pylabnet.utils.logging.logger.LogClient)
+        :param config: (str) name of config file, optional
         """
 
         self.pos = nanopos_client
@@ -41,6 +42,7 @@ class Controller:
         self.prev_velocity = [100]*self.NUM_CHANNELS
         self.prev_voltage = [50]*self.NUM_CHANNELS
         self.voltage_override = False
+        self.config=config
 
     def initialize_gui(self):
         """ Initializes the GUI (assigns channels)"""
@@ -49,6 +51,20 @@ class Controller:
         for channel_index in range(self.NUM_CHANNELS):
 
             self._initialize_channel(channel_index)
+
+        # Handle global GUI stuff
+        self.gui.assign_event_button(
+            event_widget='load_button', event_label='load_button'
+        )
+        self.gui.assign_event_button(
+            event_widget='save_button', event_label='save_button'
+        )
+        self.gui.assign_label(
+            label_widget='config_label', label_label='config_label'
+        )
+        self.gui.set_label(
+            self.config, 'config_label'
+        )
 
     def initialize_parameters(self, channel, params):
         """ Initializes all parameters to values given by params, except for DC voltage
@@ -111,6 +127,9 @@ class Controller:
             if self.gui.was_button_pressed(walker):
                 self._walk(channel_index,walker, params, left=False)
 
+            # Handle GUI Saving and Loading
+            self._load_save_settings()
+
             # Update the previous values for future use
             (
                 self.prev_amplitude[channel_index],
@@ -149,6 +168,13 @@ class Controller:
 
         for channel in range(self.NUM_CHANNELS):
             self.pos.stop(channel)
+
+    def load_settings(self):
+        """ Loads settings from configuration """
+        self.gui.load_gui(
+                self.gui.get_text('config_label'),
+                logger=self.log
+            )
 
     # Technical methods
 
@@ -271,6 +297,19 @@ class Controller:
                 self.stop_all()
                 walking = False
 
+    def _load_save_settings(self):
+        """Saves or loads settings if relevant"""
+
+        if self.gui.was_button_pressed('load_button'):
+            self.load_settings()
+        if self.gui.was_button_pressed('save_button'):
+            scalars = self.n_steps + self.amplitude + self.frequency + self.velocity
+            self.gui.save_gui(
+                self.gui.get_text('config_label'),
+                logger=self.log,
+                scalars=scalars
+            )
+
 
 def launch(**kwargs):
     """ Launches the full nanopositioner control + GUI script """
@@ -281,7 +320,7 @@ def launch(**kwargs):
     gui_client = guis['positioner_control']
 
     # Instantiate controller
-    control = Controller(nanopos_client, gui_client, logger)
+    control = Controller(nanopos_client, gui_client, logger, config=kwargs['config'])
 
     # Initialize all GUI channels
     control.initialize_gui()
@@ -289,6 +328,12 @@ def launch(**kwargs):
     for channel_index in range(control.NUM_CHANNELS):
         params = control.get_GUI_parameters(channel_index)
         control.initialize_parameters(channel_index, params)
+
+    # try:
+    #     control.load_settings()
+    # except Exception as e:
+    #     logger.warn(e)
+    #     logger.warn('Failed to load settings from config file')
 
     while True:
 

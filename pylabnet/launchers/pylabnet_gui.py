@@ -23,7 +23,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server, load_config
 
 import sys
 import socket
@@ -81,6 +81,15 @@ def main():
         server_port=gui_port
     )
 
+    # Loading config file
+    settings = {}
+    if 'config' in args:
+        if args['config'] != 'None':
+            settings = load_config(
+                args['config'],
+                logger=gui_logger
+            )
+
     # Retrieve debug flag.
     debug = int(args['debug'])
 
@@ -114,6 +123,11 @@ def main():
         gui_logger.warn('Could not find .ui file, '
                         'please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
         raise
+
+    # Implement config related updates
+    if 'window_title' in settings:
+        main_window.setWindowTitle(settings['window_title'])
+        gui_logger.info(f'Set window title to {settings["window_title"]}')
 
     # Instantiate GUI server
     gui_service = Service()

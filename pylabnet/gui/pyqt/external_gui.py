@@ -104,7 +104,7 @@ class Window(QtWidgets.QMainWindow):
         """ Occurs when window is closed. Overwrites parent class method"""
 
         self.stop_button.setChecked(True)
-    
+
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
 
@@ -259,13 +259,13 @@ class Window(QtWidgets.QMainWindow):
 
     def get_item_text(self, container_label):
         return self.containers[container_label].get_current_text()
-    
+
     def get_item_index(self, container_label):
         return self.containers[container_label].get_current_index()
-    
+
     def set_item_index(self, container_label, index):
         self.containers[container_label].set_item_index(index)
-    
+
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -961,7 +961,7 @@ class Container:
 
     def set_item_index(self, index):
         """ Sets the current index of a QComboBox
-        
+
         :param index: (int) index to set to
         """
 

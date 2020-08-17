@@ -97,7 +97,7 @@ def main():
             server_port = np.random.randint(1024, 49151)
             update_flag = True
         try:
-            mod_inst.launch(logger=server_logger, port=server_port)
+            mod_inst.launch(logger=server_logger, port=server_port, config=args['config'])
             if update_flag:
                 server_logger.update_data(data=dict(port=server_port))
             tries = 10

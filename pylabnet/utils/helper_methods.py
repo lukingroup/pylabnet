@@ -1,6 +1,7 @@
 import unicodedata
 import os
 import time
+import json
 import re
 import sys
 import ctypes
@@ -326,3 +327,55 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
+
+
+def load_config(config_filename, folder_root=None, logger=None):
+    """ Load configuration data stored in JSON format
+
+    :config_filename: (str) Name of config. file, wihtout the .json ending
+    :folder_root: (str) Name of folder where the config files are stored. If None,
+       use pylabnet/config
+    :logger: (object) Instance of logger.
+
+    Returns data as python dictionary, or None if
+    """
+
+    filepath = get_config_filepath(config_filename, folder_root)
+
+    try:
+        # Opening JSON file
+        f = open(filepath)
+
+        # returns JSON object as
+        # a dictionary
+        data = json.load(f)
+        logger.info(f'Successfully loaded settings from {config_filename}.json.')
+    except FileNotFoundError:
+        data = None
+        logger.error(f'Settings file {filepath} not found.')
+
+    return data
+
+def get_config_filepath(config_filename, folder_root=None):
+    """ Gets the config filepath
+
+    :param config_filename: (str) name of configuration file to save.
+        Can be an existing config file with other configuration parameters
+    :folder_root: (str) Name of folder where the config files are stored. If None,
+       use pylabnet/config
+    """
+
+    if folder_root is None:
+        filepath = os.path.abspath(
+            os.path.join(
+                os.path.dirname( __file__ ),
+                '..',
+                'configs',
+                f'{config_filename}.json'
+            )
+        )
+    else:
+        filepath = os.path.join(folder_root, f'{config_filename}.json')
+
+    return filepath
+

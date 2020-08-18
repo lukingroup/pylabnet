@@ -133,7 +133,7 @@ class Launcher:
         # Register new exception hook.
         def log_exceptions(exc_type, exc_value, exc_traceback):
             """Handler for unhandled exceptions that will write to the logs"""
-            error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback, limit=3))
+            error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             self.logger.error(f"Uncaught exception: {error_msg}")
 
         sys.excepthook = log_exceptions
@@ -153,14 +153,12 @@ class Launcher:
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
-        try:
-            self._launch_guis()
-            self._launch_servers()
-            self._launch_script_server()
-            hide_console()
-            self._launch_scripts()
-        except Exception as e:
-            self.logger.error(e)
+        self._launch_guis()
+        self._launch_servers()
+        self._launch_script_server()
+        hide_console()
+        self._launch_scripts()
+
 
     def _connect_to_logger(self):
         """ Connects to the LogServer"""

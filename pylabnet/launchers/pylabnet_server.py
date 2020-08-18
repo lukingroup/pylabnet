@@ -20,6 +20,8 @@ However, you can also call this directly, with command-line arguments:
 import importlib
 import numpy as np
 import os
+import sys
+import traceback
 import ptvsd
 import time
 
@@ -82,6 +84,14 @@ def main():
         ptvsd.enable_attach(address=('localhost', 5678))
         ptvsd.wait_for_attach()
         breakpoint()
+
+    # Register new exception hook.
+    def log_exceptions(exc_type, exc_value, exc_traceback):
+        """Handler for unhandled exceptions that will write to the logs"""
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback, limit=3))
+        server_logger.error(f"Uncaught exception: {error_msg}")
+
+    sys.excepthook = log_exceptions
 
     # Instantiate module
     try:

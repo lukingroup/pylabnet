@@ -14,15 +14,6 @@ def launch(**kwargs):
         :port: (int) port number for the Cnt Monitor server
     """
 
-    logger=kwargs['logger']
-
-    # Register new exception hook.
-    def log_exceptions(exc_type, exc_value, exc_traceback):
-        """Handler for unhandled exceptions that will write to the logs"""
-        logger.error(f"Uncaught exception: {exc_type}, {exc_value}, {exc_traceback}")
-        
-    sys.excepthook = log_exceptions
-
     mcs2 = MCS2(logger=kwargs['logger'])
     mcs2_service = Service()
     mcs2_service.assign_module(module=mcs2)

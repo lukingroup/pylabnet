@@ -14,6 +14,7 @@ However, you can also call this directly, with command-line arguments:
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
+import traceback
 import socket
 import ctypes
 import numpy as np
@@ -105,10 +106,11 @@ def main():
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 
     # Register new exception hook.
-    def log_exceptions(exc_type, exc_value, exc_traceback):           
+    def log_exceptions(exc_type, exc_value, exc_traceback):
         """Handler for unhandled exceptions that will write to the logs"""
-        gui_logger.error(f"Uncaught exception: {exc_type}, {exc_value}, {exc_traceback}")
-    
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback, limit=3))
+        gui_logger.error(f"Uncaught exception: {error_msg}")
+
     sys.excepthook = log_exceptions
 
     # # Create app and instantiate main window

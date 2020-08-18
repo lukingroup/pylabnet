@@ -38,6 +38,11 @@ def main():
     except IndexError:
         raise IndexError('Please provide command line arguments in the form\n"'
                          'python launch_gui.py --logport 1234 --serverport 5678 --server servername')
+    # If pylabnet.server is launched directly, it might not use a configs flag.
+    if 'configs' in args:
+        configs = args['config']
+    else:
+        configs = None
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
@@ -107,7 +112,7 @@ def main():
             server_port = np.random.randint(1024, 49151)
             update_flag = True
         try:
-            mod_inst.launch(logger=server_logger, port=server_port, config=args['config'])
+            mod_inst.launch(logger=server_logger, port=server_port, config=configs)
             if update_flag:
                 server_logger.update_data(data=dict(port=server_port))
             tries = 10

@@ -47,8 +47,11 @@
             "name": "Python: attach to launcher",
             "type": "python",
             "request": "attach",
+            "port": 5678,
+            "host": "localhost",
+            "redirectOutput" : true,
             "processId": "${command:pickProcess}"
-        }
+        },
         ```
         * Launch the process (with double-click), then launch the debugger immediately following
         * It will give you a search bar to search for and select the process to debug

@@ -378,3 +378,4 @@ def get_config_filepath(config_filename, folder_root=None):
         filepath = os.path.join(folder_root, f'{config_filename}.json')
 
     return filepath
+

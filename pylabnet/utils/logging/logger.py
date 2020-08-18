@@ -60,9 +60,6 @@ class LogHandler:
         except:
             return -1
 
-        # All errors will raise exceptions at the LogHandler level.
-        raise Exception(msg_str)
-
     def exception(self, msg_str):
         try:
             return self._logger.exception(msg_str=msg_str)

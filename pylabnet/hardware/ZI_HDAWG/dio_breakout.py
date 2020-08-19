@@ -21,6 +21,7 @@ class Driver:
 
         # Instantiate log.
         self.log = LogHandler(logger=logger)
+        self.gpib = gpib_address
 
         self.rm = ResourceManager()
 
@@ -71,7 +72,7 @@ class Driver:
 
         return self._set_high_voltage(voltage)
 
-    def set_low_voltage(self, board, channel, voltage)
+    def set_low_voltage(self, board, channel, voltage):
         """ Sets the current channel's low voltage
 
         :param board: (int) integer between 0 and 7 (assuming 8 boards)

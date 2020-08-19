@@ -54,6 +54,40 @@ class Driver:
             max=10
         )
 
+    def set_high_voltage(self, board, channel, voltage):
+        """ Sets the current channel's high voltage
+
+        :param board: (int) integer between 0 and 7 (assuming 8 boards)
+        :param channel: (int) integer between 0 and 3
+        :param voltage: (float) voltage in V between 0 and 10 (into open-loop)
+
+        :return: (int) 0 if successful
+        """
+
+        # Only proceed if we can correctly set the current board and channel
+        if self._set_board(board) + self._set_channel(channel):
+            self.log.warn(f'Did not measure the voltage for board {board} channel {channel}')
+            return float(-777)
+
+        return self._set_high_voltage(voltage)
+
+    def set_low_voltage(self, board, channel, voltage)
+        """ Sets the current channel's low voltage
+
+        :param board: (int) integer between 0 and 7 (assuming 8 boards)
+        :param channel: (int) integer between 0 and 3
+        :param voltage: (float) voltage in V between 0 and 10 (into open-loop)
+
+        :return: (int) 0 if successful
+        """
+
+        # Only proceed if we can correctly set the current board and channel
+        if self._set_board(board) + self._set_channel(channel):
+            self.log.warn(f'Did not measure the voltage for board {board} channel {channel}')
+            return float(-777)
+
+        return self._set_low_voltage(voltage)
+    
     # Technical methods (not to be exposed)
 
     def _set_board(self, board):

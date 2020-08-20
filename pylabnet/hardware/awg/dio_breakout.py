@@ -131,6 +131,19 @@ class Driver:
             max=10
         )
     
+    def save(self):
+        """ Saves current state of low/high for all channels to non-volatile memory
+        
+        :return: (int) 0 if successful
+        """
+
+        self.device.write('S')
+        if self.device.read().split()[-1] != 'Completed':
+            self.log.warn('Failed to save state')
+            return 1
+        else:
+            return 0
+    
     # Technical methods (not to be exposed)
 
     def _set_board(self, board):

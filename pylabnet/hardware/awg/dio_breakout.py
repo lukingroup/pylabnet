@@ -56,7 +56,7 @@ class Driver:
         )
 
     def set_high_voltage(self, board, channel, voltage):
-        """ Sets the current channel's high voltage
+        """ Sets a channel's high voltage
 
         :param board: (int) integer between 0 and 7 (assuming 8 boards)
         :param channel: (int) integer between 0 and 3
@@ -73,7 +73,7 @@ class Driver:
         return self._set_high_voltage(voltage)
 
     def set_low_voltage(self, board, channel, voltage):
-        """ Sets the current channel's low voltage
+        """ Sets a channel's low voltage
 
         :param board: (int) integer between 0 and 7 (assuming 8 boards)
         :param channel: (int) integer between 0 and 3
@@ -88,6 +88,48 @@ class Driver:
             return float(-777)
 
         return self._set_low_voltage(voltage)
+    
+    def get_high_voltage(self, board, channel):
+        """ Gets a channel's high voltage
+
+        :param board: (int) integer between 0 and 7 (assuming 8 boards)
+        :param channel: (int) integer between 0 and 3
+
+        :return: (float) voltage in V from 0 to 10
+        """
+
+        # Only proceed if we can correctly set the current board and channel
+        if self._set_board(board) + self._set_channel(channel):
+            self.log.warn(f'Did not measure the voltage for board {board} channel {channel}')
+            return float(-777)
+
+        return bitval_to_value(
+            int(self.device.query('h').split()[-1]),
+            bits=16,
+            min=0,
+            max=10
+        )
+
+    def get_low_voltage(self, board, channel):
+        """ Gets a channel's low voltage
+
+        :param board: (int) integer between 0 and 7 (assuming 8 boards)
+        :param channel: (int) integer between 0 and 3
+
+        :return: (float) voltage in V from 0 to 10
+        """
+
+        # Only proceed if we can correctly set the current board and channel
+        if self._set_board(board) + self._set_channel(channel):
+            self.log.warn(f'Did not measure the voltage for board {board} channel {channel}')
+            return float(-777)
+
+        return bitval_to_value(
+            int(self.device.query('l').split()[-1]),
+            bits=16,
+            min=0,
+            max=10
+        )
     
     # Technical methods (not to be exposed)
 

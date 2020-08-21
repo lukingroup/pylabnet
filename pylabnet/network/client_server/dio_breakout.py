@@ -19,6 +19,9 @@ class Service(ServiceBase):
     def exposed_get_low_voltage(self, board, channel):
         return self._module.get_low_voltage(board, channel)
 
+    def exposed_save(self):
+        return self._module.save()
+
 
 class Client(ClientBase):
 
@@ -36,3 +39,6 @@ class Client(ClientBase):
 
     def get_low_voltage(self, board, channel):
         return self._service.exposed_get_low_voltage(board, channel)
+
+    def save(self):
+        return self._service.exposed_save()

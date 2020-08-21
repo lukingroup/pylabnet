@@ -137,12 +137,22 @@ class Driver:
         :return: (int) 0 if successful
         """
 
-        self.device.write('S')
-        if self.device.read().split()[-1] != 'Completed':
-            self.log.warn('Failed to save state')
-            return 1
-        else:
+        # This fails randomly due to nondeterministic response, which we need to handle
+        read = 0
+        while read < 10:
+            self.device.write('S')
+            try:
+                self.device.read()
+                read = 11
+            except VisaIOError or UnicodeDecodeError:
+                read += 1
+        if read > 10:
+            self.log.info('Saved current DIO breakout settings successfully')
             return 0
+        else:
+            self.log.warn('Failed to save DIO breakout settings.'
+                          'Connection may be corrupted.')
+            return 1
     
     # Technical methods (not to be exposed)
 

@@ -108,7 +108,7 @@ def main():
     # Register new exception hook.
     def log_exceptions(exc_type, exc_value, exc_traceback):
         """Handler for unhandled exceptions that will write to the logs"""
-        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback, limit=3))
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         gui_logger.error(f"Uncaught exception: {error_msg}")
 
     sys.excepthook = log_exceptions

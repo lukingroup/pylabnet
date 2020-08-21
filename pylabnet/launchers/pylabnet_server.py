@@ -31,6 +31,7 @@ from pylabnet.utils.logging.logger import LogClient
 
 def main():
 
+
     # parse command line arguments
     args = parse_args()
     try:
@@ -39,7 +40,7 @@ def main():
         raise IndexError('Please provide command line arguments in the form\n"'
                          'python launch_gui.py --logport 1234 --serverport 5678 --server servername')
     # If pylabnet.server is launched directly, it might not use a configs flag.
-    if 'configs' in args:
+    if 'config' in args:
         configs = args['config']
     else:
         configs = None
@@ -80,7 +81,7 @@ def main():
         server_port=server_port
     )
 
-    # Retrieve debug flag.
+        # Retrieve debug flag.
     debug = int(args['debug'])
 
     # Halt execution and wait for debugger connection if debug flag is up.
@@ -94,7 +95,7 @@ def main():
     # Register new exception hook.
     def log_exceptions(exc_type, exc_value, exc_traceback):
         """Handler for unhandled exceptions that will write to the logs"""
-        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback, limit=3))
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         server_logger.error(f"Uncaught exception: {error_msg}")
 
     sys.excepthook = log_exceptions

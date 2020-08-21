@@ -1,3 +1,6 @@
+import os
+import ctypes
+
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 
@@ -27,6 +30,19 @@ class Service(ServiceBase):
 
     def exposed_disable_override(self, board, channel):
         return self._module.disable_override(board, channel)
+
+    def close_server(self):
+        """ Closes the server for which the service is running 
+        
+        Overwrites parent class method
+        """
+
+        self._module.close()
+        
+        pid = os.getpid()
+        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+        ctypes.windll.kernel32.TerminateProcess(handle, -1)
+        ctypes.windll.kernel32.CloseHandle(handle)
 
 
 class Client(ClientBase):

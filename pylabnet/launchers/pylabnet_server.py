@@ -62,9 +62,10 @@ def main():
         )]
         show_console()
         print('Available servers to launch:\n')
-        for file in files:
-            print(file[:-3])
-        server = input('\nPlease enter a server module name: ')
+        for index, file in enumerate(files):
+            print(f'{index}: {file[:-3]}')
+        server_index = int(input('\nPlease enter a server module index: '))
+        server = files[server_index][:-3]
         hide_console()
     if 'logip' in args:
         host = args['logip']

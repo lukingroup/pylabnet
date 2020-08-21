@@ -9,30 +9,31 @@ class Driver:
 
     BOARDS = 8
 
-    def __init__(self, gpib_address=None, logger=None):
+    def __init__(self, address=None, logger=None):
         """Instantiate driver class.
 
-        :gpib_address: GPIB-address of the scope, e.g. 'GPIB0::12::INSTR'
+        :address: Address of the device, e.g. 'ASRL3::INSTR'
             Can be read out by using
                 rm = pyvisa.ResourceManager()
                 rm.list_resources()
         :logger: An instance of a LogClient.
         """
 
-        # Instantiate log.
+        # Instantiate log
         self.log = LogHandler(logger=logger)
-        self.gpib = gpib_address
+        self.addr = address
 
         self.rm = ResourceManager()
 
         try:
-            self.device = self.rm.open_resource(gpib_address)
+            self.device = self.rm.open_resource(self.addr)
             self.log.info(f"Successfully connected to {self.device}.")
 
             # Configure device grammar
             self.device.write_termination = ';'
         except VisaIOError:
-            self.log.error(f"Connection to {gpib_address} failed.")
+            self.log.error(f"Connection to {self.addr} failed.")
+            raise
 
     def measure_voltage(self, board, channel):
         """ Measures the current voltage on a particular channel of a particular board
@@ -144,7 +145,9 @@ class Driver:
             try:
                 self.device.read()
                 read = 11
-            except VisaIOError or UnicodeDecodeError:
+            except VisaIOError:
+                read += 1
+            except UnicodeDecodeError:
                 read += 1
         if read > 10:
             self.log.info('Saved current DIO breakout settings successfully')
@@ -172,6 +175,8 @@ class Driver:
         if int(self.device.query('b').rstrip()[-1]) != board:
             self.log.warn(f'Error in overriding board {board} channel {channel}')
             return float(-1)
+
+        self.log.info(f'Board {board} channel {channel} in override mode')
         return 0
     
     def disable_override(self, board, channel):
@@ -191,7 +196,15 @@ class Driver:
         if int(self.device.query('b').rstrip()[-1]) != board:
             self.log.warn(f'Error in disabling override for board {board} channel {channel}')
             return float(-1)
+
+        self.log.info(f'Board {board} channel {channel} override has been disabled')
         return 0
+    
+    def close(self):
+        """ Closes the connection to the device """
+
+        self.device.close()
+        self.log.info(f'Closed connection to device at {self.addr}')
     
     # Technical methods (not to be exposed)
 

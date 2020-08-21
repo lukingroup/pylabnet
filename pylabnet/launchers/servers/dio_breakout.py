@@ -1,21 +1,26 @@
 from pyvisa import ResourceManager, VisaIOError
 import socket
 from pylabnet.hardware.awg.dio_breakout import Driver
-from pylabnet.utils.helper_methods import show_console, hide_console
+from pylabnet.utils.helper_methods import show_console, hide_console, load_config
 from pylabnet.network.client_server.dio_breakout import Service
 from pylabnet.network.core.generic_server import GenericServer
 
-
-addr = 'ASRL3::INSTR'
 
 def launch(**kwargs):
     """ Connects to DIO breakout and instantiates server
 
     :param kwargs: (dict) containing relevant kwargs
         :logger: instance of LogClient for logging purposes
-        :port: (int) port number for the Cnt Monitor server
+        :port: (int) port number for the DIO breakout server
+        :config: (str) name of config file to us
     """
 
+    # Try to load settings
+    if kwargs['config'] is None:
+        addr = load_config('dio_breakout', logger=kwargs['logger'])['address']
+    else:
+        addr = load_config(kwargs['config'], logger=kwargs['logger'])['address']
+        
     # Try to connect
     try:
         dio = Driver(address=addr, logger=kwargs['logger'])

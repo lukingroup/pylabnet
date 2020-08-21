@@ -67,7 +67,6 @@ setup(
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
         'rpyc>=4.1.2',
-        'si_prefix>=1.2.2',
-        'zhinst>=20.1.1211'
+        'si_prefix>=1.2.2'
     ]
 )

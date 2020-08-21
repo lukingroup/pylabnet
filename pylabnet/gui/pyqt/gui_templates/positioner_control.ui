@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1609</width>
-    <height>773</height>
+    <height>813</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1228,7 +1228,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -1259,7 +1259,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -1290,7 +1290,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -2099,7 +2099,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -2151,7 +2151,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -2307,7 +2307,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -3116,7 +3116,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -3272,7 +3272,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>
@@ -3428,7 +3428,7 @@ color: rgb(255, 255, 255);</string>
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>100000</number>
              </property>
              <property name="value">
               <number>1</number>

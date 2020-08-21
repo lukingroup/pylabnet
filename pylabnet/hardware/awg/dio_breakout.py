@@ -154,6 +154,45 @@ class Driver:
                           'Connection may be corrupted.')
             return 1
     
+    def override(self, board, channel, state=True):
+        """ Overrides HDAWG output
+
+        :param board: (int) integer between 0 and 7 (assuming 8 boards)
+        :param channel: (int) integer between 0 and 3
+        :param state: (bool) whether or not to force hi or lo
+
+        :return: (int) 0 if successful
+        """
+
+        if self._set_board(board) + self._set_channel(channel):
+            self.log.warn(f'Did not override board {board} channel {channel}')
+            return float(-777)
+
+        self.device.write(f'F {1 if state else 0}')
+        if int(self.device.query('b').rstrip()[-1]) != board:
+            self.log.warn(f'Error in overriding board {board} channel {channel}')
+            return float(-1)
+        return 0
+    
+    def disable_override(self, board, channel):
+        """ Disables the override
+
+        :param board: (int) integer between 0 and 7 (assuming 8 boards)
+        :param channel: (int) integer between 0 and 3
+
+        :return: (int) 0 if successful
+        """
+
+        if self._set_board(board) + self._set_channel(channel):
+            self.log.warn(f'Did not disable override for board {board} channel {channel}')
+            return float(-777)
+
+        self.device.write('F -1')
+        if int(self.device.query('b').rstrip()[-1]) != board:
+            self.log.warn(f'Error in disabling override for board {board} channel {channel}')
+            return float(-1)
+        return 0
+    
     # Technical methods (not to be exposed)
 
     def _set_board(self, board):

@@ -22,6 +22,12 @@ class Service(ServiceBase):
     def exposed_save(self):
         return self._module.save()
 
+    def exposed_override(self, board, channel, state=True):
+        return self._module.override(board, channel, state)
+
+    def exposed_disable_override(self, board, channel):
+        return self._module.disable_override(board, channel)
+
 
 class Client(ClientBase):
 
@@ -42,3 +48,9 @@ class Client(ClientBase):
 
     def save(self):
         return self._service.exposed_save()
+
+    def override(self, board, channel, state=True):
+        return self._service.exposed_override(board, channel, state)
+
+    def disable_override(self, board, channel):
+        return self._service.exposed_disable_override(board, channel)

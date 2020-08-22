@@ -293,12 +293,18 @@ class Controller:
 
             # Check for button release
             if self.gui.was_button_released(walker):
-                self.pos.stop(channel)
+                self.stop_all()
                 self.gui.set_scalar(False, self.is_moving[channel])
                 self.gui.change_button_background_color(walker, 'black')
                 time.sleep(0.05)
                 self._set_voltage_display(channel)
                 walking = False
+
+                # Reset all walk buttons so no steps are taken anymore
+                for button in self.walk_left:
+                    self.gui.reset_button(button)
+                for button in self.walk_right:
+                    self.gui.reset_button(button)
             else:
 
                 # Update channel and move

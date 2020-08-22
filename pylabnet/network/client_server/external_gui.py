@@ -93,12 +93,18 @@ class Service(ServiceBase):
 
     def exposed_set_button_text(self, event_label, text):
         return self._module.set_button_text(event_label, text)
-    
+
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
     def exposed_was_button_released(self, event_label):
         return self._module.was_button_released(event_label)
+
+    def exposed_reset_button(self, event_label):
+        return self._module.reset_button(event_label)
+
+    def exposed_is_pressed(self, event_label):
+        return self._module.is_pressed(event_label)
 
     def exposed_change_button_background_color(self, event_label, color):
         return self._module.change_button_background_color(event_label, color)
@@ -205,6 +211,12 @@ class Client(ClientBase):
     def was_button_released(self, event_label):
         return self._service.exposed_was_button_released(event_label)
 
+    def is_pressed(self, event_label):
+        return self._service.exposed_is_pressed(event_label)
+
+    def reset_button(self, event_label):
+        return self._service.exposed_reset_button(event_label)
+
     def change_button_background_color(self, event_label, color):
         return self._service.exposed_change_button_background_color(event_label, color)
 
@@ -222,7 +234,7 @@ class Client(ClientBase):
 
     def set_button_text(self, event_label, text):
         return self._service.exposed_set_button_text(event_label, text)
-    
+
     def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
         """ Saves the current GUI state into a config file as a dictionary
 

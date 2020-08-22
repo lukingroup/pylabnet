@@ -15,10 +15,10 @@ class Controller:
         step_left=NUM_CHANNELS, step_right=NUM_CHANNELS, walk_left=NUM_CHANNELS,
         walk_right=NUM_CHANNELS, n_steps=NUM_CHANNELS, is_moving=NUM_CHANNELS,
         amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS,
-        lock_button=NUM_CHANNELS/3
+        lock_button=int(NUM_CHANNELS/3)
     )
     DC_TOLERANCE = 0.1
-    AXIS_ORDER = [[4, 3, 7], [6, 1, 3], [8, 0, 2]]
+    AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
 
     def __init__(self, nanopos_client: smaract_mcs2.Client , gui_client, log_client=None, config=None):
         """ Instantiates the controller
@@ -45,7 +45,7 @@ class Controller:
         self.prev_voltage = [50]*self.NUM_CHANNELS
         self.voltage_override = False
         self.config=config
-        self.lock_status = [False]*self.NUM_CHANNELS/3
+        self.lock_status = [False]*int(self.NUM_CHANNELS/3)
 
     def initialize_gui(self):
         """ Initializes the GUI (assigns channels)"""
@@ -98,7 +98,7 @@ class Controller:
 
             # Check for lock events
             locked = self._handle_lock(channel_index)
-            
+
             # Get GUI values
             params = self.get_GUI_parameters(channel_index)
 
@@ -108,39 +108,37 @@ class Controller:
             # Handle parameter updates
             self._update_parameters(channel_index, params)
 
-            if not locked:
-                
-                # Handle DC change
-                # this line of code was throwing an error (params[5] comes up None), so we handle it here
-                voltage_failure = False
-                try:
-                    if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
-                        self.pos.set_voltage(channel_index, params[5])
-                except Exception as e:
-                    voltage_failure = True
-                    self.log.warn(f'{e}, failed to check DC voltage change for channel {channel_index}')
+            # Handle DC change
+            # this line of code was throwing an error (params[5] comes up None), so we handle it here
+            voltage_failure = False
+            try:
+                if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE and not locked:
+                    self.pos.set_voltage(channel_index, params[5])
+            except Exception as e:
+                voltage_failure = True
+                self.log.warn(f'{e}, failed to check DC voltage change for channel {channel_index}')
 
-                # Handle a step event
-                if self.gui.was_button_pressed(self.step_left[channel_index]):
-                    self.gui.change_button_background_color(self.step_left[channel_index], color='red')
-                    self.pos.n_steps(channel_index, n=-params[0])
-                    time.sleep(0.15)
-                    self.gui.change_button_background_color(self.step_left[channel_index], color='black')
-                    self._set_voltage_display(channel_index)
-                if self.gui.was_button_pressed(self.step_right[channel_index]):
-                    self.gui.change_button_background_color(self.step_right[channel_index], color='red')
-                    self.pos.n_steps(channel_index, n=params[0])
-                    time.sleep(0.15)
-                    self.gui.change_button_background_color(self.step_right[channel_index], color='black')
-                    self._set_voltage_display(channel_index)
+            # Handle a step event
+            if self.gui.was_button_pressed(self.step_left[channel_index]) and not locked:
+                self.gui.change_button_background_color(self.step_left[channel_index], color='red')
+                self.pos.n_steps(channel_index, n=-params[0])
+                time.sleep(0.15)
+                self.gui.change_button_background_color(self.step_left[channel_index], color='black')
+                self._set_voltage_display(channel_index)
+            if self.gui.was_button_pressed(self.step_right[channel_index]) and not locked:
+                self.gui.change_button_background_color(self.step_right[channel_index], color='red')
+                self.pos.n_steps(channel_index, n=params[0])
+                time.sleep(0.15)
+                self.gui.change_button_background_color(self.step_right[channel_index], color='black')
+                self._set_voltage_display(channel_index)
 
-                # Handle walk event
-                walker = self.walk_left[channel_index]
-                if self.gui.was_button_pressed(walker):
-                    self._walk(channel_index, walker, params, left=True)
-                walker = self.walk_right[channel_index]
-                if self.gui.was_button_pressed(walker):
-                    self._walk(channel_index,walker, params, left=False)
+            # Handle walk event
+            walker = self.walk_left[channel_index]
+            if self.gui.was_button_pressed(walker) and not locked:
+                self._walk(channel_index, walker, params, left=True)
+            walker = self.walk_right[channel_index]
+            if self.gui.was_button_pressed(walker) and not locked:
+                self._walk(channel_index,walker, params, left=False)
 
             # Handle GUI Saving and Loading
             self._load_save_settings()
@@ -327,7 +325,7 @@ class Controller:
 
     def _handle_lock(self, current_channel):
         """ Checks whether any channels were locked and applies/removes lock
-        
+
         :param current_channel: (int) current channel index
         """
 
@@ -348,7 +346,7 @@ class Controller:
             # Check if the current channel corresponds to this lock button and apply
             if current_channel in self.AXIS_ORDER[index]:
                 locked = self.lock_status[index]
-        
+
         return locked
 
 

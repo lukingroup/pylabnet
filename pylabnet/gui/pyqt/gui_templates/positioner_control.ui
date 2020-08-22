@@ -199,8 +199,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          <item>
           <widget class="QPushButton" name="lock_button_1">
            <property name="styleSheet">
-            <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-background-color: rgb(100, 0, 0);</string>
+            <string notr="true">background-color: rgb(100, 0, 0);</string>
            </property>
            <property name="text">
             <string>Lock</string>
@@ -1334,8 +1333,7 @@ color: rgb(255, 255, 255);</string>
          <item>
           <widget class="QPushButton" name="lock_button_2">
            <property name="styleSheet">
-            <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-background-color: rgb(100, 0, 0);</string>
+            <string notr="true">background-color: rgb(100, 0, 0);</string>
            </property>
            <property name="text">
             <string>Lock</string>
@@ -2469,8 +2467,7 @@ color: rgb(255, 255, 255);</string>
          <item>
           <widget class="QPushButton" name="lock_button_3">
            <property name="styleSheet">
-            <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-background-color: rgb(100, 0, 0);</string>
+            <string notr="true">background-color: rgb(100, 0, 0);</string>
            </property>
            <property name="text">
             <string>Lock</string>
@@ -3612,7 +3609,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2432</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

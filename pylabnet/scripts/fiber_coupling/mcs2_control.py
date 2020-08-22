@@ -344,10 +344,19 @@ class Controller:
                     self.lock_status[index] = False
                     self.gui.change_button_background_color(lock_button, 'rgb(100, 0, 0)')
                     self.gui.set_button_text(lock_button, 'Lock')
+
+                    # Unlock DC voltage
+                    for channel in self.AXIS_ORDER[index]:
+                        self.gui.deactivate_scalar(self.voltage[channel])
+
                 else:
                     self.lock_status[index] = True
                     self.gui.change_button_background_color(lock_button, 'rgb(0, 100, 0)')
                     self.gui.set_button_text(lock_button, 'Unlock')
+
+                    # Lock DC voltage
+                    for channel in self.AXIS_ORDER[index]:
+                        self.gui.activate_scalar(self.voltage[channel])
 
             # Check if the current channel corresponds to this lock button and apply
             if current_channel in self.AXIS_ORDER[index]:

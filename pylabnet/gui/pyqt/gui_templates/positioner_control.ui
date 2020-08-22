@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1609</width>
-    <height>813</height>
+    <width>2432</width>
+    <height>1157</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -196,6 +196,19 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          <string>Objective</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QPushButton" name="lock_button_1">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(100, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>Lock</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_3">
            <item row="0" column="0">
@@ -1318,6 +1331,19 @@ color: rgb(255, 255, 255);</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
+          <widget class="QPushButton" name="lock_button_2">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(100, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>Lock</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <layout class="QGridLayout" name="gridLayout_5">
            <item row="0" column="0">
             <layout class="QGridLayout" name="gridLayout_6">
@@ -2439,6 +2465,19 @@ color: rgb(255, 255, 255);</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_7">
          <item>
+          <widget class="QPushButton" name="lock_button_3">
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(100, 0, 0);</string>
+           </property>
+           <property name="text">
+            <string>Lock</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
           <layout class="QGridLayout" name="gridLayout_9">
            <item row="0" column="0">
             <layout class="QGridLayout" name="gridLayout_10">
@@ -2478,7 +2517,7 @@ color: rgb(255, 255, 255);</string>
               </widget>
              </item>
              <item row="0" column="2">
-              <widget class="QPushButton" name="step_left_1">
+              <widget class="QPushButton" name="step_right_1">
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -2548,7 +2587,7 @@ color: rgb(255, 255, 255);</string>
               </widget>
              </item>
              <item row="2" column="2">
-              <widget class="QPushButton" name="step_right_1">
+              <widget class="QPushButton" name="step_left_1">
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -2683,7 +2722,7 @@ color: rgb(255, 255, 255);</string>
            <item row="1" column="0">
             <layout class="QGridLayout" name="gridLayout_11">
              <item row="0" column="2">
-              <widget class="QPushButton" name="walk_left_1">
+              <widget class="QPushButton" name="walk_right_1">
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -2753,7 +2792,7 @@ color: rgb(255, 255, 255);</string>
               </widget>
              </item>
              <item row="2" column="2">
-              <widget class="QPushButton" name="walk_right_1">
+              <widget class="QPushButton" name="walk_left_1">
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -3569,7 +3608,7 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1609</width>
+     <width>2432</width>
      <height>26</height>
     </rect>
    </property>

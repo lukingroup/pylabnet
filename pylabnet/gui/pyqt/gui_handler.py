@@ -168,6 +168,14 @@ class GUIHandler():
         return self.gui_client.was_button_released(event_label)
 
     @handle_gui_errors
+    def is_pressed(self, event_label):
+        return self.gui_client.is_pressed(event_label)
+
+    @handle_gui_errors
+    def reset_button(self, event_label):
+        return self.gui_client.reset_button(event_label)
+
+    @handle_gui_errors
     def change_button_background_color(self, event_label, color):
         return self.gui_client.change_button_background_color(event_label, color)
 
@@ -178,6 +186,10 @@ class GUIHandler():
     @handle_gui_errors
     def set_item_index(self, container_label, index):
         return self.gui_client.set_item_index(container_label, index)
+
+    @handle_gui_errors
+    def set_button_text(self, event_label, text):
+        return self.gui_client.set_button_text(event_label, text)
 
     @handle_gui_errors
     def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):

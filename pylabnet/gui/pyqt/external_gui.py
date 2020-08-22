@@ -246,6 +246,22 @@ class Window(QtWidgets.QMainWindow):
 
         return self.event_buttons[event_label].get_release_state()
 
+    def is_pressed(self, event_label):
+        """ Returns whether or not a button is pressed down
+
+        :return: (bool)
+        """
+
+        return self.event_buttons[event_label].is_pressed()
+
+    def reset_button(self, event_label):
+        """ Resets button internal registers to false
+
+        :param event_label: (str) key for button to check
+        """
+
+        self.event_buttons[event_label].reset_button()
+
     def change_button_background_color(self, event_label, color):
         """ Change background color of button
 
@@ -253,6 +269,15 @@ class Window(QtWidgets.QMainWindow):
         :param color: (str) color to change to
         """
         self.event_buttons[event_label].change_background_color(color)
+
+    def set_button_text(self, event_label, text):
+        """ Change button text
+
+        :param event_label: (str) key for button to change
+        :param text: (str) text to set to
+        """
+
+        self.event_buttons[event_label].set_text(text)
 
     def get_container_info(self, container_label):
         return self.containers[container_label].get_items()
@@ -895,11 +920,17 @@ class EventButton:
         """ Resets pushed state to False """
 
         self.was_pushed = False
+        self.was_released = False
 
     def change_background_color(self, color):
         """ Changes background_color of button"""
 
         self.widget.setStyleSheet(f"background-color: {color}")
+
+    def set_text(self, text):
+        """ Sets button text"""
+
+        self.widget.setText(text)
 
     def get_state(self):
         """ Returns whether or not the button has been pressed and resets button state
@@ -919,7 +950,17 @@ class EventButton:
 
         result = copy.deepcopy(self.was_released)
         self.was_released = False
+        if result or not self.widget.isDown():
+            result = True
         return result
+
+    def is_pressed(self):
+        """ Checks whether or not the physical button is currently pressed
+
+        :return: (bool) whether or not the button is down
+        """
+
+        return self.widget.isDown()
 
 
 class Container:

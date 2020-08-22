@@ -91,6 +91,9 @@ class Service(ServiceBase):
     def exposed_get_text(self, label_label):
         return pickle.dumps(self._module.get_text(label_label))
 
+    def exposed_set_button_text(self, event_label, text):
+        return self._module.set_button_text(event_label, text)
+    
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
@@ -217,6 +220,9 @@ class Client(ClientBase):
     def set_item_index(self, container_label, index):
         return self._service.exposed_set_item_index(container_label, index)
 
+    def set_button_text(self, event_label, text):
+        return self._service.exposed_set_button_text(event_label, text)
+    
     def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
         """ Saves the current GUI state into a config file as a dictionary
 

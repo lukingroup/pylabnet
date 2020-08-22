@@ -180,6 +180,10 @@ class GUIHandler():
         return self.gui_client.set_item_index(container_label, index)
 
     @handle_gui_errors
+    def set_button_text(self, event_label, text):
+        return self.gui_client.set_button_text(event_label, text)
+    
+    @handle_gui_errors
     def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
         return self.gui_client.save_gui(config_filename, folder_root, logger, scalars, labels)
 

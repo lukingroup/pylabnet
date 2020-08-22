@@ -14,9 +14,11 @@ class Controller:
     WIDGET_DICT = dict(
         step_left=NUM_CHANNELS, step_right=NUM_CHANNELS, walk_left=NUM_CHANNELS,
         walk_right=NUM_CHANNELS, n_steps=NUM_CHANNELS, is_moving=NUM_CHANNELS,
-        amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS
+        amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS,
+        lock_button=NUM_CHANNELS/3
     )
     DC_TOLERANCE = 0.1
+    AXIS_ORDER = [[4, 3, 7], [6, 1, 3], [8, 0, 2]]
 
     def __init__(self, nanopos_client: smaract_mcs2.Client , gui_client, log_client=None, config=None):
         """ Instantiates the controller
@@ -34,7 +36,7 @@ class Controller:
         # Unpack all widgets
         (self.step_left, self.step_right, self.walk_left, self.walk_right,
          self.n_steps, self.is_moving, self.amplitude, self.frequency,
-         self.velocity, self.voltage) = generate_widgets(self.WIDGET_DICT)
+         self.velocity, self.voltage, self.lock_button) = generate_widgets(self.WIDGET_DICT)
 
         # Additional attributes
         self.prev_amplitude = [50]*self.NUM_CHANNELS
@@ -43,6 +45,7 @@ class Controller:
         self.prev_voltage = [50]*self.NUM_CHANNELS
         self.voltage_override = False
         self.config=config
+        self.lock_status = [False]*self.NUM_CHANNELS/3
 
     def initialize_gui(self):
         """ Initializes the GUI (assigns channels)"""
@@ -66,6 +69,12 @@ class Controller:
             self.config, 'config_label'
         )
 
+        # Lock buttons
+        for lock_button in self.lock_button:
+            self.gui.assign_event_button(
+                event_widget=lock_button, event_label=lock_button
+            )
+
     def initialize_parameters(self, channel, params):
         """ Initializes all parameters to values given by params, except for DC voltage
 
@@ -87,6 +96,9 @@ class Controller:
         # Iterate through channels
         for channel_index in range(self.NUM_CHANNELS):
 
+            # Check for lock events
+            locked = self._handle_lock(channel_index)
+            
             # Get GUI values
             params = self.get_GUI_parameters(channel_index)
 
@@ -96,36 +108,39 @@ class Controller:
             # Handle parameter updates
             self._update_parameters(channel_index, params)
 
-            # Handle DC change
-            # this line of code was throwing an error (params[5] comes up None), so we handle it here
-            voltage_failure = False
-            try:
-                if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
-                    self.pos.set_voltage(channel_index, params[5])
-            except:
-                voltage_failure = True
+            if not locked:
+                
+                # Handle DC change
+                # this line of code was throwing an error (params[5] comes up None), so we handle it here
+                voltage_failure = False
+                try:
+                    if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE:
+                        self.pos.set_voltage(channel_index, params[5])
+                except Exception as e:
+                    voltage_failure = True
+                    self.log.warn(f'{e}, failed to check DC voltage change for channel {channel_index}')
 
-            # Handle a step event
-            if self.gui.was_button_pressed(self.step_left[channel_index]):
-                self.gui.change_button_background_color(self.step_left[channel_index], color='red')
-                self.pos.n_steps(channel_index, n=-params[0])
-                time.sleep(0.15)
-                self.gui.change_button_background_color(self.step_left[channel_index], color='black')
-                self._set_voltage_display(channel_index)
-            if self.gui.was_button_pressed(self.step_right[channel_index]):
-                self.gui.change_button_background_color(self.step_right[channel_index], color='red')
-                self.pos.n_steps(channel_index, n=params[0])
-                time.sleep(0.15)
-                self.gui.change_button_background_color(self.step_right[channel_index], color='black')
-                self._set_voltage_display(channel_index)
+                # Handle a step event
+                if self.gui.was_button_pressed(self.step_left[channel_index]):
+                    self.gui.change_button_background_color(self.step_left[channel_index], color='red')
+                    self.pos.n_steps(channel_index, n=-params[0])
+                    time.sleep(0.15)
+                    self.gui.change_button_background_color(self.step_left[channel_index], color='black')
+                    self._set_voltage_display(channel_index)
+                if self.gui.was_button_pressed(self.step_right[channel_index]):
+                    self.gui.change_button_background_color(self.step_right[channel_index], color='red')
+                    self.pos.n_steps(channel_index, n=params[0])
+                    time.sleep(0.15)
+                    self.gui.change_button_background_color(self.step_right[channel_index], color='black')
+                    self._set_voltage_display(channel_index)
 
-            # Handle walk event
-            walker = self.walk_left[channel_index]
-            if self.gui.was_button_pressed(walker):
-                self._walk(channel_index, walker, params, left=True)
-            walker = self.walk_right[channel_index]
-            if self.gui.was_button_pressed(walker):
-                self._walk(channel_index,walker, params, left=False)
+                # Handle walk event
+                walker = self.walk_left[channel_index]
+                if self.gui.was_button_pressed(walker):
+                    self._walk(channel_index, walker, params, left=True)
+                walker = self.walk_right[channel_index]
+                if self.gui.was_button_pressed(walker):
+                    self._walk(channel_index,walker, params, left=False)
 
             # Handle GUI Saving and Loading
             self._load_save_settings()
@@ -310,6 +325,32 @@ class Controller:
                 scalars=scalars
             )
 
+    def _handle_lock(self, current_channel):
+        """ Checks whether any channels were locked and applies/removes lock
+        
+        :param current_channel: (int) current channel index
+        """
+
+        locked = False
+        for index, lock_button in enumerate(self.lock_button):
+            if self.gui.was_button_pressed(lock_button):
+
+                # Check if the stack was already locked, then unlock, else lock
+                if self.lock_status[index]:
+                    self.lock_status[index] = False
+                    self.gui.change_button_background_color(lock_button, 'rgb(100, 0, 0)')
+                    self.gui.set_button_text(lock_button, 'Lock')
+                else:
+                    self.lock_status[index] = True
+                    self.gui.change_button_background_color(lock_button, 'rgb(0, 100, 0)')
+                    self.gui.set_button_text(lock_button, 'Unlock')
+
+            # Check if the current channel corresponds to this lock button and apply
+            if current_channel in self.AXIS_ORDER[index]:
+                locked = self.lock_status[index]
+        
+        return locked
+
 
 def launch(**kwargs):
     """ Launches the full nanopositioner control + GUI script """
@@ -329,11 +370,11 @@ def launch(**kwargs):
         params = control.get_GUI_parameters(channel_index)
         control.initialize_parameters(channel_index, params)
 
-    # try:
-    #     control.load_settings()
-    # except Exception as e:
-    #     logger.warn(e)
-    #     logger.warn('Failed to load settings from config file')
+    try:
+        control.load_settings()
+    except Exception as e:
+        logger.warn(e)
+        logger.warn('Failed to load settings from config file')
 
     while True:
 

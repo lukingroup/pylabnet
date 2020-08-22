@@ -254,6 +254,15 @@ class Window(QtWidgets.QMainWindow):
         """
         self.event_buttons[event_label].change_background_color(color)
 
+    def set_button_text(self, event_label, text):
+        """ Change button text
+
+        :param event_label: (str) key for button to change
+        :param text: (str) text to set to
+        """
+        
+        self.event_buttons[event_label].set_text(text)
+    
     def get_container_info(self, container_label):
         return self.containers[container_label].get_items()
 
@@ -900,6 +909,11 @@ class EventButton:
         """ Changes background_color of button"""
 
         self.widget.setStyleSheet(f"background-color: {color}")
+
+    def set_text(self, text):
+        """ Sets button text"""
+
+        self.widget.setText(text)
 
     def get_state(self):
         """ Returns whether or not the button has been pressed and resets button state

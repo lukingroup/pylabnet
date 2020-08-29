@@ -67,9 +67,9 @@ class Optimizer:
         pass
 
 
-
-	"""
-	<IQOptimizer planned implementation example:>
+class IQOptimizer(Optimizer):
+	"""<IQOptimizer planned implementation example:>
+	
 	opt1 = IQOptimizer(mw_source, hd, sa, carrier, signal_freq)
 	opt1.opt()
 	<Sets optimized values using param_guess given (or default param_guess array)>
@@ -78,9 +78,6 @@ class Optimizer:
 	opt1.opt()
 	<This now runs a faster optimization using the parameters collected from the first optimization.>
 	"""
-
-
-class IQOptimizer(Optimizer):
 
     def __init__(self, mw_source, hd, sa, carrier, signal_freq, num_points = 30, reopt = False, param_guess = ([60, 0.85, 0.65, 0.005, 0.005]), phase_window = 20, q_window = 0.3, dc_i_window = 0.02, dc_q_window = 0.02, plot_traces = True):
         """ Instantiate IQ optimizer

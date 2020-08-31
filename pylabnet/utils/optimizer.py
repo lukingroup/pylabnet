@@ -218,8 +218,8 @@ class IQOptimizer(Optimizer):
 
 
     def opt(self)
-        self.full_opt_lower_sideband()
-        self.full_opt_carrier()
+        self.opt_lower_sideband()
+        self.opt_carrier()
 
 
 	def initialize_reopt_params(self, reopt = True, phase_window = 10, q_window = 0.2, dc_i_window = 0.01, dc_q_window = 0.01)

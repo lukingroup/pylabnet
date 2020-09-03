@@ -879,7 +879,7 @@ def launch(**kwargs):
     config = load_config(kwargs['config'], logger=logger)
 
     wavemeter_client = clients['high_finesse_ws7']
-    ao_client = clients['nidaqmx_wlm']
+    ao_client = clients['nidaqmx']
     gui_client = guis['wavemeter_monitor']
 
     # Instantiate Monitor script

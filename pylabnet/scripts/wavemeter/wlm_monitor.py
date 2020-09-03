@@ -2,7 +2,7 @@ from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
-from pylabnet.utils.helper_methods import unpack_launcher, create_server
+from pylabnet.utils.helper_methods import unpack_launcher, create_server, load_config
 from pylabnet.utils.logging.logger import LogClient
 
 import numpy as np
@@ -876,6 +876,7 @@ def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    # config = load_config(kwargs['config'])
 
     wavemeter_client = clients['high_finesse_ws7']
     ao_client = clients['nidaqmx_wlm']

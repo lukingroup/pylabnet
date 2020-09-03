@@ -876,7 +876,7 @@ def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    # config = load_config(kwargs['config'])
+    config = load_config(kwargs['config'], logger=logger)
 
     wavemeter_client = clients['high_finesse_ws7']
     ao_client = clients['nidaqmx_wlm']
@@ -904,15 +904,8 @@ def launch(**kwargs):
     update_server.start()
 
     if params is None:
-        params = dict(channel_params=[dict(
-            channel=1,
-            name="Velocity",
-            AO=dict(client='cDAQ1', channel='ao0'),
-            PID=dict(p=0.15, i=0.01, d=0),
-            memory=100,
-            setpoint=406.7,
-            voltage_monitor=True
-            )])
+        channel_params = [p for p in config['channels'].values()]
+        params = dict(channel_params=channel_params)
 
     # Set parameters
     # Can use these as default parameters for loading up the monitor initially. New parameters can be input afterwards

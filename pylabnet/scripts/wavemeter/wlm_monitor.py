@@ -617,13 +617,6 @@ class Client(ClientBase):
 class Channel:
     """Object containing all information regarding a single wavemeter channel"""
 
-    # Set acceptable voltage range for laser modulation
-    _min_voltage = -10
-    _max_voltage = 10
-
-    # Gain multiplier for PID
-    _gain = 1000
-
     def __init__(self, channel_params, ao_clients=None):
         """
         Initializes all parameters given, sets others to default. Also sets up some defaults + placeholders for data
@@ -647,6 +640,9 @@ class Channel:
         self.gui_lock = False  # Current GUI lock boolean
         self.prev_gui_lock = None  # Previous GUI lock boolean
         self.prev_gui_setpoint = None  # Previous GUI setpoint
+        self._min_voltage = None
+        self._max_voltage = None
+        self._gain = None
 
         # Set all relevant parameters to default values
         self._overwrite_parameters(channel_params)
@@ -871,6 +867,13 @@ class Channel:
         else:
             self.plot_widget_offset = 0
 
+        if 'min_voltage' in channel_params:
+            self._min_voltage = channel_params['min_voltage']
+        if 'max_voltage' in channel_params:
+            self._max_voltage = channel_params['max_voltage']
+        if 'gain' in channel_params:
+            self._gain = channel_params['gain']
+
 
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
@@ -879,7 +882,7 @@ def launch(**kwargs):
     config = load_config(kwargs['config'], logger=logger)
 
     wavemeter_client = clients['high_finesse_ws7']
-    ao_client = clients['nidaqmx']
+    ao_client = config[]
     gui_client = guis['wavemeter_monitor']
 
     # Instantiate Monitor script

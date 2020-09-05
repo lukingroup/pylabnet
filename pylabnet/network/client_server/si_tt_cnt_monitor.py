@@ -31,11 +31,12 @@ class Service(ServiceBase):
         )
 
     def exposed_get_count_rate(self, name=None, ctr_index=0, integration=0.1):
-        return self._module.get_count_rate(
+        res_pickle = self._module.get_count_rate(
             name=name,
             ctr_index=ctr_index,
             integration=integration
         )
+        return pickle.dumps(res_pickle)
 
 
 class Client(ClientBase):
@@ -65,9 +66,10 @@ class Client(ClientBase):
         )
 
     def get_count_rate(self, name=None, ctr_index=0, integration=0.1):
-        return self._service.exposed_get_count_rate(
+        res_pickle = self._service.exposed_get_count_rate(
             name=name,
             ctr_index=ctr_index,
             integration=integration
         )
+        return pickle.loads(res_pickle)
 

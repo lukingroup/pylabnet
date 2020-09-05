@@ -443,13 +443,16 @@ class HeatMapFig(HeatMapInterface):
                 self._fig.data[0].x = self._x_ar
                 self._fig.data[0].z = self._z_ar
 
-    def set_lbls(self, x_str=None, y_str=None):
+    def set_lbls(self, x_str=None, y_str=None, z_str=None):
 
         if x_str is not None:
             self._fig.layout.xaxis.title = x_str
 
         if y_str is not None:
             self._fig.layout.yaxis.title = y_str
+
+        if z_str is not None:
+            self._fig.layout.coloraxis.colorbar.title = z_str
 
     def show(self):
         display(self._fig)

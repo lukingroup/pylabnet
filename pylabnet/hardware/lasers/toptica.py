@@ -42,8 +42,9 @@ class DLC_Pro:
         :return: (bool) whether or not emission is on or off
         """
 
-        self.dlc.write(b"(param-disp 'laser1:dl:cc:enabled)\n")
-        status = self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1]
+        self.dlc.write(b"(param-disp 'laser1:dl:cc:emission)\n")
+        result = self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')
+        status = result[1]
         if status == 't':
             return True
         elif status == 'f':
@@ -64,7 +65,7 @@ class DLC_Pro:
             if self.is_laser_on():
                 self.log.info('Turned on Toptica DL-Pro laser')
             else:
-                self.log.warn('Failed to verify that DL-Pro laser turned on')
+                self.log.warn('Laser could not be turned on. Physical emission button may need to be pressed')
 
     def turn_off(self):
         """ Turns off the laser """
@@ -73,9 +74,9 @@ class DLC_Pro:
             self.dlc.write(b"(param-set! 'laser1:dl:cc:enabled #f)\n")
             self.dlc.read_until(b'>', timeout=1)
             if self.is_laser_on():
-                self.log.warn('Failed to verify that DL-Pro laser turned on')
+                self.log.warn('Failed to verify that DL-Pro laser turned off')
             else:
-                self.log.info('Turned on Toptica DL-Pro laser')
+                self.log.info('Turned off Toptica DL-Pro laser')
         else:
             self.log.info('Laser is already off')
 

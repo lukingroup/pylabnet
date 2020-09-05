@@ -1,14 +1,14 @@
-""" Turns on toptica laser """
+""" Turns off toptica laser """
 
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.launchers.servers import toptica_dlc_pro
-from pylabnet.scripts.lasers import toptica_on
+from pylabnet.scripts.lasers import toptica_off
 
 
 def main():
 
     launcher = Launcher(
-        script=[toptica_on],
+        script=[toptica_off],
         server_req=[toptica_dlc_pro],
         gui_req=[],
         params=[None],

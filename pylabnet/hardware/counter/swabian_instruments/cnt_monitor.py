@@ -113,6 +113,23 @@ class Wrap:
         # Set attribute to validated ch_list
         self._ch_list[name] = ch_list
 
+    def init_rate_monitor(self, name=None):
+        """Sets up a measurement for count rates
+
+        :param name: (str) identifier for the counter
+        :param ch_list: (list) list of channels to measure
+        """
+
+        # If a name is not provided just use the index of the measurement
+        if name is None:
+            name = str(len(self._ctr))
+
+        # Instantiate Counter instance, see TT documentation
+        self._ctr[name] = TT.Countrate(
+            self._tagger,
+            channels=self._ch_list[name]
+        )
+    
     def get_count_rate(self, name=None, ctr_index=0, integration=0.1):
         """ Reports the current count rate
 
@@ -120,12 +137,9 @@ class Wrap:
         :param integration: (float) roughly how long to measure for
         """
 
-        t_start = time.monotonic()
         self.clear_ctr(name=name)
         time.sleep(integration)
-        counts = np.sum(self.get_counts(name=name)[ctr_index])
-        t_end = time.monotonic()
-        return counts/(t_end-t_start)
+        return self._ctr[name].getData()
 
     @staticmethod
     def handle_name(name):

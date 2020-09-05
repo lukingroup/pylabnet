@@ -30,6 +30,9 @@ class Service(ServiceBase):
             ch_list=ch_list
         )
 
+    def exposed_init_rate_monitor(self, name=None):
+        return self._module.init_rate_monitor(name=name)
+    
     def exposed_get_count_rate(self, name=None, ctr_index=0, integration=0.1):
         res_pickle = self._module.get_count_rate(
             name=name,
@@ -65,6 +68,9 @@ class Client(ClientBase):
             ch_list=ch_list
         )
 
+    def init_rate_monitor(self, name=None):
+        return self._service.exposed_init_rate_monitor(name=name)
+    
     def get_count_rate(self, name=None, ctr_index=0, integration=0.1):
         res_pickle = self._service.exposed_get_count_rate(
             name=name,

@@ -2,7 +2,9 @@
 
 import TimeTagger as TT
 import pickle
+import time
 import socket
+import numpy as np
 from pylabnet.utils.logging.logger import LogHandler
 
 
@@ -110,6 +112,20 @@ class Wrap:
 
         # Set attribute to validated ch_list
         self._ch_list[name] = ch_list
+
+    def get_count_rate(self, name=None, ctr_index=0, integration=0.1):
+        """ Reports the current count rate
+
+        :param name: (str) name of counter to use
+        :param integration: (float) roughly how long to measure for
+        """
+
+        t_start = time.monotonic()
+        self.clear_ctr(name=name)
+        time.sleep(integration)
+        counts = np.sum(self.get_counts(name=name)[ctr_index])
+        t_end = time.monotonic()
+        return counts/(t_end-t_start)
 
     @staticmethod
     def handle_name(name):

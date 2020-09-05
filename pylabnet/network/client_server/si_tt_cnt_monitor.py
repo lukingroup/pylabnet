@@ -30,6 +30,13 @@ class Service(ServiceBase):
             ch_list=ch_list
         )
 
+    def exposed_get_count_rate(self, name=None, ctr_index=0, integration=0.1):
+        return self._module.get_count_rate(
+            name=name,
+            ctr_index=ctr_index,
+            integration=integration
+        )
+
 
 class Client(ClientBase):
 
@@ -55,5 +62,12 @@ class Client(ClientBase):
         return self._service.exposed_set_channels(
             name=name,
             ch_list=ch_list
+        )
+
+    def get_count_rate(self, name=None, ctr_index=0, integration=0.1):
+        return self._service.exposed_get_count_rate(
+            name=name,
+            ctr_index=ctr_index,
+            integration=integration
         )
 

@@ -382,7 +382,7 @@ class WlmMonitor:
 
         # Assign zero buttons
         self.gui_handler.assign_event_button(
-            event_widget=self.zeros[plot_multiplier * (index + channel.plot_widget_offset) + 1],
+            event_widget=self.zeros[plot_multiplier * (index + channel.plot_widget_offset)],
             event_label=f'{channel.name}_zero'
         )
 
@@ -512,7 +512,7 @@ class WlmMonitor:
                         channel.label_updated = True
 
             # If GUI is not connected, check if we should try reconnecting to the GUI
-            elif  self.gui_handler.gui_reconnect:
+            elif self.gui_handler.gui_reconnect:
 
                 self.gui_handler.gui_connected = True
                 # self.gui_handler.connect() # Commented by CK, unsure what that does.

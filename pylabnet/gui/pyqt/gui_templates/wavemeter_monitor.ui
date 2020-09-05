@@ -399,8 +399,8 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
              <property name="maximumSize">
               <size>
-               <width>75</width>
-               <height>16777215</height>
+               <width>150</width>
+               <height>33</height>
               </size>
              </property>
              <property name="font">
@@ -418,6 +418,12 @@ color: rgb(0, 0, 0);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="zero_button_1">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>33</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">color: rgb(255, 255, 255);
 background-color: rgb(170, 0, 0);
@@ -664,8 +670,8 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
              <property name="maximumSize">
               <size>
-               <width>75</width>
-               <height>16777215</height>
+               <width>150</width>
+               <height>33</height>
               </size>
              </property>
              <property name="font">
@@ -683,6 +689,12 @@ color: rgb(0, 0, 0);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="zero_button_3">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>33</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">color: rgb(255, 255, 255);
 background-color: rgb(170, 0, 0);
@@ -929,8 +941,8 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
              <property name="maximumSize">
               <size>
-               <width>75</width>
-               <height>16777215</height>
+               <width>150</width>
+               <height>33</height>
               </size>
              </property>
              <property name="font">
@@ -948,6 +960,12 @@ color: rgb(0, 0, 0);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="zero_button_2">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>33</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">color: rgb(255, 255, 255);
 background-color: rgb(170, 0, 0);
@@ -1194,8 +1212,8 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
              <property name="maximumSize">
               <size>
-               <width>75</width>
-               <height>16777215</height>
+               <width>150</width>
+               <height>33</height>
               </size>
              </property>
              <property name="font">
@@ -1213,6 +1231,12 @@ color: rgb(0, 0, 0);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="zero_button_4">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>33</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">color: rgb(255, 255, 255);
 background-color: rgb(170, 0, 0);

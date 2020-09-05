@@ -93,7 +93,7 @@ class Launcher:
         self.auto_connect = auto_connect
         self.config = config
         self.params=params
-        self.script_server=script_server
+        self.use_script_server=script_server
         if name is None:
             if self.script is None:
                 self.name = 'Generic Launcher'
@@ -158,7 +158,7 @@ class Launcher:
 
         self._launch_guis()
         self._launch_servers()
-        if self.script_server:
+        if self.use_script_server:
             self._launch_script_server()
         hide_console()
         self._launch_scripts()

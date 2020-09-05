@@ -53,7 +53,7 @@ class Wrap:
         # Instantiate Counter instance, see TT documentation
         self._ctr[name] = TT.Counter(
             self._tagger,
-            channels=self._ch_list,
+            channels=self._ch_list[name],
             binwidth=bin_width,
             n_values=n_bins
         )

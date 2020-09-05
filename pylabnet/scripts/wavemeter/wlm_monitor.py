@@ -73,7 +73,7 @@ class WlmMonitor:
 
         :param channel_params: (list) of dictionaries containing all parameters. Example of full parameter set:
             {'channel': 1, 'name': 'Velocity', 'setpoint': 406.7, 'lock':True, 'memory': 20,
-             'PID': {'p': 1, 'i': 0.1, 'd': 0}, 'ao': {'client':'nidaqmx_client', 'channel': 'ao1'},
+             'pid': {'p': 1, 'i': 0.1, 'd': 0}, 'ao': {'client':'nidaqmx_client', 'channel': 'ao1'},
              'voltage_monitor': True}
 
             In more detail:
@@ -84,8 +84,8 @@ class WlmMonitor:
             - 'setpoint': setpoint for this channel. If not provided, or if None, the setpoint is not plotted/tracked
             - 'lock': boolean that tells us whether or not to turn on the lock. Ignored if setpoint is None. Default is
                 False.
-            - 'memory': Number of points for integral memory of PID (history of the integral). Default is 20.
-            - 'PID': dict containing PID parameters. Uses the pylabnet.scripts.PID module. By default instantiates the
+            - 'memory': Number of points for integral memory of pid (history of the integral). Default is 20.
+            - 'pid': dict containing pid parameters. Uses the pylabnet.scripts.pid module. By default instantiates the
                 default PID() object.
             - 'ao': dict containing two elements: 'client' which is a string that is the name of the ao client to use
                 for locking. This should match up with a key in self.ao_clients. 'channel'is an identifier for which
@@ -160,11 +160,11 @@ class WlmMonitor:
 
                     if 'memory' in parameter:
                         channel.memory = parameter['memory']
-                    if 'PID' in parameter:
+                    if 'pid' in parameter:
                         channel.pid.set_parameters(
-                            p=parameter['PID']['p'],
-                            i=parameter['PID']['i'],
-                            d=parameter['PID']['d'],
+                            p=parameter['pid']['p'],
+                            i=parameter['pid']['i'],
+                            d=parameter['pid']['d'],
                         )
 
                     # Ignore ao requests if clients have not been assigned
@@ -716,7 +716,7 @@ class Channel:
             self.prev_gui_setpoint = copy.deepcopy(self.gui_setpoint)
             self.sp_data = np.append(self.sp_data[1:], self.setpoint)
 
-        # Now deal with PID stuff
+        # Now deal with pid stuff
         self.pid.set_parameters(setpoint=0 if self.setpoint is None else self.setpoint)
 
         # Implement lock
@@ -814,17 +814,17 @@ class Channel:
         else:
             self.memory = 20
 
-        if 'PID' in channel_params:
+        if 'pid' in channel_params:
             self.pid = PID(
-                p=channel_params['PID']['p'],
-                i=channel_params['PID']['i'],
-                d=channel_params['PID']['d'],
+                p=channel_params['pid']['p'],
+                i=channel_params['pid']['i'],
+                d=channel_params['pid']['d'],
                 memory=self.memory,
                 setpoint=0 if self.setpoint is None else self.setpoint
             )
         else:
 
-            # Just initialize a default PID module
+            # Just initialize a default pid module
             self.pid = PID()
 
         if 'ao' in channel_params and self.ao_clients is not None:
@@ -835,6 +835,11 @@ class Channel:
                     'client': self.ao_clients[channel_params['ao']['client']],
                     'channel': channel_params['ao']['channel']
                 }
+
+                try:
+                    self.current_voltage = self.ao['client'].voltage()
+                except:
+                    self.current_voltage = 0
             except KeyError:
                 # Alert the user that ao initialization failed
                 self.ao = None

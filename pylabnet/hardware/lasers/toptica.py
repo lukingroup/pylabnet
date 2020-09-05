@@ -1,4 +1,5 @@
 from telnetlib import Telnet
+from copy import deepcopy
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -13,21 +14,22 @@ class DLC_Pro:
         :param port: (int) port number, toptica defaults to 1998
         :param logger: (LogClient)
         """
-        
+
         self.host = host
         self.port = port
         self.log = LogHandler(logger)
+        self.dlc = None
 
         # Check connection
         try:
 
             # Check laser connection
-            with Telnet(host=self.host, port=self.port) as dlc:
-                dlc.read_until(b'>', timeout=1)
-                dlc.write(b"(param-disp 'laser1:dl:type)\n")
-                laser_type = dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1]
-                dlc.write(b"(param-disp 'laser1:dl:serial-number)\n")
-                serial = int(dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1])
+            self.dlc = Telnet(host=self.host, port=self.port)
+            self.dlc.read_until(b'>', timeout=1)
+            self.dlc.write(b"(param-disp 'laser1:dl:type)\n")
+            laser_type = self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1]
+            self.dlc.write(b"(param-disp 'laser1:dl:serial-number)\n")
+            serial = int(self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1])
             self.log.info(f'Connected to Toptica {laser_type}, S/N {serial}')
 
         except ConnectionRefusedError:
@@ -40,19 +42,16 @@ class DLC_Pro:
         :return: (bool) whether or not emission is on or off
         """
 
-        with Telnet(host=self.host, port=self.port) as dlc:
-            dlc.read_until(b'>', timeout=1)
+        self.dlc.write(b"(param-disp 'laser1:dl:cc:enabled)\n")
+        status = self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1]
+        if status == 't':
+            return True
+        elif status == 'f':
+            return False
+        else:
+            self.log.warn('Could not determine properly whether the laser is on or off')
+            return False
 
-            dlc.write(b"(param-disp 'laser1:dl:cc:enabled)\n")
-            status = dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1]
-            if status == 't':
-                return True
-            elif status == 'f':
-                return False
-            else:
-                self.log.warn('Could not determine properly whether the laser is on or off')
-                return False
-    
     def turn_on(self):
         """ Turns on the laser """
 
@@ -60,10 +59,8 @@ class DLC_Pro:
         if self.is_laser_on():
             self.log.info('Laser is already on')
         else:
-            with Telnet(host=self.host, port=self.port) as dlc:
-                dlc.read_until(b'>', timeout=1)
-                dlc.write(b"(param-set! 'laser1:dl:cc:enabled #t)\n")
-                dlc.read_until(b'>', timeout=1)
+            self.dlc.write(b"(param-set! 'laser1:dl:cc:enabled #t)\n")
+            self.dlc.read_until(b'>', timeout=1)
             if self.is_laser_on():
                 self.log.info('Turned on Toptica DL-Pro laser')
             else:
@@ -73,10 +70,8 @@ class DLC_Pro:
         """ Turns off the laser """
 
         if self.is_laser_on():
-            with Telnet(host=self.host, port=self.port) as dlc:
-                dlc.read_until(b'>', timeout=1)
-                dlc.write(b"(param-set! 'laser1:dl:cc:enabled #f)\n")
-                dlc.read_until(b'>', timeout=1)
+            self.dlc.write(b"(param-set! 'laser1:dl:cc:enabled #f)\n")
+            self.dlc.read_until(b'>', timeout=1)
             if self.is_laser_on():
                 self.log.warn('Failed to verify that DL-Pro laser turned on')
             else:
@@ -90,10 +85,8 @@ class DLC_Pro:
         :return: (float) current voltage on piezo
         """
 
-        with Telnet(host=self.host, port=self.port) as dlc:
-            dlc.read_until(b'>', timeout=1)
-            dlc.write(b"(param-disp 'laser1:dl:pc:voltage-set)\n")
-            voltage = float(dlc.read_until(b'>', timeout=1).split()[-3])
+        self.dlc.write(b"(param-disp 'laser1:dl:pc:voltage-set)\n")
+        voltage = float(self.dlc.read_until(b'>', timeout=1).split()[-3])
 
         return voltage
 
@@ -103,8 +96,8 @@ class DLC_Pro:
         :param voltage: (float) voltage to set
         """
 
-        with Telnet(host=self.host, port=self.port) as dlc:
-            dlc.read_until(b'>', timeout=1)
-            dlc.write(f"(param-set! 'laser1:dl:pc:voltage-set {voltage})\n".encode('utf'))
-            dlc.read_until(b'>', timeout=1)
-            
+        v = deepcopy(voltage)
+        write_data = f"(param-set! 'laser1:dl:pc:voltage-set {v})\n"
+        write_data = write_data.encode('utf')
+        self.dlc.write(write_data)
+        self.dlc.read_until(b'>', timeout=1)

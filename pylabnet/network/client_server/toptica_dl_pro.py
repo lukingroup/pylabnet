@@ -1,3 +1,5 @@
+import pickle
+
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 
@@ -17,6 +19,7 @@ class Service(ServiceBase):
         return self._module.voltage()
 
     def exposed_set_voltage(self, voltage):
+        voltage = pickle.loads(voltage)
         return self._module.set_voltage(voltage)
 
 
@@ -35,6 +38,7 @@ class Client(ClientBase):
         return self._service.exposed_voltage()
 
     def set_voltage(self, voltage):
+        voltage = pickle.dumps(voltage)
         return self._service.exposed_set_voltage(voltage)
 
     def set_ao_voltage(self, ao_channel=[], voltages=[0]):
@@ -44,4 +48,5 @@ class Client(ClientBase):
         :param voltages: (list) list containing one element, the voltage to set
         """
 
-        return self._service.exposed_set_voltage(voltages[0])
+        voltage = pickle.dumps(voltages[0])
+        return self._service.exposed_set_voltage(voltage)

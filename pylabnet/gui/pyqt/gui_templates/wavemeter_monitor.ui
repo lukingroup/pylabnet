@@ -391,6 +391,12 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="event_button_1">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>75</width>
@@ -409,6 +415,16 @@ color: rgb(0, 0, 0);</string>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="zero_button_1">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(170, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Zero Voltage</string>
              </property>
             </widget>
            </widget>
@@ -640,6 +656,12 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="event_button_3">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>75</width>
@@ -658,6 +680,16 @@ color: rgb(0, 0, 0);</string>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="zero_button_3">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(170, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Zero Voltage</string>
              </property>
             </widget>
            </widget>
@@ -889,6 +921,12 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="event_button_2">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>75</width>
@@ -907,6 +945,16 @@ color: rgb(0, 0, 0);</string>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
+             </property>
+            </widget>
+            <widget class="QPushButton" name="zero_button_2">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(170, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Zero Voltage</string>
              </property>
             </widget>
            </widget>
@@ -1138,6 +1186,12 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
             </widget>
             <widget class="QPushButton" name="event_button_4">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="maximumSize">
               <size>
                <width>75</width>
@@ -1158,6 +1212,16 @@ color: rgb(0, 0, 0);</string>
               <string>CLEAR PLOT</string>
              </property>
             </widget>
+            <widget class="QPushButton" name="zero_button_4">
+             <property name="styleSheet">
+              <string notr="true">color: rgb(255, 255, 255);
+background-color: rgb(170, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Zero Voltage</string>
+             </property>
+            </widget>
            </widget>
           </widget>
          </item>
@@ -1174,7 +1238,7 @@ color: rgb(0, 0, 0);</string>
      <x>0</x>
      <y>0</y>
      <width>2822</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

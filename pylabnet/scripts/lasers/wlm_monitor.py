@@ -44,6 +44,7 @@ class WlmMonitor:
      _boolean_widgets,
      _label_widgets,
      _event_widgets) = generate_widgets()
+    zeros = [f'zero_button_{i}' for i in range(1,5)]
 
     def __init__(self, wlm_client, gui_client, logger_client, ao_clients=None, display_pts=5000, threshold=0.0002):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
@@ -379,6 +380,12 @@ class WlmMonitor:
                 label_label=channel.error_curve
             )
 
+        # Assign zero buttons
+        self.gui_handler.assign_event_button(
+            event_widget=self.zeros[plot_multiplier * (index + channel.plot_widget_offset) + 1],
+            event_label=f'{channel.name}_zero'
+        )
+
     def _update_channels(self):
         """ Updates all channels + displays
 
@@ -544,6 +551,9 @@ class WlmMonitor:
 
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
                 self.clear_channel(channel=channel.number)
+
+            if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=f'{channel.name}_zero'):
+                channel.zero_voltage()
 
     def _get_channels(self):
         """ Returns all active channel numbers
@@ -763,11 +773,12 @@ class Channel:
 
         try:
             if self.ao is not None:
+                v_set = (self._min_voltage + self._max_voltage)/2
                 self.ao['client'].set_ao_voltage(
                     ao_channel=self.ao['channel'],
-                    voltages=[0]
+                    voltages=[v_set]
                 )
-                self.current_voltage = 0
+                self.current_voltage = v_set
         except EOFError:
             self.ao = None
 

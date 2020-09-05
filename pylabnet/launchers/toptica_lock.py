@@ -2,7 +2,7 @@
 
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.launchers.servers import high_finesse_ws7, toptica_dlc_pro
-from pylabnet.scripts.wavemeter import wlm_monitor
+from pylabnet.scripts.lasers import wlm_monitor
 
 
 def main():

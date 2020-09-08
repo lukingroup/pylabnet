@@ -180,7 +180,8 @@ class StaticLineHardwareHandler():
         # staticlines and their corresponding setup functions.
         registered_staticline_modules = {
             'zi_hdawg':  self._setup_HDWAGDriver,
-            'nidaqmx_card': self._setup_NiDaqMxDriver
+            'nidaqmx_card': self._setup_NiDaqMxDriver,
+            'toptica': self._setup_toptica
         }
 
         # Check if hardware module is registered.

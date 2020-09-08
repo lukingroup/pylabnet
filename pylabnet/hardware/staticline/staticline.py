@@ -150,6 +150,12 @@ class StaticLineHardwareHandler():
         # Log successfull setup.
         self.log.info(f"NiDaq {self.hardware_module.dev} output {ao_output} successfully assigned to staticline {self.name}.")
 
+    def _setup_toptica(self, **kwargs):
+
+        self.up = lambda: self.hardware_module.turn_on()
+        self.down = lambda: self.hardware_module.turn_off()
+        self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
+
     def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''Handler connecting hardware class to StaticLine instance
 

@@ -117,6 +117,9 @@ class StaticLineHardwareHandler():
         self.up = lambda: self._HDAWG_toggle(1)
         self.down = lambda: self._HDAWG_toggle(0)
 
+        # Set correct mode to manual
+        self.hardware_module.seti('dios/0/mode', 0)
+
     def _setup_NiDaqMxDriver(self, **kwargs):
 
         # Retrieve arguments from keyword argument dictionary,

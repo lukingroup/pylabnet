@@ -405,7 +405,7 @@ class AWGModule():
         if self.module.getInt('elf/status') == 0:
             self.hd.log.info("Upload to the instrument successful.")
         if self.module.getInt('elf/status') == 1:
-            self.hd.log.warning("Upload to the instrument failed.")
+            self.hd.log.warn("Upload to the instrument failed.")
 
     def dyn_waveform_upload(self, index, waveform1, waveform2=None):
         """ Dynamically upload a numpy array into HDAWG Memory

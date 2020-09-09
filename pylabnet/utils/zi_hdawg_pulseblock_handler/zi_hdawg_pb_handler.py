@@ -274,6 +274,9 @@ class DIOPulseBlockHandler():
     def setup_hd(self):
         """Enable driving of DIO buses of relevant DIO bits."""
 
+        # Set DIO mode to AWG sequencer
+        self.hd.seti('dios/0/mode', 1)
+
         # Read in current configuration of DIO-bus.
         current_config = self.hd.geti('dios/0/drive')
 

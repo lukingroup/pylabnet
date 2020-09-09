@@ -441,6 +441,15 @@ class AWGModule():
             f'awgs/{awg_index}/waveform/waves/{index}', waveform_native
         )
 
+    def set_user_register(self, index, value):
+        """ Sets a user register to a desired value
+
+        :param index: (int) index of user register (from 0-15)
+        :param value: (int) value to set user register to
+        """
+
+        self.hd.setd(f'awgs/{self.index}/userregs/{index}', value)
+
 
 class Sequence():
     """ Helper class containing .seqc sequences and helper functions

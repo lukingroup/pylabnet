@@ -9,6 +9,18 @@ from pylabnet.utils.logging.logger import LogHandler
 
 
 class Wrap:
+    """ Wrapper for the full hardware interface to SITT. 
+
+    Can initialize multiple measurements with a single device/ same set of channels.
+    Desired workflow:
+
+    counter = Wrap(tagger, logger)
+    counter.set_ch_assignment(name='count_trace', ch_list=[1,2,3])
+    counter.start_ctr(name='count_trace')
+
+    counter.set_ch_assignment(name='rate_monitor', ch_list=[1])
+    counter.init_rate_monitor(name='rate_monitor')
+    """
 
     def __init__(self, tagger, logger=None):
         """Instantiate count monitor
@@ -38,9 +50,10 @@ class Wrap:
 
         # Set click channels
         self._ch_list = {}
+        self._gates = {}
 
     def start_ctr(self, name=None, bin_width=1000000000, n_bins=10000):
-        """Start counter
+        """Start counter - used for count-trace applications
 
         :param name: (str) identifier for the counter measurement
         :param bin_width: integer in ps for width of count bins
@@ -96,7 +109,7 @@ class Wrap:
         # Get x axis
         return self._ctr[name].getIndex()
 
-    def set_ch_assignment(self, name=None, ch_list=[1]):
+    def set_ch_assignment(self, name=None, ch_list=[1], gates=[]):
         """Sets the ch_list attribute of the wrapper to a valid
             list of channel numbers as desired by TT, also
             configures the default naming convention for channels
@@ -105,6 +118,7 @@ class Wrap:
         :param ch_list: list of integer numbers of channels,
                         following the convention 1 ... 8
                         for rising edge and negative for falling
+        :param gates: list of channels to use for gating
         """
 
         if name is None:
@@ -112,6 +126,8 @@ class Wrap:
 
         # Set attribute to validated ch_list
         self._ch_list[name] = ch_list
+
+        self._gates[name] = gates
 
     def init_rate_monitor(self, name=None):
         """Sets up a measurement for count rates
@@ -141,6 +157,22 @@ class Wrap:
         time.sleep(integration)
         return self._ctr[name].getData()
 
+    def setup_gated_counter(self, name, bins=1000):
+        """ Starts a new gated counter
+
+        :param name: (str) name of counter measurement to use
+        :param bins: (int) number of bins (gate windows) to store
+        """
+
+        self._ctr[name] = TT.CountBetweenMarkers(
+            self._tagger,
+            self._ch_list[name][0],
+            self._gates[name],
+            end_channel=-self._gates[name],
+            n_values=bins
+        )
+    
+    
     @staticmethod
     def handle_name(name):
         if name is None:

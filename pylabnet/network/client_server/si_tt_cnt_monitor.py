@@ -24,7 +24,7 @@ class Service(ServiceBase):
         res_pickle = self._module.get_x_axis(name=name)
         return pickle.dumps(res_pickle)
 
-    def exposed_set_channels(self, name, ch_list=[1]):
+    def exposed_set_channels(self, name, ch_list=[1], gates=None):
         return self._module.set_ch_assignment(
             name=name,
             ch_list=ch_list
@@ -62,7 +62,7 @@ class Client(ClientBase):
         res_pickle = self._service.exposed_get_x_axis(name=name)
         return pickle.loads(res_pickle)
 
-    def set_channels(self, name=None, ch_list=[1]):
+    def set_channels(self, name=None, ch_list=[1], gates=None):
         return self._service.exposed_set_channels(
             name=name,
             ch_list=ch_list

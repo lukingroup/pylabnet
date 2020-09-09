@@ -24,8 +24,6 @@ def launch(**kwargs):
         msg_str = 'Please make sure Swabian Instruments drivers are installed on this machine.'
         raise ModuleNotFoundError(msg_str)
 
-    DEFAULT_CH_LIST = [1]
-
     TT.setTimeTaggerChannelNumberScheme(TT.TT_CHANNEL_NUMBER_SCHEME_ONE)
 
     # Connect to the device, otherwise instantiate virtual connection
@@ -38,7 +36,6 @@ def launch(**kwargs):
 
     cnt_trace_wrap = Wrap(
         tagger=tagger,
-        ch_list=DEFAULT_CH_LIST,
         logger=kwargs['logger']
     )
 

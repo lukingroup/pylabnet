@@ -59,7 +59,7 @@ class CountMonitor:
 
     def set_params(self, bin_width=1e9, n_bins=1e4, ch_list=[1], plot_list=None):
         """ Sets counter parameters
-        
+
         :param bin_width: bin width in ps
         :param n_bins: number of bins to display on graph
         :param ch_list: (list) channels to record
@@ -73,7 +73,7 @@ class CountMonitor:
         self._plot_list = plot_list
 
         # Configure counting channels
-        self._ctr.set_channels(ch_list=ch_list)
+        self._ctr.set_channels(name='monitor', ch_list=ch_list)
 
     def run(self):
         """ Runs the counter from scratch"""
@@ -86,7 +86,7 @@ class CountMonitor:
             # Give time to initialize
             time.sleep(0.05)
             self._is_running = True
-            self._ctr.start_counting(bin_width=self._bin_width, n_bins=self._n_bins)
+            self._ctr.start_counting(name='monitor', bin_width=self._bin_width, n_bins=self._n_bins)
 
             # Continuously update data until paused
             while self._is_running:
@@ -103,7 +103,7 @@ class CountMonitor:
 
     def resume(self):
         """ Resumes the counter.
-        
+
         To be used to resume after the counter has been paused.
         """
 
@@ -111,7 +111,7 @@ class CountMonitor:
             self._is_running = True
 
             # Clear counter and resume plotting
-            self._ctr.clear_counter()
+            self._ctr.clear_counter(name='monitor')
             while self._is_running:
                 self._update_output()
 
@@ -161,7 +161,7 @@ class CountMonitor:
 
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
-        counts = self._ctr.get_counts()
+        counts = self._ctr.get_counts(name='monitor')
         counts_per_sec = counts*(1e12/self._bin_width)
         noise = np.sqrt(counts)*(1e12/self._bin_width)
         plot_index = 0

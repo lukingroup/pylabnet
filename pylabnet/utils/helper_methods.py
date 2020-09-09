@@ -349,10 +349,17 @@ def load_config(config_filename, folder_root=None, logger=None):
         # returns JSON object as
         # a dictionary
         data = json.load(f)
-        logger.info(f'Successfully loaded settings from {config_filename}.json.')
+        try:
+            logger.info(f'Successfully loaded settings from {config_filename}.json.')
+        # Dont raise error if logger doesn't exist
+        except AttributeError:
+            pass
     except FileNotFoundError:
         data = None
-        logger.error(f'Settings file {filepath} not found.')
+        try:
+            logger.error(f'Settings file {filepath} not found.')
+        except AttributeError:
+            raise
 
     return data
 

@@ -121,6 +121,9 @@ def main():
         except OSError:
             server_logger.warn(f'Failed to launch server at port: {server_port}')
             tries += 1
+            if tries == 10:
+                raise
+            
 
     hide_console()
 

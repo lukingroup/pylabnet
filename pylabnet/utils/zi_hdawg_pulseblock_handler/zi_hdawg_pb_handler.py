@@ -1,6 +1,7 @@
 
 import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample
+from pylabnet.utils.pulseblock.pulse import PFalse
 
 
 # Sampling rate of HDWAG sequencer (300 MHz).
@@ -12,7 +13,7 @@ SETDIO_OFFSET = 4
 
 class DIOPulseBlockHandler():
 
-    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, hd=None):
+    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, hd=None, end_low=True):
         """ Initializes the pulse block handler for DIO
 
         :hd: (object) And instance of the zi_hdawg.Driver()
@@ -31,14 +32,21 @@ class DIOPulseBlockHandler():
             in which case the user will be asked to provide the
             missing values. If no assignment dictionary is
             provided, user is asked to provide all DIO bit values.
+
+        :end_low: (bool) whether or not to force the sequence to end low
         """
 
         # Use the log client of the HDAWG.
         self.hd = hd
         self.log = hd.log
+        self.sr = samp_rate
 
         # Store arguments.
         self.pb = pb
+
+        # Handle end low case
+        if end_low:
+            self._append_low()
 
         # Ask user for bit assignment if no dictionary provided.
         if assignment_dict is None:
@@ -132,6 +140,17 @@ class DIOPulseBlockHandler():
 
         return sample_dict, num_samples, num_traces
 
+    def _append_low(self):
+        """ Appends a single low sample to the pulseblock """
+
+        self.pb = self.pb.join(
+            p_obj = PFalse(
+                ch=list(self.pb.p_dict.keys())[0],
+                dur=1/self.sr,
+                t0=self.pb.dur
+            )
+        )
+    
     def gen_codewords(self):
         """Generate array of DIO codewords.
 

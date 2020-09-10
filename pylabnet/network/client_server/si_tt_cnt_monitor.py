@@ -41,6 +41,9 @@ class Service(ServiceBase):
         )
         return pickle.dumps(res_pickle)
 
+    def exposed_setup_gated_counter(self, name, bins=1000):
+        return self._module.setup_gated_counter(name, bins)
+
 
 class Client(ClientBase):
 
@@ -79,3 +82,5 @@ class Client(ClientBase):
         )
         return pickle.loads(res_pickle)
 
+    def setup_gated_counter(self, name, bins=1000):
+        self._service.exposed_setup_gated_counter(name, bins)

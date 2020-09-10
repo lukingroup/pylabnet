@@ -71,7 +71,7 @@ class Launcher:
     _GUI_LAUNCH_SCRIPT = 'pylabnet_gui.py'
     _SERVER_LAUNCH_SCRIPT = 'pylabnet_server.py'
 
-    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None, config=None):
+    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None, config=None, script_server=True):
         """ Instantiates Launcher object
 
         :param script: script modules to launch. Each module needs to have a launch() method
@@ -84,6 +84,8 @@ class Launcher:
         :param name: (str) desired name that will appear as the "process" name for the script invoking the
             Launcher object. Can be left blank, and the names of the script module(s) will be used
         :config: (str) Name of the configuration json file stored in the config folder.
+        :script_server: (bool) Whether or not to launch a persistent server running in the script thread. This
+            can be used to remotely access script parameters or to close the thread from Launch Control
         """
         self.script = script
         self.server_req = server_req
@@ -91,6 +93,7 @@ class Launcher:
         self.auto_connect = auto_connect
         self.config = config
         self.params=params
+        self.use_script_server=script_server
         if name is None:
             if self.script is None:
                 self.name = 'Generic Launcher'
@@ -155,7 +158,8 @@ class Launcher:
 
         self._launch_guis()
         self._launch_servers()
-        self._launch_script_server()
+        if self.use_script_server:
+            self._launch_script_server()
         hide_console()
         self._launch_scripts()
 

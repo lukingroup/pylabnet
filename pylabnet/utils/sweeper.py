@@ -44,6 +44,8 @@ class Sweep1D:
         self.reps = 0
         self.stop_flag = False
         self.stop_end_flag = False
+        self.x_label = None
+        self.y_label = None
 
     def set_parameters(self, **kwargs):
         """ Configures all parameters
@@ -54,6 +56,8 @@ class Sweep1D:
             :pts: (int) number of points to use
             :reps: (int) number of experiment repetitions
             :sweep_type: (str) 'triangle' or 'sawtooth' supported
+            :x_label: (str) Label of x axis
+            :y_label: (str) label of y axis
         """
 
         if 'min' in kwargs:
@@ -71,6 +75,10 @@ class Sweep1D:
             self.sweep_type = sweep_str
         if 'reps' in kwargs:
             self.reps = kwargs['reps']
+        if 'x_label' in kwargs:
+            self.x_label = kwargs['x_label']
+        if 'y_label' in kwargs:
+            self.y_label = kwargs['y_label']
 
     def configure_experiment(
         self, experiment, experiment_params={}
@@ -218,6 +226,7 @@ class Sweep1D:
         self.iplot_fwd = MultiTraceFig(title_str='Forward Scan', ch_names=['Single', 'Average'])
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
         self.iplot_fwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
+        self.iplot_fwd.set_lbls(x_str=self.x_label, y_str=self.y_label)
 
         # heat map
         self.hplot_fwd = HeatMapFig(title_str='Forward Scans')
@@ -225,6 +234,11 @@ class Sweep1D:
             x_ar=np.linspace(self.min, self.max, self.pts),
             y_ar=np.array([]),
             z_ar=np.array([[]])
+        )
+        self.hplot_fwd.set_lbls(
+            x_str=self.x_label, 
+            y_str='Repetition number', 
+            z_str=self.y_label
         )
 
         # Show plots if enabled
@@ -236,6 +250,7 @@ class Sweep1D:
             self.iplot_bwd = MultiTraceFig(title_str='Backward Scan', ch_names=['Single', 'Average'])
             self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=0)
             self.iplot_bwd.set_data(x_ar=np.array([]), y_ar=np.array([]), ind=1)
+            self.iplot_bwd.set_lbls(x_str=self.x_label, y_str=self.y_label)
 
             # heat map
             self.hplot_bwd = HeatMapFig(title_str='Backward Scans')
@@ -244,10 +259,16 @@ class Sweep1D:
                 y_ar=np.array([]),
                 z_ar=np.array([[]])
             )
+            self.hplot_bwd.set_lbls(
+                x_str=self.x_label, 
+                y_str='Repetition number', 
+                z_str=self.y_label
+            )
 
             # Show plots if enabled
             self.iplot_bwd.show()
             self.hplot_bwd.show()
+
 
     def _run_and_plot(self, x_value, backward=False):
         """ Runs the experiment for an x value and adds to plot

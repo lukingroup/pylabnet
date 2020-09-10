@@ -2,7 +2,7 @@ from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
-from pylabnet.utils.helper_methods import unpack_launcher, create_server
+from pylabnet.utils.helper_methods import unpack_launcher, create_server, load_config
 from pylabnet.utils.logging.logger import LogClient
 
 import numpy as np
@@ -44,6 +44,7 @@ class WlmMonitor:
      _boolean_widgets,
      _label_widgets,
      _event_widgets) = generate_widgets()
+    zeros = [f'zero_button_{i}' for i in range(1,5)]
 
     def __init__(self, wlm_client, gui_client, logger_client, ao_clients=None, display_pts=5000, threshold=0.0002):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
@@ -51,7 +52,7 @@ class WlmMonitor:
         :param wlm_client: (obj) instance of wavemeter client
         :param gui_client: (obj) instance of GUI client.
         :param logger_client: (obj) instance of logger client.
-        :param ao_clients: (dict, optional) dictionary of AO client objects with keys to identify. Exmaple:
+        :param ao_clients: (dict, optional) dictionary of ao client objects with keys to identify. Exmaple:
             {'ni_usb_1': nidaqmx_usb_client_1, 'ni_usb_2': nidaqmx_usb_client_2, 'ni_pxi_multi': nidaqmx_pxi_client}
         :param display_pts: (int, optional) number of points to display on plot
         :param threshold: (float, optional) threshold in THz for lock error signal
@@ -73,7 +74,7 @@ class WlmMonitor:
 
         :param channel_params: (list) of dictionaries containing all parameters. Example of full parameter set:
             {'channel': 1, 'name': 'Velocity', 'setpoint': 406.7, 'lock':True, 'memory': 20,
-             'PID': {'p': 1, 'i': 0.1, 'd': 0}, 'AO': {'client':'nidaqmx_client', 'channel': 'ao1'},
+             'pid': {'p': 1, 'i': 0.1, 'd': 0}, 'ao': {'client':'nidaqmx_client', 'channel': 'ao1'},
              'voltage_monitor': True}
 
             In more detail:
@@ -84,13 +85,13 @@ class WlmMonitor:
             - 'setpoint': setpoint for this channel. If not provided, or if None, the setpoint is not plotted/tracked
             - 'lock': boolean that tells us whether or not to turn on the lock. Ignored if setpoint is None. Default is
                 False.
-            - 'memory': Number of points for integral memory of PID (history of the integral). Default is 20.
-            - 'PID': dict containing PID parameters. Uses the pylabnet.scripts.PID module. By default instantiates the
+            - 'memory': Number of points for integral memory of pid (history of the integral). Default is 20.
+            - 'pid': dict containing pid parameters. Uses the pylabnet.scripts.pid module. By default instantiates the
                 default PID() object.
-            - 'AO': dict containing two elements: 'client' which is a string that is the name of the AO client to use
+            - 'ao': dict containing two elements: 'client' which is a string that is the name of the ao client to use
                 for locking. This should match up with a key in self.ao_clients. 'channel'is an identifier for which
                 analog output to use for this channel. By default it is set to None and no active locking is performed
-            - 'voltage monitor': boolean which tells us whether to also plot/track the AO voltage + setpoint error on
+            - 'voltage monitor': boolean which tells us whether to also plot/track the ao voltage + setpoint error on
                 the plot below the laser graph. Default is False
         """
 
@@ -160,24 +161,24 @@ class WlmMonitor:
 
                     if 'memory' in parameter:
                         channel.memory = parameter['memory']
-                    if 'PID' in parameter:
+                    if 'pid' in parameter:
                         channel.pid.set_parameters(
-                            p=parameter['PID']['p'],
-                            i=parameter['PID']['i'],
-                            d=parameter['PID']['d'],
+                            p=parameter['pid']['p'],
+                            i=parameter['pid']['i'],
+                            d=parameter['pid']['d'],
                         )
 
-                    # Ignore AO requests if clients have not been assigned
-                    if 'AO' in parameter and self.ao_clients is not None:
+                    # Ignore ao requests if clients have not been assigned
+                    if 'ao' in parameter and self.ao_clients is not None:
 
-                        # Convert AO from string to object using lookup
+                        # Convert ao from string to object using lookup
                         try:
                             channel.ao = {
-                                'client': self.ao_clients[parameter['AO']['client']],
-                                'channel': parameter['AO']['channel']
+                                'client': self.ao_clients[parameter['ao']['client']],
+                                'channel': parameter['ao']['channel']
                             }
 
-                        # Handle case where the AO client does not exist
+                        # Handle case where the ao client does not exist
                         except KeyError:
                             channel.ao = None
 
@@ -379,6 +380,12 @@ class WlmMonitor:
                 label_label=channel.error_curve
             )
 
+        # Assign zero buttons
+        self.gui_handler.assign_event_button(
+            event_widget=self.zeros[plot_multiplier * (index + channel.plot_widget_offset)],
+            event_label=f'{channel.name}_zero'
+        )
+
     def _update_channels(self):
         """ Updates all channels + displays
 
@@ -505,7 +512,7 @@ class WlmMonitor:
                         channel.label_updated = True
 
             # If GUI is not connected, check if we should try reconnecting to the GUI
-            elif  self.gui_handler.gui_reconnect:
+            elif self.gui_handler.gui_reconnect:
 
                 self.gui_handler.gui_connected = True
                 # self.gui_handler.connect() # Commented by CK, unsure what that does.
@@ -544,6 +551,9 @@ class WlmMonitor:
 
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=channel.name):
                 self.clear_channel(channel=channel.number)
+
+            if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=f'{channel.name}_zero'):
+                channel.zero_voltage()
 
     def _get_channels(self):
         """ Returns all active channel numbers
@@ -617,25 +627,18 @@ class Client(ClientBase):
 class Channel:
     """Object containing all information regarding a single wavemeter channel"""
 
-    # Set acceptable voltage range for laser modulation
-    _min_voltage = -10
-    _max_voltage = 10
-
-    # Gain multiplier for PID
-    _gain = 1000
-
     def __init__(self, channel_params, ao_clients=None):
         """
         Initializes all parameters given, sets others to default. Also sets up some defaults + placeholders for data
 
         :param channel_params: (dict) Dictionary of channel parameters (see WlmMonitor.set_parameters() for details)
-        :param ao_clients: (dict, optional) Dictionary containing AO clients tying a keyname string to the actual client
+        :param ao_clients: (dict, optional) Dictionary containing ao clients tying a keyname string to the actual client
         """
 
         # Set channel parameters to default values
         self.ao_clients = ao_clients
-        self.ao = None  # Dict with client name and channel for AO to use
-        self.voltage = None  # Array of voltage values for AO, used for plotting/monitoring voltage
+        self.ao = None  # Dict with client name and channel for ao to use
+        self.voltage = None  # Array of voltage values for ao, used for plotting/monitoring voltage
         self.current_voltage = 0
         self.setpoint = None
         self.lock = False
@@ -647,6 +650,9 @@ class Channel:
         self.gui_lock = False  # Current GUI lock boolean
         self.prev_gui_lock = None  # Previous GUI lock boolean
         self.prev_gui_setpoint = None  # Previous GUI setpoint
+        self._min_voltage = None
+        self._max_voltage = None
+        self._gain = None
 
         # Set all relevant parameters to default values
         self._overwrite_parameters(channel_params)
@@ -720,7 +726,7 @@ class Channel:
             self.prev_gui_setpoint = copy.deepcopy(self.gui_setpoint)
             self.sp_data = np.append(self.sp_data[1:], self.setpoint)
 
-        # Now deal with PID stuff
+        # Now deal with pid stuff
         self.pid.set_parameters(setpoint=0 if self.setpoint is None else self.setpoint)
 
         # Implement lock
@@ -767,11 +773,12 @@ class Channel:
 
         try:
             if self.ao is not None:
+                v_set = (self._min_voltage + self._max_voltage)/2
                 self.ao['client'].set_ao_voltage(
                     ao_channel=self.ao['channel'],
-                    voltages=[0]
+                    voltages=[v_set]
                 )
-                self.current_voltage = 0
+                self.current_voltage = v_set
         except EOFError:
             self.ao = None
 
@@ -818,33 +825,38 @@ class Channel:
         else:
             self.memory = 20
 
-        if 'PID' in channel_params:
+        if 'pid' in channel_params:
             self.pid = PID(
-                p=channel_params['PID']['p'],
-                i=channel_params['PID']['i'],
-                d=channel_params['PID']['d'],
+                p=channel_params['pid']['p'],
+                i=channel_params['pid']['i'],
+                d=channel_params['pid']['d'],
                 memory=self.memory,
                 setpoint=0 if self.setpoint is None else self.setpoint
             )
         else:
 
-            # Just initialize a default PID module
+            # Just initialize a default pid module
             self.pid = PID()
 
-        if 'AO' in channel_params and self.ao_clients is not None:
+        if 'ao' in channel_params and self.ao_clients is not None:
 
-            # Convert AO from string to object using lookup
+            # Convert ao from string to object using lookup
             try:
                 self.ao = {
-                    'client': self.ao_clients[channel_params['AO']['client']],
-                    'channel': channel_params['AO']['channel']
+                    'client': self.ao_clients[channel_params['ao']['client']],
+                    'channel': channel_params['ao']['channel']
                 }
-            except KeyError:
-                # Alert the user that AO initialization failed
-                self.ao = None
-                print('Failed to initialize AO for Channel {}'.format(self.number))
 
-        # If AO is not given just leave it as None
+                try:
+                    self.current_voltage = self.ao['client'].voltage()
+                except:
+                    self.current_voltage = 0
+            except KeyError:
+                # Alert the user that ao initialization failed
+                self.ao = None
+                print('Failed to initialize ao for Channel {}'.format(self.number))
+
+        # If ao is not given just leave it as None
         else:
             self.ao = None
 
@@ -871,21 +883,35 @@ class Channel:
         else:
             self.plot_widget_offset = 0
 
+        if 'min_voltage' in channel_params:
+            self._min_voltage = channel_params['min_voltage']
+        if 'max_voltage' in channel_params:
+            self._max_voltage = channel_params['max_voltage']
+        if 'gain' in channel_params:
+            self._gain = channel_params['gain']
+
 
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    config = load_config(kwargs['config'], logger=logger)
 
     wavemeter_client = clients['high_finesse_ws7']
-    ao_client = clients['nidaqmx_wlm']
+
+    # Get list of ao client names
+    ao_clients = {}
+    for channel in config['channels'].values():
+        client_name = channel['ao']['client']
+        ao_clients[client_name] = clients[client_name]
+
     gui_client = guis['wavemeter_monitor']
 
     # Instantiate Monitor script
     wlm_monitor = WlmMonitor(
         wlm_client=wavemeter_client,
         gui_client=gui_client,
-        ao_clients={'cDAQ1': ao_client},
+        ao_clients=ao_clients,
         logger_client=logger
     )
 
@@ -903,15 +929,8 @@ def launch(**kwargs):
     update_server.start()
 
     if params is None:
-        params = dict(channel_params=[dict(
-            channel=1,
-            name="Velocity",
-            AO=dict(client='cDAQ1', channel='ao0'),
-            PID=dict(p=0.15, i=0.01, d=0),
-            memory=100,
-            setpoint=406.7,
-            voltage_monitor=True
-            )])
+        channel_params = [p for p in config['channels'].values()]
+        params = dict(channel_params=channel_params)
 
     # Set parameters
     # Can use these as default parameters for loading up the monitor initially. New parameters can be input afterwards

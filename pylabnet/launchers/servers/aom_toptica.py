@@ -2,7 +2,7 @@
 
 import socket
 
-from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
+import pylabnet.hardware.awg.zi_hdawg as zi_hdawg
 from pylabnet.network.client_server.staticline import Service, Client
 
 import pylabnet.hardware.staticline.staticline as staticline
@@ -24,7 +24,7 @@ def launch(**kwargs):
     staticline_logger = kwargs['logger']
 
     # Instanciate HDAWG driver.
-    hd = Driver(dev_id, logger=staticline_logger)
+    hd = zi_hdawg.Driver(dev_id, logger=staticline_logger)
 
 
     aom = staticline.Driver(

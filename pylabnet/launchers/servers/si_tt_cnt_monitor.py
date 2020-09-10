@@ -34,6 +34,9 @@ def launch(**kwargs):
                               ' Instantiating virtual device instead')
         tagger = TT.createTimeTaggerVirtual()
 
+    for channel in range(8):
+        tagger.setTriggerLevel(channel+1, 0.1)
+
     cnt_trace_wrap = Wrap(
         tagger=tagger,
         logger=kwargs['logger']

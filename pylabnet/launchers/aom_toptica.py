@@ -2,7 +2,7 @@
 
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.launchers.servers import aom_toptica
-from pylabnet.scripts.staticlines import aom_toptica
+from pylabnet.scripts.staticlines import aom_toptica 
 
 
 def main():

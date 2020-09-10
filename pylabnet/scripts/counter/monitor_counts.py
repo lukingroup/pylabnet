@@ -7,7 +7,7 @@ from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import unpack_launcher
+from pylabnet.utils.helper_methods import unpack_launcher, load_config
 
 
 # Static methods
@@ -205,6 +205,17 @@ def launch(**kwargs):
         time.sleep(15)
         raise
 
+    try:
+        config = load_config('counters')
+        ch_list = list(config['channels'])
+        plot_1 = list(config['plot_1'])
+        plot_2 = list(config['plot_2'])
+        plot_list = [plot_1, plot_2]
+    except:
+        config = None
+        ch_list = [7, 8]
+        plot_list = [[7], [8]]
+
     # Instantiate Pause server
     try:
         pause_logger = LogClient(
@@ -236,7 +247,7 @@ def launch(**kwargs):
 
     # Set parameters
     if params is None:
-        params = dict(bin_width=2e10, n_bins=1e3, ch_list=[1, 2], plot_list=[[1], [2]])
+        params = dict(bin_width=2e10, n_bins=1e3, ch_list=ch_list, plot_list=plot_list)
     monitor.set_params(**params)
 
     # Run

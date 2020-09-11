@@ -189,7 +189,7 @@ class DLC_Pro:
             self.dlc.write(write_data)
             self.dlc.read_until(b'>', timeout=1)
 
-            f = deepcopy(amplitude)
+            f = deepcopy(frequency)
             write_data = f"(param-set! 'laser1:scan:frequency {f})\n"
             write_data = write_data.encode('utf')
             self.dlc.write(write_data)

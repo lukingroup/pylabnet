@@ -2,15 +2,16 @@ from pylabnet.network.client_server import toptica_dl_pro, external_gui
 from pylabnet.scripts.lasers import wlm_monitor
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import unpack_launcher
+from pylabnet.gui.pyqt.gui_handler import GUIHandler
 
 
 class Controller:
     """ Class for controlling Toptica scan and laser properties """
 
-    def __init__(self, dlc: toptica_dl_pro.Client, 
+    def __init__(self, dlc: toptica_dl_pro.Client,
         gui: external_gui.Client, logger=None):
-        """ Initializes toptica specific parameters 
-        
+        """ Initializes toptica specific parameters
+
         :param dlc: DLC client for the Toptica laser
         :param gui: GUI client for Toptica params
         """
@@ -18,9 +19,9 @@ class Controller:
         self.log = LogHandler(logger)
 
         # Assign GUI parameters
-        self.gui = gui
+        self.gui = GUIHandler(gui, logger)
         self._assign_GUI()
-        
+
         self.dlc = dlc
         self.offset = 65
         self.amplitude = 100
@@ -40,13 +41,13 @@ class Controller:
                 self.dlc.turn_off()
                 self.emission = False
                 self.log.info('Toptica DL turned off')
-            
+
             # Otherwise turn on
             else:
                 self.dlc.turn_on()
                 self.emission = True
                 self.log.info('Toptica DL turned on')
-        
+
         # check for parameter updates
         if self.gui.was_button_pressed('update_temp'):
             temp = self.gui.get_scalar('temperature')
@@ -56,7 +57,7 @@ class Controller:
             current = self.gui.get_scalar('current')
             self.dlc.set_current(current)
             self.log.info(f'Toptica DL current set to {current}')
-        
+
         # Now handle a scan event
         if self.gui.get_scalar('scan') != self.scan:
 
@@ -83,6 +84,7 @@ class Controller:
     def _assign_GUI(self):
         """ Assigns widgets in GUI """
 
+        self.gui.assign_scalar('on_off', 'on_off')
         self.gui.assign_scalar('temperature', 'temperature')
         self.gui.assign_scalar('current', 'current')
         self.gui.assign_scalar('offset', 'offset')
@@ -90,7 +92,6 @@ class Controller:
         self.gui.assign_scalar('scan', 'scan')
         self.gui.assign_event_button('update_temp', 'update_temp')
         self.gui.assign_event_button('update_current', 'update_current')
-        self.gui.assign_event_button('on_off', 'on_off')
 
     def _setup_GUI(self):
         """ Sets values to current parameters """
@@ -99,7 +100,7 @@ class Controller:
         self.emission = self.dlc.is_laser_on()
         self.gui.set_scalar(self.emission, 'on_off')
         self.gui.deactivate_scalar('on_off')
-        
+
         self.gui.activate_scalar('temperature')
         self.gui.set_scalar(self.dlc.temp_sp(), 'temperature')
         self.gui.deactivate_scalar('temperature')

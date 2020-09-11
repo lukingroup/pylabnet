@@ -11,6 +11,7 @@ def main():
         script=[toptica_control],
         server_req=[toptica_dlc_pro],
         gui_req=['toptica_control'],
+        config='toptica_lock',
         params=[None]
     )
     launcher.launch()

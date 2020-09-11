@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogHandler
 
 
 class Wrap:
-    """ Wrapper for the full hardware interface to SITT. 
+    """ Wrapper for the full hardware interface to SITT.
 
     Can initialize multiple measurements with a single device/ same set of channels.
     Desired workflow:
@@ -75,7 +75,8 @@ class Wrap:
 
     def clear_ctr(self, name=None):
         """Resets the array to zero and restarts the measurement.
-            See the clear() method of Counter class in TT
+        Generic method for most measurement types.
+        See the clear() method of Counter class in TT
 
         :param name: (str) identifier for the counter measurement
         """
@@ -145,7 +146,7 @@ class Wrap:
             self._tagger,
             channels=self._ch_list[name]
         )
-    
+
     def get_count_rate(self, name=None, ctr_index=0, integration=0.1):
         """ Reports the current count rate
 
@@ -171,8 +172,8 @@ class Wrap:
             end_channel=-self._gates[name],
             n_values=bins
         )
-    
-    
+
+
     @staticmethod
     def handle_name(name):
         if name is None:

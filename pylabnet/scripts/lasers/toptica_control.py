@@ -71,15 +71,18 @@ class Controller:
             else:
                 offset = self.gui.get_scalar('offset')
                 amplitude = self.gui.get_scalar('amplitude')
+                frequency = self.gui.get_scalar('frequency')
                 self.dlc.configure_scan(
                     offset=offset,
-                    amplitude=amplitude
+                    amplitude=amplitude,
+                    frequency=frequency
                 )
                 self.dlc.start_scan()
                 self.scan = True
                 self.log.info('Toptica DL Scan initiated '
                               f'with offset: {offset}, '
-                              f'amplitude: {amplitude}')
+                              f'amplitude: {amplitude}, '
+                              f'frequency: {frequency}')
 
     def _assign_GUI(self):
         """ Assigns widgets in GUI """
@@ -89,6 +92,7 @@ class Controller:
         self.gui.assign_scalar('current', 'current')
         self.gui.assign_scalar('offset', 'offset')
         self.gui.assign_scalar('amplitude', 'amplitude')
+        self.gui.assign_scalar('frequency', 'frequency')
         self.gui.assign_scalar('scan', 'scan')
         self.gui.assign_event_button('update_temp', 'update_temp')
         self.gui.assign_event_button('update_current', 'update_current')

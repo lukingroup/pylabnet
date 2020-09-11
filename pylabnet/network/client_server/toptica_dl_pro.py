@@ -72,14 +72,14 @@ class Service(ServiceBase):
         temp = pickle.loads(temp)
         return self._module.set_temp(temp)
 
-    def exposed_configure_scan(self, offset=65, amplitude=100):
+    def exposed_configure_scan(self, offset=65, amplitude=100, frequency=0.2):
         """ Sets the scan parameters for piezo scanning
 
         :param offset: (float) scan offset (center value) in volts (between 0 and 130)
         :param amplitude: (float) scan amplitude (peak to peak) in volts
         """
 
-        return self._module.configure_scan(offset, amplitude)
+        return self._module.configure_scan(offset, amplitude, frequency)
 
     def exposed_start_scan(self):
         """ Starts a piezo scan """
@@ -171,14 +171,15 @@ class Client(ClientBase):
         temp = pickle.dumps(temp)
         return self._service.exposed_set_temp(temp)
 
-    def configure_scan(self, offset=65, amplitude=100):
+    def configure_scan(self, offset=65, amplitude=100, frequency=0.2):
         """ Sets the scan parameters for piezo scanning
 
         :param offset: (float) scan offset (center value) in volts (between 0 and 130)
         :param amplitude: (float) scan amplitude (peak to peak) in volts
+        :param frequency: (float) scan frequency (Hz)
         """
 
-        return self._service.exposed_configure_scan(offset, amplitude)
+        return self._service.exposed_configure_scan(offset, amplitude, frequency)
 
     def start_scan(self):
         """ Starts a piezo scan """

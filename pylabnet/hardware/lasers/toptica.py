@@ -163,11 +163,12 @@ class DLC_Pro:
         self.dlc.write(write_data)
         self.dlc.read_until(b'>', timeout=1)
 
-    def configure_scan(self, offset=65, amplitude=100):
+    def configure_scan(self, offset=65, amplitude=100, frequency=0.2):
         """ Sets the scan parameters for piezo scanning
 
         :param offset: (float) scan offset (center value) in volts (between 0 and 130)
         :param amplitude: (float) scan amplitude (peak to peak) in volts
+        :param frequency: (Float) scan frequency in Hz
         """
 
         # Check that parameters are within range
@@ -188,7 +189,13 @@ class DLC_Pro:
             self.dlc.write(write_data)
             self.dlc.read_until(b'>', timeout=1)
 
-            self.log.info(f'Scan with offset {o} and amplitude {a} successfully configured.')
+            f = deepcopy(amplitude)
+            write_data = f"(param-set! 'laser1:scan:frequency {f})\n"
+            write_data = write_data.encode('utf')
+            self.dlc.write(write_data)
+            self.dlc.read_until(b'>', timeout=1)
+
+            self.log.info(f'Scan with offset {o}, amplitude {a}, frequency {f} successfully configured.')
 
     def start_scan(self):
         """ Starts a piezo scan """

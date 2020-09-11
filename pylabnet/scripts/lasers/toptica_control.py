@@ -22,18 +22,32 @@ class Controller:
         self._assign_GUI()
         
         self.dlc = dlc
-        self.current_sp = self.dlc.current_sp()
-        self.temp_sp = self.dlc.temp_sp()
         self.offset = 65
         self.amplitude = 100
         self.scan = False
+        self.emission = False
 
         self._setup_GUI()
 
     def run(self):
         """ Runs an iteration of checks for updates and implements """
 
-        # First check for parameter updates
+        # Check for on/off updates
+        if self.gui.get_scalar('on_off') != self.emission:
+
+            # If laser was already on, turn off
+            if self.emission:
+                self.dlc.turn_off()
+                self.emission = False
+                self.log.info('Toptica DL turned off')
+            
+            # Otherwise turn on
+            else:
+                self.dlc.turn_on()
+                self.emission = True
+                self.log.info('Toptica DL turned on')
+        
+        # check for parameter updates
         if self.gui.was_button_pressed('update_temp'):
             temp = self.gui.get_scalar('temperature')
             self.dlc.set_temp(temp)
@@ -49,6 +63,7 @@ class Controller:
             # If we were previously scanning, terminate the scan
             if self.scan:
                 self.dlc.stop_scan()
+                self.scan = False
                 self.log.info(f'Toptica DL scan stopped')
 
             # Otherwise, configure and start the scan
@@ -60,6 +75,7 @@ class Controller:
                     amplitude=amplitude
                 )
                 self.dlc.start_scan()
+                self.scan = True
                 self.log.info('Toptica DL Scan initiated '
                               f'with offset: {offset}, '
                               f'amplitude: {amplitude}')
@@ -74,16 +90,22 @@ class Controller:
         self.gui.assign_scalar('scan', 'scan')
         self.gui.assign_event_button('update_temp', 'update_temp')
         self.gui.assign_event_button('update_current', 'update_current')
+        self.gui.assign_event_button('on_off', 'on_off')
 
     def _setup_GUI(self):
         """ Sets values to current parameters """
 
+        self.gui.activate_scalar('on_off')
+        self.emission = self.dlc.is_laser_on()
+        self.gui.set_scalar(self.emission, 'on_off')
+        self.gui.deactivate_scalar('on_off')
+        
         self.gui.activate_scalar('temperature')
-        self.gui.set_scalar(self.temp_sp, 'temperature')
+        self.gui.set_scalar(self.dlc.temp_sp(), 'temperature')
         self.gui.deactivate_scalar('temperature')
 
         self.gui.activate_scalar('current')
-        self.gui.set_scalar(self.current_sp, 'current')
+        self.gui.set_scalar(self.dlc.current_sp(), 'current')
         self.gui.deactivate_scalar('current')
 
         self.gui.activate_scalar('scan')

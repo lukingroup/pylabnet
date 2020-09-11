@@ -235,7 +235,7 @@ def launch(**kwargs):
         try:
             port = np.random.randint(1, 9999)
             pause_server = GenericServer(
-                host=socket.gethostbyname(socket.gethostname()),
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0],
                 port=port,
                 service=pause_service)
             pause_logger.update_data(data=dict(port=port))

@@ -171,7 +171,7 @@ class LogClient:
                 raise exc_obj
 
             client_data = dict(
-                ip=socket.gethostbyname(socket.gethostname()),
+                ip=socket.gethostbyname_ex(socket.gethostname())[2][0],
                 timestamp=time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
             )
             if self._server_port is not None:
@@ -273,7 +273,7 @@ class LogClient:
     def close_server(self):
         """ Closes the server to which the LogClient is connected"""
 
-        try: 
+        try:
             self._service.close_server()
         except EOFError:
             pass
@@ -412,7 +412,7 @@ class LogService(rpyc.Service):
         handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
         ctypes.windll.kernel32.TerminateProcess(handle, -1)
         ctypes.windll.kernel32.CloseHandle(handle)
-        
+
     def add_logfile(self, name, dir_path, file_level=logging.DEBUG, form_string=None):
         """ Adds a log-file for all future logging
 

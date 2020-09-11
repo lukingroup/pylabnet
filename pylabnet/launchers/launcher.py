@@ -202,7 +202,7 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname_ex(socket.gethostname())[2][0]
 
         while not connected and timeout < 1000:
             try:
@@ -320,7 +320,7 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname_ex(socket.gethostname())[2][0]
 
         while not connected and timeout < 1000:
             try:
@@ -462,7 +462,7 @@ class Launcher:
         self.script_server, self.script_server_port = create_server(
             service=service,
             logger=self.logger,
-            host=socket.gethostbyname(socket.gethostname())
+            host=socket.gethostbyname_ex(socket.gethostname())[2][0]
         )
         self.script_server.start()
 

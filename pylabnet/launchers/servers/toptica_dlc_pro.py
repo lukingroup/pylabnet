@@ -31,7 +31,7 @@ def launch(**kwargs):
     dlc_service.assign_logger(logger=toptica_logger)
     dlc_server = GenericServer(
         service=dlc_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
 

@@ -924,7 +924,7 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=wlm_monitor)
     update_service.assign_logger(logger=log_client_update)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname(socket.gethostname()))
+    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
     log_client_update.update_data(data={'port': update_port})
     update_server.start()
 

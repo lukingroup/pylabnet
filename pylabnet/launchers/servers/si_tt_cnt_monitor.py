@@ -48,7 +48,7 @@ def launch(**kwargs):
     cnt_trace_service.assign_logger(logger=kwargs['logger'])
     cnt_trace_server = GenericServer(
         service=cnt_trace_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
     cnt_trace_server.start()

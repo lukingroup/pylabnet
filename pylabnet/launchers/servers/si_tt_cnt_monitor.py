@@ -37,10 +37,13 @@ def launch(**kwargs):
 
     try:
         config = kwargs['config']
-        config = load_config(config)
-    except KeyError:
+        config = load_config(config, logger=kwargs['logger'])
+    except:
+        config = None
+
+    if config is None:
         try:
-            config = load_config('si_tt')
+            config = load_config('si_tt', logger=kwargs['logger'])
         except:
             config = {}
 

@@ -25,6 +25,8 @@ class Service(ServiceBase):
         return pickle.dumps(res_pickle)
 
     def exposed_set_channels(self, name, ch_list=[1], gates=[]):
+        ch_list=pickle.loads(ch_list)
+        gates=pickle.loads(gatesa)
         return self._module.set_ch_assignment(
             name=name,
             ch_list=ch_list,
@@ -105,6 +107,8 @@ class Client(ClientBase):
         :param gates: list of channels to use for gating
         """
 
+        ch_list=pickle.dumps(ch_list)
+        gates=pickle.dumps(gates)
         return self._service.exposed_set_channels(
             name=name,
             ch_list=ch_list,

@@ -10,6 +10,7 @@ except ModuleNotFoundError:
 from pylabnet.hardware.counter.swabian_instruments.cnt_monitor import Wrap
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.si_tt_cnt_monitor import Service, Client
+from pylabnet.utils.helper_methods import load_config
 
 
 def launch(**kwargs):
@@ -34,8 +35,17 @@ def launch(**kwargs):
                               ' Instantiating virtual device instead')
         tagger = TT.createTimeTaggerVirtual()
 
-    for channel in range(8):
-        tagger.setTriggerLevel(channel+1, 0.1)
+    try:
+        config = kwargs['config']
+        config = load_config(config)
+    except KeyError:
+        try:
+            config = load_config('si_tt')
+        except:
+            config = {}
+
+    for channel, trig_level in config.items():
+        tagger.setTriggerLevel(int(channel)+1, float(trig_level))
 
     cnt_trace_wrap = Wrap(
         tagger=tagger,

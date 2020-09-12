@@ -69,7 +69,7 @@ Next, navigate to the root directory in the commandline and run the command
 ```bash
 python setup.py develop
 ```
-> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked.
+> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked. If it fails, try running `pip install --upgrade setuptools`.
 
 > **_NOTE 2:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 

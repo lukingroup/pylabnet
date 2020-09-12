@@ -130,6 +130,8 @@ class Wrap:
 
         self._gates[name] = gates
 
+        self.log.info(f'Set up channels {ch_list} and gates {gates}')
+
     def init_rate_monitor(self, name=None):
         """Sets up a measurement for count rates
 

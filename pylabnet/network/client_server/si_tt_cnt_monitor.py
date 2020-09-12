@@ -26,7 +26,7 @@ class Service(ServiceBase):
 
     def exposed_set_channels(self, name, ch_list=[1], gates=[]):
         ch_list=pickle.loads(ch_list)
-        gates=pickle.loads(gatesa)
+        gates=pickle.loads(gates)
         return self._module.set_ch_assignment(
             name=name,
             ch_list=ch_list,

@@ -168,8 +168,8 @@ class Wrap:
         self._ctr[name] = TT.CountBetweenMarkers(
             self._tagger,
             self._ch_list[name][0],
-            self._gates[name],
-            end_channel=-self._gates[name],
+            self._gates[name][0],
+            end_channel=-self._gates[name][0],
             n_values=bins
         )
 

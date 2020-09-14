@@ -180,7 +180,10 @@ class Sweep1D:
         )
         # Save average
         generic_save(
-            data=self.iplot_fwd._fig.data[1].y,
+            data = np.array(
+                    [self.iplot_fwd._fig.data[1].x,
+                    self.iplot_fwd._fig.data[1].y]
+            ),
             filename=f'{filename}_fwd_avg',
             directory=directory,
             date_dir=date_dir
@@ -197,7 +200,10 @@ class Sweep1D:
             )
             # Save average
             generic_save(
-                data=self.iplot_bwd._fig.data[1].y,
+                data = np.array(
+                        [self.iplot_fwd._fig.data[1].x,
+                        self.iplot_fwd._fig.data[1].y]
+                ),
                 filename=f'{filename}_bwd_avg',
                 directory=directory,
                 date_dir=date_dir
@@ -236,8 +242,8 @@ class Sweep1D:
             z_ar=np.array([[]])
         )
         self.hplot_fwd.set_lbls(
-            x_str=self.x_label, 
-            y_str='Repetition number', 
+            x_str=self.x_label,
+            y_str='Repetition number',
             z_str=self.y_label
         )
 
@@ -260,8 +266,8 @@ class Sweep1D:
                 z_ar=np.array([[]])
             )
             self.hplot_bwd.set_lbls(
-                x_str=self.x_label, 
-                y_str='Repetition number', 
+                x_str=self.x_label,
+                y_str='Repetition number',
                 z_str=self.y_label
             )
 

@@ -303,8 +303,9 @@ def generate_widgets(widget_dict):
         widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
     return widgets
 
-def generic_save(data, filename=None, directory=None, date_dir=False):
-    """ Saves data as txt file
+
+def generate_filepath(filename=None, directory=None, date_dir=False):
+    """ Generates filepath for saving.
 
     :param dir: (str) directory to save to
     :param filename: (str) name of file to save
@@ -322,11 +323,35 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     else:
         filepath = os.path.join(directory, filename)
 
+    return filepath
+
+def generic_save(data, filename=None, directory=None, date_dir=False):
+    """ Saves data as txt file
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+
     try:
         np.savetxt(filepath, data)
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
+
+
+def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):
+    """ Saves plotly_figure as png
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+    plotly_figure.write_image(f'{filepath}.png')
 
 
 def load_config(config_filename, folder_root=None, logger=None):

@@ -61,7 +61,7 @@ class TimeTrace:
 
         self.plot = SingleTraceFig(title_str='Count Histogram')
         self.plot.set_data(
-            x_ar=self.ctr.get_x_axis(self.hist),
+            x_ar=self.ctr.get_x_axis(self.hist)/1e12,
             y_ar=self.ctr.get_counts(self.hist)[0]    
         )
         self.plot.show()
@@ -115,7 +115,7 @@ class TimeTrace:
 
         generic_save(
             data=np.array([
-                self.ctr.get_x_axis(self.hist),
+                self.ctr.get_x_axis(self.hist)/1e12,
                 self.ctr.get_counts(self.hist)[0]
             ]),
             filename='histogram',

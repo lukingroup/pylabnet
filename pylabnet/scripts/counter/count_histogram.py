@@ -1,5 +1,5 @@
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.logging.logger import LogClient
+from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig
 
 import numpy as np
@@ -27,7 +27,7 @@ class TimeTrace:
         """
 
         self.ctr = ctr
-        self.log = log
+        self.log = LogHandler(log)
 
         # Store histogram parameters
         self.click_ch = click_ch
@@ -51,13 +51,17 @@ class TimeTrace:
             n_bins=self.n_bins
         )
 
+        self.log.info(f'Histogram counter {self.hist} started acquiring'
+                      f' with click channel {self.click_ch} and start channel'
+                      f' {self.start_ch}')
+
     def init_plot(self):
         """ Instantiates a plot, assuming counter is live """
 
         self.plot = SingleTraceFig(title_str='Count Histogram')
         self.plot.set_data(
             x_ar=self.ctr.get_x_axis(self.hist),
-            y_ar=self.ctr.get_counts(self.hist)    
+            y_ar=self.ctr.get_counts(self.hist)[0]    
         )
         self.plot.show()
 
@@ -65,8 +69,7 @@ class TimeTrace:
         """ Updates to the current data """
 
         self.plot.set_data(
-            x_ar=self.ctr.get_x_axis(self.hist),
-            y_ar=self.ctr.get_counts(self.hist)    
+            y_ar=self.ctr.get_counts(self.hist)[0] 
         )
     
     def go(self):
@@ -79,7 +82,7 @@ class TimeTrace:
         while not self.is_paused:
 
             time.sleep(self.up_in)
-            self._update_data
+            self._update_data()
 
     def resume(self):
         """ Runs an already instantiated counter."""
@@ -88,12 +91,14 @@ class TimeTrace:
         while not self.is_paused:
 
             time.sleep(self.up_in)
-            self._update_data
+            self._update_data()
 
     def clear(self):
         """ Clears the data """
 
         self.ctr.clear_ctr(name=self.hist)
+
+        self.log.info(f'Counter {self.hist} data cleared')
 
     def pause(self):
         """ Pauses the go/run loop. 

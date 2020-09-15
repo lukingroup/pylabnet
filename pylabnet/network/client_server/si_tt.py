@@ -45,8 +45,8 @@ class Service(ServiceBase):
     def exposed_start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                                 sync_ch=-134217728, binwidth=1000, n_bins=1000,
                                 n_histograms=1):
-        return self._module.start_histogram(name, start_ch, click_ch, next_ch,
-                                            sync_ch, binwidth, n_bins, n_histograms)
+        return self._module.start_histogram(name, start_ch, click_ch, next_ch=next_ch,
+                                            sync_ch=sync_ch, binwidth=binwidth, n_bins=n_bins, n_histograms=n_histograms)
 
 
 class Client(ClientBase):
@@ -153,7 +153,7 @@ class Client(ClientBase):
         """
 
         return self._service.exposed_start_histogram(name, start_ch, click_ch, 
-                                                     next_ch=-134217728,
-                                                     sync_ch=-134217728, 
-                                                     binwidth=1000, n_bins=1000,
-                                                     n_histograms=1)
+                                                     next_ch=next_ch,
+                                                     sync_ch=sync_ch, 
+                                                     binwidth=binwidth, n_bins=n_bins,
+                                                     n_histograms=n_histograms)

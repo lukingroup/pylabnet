@@ -275,7 +275,7 @@ class WlmMonitor:
         )
 
         # Calculate indices for various gui widget defaults. This is GUI specific
-        if channel.voltage is None:
+        if channel.voltage is not None:
             plot_multiplier = 2
             scalar_multiplier = 4
         else:

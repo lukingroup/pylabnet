@@ -62,8 +62,9 @@ class Client(ClientBase):
         """
 
         ch_list = pickle.dumps(ch_list)
-        return self._service.exposed_start_counting(
+        return self._service.exposed_start_trace(
             name=name,
+            ch_list=ch_list,
             bin_width=bin_width,
             n_bins=n_bins
         )

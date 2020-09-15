@@ -1,6 +1,7 @@
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig
+from pylabnet.utils.helper_methods import generic_save
 
 import numpy as np
 import time
@@ -108,3 +109,15 @@ class TimeTrace:
         """
 
         self.is_paused = True
+
+    def save(self):
+        """ Saves the current data """
+
+        generic_save(
+            data=np.array([
+                self.ctr.get_x_axis(self.hist),
+                self.ctr.get_counts(self.hist)[0]
+            ]),
+            filename='histogram',
+            date_dir=True
+        )

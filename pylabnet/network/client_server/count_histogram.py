@@ -10,6 +10,9 @@ class Service(ServiceBase):
     def exposed_clear(self):
         return self._module.clear()
 
+    def exposed_save(self):
+        return self._module.save()
+
 
 class Client(ClientBase):
 
@@ -20,9 +23,14 @@ class Client(ClientBase):
         There does not seem to be a way to do that from SI-TT API
         """
 
-        self._service.exposed_pause()
+        return self._service.exposed_pause()
 
     def clear(self):
         """ Clears the data """
 
-        self._service.exposed_clear()
+        return self._service.exposed_clear()
+
+    def save(self):
+        """ Saves the current data """
+
+        return self._service.exposed_save()

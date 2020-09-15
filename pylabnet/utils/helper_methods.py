@@ -257,6 +257,21 @@ def create_server(service, logger=None, host='localhost'):
             timeout += 1
     return server, port
 
+def setup_full_service(service_class, module, logger=None, host='localhost'):
+    """ Creates a Service and a server, adds info to logger and starts server
+
+    :param service_class: Service class to instantiate (not the instance itself)
+    :param module: module to assign to service
+    :param logger: instance of LogClient
+    :param host: (str) hostname
+    """
+
+    service = service_class()
+    service.assign_module(module)
+    server, port = create_server(service, logger=logger, host=host)
+    logger.update_data(data=dict(port=port))
+    server.start()
+
 def value_to_bitval(value, bits=8, min=0, max=1):
     """ Converts a value to a bits-bit number for range min to max
 
@@ -303,8 +318,9 @@ def generate_widgets(widget_dict):
         widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
     return widgets
 
-def generic_save(data, filename=None, directory=None, date_dir=False):
-    """ Saves data as txt file
+
+def generate_filepath(filename=None, directory=None, date_dir=False):
+    """ Generates filepath for saving.
 
     :param dir: (str) directory to save to
     :param filename: (str) name of file to save
@@ -322,11 +338,35 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     else:
         filepath = os.path.join(directory, filename)
 
+    return filepath
+
+def generic_save(data, filename=None, directory=None, date_dir=False):
+    """ Saves data as txt file
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+
     try:
         np.savetxt(filepath, data)
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
+
+
+def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):
+    """ Saves plotly_figure as png
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+    plotly_figure.write_image(f'{filepath}.png')
 
 
 def load_config(config_filename, folder_root=None, logger=None):

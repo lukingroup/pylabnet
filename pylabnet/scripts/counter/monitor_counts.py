@@ -7,6 +7,7 @@ from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config
 
 
@@ -30,7 +31,7 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client, gui_client, logger_client):
+    def __init__(self, ctr_client: si_tt.Client, gui_client, logger_client):
         """ Constructor for CountMonitor script
 
         :param ctr_client: (optional) instance of hardware client for counter
@@ -73,7 +74,7 @@ class CountMonitor:
         self._plot_list = plot_list
 
         # Configure counting channels
-        self._ctr.set_channels(name='monitor', ch_list=ch_list)
+        # self._ctr.set_channels(name='monitor', ch_list=ch_list)
 
     def run(self):
         """ Runs the counter from scratch"""
@@ -86,7 +87,12 @@ class CountMonitor:
             # Give time to initialize
             time.sleep(0.05)
             self._is_running = True
-            self._ctr.start_counting(name='monitor', bin_width=self._bin_width, n_bins=self._n_bins)
+            self._ctr.start_trace(
+                name='monitor',
+                ch_list=self._ch_list,
+                bin_width=self._bin_width, 
+                n_bins=self._n_bins
+            )
 
             # Continuously update data until paused
             while self._is_running:
@@ -111,7 +117,7 @@ class CountMonitor:
             self._is_running = True
 
             # Clear counter and resume plotting
-            self._ctr.clear_counter(name='monitor')
+            self._ctr.clear_ctr(name='monitor')
             while self._is_running:
                 self._update_output()
 
@@ -198,7 +204,7 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['si_tt_cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
+            ctr_client=clients['si_tt'], gui_client=guis['count_monitor'], logger_client=logger
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
@@ -235,7 +241,7 @@ def launch(**kwargs):
         try:
             port = np.random.randint(1, 9999)
             pause_server = GenericServer(
-                host=socket.gethostbyname(socket.gethostname()),
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0],
                 port=port,
                 service=pause_service)
             pause_logger.update_data(data=dict(port=port))

@@ -17,7 +17,7 @@ import socket
 def generate_widgets():
     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
 
-    graphs, legends, numbers, booleans, labels, events = [], [], [], [], [], []
+    graphs, legends, numbers, booleans, labels, events, setpoint_rs = [], [], [], [], [], [], []
     for i in range(4):
         graphs.append('graph_widget_' + str(i + 1))
         legends.append('legend_widget_' + str(i + 1))
@@ -25,11 +25,12 @@ def generate_widgets():
         booleans.append('boolean_widget_' + str(i + 1))
         labels.append('label_' + str(i + 1))
         events.append('event_button_' + str(i + 1))
+        setpoint_rs.append('setpoint_rs_' + str(i + 1))
     for i in range(4, 8):
         numbers.append('number_widget_' + str(i + 1))
         booleans.append('boolean_widget_' + str(i + 1))
         labels.append('label_' + str(i + 1))
-    return graphs, legends, numbers, booleans, labels, events
+    return graphs, legends, numbers, booleans, labels, events, setpoint_rs
 
 
 # Core objects
@@ -43,7 +44,8 @@ class WlmMonitor:
      _number_widgets,
      _boolean_widgets,
      _label_widgets,
-     _event_widgets) = generate_widgets()
+     _event_widgets,
+     _setpoint_rs) = generate_widgets()
     zeros = [f'zero_button_{i}' for i in range(1,5)]
 
     def __init__(self, wlm_client, gui_client, logger_client, ao_clients=None, display_pts=5000, threshold=0.0002):
@@ -275,7 +277,7 @@ class WlmMonitor:
         )
 
         # Calculate indices for various gui widget defaults. This is GUI specific
-        if channel.voltage is None:
+        if channel.voltage is not None:
             plot_multiplier = 2
             scalar_multiplier = 4
         else:
@@ -340,6 +342,12 @@ class WlmMonitor:
         self.gui_handler.assign_event_button(
             event_widget=self._event_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
             event_label=channel.name
+        )
+
+        # Assign pushbutton for setting setpoint
+        self.gui_handler.assign_event_button(
+            event_widget=self._setpoint_rs[plot_multiplier * (index + channel.plot_widget_offset)],
+            event_label=f'{channel.name}_rs'
         )
 
         # Assign voltage if relevant
@@ -554,6 +562,9 @@ class WlmMonitor:
 
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=f'{channel.name}_zero'):
                 channel.zero_voltage()
+
+            if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=f'{channel.name}_rs'):
+                channel.setpoint = channel.data[-1]
 
     def _get_channels(self):
         """ Returns all active channel numbers
@@ -924,7 +935,7 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=wlm_monitor)
     update_service.assign_logger(logger=log_client_update)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname(socket.gethostname()))
+    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
     log_client_update.update_data(data={'port': update_port})
     update_server.start()
 

@@ -20,7 +20,7 @@ def launch(**kwargs):
         addr = load_config('dio_breakout', logger=kwargs['logger'])['address']
     else:
         addr = load_config(kwargs['config'], logger=kwargs['logger'])['address']
-        
+
     # Try to connect
     try:
         dio = Driver(address=addr, logger=kwargs['logger'])
@@ -45,7 +45,7 @@ def launch(**kwargs):
     dio_service.assign_logger(logger=kwargs['logger'])
     dio_server = GenericServer(
         service=dio_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
     dio_server.start()

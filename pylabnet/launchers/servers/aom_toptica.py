@@ -32,7 +32,7 @@ def launch(**kwargs):
         logger=staticline_logger,
         hardware_module=hd,
         DIO_bit=30,
-    ) 
+    )
 
     # Instantiate Server
     # Staticline server
@@ -41,7 +41,7 @@ def launch(**kwargs):
     staticline_service.assign_logger(logger=staticline_logger)
     staticline_service_server = GenericServer(
         service=staticline_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
 

@@ -301,6 +301,18 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="setpoint_rs_1">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Set to frequency</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="boolean_widget_1">
              <property name="font">
               <font>
@@ -568,6 +580,18 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
              <property name="singleStep">
               <double>0.000010000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="setpoint_rs_3">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Set to frequency</string>
              </property>
             </widget>
            </item>
@@ -843,6 +867,18 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="setpoint_rs_2">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Set to frequency</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="boolean_widget_3">
              <property name="font">
               <font>
@@ -1110,6 +1146,18 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
              <property name="singleStep">
               <double>0.000010000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="setpoint_rs_4">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Set to frequency</string>
              </property>
             </widget>
            </item>

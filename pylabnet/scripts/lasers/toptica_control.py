@@ -89,7 +89,9 @@ class Controller:
 
         self.gui.assign_scalar('on_off', 'on_off')
         self.gui.assign_scalar('temperature', 'temperature')
+        self.gui.assign_scalar('temperature_actual', 'temperature_actual')
         self.gui.assign_scalar('current', 'current')
+        self.gui.assign_scalar('current_actual', 'current_actual')
         self.gui.assign_scalar('offset', 'offset')
         self.gui.assign_scalar('amplitude', 'amplitude')
         self.gui.assign_scalar('frequency', 'frequency')
@@ -109,9 +111,17 @@ class Controller:
         self.gui.set_scalar(self.dlc.temp_sp(), 'temperature')
         self.gui.deactivate_scalar('temperature')
 
+        self.gui.activate_scalar('temperature_actual')
+        self.gui.set_scalar(self.dlc.temp_act(), 'temperature_actual')
+        self.gui.deactivate_scalar('temperature_actual')
+
         self.gui.activate_scalar('current')
         self.gui.set_scalar(self.dlc.current_sp(), 'current')
         self.gui.deactivate_scalar('current')
+
+        self.gui.activate_scalar('current_actual')
+        self.gui.set_scalar(self.dlc.current_act(), 'current_actual')
+        self.gui.deactivate_scalar('current_actual')
 
         self.gui.activate_scalar('scan')
         self.gui.set_scalar(False, 'scan')

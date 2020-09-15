@@ -257,6 +257,21 @@ def create_server(service, logger=None, host='localhost'):
             timeout += 1
     return server, port
 
+def setup_full_service(service_class, module, logger=None, host='localhost'):
+    """ Creates a Service and a server, adds info to logger and starts server
+
+    :param service_class: Service class to instantiate (not the instance itself)
+    :param module: module to assign to service
+    :param logger: instance of LogClient
+    :param host: (str) hostname
+    """
+
+    service = service_class()
+    service.assign_module(module)
+    server, port = create_server(service, logger=logger, host=host)
+    logger.update_data(data=dict(port=port))
+    server.start()
+
 def value_to_bitval(value, bits=8, min=0, max=1):
     """ Converts a value to a bits-bit number for range min to max
 

@@ -301,7 +301,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="setpoint_rs">
+            <widget class="QPushButton" name="setpoint_rs_1">
              <property name="styleSheet">
               <string notr="true">background-color: rgb(170, 170, 255);
 color: rgb(0, 0, 0);
@@ -1310,7 +1310,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <x>0</x>
      <y>0</y>
      <width>2822</width>
-     <height>18</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

@@ -47,14 +47,15 @@ def launch(**kwargs):
             ssh.exec_command(venv_path)
 
 
-            cmd = '"{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
+            cmd = '"{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {} --config {}'.format(
                         python_path,
                         script_path,
                         loghost,
                         logport,
                         server_port,
                         servername,
-                        False
+                        False,
+
                     )
 
             ssh.exec_command(cmd)

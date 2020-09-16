@@ -64,7 +64,7 @@ class Driver():
             input_argument = [input_argument]
         return input_argument
 
-    def __init__(self, device_id, logger, api_level=6):
+    def __init__(self, device_id, logger, api_level=6, reset_dio=False, disable_everything=False):
         """ Instantiate AWG
 
         :logger: instance of LogClient class
@@ -102,9 +102,12 @@ class Driver():
         self.daq = daq
         self.device_id = device
 
-        # Create a base configuration
-        self.disable_everything()
-        self.reset_DIO_outputs()
+        if disable_everything:
+            # Create a base configuration
+            self.disable_everything()
+
+        if reset_dio:
+            self.reset_DIO_outputs()
 
         # read out number of channels from property dictionary
         self.num_outputs = int(
@@ -348,8 +351,13 @@ class AWGModule():
             f"AWG {self.index}: Changed sampling rate to {sampling_rate}."
         )
 
-    def start(self):
+    def start(self, dio_mode_change=True):
         """ Start AWG"""
+
+        if dio_mode_change:
+        # Set DIO mode to AWG sequencer
+            self.hd.seti('dios/0/mode', 1)
+
         self.module.set('awg/enable', 1)
         self.hd.log.info(f"AWG {self.index}: Started.")
 

@@ -59,6 +59,9 @@ class StaticLineHardwareHandler():
         :newval: Either 0 or 1 indicating the new output state.
         '''
 
+        # Set correct mode to manual
+        self.hardware_module.seti('dios/0/mode', 0)
+
         # Get current DIO output integer.
         current_output = self.hardware_module.geti('dios/0/output')
 

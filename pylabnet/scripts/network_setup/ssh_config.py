@@ -29,14 +29,21 @@ def launch(**kwargs):
         try:
             ssh.connect(host_ip, username=hostname, password=LOCALHOST_PW)
         except TimeoutError:
-            logger.warn(f"Failed to setup SSH connection to {hostname}@{host_ip}")
+            logger.error(f"Failed to setup SSH connection to {hostname}@{host_ip}.")
 
-        logger.error(f"Connected via SSH to {hostname}@{host_ip}")
+        logger.info(f"Succesfull connected via SSH to {hostname}@{host_ip}.")
 
         python_path = host['python_path']
         script_path = host['script_path']
         venv_path =  host['venv_path']
         servers = host['servers']
+
+        # I fappropriate flag is set, kill all python processes on host machine.
+        # WARNING: Make sure host machine is not running any non-pylabnet processes.
+        if host['kill_all'] == "True":
+            logger.warn(f"Killing all python processes on {hostname}@{host_ip}.")
+            kill_command = "taskkill /F /IM python.exe /T"
+            ssh.exec_command(kill_command)
 
         for server in servers:
 

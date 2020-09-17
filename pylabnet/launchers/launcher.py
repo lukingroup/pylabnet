@@ -156,8 +156,10 @@ class Launcher:
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
-        self._launch_guis()
-        self._launch_servers()
+        if self.gui_req[0] is not None:
+            self._launch_guis()
+        if self.server_req[0] is not None:
+            self._launch_servers()
         if self.use_script_server:
             self._launch_script_server()
         hide_console()

@@ -31,7 +31,7 @@ def launch(**kwargs):
         except TimeoutError:
             logger.warn(f"Failed to setup SSH connection to {hostname}@{host_ip}")
 
-        logger.warn(f"Connected via SSH to {hostname}@{host_ip}")
+        logger.error(f"Connected via SSH to {hostname}@{host_ip}")
 
         python_path = host['python_path']
         script_path = host['script_path']
@@ -41,6 +41,22 @@ def launch(**kwargs):
         for server in servers:
 
             servername = server['servername']
+
+            # Look for optional debug flag
+            try:
+                if server['debug'] == "True":
+                    debug = 1
+                else:
+                    debug = 0
+            except KeyError:
+                debug = 0
+
+            # Look for optional config flag
+            try:
+                config = server['config']
+            except KeyError:
+                config = None
+
             server_port = np.random.randint(1, 9999)
 
             # Activate virtual env
@@ -54,7 +70,8 @@ def launch(**kwargs):
                         logport,
                         server_port,
                         servername,
-
+                        debug,
+                        config
                     )
 
             ssh.exec_command(cmd)

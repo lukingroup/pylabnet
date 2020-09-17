@@ -12,7 +12,8 @@ def main():
         server_req=[None],
         gui_req=[None],
         params=[None],
-        config='ssh_config'
+        config='ssh_config',
+        script_server=False
     )
     launcher.launch()
 

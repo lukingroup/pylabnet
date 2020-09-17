@@ -49,6 +49,15 @@ def launch(**kwargs):
 
             servername = server['servername']
 
+            try:
+                disable = bool(server['disable'])
+            except KeyError:
+                disable = False
+
+            # Don't execute any ssh commands if flag is set.
+            if disable:
+                continue
+
             # Look for optional debug flag
             try:
                 if server['debug'] == "True":

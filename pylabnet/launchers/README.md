@@ -57,39 +57,45 @@
         * It will give you a search bar to search for and select the process to debug
     3. Now you can debug your subprocess that was launched via Launch Control!
     4. Each time you encounter an instantiation of Popen(), this will launch a new process that will need to be separately debugged. *Note that you **can** have multiple debuggers running simultaneously, you just need to make multiple configurations in your launch.json file that have different `"name"` subfields. So you can play the same trick over and over again to your heart's desire.*
-Instead of running `proxy-launchers`, it is possible to start all necessary hardware server from one host machine which connects via SSH to all remote machines and starts the corresponding servers. This allows all remote macines to be completly headless.
 
-The following command on the host machine can be executed to check if SSH connection between the host and a remote machine can be connected, which is a prerequisit for the automatic SSH configuration. In wondows, it must be executed in PowerShell
-`SSH remote_hostname@remote_ip`. If the command failes, a SSH client must be installed. FOr Windos 10, see here for the configuration of the built in SSH client: [Windows 10 Open SSH Installation](https://docs.microsoft.com/en-us/windows-server/administration/openSSH/openSSH_install_firstuse).
+## Optional Setup via SSH
 
-Once SSH-connections between every remote machine can be established, the password for the SSH conncetion must be stored in a `.env` file in the project root using the following format: `LOCALHOST_PW=YOUR_ACTUAL_PASSWORD. Now, a config file  named `ssh_config.json` can be used to configure the startup of all SSH-connections and associated servers:
+Instead of running `proxy-launchers`, it is possible to start all necessary hardware servers from one host machine which connects via SSH to all remote machines and starts the corresponding servers. This allows all remote machines to be completely headless.
+
+The following command on the host machine can be executed to check if SSH connection between the host and a remote machine can be connected, which is a prerequisite for the automatic SSH configuration. In Windows, it must be executed in PowerShell
+
+`SSH remote_hostname@remote_ip`
+
+ If the command fails, a SSH client must be installed. For Windows 10, see here for the configuration of the built in SSH client: [Windows 10 Open SSH Installation](https://docs.microsoft.com/en-us/windows-server/administration/openSSH/openSSH_install_firstuse).
+
+Once SSH-connections between every remote machine can be established, the password for the SSH connection must be stored in a `.env` file in the project root using the following format: `LOCALHOST_PW=YOUR_ACTUAL_PASSWORD`. This file is not tracked by git. Now, a config file  named `ssh_config.json` can be used to configure the startup of all SSH-connections and associated servers:
 
 ```json
 {
-    "hosts" : [
+    "hosts" : [
 
-        {
-            "hostname" : HOSTNAME,
-            "ip": HOSTIP,
+        {
+            "hostname" : HOSTNAME,
+            "ip": HOSTIP,
 
-            "kill_all": "True", \\ Optional,
-            \\ True if you want to kill all python porcesses on remote machine before server launching.
-            "python_path": PYTHON_PATH,
-            "script_path": PATH_OF_PYLABNET_SERVER.PY,
-            "venv_path":  PATH_OF_VENV_ACTIVATE_SCRIPT,
-            "servers":[
-                {
-                "servername" : SERVERNAME
-                "debug" : "True" \\Optional, if wait for debugger attachment.
-                "config" : NAME_OF_CONFIGFILE \\ Optional
-            }
-            ]
-        },
-        {
-            "hostname" : ...,
-            ...
-        }
-    ]
+            "kill_all": "True", \\ Optional,
+            \\ True if you want to kill all python processes on remote machine before server launching.
+            "python_path": PYTHON_PATH,
+            "script_path": PATH_OF_PYLABNET_SERVER.PY,
+            "venv_path":  PATH_OF_VENV_ACTIVATE_SCRIPT,
+            "servers":[
+                {
+                "servername" : SERVERNAME,
+                "debug" : "True" \\Optional, if wait for debugger attachment.
+                "config" : NAME_OF_CONFIGFILE \\ Optional
+            }
+            ]
+        },
+        {
+            "hostname" : ...,
+            ...
+        }
+    ]
 }
 
 ```

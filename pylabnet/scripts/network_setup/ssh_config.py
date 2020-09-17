@@ -31,7 +31,7 @@ def launch(**kwargs):
         except TimeoutError:
             logger.error(f"Failed to setup SSH connection to {hostname}@{host_ip}.")
 
-        logger.info(f"Succesfull connected via SSH to {hostname}@{host_ip}.")
+        logger.info(f"Succesfully connected via SSH to {hostname}@{host_ip}.")
 
         python_path = host['python_path']
         script_path = host['script_path']

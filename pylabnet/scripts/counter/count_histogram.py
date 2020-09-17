@@ -56,6 +56,16 @@ class TimeTrace:
                       f' with click channel {self.click_ch} and start channel'
                       f' {self.start_ch}')
 
+    def set_parameters(self, binwidth=1000, n_bins=1000, **kwargs):
+        """ Updates histogram parameters 
+
+        :param binwidth: (int) width of bins in ps
+        :param n_bins: (int) total number of bins for histogram
+        """
+
+        self.binwidth = binwidth
+        self.n_bins = n_bins
+
     def init_plot(self):
         """ Instantiates a plot, assuming counter is live """
 

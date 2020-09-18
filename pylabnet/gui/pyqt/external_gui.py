@@ -66,10 +66,6 @@ class Window(QtWidgets.QMainWindow):
             order to debug and access Window methods directly in an interactive session
         """
 
-        # Initialize parent class QWidgets.QMainWindow
-        super(Window, self).__init__()
-
-        self._ui = None  # .ui file to use as a template
         self.app = app  # Application instance onto which to load the GUI. 
 
         if self.app is None:
@@ -78,6 +74,11 @@ class Window(QtWidgets.QMainWindow):
             self.app.setWindowIcon(
                 QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
             )
+        
+        # Initialize parent class QWidgets.QMainWindow
+        super(Window, self).__init__()
+
+        self._ui = None  # .ui file to use as a template
 
 
         # Holds all widgets assigned to the GUI from an external script

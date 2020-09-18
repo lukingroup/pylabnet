@@ -93,12 +93,17 @@ class CountMonitor:
             # Give time to initialize
             # time.sleep(0.05)
             self._is_running = True
-            self._ctr.start_trace(
-                name='monitor',
-                ch_list=self._ch_list,
-                bin_width=self._bin_width, 
-                n_bins=self._n_bins
-            )
+
+            # NOTE: try statement should be removed
+            try:
+                self._ctr.start_trace(
+                    name='monitor',
+                    ch_list=self._ch_list,
+                    bin_width=self._bin_width, 
+                    n_bins=self._n_bins
+                )
+            except:
+                pass
 
             # Continuously update data until paused
             while self._is_running:
@@ -190,12 +195,23 @@ class CountMonitor:
                 np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
             )
 
+        # NOTE: should be removed
+        try:
+            self._ctr.clear_ctr(name='monitor')
+        except:
+            pass
+
     def _update_output(self):
         """ Updates the output to all current values"""
 
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
-        counts = self._ctr.get_counts(name='monitor')
+
+        # NOTE: try should be removed
+        try:
+            counts = self._ctr.get_counts(name='monitor')
+        except:
+            counts = np.random.randint(0, 10, (len(self._ch_list),self._n_bins))
         counts_per_sec = counts*(1e12/self._bin_width)
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0
@@ -224,7 +240,7 @@ class CountMonitor:
             # )
 
             self.widgets[f'curve_{channel}'].setData(count_array)
-            self.widgets[f'number_label'][channel-1].setText(count_array[-1])
+            self.widgets[f'number_label'][channel-1].setText(str(count_array[-1]))
 
 
 def launch(**kwargs):
@@ -235,7 +251,9 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['si_tt'], logger_client=logger
+            # NOTE: should be removed
+            #ctr_client=clients['si_tt'], logger_client=logger
+            ctr_client=None, logger_client=logger
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

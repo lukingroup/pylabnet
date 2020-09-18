@@ -146,11 +146,11 @@ class DIOPulseBlockHandler():
         self.pb = self.pb.join(
             p_obj = PFalse(
                 ch=list(self.pb.p_dict.keys())[0],
-                dur=1/self.sr,
+                dur=2*1/self.sr,
                 t0=self.pb.dur
             )
         )
-    
+
     def gen_codewords(self):
         """Generate array of DIO codewords.
 

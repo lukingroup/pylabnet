@@ -27,7 +27,7 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
-from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -56,7 +56,7 @@ class Window(QtWidgets.QMainWindow):
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
 
-    def __init__(self, app, gui_template=None, run=True):
+    def __init__(self, app=None, gui_template=None, run=True):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -70,7 +70,15 @@ class Window(QtWidgets.QMainWindow):
         super(Window, self).__init__()
 
         self._ui = None  # .ui file to use as a template
-        self._app = app  # Application instance onto which to load the GUI. Must be instantiated prior to Window!
+        self.app = app  # Application instance onto which to load the GUI. 
+
+        if self.app is None:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+            self.app = QtWidgets.QApplication(sys.argv)
+            self.app.setWindowIcon(
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+            )
+
 
         # Holds all widgets assigned to the GUI from an external script
         # Reference is by keyword (widget_label), and the keyword can be used to access the widget once assigned
@@ -412,7 +420,7 @@ class Window(QtWidgets.QMainWindow):
 
         :return: 0 when complete
         """
-        self._app.processEvents()
+        self.app.processEvents()
         return 0
 
     # Technical methods

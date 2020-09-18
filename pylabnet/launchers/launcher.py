@@ -78,7 +78,7 @@ class Launcher:
         :param server_req: list of modules containing necessary servers. The module needs:
             (1) launch() method to instantiate Service and run the server (see pylabnet_server.py for details)
             (2) Client() class, so that we can instantiate a client from this thread and pass it to the script
-        :param gui_req: list of gui names to instantiate (names of .ui files, excluding .ui extension)
+        :param gui_req: list of gui names to instantiate servers of (names of .ui files, excluding .ui extension)
         :param auto_connect: (bool) whether or not to automatically connect if there is a single instance of the
             required server already running
         :param name: (str) desired name that will appear as the "process" name for the script invoking the

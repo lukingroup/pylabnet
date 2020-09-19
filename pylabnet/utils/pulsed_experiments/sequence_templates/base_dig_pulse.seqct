@@ -1,4 +1,4 @@
 while (1) {
-                _dig_pulse_  
+                $dig_sequence$ 
                 wait(1000);
             }

@@ -1,7 +1,7 @@
 """ Launches the continuous count monitor application """
 
 from pylabnet.launchers.launcher import Launcher
-# from pylabnet.launchers.servers import si_tt
+from pylabnet.launchers.servers import si_tt
 from pylabnet.scripts.counter import monitor_counts
 import time
 

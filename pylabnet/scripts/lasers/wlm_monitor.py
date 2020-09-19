@@ -1,8 +1,8 @@
 from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.gui.pyqt.gui_handler import GUIHandler
-from pylabnet.utils.helper_methods import unpack_launcher, create_server, load_config
+from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.utils.helper_methods import unpack_launcher, create_server, load_config, get_gui_widgets, get_legend_from_graphics_view
 from pylabnet.utils.logging.logger import LogClient
 
 import numpy as np
@@ -10,6 +10,7 @@ import time
 import copy
 import pickle
 import socket
+import pyqtgraph as pg
 
 
 # Static methods
@@ -38,17 +39,7 @@ def generate_widgets():
 class WlmMonitor:
     """ A script class for monitoring and locking lasers based on the wavemeter """
 
-    # Assign widget names based on .gui file.
-    (_graph_widgets,
-     _legend_widgets,
-     _number_widgets,
-     _boolean_widgets,
-     _label_widgets,
-     _event_widgets,
-     _setpoint_rs) = generate_widgets()
-    zeros = [f'zero_button_{i}' for i in range(1,5)]
-
-    def __init__(self, wlm_client, gui_client, logger_client, ao_clients=None, display_pts=5000, threshold=0.0002):
+    def __init__(self, wlm_client, logger_client, gui='wavemeter_monitor', ao_clients=None, display_pts=5000, threshold=0.0002, port=None, params=None):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
 
         :param wlm_client: (obj) instance of wavemeter client
@@ -58,6 +49,8 @@ class WlmMonitor:
             {'ni_usb_1': nidaqmx_usb_client_1, 'ni_usb_2': nidaqmx_usb_client_2, 'ni_pxi_multi': nidaqmx_pxi_client}
         :param display_pts: (int, optional) number of points to display on plot
         :param threshold: (float, optional) threshold in THz for lock error signal
+        :param port: (int) port number for update server
+        :param params: (dict) see set_parameters below for details
         """
         self.channels = []
         self.wlm_client = wlm_client
@@ -65,8 +58,25 @@ class WlmMonitor:
         self.display_pts = display_pts
         self.threshold = threshold
 
-        # Instanciate gui handler
-        self.gui_handler = GUIHandler(gui_client, logger_client)
+        # Instantiate gui
+        self.gui = Window(
+            gui_template=gui,
+            host=socket.gethostbyname(socket.gethostname()),
+            port=port,
+        )
+        self.widgets = get_gui_widgets(
+            gui=self.gui,
+            freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
+            zero=4, voltage=2, error=2
+        )
+
+        if params is not None:
+            self.set_parameters(**params)
+
+    def set_port(self, port):
+        """ Sets the port label info"""
+
+        self.gui.port_label.setText(str(port))
 
     def set_parameters(self, channel_params):
         """ Instantiates new channel objects with given parameters and assigns them to the WlmMonitor
@@ -76,15 +86,14 @@ class WlmMonitor:
 
         :param channel_params: (list) of dictionaries containing all parameters. Example of full parameter set:
             {'channel': 1, 'name': 'Velocity', 'setpoint': 406.7, 'lock':True, 'memory': 20,
-             'pid': {'p': 1, 'i': 0.1, 'd': 0}, 'ao': {'client':'nidaqmx_client', 'channel': 'ao1'},
-             'voltage_monitor': True}
+             'pid': {'p': 1, 'i': 0.1, 'd': 0}, 'ao': {'client':'nidaqmx_client', 'channel': 'ao1'}}
 
             In more detail:
             - 'channel': should be from 1-8 for the High-Finesse Wavemeter (with switch) and should ALWAYS be provided,
                 as a reference so that we know which channel to assign all the other parameters to
             - 'name': a string that can just be provided once and is used as a user-friendly name for the channel.
                 Initializes to 'Channel X' where X is a random integer if not provided
-            - 'setpoint': setpoint for this channel. If not provided, or if None, the setpoint is not plotted/tracked
+            - 'setpoint': setpoint for this channel.
             - 'lock': boolean that tells us whether or not to turn on the lock. Ignored if setpoint is None. Default is
                 False.
             - 'memory': Number of points for integral memory of pid (history of the integral). Default is 20.
@@ -93,8 +102,6 @@ class WlmMonitor:
             - 'ao': dict containing two elements: 'client' which is a string that is the name of the ao client to use
                 for locking. This should match up with a key in self.ao_clients. 'channel'is an identifier for which
                 analog output to use for this channel. By default it is set to None and no active locking is performed
-            - 'voltage monitor': boolean which tells us whether to also plot/track the ao voltage + setpoint error on
-                the plot below the laser graph. Default is False
         """
 
         # Check if it is only a single channel
@@ -273,7 +280,7 @@ class WlmMonitor:
 
         # Index of channel
         physical_channel = self.channels[self._get_channels().index(channel)]
-        
+
         # Generate array of points to go to
         traverse = np.linspace(physical_channel.setpoint, value, int((value-physical_channel.setpoint)/step_size))
 
@@ -283,7 +290,7 @@ class WlmMonitor:
                 setpoint=frequency
             )])
             time.sleep(hold_time)
-    
+
     # Technical methods
 
     def _initialize_channel(self, index, channel):
@@ -307,114 +314,157 @@ class WlmMonitor:
             scalar_multiplier = 2
 
         # First, clear the plot in case it was in use by some previous process
-        self.gui_handler.clear_plot(
-            plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset)]
-        )
+        # self.gui_handler.clear_plot(
+        #     plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset)]
+        # )
 
         # Clear voltage if relevant
-        if channel.voltage is not None:
+        # if channel.voltage is not None:
 
-            # First clear the plot
-            self.gui_handler.clear_plot(
-                plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1]
-            )
+        #     # First clear the plot
+        #     self.gui_handler.clear_plot(
+        #         plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1]
+        #     )
 
         # Assign GUI + curves
-        self.gui_handler.assign_plot(
-            plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
-            plot_label=channel.name,
-            legend_widget=self._legend_widgets[plot_multiplier * (index + channel.plot_widget_offset)]
+        # self.gui_handler.assign_plot(
+        #     plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
+        #     plot_label=channel.name,
+        #     legend_widget=self._legend_widgets[plot_multiplier * (index + channel.plot_widget_offset)]
+        # )
+        # self.gui_handler.assign_curve(
+        #     plot_label=channel.name,
+        #     curve_label=channel.curve_name
+        # )
+
+        # Configure legend for plot
+        self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset)] = get_legend_from_graphics_view(
+            self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset)]
         )
-        self.gui_handler.assign_curve(
-            plot_label=channel.name,
-            curve_label=channel.curve_name
+
+        # Create curve
+        self.widgets[f'{channel.name}_{channel.curve_name}'] = self.widgets['graph_widget'][plot_multiplier * (index + channel.plot_widget_offset)].plot(
+            pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
+        )
+        self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset)].addItem(
+            self.widgets[f'{channel.name}_{channel.curve_name}'],
+            ' - '+channel.curve_name
         )
 
         # Numeric label for laser frequency
-        self.gui_handler.assign_scalar(
-            scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset)],
-            scalar_label=channel.name
-        )
+        # self.gui_handler.assign_scalar(
+        #     scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset)],
+        #     scalar_label=channel.name
+        # )
 
         # Only initialize setpoint plot if it is provided, since we don't want to clutter the screen
         if channel.setpoint is not None:
-            self.gui_handler.assign_curve(
-                plot_label=channel.name,
-                curve_label=channel.setpoint_name
+            # self.gui_handler.assign_curve(
+            #     plot_label=channel.name,
+            #     curve_label=channel.setpoint_name
+            # )
+            self.widgets[f'{channel.name}_{channel.setpoint_name}'] = self.widgets['graph_widget'][plot_multiplier * (index + channel.plot_widget_offset)].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+            )
+            self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset)].addItem(
+                self.widgets[f'{channel.name}_{channel.setpoint_name}'],
+                ' - '+channel.setpoint_name
             )
 
         # Numeric label for setpoint
-        self.gui_handler.assign_scalar(
-            scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 1],
-            scalar_label=channel.setpoint_name
-        )
+        # self.gui_handler.assign_scalar(
+        #     scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 1],
+        #     scalar_label=channel.setpoint_name
+        # )
 
         # Assign lock and error boolean widgets
-        self.gui_handler.assign_scalar(
-            scalar_widget=self._boolean_widgets[scalar_multiplier * (index + channel.plot_widget_offset)],
-            scalar_label=channel.lock_name
-        )
-        self.gui_handler.assign_scalar(
-            scalar_widget=self._boolean_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 1],
-            scalar_label=channel.error_name
-        )
-        print(f'Assigned {channel.error_name}')
+        # self.gui_handler.assign_scalar(
+        #     scalar_widget=self._boolean_widgets[scalar_multiplier * (index + channel.plot_widget_offset)],
+        #     scalar_label=channel.lock_name
+        # )
+        # self.gui_handler.assign_scalar(
+        #     scalar_widget=self._boolean_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 1],
+        #     scalar_label=channel.error_name
+        # )
+        # print(f'Assigned {channel.error_name}')
 
         # Assign pushbutton for clearing data
-        self.gui_handler.assign_event_button(
-            event_widget=self._event_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
-            event_label=channel.name
+        # self.gui_handler.assign_event_button(
+        #     event_widget=self._event_widgets[plot_multiplier * (index + channel.plot_widget_offset)],
+        #     event_label=channel.name
+        # )
+        self.widgets['event_button'][plot_multiplier * (index + channel.plot_widget_offset)].clicked.connect(
+            lambda: self.clear_channel(channel)
         )
 
         # Assign pushbutton for setting setpoint
-        self.gui_handler.assign_event_button(
-            event_widget=self._setpoint_rs[plot_multiplier * (index + channel.plot_widget_offset)],
-            event_label=f'{channel.name}_rs'
-        )
+        # self.gui_handler.assign_event_button(
+        #     event_widget=self._setpoint_rs[plot_multiplier * (index + channel.plot_widget_offset)],
+        #     event_label=f'{channel.name}_rs'
+        # )
+        # TODO : implement setpoint RS
 
         # Assign voltage if relevant
         if channel.voltage is not None:
 
             # Now reassign it
-            self.gui_handler.assign_plot(
-                plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1],
-                plot_label=channel.aux_name,
-                legend_widget=self._legend_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1]
+            # self.gui_handler.assign_plot(
+            #     plot_widget=self._graph_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1],
+            #     plot_label=channel.aux_name,
+            #     legend_widget=self._legend_widgets[plot_multiplier * (index + channel.plot_widget_offset) + 1]
+            # )
+            self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset) + 1] = get_legend_from_graphics_view(
+                self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset) + 1]
             )
-            self.gui_handler.assign_curve(
-                plot_label=channel.aux_name,
-                curve_label=channel.voltage_curve
+            # self.gui_handler.assign_curve(
+            #     plot_label=channel.aux_name,
+            #     curve_label=channel.voltage_curve
+            # )
+            # self.gui_handler.assign_curve(
+            #     plot_label=channel.aux_name,
+            #     curve_label=channel.error_curve
+            # )
+            self.widgets[f'{channel.aux_name}_{channel.voltage_curve}'] = self.widgets['graph_widget'][plot_multiplier * (index + channel.plot_widget_offset)+1].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
             )
-            self.gui_handler.assign_curve(
-                plot_label=channel.aux_name,
-                curve_label=channel.error_curve
+            self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset)+1].addItem(
+                self.widgets[f'{channel.aux_name}_{channel.voltage_curve}'],
+                ' - '+channel.voltage_curve
+            )
+            self.widgets[f'{channel.aux_name}_{channel.error_curve}'] = self.widgets['graph_widget'][plot_multiplier * (index + channel.plot_widget_offset)+1].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+            )
+            self.widgets['legend_widget'][plot_multiplier * (index + channel.plot_widget_offset)+1].addItem(
+                self.widgets[f'{channel.aux_name}_{channel.error_curve}'],
+                ' - '+channel.error_curve
             )
 
             # Display scalars as well
-            self.gui_handler.assign_scalar(
-                scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 2],
-                scalar_label=channel.voltage_curve
-            )
-            self.gui_handler.assign_scalar(
-                scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 3],
-                scalar_label=channel.error_curve
-            )
+            # self.gui_handler.assign_scalar(
+            #     scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 2],
+            #     scalar_label=channel.voltage_curve
+            # )
+            # self.gui_handler.assign_scalar(
+            #     scalar_widget=self._number_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 3],
+            #     scalar_label=channel.error_curve
+            # )
 
             # Change label text for voltage
-            self.gui_handler.assign_label(
-                label_widget=self._label_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 2],
-                label_label=channel.voltage_curve
-            )
-            self.gui_handler.assign_label(
-                label_widget=self._label_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 3],
-                label_label=channel.error_curve
-            )
+            # self.gui_handler.assign_label(
+            #     label_widget=self._label_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 2],
+            #     label_label=channel.voltage_curve
+            # )
+            # self.gui_handler.assign_label(
+            #     label_widget=self._label_widgets[scalar_multiplier * (index + channel.plot_widget_offset) + 3],
+            #     label_label=channel.error_curve
+            # )
 
         # Assign zero buttons
-        self.gui_handler.assign_event_button(
-            event_widget=self.zeros[plot_multiplier * (index + channel.plot_widget_offset)],
-            event_label=f'{channel.name}_zero'
-        )
+        # self.gui_handler.assign_event_button(
+        #     event_widget=self.zeros[plot_multiplier * (index + channel.plot_widget_offset)],
+        #     event_label=f'{channel.name}_zero'
+        # )
+        # TODO implement zeroing
 
     def _update_channels(self):
         """ Updates all channels + displays
@@ -422,152 +472,152 @@ class WlmMonitor:
         Called continuously inside run() method to refresh WLM data and output on GUI
         """
 
-        for channel in self.channels:
+        for index, channel in enumerate(self.channels):
+
+            if channel.voltage is not None:
+                plot_multiplier = 2
+                scalar_multiplier = 4
+            else:
+                plot_multiplier = 1
+                scalar_multiplier = 2
 
             # Update data with the new wavelength
             channel.update(self.wlm_client.get_wavelength(channel.number))
 
             # Try to update plots if we have a GUI connected
-            if self.gui_handler.gui_connected:
 
-                self.gui_handler.set_curve_data(
-                    data=channel.data,
-                    plot_label=channel.name,
-                    curve_label=channel.curve_name
-                )
-                self.gui_handler.set_scalar(
-                    value=channel.data[-1],
-                    scalar_label=channel.name
+            # self.gui_handler.set_curve_data(
+            #     data=channel.data,
+            #     plot_label=channel.name,
+            #     curve_label=channel.curve_name
+            # )
+            # self.gui_handler.set_scalar(
+            #     value=channel.data[-1],
+            #     scalar_label=channel.name
+            # )
+            self.widgets[f'{channel.name}_{channel.curve_name}'].setData(
+                channel.data
+            )
+            self.widgets['number_widget'][scalar_multiplier * (index + channel.plot_widget_offset)].setValue(
+                channel.data[-1]
+            )
+
+            # Update setpoints if necessary
+            if channel.setpoint is not None:
+                # self.gui_handler.set_curve_data(
+                #     data=channel.sp_data,
+                #     plot_label=channel.name,
+                #     curve_label=channel.setpoint_name
+                # )
+                self.widgets[f'{channel.name}_{channel.setpoint_name}'].setData(
+                    channel.sp_data
                 )
 
-                # Update setpoints if necessary
-                if channel.setpoint is not None:
-                    self.gui_handler.set_curve_data(
-                        data=channel.sp_data,
-                        plot_label=channel.name,
-                        curve_label=channel.setpoint_name
+                # Update the setpoint to GUI directly if it has been changed
+                if channel.setpoint_override:
+
+                    # Tell GUI to pull data provided by script and overwrite direct GUI input
+                    self.widgets['number_widget'][scalar_multiplier * (index + channel.plot_widget_offset)+1].setValue(
+                        channel.setpoint
                     )
 
-                    # Update the setpoint to GUI directly if it has been changed
-                    if channel.setpoint_override:
+            # Set lock and error booleans
+            if channel.setpoint is not None:
 
-                        # Tell GUI to pull data provided by script and overwrite direct GUI input
-                        self.gui_handler.activate_scalar(
-                            scalar_label=channel.setpoint_name
-                        )
-                        self.gui_handler.set_scalar(
-                            value=channel.setpoint,
-                            scalar_label=channel.setpoint_name
-                        )
-                        self.gui_handler.deactivate_scalar(
-                            scalar_label=channel.setpoint_name
-                        )
-
-                    # Otherwise, tell GUI to stop updating from script and accept direct GUI input
-                    else:
-                        self.gui_handler.deactivate_scalar(
-                            scalar_label=channel.setpoint_name
-                        )
-
-                # Set lock and error booleans
-                if channel.setpoint is not None:
-
-                    # If the lock has been updated, override the GUI
-                    if channel.lock_override:
-                        self.gui_handler.activate_scalar(
-                            scalar_label=channel.lock_name
-                        )
-                        self.gui_handler.set_scalar(
-                            value=channel.lock,
-                            scalar_label=channel.lock_name
-                        )
-
-                    # Otherwise, enable GUI input
-                    else:
-                        self.gui_handler.deactivate_scalar(
-                            scalar_label=channel.lock_name
-                        )
-
-                    # Set the error boolean (true if the lock is active and we are outside the error threshold)
-                    if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
-                        self.gui_handler.set_scalar(
-                            value=True,
-                            scalar_label=channel.error_name
-                        )
-                    else:
-                        self.gui_handler.set_scalar(
-                            value=False,
-                            scalar_label=channel.error_name
-                        )
-
-                # Otherwise just set everything false, since we don't have a setpoint
-                else:
+                # If the lock has been updated, override the GUI
+                if channel.lock_override:
+                    self.
                     self.gui_handler.set_scalar(
-                        value=False,
+                        value=channel.lock,
                         scalar_label=channel.lock_name
                     )
+
+                # Otherwise, enable GUI input
+                else:
+                    self.gui_handler.deactivate_scalar(
+                        scalar_label=channel.lock_name
+                    )
+
+                # Set the error boolean (true if the lock is active and we are outside the error threshold)
+                if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
+                    self.gui_handler.set_scalar(
+                        value=True,
+                        scalar_label=channel.error_name
+                    )
+                else:
                     self.gui_handler.set_scalar(
                         value=False,
                         scalar_label=channel.error_name
                     )
 
-                # Now update lock + voltage plots + scalars if relevant
-                if channel.voltage is not None:
-                    self.gui_handler.set_curve_data(
-                        data=channel.voltage,
-                        plot_label=channel.aux_name,
-                        curve_label=channel.voltage_curve
-                    )
-                    self.gui_handler.set_curve_data(
-                        data=channel.error,
-                        plot_label=channel.aux_name,
-                        curve_label=channel.error_curve
-                    )
-                    self.gui_handler.set_scalar(
-                        value=channel.voltage[-1],
-                        scalar_label=channel.voltage_curve
-                    )
-                    self.gui_handler.set_scalar(
-                        value=channel.error[-1],
-                        scalar_label=channel.error_curve
-                    )
-
-                    # Update labels, if desired
-                    if not channel.labels_updated:
-                        self.gui_handler.set_label(
-                            text='Voltage',
-                            label_label=channel.voltage_curve
-                        )
-                        self.gui_handler.set_label(
-                            text='Lock Error',
-                            label_label=channel.error_curve
-                        )
-                        channel.label_updated = True
-
-            # If GUI is not connected, check if we should try reconnecting to the GUI
-            elif self.gui_handler.gui_reconnect:
-
-                self.gui_handler.gui_connected = True
-                # self.gui_handler.connect() # Commented by CK, unsure what that does.
-
-                # Reinitialize channels to new GUI
-                self.initialize_channels()
-
-                # Manually update the GUI for a while so we don't change the setpoints
-                channel.setpoint_override = True
-                channel.lock_override = True
-                self.gui_handler.activate_scalar(scalar_label=channel.setpoint_name)
-                self.gui_handler.activate_scalar(scalar_label=channel.lock_name)
+            # Otherwise just set everything false, since we don't have a setpoint
+            else:
                 self.gui_handler.set_scalar(
-                    value=channel.setpoint,
-                    scalar_label=channel.setpoint_name
-                )
-                self.gui_handler.set_scalar(
-                    value=channel.lock,
+                    value=False,
                     scalar_label=channel.lock_name
                 )
-                self._update_channels()
-                self.gui_handler.gui_reconnect = False
+                self.gui_handler.set_scalar(
+                    value=False,
+                    scalar_label=channel.error_name
+                )
+
+            # Now update lock + voltage plots + scalars if relevant
+            if channel.voltage is not None:
+                self.gui_handler.set_curve_data(
+                    data=channel.voltage,
+                    plot_label=channel.aux_name,
+                    curve_label=channel.voltage_curve
+                )
+                self.gui_handler.set_curve_data(
+                    data=channel.error,
+                    plot_label=channel.aux_name,
+                    curve_label=channel.error_curve
+                )
+                self.gui_handler.set_scalar(
+                    value=channel.voltage[-1],
+                    scalar_label=channel.voltage_curve
+                )
+                self.gui_handler.set_scalar(
+                    value=channel.error[-1],
+                    scalar_label=channel.error_curve
+                )
+
+                # Update labels, if desired
+                if not channel.labels_updated:
+                    self.gui_handler.set_label(
+                        text='Voltage',
+                        label_label=channel.voltage_curve
+                    )
+                    self.gui_handler.set_label(
+                        text='Lock Error',
+                        label_label=channel.error_curve
+                    )
+                    channel.label_updated = True
+
+        # If GUI is not connected, check if we should try reconnecting to the GUI
+        elif self.gui_handler.gui_reconnect:
+
+            self.gui_handler.gui_connected = True
+            # self.gui_handler.connect() # Commented by CK, unsure what that does.
+
+            # Reinitialize channels to new GUI
+            self.initialize_channels()
+
+            # Manually update the GUI for a while so we don't change the setpoints
+            channel.setpoint_override = True
+            channel.lock_override = True
+            self.gui_handler.activate_scalar(scalar_label=channel.setpoint_name)
+            self.gui_handler.activate_scalar(scalar_label=channel.lock_name)
+            self.gui_handler.set_scalar(
+                value=channel.setpoint,
+                scalar_label=channel.setpoint_name
+            )
+            self.gui_handler.set_scalar(
+                value=channel.lock,
+                scalar_label=channel.lock_name
+            )
+            self._update_channels()
+            self.gui_handler.gui_reconnect = False
 
     def _get_gui_data(self):
         """ Updates setpoint and lock parameters with data pulled from GUI
@@ -724,25 +774,19 @@ class Channel:
 
         self.data = np.ones(display_pts) * wavelength
 
-        if self.setpoint is not None:
-            self.sp_data = np.ones(display_pts) * self.setpoint
-            self.setpoint_override = True
+        self.sp_data = np.ones(display_pts) * self.setpoint
+        self.setpoint_override = True
 
         self.lock_override = True
 
         # Initialize voltage and error
-        if self.voltage is not None:
-            self.voltage = np.ones(display_pts) * self.current_voltage
+        self.voltage = np.ones(display_pts) * self.current_voltage
 
-            # Check that setpoint is reasonable, otherwise set error to 0
-            if self.setpoint is None:
-                self.error = np.zeros(display_pts)
-            else:
-                self.error = np.ones(display_pts) * (wavelength - self.setpoint)
+        # Check that setpoint is reasonable, otherwise set error to 0
+        self.error = np.ones(display_pts) * (wavelength - self.setpoint)
 
     def initialize_sp_data(self, display_pts=5000):
-        if self.setpoint is not None:
-            self.sp_data = np.ones(display_pts) * self.setpoint
+        self.sp_data = np.ones(display_pts) * self.setpoint
 
     def update(self, wavelength):
         """
@@ -753,31 +797,29 @@ class Channel:
 
         self.data = np.append(self.data[1:], wavelength)
 
-        if self.setpoint is not None:
+        # Pick which setpoint to use
+        # If the setpoint override is on, this means we need to try and set the GUI value to self.setpoint
+        if self.setpoint_override:
 
-            # Pick which setpoint to use
-            # If the setpoint override is on, this means we need to try and set the GUI value to self.setpoint
-            if self.setpoint_override:
+            # Check if the GUI has actually caught up
+            if self.setpoint == self.gui_setpoint:
+                self.setpoint_override = False
 
-                # Check if the GUI has actually caught up
-                if self.setpoint == self.gui_setpoint:
-                    self.setpoint_override = False
+            # Otherwise, the GUI still hasn't implemented the setpoint prescribed by update_parameters()
 
-                # Otherwise, the GUI still hasn't implemented the setpoint prescribed by update_parameters()
+        # If setpoint override is off, this means the GUI caught up to our last update_parameters() call, and we
+        # should refrain from updating the value until we get a new value from the GUI
+        else:
 
-            # If setpoint override is off, this means the GUI caught up to our last update_parameters() call, and we
-            # should refrain from updating the value until we get a new value from the GUI
-            else:
+            # Check if the GUI has changed, and if so, update the setpoint in the script to match
+            if self.gui_setpoint != self.prev_gui_setpoint:
+                self.setpoint = copy.deepcopy(self.gui_setpoint)
 
-                # Check if the GUI has changed, and if so, update the setpoint in the script to match
-                if self.gui_setpoint != self.prev_gui_setpoint:
-                    self.setpoint = copy.deepcopy(self.gui_setpoint)
+            # Otherwise the GUI is static AND parameters haven't been updated so we don't change the setpoint at all
 
-                # Otherwise the GUI is static AND parameters haven't been updated so we don't change the setpoint at all
-
-            # Store the latest GUI setpoint
-            self.prev_gui_setpoint = copy.deepcopy(self.gui_setpoint)
-            self.sp_data = np.append(self.sp_data[1:], self.setpoint)
+        # Store the latest GUI setpoint
+        self.prev_gui_setpoint = copy.deepcopy(self.gui_setpoint)
+        self.sp_data = np.append(self.sp_data[1:], self.setpoint)
 
         # Now deal with pid stuff
         self.pid.set_parameters(setpoint=0 if self.setpoint is None else self.setpoint)
@@ -815,11 +857,8 @@ class Channel:
                 self.ao = None
 
         # Update voltage and error data
-        if self.voltage is not None:
-            self.voltage = np.append(self.voltage[1:], self.current_voltage)
-            self.error = np.append(self.error[1:], self.pid.error * self._gain)
-        else:
-            print('Voltage is None')
+        self.voltage = np.append(self.voltage[1:], self.current_voltage)
+        self.error = np.append(self.error[1:], self.pid.error * self._gain)
 
     def zero_voltage(self):
         """Zeros the voltage (if applicable)"""
@@ -914,23 +953,11 @@ class Channel:
             self.ao = None
 
         # Configure voltage monitor arrays if desired
-        if 'voltage_monitor' in channel_params:
-            if channel_params['voltage_monitor']:
-                self.voltage = np.array([])
-                self.error = np.array([])
-                self.aux_name = '{} Auxiliary Monitor'.format(self.name)
-                self.voltage_curve = '{} Voltage'.format(self.name)
-                self.error_curve = '{} Lock Error'.format(self.name)
-            else:
-                self.voltage = None
-
-        # Set voltage to None - this will be used later on to check if we should be monitoring
-        else:
-            self.voltage = None
-
-        # If we specify a specific widget to use, configure an offset for plot widget loading
-        if 'plot_widget' in channel_params:
-            self.plot_widget_offset = channel_params['plot_widget']
+        self.voltage = np.array([])
+        self.error = np.array([])
+        self.aux_name = '{} Auxiliary Monitor'.format(self.name)
+        self.voltage_curve = '{} Voltage'.format(self.name)
+        self.error_curve = '{} Lock Error'.format(self.name)
 
         # Otherwise just use the default widget (populates in order)
         else:
@@ -958,14 +985,18 @@ def launch(**kwargs):
         client_name = channel['ao']['client']
         ao_clients[client_name] = clients[client_name]
 
-    gui_client = guis['wavemeter_monitor']
+    if params is None:
+        channel_params = [p for p in config['channels'].values()]
+        params = dict(channel_params=channel_params)
+
+    # gui_client = guis['wavemeter_monitor']
 
     # Instantiate Monitor script
     wlm_monitor = WlmMonitor(
         wlm_client=wavemeter_client,
-        gui_client=gui_client,
         ao_clients=ao_clients,
-        logger_client=logger
+        logger_client=logger,
+        params=params
     )
 
     # Instantiate pause+update service & connect to logger
@@ -979,16 +1010,8 @@ def launch(**kwargs):
     update_service.assign_logger(logger=log_client_update)
     update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
     log_client_update.update_data(data={'port': update_port})
+    wlm_monitor.set_port(update_port)
     update_server.start()
-
-    if params is None:
-        channel_params = [p for p in config['channels'].values()]
-        params = dict(channel_params=channel_params)
-
-    # Set parameters
-    # Can use these as default parameters for loading up the monitor initially. New parameters can be input afterwards
-    # using an update client
-    wlm_monitor.set_parameters(**params)
 
     # Initialize channels to GUI
     wlm_monitor.initialize_channels()

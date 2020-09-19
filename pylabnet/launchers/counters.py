@@ -10,10 +10,7 @@ def main():
     try:
         launcher = Launcher(
             script=[monitor_counts],
-            # NOTE
-            #server_req=[si_tt],
-            server_req=[None],
-            #gui_req=['count_monitor'],
+            server_req=[si_tt],
             gui_req=[None],
             params=[None]
         )

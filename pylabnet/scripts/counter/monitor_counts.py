@@ -100,16 +100,12 @@ class CountMonitor:
             # time.sleep(0.05)
             self._is_running = True
 
-            # NOTE: try statement should be removed
-            try:
-                self._ctr.start_trace(
-                    name='monitor',
-                    ch_list=self._ch_list,
-                    bin_width=self._bin_width, 
-                    n_bins=self._n_bins
-                )
-            except:
-                pass
+            self._ctr.start_trace(
+                name='monitor',
+                ch_list=self._ch_list,
+                bin_width=self._bin_width, 
+                n_bins=self._n_bins
+            )
 
             # Continuously update data until paused
             while self._is_running:
@@ -214,11 +210,7 @@ class CountMonitor:
                 np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
             )
 
-        # NOTE: should be removed
-        try:
-            self._ctr.clear_ctr(name='monitor')
-        except:
-            pass
+        self._ctr.clear_ctr(name='monitor')
 
     def _update_output(self):
         """ Updates the output to all current values"""
@@ -226,11 +218,7 @@ class CountMonitor:
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
 
-        # NOTE: try should be removed
-        try:
-            counts = self._ctr.get_counts(name='monitor')
-        except:
-            counts = np.random.randint(0, 10, (len(self._ch_list),self._n_bins))
+        counts = self._ctr.get_counts(name='monitor')
         counts_per_sec = counts*(1e12/self._bin_width)
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0
@@ -270,9 +258,7 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            # NOTE: should be removed
-            #ctr_client=clients['si_tt'], logger_client=logger
-            ctr_client=None, logger_client=logger, server_port=kwargs['server_port']
+            ctr_client=clients['si_tt'], logger_client=logger, server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

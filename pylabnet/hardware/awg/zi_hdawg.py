@@ -572,19 +572,17 @@ class Sequence():
 
         # Retrieve placeholders in input sequence template
         self.placeholders = self.get_placeholders()
-        # Keeps track of which placeholders has not been replaced yet.
 
+        # Keeps track of which placeholders has not been replaced yet.
         self.unresolved_placeholders = copy.deepcopy(self.placeholders)
 
         if placeholder_dict is not None:
             # Some sanity checks.
             for placeholder in placeholder_dict.keys():
-
-                placeholder_wrapped = f"{marker_string}{placeholder}{marker_string}"
-                if  placeholder_wrapped not in sequence:
-                    error_msg = f"The placeholder {placeholder_wrapped} cannot \
+                    if placeholder not in self.placeholders:
+                        error_msg = f"The placeholder {placeholder} cannot \
                         be found in the sequence."
-                    hdawg_driver.log.error(error_msg)
+                        hdawg_driver.log.error(error_msg)
             
             # Replace placeholdes.
             self._replace_placeholders()
@@ -592,9 +590,8 @@ class Sequence():
         if waveform_dict is not None:
             # Some sanity checks.
             for waveform in waveform_dict.keys():
-                waveform_wrapped = f"{marker_string}{waveform}{marker_string}"
-                if waveform_wrapped not in sequence:
-                    error_msg = f"The placeholder {waveform_wrapped} cannot \
+                if waveform not in self.placeholders:
+                    error_msg = f"The placeholder {error_msg} cannot \
                         be found in the sequence."
                     hdawg_driver.log.error(error_msg)
 

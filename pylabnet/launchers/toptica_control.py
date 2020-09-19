@@ -10,7 +10,7 @@ def main():
     launcher = Launcher(
         script=[toptica_control],
         server_req=[toptica_dlc_pro],
-        gui_req=['toptica_control'],
+        gui_req=[None],
         config='toptica_lock',
         params=[None]
     )

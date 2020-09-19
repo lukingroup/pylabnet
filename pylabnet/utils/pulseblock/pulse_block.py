@@ -45,7 +45,7 @@ class PulseBlock:
                         (t0+dur of the latest Pulse object)
     """
 
-    def __init__(self, p_obj_list=None, dflt_dict=None, name=''):
+    def __init__(self, p_obj_list=None, dflt_dict=None, name='', use_auto_dflt=True):
         """ Construct new PulseBlock.
 
         Each argument is optional. One can pass non-default values to fill-in
@@ -70,6 +70,8 @@ class PulseBlock:
                 }
 
         :param name: (opt, str) pulse object name
+        :use_auto_dflt (bool): If True, auto-assign default pulses based
+        on pulses used in each track.
         """
 
         self.name = name

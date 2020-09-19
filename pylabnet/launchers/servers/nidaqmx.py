@@ -55,6 +55,7 @@ def launch(**kwargs):
     except KeyError:
         ni_daqmx_logger.error('No device name provided. '
                               'Please make sure proper config file is provided')
+        raise
 
     # Instantiate server
     ni_daqmx_service = Service()

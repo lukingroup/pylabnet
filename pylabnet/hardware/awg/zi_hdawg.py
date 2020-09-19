@@ -497,27 +497,27 @@ class Sequence():
 
     """
 
-    def _replace_placeholders(self):
+    def replace_placeholders(self, placeholder_dict):
         """ Replace a placeholder by some value
 
         :placeholder: Placeholder string to be replaced.
         :value: Value to which the placeholder string need to be set.
         """
-        for placeholder, value in self.placeholder_dict.items():
+        for placeholder, value in placeholder_dict.items():
             placeholder_wrapped = f"{self.marker_string}{placeholder}{self.marker_string}"
             self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
             self.unresolved_placeholders.remove(placeholder)
 
-    def _replace_waveforms(self):
+    def replace_waveforms(self, waveform_dict):
         """ Replace a placeholder by a waveform
 
         :placeholder: Placeholder string to be replaced.
         :waveform: Numpy array designating the waveform.
         """
-        for waveform, value in self.waveform_dict.items():
+        for waveform, value in waveform_dict.items():
             waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
-            waveform = 'vect(' + ','.join([str(x) for x in value]) + ')'
-            self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(value))
+            waveform_vector = 'vect(' + ','.join([str(x) for x in value]) + ')'
+            self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(waveform_vector))
             self.unresolved_placeholders.remove(waveform)
 
 
@@ -535,7 +535,7 @@ class Sequence():
         for  found_placeholder in found_placeholders:
             if found_placeholders.count(found_placeholder) != 1:
                 error_msg = f"Placeholder {found_placeholder} found multiple time in sequence."
-                self.hd.error(error_msg)
+                self.hd.log.error(error_msg)
 
         return found_placeholders
 
@@ -564,8 +564,12 @@ class Sequence():
         # Store reference to HDAWG_Driver to use logging function.
         self.hd = hdawg_driver
 
-        # Store sequence and placeholders.
+        # Store raw sequence.
         self.raw_sequence = textwrap.dedent(sequence)
+
+        # Store sequence with replaced placeholders.
+        self.sequence = copy.deepcopy(self.raw_sequence)
+
         self.placeholder_dict = placeholder_dict
         self.waveform_dict = waveform_dict
         self.marker_string = marker_string
@@ -585,7 +589,7 @@ class Sequence():
                         hdawg_driver.log.error(error_msg)
             
             # Replace placeholdes.
-            self._replace_placeholders()
+            self.replace_placeholders(self.placeholder_dict)
 
         if waveform_dict is not None:
             # Some sanity checks.
@@ -596,6 +600,6 @@ class Sequence():
                     hdawg_driver.log.error(error_msg)
 
             # Replace waveforms
-            self._replace_waveforms()
+            self.replace_waveforms(self.waveform_dict )
 
 

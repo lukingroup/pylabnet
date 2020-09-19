@@ -435,7 +435,7 @@ def get_gui_widgets(gui, **kwargs):
         of the widget (str, widget_name) and argument value an integer specifying the
         number of copies of that widget
 
-        For more than 1 widget copy, assumes the name is assigned as 
+        For more than 1 widget copy, assumes the name is assigned as
         widget_name_1, widget_name_2, etc.
 
     :return: (dict) dictionary with keywords as widget name and values
@@ -474,3 +474,16 @@ def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
     legend.anchor((0, 0), (0, 0))
 
     return legend
+
+def add_to_legend(legend: pg.LegendItem, curve: pg.PlotItem, curve_name):
+    """ Adds a curve to a legend
+
+    :param legend: pg.LegendItem to add to
+    :param curve: pg.PlotItem containing the relevant curve
+    :param curve_name: (str) name of curve
+    """
+
+    legend.addItem(
+        curve,
+        ' - '+curve_name
+    )

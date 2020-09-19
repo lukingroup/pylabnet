@@ -120,10 +120,10 @@ class DLC_Pro:
 
         self.dlc.write(b"(param-disp 'laser1:dl:cc:current-act)\n")
         return float(self.dlc.read_until(b'>', timeout=1).split()[-3])
-    
+
     def set_current(self, current):
         """ Sets the current to desired value
-        
+
         :param current: (float) value of current to set as setpoint
         """
 
@@ -153,7 +153,7 @@ class DLC_Pro:
 
     def set_temp(self, temp):
         """ Sets the current to desired value
-        
+
         :param temp: (float) value of temperature to set to in Celsius
         """
 

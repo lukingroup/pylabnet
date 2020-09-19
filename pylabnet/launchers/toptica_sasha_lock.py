@@ -10,9 +10,10 @@ def main():
     launcher = Launcher(
         script=[wlm_monitor],
         server_req=[high_finesse_ws7, nidaqmx, toptica_dlc_pro],
-        gui_req=['wavemeter_monitor'],
+        gui_req=[None],
         params=[None],
-        config='toptica+sasha_lock'
+        config='toptica+sasha_lock',
+        script_server=False
     )
     launcher.launch()
 

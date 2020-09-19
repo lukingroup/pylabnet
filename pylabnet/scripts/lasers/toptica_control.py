@@ -6,6 +6,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 
 import socket
 import time
+import numpy as np
 
 
 class Controller:
@@ -111,12 +112,18 @@ class Controller:
 
         # Handle value checking
         if check_vals:
-            self.widgets['temperature_actual'].setValue(
-                self.dlc.temp_act()
-            )
-            self.widgets['current_actual'].setValue(
-                self.dlc.current_act()
-            )
+            try:
+                temp = self.dlc.temp_act()
+                if temp < 50:
+                    self.widgets['temperature_actual'].setValue(
+                        temp
+                    )
+                time.sleep(0.1)
+                self.widgets['current_actual'].setValue(
+                    self.dlc.current_act()
+                )
+            except ValueError:
+                pass
 
         self.gui.force_update()
 
@@ -126,14 +133,26 @@ class Controller:
         # Check if laser is on and update
         self.emission = self.dlc.is_laser_on()
         self.widgets['on_off'].setChecked(self.emission)
+        time.sleep(0.1)
 
         # Get temperature setpoint and actual temperature
-        self.widgets['temperature'].setValue(self.dlc.temp_sp())
-        self.widgets['temperature_actual'].setValue(self.dlc.temp_act())
+        temp_sp=100
+        while temp_sp > 50:
+            temp_sp = self.dlc.temp_sp()
+            time.sleep(0.1)
+
+        self.widgets['temperature'].setValue(temp_sp)
+        temp_act=100
+        while temp_act > 50:
+            temp_act = self.dlc.temp_act()
+            time.sleep(0.1)
+        self.widgets['temperature_actual'].setValue(temp_act)
 
         # Get current setpoint and actual current
         self.widgets['current'].setValue(self.dlc.current_sp())
+        time.sleep(0.1)
         self.widgets['current_actual'].setValue(self.dlc.current_act())
+        time.sleep(0.1)
 
         # Assign button pressing
         self.widgets['update_temp'].clicked.connect(self._set_temperature)

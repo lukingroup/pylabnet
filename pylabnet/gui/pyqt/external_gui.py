@@ -71,7 +71,7 @@ class Window(QtWidgets.QMainWindow):
             order to debug and access Window methods directly in an interactive session
         """
 
-        self.app = app  # Application instance onto which to load the GUI. 
+        self.app = app  # Application instance onto which to load the GUI.
 
         if self.app is None:
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
@@ -79,7 +79,7 @@ class Window(QtWidgets.QMainWindow):
             self.app.setWindowIcon(
                 QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
             )
-        
+
         # Initialize parent class QWidgets.QMainWindow
         super(Window, self).__init__()
 
@@ -130,16 +130,21 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
 
-    def set_network_info(self, host, port):
+    def set_network_info(self, host=None, port=None):
         """ Sets IP and port labels
 
         :param host: (str) host IP address
         :param port: (int) port number
         """
 
-        self.ip_label.setText(host)
-        self.port.setText(port)
-    
+        if host is not None:
+            self.host=host
+            self.ip_label.setText(f'IP Adress: {host}')
+
+        if port is not None:
+            self.port=port
+            self.port_label.setText(f'Port: {port}')
+
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
@@ -152,9 +157,9 @@ class Window(QtWidgets.QMainWindow):
                 close_client.close_server()
             except:
                 pass
-        
+
         self.stop_button.setChecked(True)
-    
+
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
 

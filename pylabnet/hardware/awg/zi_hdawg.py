@@ -496,55 +496,76 @@ class Sequence():
 
     """
 
-    def replace_placeholder(self, placeholder, value):
+    def _replace_placeholders(self):
         """ Replace a placeholder by some value
 
         :placeholder: Placeholder string to be replaced.
         :value: Value to which the placeholder string need to be set.
         """
-        self.sequence = self.sequence.replace(f"_{placeholder}_", str(value))
-        self.unresolved_placeholders.remove(placeholder)
+        for placeholder, value in self.placeholder_dict.items():
+            placeholder_wrapped = f"{self.marker_string}{placeholder}{self.marker_string}"
+            self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
 
-    def replace_waveform(self, placeholder, waveform):
+    def _replace_waveforms(self):
         """ Replace a placeholder by a waveform
 
         :placeholder: Placeholder string to be replaced.
         :waveform: Numpy array designating the waveform.
         """
-        waveform = 'vect(' + ','.join([str(x) for x in waveform]) + ')'
-        self.sequence = self.sequence.replace(f"_{placeholder}_", waveform)
-        self.unresolved_placeholders.remove(placeholder)
+        for waveform, value in self.waveform_dict.items():
+            waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
+            waveform = 'vect(' + ','.join([str(x) for x in value]) + ')'
+            self.sequence = self.sequence.replace(f"{waveform_wrapped}", self(value))
 
-    def is_ready(self):
-        """ Return True if all placeholders have been replaced"""
-        return len(self.unresolved_placeholders) == 0
-
-    def __init__(self, hdawg_driver, sequence, placeholders=None):
+    def __init__(self, hdawg_driver, sequence, placeholder_dict=None, waveform_dict=None, marker_string = "$"):
         """ Initialize sequence with string
 
         :hdawg_driver: Instance of HDAWG_Driver
         :sequence: A string which contains sequence instructions,
             as defined in the ZI language seqc. This string can contain placeholders
-            indicated by '_c_', where c is the name of the placeholder.
-        :placeholders: A list of placeholders which need to be replaced
-            before compilation of sequence. If for example '_c_' is included
+            indicated by '$c$', where c is the name of the placeholder. The marker string $
+            can be changed as an optional input parameter.
+        :placeholder_dict: A dictionary of placeholder_names and values which need to be replaced
+            before compilation of sequence. If for example '$c$' is included
             in the sequence string, 'c' is the name of the placeholder to be
-            passed in this argument.
+            used as the dictionary key, while the value of the key is the value the placeholder will
+            be replaced with in the sequence.
+        :waveform_dict: Same as placeholder_dict, but values are numpy.arrays which will be tranformed to
+        waveform commands.
+        :marker_string: String wrapping placeholders in sequence_string.
         """
 
         # Store reference to HDAWG_Driver to use logging function.
         self.hd = hdawg_driver
 
-        # Some sanity checks.
-        for placeholder in placeholders:
-            if f"_{placeholder}_" not in sequence:
-                error_msg = f"The placeholder _{placeholder}_ cannot \
-                    be found in the sequence."
-                hdawg_driver.log.error(error_msg)
-                raise Exception(error_msg)
-
         # Store sequence and placeholders.
         self.sequence = textwrap.dedent(sequence)
-        self.placeholders = placeholders
-        # Keeps track of which placeholders has not been replaced yet.
-        self.unresolved_placeholders = copy.deepcopy(placeholders)
+        self.placeholder_dict = placeholder_dict
+        self.waveform_dict = waveform_dict
+        self.marker_string = marker_string
+
+        if placeholder_dict is not None:
+            # Some sanity checks.
+            for placeholder in placeholder_dict.keys():
+                placeholder_wrapped = f"{marker_string}{placeholder}{marker_string}"
+                if  placeholder_wrapped not in sequence:
+                    error_msg = f"The placeholder {placeholder_wrapped} cannot \
+                        be found in the sequence."
+                    hdawg_driver.log.error(error_msg)
+            
+            # Replace placeholdes.
+            self._replace_placeholders()
+
+        if waveform_dict is not None:
+            # Some sanity checks.
+            for waveform in waveform_dict.keys():
+                waveform_wrapped = f"{marker_string}{waveform}{marker_string}"
+                if waveform_wrapped not in sequence:
+                    error_msg = f"The placeholder {waveform_wrapped} cannot \
+                        be found in the sequence."
+                    hdawg_driver.log.error(error_msg)
+
+            # Replace waveforms
+            self._replace_waveforms()
+
+

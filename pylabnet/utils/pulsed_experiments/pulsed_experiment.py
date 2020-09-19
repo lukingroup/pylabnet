@@ -1,6 +1,7 @@
 
 import os 
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
+from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
 
 
 class PulsedExperiment():
@@ -23,35 +24,46 @@ class PulsedExperiment():
         return files_trimmed
 
     def replace_placeholders(self):
-        """Replaces all sequence placeholders with values"""
-        placeholder_dict
-
-                
-        # Create Sequence Object and replace placeholder
-        placeholder_dict = {
-            "c1" : AWG_N
-        }
-
-        # Create Sequence Object and replace placeholder
+        """Replaces all sequence placeholders with values"""              
+  
+        # Create Sequence Object and replace placeholder.
         seq = Sequence(
             hdawg_driver = self.hd,
-            sequence = sequence_txt,
-            placeholder_dict=placeholder_dict
+            sequence = self.sequence_string,
+            placeholder_dict=self.placeholder_dict
         )
 
-    def replace_dio_commands(self):
-        pass
+        return seq
+
+    def replace_dio_commands(self, pulseblock, dio_command_number):
+        
+        # Instanciate pulseblock handler.
+        pb_handler = DIOPulseBlockHandler(
+            pb = pulseblock,
+            assignment_dict=self.assignment_dict,
+            hd=self.hd
+        )
+
+        # Generate .seqc instruction set which represents pulse sequence.
+        dig_pulse_sequence = pb_handler.get_dio_sequence()
+
+        # Construct replacement dict
+        dio_replacement_dict = {
+            f"{self.dio_seq_identifier}{dio_command_number}", dig_pulse_sequence
+        }
+
 
 
     def prepare_sequence(self):
         """Prepares sequence"""
 
-        self.replace_placeholders()
-        self.replace_dio_commands()
+        # First replace the standard placeholder.
+        if self.placeholder_dict is not None: 
+            self.replace_placeholders()
 
-
-
-
+        # Then replace the DIO commands:
+        for i, pulseblock in enumerate(self.pulseblocks):
+            self.replace_dio_commands(pulseblock, i)
 
     
 
@@ -71,7 +83,6 @@ class PulsedExperiment():
         :dio_seq_identifier: (str) Placeholder within .seqct files to be replaced with DIO sequences.
         """        
 
-
         # Ugly typecasting
         if type(pulseblocks) != list:
             self.pulseblocks = [pulseblocks]
@@ -83,17 +94,26 @@ class PulsedExperiment():
         self.template_name = template_name
         self.sequence_string = sequence_string
         self.placeholder_dict = placeholder_dict
+        self.dio_seq_identifier = dio_seq_identifier
 
-        # Check if template is available
+        # Check if template is available, and store it.
         if use_template:
             templates = self.get_templates(template_directory)
             if not template_name in templates:
                 error_msg = f"Template name {template_name} not found. Available templates are {templates}."
                 print(error_msg)
 
-            template_filepath =  os.path.join(current_directory, template_directory, f'{template_name}.seqct')
+            template_filepath =  os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), 
+                template_directory, 
+                f'{template_name}.seqct'
+            )
 
             self.sequence_string =  open(template_filepath, 'r').read()
+
+        # If no tempalte given, use argument input.
+        else:
+            self.sequence_string = template_filepath
 
 
         

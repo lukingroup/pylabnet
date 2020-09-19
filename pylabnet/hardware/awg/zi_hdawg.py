@@ -10,6 +10,7 @@ import re
 import time
 import textwrap
 import copy
+import re
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -404,6 +405,11 @@ class AWGModule():
         :sequence: Instance of Sequence class.
         """
 
+        # First check if all values have been replaced in sequence:
+        if not sequence.is_ready():
+            self.hd.log.error("Sequence is not ready: Not all placeholders have been replaced.")
+            return
+
         self.module.set('compiler/sourcestring', sequence.sequence)
         # Note: when using an AWG program from a source file
         # (and only then), the compiler needs to
@@ -500,6 +506,7 @@ class Sequence():
         for placeholder, value in self.placeholder_dict.items():
             placeholder_wrapped = f"{self.marker_string}{placeholder}{self.marker_string}"
             self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
+            self.unresolved_placeholders.remove(placeholder)
 
     def _replace_waveforms(self):
         """ Replace a placeholder by a waveform
@@ -511,6 +518,30 @@ class Sequence():
             waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
             waveform = 'vect(' + ','.join([str(x) for x in value]) + ')'
             self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(value))
+            self.unresolved_placeholders.remove(waveform)
+
+
+    def get_placeholders(self):
+        """Parses sequence template and returns placeholder variables."""
+           
+        # Define regex
+        regex = f'\{self.marker_string}(.+)\{self.marker_string}'
+
+        found_placeholders = []
+        for match in re.finditer(regex, self.raw_sequence):
+            found_placeholders.append(match.group(1))
+
+        # Check for duplicates
+        for  found_placeholder in found_placeholders:
+            if found_placeholders.count(found_placeholder) != 1:
+                error_msg = f"Placeholder {found_placeholder} found multiple time in sequence."
+                self.hd.error(error_msg)
+
+        return found_placeholders
+
+    def is_ready(self):
+        """ Return True if all placeholders have been replaced"""
+        return len(self.unresolved_placeholders) == 0
 
     def __init__(self, hdawg_driver, sequence, placeholder_dict=None, waveform_dict=None, marker_string = "$"):
         """ Initialize sequence with string
@@ -534,14 +565,21 @@ class Sequence():
         self.hd = hdawg_driver
 
         # Store sequence and placeholders.
-        self.sequence = textwrap.dedent(sequence)
+        self.raw_sequence = textwrap.dedent(sequence)
         self.placeholder_dict = placeholder_dict
         self.waveform_dict = waveform_dict
         self.marker_string = marker_string
 
+        # Retrieve placeholders in input sequence template
+        self.placeholders = self.get_placeholders()
+        # Keeps track of which placeholders has not been replaced yet.
+
+        self.unresolved_placeholders = copy.deepcopy(self.placeholders)
+
         if placeholder_dict is not None:
             # Some sanity checks.
             for placeholder in placeholder_dict.keys():
+
                 placeholder_wrapped = f"{marker_string}{placeholder}{marker_string}"
                 if  placeholder_wrapped not in sequence:
                     error_msg = f"The placeholder {placeholder_wrapped} cannot \

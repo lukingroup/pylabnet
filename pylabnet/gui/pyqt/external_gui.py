@@ -684,7 +684,7 @@ class Plot:
         # Add a new curve to self.curves dictionary for this plot
         self.curves[curve_label] = Curve(
             self.widget,
-            pen=pg.mkPen(color=self._color_list[len(self.curves)]),  # Instantiate a Pen for curve properties
+            pen=pg.mkPen(color=self.COLOR_LIST[len(self.curves)]),  # Instantiate a Pen for curve properties
             error=error
         )
 

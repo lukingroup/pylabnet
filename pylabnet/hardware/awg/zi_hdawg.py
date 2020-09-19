@@ -143,6 +143,19 @@ class Driver():
         self.daq.setDouble(f'/{self.device_id}/{node}', new_double)
 
     @log_standard_output
+    def getd(self, node):
+        """
+        Warapper for daq.setDouble commands. For instance, instead of
+        daq.getDouble('/dev8040/sigouts/0/range'), write
+
+        hdawg.getd('sigouts/0/range')
+
+        :node: Node which will be appended to '/device_id/'
+        """
+
+        return self.daq.getDouble(f'/{self.device_id}/{node}')
+
+    @log_standard_output
     def setv(self, node, vector):
         """
         Warapper for daq.setVector commands. For instance, instead of
@@ -269,6 +282,25 @@ class Driver():
             self.log.error(
                 f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid."
             )
+
+    def set_direct_user_register(self, awg_num, index, value):
+        """ Sets a user register to a desired value
+
+        :param awg_num: (int) index of awg module
+        :param index: (int) index of user register (from 0-15)
+        :param value: (int) value to set user register to
+        """
+
+        self.setd(f'awgs/{awg_num}/userregs/{index}', value)
+
+    def get_direct_user_register(self, awg_num, index):
+        """ Gets a user register to a desired value
+
+        :param awg_num: (int) index of awg module
+        :param index: (int) index of user register (from 0-15)
+        """
+
+        return int(self.getd(f'awgs/{awg_num}/userregs/{index}'))
 
 
 class AWGModule():

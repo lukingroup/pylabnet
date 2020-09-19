@@ -8,6 +8,7 @@ import ctypes
 import numpy as np
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
+import pyqtgraph as pg
 
 
 def str_to_float(in_val):
@@ -426,3 +427,50 @@ def get_config_filepath(config_filename, folder_root=None):
 
     return filepath
 
+def get_gui_widgets(gui, **kwargs):
+    """ Returns the GUI widget objects specified in kwargs
+
+    :param gui: (Window) main window gui object containing other widgets
+    :param kwargs: keyword arguments with argument name being the name
+        of the widget (str, widget_name) and argument value an integer specifying the
+        number of copies of that widget
+
+        For more than 1 widget copy, assumes the name is assigned as 
+        widget_name_1, widget_name_2, etc.
+
+    :return: (dict) dictionary with keywords as widget name and values
+        as either individual widgets or list of widgets in case of multiple
+        similarly named widgets
+    """
+
+    widgets = dict()
+    for widget_name, widget_number in kwargs.items():
+
+        # Check if it is multiple named widgets
+        if widget_number > 1:
+            widget_list = []
+            for widget_index in range(widget_number):
+                widget_list.append(getattr(
+                    gui,
+                    f'{widget_name}_{widget_index+1}'
+                ))
+            widgets[widget_name] = widget_list
+        else:
+            widgets[widget_name] = getattr(gui, widget_name)
+
+    return widgets
+
+def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
+    """ Configures and returns a legend widget given a GraphicsView
+
+    :param legend_widget: instance of GraphicsView object
+    :return: pg.LegendItem
+    """
+
+    legend = pg.LegendItem()
+    view_box = pg.ViewBox()
+    legend_widget.setCentralWidget(view_box)
+    legend.setParentItem(view_box)
+    legend.anchor((0, 0), (0, 0))
+
+    return legend

@@ -3,16 +3,20 @@
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.launchers.servers import si_tt
 from pylabnet.scripts.counter import monitor_counts
-
+import time
 
 def main():
 
-    launcher = Launcher(
-        script=[monitor_counts],
-        server_req=[si_tt],
-        gui_req=['count_monitor'],
-        params=[None]
-    )
+    try:
+        launcher = Launcher(
+            script=[monitor_counts],
+            server_req=[si_tt],
+            gui_req=[None],
+            params=[None]
+        )
+    except Exception as e:
+        print(e)
+        time.sleep(10)
     launcher.launch()
 
 

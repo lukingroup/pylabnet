@@ -262,6 +262,28 @@ class WlmMonitor:
         except KeyError:
             pass
 
+    def go_to(self, channel, value, step_size, hold_time):
+        """ Sends laser to a setpoint value gradually
+
+        :param channel: (int) channel number on wavemeter
+        :param value: (float) value to set laser frequency to
+        :param step_size: (float) step size in THz for laser freq steps
+        :param hold_time: (float) time in seconds to wait between steps
+        """
+
+        # Index of channel
+        physical_channel = self.channels[self._get_channels().index(channel)]
+        
+        # Generate array of points to go to
+        traverse = np.linspace(physical_channel.setpoint, value, int((value-physical_channel.setpoint)/step_size))
+
+        for frequency in traverse:
+            self.set_parameters([dict(
+                channel=channel,
+                setpoint=frequency
+            )])
+            time.sleep(hold_time)
+    
     # Technical methods
 
     def _initialize_channel(self, index, channel):
@@ -437,6 +459,9 @@ class WlmMonitor:
                             value=channel.setpoint,
                             scalar_label=channel.setpoint_name
                         )
+                        self.gui_handler.deactivate_scalar(
+                            scalar_label=channel.setpoint_name
+                        )
 
                     # Otherwise, tell GUI to stop updating from script and accept direct GUI input
                     else:
@@ -565,6 +590,9 @@ class WlmMonitor:
 
             if self.gui_handler.gui_connected and self.gui_handler.was_button_pressed(event_label=f'{channel.name}_rs'):
                 channel.setpoint = channel.data[-1]
+                self.gui_handler.activate_scalar(scalar_label=channel.setpoint_name)
+                self.gui_handler.set_scalar(value=channel.setpoint, scalar_label=channel.setpoint_name)
+                self.gui_handler.deactivate_scalar(scalar_label=channel.setpoint_name)
 
     def _get_channels(self):
         """ Returns all active channel numbers
@@ -610,6 +638,9 @@ class Service(ServiceBase):
     def exposed_resume(self):
         return self._module.resume()
 
+    def exposed_go_to(self, channel, value, step_size, hold_time):
+        return self._module.go_to(channel, value, step_size, hold_time)
+
 
 class Client(ClientBase):
 
@@ -633,6 +664,17 @@ class Client(ClientBase):
 
     def resume(self):
         return self._service.exposed_resume()
+
+    def go_to(self, channel, value, step_size=0.001, hold_time=0.1):
+        """ Sends laser to a setpoint value gradually
+
+        :param channel: (int) channel number on wavemeter
+        :param value: (float) value to set laser frequency to
+        :param step_size: (float) step size in THz for laser freq steps
+        :param hold_time: (float) time in seconds to wait between steps
+        """
+
+        return self._service.exposed_go_to(channel, value, step_size, hold_time)
 
 
 class Channel:

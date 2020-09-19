@@ -6,6 +6,7 @@ import logging
 import sys
 import os
 import ctypes
+import re
 import pickle
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
@@ -397,6 +398,18 @@ class LogService(rpyc.Service):
         """
 
         try:
+            # Check for module name copies in client data
+            matches = []
+            indices = []
+            pattern = re.compile(f'^{module_name}\d')
+            for module in self.client_data:
+                if re.match(pattern, module):
+                    matches.append(module)
+                    indices.append(int(module[-1]))
+
+            if len(matches) > 0:
+                module_name = matches[indices.index(max(indices))]
+
             self.client_data[module_name].update(pickle.loads(module_data_pickle))
             self.logger.info('Updated client data for {}'.format(module_name))
             self.data_updated.append(module_name)

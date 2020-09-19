@@ -34,13 +34,13 @@ class Controller:
         """ Runs an iteration of checks for updates and implements """
 
         # Update actual current and temperature
-        self.gui.activate_scalar('temperature_actual')
-        self.gui.set_scalar(self.dlc.temp_act(), 'temperature_actual')
-        self.gui.deactivate_scalar('temperature_actual')
+        # self.gui.activate_scalar('temperature_actual')
+        # self.gui.set_scalar(self.dlc.temp_act(), 'temperature_actual')
+        # self.gui.deactivate_scalar('temperature_actual')
 
-        self.gui.activate_scalar('current_actual')
-        self.gui.set_scalar(self.dlc.current_act(), 'current_actual')
-        self.gui.deactivate_scalar('current_actual')
+        # self.gui.activate_scalar('current_actual')
+        # self.gui.set_scalar(self.dlc.current_act(), 'current_actual')
+        # self.gui.deactivate_scalar('current_actual')
 
 
         # Check for on/off updates

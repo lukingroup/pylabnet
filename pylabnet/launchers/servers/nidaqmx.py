@@ -22,6 +22,10 @@ def launch(**kwargs):
     ni_daqmx_logger = kwargs['logger']
     try:
         config = load_config(kwargs['config'])
+        ni_driver = nidaqmx_card.Driver(
+            device_name=config['device'],
+            logger=ni_daqmx_logger
+        )
     except AttributeError:
         config_directory = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),

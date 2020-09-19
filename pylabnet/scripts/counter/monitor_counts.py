@@ -3,12 +3,13 @@
 import numpy as np
 import time
 import socket
+import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
 
 # Static methods
@@ -31,12 +32,13 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None):
+    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
         :param gui_client: (optional) instance of client of desired output GUI
         :param logger_client: (obj) instance of logger client.
+        :param server_port: (int) port number of script server
         """
 
         self._ctr = ctr_client
@@ -47,7 +49,11 @@ class CountMonitor:
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
         # Instantiate GUI window
-        self.gui = Window(gui_template=ui)
+        self.gui = Window(
+            gui_template=ui, 
+            host=socket.gethostbyname(socket.gethostname()), 
+            port=server_port
+        )
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
@@ -143,7 +149,13 @@ class CountMonitor:
         """ Initializes the display (configures all plots) """
 
         plot_index = 0
-        for channel in self._ch_list:
+        for index in range(len(self.widgets['graph_widget'])):
+            # Configure and return legend widgets
+            self.widgets['legend_widget'][index] = get_legend_from_graphics_view(
+                self.widgets['legend_widget'][index]
+            )
+
+        for color, channel in enumerate(self._ch_list):
 
             # Figure out which plot to assign to
             if self._plot_list is not None:
@@ -169,7 +181,14 @@ class CountMonitor:
             # )
 
             # Create a curve and store the widget in our dictionary
-            self.widgets[f'curve_{channel}'] = self.widgets['graph_widget'][plot_index].plot()
+            self.widgets[f'curve_{channel}'] = self.widgets['graph_widget'][plot_index].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[color])
+            )
+            self.widgets['legend_widget'][plot_index].addItem(
+                self.widgets[f'curve_{channel}'],
+                ' - '+f'Channel {channel}'
+            )
+            
 
             # Assign scalar
             # self.gui_handler.assign_label(
@@ -253,7 +272,7 @@ def launch(**kwargs):
         monitor = CountMonitor(
             # NOTE: should be removed
             #ctr_client=clients['si_tt'], logger_client=logger
-            ctr_client=None, logger_client=logger
+            ctr_client=None, logger_client=logger, server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

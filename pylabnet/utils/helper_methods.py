@@ -8,6 +8,7 @@ import ctypes
 import numpy as np
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
+import pyqtgraph as pg
 
 
 def str_to_float(in_val):
@@ -459,3 +460,17 @@ def get_gui_widgets(gui, **kwargs):
 
     return widgets
 
+def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
+    """ Configures and returns a legend widget given a GraphicsView
+
+    :param legend_widget: instance of GraphicsView object
+    :return: pg.LegendItem
+    """
+
+    legend = pg.LegendItem()
+    view_box = pg.ViewBox()
+    legend_widget.setCentralWidget(view_box)
+    legend.setParentItem(view_box)
+    legend.anchor((0, 0), (0, 0))
+
+    return legend

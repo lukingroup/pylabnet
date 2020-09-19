@@ -448,7 +448,8 @@ class Launcher:
                 guis=self.gui_clients,
                 logport=self.log_port,
                 params=self.params[index],
-                config=self.config
+                config=self.config,
+                server_port=self.script_server_port
             )
 
     def _launch_script_server(self, service=None):

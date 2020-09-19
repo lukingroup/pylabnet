@@ -37,6 +37,8 @@ import sys
 import socket
 import ctypes
 
+from pylabnet.network.core.client_base import ClientBase
+
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -55,8 +57,11 @@ class Window(QtWidgets.QMainWindow):
 
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
+    COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                   '#000075', '#808080']
 
-    def __init__(self, app=None, gui_template=None, run=True):
+    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -88,6 +93,7 @@ class Window(QtWidgets.QMainWindow):
         self.labels = {}
         self.event_buttons = {}
         self.containers = {}
+        self.auto_close = auto_close
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -109,11 +115,46 @@ class Window(QtWidgets.QMainWindow):
         self._load_gui(gui_template=gui_template, run=run)
         self.showNormal()
 
+        self.host=None
+        self.port=None
+
+        # Confgiure stop button, host and port
+        try:
+            self.stop_button.clicked.connect(self.close)
+            if host is not None:
+                self.ip_label.setText(f'IP Address: {host}')
+                self.host = host
+            if port is not None:
+                self.port_label.setText(f'Port: {port}')
+                self.port = port
+        except:
+            pass
+
+    def set_network_info(self, host, port):
+        """ Sets IP and port labels
+
+        :param host: (str) host IP address
+        :param port: (int) port number
+        """
+
+        self.ip_label.setText(host)
+        self.port.setText(port)
+    
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
+        if self.auto_close:
+            try:
+                close_client = ClientBase(
+                    host=self.host,
+                    port=self.port
+                )
+                close_client.close_server()
+            except:
+                pass
+        
         self.stop_button.setChecked(True)
-
+    
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
 
@@ -607,7 +648,7 @@ class Plot:
     """
 
     # Semi-arbitrary list of colors to cycle through for plot data
-    _color_list = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+    COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 

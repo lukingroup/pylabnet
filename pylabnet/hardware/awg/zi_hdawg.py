@@ -404,11 +404,6 @@ class AWGModule():
         :sequence: Instance of Sequence class.
         """
 
-        # First check if all values have been replaced in sequence:
-        if not sequence.is_ready():
-            self.hd.log.error("Sequence is not ready: Not all placeholders have been replaced.")
-            return
-
         self.module.set('compiler/sourcestring', sequence.sequence)
         # Note: when using an AWG program from a source file
         # (and only then), the compiler needs to
@@ -515,7 +510,7 @@ class Sequence():
         for waveform, value in self.waveform_dict.items():
             waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
             waveform = 'vect(' + ','.join([str(x) for x in value]) + ')'
-            self.sequence = self.sequence.replace(f"{waveform_wrapped}", self(value))
+            self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(value))
 
     def __init__(self, hdawg_driver, sequence, placeholder_dict=None, waveform_dict=None, marker_string = "$"):
         """ Initialize sequence with string

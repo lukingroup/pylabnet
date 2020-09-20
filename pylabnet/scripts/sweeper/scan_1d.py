@@ -38,12 +38,13 @@ class Controller(MultiChSweep1D):
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
-            autosave=1, save_name=1, save=1)
+            autosave=1, save_name=1, save=1, reps=1)
 
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
         self.max = self.widgets['p_max'].value()
         self.pts = self.widgets['pts'].value()
+        self.reps = self.widgets['reps'].value()
 
         self.data_fwd = []
         self.data_bwd = []
@@ -81,6 +82,7 @@ class Controller(MultiChSweep1D):
             filename=self.widgets['save_name'].text(),
             directory=self.config['save_path']
         ))
+        self.widgets['reps'].valueChanged.connect(self.set_reps)
 
         # Create legends
         self.widgets['curve'] = []

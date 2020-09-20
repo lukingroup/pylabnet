@@ -71,8 +71,8 @@ class TimeTrace:
 
         self.binwidth = binwidth
         self.n_bins = n_bins
-        self.log.info('Set parameters for next histogram. Will not affect'
-                      'any histogram already in progress')
+        self.log.info('Set parameters for next histogram (will not affect '
+                      'any histogram already in progress)')
 
     def init_plot(self):
         """ Instantiates a plot, assuming counter is live """
@@ -232,7 +232,7 @@ class TimeTraceGui(TimeTrace):
         self.curve.clear()
         self.gui.graph.setData(
             self.ctr.get_x_axis(self.hist),
-            self.ctr.get_counts(self.hist)
+            self.ctr.get_counts(self.hist)[0]
         )
     
     def _get_binwidth(self):

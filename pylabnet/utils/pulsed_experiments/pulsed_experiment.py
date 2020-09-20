@@ -28,6 +28,8 @@ class PulsedExperiment():
     def replace_placeholders(self):
         """Replaces all sequence placeholders with values."""              
         self.seq.replace_placeholders(self.placeholder_dict)
+        self.hd.log.info("Replaced placeholders.")
+
 
     def replace_dio_commands(self, pulseblock, dio_command_number):
 
@@ -50,6 +52,7 @@ class PulsedExperiment():
         }
 
         self.seq.replace_placeholders(dio_replacement_dict)
+        self.hd.log.info("Replaced DIO sequence(s).")
 
 
     def prepare_sequence(self):
@@ -68,6 +71,8 @@ class PulsedExperiment():
         # Create an instance of the AWG Module.
         awg = AWGModule(self.hd, awg_number)
         awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
+
+        self.hd.log.info("Preparing to upload sequence.")
 
         # Upload sequence.
         if awg is not None:
@@ -134,10 +139,13 @@ class PulsedExperiment():
                 f'{template_name}.seqct'
             )
             sequence_string =  open(template_filepath, 'r').read()
+            self.hd.log.info(f"Using template {template_name}.seqc")
 
         # If no template given, use argument input.
         else:
             sequence_string = sequence_string
+            self.hd.log.info("Using user input sequence.")
+
 
         # Initialize sequence object.
         self.seq = Sequence(

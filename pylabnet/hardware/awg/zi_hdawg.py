@@ -534,7 +534,7 @@ class Sequence():
         """Parses sequence template and returns placeholder variables."""
            
         # Define regex
-        regex = f'\{self.marker_string}(.+)\{self.marker_string}'
+        regex = f'\{self.marker_string}([^$]+)\{self.marker_string}'
 
         found_placeholders = []
         for match in re.finditer(regex, self.raw_sequence):
@@ -543,8 +543,12 @@ class Sequence():
         # Check for duplicates
         for  found_placeholder in found_placeholders:
             if found_placeholders.count(found_placeholder) != 1:
+
                 error_msg = f"Placeholder {found_placeholder} found multiple time in sequence."
-                self.hd.log.error(error_msg)
+                self.hd.log.info(error_msg)
+
+                # Remove one occurence from dictionary.
+                found_placeholders.remove(found_placeholder)
 
         return found_placeholders
 

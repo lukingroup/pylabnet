@@ -99,11 +99,6 @@ class DIOPulseBlockHandler():
         """Check if key values in assignment dict coincide with keys in pulseblock"""
 
         if not self.assignment_dict.keys() == self.pb.p_dict.keys():
-            for assignment_key in self.assignment_dict.keys():
-                if assignment_key not in self.pb.p_dict.keys():
-                    self.log.error(
-                        f"Key '{assignment_key}' in assignment dictionary not found in pulseblock instance. Available keys are {self.pb.p_dict.keys()}."
-                    )
             for pb_key in self.pb.p_dict.keys():
                 if pb_key not in self.assignment_dict.keys():
                     self.log.warn(

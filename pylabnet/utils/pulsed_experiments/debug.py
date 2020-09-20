@@ -18,6 +18,7 @@ from pylabnet.network.client_server import count_histogram
 from pylabnet.utils.helper_methods import setup_full_service
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
+
 from pyvisa import VisaIOError, ResourceManager
 
 
@@ -49,18 +50,30 @@ gate_buffer = 0.5e-6
 delta_t_gate = 1e-6
 
 
+# T1 parameteres
+delta_t_sasha_t1 = 1e-3
+delta_t_start_t1 = 100e-9
+t_start_t1 = 0
+
+tau_start = 100e-6
+tau_end = 1000e-3
+num_tau = 10
+
+
 # Define the pulse sequence
 laser_1_pulse = po.PTrue(ch=laser_1, dur=delta_t_laser_1)
 laser_2_pulse = po.PTrue(ch=laser_2, dur=delta_t_laser_2)
 gate_pulse = po.PTrue(ch='gate1',  t0=-gate_buffer, dur=delta_t_gate+gate_buffer)
 
+
+# Gated Optical Pumping Pulse
 gate_laser_2_pulse = pb.PulseBlock(
  [
     laser_2_pulse,
     gate_pulse,
     ]
 )
-new_pulse = pb.PulseBlock(laser_1_pulse, name='test')
+
 scan_pulse = pb.PulseBlock(laser_1_pulse, name='scan_block')
 
 scan_pulse.append_pb(
@@ -68,23 +81,37 @@ scan_pulse.append_pb(
     offset = wait_lasers
 )
 
-assignment_dict = {
-    "sasha": 1,
-    "toptica": 2,
-    "gate1": 3,
-}
+# T1 pulse
+taus = np.linspace(tau_start, tau_end, num_tau)
+
+t1_pb = pb.PulseBlock(
+            p_obj_list=[
+            po.PTrue(ch='gate1', t0=t_start_t1, dur=delta_t_start_t1),
+            ]
+        )
+
+for tau in taus:
+
+    t1_pb.append(
+        po.PTrue(ch=laser_2, t0=tau, dur=delta_t_sasha_t1)
+        )
 
 
 
-sequence_txt = """\
+assignment_dict = load_config('dio_assignment')
+awg_number = 0
+# Load DIO assignment dict from config files
+assignment_dict = load_config('dio_assignment')
 
-        while (1) {
-            $dig_pulse0$  
-            wait(1000);
-                $dig_pulse1$ 
-        }
-        """
+# Load placeholder replacement dict from config files
+placeholder_dict = load_config('gated_experiment')
 
+pe_scan = PulsedExperiment(
+    pulseblocks=scan_pulse, 
+    assignment_dict=assignment_dict, 
+    hd=hd, 
+    template_name="gated_optical_pumping",
+    placeholder_dict=placeholder_dict
+    )
 
-pe = PulsedExperiment([scan_pulse, new_pulse], assignment_dict, hd=hd, use_template=False, sequence_string=sequence_txt)
-pe.prepare_sequence()
+awg = pe_scan.get_ready(awg_num)

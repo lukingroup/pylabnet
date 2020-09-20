@@ -132,6 +132,9 @@ class Controller(MultiChSweep1D):
         self.x_fwd = self._generate_x_axis()
         self.x_bwd = self._generate_x_axis(backward=True)
 
+        # Run any pre-experiment configuration
+        self.module.configure(**self.clients)
+
         self.log.info(f'Experiment {exp_name} configured')
 
     def run_pressed(self):

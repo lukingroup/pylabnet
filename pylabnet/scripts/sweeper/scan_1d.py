@@ -16,12 +16,14 @@ from pylabnet.utils.helper_methods import (get_gui_widgets, load_config,
 
 class Controller(MultiChSweep1D):
 
-    def __init__(self, logger=None, channels=['Channel 1'], clients={}, exp_path=None):
+    def __init__(self, logger=None, channels=['Channel 1'], clients={}, exp_path=None, fast=True):
         """ Instantiates controller
 
         :param logger: instance of LogClient
         :param channels: (list) list of channel names
         :param exp_path: (str) path to experiment directory containing experiment functions
+        :param fast: (bool) whether to operate in fast mode
+            fast mode only updates heat maps at the end of each scan (this speeds things up)
         """
 
         super().__init__(logger, channels)
@@ -42,8 +44,11 @@ class Controller(MultiChSweep1D):
 
         self.data_fwd = []
         self.data_bwd = []
+        self.avg_fwd = []
+        self.avg_bwd = []
         self.x_fwd = self._generate_x_axis()
         self.x_bwd = self._generate_x_axis(backward=True)
+        self.fast = fast
 
         # Configure list of experiments
         self.exp_path = exp_path
@@ -115,6 +120,7 @@ class Controller(MultiChSweep1D):
         """ Configures the plots """
 
         self.widgets['curve'] = []
+        self.widgets['curve_avg'] = []
         for index, graph in enumerate(self.widgets['graph']):
             self.widgets['curve'].append(graph.plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
@@ -123,6 +129,15 @@ class Controller(MultiChSweep1D):
                 self.widgets['legend'][index],
                 self.widgets['curve'][index],
                 'Single scan'
+            )
+
+            self.widgets['curve_avg'].append(graph.plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+            ))
+            add_to_legend(
+                self.widgets['legend'][index],
+                self.widgets['curve_avg'][index],
+                'Average'
             )
 
         for hmap in self.widgets['hmap']:
@@ -136,40 +151,88 @@ class Controller(MultiChSweep1D):
     def _run_and_plot(self, x_value, backward=False):
 
         if backward:
+            
             # Single trace
             self.data_bwd[-1].append(self.experiment(x_value))
+            cur_ind = len(self.data_bwd[-1])
             self.widgets['curve'][1].setData(
-                self.x_bwd[:len(self.data_bwd[-1])],
+                self.x_bwd[:cur_ind],
                 self.data_bwd[-1]
             )
 
+            # Update average and plot
+            try:
+                self.avg_bwd[cur_ind-1] = (
+                    (cur_ind-1) * self.avg_bwd[cur_ind-1] 
+                    + self.data_bwd[-1][-1]
+                )/cur_ind
+                self.widgets['curve_avg'][1].setData(
+                    self.x_bwd,
+                    self.avg_bwd
+                )
+
+            # If it is the first run, just add the data
+            except IndexError:
+                self.avg_bwd.append(self.data_bwd[-1][-1])
+
             # Heat map
+            if not self.fast:
+                self.widgets['hmap'][1].setImage(
+                    img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
+                    pos=(self.min, 0),
+                    scale=((self.max-self.min)/self.pts,1),
+                    autoRange=False
+                )
+        else:
+
+            self.data_fwd[-1].append(self.experiment(x_value))
+            cur_ind = len(self.data_fwd[-1])
+            self.widgets['curve'][0].setData(
+                self.x_fwd[:cur_ind],
+                self.data_fwd[-1]
+            )
+
+            # Update average and plot
+            try:
+                self.avg_fwd[cur_ind-1] = (
+                    (cur_ind-1) * self.avg_fwd[cur_ind-1] 
+                    + self.data_fwd[-1][-1]
+                )/cur_ind
+                self.widgets['curve_avg'][0].setData(
+                    self.x_fwd,
+                    self.avg_fwd
+                )
+
+            # If it is the first run, just add the data
+            except IndexError:
+                self.avg_fwd.append(self.data_fwd[-1][-1])
+
+            # Heat map
+            if not self.fast:
+                self.widgets['hmap'][0].setImage(
+                    img=np.transpose(fill_2dlist(self.data_fwd)),
+                    pos=(self.min, 0),
+                    scale=((self.max-self.min)/self.pts,1),
+                    autoRange=False
+                )
+        self.gui.force_update()
+
+    def _update_hmaps(self, reps_done):
+        """ Updates hmap if in fast mode """
+
+        if self.fast:
             self.widgets['hmap'][1].setImage(
                 img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
                 pos=(self.min, 0),
                 scale=((self.max-self.min)/self.pts,1),
                 autoRange=False
             )
-        else:
-            self.data_fwd[-1].append(self.experiment(x_value))
-            self.widgets['curve'][0].setData(
-                self.x_fwd[:len(self.data_fwd[-1])],
-                self.data_fwd[-1]
-            )
-
-            # Heat map
             self.widgets['hmap'][0].setImage(
                 img=np.transpose(fill_2dlist(self.data_fwd)),
                 pos=(self.min, 0),
                 scale=((self.max-self.min)/self.pts,1),
                 autoRange=False
             )
-        self.gui.force_update()
-
-    def _update_hmaps(self, reps_done):
-        """ Updates hmap scale """
-
-        pass
 
     def _update_integrated(self, reps_done):
         pass

@@ -209,8 +209,8 @@ class TimeTraceGui(TimeTrace):
             self.log.info('Stopped histogram')
             if self.gui.autosave.isChecked():
                 self.save(
-                    filename=self.gui.save_name.text()
-                    directory=config['save_path']
+                    filename=self.gui.save_name.text(),
+                    directory=self.config['save_path']
                 )
             self.pause()
 
@@ -229,7 +229,7 @@ class TimeTraceGui(TimeTrace):
                 if current_time - last_save > self.gui.save_time.value():
                     self.save(
                         filename=self.gui.save_name.text(),
-                        directory=config['save_path']
+                        directory=self.config['save_path']
                     )
                     last_save = current_time
             self._update_data()

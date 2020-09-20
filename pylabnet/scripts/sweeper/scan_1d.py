@@ -235,7 +235,7 @@ class Controller(MultiChSweep1D):
         for index, graph in enumerate(self.widgets['graph']):
 
             self.widgets['curve'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[3])
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[6])
             ))
             add_to_legend(
                 self.widgets['legend'][index],
@@ -244,7 +244,7 @@ class Controller(MultiChSweep1D):
             )
 
             self.widgets['curve_avg'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
             ))
             add_to_legend(
                 self.widgets['legend'][index],

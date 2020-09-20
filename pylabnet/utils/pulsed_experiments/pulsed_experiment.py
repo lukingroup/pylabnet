@@ -46,7 +46,7 @@ class PulsedExperiment():
 
         # Construct replacement dict
         dio_replacement_dict = {
-            f"{self.dio_seq_identifier}{dio_command_number}", dig_pulse_sequence
+            f"{self.dio_seq_identifier}{dio_command_number}": dig_pulse_sequence
         }
 
         self.seq.replace_placeholders(dio_replacement_dict)
@@ -63,6 +63,31 @@ class PulsedExperiment():
         for i, pulseblock in enumerate(self.pulseblocks):
             self.replace_dio_commands(pulseblock, i)
 
+    def prepare_awg(self, awg_number):
+
+        # Create an instance of the AWG Module.
+        awg = AWGModule(self.hd, awg_number)
+        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
+
+        # Upload sequence.
+        if awg is not None:
+            awg.compile_upload_sequence(self.seq)
+
+        for pulseblock in self.pulseblocks:
+            # Instanciate pulseblock handler.
+            pb_handler = DIOPulseBlockHandler(
+                pb = pulseblock,
+                assignment_dict=self.assignment_dict,
+                hd=self.hd
+            )
+            pb_handler.setup_hd()
+
+        return awg
+
+    def get_ready(self, awg_number):
+        """ Compies sequence, uploads it"""
+        self.prepare_sequence()
+        return self.prepare_awg(awg_number)
     
 
     def __init__(self, pulseblocks, assignment_dict, hd, placeholder_dict=None,  
@@ -112,7 +137,7 @@ class PulsedExperiment():
 
         # If no template given, use argument input.
         else:
-            sequence_string = template_filepath
+            sequence_string = sequence_string
 
         # Initialize sequence object.
         self.seq = Sequence(

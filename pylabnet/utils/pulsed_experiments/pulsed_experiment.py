@@ -2,14 +2,16 @@
 import os 
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
+from pylabnet.utils.pulseblock.pb_iplot import iplot
 
 
 class PulsedExperiment():
-
+    """ Wrapper class for Pulsed experiments using the ZI HDAWG 
+    DIO output.
+    """
 
     def get_templates(self, template_directory="sequence_templates"):
-      
-
+    
         # Get all relevant files template files
         current_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -24,18 +26,13 @@ class PulsedExperiment():
         return files_trimmed
 
     def replace_placeholders(self):
-        """Replaces all sequence placeholders with values"""              
-  
-        # Create Sequence Object and replace placeholder.
-        seq = Sequence(
-            hdawg_driver = self.hd,
-            sequence = self.sequence_string,
-            placeholder_dict=self.placeholder_dict
-        )
-
-        return seq
+        """Replaces all sequence placeholders with values."""              
+        self.seq.replace_placeholders(self.placeholder_dict)
 
     def replace_dio_commands(self, pulseblock, dio_command_number):
+
+        if self.iplot:
+            iplot(pulseblock)
         
         # Instanciate pulseblock handler.
         pb_handler = DIOPulseBlockHandler(
@@ -52,6 +49,7 @@ class PulsedExperiment():
             f"{self.dio_seq_identifier}{dio_command_number}", dig_pulse_sequence
         }
 
+        self.seq.replace_placeholders(dio_replacement_dict)
 
 
     def prepare_sequence(self):
@@ -67,8 +65,9 @@ class PulsedExperiment():
 
     
 
-    def __init__(self, pulseblocks, assignment_dict, placeholder_dict=None, hd=None, 
-    use_template=True, template_name='base_dig_pulse', sequence_string=None, dio_seq_identifier='dig_sequence', template_directory="sequence_templates"):
+    def __init__(self, pulseblocks, assignment_dict, hd, placeholder_dict=None,  
+    use_template=True, template_name='base_dig_pulse', sequence_string=None, 
+    dio_seq_identifier='dig_sequence', template_directory="sequence_templates", iplot=True):
         """ Initilizes pulseblock experiment
 
         :hd: Instance of ZI AWG Driver
@@ -95,6 +94,7 @@ class PulsedExperiment():
         self.sequence_string = sequence_string
         self.placeholder_dict = placeholder_dict
         self.dio_seq_identifier = dio_seq_identifier
+        self.iplot = iplot
 
         # Check if template is available, and store it.
         if use_template:
@@ -108,12 +108,19 @@ class PulsedExperiment():
                 template_directory, 
                 f'{template_name}.seqct'
             )
+            sequence_string =  open(template_filepath, 'r').read()
 
-            self.sequence_string =  open(template_filepath, 'r').read()
-
-        # If no tempalte given, use argument input.
+        # If no template given, use argument input.
         else:
-            self.sequence_string = template_filepath
+            sequence_string = template_filepath
+
+        # Initialize sequence object.
+        self.seq = Sequence(
+            hdawg_driver = hd,
+            sequence = sequence_string,
+        )
+
+        
 
 
         

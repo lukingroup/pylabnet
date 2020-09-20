@@ -98,7 +98,7 @@ class Controller(MultiChSweep1D):
             # Configure Hmap to work the way we want
             hmap = pg.ImageView(view=pg.PlotItem())
             self.gui.graph_layout.insertWidget(2*index+1, hmap)
-            hmap.setPredefinedGradient('viridis')
+            hmap.setPredefinedGradient('inferno')
             hmap.show()
             hmap.view.setAspectLocked(False)
             hmap.view.invertY(False)
@@ -357,10 +357,10 @@ class Controller(MultiChSweep1D):
         self.autosave = self.widgets['autosave'].isChecked()
 
 
-def main():
-    control=Controller(config='laser_scan')
-    while True:
-        control.gui.force_update()
+# def main():
+#     control=Controller(config='laser_scan')
+#     while True:
+#         control.gui.force_update()
 
 def launch(**kwargs):
     """ Launches the sweeper GUI """
@@ -389,5 +389,5 @@ def launch(**kwargs):
         control.gui.force_update()
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

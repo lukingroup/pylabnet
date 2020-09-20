@@ -1,10 +1,15 @@
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig
-from pylabnet.utils.helper_methods import generic_save
+from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets, 
+    get_legend_from_graphics_view, add_to_legend, create_server)
+from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
 import time
+import socket
+import pyqtgraph as pg
 
 
 class TimeTrace:
@@ -120,7 +125,7 @@ class TimeTrace:
 
         self.is_paused = True
 
-    def save(self):
+    def save(self, filename=None):
         """ Saves the current data """
 
         generic_save(
@@ -128,6 +133,145 @@ class TimeTrace:
                 self.ctr.get_x_axis(self.hist)/1e12,
                 self.ctr.get_counts(self.hist)[0]
             ]),
-            filename='histogram',
+            filename=filename,
             date_dir=True
         )
+
+
+class TimeTraceGui(TimeTrace):
+    """ Same as TimeTrace but with a dedicated GUI for display
+    and parameter setting"""
+
+    def __init__(self, ctr: si_tt.Client, log: LogClient, config, ui='histogram', **kwargs):
+        """ Instantiates TimeTrace measurement
+
+        :param ctr: (si_tt.Client) client to timetagger hardware
+        :param log: (LogClient) instance of logclient for logging
+        :param config: (str) name of config file
+        :param ui: (str) name of ui file
+        :param **kwargs: additional keyword arguments 
+            TODO: in future, can implement multiple histograms if useful
+        """
+
+        # Setup GUI
+        self.gui = Window(
+            gui_template='histogram',
+            host=socket.gethostbyname(socket.gethostname())
+        )
+
+        super().__init__(
+            ctr=ctr,
+            log=log,
+            click_ch=config['click_ch'],
+            start_ch=config['start_ch'],
+            binwidth=int(self._get_binwidth()),
+            n_bins=self.gui.n_bins.value(),
+            update_interval=0
+        )
+
+        # Configure clicks
+        self.gui.configure.clicked.connect(lambda: self.set_parameters(
+            binwidth=self._get_binwidth(),
+            n_bins=self.gui.n_bins.value()
+        ))
+        self.gui.clear.clicked.connect(self.clear)
+        self.gui.save.clicked.connect(lambda: self.save(
+            filename=self.gui.save_name.text()
+        ))
+        self.gui.run.clicked.connect(self.run)
+
+        # Initialize plot info
+        self.curve = self.gui.graph.plot(
+            pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
+        )
+        self.legend = get_legend_from_graphics_view(self.gui.legend)
+        add_to_legend(self.legend, self.curve, 'Histogram')
+
+    def run(self):
+        """ Handles run button click """
+
+        if self.gui.run.text() == 'Run':
+            self.gui.run.setText('Stop')
+            self.gui.run.setStyleSheet('background-color: red')
+            self.log.info('Running histogram')
+            self.go()
+        else:
+            self.gui.run.setText('Run')
+            self.gui.run.setStyleSheet('background-color: green')
+            self.log.info('Stopped histogram')
+            if self.gui.autosave.isChecked():
+                self.save(self.gui.save_name.text())
+            self.pause()
+
+    def go(self):
+        """ Runs counter from scratch """
+        
+        self.start_acquisition()
+        self.init_plot()
+
+        self.is_paused = False
+        last_save = time.time()
+        while not self.is_paused:
+
+            if self.gui.autosave.isChecked():
+                current_time = time.time()
+                if current_time - last_save > self.gui.save_time.value():
+                    self.save(self.gui.save_name.text())
+                    last_save = current_time
+            self._update_data()
+            self.gui.force_update()
+    
+    def init_plot(self):
+        """ Initializes the plot """
+
+        # Clear existing data
+        self.curve.clear()
+        self.gui.graph.setData(
+            self.ctr.get_x_axis(self.hist),
+            self.ctr.get_counts(self.hist)
+        )
+    
+    def _get_binwidth(self):
+        """ Gets the binwidth using the unit combo box 
+        
+        :return: (float) binwidth in ps
+        """
+
+        val = self.gui.binwidth.value()
+        unit_index = self.gui.units.currentIndex()
+        if unit_index == 0:
+            return val
+        elif unit_index == 1:
+            return val*1e3
+        elif unit_index == 2:
+            return val*1e6
+        elif unit_index == 3:
+            return val*1e9
+
+
+def launch(**kwargs):
+    """ Launches the sweeper GUI """
+
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+
+    # Instantiate Monitor script
+    trace = TimeTraceGui(
+        ctr = clients['si_tt'],
+        log=logger,
+        config=kwargs['config'],
+    )
+
+    update_service = Service()
+    update_service.assign_module(module=trace)
+    update_service.assign_logger(logger=logger)
+    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
+    logger.update_data(data={'port': update_port})
+    trace.gui.set_network_info(port=update_port)
+    update_server.start()
+
+    # Run continuously
+    # Note that the actual operation inside run() can be paused using the update server
+    while True:
+
+        control.gui.force_update()
+

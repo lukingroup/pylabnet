@@ -140,8 +140,8 @@ class Controller(MultiChSweep1D):
         if self.widgets['run'].text() == 'Run':
             self.widgets['run'].setStyleSheet('background-color: red')
             self.widgets['run'].setText('Stop')
-            self.run()
             self.log.info('Sweep experiment started')
+            self.run()
         else:
             self.widgets['run'].setStyleSheet('background-color: green')
             self.widgets['run'].setText('Run')
@@ -246,7 +246,7 @@ class Controller(MultiChSweep1D):
         if backward:
             
             # Single trace
-            self.data_bwd[-1].append(self.experiment(x_value))
+            self.data_bwd[-1].append(self.experiment(x_value, **self.clients))
             cur_ind = len(self.data_bwd[-1])
             self.widgets['curve'][1].setData(
                 self.x_bwd[:cur_ind],

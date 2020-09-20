@@ -9,9 +9,11 @@ import pyqtgraph as pg
 import numpy as np
 
 from pylabnet.scripts.sweeper.sweeper import MultiChSweep1D
+from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_config,
-    get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save)
+    get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
+    unpack_launcher, create_server)
 
 
 class Controller(MultiChSweep1D):
@@ -53,7 +55,7 @@ class Controller(MultiChSweep1D):
 
         # Configure list of experiments
         self.widgets['config'].setText(config)
-        self.config = load_config(config)
+        self.config = load_config(config, self.log)
 
         self.exp_path = self.config['exp_path']
         if self.exp_path is None:
@@ -333,10 +335,38 @@ class Controller(MultiChSweep1D):
 
         self.autosave = self.widgets['autosave'].isChecked()
 
+
 def main():
     control=Controller(config='laser_scan')
     while True:
         control.gui.force_update()
+
+def launch(**kwargs):
+    """ Launches the sweeper GUI """
+
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+
+    # Instantiate Monitor script
+    control = Controller(
+        logger=logger,
+        clients=clients,
+        config=kwargs['config'],
+    )
+
+    update_service = Service()
+    update_service.assign_module(module=control)
+    update_service.assign_logger(logger=logger)
+    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
+    logger.update_data(data={'port': update_port})
+    control.gui.set_network_info(port=update_port)
+    update_server.start()
+
+    # Run continuously
+    # Note that the actual operation inside run() can be paused using the update server
+    while True:
+
+        control.gui.force_update()
+
 
 if __name__ == '__main__':
     main()

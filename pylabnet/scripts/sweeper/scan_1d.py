@@ -55,7 +55,7 @@ class Controller(MultiChSweep1D):
 
         # Configure list of experiments
         self.widgets['config'].setText(config)
-        self.config = load_config(config, self.log)
+        self.config = load_config(config, logger=self.log)
 
         self.exp_path = self.config['exp_path']
         if self.exp_path is None:

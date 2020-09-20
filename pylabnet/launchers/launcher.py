@@ -102,7 +102,7 @@ class Launcher:
                 for scr in script:
                     self.name += scr.__name__.split('.')[-1]
                     self.name += '_'
-                self.name += 'script'
+                self.name += 'server'
         else:
             self.name = name
 

@@ -3,7 +3,7 @@
 import socket
 import os
 import sys
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 import importlib
 import pyqtgraph as pg
 import numpy as np
@@ -11,17 +11,17 @@ import numpy as np
 from pylabnet.scripts.sweeper.sweeper import MultiChSweep1D
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_config,
-    get_legend_from_graphics_view, add_to_legend, fill_2dlist)
+    get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save)
 
 
 class Controller(MultiChSweep1D):
 
-    def __init__(self, logger=None, channels=['Channel 1'], clients={}, exp_path=None, fast=True):
-        """ Instantiates controller
+    def __init__(self, logger=None, channels=['Channel 1'], clients={}, config=None, fast=True):
+        """ Instantiates controller (only 1D data supported so far)
 
         :param logger: instance of LogClient
         :param channels: (list) list of channel names
-        :param exp_path: (str) path to experiment directory containing experiment functions
+        :param config: (str) name of config file
         :param fast: (bool) whether to operate in fast mode
             fast mode only updates heat maps at the end of each scan (this speeds things up)
         """
@@ -34,8 +34,9 @@ class Controller(MultiChSweep1D):
             gui_template='scan_1d',
             host=socket.gethostbyname(socket.gethostname())
         )
-        self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1,
-            graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1)
+        self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
+            graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
+            autosave=1, save_name=1, save=1)
 
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
@@ -51,11 +52,14 @@ class Controller(MultiChSweep1D):
         self.fast = fast
 
         # Configure list of experiments
-        self.exp_path = exp_path
+        self.widgets['config'].setText(config)
+        self.config = load_config(config)
+
+        self.exp_path = self.config['exp_path']
         if self.exp_path is None:
             self.exp_path = os.getcwd()
         sys.path.insert(1, self.exp_path)
-        for filename in os.listdir(exp_path):
+        for filename in os.listdir(self.exp_path):
             if filename.endswith('.py'):
                 self.widgets['exp'].addItem(filename[:-3])
         self.widgets['exp'].itemClicked.connect(self.display_experiment)
@@ -69,7 +73,12 @@ class Controller(MultiChSweep1D):
 
         # Configure button
         self.widgets['configure'].clicked.connect(self.configure_experiment)
-        self.widgets['run'].clicked.connect(self.run)
+        self.widgets['run'].clicked.connect(self.run_pressed)
+        self.widgets['autosave'].toggled.connect(self._update_autosave)
+        self.widgets['save'].pressed.connect(lambda: self.save(
+            filename=self.widgets['save_name'].text(),
+            directory=self.config['save_path']
+        ))
 
         # Create legends
         self.widgets['curve'] = []
@@ -105,7 +114,12 @@ class Controller(MultiChSweep1D):
     def configure_experiment(self):
         """ Configures experiment to be the currently selected item """
 
-        self.module = importlib.import_module(self.widgets['exp'].currentItem().text())
+        # Set all experiments to normal state and highlight configured expt
+        for item_no in range(self.widgets['exp'].count()):
+            self.widgets['exp'].item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
+        self.widgets['exp'].currentItem().setBackground(QtGui.QBrush(QtGui.QColor('red')))
+        exp_name = self.widgets['exp'].currentItem().text()
+        self.module = importlib.import_module(exp_name)
         self.module = importlib.reload(self.module)
 
         self.experiment = self.module.experiment
@@ -116,12 +130,89 @@ class Controller(MultiChSweep1D):
         self.x_fwd = self._generate_x_axis()
         self.x_bwd = self._generate_x_axis(backward=True)
 
+        self.log.info(f'Experiment {exp_name} configured')
+
+    def run_pressed(self):
+        """ Handles button pressing for run and stop """
+
+        if self.widgets['run'].text() == 'Run':
+            self.widgets['run'].setStyleSheet('background-color: red')
+            self.widgets['run'].setText('Stop')
+            self.run()
+            self.log.info('Sweep experiment started')
+        else:
+            self.widgets['run'].setStyleSheet('background-color: green')
+            self.widgets['run'].setText('Run')
+            self.stop()
+            self.log.info('Sweep experiment stopped')
+    
+    def save(self, filename=None, directory=None, date_dir=True):
+        """ Saves the dataset
+
+        :param filename: (str) name of file identifier
+        :param directory: (str) filepath to save to
+        :param date_dir: (bool) whether or not to store in date-specific sub-directory
+        """
+
+        if filename is None:
+            filename = self.widgets['save_name'].text()
+        if directory is None:
+            directory = self.config['save_path']
+
+        # Save heatmap
+        generic_save(
+            data=fill_2dlist(self.data_fwd),
+            filename=f'{filename}_fwd_scans',
+            directory=directory,
+            date_dir=date_dir
+        )
+
+        # Save average
+        generic_save(
+            data = np.vstack((self.x_fwd, np.array([self.avg_fwd]))),
+            filename=f'{filename}_fwd_avg',
+            directory=directory,
+            date_dir=date_dir
+        )
+
+        if self.sweep_type != 'sawtooth':
+
+            # Save heatmap
+            generic_save(
+                data=fill_2dlist(self.data_bwd),
+                filename=f'{filename}_bwd_scans',
+                directory=directory,
+                date_dir=date_dir
+            )
+            # Save average
+            generic_save(
+                data = np.vstack((self.x_bwd, np.array([self.avg_bwd]))),
+                filename=f'{filename}_bwd_avg',
+                directory=directory,
+                date_dir=date_dir
+            )
+    
     def _configure_plots(self, plot=True):
         """ Configures the plots """
 
+        # Clear plots
+        if len(self.widgets['curve']) > 0:
+            self.widgets['curve'][0].clear()
+            self.widgets['curve'][1].clear()
+            self.widgets['curve_avg'][0].clear()
+            self.widgets['curve_avg'][1].clear()
+            self.data_fwd = []
+            self.data_bwd = []
+            self.avg_fwd = []
+            self.avg_bwd = []
+            self.x_fwd = self._generate_x_axis()
+            self.x_bwd = self._generate_x_axis(backward=True)
+
         self.widgets['curve'] = []
         self.widgets['curve_avg'] = []
+
         for index, graph in enumerate(self.widgets['graph']):
+
             self.widgets['curve'].append(graph.plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
             ))
@@ -237,9 +328,13 @@ class Controller(MultiChSweep1D):
     def _update_integrated(self, reps_done):
         pass
 
+    def _update_autosave(self):
+        """ Updates autosave status """
+
+        self.autosave = self.widgets['autosave'].isChecked()
+
 def main():
-    config = load_config('laser_scan')
-    control=Controller(exp_path=config['path'])
+    control=Controller(config='laser_scan')
     while True:
         control.gui.force_update()
 

@@ -46,6 +46,7 @@ class Sweep1D:
         self.stop_end_flag = False
         self.x_label = None
         self.y_label = None
+        self.autosave = False
 
     def set_parameters(self, **kwargs):
         """ Configures all parameters
@@ -106,7 +107,7 @@ class Sweep1D:
         )
         return result
 
-    def run(self, plot=False, autosave=False, filename=None, directory=None, date_dir=True):
+    def run(self, plot=False, autosave=None, filename=None, directory=None, date_dir=True):
         """ Runs the sweeper
 
         :param plot: (bool) whether or not to display the plotly plot
@@ -116,6 +117,9 @@ class Sweep1D:
         :param date_dir: (bool) whether or not to store in date-specific sub-directory
         """
 
+        if autosave is not None:
+            self.autosave = autosave
+        
         sweep_points = self._generate_x_axis()
         if self.sweep_type != 'sawtooth':
             bw_sweep_points = self._generate_x_axis(backward=True)
@@ -145,7 +149,7 @@ class Sweep1D:
             self._update_integrated(reps_done)
 
             # Autosave at every iteration
-            if autosave:
+            if self.autosave:
                 self.save(filename, directory, date_dir)
 
             # Print progress

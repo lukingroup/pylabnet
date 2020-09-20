@@ -100,7 +100,7 @@
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
+    <item row="1" column="0" colspan="2">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
        <widget class="QLabel" name="param_2">
@@ -131,7 +131,7 @@
 font: 25 12pt &quot;Calibri Light&quot;;</string>
         </property>
         <property name="frame">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
@@ -179,7 +179,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
 font: 25 12pt &quot;Calibri Light&quot;;</string>
         </property>
         <property name="frame">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
@@ -227,7 +227,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
 font: 25 12pt &quot;Calibri Light&quot;;</string>
         </property>
         <property name="frame">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
@@ -237,6 +237,152 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
         </property>
         <property name="value">
          <number>101</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="param_7">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>Config:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="config">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="text">
+         <string>laser_scan</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="param_8">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>Save Filename:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="save_name">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="text">
+         <string>sweeper</string>
+        </property>
+        <property name="textInteractionFlags">
+         <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextEditable|Qt::TextEditorInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="param_10">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>Autosave:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="autosave">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>green_LED_off.svg</normaloff>
+          <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+        <property name="autoExclusive">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -356,7 +502,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
 font: 25 12pt &quot;Calibri Light&quot;;</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::StyledPanel</enum>
             </property>
            </widget>
           </item>
@@ -393,13 +539,24 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
 font: 25 12pt &quot;Calibri Light&quot;;</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::StyledPanel</enum>
             </property>
            </widget>
           </item>
          </layout>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+        </property>
+        <property name="text">
+         <string>Experiment preview:</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QTextBrowser" name="exp_preview">
@@ -410,11 +567,14 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+         <string notr="true">font: 12pt &quot;Consolas&quot;;
+color: rgb(255, 255, 255);</string>
         </property>
         <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="lineWrapMode">
+         <enum>QTextEdit::NoWrap</enum>
         </property>
        </widget>
       </item>
@@ -465,6 +625,32 @@ color: rgb(255, 255, 255);</string>
           </property>
           <property name="text">
            <string>Run</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="save">
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Calibri Light</family>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(0, 85, 127);
+color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="text">
+           <string>Save</string>
           </property>
           <property name="checkable">
            <bool>false</bool>

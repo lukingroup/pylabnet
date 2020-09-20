@@ -499,6 +499,6 @@ def fill_2dlist(list_in):
 
     list_manipulate = copy.deepcopy(list_in)
     if len(list_in) > 1:
-        list_manipulate[-1] += [0]*(len(list_manipulate[0])-len(list_manipulate[-1]))
+        list_manipulate[-1] += [list_manipulate[-1][0]]*(len(list_manipulate[0])-len(list_manipulate[-1]))
 
     return np.array(list_manipulate)

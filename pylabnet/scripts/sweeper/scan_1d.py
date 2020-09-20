@@ -33,7 +33,7 @@ class Controller(MultiChSweep1D):
             host=socket.gethostbyname(socket.gethostname())
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1,
-            graph=2, hmap=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1)
+            graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1)
 
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
@@ -66,6 +66,26 @@ class Controller(MultiChSweep1D):
         self.widgets['configure'].clicked.connect(self.configure_experiment)
         self.widgets['run'].clicked.connect(self.run)
 
+        # Create legends
+        self.widgets['curve'] = []
+        for index in range(len(self.widgets['graph'])):
+            self.widgets['legend'][index] = get_legend_from_graphics_view(
+                self.widgets['legend'][index]
+            )
+
+        # Configure hmaps
+        self.widgets['hmap'] = []
+        for index in range(2):
+
+            # Configure Hmap to work the way we want
+            hmap = pg.ImageView(view=pg.PlotItem())
+            self.gui.graph_layout.addWidget(hmap)
+            hmap.setPredefinedGradient('plasma')
+            hmap.show()
+            hmap.view.setAspectLocked(False)
+            hmap.view.invertY(False)
+            self.widgets['hmap'].append(hmap)
+
     def display_experiment(self, item):
         """ Displays the currently clicked experiment in the text browser
 
@@ -91,15 +111,11 @@ class Controller(MultiChSweep1D):
         self.x_fwd = self._generate_x_axis()
         self.x_bwd = self._generate_x_axis(backward=True)
 
-
     def _configure_plots(self, plot=True):
         """ Configures the plots """
 
         self.widgets['curve'] = []
         for index, graph in enumerate(self.widgets['graph']):
-            self.widgets['legend'][index] = get_legend_from_graphics_view(
-                self.widgets['legend'][index]
-            )
             self.widgets['curve'].append(graph.plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
             ))
@@ -109,11 +125,13 @@ class Controller(MultiChSweep1D):
                 'Single scan'
             )
 
+        for hmap in self.widgets['hmap']:
+            hmap.view.setLimits(xMin=self.min, xMax=self.max)
+
     def _reset_plots(self):
         """ Resets things after a rep """
         self.data_bwd.append([])
         self.data_fwd.append([])
-
 
     def _run_and_plot(self, x_value, backward=False):
 
@@ -126,9 +144,12 @@ class Controller(MultiChSweep1D):
             )
 
             # Heat map
-            self.widgets['hmap'][1].setImage(np.transpose(
-                fill_2dlist(self.data_bwd)
-            ))
+            self.widgets['hmap'][1].setImage(
+                img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
+                pos=(self.min, 0),
+                scale=((self.max-self.min)/self.pts,1),
+                autoRange=False
+            )
         else:
             self.data_fwd[-1].append(self.experiment(x_value))
             self.widgets['curve'][0].setData(
@@ -137,12 +158,17 @@ class Controller(MultiChSweep1D):
             )
 
             # Heat map
-            self.widgets['hmap'][0].setImage(np.transpose(
-                fill_2dlist(self.data_fwd)
-            ))
+            self.widgets['hmap'][0].setImage(
+                img=np.transpose(fill_2dlist(self.data_fwd)),
+                pos=(self.min, 0),
+                scale=((self.max-self.min)/self.pts,1),
+                autoRange=False
+            )
         self.gui.force_update()
 
     def _update_hmaps(self, reps_done):
+        """ Updates hmap scale """
+
         pass
 
     def _update_integrated(self, reps_done):

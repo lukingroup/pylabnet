@@ -503,8 +503,13 @@ class Sequence():
         :placeholder: Placeholder string to be replaced.
         :value: Value to which the placeholder string need to be set.
         """
+
         for placeholder, value in placeholder_dict.items():
             placeholder_wrapped = f"{self.marker_string}{placeholder}{self.marker_string}"
+
+            if placeholder not in self.unresolved_placeholders:
+                self.hd.log.error(f"Placeholder {placeholder} not found in sequence.")
+
             self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
             self.unresolved_placeholders.remove(placeholder)
 
@@ -515,6 +520,10 @@ class Sequence():
         :waveform: Numpy array designating the waveform.
         """
         for waveform, value in waveform_dict.items():
+
+            if waveform not in self.unresolved_placeholders:
+                self.hd.log.error(f"Placeholder {waveform} not found in sequence.")
+                
             waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
             waveform_vector = 'vect(' + ','.join([str(x) for x in value]) + ')'
             self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(waveform_vector))

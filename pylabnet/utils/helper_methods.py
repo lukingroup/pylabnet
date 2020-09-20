@@ -5,6 +5,7 @@ import json
 import re
 import sys
 import ctypes
+import copy
 import numpy as np
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
@@ -487,3 +488,17 @@ def add_to_legend(legend: pg.LegendItem, curve: pg.PlotItem, curve_name):
         curve,
         ' - '+curve_name
     )
+
+def fill_2dlist(list_in):
+    """ Turns a 2D list of irregular dimensions into a 2D numpy array
+
+    Assuming only last dimension of list is incomplete
+    :param list_in: input list
+    :return: (numpy.ndarray) 2D array with missing elements padded as zeros
+    """
+
+    list_manipulate = copy.deepcopy(list_in)
+    if len(list_in) > 1:
+        list_manipulate[-1] += [0]*(len(list_manipulate[0])-len(list_manipulate[-1]))
+
+    return np.array(list_manipulate)

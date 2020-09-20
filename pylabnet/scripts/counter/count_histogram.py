@@ -222,6 +222,7 @@ class TimeTraceGui(TimeTrace):
 
         self.is_paused = False
         last_save = time.time()
+        last_clear = last_save
         while not self.is_paused:
 
             if self.gui.autosave.isChecked():
@@ -232,6 +233,11 @@ class TimeTraceGui(TimeTrace):
                         directory=self.config['save_path']
                     )
                     last_save = current_time
+            if self.gui.auto_clear.isChecked():
+                current_time = time.time()
+                if current_time - last_clear > self.gui.clear_time.value():
+                    self.clear()
+                    last_clear = current_time
             self._update_data()
             self.gui.force_update()
     

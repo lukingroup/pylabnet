@@ -3,7 +3,8 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets, 
-    get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher)
+    get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
+    load_config)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -158,7 +159,8 @@ class TimeTraceGui(TimeTrace):
             gui_template='histogram',
             host=socket.gethostbyname(socket.gethostname())
         )
-
+        
+        self.config = load_config(config, logger=log)
         super().__init__(
             ctr=ctr,
             log=log,

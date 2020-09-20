@@ -3,7 +3,7 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets, 
-    get_legend_from_graphics_view, add_to_legend, create_server)
+    get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -273,5 +273,5 @@ def launch(**kwargs):
     # Note that the actual operation inside run() can be paused using the update server
     while True:
 
-        control.gui.force_update()
+        trace.gui.force_update()
 

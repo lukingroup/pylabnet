@@ -38,7 +38,7 @@ class Controller(MultiChSweep1D):
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
-            autosave=1, save_name=1, save=1, reps=1)
+            autosave=1, save_name=1, save=1, reps=1, rep_tracker=1)
 
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
@@ -97,8 +97,8 @@ class Controller(MultiChSweep1D):
 
             # Configure Hmap to work the way we want
             hmap = pg.ImageView(view=pg.PlotItem())
-            self.gui.graph_layout.addWidget(hmap)
-            hmap.setPredefinedGradient('plasma')
+            self.gui.graph_layout.insertWidget(2*index+1, hmap)
+            hmap.setPredefinedGradient('viridis')
             hmap.show()
             hmap.view.setAspectLocked(False)
             hmap.view.invertY(False)
@@ -114,6 +114,9 @@ class Controller(MultiChSweep1D):
             exp_content = exp_file.read()
 
         self.widgets['exp_preview'].setText(exp_content)
+        self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
+                                                  'color: rgb(255, 255, 255); '
+                                                  'background-color: rgb(0, 0, 0);')
 
     def configure_experiment(self):
         """ Configures experiment to be the currently selected item """
@@ -121,7 +124,7 @@ class Controller(MultiChSweep1D):
         # Set all experiments to normal state and highlight configured expt
         for item_no in range(self.widgets['exp'].count()):
             self.widgets['exp'].item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
-        self.widgets['exp'].currentItem().setBackground(QtGui.QBrush(QtGui.QColor('red')))
+        self.widgets['exp'].currentItem().setBackground(QtGui.QBrush(QtGui.QColor('darkRed')))
         exp_name = self.widgets['exp'].currentItem().text()
         self.module = importlib.import_module(exp_name)
         self.module = importlib.reload(self.module)
@@ -141,6 +144,9 @@ class Controller(MultiChSweep1D):
             pass
 
         self.log.info(f'Experiment {exp_name} configured')
+        self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
+                                                  'color: rgb(255, 255, 255); '
+                                                  'background-color: rgb(50, 50, 50);')
 
     def run_pressed(self):
         """ Handles button pressing for run and stop """
@@ -149,7 +155,12 @@ class Controller(MultiChSweep1D):
             self.widgets['run'].setStyleSheet('background-color: red')
             self.widgets['run'].setText('Stop')
             self.log.info('Sweep experiment started')
+            self.widgets['rep_tracker'].setValue(1)
             self.run()
+            self.widgets['rep_tracker'].setValue(0)
+            self.widgets['run'].setStyleSheet('background-color: green')
+            self.widgets['run'].setText('Run')
+            self.log.info('Sweep experiment stopped')
         else:
             self.widgets['run'].setStyleSheet('background-color: green')
             self.widgets['run'].setText('Run')
@@ -224,12 +235,12 @@ class Controller(MultiChSweep1D):
         for index, graph in enumerate(self.widgets['graph']):
 
             self.widgets['curve'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[3])
             ))
             add_to_legend(
                 self.widgets['legend'][index],
                 self.widgets['curve'][index],
-                'Single scan'
+                f'{"Fwd" if index==0 else "Bwd"} trace'
             )
 
             self.widgets['curve_avg'].append(graph.plot(
@@ -238,7 +249,7 @@ class Controller(MultiChSweep1D):
             add_to_legend(
                 self.widgets['legend'][index],
                 self.widgets['curve_avg'][index],
-                'Average'
+                f'{"Fwd" if index==0 else "Bwd"} avg'
             )
 
         for hmap in self.widgets['hmap']:
@@ -336,7 +347,9 @@ class Controller(MultiChSweep1D):
             )
 
     def _update_integrated(self, reps_done):
-        pass
+        """ Update repetition counter """
+
+        self.widgets['rep_tracker'].setValue(reps_done + 1)
 
     def _update_autosave(self):
         """ Updates autosave status """

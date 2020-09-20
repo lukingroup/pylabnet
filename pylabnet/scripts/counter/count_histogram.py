@@ -232,14 +232,14 @@ class TimeTraceGui(TimeTrace):
         self.curve.clear()
         self.curve.setData(
             self.ctr.get_x_axis(self.hist),
-            self.ctr.get_counts(self.hist)
+            self.ctr.get_counts(self.hist)[0]
         )
 
     def _update_data(self):
         """ Adds latest data to the plot """
 
         self.curve.setData(
-            self.ctr.get_counts(self.hist)
+            self.ctr.get_counts(self.hist)[0]
         )
     
     def _get_binwidth(self):

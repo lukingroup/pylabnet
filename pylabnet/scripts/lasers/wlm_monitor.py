@@ -128,11 +128,11 @@ class WlmMonitor:
 
                     if 'setpoint' in parameter:
 
-                        self.widgets['sp'][index].setValue(parameter['setpoint'])
+                        # self.widgets['sp'][index].setValue(parameter['setpoint'])
                         # channel.setpoint = parameter['setpoint']
 
                         # Mark that we should override GUI setpoint, since it has been updated by the script
-                        # channel.setpoint_override = True
+                        channel.setpoint_override = parameter['setpoint']
 
                     if 'lock' in parameter:
 
@@ -331,6 +331,11 @@ class WlmMonitor:
 
         for index, channel in enumerate(self.channels):
 
+            # Check for override
+            if channel.setpoint_override:
+                self.widgets['sp'][index].setValue(channel.setpoint_override)
+                channel.setpoint_override = 0
+
             # Update data with the new wavelength
             channel.update(self.wlm_client.get_wavelength(channel.number))
 
@@ -479,7 +484,7 @@ class Channel:
         self.lock = False
         self.error = None  # Array of error values, used for plotting/monitoring lock error
         self.labels_updated = False  # Flag to check if we have updated all labels
-        # self.setpoint_override = True  # Flag to check if setpoint has been updated + GUI should be overridden
+        self.setpoint_override = 0  # Flag to check if setpoint has been updated + GUI should be overridden
         # self.lock_override = True  # Flag to check if lock has been updated + GUI should be overridden
         self.gui_setpoint = 0  # Current GUI setpoint
         self.gui_lock = False  # Current GUI lock boolean

@@ -128,7 +128,7 @@ class TimeTrace:
 
         self.is_paused = True
 
-    def save(self, filename=None):
+    def save(self, filename=None, directory=None):
         """ Saves the current data """
 
         generic_save(
@@ -137,8 +137,11 @@ class TimeTrace:
                 self.ctr.get_counts(self.hist)[0]
             ]),
             filename=filename,
+            directory=directory,
             date_dir=True
         )
+
+        self.log.info('Saved histogram data')
 
 
 class TimeTraceGui(TimeTrace):
@@ -180,7 +183,8 @@ class TimeTraceGui(TimeTrace):
         ))
         self.gui.clear.clicked.connect(self.clear)
         self.gui.save.clicked.connect(lambda: self.save(
-            filename=self.gui.save_name.text()
+            filename=self.gui.save_name.text(),
+            directory=self.config['save_path']
         ))
         self.gui.run.clicked.connect(self.run)
 
@@ -204,7 +208,10 @@ class TimeTraceGui(TimeTrace):
             self.gui.run.setStyleSheet('background-color: green')
             self.log.info('Stopped histogram')
             if self.gui.autosave.isChecked():
-                self.save(self.gui.save_name.text())
+                self.save(
+                    filename=self.gui.save_name.text()
+                    directory=config['save_path']
+                )
             self.pause()
 
     def go(self):
@@ -220,7 +227,10 @@ class TimeTraceGui(TimeTrace):
             if self.gui.autosave.isChecked():
                 current_time = time.time()
                 if current_time - last_save > self.gui.save_time.value():
-                    self.save(self.gui.save_name.text())
+                    self.save(
+                        filename=self.gui.save_name.text(),
+                        directory=config['save_path']
+                    )
                     last_save = current_time
             self._update_data()
             self.gui.force_update()

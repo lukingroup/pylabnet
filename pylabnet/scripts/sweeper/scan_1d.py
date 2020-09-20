@@ -133,7 +133,10 @@ class Controller(MultiChSweep1D):
         self.x_bwd = self._generate_x_axis(backward=True)
 
         # Run any pre-experiment configuration
-        self.module.configure(**self.clients)
+        try:
+            self.module.configure(**self.clients)
+        except AttributeError:
+            pass
 
         self.log.info(f'Experiment {exp_name} configured')
 

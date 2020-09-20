@@ -164,8 +164,8 @@ class TimeTraceGui(TimeTrace):
         super().__init__(
             ctr=ctr,
             log=log,
-            click_ch=config['click_ch'],
-            start_ch=config['start_ch'],
+            click_ch=self.config['click_ch'],
+            start_ch=self.config['start_ch'],
             binwidth=int(self._get_binwidth()),
             n_bins=self.gui.n_bins.value(),
             update_interval=0

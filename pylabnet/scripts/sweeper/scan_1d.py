@@ -153,7 +153,7 @@ class Controller(MultiChSweep1D):
             self.widgets['run'].setText('Run')
             self.stop()
             self.log.info('Sweep experiment stopped')
-    
+
     def save(self, filename=None, directory=None, date_dir=True):
         """ Saves the dataset
 
@@ -199,7 +199,7 @@ class Controller(MultiChSweep1D):
                 directory=directory,
                 date_dir=date_dir
             )
-    
+
     def _configure_plots(self, plot=True):
         """ Configures the plots """
 
@@ -250,7 +250,7 @@ class Controller(MultiChSweep1D):
     def _run_and_plot(self, x_value, backward=False):
 
         if backward:
-            
+
             # Single trace
             self.data_bwd[-1].append(self.experiment(x_value, **self.clients))
             cur_ind = len(self.data_bwd[-1])
@@ -262,7 +262,7 @@ class Controller(MultiChSweep1D):
             # Update average and plot
             try:
                 self.avg_bwd[cur_ind-1] = (
-                    (cur_ind-1) * self.avg_bwd[cur_ind-1] 
+                    (cur_ind-1) * self.avg_bwd[cur_ind-1]
                     + self.data_bwd[-1][-1]
                 )/cur_ind
                 self.widgets['curve_avg'][1].setData(
@@ -284,7 +284,7 @@ class Controller(MultiChSweep1D):
                 )
         else:
 
-            self.data_fwd[-1].append(self.experiment(x_value))
+            self.data_fwd[-1].append(self.experiment(x_value, **self.clients))
             cur_ind = len(self.data_fwd[-1])
             self.widgets['curve'][0].setData(
                 self.x_fwd[:cur_ind],
@@ -294,7 +294,7 @@ class Controller(MultiChSweep1D):
             # Update average and plot
             try:
                 self.avg_fwd[cur_ind-1] = (
-                    (cur_ind-1) * self.avg_fwd[cur_ind-1] 
+                    (cur_ind-1) * self.avg_fwd[cur_ind-1]
                     + self.data_fwd[-1][-1]
                 )/cur_ind
                 self.widgets['curve_avg'][0].setData(

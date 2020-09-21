@@ -371,10 +371,10 @@ def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=Fa
     filepath = generate_filepath(filename, directory, date_dir)
     plotly_figure.write_image(f'{filepath}.png')
 
-def pyqtgraph_save(widget, size, filename=None, directory=None, date_dir=False):
+def pyqtgraph_save(widget, width=1500, filename=None, directory=None, date_dir=False):
     """ Saves pyqtgraph figure to png
 
-    :param size: (tuple) (width, height) of image to save
+    :param width: (int) pixel width of image to save
     :param dir: (str) directory to save to
     :param filename: (str) name of file to save
     :param date_dir: (bool) whether or not to use date sub-directory
@@ -382,7 +382,7 @@ def pyqtgraph_save(widget, size, filename=None, directory=None, date_dir=False):
 
     filepath = generate_filepath(filename+'.png', directory, date_dir)
     exporter = pg.exporters.ImageExporter(widget)
-    exporter.parameters()['width'], exporter.parameters()['height'] = size[0], size[1]
+    # exporter.parameters()['width'] = width
     exporter.export(filepath)
 
 def load_config(config_filename, folder_root=None, logger=None):

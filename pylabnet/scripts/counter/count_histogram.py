@@ -288,10 +288,8 @@ class TimeTraceGui(TimeTrace):
             date_dir=True
         )
 
-        # TODO: does not work yet
         pyqtgraph_save(
             widget=self.gui.graph.getPlotItem(),
-            size=(1500,1000),
             filename=filename,
             directory=directory,
             date_dir=True

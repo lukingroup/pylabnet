@@ -30,88 +30,88 @@ dev_id = 'dev8227'
 # Instantiate
 logger = LogClient(
     host='140.247.189.82',
-    port=18977,
+    port=37542,
     module_tag=f'ZI HDAWG {dev_id}'
 )
 
 # # Instanciate HDAWG driver.
 hd = Driver(dev_id, logger=logger)
 
-scaling = 0.1
+def rabi_element(tau=0, aom_offset=0):
+    rabi_element = pb.PulseBlock(
+        p_obj_list=[
+            po.PTrue(ch='aom', dur=1.1e-6),
+            po.PTrue(ch='ctr', t0=0.5e-6, dur=0.5e-6)
+        ]
+    )
+    temp_t = rabi_element.dur
 
-laser_2 = "sasha"
-laser_1 = "toptica"
+    rabi_element.insert(
+        p_obj=po.PTrue(ch='mw_gate', dur=tau, t0=temp_t+0.7e-6)
+    )
+    temp_t = rabi_element.dur
 
-delta_t_laser_1 = 2e-3 * scaling
-delta_t_laser_2 = 2e-3* scaling
-wait_lasers = 1e-6
-
-gate_buffer = 0.5e-6
-delta_t_gate = 1e-6
-
-
-# T1 parameteres
-delta_t_sasha_t1 = 1e-3
-delta_t_start_t1 = 100e-9
-t_start_t1 = 0
-
-tau_start = 100e-6
-tau_end = 1000e-3
-num_tau = 10
-
-
-# Define the pulse sequence
-laser_1_pulse = po.PTrue(ch=laser_1, dur=delta_t_laser_1)
-laser_2_pulse = po.PTrue(ch=laser_2, dur=delta_t_laser_2)
-gate_pulse = po.PTrue(ch='gate1',  t0=-gate_buffer, dur=delta_t_gate+gate_buffer)
-
-
-# Gated Optical Pumping Pulse
-gate_laser_2_pulse = pb.PulseBlock(
- [
-    laser_2_pulse,
-    gate_pulse,
-    ]
-)
-
-scan_pulse = pb.PulseBlock(laser_1_pulse, name='scan_block')
-
-scan_pulse.append_pb(
-    pb_obj=gate_laser_2_pulse,
-    offset = wait_lasers
-)
-
-# T1 pulse
-taus = np.linspace(tau_start, tau_end, num_tau)
-
-t1_pb = pb.PulseBlock(
-            p_obj_list=[
-            po.PTrue(ch='gate1', t0=t_start_t1, dur=delta_t_start_t1),
-            ]
-        )
-
-for tau in taus:
-
-    t1_pb.append(
-        po.PTrue(ch=laser_2, t0=tau, dur=delta_t_sasha_t1)
-        )
-
-
-
-assignment_dict = load_config('dio_assignment')
-awg_number = 0
-# Load DIO assignment dict from config files
-assignment_dict = load_config('dio_assignment')
-
-# Load placeholder replacement dict from config files
-placeholder_dict = load_config('gated_experiment')
-
-pe_scan = PulsedExperiment(
-    pulseblocks=scan_pulse, 
-    assignment_dict=assignment_dict, 
-    hd=hd, 
-    template_name="gated_optical_pumping",
-    placeholder_dict=placeholder_dict
+    rabi_element.insert(
+        p_obj=po.PTrue(ch='aom', t0=temp_t+aom_offset, dur=2e-6)
+    )
+    rabi_element.insert(
+        p_obj=po.PTrue(ch='ctr', t0=temp_t, dur=0.5e-6)
     )
 
-awg = pe_scan.get_ready(awg_num)
+    return rabi_element
+
+
+# Let's choose a microwave duration of 1us.
+tau = 1e-6
+
+
+
+# Specify the DIO outputs which drive the MW, counter and aom.
+assignment_dict = {
+    'mw_gate':   15,
+    'ctr':      16,
+    'aom':      17,
+}
+
+# Which awg core to use
+awg_num = 1
+
+
+# Sequence containing two DIO placeholders, and non-DIO palceholders
+sequence_txt = """\
+
+        while (1) {
+            if (getUserReg($trigger_user_reg$) == $trigger_up_val$) {
+                repeat ($repetitions$) {
+                $dig_sequence0$  
+                wait(1000);
+                }
+                setUserReg($trigger_user_reg$, $trigger_down_val$);
+                $dig_sequence1$
+            }
+        }
+        """
+
+# Replacement values for non-DIO placeholders
+placeholder_dict = {
+    "trigger_user_reg": 0,
+    "repetitions": 0,
+    "trigger_up_val" : 0,
+    "trigger_down_val" : 1
+}
+
+# Pulseblock to replace the DIO placeholder
+pulseblocks = [rabi_element(tau), rabi_element(tau+2e-6)]
+
+# Instanciate pulsed experiment
+pe_rabi_multi = PulsedExperiment(
+    pulseblocks=pulseblocks, 
+    assignment_dict=assignment_dict, 
+    placeholder_dict=placeholder_dict,
+    use_template=False,
+    sequence_string=sequence_txt,
+    hd=hd, 
+    )
+
+# Compile sequence, upload to HDAWG and prepare DIO output
+awg = pe_rabi.get_ready(awg_num)

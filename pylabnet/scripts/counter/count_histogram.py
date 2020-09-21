@@ -2,7 +2,7 @@ from pylabnet.network.client_server import si_tt
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets, 
+from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
     load_config, pyqtgraph_save)
 from pylabnet.network.client_server.count_histogram import Service
@@ -16,7 +16,7 @@ import pyqtgraph as pg
 class TimeTrace:
     """ Convenience class for handling time-trace measurements """
 
-    def __init__(self, ctr: si_tt.Client, log: LogClient, 
+    def __init__(self, ctr: si_tt.Client, log: LogClient,
                  click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5, **kwargs):
         """ Instantiates TimeTrace measurement
 
@@ -28,7 +28,7 @@ class TimeTrace:
             :param binwidth: (int) width of bins in ps
             :param n_bins: (int) total number of bins for histogram
             :param update_interval: (float) interval in seconds to wait between updates
-                Note, don't go too small (< 100 ms, not precisely tested yet), 
+                Note, don't go too small (< 100 ms, not precisely tested yet),
                 otherwise we might lag in jupyter notebook
             TODO: in future, can implement multiple histograms if useful
         """
@@ -63,7 +63,7 @@ class TimeTrace:
                       f' {self.start_ch}')
 
     def set_parameters(self, binwidth=1000, n_bins=1000, **kwargs):
-        """ Updates histogram parameters 
+        """ Updates histogram parameters
 
         :param binwidth: (int) width of bins in ps
         :param n_bins: (int) total number of bins for histogram
@@ -80,7 +80,7 @@ class TimeTrace:
         self.plot = SingleTraceFig(title_str='Count Histogram')
         self.plot.set_data(
             x_ar=self.ctr.get_x_axis(self.hist)/1e12,
-            y_ar=self.ctr.get_counts(self.hist)[0]    
+            y_ar=self.ctr.get_counts(self.hist)[0]
         )
         self.plot.show()
 
@@ -88,12 +88,12 @@ class TimeTrace:
         """ Updates to the current data """
 
         self.plot.set_data(
-            y_ar=self.ctr.get_counts(self.hist)[0] 
+            y_ar=self.ctr.get_counts(self.hist)[0]
         )
-    
+
     def go(self):
         """ Runs counter from scratch """
-        
+
         self.start_acquisition()
         self.init_plot()
 
@@ -120,9 +120,9 @@ class TimeTrace:
         self.log.info(f'Counter {self.hist} data cleared')
 
     def pause(self):
-        """ Pauses the go/run loop. 
+        """ Pauses the go/run loop.
 
-        NOTE: does not actually stop counter acquisition! 
+        NOTE: does not actually stop counter acquisition!
         There does not seem to be a way to do that from SI-TT API
         """
 
@@ -136,12 +136,6 @@ class TimeTrace:
                 self.ctr.get_x_axis(self.hist)/1e12,
                 self.ctr.get_counts(self.hist)[0]
             ]),
-            filename=filename,
-            directory=directory,
-            date_dir=True
-        )
-        pyqtgraph_save(
-            widget=self.gui.curve,
             filename=filename,
             directory=directory,
             date_dir=True
@@ -161,7 +155,7 @@ class TimeTraceGui(TimeTrace):
         :param log: (LogClient) instance of logclient for logging
         :param config: (str) name of config file
         :param ui: (str) name of ui file
-        :param **kwargs: additional keyword arguments 
+        :param **kwargs: additional keyword arguments
             TODO: in future, can implement multiple histograms if useful
         """
 
@@ -170,7 +164,7 @@ class TimeTraceGui(TimeTrace):
             gui_template='histogram',
             host=socket.gethostbyname(socket.gethostname())
         )
-        
+
         self.config = load_config(config, logger=log)
         super().__init__(
             ctr=ctr,
@@ -222,7 +216,7 @@ class TimeTraceGui(TimeTrace):
 
     def go(self):
         """ Runs counter from scratch """
-        
+
         self.start_acquisition()
         self.init_plot()
 
@@ -246,7 +240,7 @@ class TimeTraceGui(TimeTrace):
                     last_clear = current_time
             self._update_data()
             self.gui.force_update()
-    
+
     def init_plot(self):
         """ Initializes the plot """
 
@@ -263,10 +257,10 @@ class TimeTraceGui(TimeTrace):
         self.curve.setData(
             self.ctr.get_counts(self.hist)[0]
         )
-    
+
     def _get_binwidth(self):
-        """ Gets the binwidth using the unit combo box 
-        
+        """ Gets the binwidth using the unit combo box
+
         :return: (float) binwidth in ps
         """
 
@@ -294,7 +288,12 @@ class TimeTraceGui(TimeTrace):
             date_dir=True
         )
 
-        
+        pyqtgraph_save(
+            widget=self.curve,
+            filename=filename,
+            directory=directory,
+            date_dir=True
+        )
 
         self.log.info('Saved histogram data')
 

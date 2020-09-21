@@ -10,6 +10,7 @@ import numpy as np
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
+import pyqtgraph.exporters
 
 
 def str_to_float(in_val):

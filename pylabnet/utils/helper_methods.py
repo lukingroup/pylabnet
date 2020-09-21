@@ -370,6 +370,17 @@ def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=Fa
     filepath = generate_filepath(filename, directory, date_dir)
     plotly_figure.write_image(f'{filepath}.png')
 
+def pyqtgraph_save(widget, filename=None, directory=None, date_dir=False):
+    """ Saves pyqtgraph figure to png
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename+'.png', directory, date_dir)
+    exporter = pg.exporters.ImageExporter(widget)
+    exporter.export(filepath)
 
 def load_config(config_filename, folder_root=None, logger=None):
     """ Load configuration data stored in JSON format

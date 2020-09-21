@@ -4,7 +4,7 @@ from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets, 
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
-    load_config)
+    load_config, pyqtgraph_save)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -136,6 +136,12 @@ class TimeTrace:
                 self.ctr.get_x_axis(self.hist)/1e12,
                 self.ctr.get_counts(self.hist)[0]
             ]),
+            filename=filename,
+            directory=directory,
+            date_dir=True
+        )
+        pyqtgraph_save(
+            widget=self.gui.curve,
             filename=filename,
             directory=directory,
             date_dir=True
@@ -274,6 +280,23 @@ class TimeTraceGui(TimeTrace):
             return val*1e6
         elif unit_index == 3:
             return val*1e9
+
+    def save(self, filename=None, directory=None):
+        """ Saves the current data """
+
+        generic_save(
+            data=np.array([
+                self.ctr.get_x_axis(self.hist)/1e12,
+                self.ctr.get_counts(self.hist)[0]
+            ]),
+            filename=filename,
+            directory=directory,
+            date_dir=True
+        )
+
+        
+
+        self.log.info('Saved histogram data')
 
 
 def launch(**kwargs):

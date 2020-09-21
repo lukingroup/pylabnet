@@ -156,6 +156,12 @@ class Controller(MultiChSweep1D):
             self.widgets['run'].setText('Stop')
             self.log.info('Sweep experiment started')
             self.widgets['rep_tracker'].setValue(1)
+
+            # set min and max
+            self.min = self.widgets['min'].value()
+            self.max = self.widgets['max'].value()
+            self.pts = self.widgets['pts'].value()
+            
             self.run()
             self.widgets['rep_tracker'].setValue(0)
             self.widgets['reps'].setValue(0)

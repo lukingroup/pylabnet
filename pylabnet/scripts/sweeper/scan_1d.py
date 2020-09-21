@@ -298,7 +298,7 @@ class Controller(MultiChSweep1D):
         if backward:
 
             # Single trace
-            self.data_bwd[-1].append(self.experiment(x_value, **self.clients))
+            self.data_bwd[-1].append(self.experiment(x_value, **self.clients, gui=self.gui))
             cur_ind = len(self.data_bwd[-1])
             self.widgets['curve'][1].setData(
                 self.x_bwd[:cur_ind],
@@ -331,7 +331,7 @@ class Controller(MultiChSweep1D):
                 )
         else:
 
-            self.data_fwd[-1].append(self.experiment(x_value, **self.clients))
+            self.data_fwd[-1].append(self.experiment(x_value, **self.clients, gui=self.gui))
             cur_ind = len(self.data_fwd[-1])
             self.widgets['curve'][0].setData(
                 self.x_fwd[:cur_ind],

@@ -13,7 +13,7 @@ from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
-    unpack_launcher, create_server)
+    unpack_launcher, create_server, pyqtgraph_save)
 
 
 class Controller(MultiChSweep1D):
@@ -187,10 +187,22 @@ class Controller(MultiChSweep1D):
             directory=directory,
             date_dir=date_dir
         )
+        pyqtgraph_save(
+            widget=self.widgets['hmap'][0].getView(),
+            filename=f'{filename}_fwd_scans',
+            directory=directory,
+            date_dir=date_dir
+        )
 
         # Save average
         generic_save(
             data = np.vstack((self.x_fwd, np.array([self.avg_fwd]))),
+            filename=f'{filename}_fwd_avg',
+            directory=directory,
+            date_dir=date_dir
+        )
+        pyqtgraph_save(
+            widget=self.widgets['graph'][0].getPlotItem(),
             filename=f'{filename}_fwd_avg',
             directory=directory,
             date_dir=date_dir
@@ -205,9 +217,21 @@ class Controller(MultiChSweep1D):
                 directory=directory,
                 date_dir=date_dir
             )
+            pyqtgraph_save(
+                widget=self.widgets['hmap'][1].getView(),
+                filename=f'{filename}_bwd_scans',
+                directory=directory,
+                date_dir=date_dir
+            )
             # Save average
             generic_save(
                 data = np.vstack((self.x_bwd, np.array([self.avg_bwd]))),
+                filename=f'{filename}_bwd_avg',
+                directory=directory,
+                date_dir=date_dir
+            )
+            pyqtgraph_save(
+                widget=self.widgets['graph'][1].getPlotItem(),
                 filename=f'{filename}_bwd_avg',
                 directory=directory,
                 date_dir=date_dir
@@ -357,10 +381,10 @@ class Controller(MultiChSweep1D):
         self.autosave = self.widgets['autosave'].isChecked()
 
 
-# def main():
-#     control=Controller(config='laser_scan')
-#     while True:
-#         control.gui.force_update()
+def main():
+    control=Controller(config='laser_scan')
+    while True:
+        control.gui.force_update()
 
 def launch(**kwargs):
     """ Launches the sweeper GUI """
@@ -389,5 +413,5 @@ def launch(**kwargs):
         control.gui.force_update()
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()

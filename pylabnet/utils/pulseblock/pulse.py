@@ -45,6 +45,7 @@ class PTrue(PulseBase):
         # Define an automatic default.
         self.auto_default = DFalse()
 
+
     def __str__(self):
         return 'True'
 

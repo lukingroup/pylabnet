@@ -192,6 +192,7 @@ class TimeTraceGui(TimeTrace):
         self.curve = self.gui.graph.plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
         )
+        self.gui.graph.getPlotItem().setLabel(f'Time {self.gui.units.currentText()}')
         self.legend = get_legend_from_graphics_view(self.gui.legend)
         add_to_legend(self.legend, self.curve, 'Histogram')
 
@@ -247,10 +248,10 @@ class TimeTraceGui(TimeTrace):
         # Clear existing data
         self.curve.clear()
         self.curve.setData(
-            self.ctr.get_x_axis(self.hist),
+            self.ctr.get_x_axis(self.hist)*self.gui.binwidth.value(),
             self.ctr.get_counts(self.hist)[0]
         )
-
+    
     def _update_data(self):
         """ Adds latest data to the plot """
 

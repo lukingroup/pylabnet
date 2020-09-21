@@ -65,7 +65,7 @@ class Driver():
             input_argument = [input_argument]
         return input_argument
 
-    def __init__(self, device_id, logger, api_level=6, reset_dio=False, disable_everything=False):
+    def __init__(self, device_id, logger, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
         """ Instantiate AWG
 
         :logger: instance of LogClient class
@@ -523,7 +523,7 @@ class Sequence():
 
             if waveform not in self.unresolved_placeholders:
                 self.hd.log.error(f"Placeholder {waveform} not found in sequence.")
-                
+
             waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
             waveform_vector = 'vect(' + ','.join([str(x) for x in value]) + ')'
             self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(waveform_vector))
@@ -532,7 +532,7 @@ class Sequence():
 
     def get_placeholders(self):
         """Parses sequence template and returns placeholder variables."""
-           
+
         # Define regex
         regex = f'\{self.marker_string}([^$]+)\{self.marker_string}'
 
@@ -600,7 +600,7 @@ class Sequence():
                         error_msg = f"The placeholder {placeholder} cannot \
                         be found in the sequence."
                         hdawg_driver.log.error(error_msg)
-            
+
             # Replace placeholdes.
             self.replace_placeholders(self.placeholder_dict)
 

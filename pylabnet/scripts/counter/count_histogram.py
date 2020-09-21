@@ -288,12 +288,14 @@ class TimeTraceGui(TimeTrace):
             date_dir=True
         )
 
-        pyqtgraph_save(
-            widget=self.curve,
-            filename=filename,
-            directory=directory,
-            date_dir=True
-        )
+        # TODO: does not work yet
+        # pyqtgraph_save(
+        #     widget=self.curve,
+        #     size=(1500,1000),
+        #     filename=filename,
+        #     directory=directory,
+        #     date_dir=True
+        # )
 
         self.log.info('Saved histogram data')
 

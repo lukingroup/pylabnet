@@ -117,7 +117,7 @@ class TimeTrace:
 
         self.ctr.clear_ctr(name=self.hist)
 
-        self.log.info(f'Counter {self.hist} data cleared')
+        # self.log.info(f'Counter {self.hist} data cleared')
 
     def pause(self):
         """ Pauses the go/run loop.

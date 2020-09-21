@@ -45,8 +45,7 @@ class DIOPulseBlockHandler():
         self.pb = pb
 
         # Handle end low case
-        if end_low:
-            self._append_low()
+        self.end_low = end_low
 
         # Ask user for bit assignment if no dictionary provided.
         if assignment_dict is None:
@@ -134,17 +133,6 @@ class DIOPulseBlockHandler():
             )
 
         return sample_dict, num_samples, num_traces
-
-    def _append_low(self):
-        """ Appends a single low sample to the pulseblock """
-
-        self.pb = self.pb.join(
-            p_obj = PFalse(
-                ch=list(self.pb.p_dict.keys())[0],
-                dur=2*1/self.sr,
-                t0=self.pb.dur
-            )
-        )
 
     def gen_codewords(self):
         """Generate array of DIO codewords.
@@ -259,6 +247,11 @@ class DIOPulseBlockHandler():
         # Sanity check if waveform is reproducible from reduced codewords and waittimes.
         if not (codewords == waveform).all():
             self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
+
+        # Add setDIO(0); to end if selected.
+        if self.end_low:
+            # Add 0 waittime to sequence
+            sequence += wait_raw.replace("_w_", '0')
 
         return sequence
 

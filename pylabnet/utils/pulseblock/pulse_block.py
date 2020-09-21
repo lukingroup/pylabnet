@@ -85,7 +85,7 @@ class PulseBlock:
 
         if p_obj_list is None:
             p_obj_list = list()
-        # If only a single pulse_object is provided, 
+        # If only a single pulse_object is provided,
         # wrap as list.
         elif type(p_obj_list) is not list:
             p_obj_list = [p_obj_list]
@@ -274,13 +274,13 @@ class PulseBlock:
                 cflct_er=cflct_er
             )
 
-    def append_po_as_pb(self, p_obj, t0=0, cflct_er=True):
+    def append_po_as_pb(self, p_obj, offset=0):
         """ Tranforms a Pulse object into Pulse Block
         and appends it into self.
 
         :param p_obj: the Pulse object to be inserted
 
-        :param t0: position where the beginning of pb_obj should be placed with
+        :param offset: position where the beginning of pb_obj should be placed with
                    respect to the beginning of self.
                    If t0 is negative, pb_obj is inserted before the beginning of
                    self and time origin is shifted into the beginning of pb_obj.
@@ -292,9 +292,8 @@ class PulseBlock:
 
         """
 
-        po_as_pb = PulseBlock(p_obj_list=p_obj)
-        offset = t0 + self.dur
-        self.insert_pb(po_as_pb, t0=offset, cflct_er=True)
+        po_as_pb = PulseBlock(p_obj)
+        self.append_pb(po_as_pb, offset=offset)
 
     def insert_pb(self, pb_obj, t0=0, cflct_er=True):
         """ Insert PulseBlock pb_obj into self.

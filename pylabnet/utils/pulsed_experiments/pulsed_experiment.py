@@ -32,12 +32,11 @@ class PulsedExperiment():
         self.seq.replace_placeholders(self.placeholder_dict)
         self.hd.log.info("Replaced placeholders.")
 
-
     def replace_dio_commands(self, pulseblock, dio_command_number):
-        """Replace all DIO-waveform placeholdesr with DIO waveform commands.
+        """Replace all DIO-waveform placeholders with DIO waveform commands.
         
         :pulseblock: Pulseblock object
-        :dio_command_numer: (int) Index designating which DIO-waveform placeholder
+        :dio_command_number: (int) Index designating which DIO-waveform placeholder
         needs to be replaced.
         """
 
@@ -103,15 +102,14 @@ class PulsedExperiment():
         return awg
 
     def get_ready(self, awg_number):
-        """Prepare AWG for sequence execution
+        """Prepare AWG for sequence execution.
         
-        THis function will generate the sequence based on the placeholders and the 
+        This function will generate the sequence based on the placeholders and the 
         pulseblocks, upload it to the AWG and configure the DIO output bits.
         """
         self.prepare_sequence()
-        return self.prepare_awg(awg_number)
+        return self.prepare_awg(awg_number) 
     
-
     def __init__(self, pulseblocks, assignment_dict, hd, placeholder_dict=None,  
     use_template=True, template_name='base_dig_pulse', sequence_string=None, 
     dio_seq_identifier='dig_sequence', template_directory="sequence_templates", iplot=True):
@@ -129,7 +127,7 @@ class PulsedExperiment():
         :dio_seq_identifier: (str) Placeholder within .seqct files to be replaced with DIO sequences.
         :template_directory: Folder where to look for .seqct templates.
         :iplot: If True, sequences will be plotted.
-        """        
+        """         
 
         # Ugly typecasting
         if type(pulseblocks) != list:

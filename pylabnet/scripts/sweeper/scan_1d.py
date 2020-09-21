@@ -158,10 +158,13 @@ class Controller(MultiChSweep1D):
             self.widgets['rep_tracker'].setValue(1)
             self.run()
             self.widgets['rep_tracker'].setValue(0)
+            self.widgets['reps'].setValue(0)
             self.widgets['run'].setStyleSheet('background-color: green')
             self.widgets['run'].setText('Run')
             self.log.info('Sweep experiment stopped')
         else:
+            self.widgets['rep_tracker'].setValue(0)
+            self.widgets['reps'].setValue(0)
             self.widgets['run'].setStyleSheet('background-color: green')
             self.widgets['run'].setText('Run')
             self.stop()
@@ -242,8 +245,14 @@ class Controller(MultiChSweep1D):
 
         # Clear plots
         if len(self.widgets['curve']) > 0:
-            self.widgets['curve'][0].clear()
-            self.widgets['curve'][1].clear()
+            # self.widgets['curve'][0].clear()
+            # self.widgets['curve'][1].clear()
+            self.widgets['graph'][0].getPlotItem().clear()
+            self.widgets['graph'][1].getPlotItem().clear()
+            self.widgets['hmap'][0].clear()
+            self.widgets['hmap'][1].clear()
+            self.widgets['legend'][0].clear()
+            self.widgets['legend'][1].clear()
             self.widgets['curve_avg'][0].clear()
             self.widgets['curve_avg'][1].clear()
             self.data_fwd = []
@@ -298,10 +307,11 @@ class Controller(MultiChSweep1D):
 
             # Update average and plot
             try:
+                cur_rep = len(self.data_bwd)
                 self.avg_bwd[cur_ind-1] = (
-                    (cur_ind-1) * self.avg_bwd[cur_ind-1]
+                    (cur_rep-1) * self.avg_bwd[cur_ind-1]
                     + self.data_bwd[-1][-1]
-                )/cur_ind
+                )/cur_rep
                 self.widgets['curve_avg'][1].setData(
                     self.x_bwd,
                     self.avg_bwd
@@ -330,10 +340,11 @@ class Controller(MultiChSweep1D):
 
             # Update average and plot
             try:
+                cur_rep = len(self.data_fwd)
                 self.avg_fwd[cur_ind-1] = (
-                    (cur_ind-1) * self.avg_fwd[cur_ind-1]
+                    (cur_rep-1) * self.avg_fwd[cur_ind-1]
                     + self.data_fwd[-1][-1]
-                )/cur_ind
+                )/cur_rep
                 self.widgets['curve_avg'][0].setData(
                     self.x_fwd,
                     self.avg_fwd

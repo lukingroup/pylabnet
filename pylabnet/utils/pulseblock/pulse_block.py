@@ -45,7 +45,7 @@ class PulseBlock:
                         (t0+dur of the latest Pulse object)
     """
 
-    def __init__(self, p_obj_list=None, dflt_dict=None, name=''):
+    def __init__(self, p_obj_list=None, dflt_dict=None, name='', use_auto_dflt=True):
         """ Construct new PulseBlock.
 
         Each argument is optional. One can pass non-default values to fill-in
@@ -70,30 +70,37 @@ class PulseBlock:
                 }
 
         :param name: (opt, str) pulse object name
+        :use_auto_dflt (bool): If True, auto-assign default pulses based
+        on pulses used in each track.
         """
 
         self.name = name
         self.dur = 0
         self.p_dict = dict()
         self.dflt_dict = dict()
+        self.use_auto_dflt = use_auto_dflt
 
         if dflt_dict is not None:
             self.dflt_dict = copy.deepcopy(dflt_dict)
 
         if p_obj_list is None:
             p_obj_list = list()
+        # If only a single pulse_object is provided, 
+        # wrap as list.
+        elif type(p_obj_list) is not list:
+            p_obj_list = [p_obj_list]
 
         # Iterate through all given pulses and _insert them into the block
         # (_insert should be used - it does not reset edges)
         for p_obj in p_obj_list:
             p_obj = copy.deepcopy(p_obj)
-            self._insert(p_obj=p_obj)
+            self._insert(p_obj=p_obj, use_auto_dflt=self.use_auto_dflt)
 
         # Reset edges: set the left-most edge to zero
         # and set self.dur to the right-most edge
         self.reset_edges()
 
-    def _insert(self, p_obj, cflct_er=True):
+    def _insert(self, p_obj, cflct_er=True, use_auto_dflt=True):
         """ Technical method for inserting a new Pulse object into PulseBlock
         Here start and stop edges of PulseBlock are not adjusted.
 
@@ -113,7 +120,8 @@ class PulseBlock:
                          performed to ensure that p_obj does not overlap with
                          existing pulses on the channel. In the case of overlap,
                          PulseBlock is not altered and ValueError is produced.
-        :return: None
+        :use_auto_dflt: Assign default pulses based on auto_default parameter of
+                        Pulse object.
         """
 
         p_obj = copy.deepcopy(p_obj)
@@ -188,6 +196,12 @@ class PulseBlock:
             key=lambda p_item: p_item.t0
         )
 
+        # Autimatically assign default pulse
+        if use_auto_dflt:
+            self.dflt_dict[ch] = p_obj.auto_default
+
+
+
     def insert(self, p_obj, cflct_er=True):
         """ Insert a new Pulse object into PulseBlock
 
@@ -259,6 +273,28 @@ class PulseBlock:
                 p_obj=p_obj,
                 cflct_er=cflct_er
             )
+
+    def append_po_as_pb(self, p_obj, t0=0, cflct_er=True):
+        """ Tranforms a Pulse object into Pulse Block
+        and appends it into self.
+
+        :param p_obj: the Pulse object to be inserted
+
+        :param t0: position where the beginning of pb_obj should be placed with
+                   respect to the beginning of self.
+                   If t0 is negative, pb_obj is inserted before the beginning of
+                   self and time origin is shifted into the beginning of pb_obj.
+
+        :param cflct_er: (bool) If True, conflict check is performed across all
+                         channels (for both Pulse and DfltPulse values).
+
+        :return: None
+
+        """
+
+        po_as_pb = PulseBlock(p_obj_list=p_obj)
+        offset = t0 + self.dur
+        self.insert_pb(po_as_pb, t0=offset, cflct_er=True)
 
     def insert_pb(self, pb_obj, t0=0, cflct_er=True):
         """ Insert PulseBlock pb_obj into self.
@@ -388,12 +424,6 @@ class PulseBlock:
                        NOTE: only NON-negative offset is allowed.
                        To achieve negative offset, use insert_pb()/join_pb()
         """
-
-        if offset < 0:
-            raise ValueError(
-                'append_pb(): only non-negative offset is allowed. \n'
-                'Use insert_pb() or join_pb() for arbitrary t0'
-            )
 
         if join:
             return self.join_pb(

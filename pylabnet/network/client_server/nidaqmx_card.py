@@ -13,8 +13,8 @@ class Service(ServiceBase):
             voltages=voltages
         )
     
-    def exposed_get_ai_voltage(self, ai_channel, num_samples):
-        voltages = self._module.get_ai_voltage(ai_channel=ai_channel, num_samples=num_samples)
+    def exposed_get_ai_voltage(self, ai_channel, num_samples, max_range):
+        voltages = self._module.get_ai_voltage(ai_channel=ai_channel, num_samples=num_samples, max_range=max_range)
         return pickle.dumps(voltages)
 
     def exposed_create_timed_counter(
@@ -46,10 +46,11 @@ class Client(ClientBase):
             voltage_pickle=voltage_pickle
         )
 
-    def get_ai_voltage(self, ai_channel, num_samples=1):
+    def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10):
         voltages_pickle = self._service.exposed_get_ai_voltage(
             ai_channel=ai_channel,
-            num_samples=num_samples
+            num_samples=num_samples,
+            max_range=max_range
         )
         return pickle.loads(voltages_pickle)
 

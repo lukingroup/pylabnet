@@ -78,10 +78,11 @@ class Driver:
             task.ao_channels.add_ao_voltage_chan(channel)
             task.write(voltages, auto_start=True)
 
-    def get_ai_voltage(self, ai_channel, num_samples = 1):
+    def get_ai_voltage(self, ai_channel, num_samples = 1, max_range = 10.0):
         channel = self._gen_ch_path(ai_channel)
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(channel)
+            task.ai_channels[0].ai_rng_high = max_range
             return task.read(number_of_samples_per_channel = num_samples)
         return -1
 

@@ -78,6 +78,10 @@ class Driver:
             task.ao_channels.add_ao_voltage_chan(channel)
             task.write(voltages, auto_start=True)
 
+    def get_ai_voltage(self, ai_channel):
+        
+        return 0
+
     def create_timed_counter(
         self, counter_channel, physical_channel, duration=0.1, name=None
     ):

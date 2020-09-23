@@ -38,7 +38,7 @@ class Controller(MultiChSweep1D):
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
-            autosave=1, save_name=1, save=1, reps=1, rep_tracker=1)
+            autosave=1, save_name=1, save=1, reps=1, rep_tracker=1, avg=2)
 
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
@@ -83,6 +83,8 @@ class Controller(MultiChSweep1D):
             directory=self.config['save_path']
         ))
         self.widgets['reps'].valueChanged.connect(self.set_reps)
+        self.widgets['avg'][0].clicked.connect(lambda: self._clear_show_trace(0))
+        self.widgets['avg'][1].clicked.connect(lambda: self._clear_show_trace(1))
 
         # Create legends
         self.widgets['curve'] = []
@@ -156,15 +158,25 @@ class Controller(MultiChSweep1D):
             self.widgets['run'].setText('Stop')
             self.log.info('Sweep experiment started')
             self.widgets['rep_tracker'].setValue(1)
+
+            # set min and max
+            self.min = self.widgets['p_min'].value()
+            self.max = self.widgets['p_max'].value()
+            self.pts = self.widgets['pts'].value()
+            
             self.run()
             self.widgets['rep_tracker'].setValue(0)
             self.widgets['reps'].setValue(0)
             self.widgets['run'].setStyleSheet('background-color: green')
             self.widgets['run'].setText('Run')
+            for button in self.widgets['avg']:
+                button.setText('Avg only')
             self.log.info('Sweep experiment stopped')
         else:
             self.widgets['rep_tracker'].setValue(0)
             self.widgets['reps'].setValue(0)
+            for button in self.widgets['avg']:
+                button.setText('Avg only')
             self.widgets['run'].setStyleSheet('background-color: green')
             self.widgets['run'].setText('Run')
             self.stop()
@@ -390,6 +402,23 @@ class Controller(MultiChSweep1D):
         """ Updates autosave status """
 
         self.autosave = self.widgets['autosave'].isChecked()
+
+    def _clear_show_trace(self, index):
+        """ Clears or shows the single scan trace of a graph
+
+        :param index: (int) index of graph 
+        """
+
+        # Check status of button
+        try:
+            if self.widgets['avg'][index].text() == 'Avg only':
+                self.widgets['avg'][index].setText('Show trace')
+                self.widgets['graph'][index].removeItem(self.widgets['curve'][index])
+            else:
+                self.widgets['avg'][index].setText('Avg only')
+                self.widgets['graph'][index].addItem(self.widgets['curve'][index])
+        except KeyError:
+            pass
 
 
 def main():

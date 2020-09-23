@@ -173,7 +173,7 @@ class Driver():
     @log_standard_output
     def geti(self, node):
         """
-        Warapper for daq.getInt commands. For instance, instead of
+        Wrapper for daq.getInt commands. For instance, instead of
         daq.getInt('/dev8040/sigouts/0/busy'), write
 
         hdawg.geti('sigouts/0/busy')
@@ -292,7 +292,7 @@ class Driver():
         :param value: (int) value to set user register to
         """
 
-        self.setd(f'awgs/{awg_num}/userregs/{index}', value)
+        self.setd(f'awgs/{awg_num}/userregs/{index}', int(value))
 
     def get_direct_user_register(self, awg_num, index):
         """ Gets a user register to a desired value
@@ -489,7 +489,7 @@ class AWGModule():
         :param value: (int) value to set user register to
         """
 
-        self.hd.setd(f'awgs/{self.index}/userregs/{index}', value)
+        self.hd.setd(f'awgs/{self.index}/userregs/{index}', int(value))
 
 
 class Sequence():
@@ -508,10 +508,10 @@ class Sequence():
             placeholder_wrapped = f"{self.marker_string}{placeholder}{self.marker_string}"
 
             if placeholder not in self.unresolved_placeholders:
-                self.hd.log.error(f"Placeholder {placeholder} not found in sequence.")
-
-            self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
-            self.unresolved_placeholders.remove(placeholder)
+                self.hd.log.warn(f"Placeholder {placeholder} not found in sequence.")
+            else:
+                self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
+                self.unresolved_placeholders.remove(placeholder)
 
     def replace_waveforms(self, waveform_dict):
         """ Replace a placeholder by a waveform

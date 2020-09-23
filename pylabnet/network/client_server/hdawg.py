@@ -11,6 +11,12 @@ class Service(ServiceBase):
 
         return self._module.get_direct_user_register(awg_num, index)
 
+    def exposed_geti(self, node):
+        return self._module.geti(node)
+
+    def exposed_seti(self, node, new_int):
+        return self._module.seti(node, new_int)
+
 
 
 class Client(ClientBase):
@@ -32,3 +38,26 @@ class Client(ClientBase):
         """
 
         return self._service.exposed_get_direct_user_register(awg_num, index)
+
+    def geti(self, node):
+        """
+        Wrapper for daq.getInt commands. For instance, instead of
+        daq.getInt('/dev8040/sigouts/0/busy'), write
+
+        hdawg.geti('sigouts/0/busy')
+
+        :node: Node which will be appended to '/device_id/'
+        """
+        return self._service.exposed_geti(node)
+
+    def seti(self, node, new_int):
+        """
+        Warapper for daq.setInt commands. For instance, instead of
+        daq.setInt('/dev8040/sigouts/0/on', 1), write
+
+        hdawg.seti('sigouts/0/on, 1)
+
+        :node: Node which will be appended to '/device_id/'
+        :new_int: New value for integer
+        """
+        return self._service.exposed_seti(node, new_int)

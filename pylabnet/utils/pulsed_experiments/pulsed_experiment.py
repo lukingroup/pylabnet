@@ -1,5 +1,5 @@
 
-import os 
+import os
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
 from pylabnet.utils.pulseblock.pb_iplot import iplot
@@ -7,20 +7,20 @@ from pylabnet.utils.pulseblock.pb_iplot import iplot
 
 class PulsedExperiment():
     """ Wrapper class for Pulsed experiments using the ZI HDAWG.
-    This class conveniently allows for the generation and the AWG upload of 
+    This class conveniently allows for the generation and the AWG upload of
     DIO pulse-sequences.
     """
 
     def get_templates(self, template_directory="sequence_templates"):
         """Look in sequence template folder and return list of templates."""
-    
+
         # Get all relevant files template files
         current_directory = os.path.dirname(os.path.realpath(__file__))
 
         template_directory = os.path.join(current_directory, template_directory)
 
-        files = [file for file in os.listdir(template_directory) 
-            if  '.seqct' in file and '__init__.py' not in file 
+        files = [file for file in os.listdir(template_directory)
+            if  '.seqct' in file and '__init__.py' not in file
         ]
 
         files_trimmed = [filename.replace('.seqct', '') for filename in files]
@@ -28,13 +28,13 @@ class PulsedExperiment():
         return files_trimmed
 
     def replace_placeholders(self):
-        """Replace all sequence placeholders with values."""              
+        """Replace all sequence placeholders with values."""
         self.seq.replace_placeholders(self.placeholder_dict)
         self.hd.log.info("Replaced placeholders.")
 
     def replace_dio_commands(self, pulseblock, dio_command_number):
         """Replace all DIO-waveform placeholders with DIO waveform commands.
-        
+
         :pulseblock: Pulseblock object
         :dio_command_number: (int) Index designating which DIO-waveform placeholder
         needs to be replaced.
@@ -42,7 +42,7 @@ class PulsedExperiment():
 
         if self.iplot:
             iplot(pulseblock)
-        
+
         # Instanciate pulseblock handler.
         pb_handler = DIOPulseBlockHandler(
             pb = pulseblock,
@@ -67,7 +67,7 @@ class PulsedExperiment():
         """Prepares sequence by replacing all placeholders and DIO-placeholders."""
 
         # First replace the standard placeholder.
-        if self.placeholder_dict is not None: 
+        if self.placeholder_dict is not None:
             self.replace_placeholders()
 
         # Then replace the DIO commands:
@@ -103,15 +103,15 @@ class PulsedExperiment():
 
     def get_ready(self, awg_number):
         """Prepare AWG for sequence execution.
-        
-        This function will generate the sequence based on the placeholders and the 
+
+        This function will generate the sequence based on the placeholders and the
         pulseblocks, upload it to the AWG and configure the DIO output bits.
         """
         self.prepare_sequence()
-        return self.prepare_awg(awg_number) 
-    
-    def __init__(self, pulseblocks, assignment_dict, hd, placeholder_dict=None,  
-    use_template=True, template_name='base_dig_pulse', sequence_string=None, 
+        return self.prepare_awg(awg_number)
+
+    def __init__(self, pulseblocks, assignment_dict, hd, placeholder_dict=None,
+    use_template=True, template_name='base_dig_pulse', sequence_string=None,
     dio_seq_identifier='dig_sequence', template_directory="sequence_templates", iplot=True):
         """ Initilizes pulseblock experiment
 
@@ -127,7 +127,7 @@ class PulsedExperiment():
         :dio_seq_identifier: (str) Placeholder within .seqct files to be replaced with DIO sequences.
         :template_directory: Folder where to look for .seqct templates.
         :iplot: If True, sequences will be plotted.
-        """         
+        """
 
         # Ugly typecasting
         if type(pulseblocks) != list:
@@ -151,8 +151,8 @@ class PulsedExperiment():
                 self.hd.log.error(error_msg)
 
             template_filepath =  os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), 
-                template_directory, 
+                os.path.dirname(os.path.realpath(__file__)),
+                template_directory,
                 f'{template_name}.seqct'
             )
             sequence_string =  open(template_filepath, 'r').read()
@@ -169,11 +169,10 @@ class PulsedExperiment():
             sequence = sequence_string,
         )
 
-        
 
 
-        
 
-        
 
-   
+
+
+

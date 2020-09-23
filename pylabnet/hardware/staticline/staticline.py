@@ -59,6 +59,9 @@ class StaticLineHardwareHandler():
         :newval: Either 0 or 1 indicating the new output state.
         '''
 
+        # Set correct mode to manual
+        self.hardware_module.seti('dios/0/mode', 0)
+
         # Get current DIO output integer.
         current_output = self.hardware_module.geti('dios/0/output')
 
@@ -116,6 +119,9 @@ class StaticLineHardwareHandler():
         # Register up/down function.
         self.up = lambda: self._HDAWG_toggle(1)
         self.down = lambda: self._HDAWG_toggle(0)
+
+        # Set correct mode to manual
+        self.hardware_module.seti('dios/0/mode', 0)
 
     def _setup_NiDaqMxDriver(self, **kwargs):
 

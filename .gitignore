@@ -154,3 +154,4 @@ projects/
 # Config files
 configs/*
 configs
+secretkeys.env

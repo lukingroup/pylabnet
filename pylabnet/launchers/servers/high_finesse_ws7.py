@@ -25,7 +25,7 @@ def launch(**kwargs):
     wavemeter_service.assign_logger(logger=wavemeter_logger)
     wavemeter_server = GenericServer(
         service=wavemeter_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
 

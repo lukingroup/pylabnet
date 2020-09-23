@@ -22,9 +22,13 @@ def launch(**kwargs):
     ni_daqmx_logger = kwargs['logger']
     try:
         config = load_config(kwargs['config'])
+        ni_driver = nidaqmx_card.Driver(
+            device_name=config['device'],
+            logger=ni_daqmx_logger
+        )
     except AttributeError:
         config_directory = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))), 
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
             'configs'
         )
         files = [file for file in os.listdir(config_directory) if (
@@ -51,6 +55,7 @@ def launch(**kwargs):
     except KeyError:
         ni_daqmx_logger.error('No device name provided. '
                               'Please make sure proper config file is provided')
+        raise
 
     # Instantiate server
     ni_daqmx_service = Service()
@@ -58,7 +63,7 @@ def launch(**kwargs):
     ni_daqmx_service.assign_logger(logger=ni_daqmx_logger)
     ni_daqmx_server = GenericServer(
         service=ni_daqmx_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
 

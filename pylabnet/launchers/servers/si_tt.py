@@ -7,9 +7,10 @@ try:
 except ModuleNotFoundError:
     IMPORT_STATUS = False
 
-from pylabnet.hardware.counter.swabian_instruments.cnt_monitor import Wrap
+from pylabnet.hardware.counter.swabian_instruments.time_tagger import Wrap
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.si_tt_cnt_monitor import Service, Client
+from pylabnet.network.client_server.si_tt import Service, Client
+from pylabnet.utils.helper_methods import load_config
 
 
 def launch(**kwargs):
@@ -34,6 +35,21 @@ def launch(**kwargs):
                               ' Instantiating virtual device instead')
         tagger = TT.createTimeTaggerVirtual()
 
+    try:
+        config = kwargs['config']
+        config = load_config(config, logger=kwargs['logger'])
+    except:
+        config = None
+
+    if config is None:
+        try:
+            config = load_config('si_tt', logger=kwargs['logger'])
+        except:
+            config = {}
+
+    for channel, trig_level in config.items():
+        tagger.setTriggerLevel(int(channel)+1, float(trig_level))
+
     cnt_trace_wrap = Wrap(
         tagger=tagger,
         logger=kwargs['logger']
@@ -45,7 +61,7 @@ def launch(**kwargs):
     cnt_trace_service.assign_logger(logger=kwargs['logger'])
     cnt_trace_server = GenericServer(
         service=cnt_trace_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
     cnt_trace_server.start()

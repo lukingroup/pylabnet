@@ -17,7 +17,7 @@ see pylabnet.network.client_server.sweeper
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import generic_save
+from pylabnet.utils.helper_methods import generic_save, plotly_figure_save
 from pylabnet.gui.igui.iplot import MultiTraceFig, HeatMapFig
 
 
@@ -46,6 +46,7 @@ class Sweep1D:
         self.stop_end_flag = False
         self.x_label = None
         self.y_label = None
+        self.autosave = False
 
     def set_parameters(self, **kwargs):
         """ Configures all parameters
@@ -106,7 +107,7 @@ class Sweep1D:
         )
         return result
 
-    def run(self, plot=False, autosave=False, filename=None, directory=None, date_dir=True):
+    def run(self, plot=False, autosave=None, filename=None, directory=None, date_dir=True):
         """ Runs the sweeper
 
         :param plot: (bool) whether or not to display the plotly plot
@@ -116,6 +117,9 @@ class Sweep1D:
         :param date_dir: (bool) whether or not to store in date-specific sub-directory
         """
 
+        if autosave is not None:
+            self.autosave = autosave
+        
         sweep_points = self._generate_x_axis()
         if self.sweep_type != 'sawtooth':
             bw_sweep_points = self._generate_x_axis(backward=True)
@@ -144,8 +148,12 @@ class Sweep1D:
             self._update_hmaps(reps_done)
             self._update_integrated(reps_done)
 
-        if autosave:
-            self.save(filename, directory, date_dir)
+            # Autosave at every iteration
+            if self.autosave:
+                self.save(filename, directory, date_dir)
+
+            # Print progress
+            print(f'Finished {reps_done} out of {self.reps} sweeps.')
 
     def stop(self):
         """ Terminates the sweeper immediately """
@@ -178,9 +186,21 @@ class Sweep1D:
             directory=directory,
             date_dir=date_dir
         )
+
+        # Save heatmap png
+        # plotly_figure_save(
+        #     self.hplot_fwd._fig,
+        #     filename=f'{filename}_fwd_scans',
+        #     directory=directory,
+        #     date_dir=date_dir
+        # )
+
         # Save average
         generic_save(
-            data=self.iplot_fwd._fig.data[1].y,
+            data = np.array(
+                    [self.iplot_fwd._fig.data[1].x,
+                    self.iplot_fwd._fig.data[1].y]
+            ),
             filename=f'{filename}_fwd_avg',
             directory=directory,
             date_dir=date_dir
@@ -197,7 +217,10 @@ class Sweep1D:
             )
             # Save average
             generic_save(
-                data=self.iplot_bwd._fig.data[1].y,
+                data = np.array(
+                        [self.iplot_fwd._fig.data[1].x,
+                        self.iplot_fwd._fig.data[1].y]
+                ),
                 filename=f'{filename}_bwd_avg',
                 directory=directory,
                 date_dir=date_dir
@@ -236,8 +259,8 @@ class Sweep1D:
             z_ar=np.array([[]])
         )
         self.hplot_fwd.set_lbls(
-            x_str=self.x_label, 
-            y_str='Repetition number', 
+            x_str=self.x_label,
+            y_str='Repetition number',
             z_str=self.y_label
         )
 
@@ -260,8 +283,8 @@ class Sweep1D:
                 z_ar=np.array([[]])
             )
             self.hplot_bwd.set_lbls(
-                x_str=self.x_label, 
-                y_str='Repetition number', 
+                x_str=self.x_label,
+                y_str='Repetition number',
                 z_str=self.y_label
             )
 

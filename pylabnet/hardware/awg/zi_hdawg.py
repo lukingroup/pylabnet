@@ -14,6 +14,8 @@ import copy
 from pylabnet.utils.logging.logger import LogHandler
 
 from pylabnet.utils.decorators.logging_redirector import log_standard_output
+from pylabnet.utils.decorators.dummy_wrapper import dummy_wrap
+
 
 # Storing the sampling rates and the corresponding target integers for the setInt command
 SAMPLING_RATE_DICT = {
@@ -36,11 +38,13 @@ SAMPLING_RATE_DICT = {
 
 class Driver():
 
+    @dummy_wrap
     def reset_DIO_outputs(self):
         """Sets all DIO outputs to low"""
         self.seti('dios/0/output', 0)
         self.log.info("Set all DIO outputs to low.")
 
+    @dummy_wrap
     def disable_everything(self):
         """ Create a base configuration.
         Disable all available outputs, awgs, demods, scopes, etc.
@@ -49,6 +53,7 @@ class Driver():
         self.log.info("Disabled everything.")
 
     @log_standard_output
+    @dummy_wrap
     def log_stdout(self, function):
         """ Execute function and log print output to self.log
 
@@ -64,30 +69,13 @@ class Driver():
             input_argument = [input_argument]
         return input_argument
 
-    def __init__(self, device_id, logger, api_level=6):
-        """ Instantiate AWG
-
-        :logger: instance of LogClient class
-        :device_id: Device id of connceted ZI HDAWG, for example 'dev8060'
-        :api_level: API level of zhins API
-        """
-
-        # Instantiate log
-        self.log = LogHandler(logger=logger)
-
-        # Part of this code has been modified from
-        # ZI's Zurich Instruments LabOne Python API Example
-
-        # Call a zhinst utility function that returns:
-        # - an API session `daq` in order to communicate
-        # with devices via the data server.
-        # - the device ID string that specifies the device
-        # branch in the server's node hierarchy.
-        # - the device's discovery properties.
+    @dummy_wrap
+    def _setup_hdawg(self, device_id, logger, api_level):
+        ''' Sets up HDAWG '''
 
         err_msg = "This example can only be run on an HDAWG."
 
-        # Connect to device and log print output, not the lambda expression.
+          # Connect to device and log print output, not the lambda expression.
         (daq, device, props) = self.log_stdout(
             lambda: zhinst.utils.create_api_session(
                 device_id,
@@ -111,7 +99,26 @@ class Driver():
             re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1)
         )
 
+    def __init__(self, device_id, logger, dummy=False, api_level=6):
+        """ Instantiate AWG
+
+        :logger: instance of LogClient class
+        :device_id: Device id of connceted ZI HDAWG, for example 'dev8060'
+        :api_level: API level of zhins API
+        """
+
+        # Instantiate log
+        self.log = LogHandler(logger=logger)
+
+        # Store dummy flag
+        self.dummy = dummy
+
+        # Setup HDAWG
+        self._setup_hdawg(device_id, logger, api_level)
+
+
     @log_standard_output
+    @dummy_wrap
     def seti(self, node, new_int):
         """
         Warapper for daq.setInt commands. For instance, instead of
@@ -126,6 +133,7 @@ class Driver():
         self.daq.setInt(f'/{self.device_id}/{node}', new_int)
 
     @log_standard_output
+    @dummy_wrap
     def setd(self, node, new_double):
         """
         Warapper for daq.setDouble commands. For instance, instead of
@@ -140,6 +148,7 @@ class Driver():
         self.daq.setDouble(f'/{self.device_id}/{node}', new_double)
 
     @log_standard_output
+    @dummy_wrap
     def setv(self, node, vector):
         """
         Warapper for daq.setVector commands. For instance, instead of
@@ -154,6 +163,7 @@ class Driver():
         self.daq.setVector(f'/{self.device_id}/{node}', vector)
 
     @log_standard_output
+    @dummy_wrap
     def geti(self, node):
         """
         Warapper for daq.getInt commands. For instance, instead of
@@ -166,6 +176,7 @@ class Driver():
 
         return self.daq.getInt(f'/{self.device_id}/{node}')
 
+    @dummy_wrap
     def set_channel_grouping(self, index):
         """ Specifies channel grouping.
 
@@ -179,6 +190,7 @@ class Driver():
 
     # Functions related to wave outputs:
 
+    @dummy_wrap
     def _toggle_output(self, output_indices, target_index):
         """
         Local function enabeling/disabeling wave output.
@@ -200,6 +212,7 @@ class Driver():
                         channel index {output_index} is invalid."
                 )
 
+    @dummy_wrap
     def enable_output(self, output_indices):
         """
         Enables wave output.
@@ -213,6 +226,7 @@ class Driver():
 
         self._toggle_output(output_indices, 1)
 
+    @dummy_wrap
     def disable_output(self, output_indices):
         """
         Disables wave output.
@@ -222,6 +236,7 @@ class Driver():
         """
         self._toggle_output(output_indices, 0)
 
+    @dummy_wrap
     def set_output_range(self, output_index, output_range):
         """
         Set the output range.

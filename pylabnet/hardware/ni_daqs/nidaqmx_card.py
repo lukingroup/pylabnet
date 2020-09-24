@@ -12,12 +12,13 @@ from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
+from pylabnet.utils.decorators.dummy_wrapper import dummy_wrap
 
 class Driver:
     """Driver for NI DAQmx card. Currently only implements setting AO voltage"""
     # TODO implement counter
 
-    def __init__(self, device_name, logger=None):
+    def __init__(self, device_name, logger=None, dummy=False):
         """Instantiate NI DAQ mx card
 
         :device_name: (str) Name of NI DAQ mx card, as displayed in the measurement and automation explorer
@@ -28,6 +29,7 @@ class Driver:
 
         # Log
         self.log = LogHandler(logger=logger)
+        self.dummy = dummy
 
         # Try to get info of DAQ device to verify connection
         try:
@@ -41,29 +43,35 @@ class Driver:
             )
 
         # If failed, provide info about connected DAQs
-        except nidaqmx.DaqError:
+        except (nidaqmx.DaqError, OSError):
 
             # Log exception message
 
             # - get names of all connected NI DAQs
-            ni_daqs_names = nidaqmx.system._collections.device_collection.\
-                DeviceCollection().device_names
+            try:
+                ni_daqs_names = nidaqmx.system._collections.device_collection.\
+                    DeviceCollection().device_names
 
-            # - exception message
-            self.log.error(
-                "NI DAQ card {} not found. \n"
-                "There are {} NI DAQs available: \n "
-                "    {}"
-                "".format(
-                    device_name,
-                    len(ni_daqs_names),
-                    ni_daqs_names
+                # - exception message
+                self.log.error(
+                    "NI DAQ card {} not found. \n"
+                    "There are {} NI DAQs available: \n "
+                    "    {}"
+                    "".format(
+                        device_name,
+                        len(ni_daqs_names),
+                        ni_daqs_names
+                    )
                 )
-            )
+            except:
+                self.log.error('No NI modules found')
+            if self.dummy:
+                self.log.info('Entering dummy mode instead')
 
         self.counters = {}
         
 
+    @dummy_wrap
     def set_ao_voltage(self, ao_channel, voltages):
         """Set analog output of NI DAQ mx card to a series of voltages
 

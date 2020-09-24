@@ -22,6 +22,9 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout
+
+
 
 
 class PulseMaster:
@@ -29,11 +32,21 @@ class PulseMaster:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, hd, ui='pulsemaster', logger_client=None, server_port=None):
+    def __init__(self, hd, config, ui='pulsemaster', logger_client=None, server_port=None):
         """ TODO
         """
 
         self.hd = hd
+        self.config = config
+        self.log = logger_client
+
+        self.config_dict = load_config(
+            config_filename=config,
+            logger=self.log
+        )
+
+        # Load DIO values
+        self.get_DIO_assignment()
 
         # Instantiate GUI window
         self.gui = Window(
@@ -41,6 +54,26 @@ class PulseMaster:
             host=socket.gethostbyname(socket.gethostname()),
             port=server_port
         )
+
+        logger_client.info(self.DIO_assignment_dict)
+
+
+    def get_DIO_assignment(self):
+        """Parse DIO assignment dict."""
+        self.DIO_assignment_dict = load_config(
+                config_filename=self.config_dict['DIO_dict'],
+                logger=self.log
+            )
+
+    def display_DIOs(self):
+        """Display DIO assignment in DIO tab."""
+
+        # First update DIO assignment from config file
+        self.get_DIO_assignment()
+
+        # Now configure the GUI
+        return 0
+
 
     def run(self):
         """ Runs an iteration of checks for updates and implements
@@ -53,12 +86,12 @@ class PulseMaster:
 def launch(**kwargs):
     """ Launches the pulsemaster script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger, loghost, logport, clients, guis, params, config = unpack_launcher(**kwargs)
 
     # Instantiate Pulsemaster
     try:
         pulsemaster = PulseMaster(
-            hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port']
+            hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port'], config=config
         )
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

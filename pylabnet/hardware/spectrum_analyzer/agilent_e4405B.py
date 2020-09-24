@@ -103,7 +103,7 @@ class Driver():
         end_freq = float(self.device.query(':SENSe:FREQuency:STOP?'))
 
         # Number of sweep points.
-        num_sweep_points = float(self.device.query('SENSE:SWEEP:POINTS?'))
+        num_sweep_points = int(self.device.query('SENSE:SWEEP:POINTS?'))
 
         # Array containing frequencies of each sweep point.
         frequencies = np.linspace(start_freq, end_freq, num_sweep_points)

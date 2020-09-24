@@ -1,6 +1,7 @@
 import numpy as np
 from IPython.display import clear_output
 import itertools as it
+import pylabnet.hardware.spectrum_analyzer.agilent_e4405B as sa_hardware
 
 """Unnecessary code for instantiating array with desired guess parameters
 
@@ -56,7 +57,7 @@ class IQOptimizer(Optimizer):
 	"""
 
 	# Constants
-	CUSHION_PARAM = 3
+	CUSHION_PARAM = 2
 
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, num_points = 30, reopt = False,
@@ -130,9 +131,12 @@ class IQOptimizer(Optimizer):
 
 
 		# Marker for upper sideband.
-		self.upp_sb_marker = self.sa.E4405BMarker(self.sa,'Upper Sideband',1)
-		self.lower_sb_marker = self.sa.E4405BMarker(self.sa,'Lower Sideband',2)
-		self.carrier_marker = self.sa.E4405BMarker(self.sa,'Carrier',3)
+		self.upp_sb_marker = sa_hardware.E4405BMarker(self.sa,'Upper Sideband',1)
+		print(float(self.upp_sb_marker))
+		self.lower_sb_marker = sa_hardware.E4405BMarker(self.sa,'Lower Sideband',2)
+		print(self.lower_sb_marker)
+		self.carrier_marker = sa_hardware.E4405BMarker(self.sa,'Carrier',3)
+		print(self.carrier_marker)
 
 		self.upp_sb_marker.look_right()
 		self.lower_sb_marker.look_left()
@@ -215,15 +219,32 @@ class IQOptimizer(Optimizer):
 		self.param_guess = (
 			[self.opt_phase,
 			self.opt_q,
-			self.amp_q_opt(1+self.opt_q)/2,
+			(self.amp_q_opt*self.amp_i_opt) / 2,
 			self.dc_offset_i_opt,
 			self.dc_offset_q_opt]
 		)
+
+		#Introduce error so that markers can be reset
+		# Set optimal I and Q amplitudes
+		self.hd.setd('sines/0/amplitudes/0', self.amp_i_opt + epsilon)
+		self.hd.setd('sines/1/amplitudes/1', self.amp_q_opt + epsilon)
+
+		# Set optimal phaseshift
+		self.hd.setd('sines/0/phaseshift', self.opt_phase + epsilon2)
+
+		# Set I DC-offset
+		self.hd.setd('sigouts/0/offset', self.dc_offset_i_opt + epsilon3)
+
+		# Set Q DC-offset
+		self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt + epsilon3)
+
 		self.reopt = reopt
 		self.phase_window = phase_window
 		self.q_window =q_window
 		self.dc_i_window = dc_i_window
 		self.dc_q_window = dc_q_window
+
+		self.set_markers()
 
 
 	def _sweep_phase_amp_imbalance(self):

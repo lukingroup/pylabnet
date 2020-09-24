@@ -146,4 +146,4 @@ pylabnet/launchers/pylabnet_proxy.cmd
 pylabnet/launchers/pylabnet.cmd
 
 # Projects
-projects/
+projects/*

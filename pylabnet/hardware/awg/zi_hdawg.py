@@ -70,6 +70,8 @@ class Driver():
 
         :logger: instance of LogClient class
         :device_id: Device id of connceted ZI HDAWG, for example 'dev8060'
+        :reset_dio: Whether to reset the DIO outputs to low upon instanciation.
+        :disable_everything: Whether to diable everything upon instanciation.
         :api_level: API level of zhins API
         """
 

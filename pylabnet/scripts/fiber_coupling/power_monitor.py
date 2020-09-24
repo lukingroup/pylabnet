@@ -5,25 +5,31 @@ import time
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
+from pylabnet.utils.helper_methods import load_config
+
 
 class Monitor:
-    CALIBRATION = [1.464e-4]
     RANGE_LIST = [
         'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW', 'R1MW',
         'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
     ]
 
-    def __init__(self, pm_clients, gui_client, logger=None): 
+    def __init__(self, pm_clients, gui_client, logger=None, calibration=None, name=None):
         """ Instantiates a monitor for 2-ch power meter with GUI
 
         :param pm_clients: (client, list of clients) clients of power meter
         :param gui_client: client of monitor GUI
         :param logger: instance of LogClient
+        :calibration: (float) Calibration value for power meter.
+        :name: (str) Humand-readable name of the power meter.
         """
+
 
         self.log = LogHandler(logger)
         self.gui = GUIHandler(gui_client=gui_client, logger_client=self.log)
         self.wavelength = []
+        self.calibration = calibration
+        self.name = name
         self.ir_index, self.rr_index = [], []
         if isinstance(pm_clients, list):
             self.pm = pm_clients
@@ -68,7 +74,7 @@ class Monitor:
             self.wavelength[channel] = gui_wl
             self.pm[channel].set_wavelength(1, self.wavelength[channel])
             self.pm[channel].set_wavelength(2, self.wavelength[channel])
-        
+
         gui_ir = self.gui.get_item_index(f'ir_{channel}')
         if self.ir_index[channel] != gui_ir:
             self.ir_index[channel] = gui_ir
@@ -79,17 +85,16 @@ class Monitor:
             self.rr_index[channel] = gui_rr
             self.pm[channel].set_range(2*channel+2, self.RANGE_LIST[self.rr_index[channel]])
 
-    
     def run(self):
         """ Runs the power monitor """
 
         self.running = True
 
         for channel, pm in enumerate(self.pm):
-        
+
             # Check for/implement changes to settings
             self.update_settings(channel)
-            
+
             # Get all current values
             try:
                 p_in = pm.get_power(1)
@@ -106,7 +111,7 @@ class Monitor:
                 p_ref = 0
                 split_ref = (0, 0)
             try:
-                efficiency = np.sqrt(p_ref/(p_in*self.CALIBRATION[channel]))
+                efficiency = np.sqrt(p_ref/(p_in*self.calibration[channel]))
             except ZeroDivisionError:
                 efficiency = 0
             values = [p_in, p_ref, efficiency]
@@ -198,14 +203,22 @@ class Monitor:
                 )
 
             self.gui.assign_container(
-                container_widget=self.combos[0], 
+                container_widget=self.combos[0],
                 container_label=f'ir_{channel}'
             )
             self.gui.assign_container(
                 container_widget=self.combos[1],
                 container_label=f'rr_{channel}'
             )
-            
+
+            # Assign name to name_label and set value.
+            self.gui.assign_label(
+                    label_widget='name_label',
+                    label_label='name_label'
+            )
+
+            self.gui.set_label(self.name, label_label='name_label')
+
 
 def launch(**kwargs):
     """ Launches the full fiber controll + GUI script """
@@ -215,11 +228,23 @@ def launch(**kwargs):
     pm_client = clients['thorlabs_pm320e']
     gui_client = guis['fiber_coupling']
 
+    # Unpack settings
+
+    settings = load_config(
+        kwargs['config'],
+        logger=logger
+    )
+
+    calibration = [settings['calibration']]
+    name = settings['name']
+
     # Instantiate controller
     control = Monitor(
         pm_clients=[pm_client],
         gui_client=gui_client,
-        logger=logger
+        logger=logger,
+        calibration=calibration,
+        name=name
     )
 
     time.sleep(2)

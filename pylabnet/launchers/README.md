@@ -8,7 +8,7 @@
     2. Right-click on the shortcut, and select properties
     3. In the "Start in" field, replace whatever is entered with the local machine's path to the pylabnet/launchers/ directory. This should be already listed in the "Target" field. *Still trying to come up with a more elegant way to do this, but this is simplest for now*
 3. Double-click your new desktop shortcut. This should launch a minimzied shell and the pylabnet `Launch Control` GUI. Note that you can use pylabnet to launch the main Log Server, and pylabnet_proxy to launch a proxy launcher that will connect to an already running Log Server and Launch Control GUI
-4. From here, you can 
+4. From here, you can
     1. Run any scripts in the pylabnet/launcher directory by double clicking on the desired script
     2. View all active clients to the running `Logger`
     3. View all client information, including port number (if the client is running its own server) and .ui file (if the client is a GUI)
@@ -24,7 +24,7 @@
         1. **A list of script modules to execute, sequentially (e.g. `[script_module]`).**
             * This module can implement arbitrary classes, but the module itself must have a method `script_module.launcher(**kwargs)` which can run the desired script/application (see `count_monitor.launcher(**kwargs)` for an example and/or `Launcher._launch_scripts()` for the generic implementation)
             * These will be run in the main process thread, and in general require other servers and/or GUIs to be running (see below)
-            * In our counter example, we want to run a single script given in the monitor_counts.py module. 
+            * In our counter example, we want to run a single script given in the monitor_counts.py module.
         2. **A list of required server modules to be running, prior to execution of the script(s) (e.g. `[server_module_1, server_module_2]`).**
             * These server-launching submodules should be located in the `pylabnet.launchers.servers` module
             * Each server module should have a `server_module.launch(**kwargs)` method that performs connection to hardware (if necessary) and instantiates the desired server
@@ -39,7 +39,7 @@
 3. Now you should be able to launch your script and requisite servers with a simple double-click from the Launch Control!
 4. In practice, everything may fail, and it may seem to be difficult to trace what is happening. In order to debug scripts that you are launching via `Launch Control`:
     1. Place a `time.sleep(x)` statement at the top of your script.
-    2. Attach a debugger to the active process launched by the double-click before it executes beyond the `sleep(x)` statement 
+    2. Attach a debugger to the active process launched by the double-click before it executes beyond the `sleep(x)` statement
     (make sure there is a suitable breakpoint in place)
         *In Visual Studio, this requires configuring a debugger with a launch.json file that looks like this:
         ```
@@ -47,10 +47,55 @@
             "name": "Python: attach to launcher",
             "type": "python",
             "request": "attach",
+            "port": 5678,
+            "host": "localhost",
+            "redirectOutput" : true,
             "processId": "${command:pickProcess}"
-        }
+        },
         ```
         * Launch the process (with double-click), then launch the debugger immediately following
         * It will give you a search bar to search for and select the process to debug
     3. Now you can debug your subprocess that was launched via Launch Control!
     4. Each time you encounter an instantiation of Popen(), this will launch a new process that will need to be separately debugged. *Note that you **can** have multiple debuggers running simultaneously, you just need to make multiple configurations in your launch.json file that have different `"name"` subfields. So you can play the same trick over and over again to your heart's desire.*
+
+## Optional Setup via SSH
+
+Instead of running `proxy-launchers`, it is possible to start all necessary hardware servers from one host machine which connects via SSH to all remote machines and starts the corresponding servers. This allows all remote machines to be completely headless.
+
+The following command on the host machine can be executed to check if SSH connection between the host and a remote machine can be connected, which is a prerequisite for the automatic SSH configuration. In Windows, it must be executed in PowerShell
+
+`SSH remote_hostname@remote_ip`
+
+ If the command fails, a SSH client must be installed. For Windows 10, see here for the configuration of the built in SSH client: [Windows 10 Open SSH Installation](https://docs.microsoft.com/en-us/windows-server/administration/openSSH/openSSH_install_firstuse).
+
+Once SSH-connections between every remote machine can be established, the password for the SSH connection must be stored in a `.env` file in the project root using the following format: `LOCALHOST_PW=YOUR_ACTUAL_PASSWORD`. This file is not tracked by git. Now, a config file  named `ssh_config.json` can be used to configure the startup of all SSH-connections and associated servers:
+
+```json
+{
+    "hosts" : [
+
+        {
+            "hostname" : HOSTNAME,
+            "ip": HOSTIP,
+
+            "kill_all": "True", \\ Optional,
+            \\ True if you want to kill all python processes on remote machine before server launching.
+            "python_path": PYTHON_PATH,
+            "script_path": PATH_OF_PYLABNET_SERVER.PY,
+            "venv_path":  PATH_OF_VENV_ACTIVATE_SCRIPT,
+            "servers":[
+                {
+                "servername" : SERVERNAME,
+                "debug" : "True" \\Optional, if wait for debugger attachment.
+                "config" : NAME_OF_CONFIGFILE \\ Optional
+            }
+            ]
+        },
+        {
+            "hostname" : ...,
+            ...
+        }
+    ]
+}
+
+```

@@ -27,7 +27,7 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
-from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -36,6 +36,8 @@ import copy
 import sys
 import socket
 import ctypes
+
+from pylabnet.network.core.client_base import ClientBase
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -55,8 +57,11 @@ class Window(QtWidgets.QMainWindow):
 
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
+    COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                   '#000075', '#808080']
 
-    def __init__(self, app, gui_template=None, run=True):
+    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -66,11 +71,20 @@ class Window(QtWidgets.QMainWindow):
             order to debug and access Window methods directly in an interactive session
         """
 
+        self.app = app  # Application instance onto which to load the GUI.
+
+        if self.app is None:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+            self.app = QtWidgets.QApplication(sys.argv)
+            self.app.setWindowIcon(
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+            )
+
         # Initialize parent class QWidgets.QMainWindow
         super(Window, self).__init__()
 
         self._ui = None  # .ui file to use as a template
-        self._app = app  # Application instance onto which to load the GUI. Must be instantiated prior to Window!
+
 
         # Holds all widgets assigned to the GUI from an external script
         # Reference is by keyword (widget_label), and the keyword can be used to access the widget once assigned
@@ -79,6 +93,7 @@ class Window(QtWidgets.QMainWindow):
         self.labels = {}
         self.event_buttons = {}
         self.containers = {}
+        self.auto_close = auto_close
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -99,6 +114,51 @@ class Window(QtWidgets.QMainWindow):
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
         self.showNormal()
+
+        self.host=None
+        self.port=None
+
+        # Confgiure stop button, host and port
+        try:
+            self.stop_button.clicked.connect(self.close)
+            if host is not None:
+                self.ip_label.setText(f'IP Address: {host}')
+                self.host = host
+            if port is not None:
+                self.port_label.setText(f'Port: {port}')
+                self.port = port
+        except:
+            pass
+
+    def set_network_info(self, host=None, port=None):
+        """ Sets IP and port labels
+
+        :param host: (str) host IP address
+        :param port: (int) port number
+        """
+
+        if host is not None:
+            self.host=host
+            self.ip_label.setText(f'IP Adress: {host}')
+
+        if port is not None:
+            self.port=port
+            self.port_label.setText(f'Port: {port}')
+
+    def closeEvent(self, event):
+        """ Occurs when window is closed. Overwrites parent class method"""
+
+        if self.auto_close:
+            try:
+                close_client = ClientBase(
+                    host=self.host,
+                    port=self.port
+                )
+                close_client.close_server()
+            except:
+                pass
+
+        self.stop_button.setChecked(True)
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
@@ -241,6 +301,22 @@ class Window(QtWidgets.QMainWindow):
 
         return self.event_buttons[event_label].get_release_state()
 
+    def is_pressed(self, event_label):
+        """ Returns whether or not a button is pressed down
+
+        :return: (bool)
+        """
+
+        return self.event_buttons[event_label].is_pressed()
+
+    def reset_button(self, event_label):
+        """ Resets button internal registers to false
+
+        :param event_label: (str) key for button to check
+        """
+
+        self.event_buttons[event_label].reset_button()
+
     def change_button_background_color(self, event_label, color):
         """ Change background color of button
 
@@ -249,18 +325,27 @@ class Window(QtWidgets.QMainWindow):
         """
         self.event_buttons[event_label].change_background_color(color)
 
+    def set_button_text(self, event_label, text):
+        """ Change button text
+
+        :param event_label: (str) key for button to change
+        :param text: (str) text to set to
+        """
+
+        self.event_buttons[event_label].set_text(text)
+
     def get_container_info(self, container_label):
         return self.containers[container_label].get_items()
 
     def get_item_text(self, container_label):
         return self.containers[container_label].get_current_text()
-    
+
     def get_item_index(self, container_label):
         return self.containers[container_label].get_current_index()
-    
+
     def set_item_index(self, container_label, index):
         self.containers[container_label].set_item_index(index)
-    
+
     # Methods to be called by the process launching the GUI
 
     def configure_widgets(self):
@@ -382,7 +467,7 @@ class Window(QtWidgets.QMainWindow):
 
         :return: 0 when complete
         """
-        self._app.processEvents()
+        self.app.processEvents()
         return 0
 
     # Technical methods
@@ -568,7 +653,7 @@ class Plot:
     """
 
     # Semi-arbitrary list of colors to cycle through for plot data
-    _color_list = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+    COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 
@@ -604,7 +689,7 @@ class Plot:
         # Add a new curve to self.curves dictionary for this plot
         self.curves[curve_label] = Curve(
             self.widget,
-            pen=pg.mkPen(color=self._color_list[len(self.curves)]),  # Instantiate a Pen for curve properties
+            pen=pg.mkPen(color=self.COLOR_LIST[len(self.curves)]),  # Instantiate a Pen for curve properties
             error=error
         )
 
@@ -890,11 +975,17 @@ class EventButton:
         """ Resets pushed state to False """
 
         self.was_pushed = False
+        self.was_released = False
 
     def change_background_color(self, color):
         """ Changes background_color of button"""
 
         self.widget.setStyleSheet(f"background-color: {color}")
+
+    def set_text(self, text):
+        """ Sets button text"""
+
+        self.widget.setText(text)
 
     def get_state(self):
         """ Returns whether or not the button has been pressed and resets button state
@@ -914,7 +1005,17 @@ class EventButton:
 
         result = copy.deepcopy(self.was_released)
         self.was_released = False
+        if result or not self.widget.isDown():
+            result = True
         return result
+
+    def is_pressed(self):
+        """ Checks whether or not the physical button is currently pressed
+
+        :return: (bool) whether or not the button is down
+        """
+
+        return self.widget.isDown()
 
 
 class Container:
@@ -956,7 +1057,7 @@ class Container:
 
     def set_item_index(self, index):
         """ Sets the current index of a QComboBox
-        
+
         :param index: (int) index to set to
         """
 

@@ -6,6 +6,8 @@ import os
 import time
 import subprocess
 from io import StringIO
+import copy
+import ctypes
 import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -13,6 +15,7 @@ from datetime import datetime
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
@@ -25,6 +28,28 @@ if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
 if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
+
+class LaunchWindow(Window):
+    """ Child class of GUI Window enabling killing of all servers """
+
+    def __init__(self, app, controller, gui_template=None, run=True):
+        """ Instantiates LaunchWindow
+
+        :param app: GUI application
+        :param controller: Controller object
+        :param gui_template: (str) name of .ui file to use
+        :param run: whether or not to run GUI on instantiation
+        """
+
+        super().__init__(app, gui_template=gui_template)
+        self.controller = controller
+
+    def closeEvent(self, event):
+        """ Occurs when window is closed. Overwrites parent class method"""
+
+        if not self.controller.proxy:
+            self.controller.kill_servers()
+        self.stop_button.setChecked(True)
 
 class Controller:
     """ Class for log system controller """
@@ -65,7 +90,7 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
-        self.host = socket.gethostbyname(socket.gethostname())
+        self.host = socket.gethostbyname_ex(socket.gethostname())[2][0]
         self.update_index = 0
 
         # Find logger if applicable
@@ -83,8 +108,12 @@ class Controller:
         sys.stdout = StringIO()
 
         # Instantiate GUI application
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         self.app = QtWidgets.QApplication(sys.argv)
-        self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
+        self.app.setWindowIcon(
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        )
+        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
@@ -128,7 +157,7 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=socket.gethostbyname(socket.gethostname())
+                    host=socket.gethostbyname_ex(socket.gethostname())[2][0]
                     )
             else:
                 try:
@@ -223,7 +252,7 @@ class Controller:
         if self.LOG_PORT is None:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=socket.gethostbyname(socket.gethostname())
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
                 )
         else:
             try:
@@ -248,7 +277,7 @@ class Controller:
         if self.proxy:
             self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
-            ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
+            ip_str_2 = f' ({socket.gethostbyname_ex(socket.gethostname())[2][0]})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2
@@ -316,10 +345,41 @@ class Controller:
                 pass
             self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
+    def kill_servers(self):
+        """ Kills all servers connected to the logger, including the Log GUI and Log Server"""
+
+        client_data = copy.deepcopy(self.client_data)
+        del client_data['logger_GUI']
+
+        for server_data in client_data.values():
+            if 'port' in server_data:
+                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                stop_client.close_server()
+        self.gui_server.stop()
+        self.log_server.stop()
+
     def _configure_clicks(self):
-        """ Configures what to do if script is clicked """
+        """ Configures what to do upon clicks """
 
         self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
+        self.main_window.close_server.pressed.connect(self._stop_server)
+
+    def _stop_server(self):
+        """ Stops the highlighted server, if applicable """
+
+        client_to_stop = self.main_window.client_list.currentItem().text()
+        server_data = self.client_data[client_to_stop]
+        if 'port' in server_data:
+            try:
+                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                stop_client.close_server()
+            except:
+                self.gui_logger.warn(
+                    f'Failed to shutdown server {client_to_stop}'
+                    f'on host: {server_data["ip"]}, port: {server_data["port"]}'
+                )
+        else:
+            self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
 
     def _clicked(self):
         """ Launches the script that has been double-clicked
@@ -349,7 +409,19 @@ class Controller:
                 gui_debug_flag = '1'
 
         # Build the bash command to input all active servers and relevant port numbers to script
-        bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
+        # bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
+        #     script_to_run,
+        #     launch_time,
+        #     sys.executable,
+        #     os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
+        #     self.host,
+        #     self.log_port,
+        #     len(self.client_list),
+        #     debug_flag,
+        #     server_debug_flag,
+        #     gui_debug_flag
+        # )
+        bash_cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
             script_to_run,
             launch_time,
             sys.executable,
@@ -427,6 +499,7 @@ class Controller:
         # Update the proxy GUI to reflect the client list of the main GUI
         add_clients = list(set(clients.keys()) - set(self.client_list.keys()))
         remove_clients = list(set(self.client_list.keys()) - set(clients.keys()))
+        other_clients = list(set(clients.keys()) - set(add_clients) - set(remove_clients))
 
         # Add clients
         for client in add_clients:
@@ -451,6 +524,20 @@ class Controller:
             self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
             del self.client_list[client]
 
+        # Update any other changes
+        for client in other_clients:
+            if self.client_list[client].toolTip() != clients[client]:
+                self.client_list[client].setToolTip(clients[client])
+                if 'ip: ' in clients[client]:
+                    self.client_data[client]['ip'] = clients[client].split('ip: ')[1].split('\n')[0]
+                if 'timestamp: ' in clients[client]:
+                    self.client_data[client]['timestamp'] = clients[client].split('timestamp: ')[1].split('\n')[0]
+                if 'ui: ' in clients[client]:
+                    self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
+                if 'port: ' in clients[client]:
+                    self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+
+
     # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):
         self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
@@ -462,7 +549,7 @@ class Controller:
     def _configure_logfile(self):
         """ Defines what to do if the logfile radio button is clicked """
         self.main_window.log_file_button.toggled.connect(self._update_logfile_status)
-    
+
     # Defines what to do if combobox is changed.
     def _configure_debug_combo_select(self):
         self.main_window.debug_comboBox.currentIndexChanged.connect(self._update_debug_level)
@@ -489,7 +576,7 @@ class Controller:
     def _update_logfile_status(self):
         """ Updates the status of whether or not we are using a logfile """
         if self.main_window.log_file_button.isChecked():
-            
+
             # Enable and show file browser
             self.main_window.file_viewer.setEnabled(True)
             self.main_window.file_viewer.setHidden(False)
@@ -497,7 +584,7 @@ class Controller:
             self.main_window.logfile_status_button.setHidden(False)
             self.main_window.log_previous.setEnabled(True)
             self.main_window.log_previous.setHidden(False)
-            
+
             # Assign a file system model if we're not already logging
             if not self.main_window.logfile_status_button.isChecked():
                 model = QtWidgets.QFileSystemModel()
@@ -566,6 +653,7 @@ class Controller:
 def main():
     """ Runs the launch controller """
 
+    hide_console()
     log_controller = Controller()
     run(log_controller)
 
@@ -615,8 +703,11 @@ def run(log_controller):
         # Update display
         log_controller.main_window.force_update()
 
-    # Exit app (does not close servers)
-    sys.exit(log_controller.app.exec_())
+    # Exit, close servers if necessary
+    if log_controller.proxy:
+        pass
+    else:
+        log_controller.kill_servers()
 
 
 if __name__ == '__main__':

@@ -1,0 +1,10 @@
+while (1) {
+    if (getUserReg($trigger_user_reg$) == $trigger_up_val$) {
+        repeat ($repetitions$) {
+        $dig_sequence0$
+        setDIO(0);
+        wait(1000);
+        }
+        setUserReg($trigger_user_reg$, $trigger_down_val$);
+    }
+}

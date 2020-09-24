@@ -56,11 +56,14 @@ import time
 import subprocess
 import numpy as np
 import sys
+import traceback
 import os
 import socket
 from pylabnet.utils.logging import logger
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server
 from pylabnet.network.client_server import external_gui
+from pylabnet.network.core.service_base import ServiceBase
+from pylabnet.network.core.generic_server import GenericServer
 
 
 class Launcher:
@@ -68,25 +71,29 @@ class Launcher:
     _GUI_LAUNCH_SCRIPT = 'pylabnet_gui.py'
     _SERVER_LAUNCH_SCRIPT = 'pylabnet_server.py'
 
-    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None):
+    def __init__(self, script=None, server_req=None, gui_req=None, auto_connect=True, name=None, params=None, config=None, script_server=True):
         """ Instantiates Launcher object
 
         :param script: script modules to launch. Each module needs to have a launch() method
         :param server_req: list of modules containing necessary servers. The module needs:
             (1) launch() method to instantiate Service and run the server (see pylabnet_server.py for details)
             (2) Client() class, so that we can instantiate a client from this thread and pass it to the script
-        :param gui_req: list of gui names to instantiate (names of .ui files, excluding .ui extension)
+        :param gui_req: list of gui names to instantiate servers of (names of .ui files, excluding .ui extension)
         :param auto_connect: (bool) whether or not to automatically connect if there is a single instance of the
             required server already running
         :param name: (str) desired name that will appear as the "process" name for the script invoking the
             Launcher object. Can be left blank, and the names of the script module(s) will be used
-        :param params: (list) parameters for each script to launch
+        :config: (str) Name of the configuration json file stored in the config folder.
+        :script_server: (bool) Whether or not to launch a persistent server running in the script thread. This
+            can be used to remotely access script parameters or to close the thread from Launch Control
         """
         self.script = script
         self.server_req = server_req
         self.gui_req = gui_req
         self.auto_connect = auto_connect
-        self.params = params
+        self.config = config
+        self.params=params
+        self.use_script_server=script_server
         if name is None:
             if self.script is None:
                 self.name = 'Generic Launcher'
@@ -95,7 +102,7 @@ class Launcher:
                 for scr in script:
                     self.name += scr.__name__.split('.')[-1]
                     self.name += '_'
-                self.name += 'script'
+                self.name += 'server'
         else:
             self.name = name
 
@@ -115,6 +122,7 @@ class Launcher:
         # Connect to logger.
         self.logger = self._connect_to_logger()
 
+
         # Halt execution and wait for debugger connection if debug flag is up.
         if self.debug == 1:
             import ptvsd
@@ -125,6 +133,14 @@ class Launcher:
             ptvsd.wait_for_attach()
             breakpoint()
 
+        # Register new exception hook.
+        def log_exceptions(exc_type, exc_value, exc_traceback):
+            """Handler for unhandled exceptions that will write to the logs"""
+            error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            self.logger.error(f"Uncaught exception: {error_msg}")
+
+        sys.excepthook = log_exceptions
+
         # Find all servers with port numbers and store them as a dictionary
         self.connectors = {}
         self._scan_servers()
@@ -133,15 +149,22 @@ class Launcher:
         self.gui_clients = {}
         self.clients = {}
 
+        # Script server
+        self.script_server_port = None
+        self.script_server = None
+
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
-        try:
+        if self.gui_req[0] is not None:
             self._launch_guis()
+        if self.server_req[0] is not None:
             self._launch_servers()
-            self._launch_scripts()
-        except Exception as e:
-            self.logger.error(e)
+        if self.use_script_server:
+            self._launch_script_server()
+        hide_console()
+        self._launch_scripts()
+
 
     def _connect_to_logger(self):
         """ Connects to the LogServer"""
@@ -181,12 +204,12 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname_ex(socket.gethostname())[2][0]
 
         while not connected and timeout < 1000:
             try:
                 gui_port = np.random.randint(1, 9999)
-                subprocess.Popen('start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {}'.format(
+                subprocess.Popen('start "{}, {}" "{}" "{}" --logip {} --logport {} --guiport {} --ui {} --debug {} --config {}'.format(
                     gui+'_GUI',
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -195,7 +218,8 @@ class Launcher:
                     self.log_port,
                     gui_port,
                     gui,
-                    self.gui_debug
+                    self.gui_debug,
+                    self.config
                 ), shell=True)
                 connected = True
             except ConnectionRefusedError:
@@ -298,14 +322,14 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname_ex(socket.gethostname())[2][0]
 
         while not connected and timeout < 1000:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
+                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {} --config {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -314,7 +338,8 @@ class Launcher:
                     self.log_port,
                     server_port,
                     server,
-                    self.server_debug
+                    self.server_debug,
+                    self.config
                 )
 
                 subprocess.Popen(cmd, shell=True)
@@ -422,8 +447,31 @@ class Launcher:
                 clients=self.clients,
                 guis=self.gui_clients,
                 logport=self.log_port,
-                params=self.params[index]
+                params=self.params[index],
+                config=self.config,
+                server_port=self.script_server_port
             )
+
+    def _launch_script_server(self, service=None):
+        """ Launches a GenericServer attached to this script to enable closing
+
+        :param service: (optional), child of ServiceBase to enable server functionality
+            NOTE: not yet implemented, can be used in future e.g. for pause server
+        """
+
+        if service is None:
+            service = ServiceBase()
+
+        self.script_server, self.script_server_port = create_server(
+            service=service,
+            logger=self.logger,
+            host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+        )
+        self.script_server.start()
+
+        self.logger.update_data(data=dict(
+            port=self.script_server_port
+        ))
 
 
 class Connector:

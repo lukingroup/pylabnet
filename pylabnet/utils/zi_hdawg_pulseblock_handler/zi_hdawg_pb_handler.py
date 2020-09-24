@@ -1,6 +1,7 @@
 
 import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample
+from pylabnet.utils.pulseblock.pulse import PFalse
 
 
 # Sampling rate of HDWAG sequencer (300 MHz).
@@ -12,7 +13,7 @@ SETDIO_OFFSET = 4
 
 class DIOPulseBlockHandler():
 
-    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, hd=None):
+    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, hd=None, end_low=True):
         """ Initializes the pulse block handler for DIO
 
         :hd: (object) And instance of the zi_hdawg.Driver()
@@ -31,14 +32,20 @@ class DIOPulseBlockHandler():
             in which case the user will be asked to provide the
             missing values. If no assignment dictionary is
             provided, user is asked to provide all DIO bit values.
+
+        :end_low: (bool) whether or not to force the sequence to end low
         """
 
         # Use the log client of the HDAWG.
         self.hd = hd
         self.log = hd.log
+        self.sr = samp_rate
 
         # Store arguments.
         self.pb = pb
+
+        # Handle end low case
+        self.end_low = end_low
 
         # Ask user for bit assignment if no dictionary provided.
         if assignment_dict is None:
@@ -91,11 +98,6 @@ class DIOPulseBlockHandler():
         """Check if key values in assignment dict coincide with keys in pulseblock"""
 
         if not self.assignment_dict.keys() == self.pb.p_dict.keys():
-            for assignment_key in self.assignment_dict.keys():
-                if assignment_key not in self.pb.p_dict.keys():
-                    self.log.error(
-                        f"Key '{assignment_key}' in assignment dictionary not found in pulseblock instance. Available keys are {self.pb.p_dict.keys()}."
-                    )
             for pb_key in self.pb.p_dict.keys():
                 if pb_key not in self.assignment_dict.keys():
                     self.log.warn(
@@ -246,6 +248,11 @@ class DIOPulseBlockHandler():
         if not (codewords == waveform).all():
             self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
 
+        # Add setDIO(0); to end if selected.
+        if self.end_low:
+            # Add 0 waittime to sequence
+            sequence += wait_raw.replace("_w_", '0')
+
         return sequence
 
     def get_dio_sequence(self):
@@ -273,6 +280,9 @@ class DIOPulseBlockHandler():
 
     def setup_hd(self):
         """Enable driving of DIO buses of relevant DIO bits."""
+
+        # Set DIO mode to AWG sequencer
+        self.hd.seti('dios/0/mode', 1)
 
         # Read in current configuration of DIO-bus.
         current_config = self.hd.geti('dios/0/drive')

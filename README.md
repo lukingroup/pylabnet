@@ -23,7 +23,13 @@ pip install --upgrade pylabnet
 
  After `pip` installation of pylabnet, two executables will be created in the system `PATH`: `pylabnet.exe` and `pylabnet_proxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over pylabnet. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
 
- > **_NOTE:_** You will likely need to allow python through Windows firewall the first time you run Launch Control on a new machine.
+ > **_NOTE 1:_** You will likely need to allow python through Windows firewall the first time you run Launch Control on a new machine.
+
+> **_NOTE 2:_** The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the commandline
+> ```bash
+> openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
+> ```
+> You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` is automatically placed in the `C:/Windows/System32` directory of the machine it is generated on. It can then be copied into the equivalent directory of any other machines using the same *pylabnetwork*.
 
 The master Launch Control runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master and mirror its information for convenience on remote machines.
 
@@ -63,7 +69,7 @@ Next, navigate to the root directory in the commandline and run the command
 ```bash
 python setup.py develop
 ```
-> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked.
+> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked. If it fails, try running `pip install --upgrade setuptools`.
 
 > **_NOTE 2:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 

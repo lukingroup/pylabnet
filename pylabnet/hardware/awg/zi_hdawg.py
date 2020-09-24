@@ -10,6 +10,7 @@ import re
 import time
 import textwrap
 import copy
+import re
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -64,7 +65,7 @@ class Driver():
             input_argument = [input_argument]
         return input_argument
 
-    def __init__(self, device_id, logger, api_level=6):
+    def __init__(self, device_id, logger, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
         """ Instantiate AWG
 
         :logger: instance of LogClient class
@@ -102,9 +103,12 @@ class Driver():
         self.daq = daq
         self.device_id = device
 
-        # Create a base configuration
-        self.disable_everything()
-        self.reset_DIO_outputs()
+        if disable_everything:
+            # Create a base configuration
+            self.disable_everything()
+
+        if reset_dio:
+            self.reset_DIO_outputs()
 
         # read out number of channels from property dictionary
         self.num_outputs = int(
@@ -140,6 +144,19 @@ class Driver():
         self.daq.setDouble(f'/{self.device_id}/{node}', new_double)
 
     @log_standard_output
+    def getd(self, node):
+        """
+        Warapper for daq.setDouble commands. For instance, instead of
+        daq.getDouble('/dev8040/sigouts/0/range'), write
+
+        hdawg.getd('sigouts/0/range')
+
+        :node: Node which will be appended to '/device_id/'
+        """
+
+        return self.daq.getDouble(f'/{self.device_id}/{node}')
+
+    @log_standard_output
     def setv(self, node, vector):
         """
         Warapper for daq.setVector commands. For instance, instead of
@@ -156,7 +173,7 @@ class Driver():
     @log_standard_output
     def geti(self, node):
         """
-        Warapper for daq.getInt commands. For instance, instead of
+        Wrapper for daq.getInt commands. For instance, instead of
         daq.getInt('/dev8040/sigouts/0/busy'), write
 
         hdawg.geti('sigouts/0/busy')
@@ -267,6 +284,25 @@ class Driver():
                 f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid."
             )
 
+    def set_direct_user_register(self, awg_num, index, value):
+        """ Sets a user register to a desired value
+
+        :param awg_num: (int) index of awg module
+        :param index: (int) index of user register (from 0-15)
+        :param value: (int) value to set user register to
+        """
+
+        self.setd(f'awgs/{awg_num}/userregs/{index}', int(value))
+
+    def get_direct_user_register(self, awg_num, index):
+        """ Gets a user register to a desired value
+
+        :param awg_num: (int) index of awg module
+        :param index: (int) index of user register (from 0-15)
+        """
+
+        return int(self.getd(f'awgs/{awg_num}/userregs/{index}'))
+
 
 class AWGModule():
     """ Wrapper class for awgModule"""
@@ -348,8 +384,13 @@ class AWGModule():
             f"AWG {self.index}: Changed sampling rate to {sampling_rate}."
         )
 
-    def start(self):
+    def start(self, dio_mode_change=True):
         """ Start AWG"""
+
+        if dio_mode_change:
+        # Set DIO mode to AWG sequencer
+            self.hd.seti('dios/0/mode', 1)
+
         self.module.set('awg/enable', 1)
         self.hd.log.info(f"AWG {self.index}: Started.")
 
@@ -405,7 +446,7 @@ class AWGModule():
         if self.module.getInt('elf/status') == 0:
             self.hd.log.info("Upload to the instrument successful.")
         if self.module.getInt('elf/status') == 1:
-            self.hd.log.warning("Upload to the instrument failed.")
+            self.hd.log.warn("Upload to the instrument failed.")
 
     def dyn_waveform_upload(self, index, waveform1, waveform2=None):
         """ Dynamically upload a numpy array into HDAWG Memory
@@ -441,61 +482,137 @@ class AWGModule():
             f'awgs/{awg_index}/waveform/waves/{index}', waveform_native
         )
 
+    def set_user_register(self, index, value):
+        """ Sets a user register to a desired value
+
+        :param index: (int) index of user register (from 0-15)
+        :param value: (int) value to set user register to
+        """
+
+        self.hd.setd(f'awgs/{self.index}/userregs/{index}', int(value))
+
 
 class Sequence():
     """ Helper class containing .seqc sequences and helper functions
 
     """
 
-    def replace_placeholder(self, placeholder, value):
+    def replace_placeholders(self, placeholder_dict):
         """ Replace a placeholder by some value
 
         :placeholder: Placeholder string to be replaced.
         :value: Value to which the placeholder string need to be set.
         """
-        self.sequence = self.sequence.replace(f"_{placeholder}_", str(value))
-        self.unresolved_placeholders.remove(placeholder)
 
-    def replace_waveform(self, placeholder, waveform):
+        for placeholder, value in placeholder_dict.items():
+            placeholder_wrapped = f"{self.marker_string}{placeholder}{self.marker_string}"
+
+            if placeholder not in self.unresolved_placeholders:
+                self.hd.log.warn(f"Placeholder {placeholder} not found in sequence.")
+            else:
+                self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
+                self.unresolved_placeholders.remove(placeholder)
+
+    def replace_waveforms(self, waveform_dict):
         """ Replace a placeholder by a waveform
 
         :placeholder: Placeholder string to be replaced.
         :waveform: Numpy array designating the waveform.
         """
-        waveform = 'vect(' + ','.join([str(x) for x in waveform]) + ')'
-        self.sequence = self.sequence.replace(f"_{placeholder}_", waveform)
-        self.unresolved_placeholders.remove(placeholder)
+        for waveform, value in waveform_dict.items():
+
+            if waveform not in self.unresolved_placeholders:
+                self.hd.log.error(f"Placeholder {waveform} not found in sequence.")
+
+            waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
+            waveform_vector = 'vect(' + ','.join([str(x) for x in value]) + ')'
+            self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(waveform_vector))
+            self.unresolved_placeholders.remove(waveform)
+
+
+    def get_placeholders(self):
+        """Parses sequence template and returns placeholder variables."""
+
+        # Define regex
+        regex = f'\{self.marker_string}([^$]+)\{self.marker_string}'
+
+        found_placeholders = []
+        for match in re.finditer(regex, self.raw_sequence):
+            found_placeholders.append(match.group(1))
+
+        # Check for duplicates
+        for  found_placeholder in found_placeholders:
+            if found_placeholders.count(found_placeholder) != 1:
+
+                error_msg = f"Placeholder {found_placeholder} found multiple time in sequence."
+                self.hd.log.info(error_msg)
+
+                # Remove one occurence from dictionary.
+                found_placeholders.remove(found_placeholder)
+
+        return found_placeholders
 
     def is_ready(self):
         """ Return True if all placeholders have been replaced"""
         return len(self.unresolved_placeholders) == 0
 
-    def __init__(self, hdawg_driver, sequence, placeholders=None):
+    def __init__(self, hdawg_driver, sequence, placeholder_dict=None, waveform_dict=None, marker_string = "$"):
         """ Initialize sequence with string
 
         :hdawg_driver: Instance of HDAWG_Driver
         :sequence: A string which contains sequence instructions,
             as defined in the ZI language seqc. This string can contain placeholders
-            indicated by '_c_', where c is the name of the placeholder.
-        :placeholders: A list of placeholders which need to be replaced
-            before compilation of sequence. If for example '_c_' is included
+            indicated by '$c$', where c is the name of the placeholder. The marker string $
+            can be changed as an optional input parameter.
+        :placeholder_dict: A dictionary of placeholder_names and values which need to be replaced
+            before compilation of sequence. If for example '$c$' is included
             in the sequence string, 'c' is the name of the placeholder to be
-            passed in this argument.
+            used as the dictionary key, while the value of the key is the value the placeholder will
+            be replaced with in the sequence.
+        :waveform_dict: Same as placeholder_dict, but values are numpy.arrays which will be tranformed to
+        waveform commands.
+        :marker_string: String wrapping placeholders in sequence_string.
         """
 
         # Store reference to HDAWG_Driver to use logging function.
         self.hd = hdawg_driver
 
-        # Some sanity checks.
-        for placeholder in placeholders:
-            if f"_{placeholder}_" not in sequence:
-                error_msg = f"The placeholder _{placeholder}_ cannot \
-                    be found in the sequence."
-                hdawg_driver.log.error(error_msg)
-                raise Exception(error_msg)
+        # Store raw sequence.
+        self.raw_sequence = textwrap.dedent(sequence)
 
-        # Store sequence and placeholders.
-        self.sequence = textwrap.dedent(sequence)
-        self.placeholders = placeholders
+        # Store sequence with replaced placeholders.
+        self.sequence = copy.deepcopy(self.raw_sequence)
+
+        self.placeholder_dict = placeholder_dict
+        self.waveform_dict = waveform_dict
+        self.marker_string = marker_string
+
+        # Retrieve placeholders in input sequence template
+        self.placeholders = self.get_placeholders()
+
         # Keeps track of which placeholders has not been replaced yet.
-        self.unresolved_placeholders = copy.deepcopy(placeholders)
+        self.unresolved_placeholders = copy.deepcopy(self.placeholders)
+
+        if placeholder_dict is not None:
+            # Some sanity checks.
+            for placeholder in placeholder_dict.keys():
+                    if placeholder not in self.placeholders:
+                        error_msg = f"The placeholder {placeholder} cannot \
+                        be found in the sequence."
+                        hdawg_driver.log.error(error_msg)
+
+            # Replace placeholdes.
+            self.replace_placeholders(self.placeholder_dict)
+
+        if waveform_dict is not None:
+            # Some sanity checks.
+            for waveform in waveform_dict.keys():
+                if waveform not in self.placeholders:
+                    error_msg = f"The placeholder {error_msg} cannot \
+                        be found in the sequence."
+                    hdawg_driver.log.error(error_msg)
+
+            # Replace waveforms
+            self.replace_waveforms(self.waveform_dict )
+
+

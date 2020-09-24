@@ -142,18 +142,18 @@ def main():
             gui_server, gui_port = create_server(
                 service=gui_service,
                 logger=gui_logger,
-                host=socket.gethostbyname(socket.gethostname())
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
             )
             gui_logger.update_data(data=dict(port=gui_port))
         else:
             gui_server = GenericServer(
                 service=gui_service,
-                host=socket.gethostbyname(socket.gethostname()),
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0],
                 port=gui_port
             )
     except ConnectionRefusedError:
         gui_logger.warn('Tried and failed to create GUI server with \nIP:{}\nPort:{}'.format(
-            socket.gethostbyname(socket.gethostname()),
+            socket.gethostbyname_ex(socket.gethostname())[2][0],
             gui_port
         ))
         raise
@@ -162,7 +162,7 @@ def main():
     # Update GUI with server-specific details
     try:
         main_window.ip_label.setText('IP Address: {}'.format(
-            socket.gethostbyname(socket.gethostname())
+            socket.gethostbyname_ex(socket.gethostname())[2][0]
         ))
         main_window.port_label.setText('Port: {}'.format(gui_port))
     except AttributeError:

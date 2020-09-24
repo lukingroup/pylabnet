@@ -412,7 +412,7 @@ color: rgb(0, 0, 0);</string>
        </widget>
       </item>
       <item row="3" column="1">
-       <widget class="QLabel" name="number_label_5">
+       <widget class="QLabel" name="number_label_8">
         <property name="minimumSize">
          <size>
           <width>100</width>
@@ -450,28 +450,6 @@ color: rgb(0, 0, 0);</string>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QLabel" name="number_label_6">
-        <property name="minimumSize">
-         <size>
-          <width>100</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>14</pointsize>
-         </font>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
-        </property>
-        <property name="text">
-         <string>0</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
        <widget class="QLabel" name="number_label_7">
         <property name="minimumSize">
          <size>
@@ -493,8 +471,30 @@ color: rgb(0, 0, 0);</string>
         </property>
        </widget>
       </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="number_label_5">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">color: rgb(255, 255, 255);</string>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="1">
-       <widget class="QLabel" name="number_label_8">
+       <widget class="QLabel" name="number_label_6">
         <property name="minimumSize">
          <size>
           <width>100</width>

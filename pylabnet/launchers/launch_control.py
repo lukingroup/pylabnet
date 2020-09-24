@@ -90,7 +90,7 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
-        self.host = socket.gethostbyname(socket.gethostname())
+        self.host = socket.gethostbyname_ex(socket.gethostname())[2][0]
         self.update_index = 0
 
         # Find logger if applicable
@@ -157,7 +157,7 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=socket.gethostbyname(socket.gethostname())
+                    host=socket.gethostbyname_ex(socket.gethostname())[2][0]
                     )
             else:
                 try:
@@ -252,7 +252,7 @@ class Controller:
         if self.LOG_PORT is None:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=socket.gethostbyname(socket.gethostname())
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
                 )
         else:
             try:
@@ -277,7 +277,7 @@ class Controller:
         if self.proxy:
             self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
-            ip_str_2 = f' ({socket.gethostbyname(socket.gethostname())})'
+            ip_str_2 = f' ({socket.gethostbyname_ex(socket.gethostname())[2][0]})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2
@@ -357,7 +357,7 @@ class Controller:
                 stop_client.close_server()
         self.gui_server.stop()
         self.log_server.stop()
-    
+
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
@@ -380,7 +380,7 @@ class Controller:
                 )
         else:
             self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
-    
+
     def _clicked(self):
         """ Launches the script that has been double-clicked
 
@@ -549,7 +549,7 @@ class Controller:
     def _configure_logfile(self):
         """ Defines what to do if the logfile radio button is clicked """
         self.main_window.log_file_button.toggled.connect(self._update_logfile_status)
-    
+
     # Defines what to do if combobox is changed.
     def _configure_debug_combo_select(self):
         self.main_window.debug_comboBox.currentIndexChanged.connect(self._update_debug_level)
@@ -576,7 +576,7 @@ class Controller:
     def _update_logfile_status(self):
         """ Updates the status of whether or not we are using a logfile """
         if self.main_window.log_file_button.isChecked():
-            
+
             # Enable and show file browser
             self.main_window.file_viewer.setEnabled(True)
             self.main_window.file_viewer.setHidden(False)
@@ -584,7 +584,7 @@ class Controller:
             self.main_window.logfile_status_button.setHidden(False)
             self.main_window.log_previous.setEnabled(True)
             self.main_window.log_previous.setHidden(False)
-            
+
             # Assign a file system model if we're not already logging
             if not self.main_window.logfile_status_button.isChecked():
                 model = QtWidgets.QFileSystemModel()

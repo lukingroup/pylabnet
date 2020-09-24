@@ -5,9 +5,12 @@ import json
 import re
 import sys
 import ctypes
+import copy
 import numpy as np
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
+import pyqtgraph as pg
+import pyqtgraph.exporters
 
 
 def str_to_float(in_val):
@@ -257,6 +260,21 @@ def create_server(service, logger=None, host='localhost'):
             timeout += 1
     return server, port
 
+def setup_full_service(service_class, module, logger=None, host='localhost'):
+    """ Creates a Service and a server, adds info to logger and starts server
+
+    :param service_class: Service class to instantiate (not the instance itself)
+    :param module: module to assign to service
+    :param logger: instance of LogClient
+    :param host: (str) hostname
+    """
+
+    service = service_class()
+    service.assign_module(module)
+    server, port = create_server(service, logger=logger, host=host)
+    logger.update_data(data=dict(port=port))
+    server.start()
+
 def value_to_bitval(value, bits=8, min=0, max=1):
     """ Converts a value to a bits-bit number for range min to max
 
@@ -303,8 +321,9 @@ def generate_widgets(widget_dict):
         widgets = widgets + ([f'{widget_name}_{instance+1}' for instance in range(instances)],)
     return widgets
 
-def generic_save(data, filename=None, directory=None, date_dir=False):
-    """ Saves data as txt file
+
+def generate_filepath(filename=None, directory=None, date_dir=False):
+    """ Generates filepath for saving.
 
     :param dir: (str) directory to save to
     :param filename: (str) name of file to save
@@ -322,12 +341,47 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     else:
         filepath = os.path.join(directory, filename)
 
+    return filepath
+
+def generic_save(data, filename=None, directory=None, date_dir=False):
+    """ Saves data as txt file
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+
     try:
         np.savetxt(filepath, data)
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
 
+
+def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):
+    """ Saves plotly_figure as png
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+    plotly_figure.write_image(f'{filepath}.png')
+
+def pyqtgraph_save(widget, filename=None, directory=None, date_dir=False):
+    """ Saves pyqtgraph figure to png
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)+'.png'
+    exporter = pg.exporters.ImageExporter(widget)
+    exporter.export(filepath)
 
 def load_config(config_filename, folder_root=None, logger=None):
     """ Load configuration data stored in JSON format
@@ -386,3 +440,77 @@ def get_config_filepath(config_filename, folder_root=None):
 
     return filepath
 
+def get_gui_widgets(gui, **kwargs):
+    """ Returns the GUI widget objects specified in kwargs
+
+    :param gui: (Window) main window gui object containing other widgets
+    :param kwargs: keyword arguments with argument name being the name
+        of the widget (str, widget_name) and argument value an integer specifying the
+        number of copies of that widget
+
+        For more than 1 widget copy, assumes the name is assigned as
+        widget_name_1, widget_name_2, etc.
+
+    :return: (dict) dictionary with keywords as widget name and values
+        as either individual widgets or list of widgets in case of multiple
+        similarly named widgets
+    """
+
+    widgets = dict()
+    for widget_name, widget_number in kwargs.items():
+
+        # Check if it is multiple named widgets
+        if widget_number > 1:
+            widget_list = []
+            for widget_index in range(widget_number):
+                widget_list.append(getattr(
+                    gui,
+                    f'{widget_name}_{widget_index+1}'
+                ))
+            widgets[widget_name] = widget_list
+        else:
+            widgets[widget_name] = getattr(gui, widget_name)
+
+    return widgets
+
+def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
+    """ Configures and returns a legend widget given a GraphicsView
+
+    :param legend_widget: instance of GraphicsView object
+    :return: pg.LegendItem
+    """
+
+    legend = pg.LegendItem()
+    view_box = pg.ViewBox()
+    legend_widget.setCentralWidget(view_box)
+    legend.setParentItem(view_box)
+    legend.anchor((0, 0), (0, 0))
+
+    return legend
+
+def add_to_legend(legend: pg.LegendItem, curve: pg.PlotItem, curve_name):
+    """ Adds a curve to a legend
+
+    :param legend: pg.LegendItem to add to
+    :param curve: pg.PlotItem containing the relevant curve
+    :param curve_name: (str) name of curve
+    """
+
+    legend.addItem(
+        curve,
+        ' - '+curve_name
+    )
+
+def fill_2dlist(list_in):
+    """ Turns a 2D list of irregular dimensions into a 2D numpy array
+
+    Assuming only last dimension of list is incomplete
+    :param list_in: input list
+    :return: (numpy.ndarray) 2D array with missing elements padded as zeros
+    """
+
+    list_manipulate = copy.deepcopy(list_in)
+    if len(list_in) > 1:
+        list_manipulate[-1] += [list_manipulate[-1][0]]*(len(list_manipulate[0])-len(list_manipulate[-1]))
+
+    return np.array(list_manipulate)

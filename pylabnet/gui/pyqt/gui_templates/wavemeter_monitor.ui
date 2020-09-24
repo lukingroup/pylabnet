@@ -205,7 +205,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_1">
+            <widget class="QDoubleSpinBox" name="freq_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -259,7 +259,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_2">
+            <widget class="QDoubleSpinBox" name="sp_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -301,7 +301,19 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="boolean_widget_1">
+            <widget class="QPushButton" name="rs_1">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Set to frequency</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="lock_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -328,7 +340,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="boolean_widget_2">
+            <widget class="QPushButton" name="error_status_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -358,7 +370,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="PlotWidget" name="graph_widget_1" native="true">
+           <widget class="PlotWidget" name="graph_1" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -376,7 +388,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="GraphicsView" name="legend_widget_1">
+            <widget class="GraphicsView" name="legend_1">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -390,7 +402,7 @@ selection-color: rgb(255, 255, 255);</string>
               </size>
              </property>
             </widget>
-            <widget class="QPushButton" name="event_button_1">
+            <widget class="QPushButton" name="clear_1">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -417,7 +429,7 @@ color: rgb(0, 0, 0);</string>
               <string>CLEAR PLOT</string>
              </property>
             </widget>
-            <widget class="QPushButton" name="zero_button_1">
+            <widget class="QPushButton" name="zero_1">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -476,7 +488,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_5">
+            <widget class="QDoubleSpinBox" name="freq_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -530,7 +542,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_6">
+            <widget class="QDoubleSpinBox" name="sp_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -572,7 +584,19 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="boolean_widget_5">
+            <widget class="QPushButton" name="rs_2">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(170, 170, 255);
+color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="text">
+              <string>Set to frequency</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="lock_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -599,7 +623,7 @@ selection-color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="boolean_widget_6">
+            <widget class="QPushButton" name="error_status_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -629,7 +653,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="PlotWidget" name="graph_widget_3" native="true">
+           <widget class="PlotWidget" name="graph_3" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -647,7 +671,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="GraphicsView" name="legend_widget_3">
+            <widget class="GraphicsView" name="legend_3">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -661,7 +685,7 @@ selection-color: rgb(255, 255, 255);</string>
               </size>
              </property>
             </widget>
-            <widget class="QPushButton" name="event_button_3">
+            <widget class="QPushButton" name="clear_3">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -688,7 +712,7 @@ color: rgb(0, 0, 0);</string>
               <string>CLEAR PLOT</string>
              </property>
             </widget>
-            <widget class="QPushButton" name="zero_button_3">
+            <widget class="QPushButton" name="zero_3">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -742,12 +766,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Frequency&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Voltage&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_3">
+            <widget class="QDoubleSpinBox" name="voltage_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -796,12 +820,12 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Error&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_4">
+            <widget class="QDoubleSpinBox" name="error_1">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -842,57 +866,6 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QPushButton" name="boolean_widget_3">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>14</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Lock Active</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>green_LED_off.svg</normaloff>
-               <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-             <property name="autoExclusive">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="boolean_widget_4">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>14</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Lock Error</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>red_LED_off.svg</normaloff>
-               <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="autoExclusive">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
           </layout>
          </item>
          <item>
@@ -900,7 +873,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="PlotWidget" name="graph_widget_2" native="true">
+           <widget class="PlotWidget" name="graph_2" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -918,7 +891,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="GraphicsView" name="legend_widget_2">
+            <widget class="GraphicsView" name="legend_2">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -932,7 +905,7 @@ selection-color: rgb(255, 255, 255);</string>
               </size>
              </property>
             </widget>
-            <widget class="QPushButton" name="event_button_2">
+            <widget class="QPushButton" name="clear_2">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -959,7 +932,7 @@ color: rgb(0, 0, 0);</string>
               <string>CLEAR PLOT</string>
              </property>
             </widget>
-            <widget class="QPushButton" name="zero_button_2">
+            <widget class="QPushButton" name="zero_2">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -1013,12 +986,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Frequency&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Voltage&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_7">
+            <widget class="QDoubleSpinBox" name="voltage_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -1067,12 +1040,12 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Setpoint&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:16pt;&quot;&gt;Error&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="number_widget_8">
+            <widget class="QDoubleSpinBox" name="error_2">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -1113,57 +1086,6 @@ selection-color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QPushButton" name="boolean_widget_7">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>14</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Lock Active</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>green_LED_off.svg</normaloff>
-               <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="checked">
-              <bool>false</bool>
-             </property>
-             <property name="autoExclusive">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="boolean_widget_8">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>14</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Lock Error</string>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>red_LED_off.svg</normaloff>
-               <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="autoExclusive">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
           </layout>
          </item>
          <item>
@@ -1171,7 +1093,7 @@ selection-color: rgb(255, 255, 255);</string>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
-           <widget class="PlotWidget" name="graph_widget_4" native="true">
+           <widget class="PlotWidget" name="graph_4" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -1189,7 +1111,7 @@ selection-color: rgb(255, 255, 255);</string>
             <property name="orientation">
              <enum>Qt::Vertical</enum>
             </property>
-            <widget class="GraphicsView" name="legend_widget_4">
+            <widget class="GraphicsView" name="legend_4">
              <property name="minimumSize">
               <size>
                <width>150</width>
@@ -1203,7 +1125,7 @@ selection-color: rgb(255, 255, 255);</string>
               </size>
              </property>
             </widget>
-            <widget class="QPushButton" name="event_button_4">
+            <widget class="QPushButton" name="clear_4">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -1230,7 +1152,7 @@ color: rgb(0, 0, 0);</string>
               <string>CLEAR PLOT</string>
              </property>
             </widget>
-            <widget class="QPushButton" name="zero_button_4">
+            <widget class="QPushButton" name="zero_4">
              <property name="maximumSize">
               <size>
                <width>16777215</width>

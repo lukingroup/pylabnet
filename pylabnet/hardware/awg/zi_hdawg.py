@@ -117,6 +117,8 @@ class Driver():
             re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1)
         )
 
+        return 0
+
     @log_standard_output
     def seti(self, node, new_int):
         """

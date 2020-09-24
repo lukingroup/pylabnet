@@ -1,7 +1,10 @@
 import pickle
+import os
+import json
 
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
+from pylabnet.utils.helper_methods import load_config, get_config_filepath
 
 
 class Service(ServiceBase):
@@ -88,11 +91,20 @@ class Service(ServiceBase):
     def exposed_get_text(self, label_label):
         return pickle.dumps(self._module.get_text(label_label))
 
+    def exposed_set_button_text(self, event_label, text):
+        return self._module.set_button_text(event_label, text)
+
     def exposed_was_button_pressed(self, event_label):
         return self._module.was_button_pressed(event_label)
 
     def exposed_was_button_released(self, event_label):
         return self._module.was_button_released(event_label)
+
+    def exposed_reset_button(self, event_label):
+        return self._module.reset_button(event_label)
+
+    def exposed_is_pressed(self, event_label):
+        return self._module.is_pressed(event_label)
 
     def exposed_change_button_background_color(self, event_label, color):
         return self._module.change_button_background_color(event_label, color)
@@ -199,6 +211,12 @@ class Client(ClientBase):
     def was_button_released(self, event_label):
         return self._service.exposed_was_button_released(event_label)
 
+    def is_pressed(self, event_label):
+        return self._service.exposed_is_pressed(event_label)
+
+    def reset_button(self, event_label):
+        return self._service.exposed_reset_button(event_label)
+
     def change_button_background_color(self, event_label, color):
         return self._service.exposed_change_button_background_color(event_label, color)
 
@@ -213,3 +231,58 @@ class Client(ClientBase):
 
     def set_item_index(self, container_label, index):
         return self._service.exposed_set_item_index(container_label, index)
+
+    def set_button_text(self, event_label, text):
+        return self._service.exposed_set_button_text(event_label, text)
+
+    def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
+        """ Saves the current GUI state into a config file as a dictionary
+
+        :param config_filename: (str) name of configuration file to save.
+            Can be an existing config file with other configuration parameters
+        :folder_root: (str) Name of folder where the config files are stored. If None,
+        use pylabnet/config
+        :logger: (LogClient) instance of LogClient (or LogHandler)
+        :param scalars: [str] list of scalar labels to save
+        :param labels: [str] list of label labels to save
+        """
+
+        # Generate GUI dictionary
+        gui_scalars, gui_labels = dict(), dict()
+        for scalar in scalars:
+            gui_scalars[scalar] = self.get_scalar(scalar)
+        for label in labels:
+            gui_labels[label] = self.get_text(label)
+        data = dict(gui_scalars=gui_scalars, gui_labels=gui_labels)
+
+        # Append to the configuration file if it exists, otherwise create a new one
+        filepath = get_config_filepath(config_filename, folder_root)
+        if os.path.exists(filepath):
+            old_data = load_config(config_filename, folder_root, logger)
+        else:
+            old_data = dict()
+            data = dict(**old_data, **data)
+        with open(filepath, 'w') as outfile:
+            json.dump(data, outfile, indent=4)
+            logger.info(f'Saved GUI data to {filepath}')
+
+    def load_gui(self, config_filename, folder_root=None, logger=None):
+        """ Loads and applies GUI settings from a config file
+
+        :param config_filename: (str) name of configuration file to save.
+            Can be an existing config file with other configuration parameters
+        :folder_root: (str) Name of folder where the config files are stored. If None,
+        use pylabnet/config
+        :logger: (LogClient) instance of LogClient (or LogHandler)
+        """
+
+        data = load_config(config_filename, folder_root, logger)
+        if 'gui_scalars' in data:
+            for scalar, value in data['gui_scalars'].items():
+                self.activate_scalar(scalar)
+                self.set_scalar(value, scalar)
+                self.deactivate_scalar(scalar)
+        if 'gui_labels' in data:
+            for label, text in data['gui_labels'].items():
+                self.set_label(text, label)
+        logger.info(f'Loaded GUI values from {get_config_filepath(config_filename, folder_root)}')

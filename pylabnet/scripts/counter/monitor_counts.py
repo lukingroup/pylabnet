@@ -3,39 +3,42 @@
 import numpy as np
 import time
 import socket
-from pylabnet.gui.pyqt.gui_handler import GUIHandler
+import pyqtgraph as pg
+from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import unpack_launcher
+from pylabnet.network.client_server import si_tt
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
 
 # Static methods
 
-def generate_widgets():
-    """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
+# def generate_widgets():
+#     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
 
-    graphs, legends, numbers = [], [], []
-    for i in range(2):
-        graphs.append('graph_widget_' + str(i + 1))
-        legends.append('legend_widget_' + str(i + 1))
-        numbers.append('number_label_' + str(i + 1))
-    for i in range(2, 8):
-        numbers.append('number_label_' + str(i + 1))
-    return graphs, legends, numbers
+#     graphs, legends, numbers = [], [], []
+#     for i in range(2):
+#         graphs.append('graph_widget_' + str(i + 1))
+#         legends.append('legend_widget_' + str(i + 1))
+#         numbers.append('number_label_' + str(i + 1))
+#     for i in range(2, 8):
+#         numbers.append('number_label_' + str(i + 1))
+#     return graphs, legends, numbers
 
 
 class CountMonitor:
 
     # Generate all widget instances for the .ui to use
-    _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
+    # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client, gui_client, logger_client):
+    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None):
         """ Constructor for CountMonitor script
 
-        :param ctr_client: (optional) instance of hardware client for counter
+        :param ctr_client: instance of hardware client for counter
         :param gui_client: (optional) instance of client of desired output GUI
         :param logger_client: (obj) instance of logger client.
+        :param server_port: (int) port number of script server
         """
 
         self._ctr = ctr_client
@@ -45,8 +48,21 @@ class CountMonitor:
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
-        # Instanciate gui handler
-        self.gui_handler = GUIHandler(gui_client, logger_client)
+        # Instantiate GUI window
+        self.gui = Window(
+            gui_template=ui, 
+            host=socket.gethostbyname(socket.gethostname()), 
+            port=server_port
+        )
+
+        # Get all GUI widgets
+        self.widgets = get_gui_widgets(
+            self.gui,
+            graph_widget=2,
+            number_label=8,
+            event_button=2,
+            legend_widget=2
+        )
 
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
@@ -59,7 +75,7 @@ class CountMonitor:
 
     def set_params(self, bin_width=1e9, n_bins=1e4, ch_list=[1], plot_list=None):
         """ Sets counter parameters
-        
+
         :param bin_width: bin width in ps
         :param n_bins: number of bins to display on graph
         :param ch_list: (list) channels to record
@@ -72,9 +88,6 @@ class CountMonitor:
         self._ch_list = ch_list
         self._plot_list = plot_list
 
-        # Configure counting channels
-        self._ctr.set_channels(ch_list=ch_list)
-
     def run(self):
         """ Runs the counter from scratch"""
 
@@ -84,13 +97,20 @@ class CountMonitor:
             self._initialize_display()
 
             # Give time to initialize
-            time.sleep(0.05)
+            # time.sleep(0.05)
             self._is_running = True
-            self._ctr.start_counting(bin_width=self._bin_width, n_bins=self._n_bins)
+
+            self._ctr.start_trace(
+                name='monitor',
+                ch_list=self._ch_list,
+                bin_width=self._bin_width, 
+                n_bins=self._n_bins
+            )
 
             # Continuously update data until paused
             while self._is_running:
                 self._update_output()
+                self.gui.force_update()
 
         except Exception as exc_obj:
             self._is_running = False
@@ -103,7 +123,7 @@ class CountMonitor:
 
     def resume(self):
         """ Resumes the counter.
-        
+
         To be used to resume after the counter has been paused.
         """
 
@@ -111,7 +131,7 @@ class CountMonitor:
             self._is_running = True
 
             # Clear counter and resume plotting
-            self._ctr.clear_counter()
+            self._ctr.clear_ctr(name='monitor')
             while self._is_running:
                 self._update_output()
 
@@ -125,7 +145,13 @@ class CountMonitor:
         """ Initializes the display (configures all plots) """
 
         plot_index = 0
-        for channel in self._ch_list:
+        for index in range(len(self.widgets['graph_widget'])):
+            # Configure and return legend widgets
+            self.widgets['legend_widget'][index] = get_legend_from_graphics_view(
+                self.widgets['legend_widget'][index]
+            )
+
+        for color, channel in enumerate(self._ch_list):
 
             # Figure out which plot to assign to
             if self._plot_list is not None:
@@ -135,59 +161,93 @@ class CountMonitor:
                         break
 
             # If we have not assigned this plot yet, assign it
-            if plot_index not in self._plots_assigned:
-                self.gui_handler.assign_plot(
-                    plot_widget=self._plot_widgets[plot_index],
-                    plot_label='Counter Monitor {}'.format(plot_index + 1),
-                    legend_widget=self._legend_widgets[plot_index]
-                )
-                self._plots_assigned.append(plot_index)
+            # if plot_index not in self._plots_assigned:
+            #     self.gui_handler.assign_plot(
+            #         plot_widget=self._plot_widgets[plot_index],
+            #         plot_label='Counter Monitor {}'.format(plot_index + 1),
+            #         legend_widget=self._legend_widgets[plot_index]
+            #     )
+            #     self._plots_assigned.append(plot_index)
 
             # Now assign this curve
-            self.gui_handler.assign_curve(
-                plot_label='Counter Monitor {}'.format(plot_index + 1),
-                curve_label='Channel {}'.format(channel),
-                error=True
+            # self.gui_handler.assign_curve(
+            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
+            #     curve_label='Channel {}'.format(channel),
+            #     error=True
+            # )
+
+            # Create a curve and store the widget in our dictionary
+            self.widgets[f'curve_{channel}'] = self.widgets['graph_widget'][plot_index].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[color])
             )
+            self.widgets['legend_widget'][plot_index].addItem(
+                self.widgets[f'curve_{channel}'],
+                ' - '+f'Channel {channel}'
+            )
+            
 
             # Assign scalar
-            self.gui_handler.assign_label(
-                label_widget=self._number_widgets[channel - 1],
-                label_label='Channel {}'.format(channel)
+            # self.gui_handler.assign_label(
+            #     label_widget=self._number_widgets[channel - 1],
+            #     label_label='Channel {}'.format(channel)
+            # )
+
+        # Handle button pressing
+        for plot_index, clear_button in enumerate(self.widgets['event_button']):
+            clear_button.clicked.connect(lambda: self._clear_plot(plot_index))
+
+    def _clear_plot(self, plot_index):
+        """ Clears the curves on a particular plot
+
+        :param plot_index: (int) index of plot to clear
+        """
+
+        # Find all curves in this plot
+        for channel in self._plot_list[plot_index]:
+
+            # Set the curve to constant with last point for all entries
+            self.widgets[f'curve_{channel}'].setData(
+                np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
             )
+
+        self._ctr.clear_ctr(name='monitor')
 
     def _update_output(self):
         """ Updates the output to all current values"""
 
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
-        counts = self._ctr.get_counts()
+
+        counts = self._ctr.get_counts(name='monitor')
         counts_per_sec = counts*(1e12/self._bin_width)
-        noise = np.sqrt(counts)*(1e12/self._bin_width)
-        plot_index = 0
+        # noise = np.sqrt(counts)*(1e12/self._bin_width)
+        # plot_index = 0
 
         for index, count_array in enumerate(counts_per_sec):
 
             # Figure out which plot to assign to
             channel = self._ch_list[index]
-            if self._plot_list is not None:
-                for index_plot, channel_set in enumerate(self._plot_list):
-                    if channel in channel_set:
-                        plot_index = index_plot
-                        break
+            # if self._plot_list is not None:
+            #     for index_plot, channel_set in enumerate(self._plot_list):
+            #         if channel in channel_set:
+            #             plot_index = index_plot
+            #             break
 
             # Update GUI data
 
-            self.gui_handler.set_curve_data(
-                data=count_array,
-                error=noise[index],
-                plot_label='Counter Monitor {}'.format(plot_index + 1),
-                curve_label='Channel {}'.format(channel)
-            )
-            self.gui_handler.set_label(
-                text='{:.4e}'.format(count_array[-1]),
-                label_label='Channel {}'.format(channel)
-            )
+            # self.gui_handler.set_curve_data(
+            #     data=count_array,
+            #     error=noise[index],
+            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
+            #     curve_label='Channel {}'.format(channel)
+            # )
+            # self.gui_handler.set_label(
+            #     text='{:.4e}'.format(count_array[-1]),
+            #     label_label='Channel {}'.format(channel)
+            # )
+
+            self.widgets[f'curve_{channel}'].setData(count_array)
+            self.widgets[f'number_label'][channel-1].setText(str(count_array[-1]))
 
 
 def launch(**kwargs):
@@ -198,45 +258,56 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['si_tt_cnt_monitor'], gui_client=guis['count_monitor'], logger_client=logger
+            ctr_client=clients['si_tt'], logger_client=logger, server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
 
-    # Instantiate Pause server
     try:
-        pause_logger = LogClient(
-            host=loghost,
-            port=logport,
-            module_tag='count_monitor_pause_server'
-        )
-    except ConnectionRefusedError:
-        logger.warn('Could not connect Count Monitor Pause server to logger')
+        config = load_config('counters')
+        ch_list = list(config['channels'])
+        plot_1 = list(config['plot_1'])
+        plot_2 = list(config['plot_2'])
+        plot_list = [plot_1, plot_2]
+    except:
+        config = None
+        ch_list = [7, 8]
+        plot_list = [[7], [8]]
 
-    pause_service = PauseService()
-    pause_service.assign_module(module=monitor)
-    pause_service.assign_logger(logger=pause_logger)
+    # Instantiate Pause server
+    # try:
+    #     pause_logger = LogClient(
+    #         host=loghost,
+    #         port=logport,
+    #         module_tag='count_monitor_pause_server'
+    #     )
+    # except ConnectionRefusedError:
+    #     logger.warn('Could not connect Count Monitor Pause server to logger')
 
-    timeout = 0
-    while timeout < 1000:
-        try:
-            port = np.random.randint(1, 9999)
-            pause_server = GenericServer(
-                host=socket.gethostbyname(socket.gethostname()),
-                port=port,
-                service=pause_service)
-            pause_logger.update_data(data=dict(port=port))
-            timeout = 9999
-        except ConnectionRefusedError:
-            logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')
-            timeout += 1
-    pause_server.start()
+    # pause_service = PauseService()
+    # pause_service.assign_module(module=monitor)
+    # pause_service.assign_logger(logger=pause_logger)
+
+    # timeout = 0
+    # while timeout < 1000:
+    #     try:
+    #         port = np.random.randint(1, 9999)
+    #         pause_server = GenericServer(
+    #             host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+    #             port=port,
+    #             service=pause_service)
+    #         pause_logger.update_data(data=dict(port=port))
+    #         timeout = 9999
+    #     except ConnectionRefusedError:
+    #         logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')
+    #         timeout += 1
+    # pause_server.start()
 
     # Set parameters
     if params is None:
-        params = dict(bin_width=2e10, n_bins=1e3, ch_list=[1, 2], plot_list=[[1], [2]])
+        params = dict(bin_width=2e10, n_bins=1e3, ch_list=ch_list, plot_list=plot_list)
     monitor.set_params(**params)
 
     # Run

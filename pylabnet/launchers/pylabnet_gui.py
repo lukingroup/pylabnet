@@ -12,16 +12,19 @@ However, you can also call this directly, with command-line arguments:
     (2) if not provided, _default_template will be used
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 import sys
+import traceback
 import socket
+import ctypes
 import numpy as np
+import os
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
+from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server, load_config
 
 import sys
 import socket
@@ -49,15 +52,26 @@ def main():
     if 'ui' in args:
         gui_template = args['ui']
     else:
+        # Get all relevant files
+        ui_directory = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'gui', 'pyqt', 'gui_templates'
+        )
+        files = [file for file in os.listdir(ui_directory) if (
+            os.path.isfile(os.path.join(
+                ui_directory, file
+            )) and '.ui' in file
+        )]
         show_console()
-        gui_template = input('Please enter a GUI template to use: ')
+        print('Available UIs to launch:\n')
+        for file in files:
+            print(file[:-3])
+        gui_template = input('\nPlease enter a UI name: ')
         hide_console()
     if 'guiport' in args:
         gui_port = int(args['guiport'])
     else:
-        show_console()
-        gui_port = int(input('Please enter a GUI port value: '))
-        hide_console()
+        gui_port = None
 
     # Instantiate logger
     gui_logger = LogClient(
@@ -68,13 +82,21 @@ def main():
         server_port=gui_port
     )
 
+    # Loading config file
+    settings = {}
+    if 'config' in args:
+        if args['config'] != 'None':
+            settings = load_config(
+                args['config'],
+                logger=gui_logger
+            )
+
     # Retrieve debug flag.
     debug = int(args['debug'])
 
     # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
         import ptvsd
-        import os
         # 5678 is the default attach port in the VS Code debug configurations
         gui_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_gui)")
         ptvsd.enable_attach(address=('localhost', 5678))
@@ -83,14 +105,31 @@ def main():
 
     gui_logger.info('Logging for gui template: {}'.format(gui_template))
 
-    # Create app and instantiate main window
+    # Register new exception hook.
+    def log_exceptions(exc_type, exc_value, exc_traceback):
+        """Handler for unhandled exceptions that will write to the logs"""
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        gui_logger.error(f"Uncaught exception: {error_msg}")
+
+    sys.excepthook = log_exceptions
+
+    # # Create app and instantiate main window
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
     app = QtWidgets.QApplication(sys.argv)
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
     try:
         main_window = Window(app, gui_template=gui_template)
     except FileNotFoundError:
         gui_logger.warn('Could not find .ui file, '
                         'please check that it is in the pylabnet/gui/pyqt/gui_templates directory')
         raise
+
+    # Implement config related updates
+    if 'window_title' in settings:
+        main_window.setWindowTitle(settings['window_title'])
+        gui_logger.info(f'Set window title to {settings["window_title"]}')
 
     # Instantiate GUI server
     gui_service = Service()
@@ -99,14 +138,22 @@ def main():
 
     # Make connection
     try:
-        gui_server = GenericServer(
-            service=gui_service,
-            host=socket.gethostbyname(socket.gethostname()),
-            port=gui_port
-        )
+        if gui_port is None:
+            gui_server, gui_port = create_server(
+                service=gui_service,
+                logger=gui_logger,
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+            )
+            gui_logger.update_data(data=dict(port=gui_port))
+        else:
+            gui_server = GenericServer(
+                service=gui_service,
+                host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+                port=gui_port
+            )
     except ConnectionRefusedError:
         gui_logger.warn('Tried and failed to create GUI server with \nIP:{}\nPort:{}'.format(
-            socket.gethostbyname(socket.gethostname()),
+            socket.gethostbyname_ex(socket.gethostname())[2][0],
             gui_port
         ))
         raise
@@ -115,18 +162,20 @@ def main():
     # Update GUI with server-specific details
     try:
         main_window.ip_label.setText('IP Address: {}'.format(
-            socket.gethostbyname(socket.gethostname())
+            socket.gethostbyname_ex(socket.gethostname())[2][0]
         ))
         main_window.port_label.setText('Port: {}'.format(gui_port))
     except AttributeError:
         gui_logger.warn(f'Could not set IP Address and port labels on {gui_template}')
 
     # Run the GUI until the stop button is clicked
+    hide_console()
     while not main_window.stop_button.isChecked():
         main_window.configure_widgets()
         main_window.update_widgets()
         main_window.force_update()
-    sys.exit(app.exec_())
+
+    gui_server.stop()
 
 
 if __name__ == '__main__':

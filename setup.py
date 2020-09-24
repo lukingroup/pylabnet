@@ -59,7 +59,7 @@ setup(
         'matplotlib>=3.1.3',
         'nidaqmx>=0.5.7',
         'numpy>=1.16.5',
-        'plotly>=4.7.1'
+        'plotly>=4.7.1',
         'ptvsd>=4.3.2',
         'PyQt5>=5.13.0',
         'pyqtgraph>=0.10.0',
@@ -67,7 +67,6 @@ setup(
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
         'rpyc>=4.1.2',
-        'si_prefix>=1.2.2',
-        'zhinst>=20.1.1211'
+        'si_prefix>=1.2.2'
     ]
 )

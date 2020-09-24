@@ -42,6 +42,10 @@ class PTrue(PulseBase):
     def __init__(self, ch, dur, t0=0):
         super().__init__(ch=ch, dur=dur, t0=t0)
 
+        # Define an automatic default.
+        self.auto_default = DFalse()
+
+
     def __str__(self):
         return 'True'
 
@@ -61,6 +65,9 @@ class PFalse(PulseBase):
 
     def __init__(self, ch, dur, t0=0):
         super().__init__(ch=ch, dur=dur, t0=t0)
+
+        # Define an automatic default.
+        self.auto_default = DTrue()
 
     def __str__(self):
         return 'False'
@@ -96,6 +103,9 @@ class PSin(PulseBase):
         self._freq = freq
         self._ph = ph
 
+        # Define an automatic default.
+        self.auto_default = DConst(val=0.0)
+
     def __str__(self):
         ret_str = 'Sin(amp={:.2e} freq={:.2e} ph={:.2f})' \
                   ''.format(self._amp, self._freq, self._ph)
@@ -130,6 +140,9 @@ class PConst(PulseBase):
 
         super().__init__(ch=ch, dur=dur, t0=t0)
         self._val = val
+
+        # Define an automatic default.
+        self.auto_default = DConst(val=0.0)
 
     def __str__(self):
         return 'Const(val={})'.format(self._val)

@@ -1,4 +1,5 @@
 import socket
+import sys
 
 from pylabnet.hardware.nanopositioners.smaract import MCS2
 from pylabnet.network.core.generic_server import GenericServer
@@ -19,7 +20,7 @@ def launch(**kwargs):
     mcs2_service.assign_logger(logger=kwargs['logger'])
     mcs2_server = GenericServer(
         service=mcs2_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
     mcs2_server.start()

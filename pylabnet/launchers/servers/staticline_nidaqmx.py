@@ -25,7 +25,7 @@ def launch(**kwargs):
     daq = nidaqmx.Driver(device_name=NI_DEVICE_NAME, logger=staticline_logger)
 
     test_staticline = staticline.Driver(
-        name='Test staticline',
+        name='Laser Green',
         logger=kwargs['logger'],
         hardware_module=daq,
         ao_output='ao2',
@@ -40,7 +40,7 @@ def launch(**kwargs):
     staticline_service.assign_logger(logger=staticline_logger)
     staticline_service_server = GenericServer(
         service=staticline_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
 

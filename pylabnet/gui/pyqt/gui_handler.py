@@ -1,5 +1,7 @@
 from pylabnet.utils.decorators.gui_decorators import handle_gui_errors
 import pickle
+import sys
+import traceback
 
 
 class GUIHandler():
@@ -152,6 +154,12 @@ class GUIHandler():
         )
 
     @handle_gui_errors
+    def get_text(self, label_label):
+        return self.gui_client.get_text(
+            label_label
+        )
+
+    @handle_gui_errors
     def was_button_pressed(self, event_label):
         return self.gui_client.was_button_pressed(event_label)
 
@@ -160,13 +168,33 @@ class GUIHandler():
         return self.gui_client.was_button_released(event_label)
 
     @handle_gui_errors
+    def is_pressed(self, event_label):
+        return self.gui_client.is_pressed(event_label)
+
+    @handle_gui_errors
+    def reset_button(self, event_label):
+        return self.gui_client.reset_button(event_label)
+
+    @handle_gui_errors
     def change_button_background_color(self, event_label, color):
         return self.gui_client.change_button_background_color(event_label, color)
 
     @handle_gui_errors
     def get_item_index(self, container_label):
         return self.gui_client.get_item_index(container_label)
-    
+
     @handle_gui_errors
     def set_item_index(self, container_label, index):
         return self.gui_client.set_item_index(container_label, index)
+
+    @handle_gui_errors
+    def set_button_text(self, event_label, text):
+        return self.gui_client.set_button_text(event_label, text)
+
+    @handle_gui_errors
+    def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
+        return self.gui_client.save_gui(config_filename, folder_root, logger, scalars, labels)
+
+    @handle_gui_errors
+    def load_gui(self, config_filename, folder_root=None, logger=None):
+        return self.gui_client.load_gui(config_filename, folder_root, logger)

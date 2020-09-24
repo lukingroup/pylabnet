@@ -13,7 +13,7 @@ def handle_gui_errors(func):
 
         # Check 1: KeyError
         updated = False
-        timeout = 5  # Number of times to try function execution before timeout.
+        timeout = 10  # Number of times to try function execution before timeout.
         try_num = 0
 
         # Try until timeout is reached

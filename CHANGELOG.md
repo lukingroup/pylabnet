@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 0.3.0
+### Added
+- Initial notebook support for sweeper functionality
+- Logfile capability from launch control GUI
+- Driver for Thorlabs PM320E
+- GUI for fiber coupling
+
+### Changed
+- Servers are now, by default, secure. This means that you should have a common `pylabnet.pem` file in your `Windows/System32` directory to use the client-server interface.
+- Updated README.md
+
+## 0.2.6
+### Changed
+- Fixed bugs with developer mode installation and jupyter notebook support
+- Updated README.md
+
 ## 0.2.7
 ### Added
 - Driver support for Smaract MCS2 nanopositioners

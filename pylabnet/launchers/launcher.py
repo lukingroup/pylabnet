@@ -78,7 +78,7 @@ class Launcher:
         :param server_req: list of modules containing necessary servers. The module needs:
             (1) launch() method to instantiate Service and run the server (see pylabnet_server.py for details)
             (2) Client() class, so that we can instantiate a client from this thread and pass it to the script
-        :param gui_req: list of gui names to instantiate (names of .ui files, excluding .ui extension)
+        :param gui_req: list of gui names to instantiate servers of (names of .ui files, excluding .ui extension)
         :param auto_connect: (bool) whether or not to automatically connect if there is a single instance of the
             required server already running
         :param name: (str) desired name that will appear as the "process" name for the script invoking the
@@ -102,7 +102,7 @@ class Launcher:
                 for scr in script:
                     self.name += scr.__name__.split('.')[-1]
                     self.name += '_'
-                self.name += 'script'
+                self.name += 'server'
         else:
             self.name = name
 
@@ -156,8 +156,10 @@ class Launcher:
     def launch(self):
         """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
 
-        self._launch_guis()
-        self._launch_servers()
+        if self.gui_req[0] is not None:
+            self._launch_guis()
+        if self.server_req[0] is not None:
+            self._launch_servers()
         if self.use_script_server:
             self._launch_script_server()
         hide_console()
@@ -202,7 +204,7 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname_ex(socket.gethostname())[2][0]
 
         while not connected and timeout < 1000:
             try:
@@ -320,7 +322,7 @@ class Launcher:
 
         connected = False
         timeout = 0
-        host = socket.gethostbyname(socket.gethostname())
+        host = socket.gethostbyname_ex(socket.gethostname())[2][0]
 
         while not connected and timeout < 1000:
             try:
@@ -446,7 +448,8 @@ class Launcher:
                 guis=self.gui_clients,
                 logport=self.log_port,
                 params=self.params[index],
-                config=self.config
+                config=self.config,
+                server_port=self.script_server_port
             )
 
     def _launch_script_server(self, service=None):
@@ -462,7 +465,7 @@ class Launcher:
         self.script_server, self.script_server_port = create_server(
             service=service,
             logger=self.logger,
-            host=socket.gethostbyname(socket.gethostname())
+            host=socket.gethostbyname_ex(socket.gethostname())[2][0]
         )
         self.script_server.start()
 

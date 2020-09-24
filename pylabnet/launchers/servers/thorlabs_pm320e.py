@@ -57,7 +57,7 @@ def launch(**kwargs):
     pm_service.assign_logger(logger=kwargs['logger'])
     pm_server = GenericServer(
         service=pm_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
     pm_server.start()

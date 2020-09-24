@@ -40,7 +40,7 @@ def launch(**kwargs):
     staticline_service.assign_logger(logger=staticline_logger)
     staticline_service_server = GenericServer(
         service=staticline_service,
-        host=socket.gethostbyname(socket.gethostname()),
+        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
         port=kwargs['port']
     )
 

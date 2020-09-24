@@ -6,6 +6,7 @@ import logging
 import sys
 import os
 import ctypes
+import re
 import pickle
 from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
 
@@ -171,7 +172,7 @@ class LogClient:
                 raise exc_obj
 
             client_data = dict(
-                ip=socket.gethostbyname(socket.gethostname()),
+                ip=socket.gethostbyname_ex(socket.gethostname())[2][0],
                 timestamp=time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
             )
             if self._server_port is not None:
@@ -273,7 +274,7 @@ class LogClient:
     def close_server(self):
         """ Closes the server to which the LogClient is connected"""
 
-        try: 
+        try:
             self._service.close_server()
         except EOFError:
             pass
@@ -397,6 +398,18 @@ class LogService(rpyc.Service):
         """
 
         try:
+            # Check for module name copies in client data
+            matches = []
+            indices = []
+            pattern = re.compile(f'^{module_name}\d')
+            for module in self.client_data:
+                if re.match(pattern, module):
+                    matches.append(module)
+                    indices.append(int(module[-1]))
+
+            if len(matches) > 0:
+                module_name = matches[indices.index(max(indices))]
+
             self.client_data[module_name].update(pickle.loads(module_data_pickle))
             self.logger.info('Updated client data for {}'.format(module_name))
             self.data_updated.append(module_name)
@@ -412,7 +425,7 @@ class LogService(rpyc.Service):
         handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
         ctypes.windll.kernel32.TerminateProcess(handle, -1)
         ctypes.windll.kernel32.CloseHandle(handle)
-        
+
     def add_logfile(self, name, dir_path, file_level=logging.DEBUG, form_string=None):
         """ Adds a log-file for all future logging
 

@@ -50,12 +50,12 @@ def launch(logger=None, port=None, name=None):
         gui_server, port = create_server(
             service=gui_service,
             logger=logger,
-            host=socket.gethostbyname(socket.gethostname())
+            host=socket.gethostbyname_ex(socket.gethostname())[2][0]
         )
     else:
         gui_server = GenericServer(
             service=gui_service,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=socket.gethostbyname_ex(socket.gethostname())[2][0],
             port=port
         )
     logger.update_data(data=dict(ui=ui, port=port))
@@ -64,7 +64,7 @@ def launch(logger=None, port=None, name=None):
 
     # Update GUI with server-specific details
     main_window.ip_label.setText('IP Address: {}'.format(
-        socket.gethostbyname(socket.gethostname())
+        socket.gethostbyname_ex(socket.gethostname())[2][0]
     ))
     main_window.port_label.setText('Port: {}'.format(port))
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1056</width>
-    <height>692</height>
+    <width>1538</width>
+    <height>1190</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,47 +17,41 @@
    <string notr="true">background-color: rgb(0, 0, 0);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="stop_button">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>0</y>
-      <width>70</width>
-      <height>33</height>
-     </rect>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>70</width>
-      <height>16777215</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri Light</family>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color: rgb(170, 170, 255);</string>
-    </property>
-    <property name="text">
-     <string>STOP</string>
-    </property>
-    <property name="checkable">
-     <bool>true</bool>
-    </property>
-   </widget>
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>810</x>
-      <y>0</y>
-      <width>243</width>
-      <height>26</height>
+      <x>20</x>
+      <y>10</y>
+      <width>320</width>
+      <height>35</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="stop_button">
+       <property name="maximumSize">
+        <size>
+         <width>70</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Calibri Light</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(170, 170, 255);</string>
+       </property>
+       <property name="text">
+        <string>STOP</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QLabel" name="ip_label">
        <property name="font">
@@ -92,19 +86,70 @@
      </item>
     </layout>
    </widget>
+   <widget class="QTabWidget" name="config_tab">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>70</y>
+      <width>451</width>
+      <height>421</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>4</number>
+    </property>
+    <widget class="QWidget" name="tab_1">
+     <attribute name="title">
+      <string>Tab 1</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Tab 2</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Page</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="tab_3">
+     <attribute name="title">
+      <string>Page</string>
+     </attribute>
+    </widget>
+    <widget class="QWidget" name="dio_tab">
+     <attribute name="title">
+      <string>DIO setup</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QTableWidget" name="DIO_table">
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(170, 170, 255);</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1056</width>
+     <width>1538</width>
      <height>26</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <tabstops>
+  <tabstop>stop_button</tabstop>
+  <tabstop>config_tab</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

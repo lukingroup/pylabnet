@@ -211,9 +211,9 @@ def unpack_launcher(**kwargs):
     guis = kwargs['guis']
     logport = kwargs['logport']
     params = kwargs['params']
-    config = kwargs['config']
 
-    return logger, loghost, logport, clients, guis, params, config
+
+    return logger, loghost, logport, clients, guis, params
 
 
 def show_console():

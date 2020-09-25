@@ -22,7 +22,10 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem
+
+
+
 
 
 
@@ -37,16 +40,19 @@ class PulseMaster:
         """
 
         self.hd = hd
-        self.config = config
         self.log = logger_client
 
+        # Load config dict.
         self.config_dict = load_config(
             config_filename=config,
             logger=self.log
         )
 
-        # Load DIO values
-        self.get_DIO_assignment()
+         # Load DIO assignment.
+        self.DIO_assignment_dict = load_config(
+                config_filename=self.config_dict['DIO_dict'],
+                logger=self.log
+        )
 
         # Instantiate GUI window
         self.gui = Window(
@@ -55,25 +61,27 @@ class PulseMaster:
             port=server_port
         )
 
-        logger_client.info(self.DIO_assignment_dict)
+        # Get Widgets
+        self.widgets = get_gui_widgets(self.gui, DIO_table=1)
 
+        # Populate DIO table
+        self.populate_dio_table()
 
-    def get_DIO_assignment(self):
-        """Parse DIO assignment dict."""
-        self.DIO_assignment_dict = load_config(
-                config_filename=self.config_dict['DIO_dict'],
-                logger=self.log
-            )
+    def populate_dio_table(self):
+        '''Populate DIO assignment table from DIO assignment dict.
+        '''
+        dio_table = self.widgets['DIO_table']
 
-    def display_DIOs(self):
-        """Display DIO assignment in DIO tab."""
+        # Define table size
+        dio_table.setRowCount(len(self.DIO_assignment_dict.keys()))
+        dio_table.setColumnCount(2)
 
-        # First update DIO assignment from config file
-        self.get_DIO_assignment()
+        for i, (dio_name, dio_bit) in enumerate(self.DIO_assignment_dict.items()):
+            #Populate it
+            dio_table.setItem(i , 0, QTableWidgetItem(str(dio_name)))
+            dio_table.setItem(i , 1, QTableWidgetItem(str(dio_bit)))
 
-        # Now configure the GUI
-        return 0
-
+            self.log.info('DIO settings successfully loaded.')
 
     def run(self):
         """ Runs an iteration of checks for updates and implements
@@ -86,12 +94,12 @@ class PulseMaster:
 def launch(**kwargs):
     """ Launches the pulsemaster script """
 
-    logger, loghost, logport, clients, guis, params, config = unpack_launcher(**kwargs)
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
     # Instantiate Pulsemaster
     try:
         pulsemaster = PulseMaster(
-            hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port'], config=config
+            hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port'], config=kwargs['config']
         )
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

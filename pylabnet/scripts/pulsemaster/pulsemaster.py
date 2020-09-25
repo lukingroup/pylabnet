@@ -22,7 +22,7 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter
+from PyQt5.QtWidgets import QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
 from PyQt5.QtGui import QBrush, QColor
@@ -57,7 +57,15 @@ class PulseMaster:
         )
 
         # Get Widgets
-        self.widgets = get_gui_widgets(self.gui, DIO_table=1, update_DIO_button=1, channel_edit=1, pulse_type_combobox=1)
+        self.widgets = get_gui_widgets(
+            self.gui,
+            DIO_table=1,
+            update_DIO_button=1,
+            channel_edit=1,
+            pulse_type_combobox=1,
+            add_channel_layout=1,
+            add_pulse_layout=1
+        )
 
         # Populate DIO table
         self.populate_dio_table_from_dict()
@@ -65,19 +73,78 @@ class PulseMaster:
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
 
-        # Setup pulse type selector.
+        # Initilize Pulse Selector Form
+        self.setup_pulse_selector_form()
+
+        # Apply CSS stylesheet
+        self.gui.apply_stylesheet()
+
+    def setup_pulse_selector_form(self):
+        self.pulse_selector_form = QGroupBox("Pulse selector")
+        self.pulse_selector_channelselection = QLineEdit()
+        self.pulse_selector_pulse_drop_down = QComboBox()
+
+        # Set selector.
         self.set_pulsetype_combobox()
+
+        # Connect to change function
+        self.pulse_selector_pulse_drop_down.currentTextChanged.connect(self.build_pulse_input_fields)
+
+        layout = QFormLayout()
+        layout.addRow(QLabel("Channel:"), QLineEdit())
+        layout.addRow(QLabel("Pulse Type:"), QComboBox())
+        self.pulse_selector_form.setLayout(layout)
+
+
+    def build_pulse_input_fields(self):
+        """Change input fields if pulse selector dropdown has been changed."""
+
+        # Retrieve combobox-value
+        current_pulsetype = str(self.widgets['pulse_type_combobox'].currentText())
+
+        # Load pulsetype settings
+        pulsetype_dict = [pulsedict for pulsedict in self.config_dict['pulse_types'] if pulsedict['name'] == current_pulsetype][0]
+
+        # Clear all widgets containing pulse field inputs.
+        for widget in self.widgets['add_pulse_layout'].children():
+            widget.removeWidget()
+
+        for field in pulsetype_dict['fields']:
+
+            # Add a horizontal layout
+            hbox = QHBoxLayout()
+
+            # Add label.
+            field_label = QLabel(field['label'])
+            hbox.addWidget(field_label)
+
+            # Build field.
+            field_type = field['input_type']
+            if field_type == 'QLineEdit':
+                field_input = QLineEdit()
+                hbox.addWidget(field_input)
+            elif field_type == 'QComboBox':
+                field_input = QComboBox()
+                for choice in field['combo_choice']:
+                    field_input.addItem(choice)
+
+            # Add field to hbox.
+            hbox.addWidget(field_input)
+
+            # Add horizontal layout to.
+            self.widgets['add_pulse_layout'].addLayout(hbox)
+
+        # Apply CSS stylesheet
+        self.gui.apply_stylesheet()
 
     def set_pulsetype_combobox(self):
         for pulsetype in self.config_dict['pulse_types']:
-            self.widgets['pulse_type_combobox'].addItem(pulsetype['name'])
-            # self.widgets['pulse_type_combobox'].setToolTip(pulsetype['description'] )
-
+            pulse_selector_pulse_drop_down.addItem(pulsetype['name'])
 
     def set_dio_channel_completer(self):
         """Reset the autocomplete for the channel selection."""
         completer = QCompleter(self.DIO_assignment_dict.keys())
-        self.widgets['channel_edit'].setCompleter(completer)
+        self.pulse_selector_channelselection.setCompleter(completer)
 
     def load_dio_assignment_from_dict(self):
         """Read in DIO assignment dictionary and store as member variable."""

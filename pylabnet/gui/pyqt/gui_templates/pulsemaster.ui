@@ -181,9 +181,9 @@ background-color: rgb(170, 170, 255);</string>
        <height>257</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="add_channel_layout">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
+       <layout class="QVBoxLayout" name="hor_layout">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
@@ -242,54 +242,7 @@ background-color: rgb(170, 170, 255);</string>
          </layout>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
-          <item>
-           <widget class="QLabel" name="channel_label_3">
-            <property name="font">
-             <font>
-              <family>Calibri Light</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);</string>
-            </property>
-            <property name="text">
-             <string>t0 (ns, us, or ms)</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="channel_edit_2"/>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="styleSheet">
-           <string notr="true">    background-color:rgb(135, 135, 135);
-    color: white;
-    border-style:outset;
-    border-color:  rgb(77,77,77);
-    border-width: 0px;
-    border-radius: 7px;
-    padding: 6px;
-    font: 25 12pt &quot;Calibri Light&quot;;</string>
-          </property>
-          <property name="text">
-           <string>Add Pulse</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>add_pulse.svg</normaloff>add_pulse.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>40</width>
-            <height>40</height>
-           </size>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="add_pulse_layout"/>
         </item>
        </layout>
       </item>
@@ -338,6 +291,39 @@ background-color: rgb(170, 170, 255);</string>
        </widget>
       </item>
      </layout>
+    </widget>
+    <widget class="QPushButton" name="pushButton">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>280</y>
+       <width>395</width>
+       <height>52</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">    background-color:rgb(135, 135, 135);
+    color: white;
+    border-style:outset;
+    border-color:  rgb(77,77,77);
+    border-width: 0px;
+    border-radius: 7px;
+    padding: 6px;
+    font: 25 12pt &quot;Calibri Light&quot;;</string>
+     </property>
+     <property name="text">
+      <string>Add Pulse</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>add_pulse.svg</normaloff>add_pulse.svg</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>40</width>
+       <height>40</height>
+      </size>
+     </property>
     </widget>
    </widget>
   </widget>

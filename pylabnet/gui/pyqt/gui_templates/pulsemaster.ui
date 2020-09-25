@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Count Monitor</string>
+   <string>Pulsemaster</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(0, 0, 0);</string>
@@ -89,10 +89,10 @@
    <widget class="QTabWidget" name="config_tab">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>70</y>
-      <width>451</width>
-      <height>421</height>
+      <x>1160</x>
+      <y>50</y>
+      <width>351</width>
+      <height>351</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -126,12 +126,59 @@
       <item>
        <widget class="QTableWidget" name="DIO_table">
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);</string>
+         <string notr="true">background-color: rgb(72, 72, 72);</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="update_DIO_button">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load DIO assignment from config file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color:rgb(0, 123, 255);
+color: white;
+border-style:outset;
+border-color:  rgb(77,77,77);
+border-width: 0px;
+border-radius: 7px;
+selection-background-color: rgb(0, 170, 0);</string>
+        </property>
+        <property name="text">
+         <string>Update DIO Assignment</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
      </layout>
     </widget>
+   </widget>
+   <widget class="QFrame" name="pulsebuilder">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>60</y>
+      <width>691</width>
+      <height>391</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

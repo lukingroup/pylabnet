@@ -129,6 +129,24 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
 
+        # Apply stylesheet.
+        self.apply_stylesheet()
+
+    def apply_stylesheet(self):
+        """Apply stylesheet to GUI."""
+          # Load Stylesheet
+        stylesheet_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname( __file__ ),
+                'stylesheets',
+                'pylabnet.css',
+            )
+        )
+
+        stylesheet =open(stylesheet_path).read()
+
+        self.app.setStyleSheet(stylesheet)
+
     def set_network_info(self, host=None, port=None):
         """ Sets IP and port labels
 

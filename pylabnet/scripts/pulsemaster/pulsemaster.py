@@ -24,6 +24,7 @@ from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_
 
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem
 
+from PyQt5.QtGui import QBrush, QColor
 
 
 
@@ -48,11 +49,8 @@ class PulseMaster:
             logger=self.log
         )
 
-         # Load DIO assignment.
-        self.DIO_assignment_dict = load_config(
-                config_filename=self.config_dict['DIO_dict'],
-                logger=self.log
-        )
+        # Load dio configs.
+        self.load_dio_assignment_from_dict()
 
         # Instantiate GUI window
         self.gui = Window(
@@ -62,24 +60,54 @@ class PulseMaster:
         )
 
         # Get Widgets
-        self.widgets = get_gui_widgets(self.gui, DIO_table=1)
+        self.widgets = get_gui_widgets(self.gui, DIO_table=1, update_DIO_button=1)
 
         # Populate DIO table
-        self.populate_dio_table()
+        self.populate_dio_table_from_dict()
 
-    def populate_dio_table(self):
-        '''Populate DIO assignment table from DIO assignment dict.
-        '''
+        # Connect "Update DIO Assignment" Button
+        self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
+
+
+
+    def load_dio_assignment_from_dict(self):
+        """Read in DIO assignment dictionary and store as member variable."""
+        # Load DIO assignment.
+        self.DIO_assignment_dict = load_config(
+                config_filename=self.config_dict['DIO_dict'],
+                logger=self.log
+        )
+
+    def populate_dio_table_from_dict(self):
+        '''Populate DIO assignment table from DIO assignment dict.'''
+
+        # Update DIO assignments from dict
+        self.load_dio_assignment_from_dict()
+
         dio_table = self.widgets['DIO_table']
 
         # Define table size
         dio_table.setRowCount(len(self.DIO_assignment_dict.keys()))
         dio_table.setColumnCount(2)
 
+        # Define header
+        # header = QStandardItemModel()
+        # header.setHorizontalHeaderLabels(['Staticline Name', 'DIO bit'])
+        # dio_table.setModel(header)
+
         for i, (dio_name, dio_bit) in enumerate(self.DIO_assignment_dict.items()):
             #Populate it
-            dio_table.setItem(i , 0, QTableWidgetItem(str(dio_name)))
-            dio_table.setItem(i , 1, QTableWidgetItem(str(dio_bit)))
+
+            # Define table entries
+            dio_name_item = QTableWidgetItem(str(dio_name))
+            dio_bit_item = QTableWidgetItem(str(dio_bit))
+
+            # Color entries
+            dio_name_item.setForeground(QBrush(QColor(255, 255, 255)))
+            dio_bit_item.setForeground(QBrush(QColor(255, 255, 255)))
+
+            dio_table.setItem(i , 0, dio_name_item)
+            dio_table.setItem(i , 1, dio_bit_item)
 
             self.log.info('DIO settings successfully loaded.')
 
@@ -87,7 +115,7 @@ class PulseMaster:
         """ Runs an iteration of checks for updates and implements
         """
 
-        time.sleep(1)
+        time.sleep(0.01)
         self.gui.force_update()
 
 

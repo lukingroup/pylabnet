@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>485</width>
-    <height>380</height>
+    <width>566</width>
+    <height>468</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -44,7 +44,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>Stop</string>
@@ -218,8 +218,9 @@ selection-color: rgb(255, 255, 255);</string>
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-background-color: rgb(170, 170, 255);</string>
+       <string notr="true">background-color: rgb(170, 170, 255);
+font: 25 12pt &quot;Calibri Light&quot;;
+</string>
       </property>
       <property name="text">
        <string>Update</string>
@@ -696,8 +697,8 @@ selection-color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>485</width>
-     <height>18</height>
+     <width>566</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>

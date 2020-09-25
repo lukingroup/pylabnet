@@ -57,13 +57,22 @@ class PulseMaster:
         )
 
         # Get Widgets
-        self.widgets = get_gui_widgets(self.gui, DIO_table=1, update_DIO_button=1, channel_edit=1)
+        self.widgets = get_gui_widgets(self.gui, DIO_table=1, update_DIO_button=1, channel_edit=1, pulse_type_combobox=1)
 
         # Populate DIO table
         self.populate_dio_table_from_dict()
 
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
+
+        # Setup pulse type selector.
+        self.set_pulsetype_combobox()
+
+    def set_pulsetype_combobox(self):
+        for pulsetype in self.config_dict['pulse_types']:
+            self.widgets['pulse_type_combobox'].addItem(pulsetype['name'])
+            # self.widgets['pulse_type_combobox'].setToolTip(pulsetype['description'] )
+
 
     def set_dio_channel_completer(self):
         """Reset the autocomplete for the channel selection."""

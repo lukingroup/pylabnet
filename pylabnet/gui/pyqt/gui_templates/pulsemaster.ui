@@ -226,13 +226,13 @@ background-color: rgb(170, 170, 255);</string>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox">
+           <widget class="QComboBox" name="pulse_type_combobox">
             <property name="styleSheet">
              <string notr="true">    background-color:rgb(176, 176, 176);
     color: white;
     border-style:outset;
     border-color:  rgb(77,77,77);
-    border-width: 0px;
+    border-width: 3px;
     border-radius: 7px;
     padding: 6px;
     font: 25 12pt &quot;Calibri Light&quot;;</string>

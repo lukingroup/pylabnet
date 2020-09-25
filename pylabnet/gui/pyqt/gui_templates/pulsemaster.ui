@@ -181,72 +181,7 @@ background-color: rgb(170, 170, 255);</string>
        <height>257</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="add_channel_layout">
-      <item>
-       <layout class="QVBoxLayout" name="hor_layout">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <widget class="QLabel" name="channel_label">
-            <property name="font">
-             <font>
-              <family>Calibri Light</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);</string>
-            </property>
-            <property name="text">
-             <string>Channel</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLineEdit" name="channel_edit"/>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QLabel" name="channel_label_2">
-            <property name="font">
-             <font>
-              <family>Calibri Light</family>
-              <pointsize>12</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);</string>
-            </property>
-            <property name="text">
-             <string>Pulse Type</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="pulse_type_combobox">
-            <property name="styleSheet">
-             <string notr="true">    background-color:rgb(176, 176, 176);
-    color: white;
-    border-style:outset;
-    border-color:  rgb(77,77,77);
-    border-width: 3px;
-    border-radius: 7px;
-    padding: 6px;
-    font: 25 12pt &quot;Calibri Light&quot;;</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="add_pulse_layout"/>
-        </item>
-       </layout>
-      </item>
-     </layout>
+     <layout class="QHBoxLayout" name="add_pulse_layout"/>
     </widget>
     <widget class="QWidget" name="horizontalLayoutWidget_2">
      <property name="geometry">

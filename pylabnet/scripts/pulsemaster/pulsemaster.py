@@ -22,13 +22,10 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter
+
 
 from PyQt5.QtGui import QBrush, QColor
-
-
-
-
 
 
 class PulseMaster:
@@ -60,7 +57,7 @@ class PulseMaster:
         )
 
         # Get Widgets
-        self.widgets = get_gui_widgets(self.gui, DIO_table=1, update_DIO_button=1)
+        self.widgets = get_gui_widgets(self.gui, DIO_table=1, update_DIO_button=1, channel_edit=1)
 
         # Populate DIO table
         self.populate_dio_table_from_dict()
@@ -68,7 +65,10 @@ class PulseMaster:
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
 
-
+    def set_dio_channel_completer(self):
+        """Reset the autocomplete for the channel selection."""
+        completer = QCompleter(self.DIO_assignment_dict.keys())
+        self.widgets['channel_edit'].setCompleter(completer)
 
     def load_dio_assignment_from_dict(self):
         """Read in DIO assignment dictionary and store as member variable."""
@@ -108,6 +108,9 @@ class PulseMaster:
 
             dio_table.setItem(i , 0, dio_name_item)
             dio_table.setItem(i , 1, dio_bit_item)
+
+            # Update completer.
+            self.set_dio_channel_completer()
 
             self.log.info('DIO settings successfully loaded.')
 

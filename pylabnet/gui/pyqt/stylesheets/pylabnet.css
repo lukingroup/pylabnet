@@ -9,6 +9,12 @@ QPushButton{
     font: 25 12pt "Calibri Light";
 }
 
+QGroupBox#pm_qhbox{
+    background-color:rgb(0, 123, 255);
+    color: white;
+    font: 25 12pt "Calibri Light";
+}
 
-QPushButton:pressed { background-color: red }
+
+
 

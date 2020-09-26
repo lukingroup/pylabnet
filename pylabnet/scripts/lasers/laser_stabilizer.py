@@ -19,14 +19,8 @@ import pyqtgraph as pg
 
 class LaserStabilizer:
     """A class for stabilizing the laser power given a DAQ input, a power control output, and a setpoint"""
-    def __init__(self, ai_client, ai_channel, ao_client, ao_channel):
+    def __init__(self, config='toptica_laser_stabilization'):
         
-        self.ai_client = ai_client
-        self.ao_client = ao_client
-        self.ao_channel = ao_channel
-        self.ai_channel = ai_channel
-
-
                 # Instantiate GUI
         self.gui = Window(
             gui_template='power_stabilizer',
@@ -35,21 +29,40 @@ class LaserStabilizer:
         self.widgets = get_gui_widgets(self.gui, p_setpoint=1, p_outputVoltage=1, label_power=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, start=1,
             autosave=1, save_name=1, stop=1, clear=1)
+
+        self.widgets['config'].setText(config)
+        self.config = load_config(config, logger=None)
+
+        self.ai_client = nidaqmx_card_server.Client(
+            host=self.config["power_input_host"], 
+            port=self.config["power_input_port"]
+        )
+
+        self.ai_channel = self.config["power_input_channel"]
+        
+        self.ao_client = nidaqmx_card_server.Client(
+            host=self.config["ctrl_output_host"],
+            port=self.config["ctrl_output_port"]
+        )
+        self.ao_channel = self.config["ctrl_output_channel"]
         
         # Configure default parameters
-        self.min_voltage = 0
-        self.max_voltage = 1
-        self.gain = 1
-        self.max_input_voltage = 1
-        self.paramP = -0.65/2
-        self.paramI = -1
-        self.paramD = 0
+        self.min_voltage = self.config['min_output_voltage']
+        self.max_voltage = self.config['max_output_voltage']
+        self.gain = self.config['gain']
+        self.max_input_voltage =  self.config['max_input_voltage']
+
+        #Loading PID parameters
+        self.paramP = self.config["pid"]["p"]
+        self.paramI = self.config["pid"]["i"]
+        self.paramD = self.config["pid"]["d"]
+        self.paramMemory = self.config["memory"]
         self.update_voltageSetpoint()
         self.update_PID()
 
-        self.numReadsPerCycle = 3
+        self.numReadsPerCycle = self.config["reads_per_cycle"]
 
-        self.curr_output_voltage = self.widgets['p_outputVoltage'].value()
+        self.curr_output_voltage = self.widgets['p_outputVoltage'].value() #Initializing initial output voltage to 0
         self.widgets['p_outputVoltage'].valueChanged.connect(self._set_output_voltage_from_label)
         self.ao_client.set_ao_voltage(self.ao_channel, self.curr_output_voltage)
 
@@ -60,6 +73,7 @@ class LaserStabilizer:
 
         self.widgets['start'].clicked.connect(lambda: self.start(update_vs_gui=True))
         self.widgets['stop'].clicked.connect(self.stop)
+        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=5000))
         self.is_stabilizing = False
 
     def  _initialize_graphs(self):
@@ -126,7 +140,7 @@ class LaserStabilizer:
     def update_power_label(self):
         currTime = time.time()
         if currTime - self.last_power_text_update > 0.5: 
-            power = self.gain*self.ai_client.get_ai_voltage(self.ai_channel, max_range=self.max_input_voltage)
+            power = self.gain*np.array(self.ai_client.get_ai_voltage(self.ai_channel, max_range=self.max_input_voltage))
             self.widgets['label_power'].setText(str(power[-1]))
             self.last_power = power[-1]/self.gain; 
             self.last_power_text_update = currTime
@@ -165,14 +179,15 @@ class LaserStabilizer:
 
         self.is_stabilizing = True
         
+        
     def _clear_data_plots(self, display_pts = 5000):
         #Initializing variables for plotting
         self.out_voltages = np.ones(display_pts) * self.curr_output_voltage
         self.measured_powers = np.ones(display_pts) * self.last_power
 
         # Check that setpoint is reasonable, otherwise set error to 0
-        self.errors = np.ones(display_pts) * (self.last_power-self.voltageSetpoint)*self.gain
-        self.sp_data = np.ones(display_pts) * self.voltageSetpoint*self.gain
+        self.errors = np.ones(display_pts) * (self.last_power-self.voltageSetpoint)
+        self.sp_data = np.ones(display_pts) * self.voltageSetpoint
 
     def stop(self):
         """This stops the power stabilization"""
@@ -183,7 +198,7 @@ class LaserStabilizer:
         self.voltageSetpoint = self.widgets['p_setpoint'].value()/self.gain
         
     def update_PID(self):
-        self.pid = PID(p=self.paramP, i=self.paramI, d=self.paramD, setpoint=self.voltageSetpoint)
+        self.pid = PID(p=self.paramP, i=self.paramI, d=self.paramD, setpoint=self.voltageSetpoint, memory=self.paramMemory)
 
     def update_feedback(self):
         """ Runs the actual feedback loop"""
@@ -212,29 +227,21 @@ class LaserStabilizer:
     def update_plots(self):
             #Adding in new data to plots\
             currSignal = self.ai_client.get_ai_voltage(self.ai_channel, max_range=self.max_input_voltage)
-            self.measured_powers = np.append(self.measured_powers[1:], np.mean(currSignal) * self.gain)
+            self.measured_powers = np.append(self.measured_powers[1:], np.mean(currSignal))
             self.out_voltages = np.append(self.out_voltages[1:], self.curr_output_voltage)
-            self.errors = np.append(self.errors[1:], (currSignal[-1] - self.voltageSetpoint)* self.gain)
-            self.sp_data = np.append(self.sp_data[1:], self.voltageSetpoint*self.gain)
+            self.errors = np.append(self.errors[1:], (currSignal[-1] - self.voltageSetpoint))
+            self.sp_data = np.append(self.sp_data[1:], self.voltageSetpoint)
             #Update power plots
-            self.widgets['curve'][0].setData(self.measured_powers)
+            self.widgets['curve'][0].setData(self.measured_powers*self.gain)
             #Update setpoint plots
-            self.widgets['curve'][1].setData(self.sp_data)
+            self.widgets['curve'][1].setData(self.sp_data*self.gain)
 
             # Now update voltage polots
             self.widgets['curve'][2].setData(self.out_voltages)
-            self.widgets['curve'][3].setData(self.errors)
+            self.widgets['curve'][3].setData(self.errors*self.gain)
         
 def main():
-    daq_client = nidaqmx_card_server.Client(
-        host='localhost', 
-        port=17972
-    )
-    daq_ao_client = nidaqmx_card_server.Client(
-        host='localhost', 
-        port=17974
-    )
-    laser_stabilizer=LaserStabilizer(daq_client, 'ai0', daq_ao_client, 'ao2')
+    laser_stabilizer=LaserStabilizer('toptica_laser_stabilization')
     while True:
         laser_stabilizer.run()
         

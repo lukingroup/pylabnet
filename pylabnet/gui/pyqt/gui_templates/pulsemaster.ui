@@ -241,6 +241,64 @@ background-color: rgb(170, 170, 255);</string>
      <property name="title">
       <string>Pulse Blocks</string>
      </property>
+     <widget class="QWidget" name="horizontalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>40</y>
+        <width>711</width>
+        <height>80</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLabel" name="ip_label_2">
+         <property name="font">
+          <font>
+           <family>Calibri Light</family>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(255, 255, 255);</string>
+         </property>
+         <property name="text">
+          <string>Available Pulseblocks:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="pulseblock_combo"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="new_pulseblock_button">
+         <property name="styleSheet">
+          <string notr="true">    background-color:rgb(135, 135, 135);
+    color: white;
+    border-style:outset;
+    border-color:  rgb(77,77,77);
+    border-width: 0px;
+    border-radius: 7px;
+    padding: 6px;
+    font: 25 12pt &quot;Calibri Light&quot;;</string>
+         </property>
+         <property name="text">
+          <string>New Pulse Block</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>add_pulseblock.svg</normaloff>add_pulseblock.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </widget>
   </widget>

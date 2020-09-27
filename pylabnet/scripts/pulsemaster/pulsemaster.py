@@ -21,13 +21,32 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QPushButton, QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
-from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtGui import QBrush, QColor, QPainter
+from PyQt5.QtCore import QRect
 from pylabnet.utils.helper_methods import slugify
 
 
+class AddPulseblockPopup(QWidget):
+    def __init__(self):
+        QWidget.__init__(self)
+
+        self.pulseblock_name_field = None
+        self.pulseblock_inherit_field = None
+        self.form_layout = None
+        self.form_groupbox = None
+        self.global_hbox = None
+
+    def return_pulseblock_new_pulseblock(self):
+        """ Add new pulseblock by clicking the "Add Pb" button."""
+
+        # Get pulseblock name
+        pb_name = self.pulseblock_name_field.text()
+        pulseblock= pb.PulseBlock(name=pb_name)
+
+        return pb_name, pulseblock
 
 
 class PulseMaster:
@@ -64,9 +83,14 @@ class PulseMaster:
             DIO_table=1,
             update_DIO_button=1,
             add_pulse_layout=1,
-            add_pulse_button=1
+            add_pulse_button=1,
+            new_pulseblock_button=1,
+            pulseblock_combo=1
         )
 
+
+        # Initialize empty pulseblock dictionary.
+        self.pulseblocks = {}
 
 
         # Connect "Update DIO Assignment" Button
@@ -80,12 +104,86 @@ class PulseMaster:
 
 
         # Connect add pulse button.
-        self.stored_pulseblock = pb.PulseBlock()
         self.widgets['add_pulse_button'].clicked.connect(self.add_pulse_from_form)
-
+        self.widgets['new_pulseblock_button'].clicked.connect(self.add_pulseblock)
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
+
+        self.add_pb_popup = None
+
+
+    def add_pulseblock(self):
+        self.add_pb_popup = AddPulseblockPopup()
+        self.add_pb_popup.setObjectName('add_pb_popup')
+        self.add_pb_popup.setGeometry(QRect(100, 100, 400, 200))
+
+        self.add_pb_popup.global_hbox = QVBoxLayout()
+        self.add_pb_popup.setLayout(self.add_pb_popup.global_hbox)
+
+
+        # Setup of box.
+        self.add_pb_popup.form_groupbox = QGroupBox("Add Pulseblock")
+        self.add_pb_popup.form_layout = QFormLayout()
+
+
+        self.add_pb_popup.pulseblock_name_field = QLineEdit()
+        self.add_pb_popup.pulseblock_inherit_field = QComboBox()
+
+        # Add pulseblock choices.
+        self.add_pb_popup.pulseblock_inherit_field.addItems(self.get_pulseblock_names())
+
+
+        # Create one Form to contain the for fields that never change.
+        self.add_pb_popup.form_layout.addRow(QLabel("Pulseblock Name:"), self.add_pb_popup.pulseblock_name_field)
+        self.add_pb_popup.form_layout.addRow(QLabel("Inherit from:"), self.add_pb_popup.pulseblock_inherit_field)
+
+        self.add_pb_popup.form_groupbox.setLayout(self.add_pb_popup.form_layout)
+
+        # Set Layout
+        self.add_pb_popup.setLayout(self.add_pb_popup.form_layout)
+
+        # Add to global hbox
+        self.add_pb_popup.global_hbox.addWidget(self.add_pb_popup.form_groupbox)
+
+        # Add button
+        add_pb_button = QPushButton('Add Pulseblock')
+        add_pb_button.setObjectName("add_pb_button")
+        self.add_pb_popup.global_hbox.addWidget(add_pb_button)
+
+        # Connect Button to add pulseblock function
+        add_pb_button.clicked.connect(self.add_pulseblock_from_popup)
+
+        # Apply CSS stylesheet
+        self.gui.apply_stylesheet()
+
+        # Shot the pop-up
+        self.add_pb_popup.show()
+
+    def update_pulseblock_dropdown(self):
+        """Update pulseblock dropdown"""
+
+        self.widgets['pulseblock_combo'].clear()
+        self.widgets['pulseblock_combo'].addItems(self.get_pulseblock_names())
+
+    def get_pulseblock_names(self):
+        return self.pulseblocks.keys()
+
+
+    def add_pulseblock_from_popup(self):
+        """Create new pulseblock instance and add to pb dictionary"""
+
+        # Get pulseblocks from Popup class
+        pb_name, pulseblock = self.add_pb_popup.return_pulseblock_new_pulseblock()
+
+        # Add pulseblock
+        self.pulseblocks[pb_name] = pulseblock
+
+        # Update pulseblock dropdown.
+        self.update_pulseblock_dropdown()
+
+        # Close popup
+        self.add_pb_popup.close()
 
 
     def add_pulse_from_form(self):
@@ -207,8 +305,7 @@ class PulseMaster:
 
             # Add choices to combobox.
             if type(field_input) is QComboBox:
-                for choice in field['combo_choice']:
-                    field_input.addItem(choice)
+                    field_input.addItems(field['combo_choice'])
 
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(field)

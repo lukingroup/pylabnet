@@ -63,7 +63,8 @@ class PulseMaster:
             self.gui,
             DIO_table=1,
             update_DIO_button=1,
-            add_pulse_layout=1
+            add_pulse_layout=1,
+            add_pulse_button=1
         )
 
 
@@ -77,8 +78,43 @@ class PulseMaster:
          # Populate DIO table
         self.populate_dio_table_from_dict()
 
+
+        # Connect add pulse button.
+        self.stored_pulseblock = pb.PulseBlock()
+        self.widgets['add_pulse_button'].clicked.connect(self.add_pulse_from_form)
+
+
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
+
+
+    def add_pulse_from_form(self):
+        """Get pulse info from form, create Pulse object and add to pulse list"""
+
+        # Retrieve pulse:
+        new_pulsetype = str(self.pulse_selector_pulse_drop_down.currentText())
+
+        # Get pulsetype dict
+        pulsetype_dict = self._current_pulsetype_dict()
+
+        pulse_params = self.read_pulse_params_from_form()
+
+        # # Create new pulse
+        # if pulsetype_dict["pulseblock_type"] == "PTrue":
+        #     new_pulse = po.PTrue(ch=laser_1, dur=delta_t_laser_1)
+
+
+    def read_pulse_params_from_form(self):
+        channel = self.pulse_selector_channelselection.text()
+        pulsetype_dict = self._current_pulsetype_dict()
+
+
+        duration_field = [field for field in pulsetype_dict['fields'] if field['pulseblock_input_name'] == "dur"][0]
+        duration_field_name = self._get_form_field_widget_name(duration_field)
+        self.log.info(duration_field_name)
+
+        return channel
+
 
     def setup_pulse_selector_form(self):
         self.pulse_selector_form_static = QGroupBox()
@@ -119,34 +155,63 @@ class PulseMaster:
         for _ in range(num_rows):
             self.pulse_selector_form_layout_variable.removeRow(0)
 
+
+    def _get_current_pulsetype(self):
+        """Get selected pulsetype from form."""
+        return str(self.pulse_selector_pulse_drop_down.currentText())
+
+    def _get_pulsetype_dict(self, current_pulsetype):
+        """ Return dictionary of pulsetype"""
+        pulsetype_dict = [pulsedict for pulsedict in self.config_dict['pulse_types'] if pulsedict['name'] == current_pulsetype][0]
+        return pulsetype_dict
+
+    def _current_pulsetype_dict(self):
+        """Get DIctionary of durrently selected pulsetype"""
+        return self._get_pulsetype_dict(self._get_current_pulsetype())
+
+
+    def _get_form_field_widget_name(self, field_dict):
+        """Generates a unique name for pulse add form fields."""
+        field_input = self._get_pulse_fieldtype(field_dict)
+        field_input_str = str(type(field_input)).replace("<class 'PyQt5.QtWidgets.", "").replace("'>", "")
+        input_widget_name = f"{slugify(field_dict['label'])}_{str(field_input_str)}"
+        return input_widget_name
+
+
+    def _get_pulse_fieldtype(self, field_dict):
+        """Determie input field type."""
+        # Build field.
+        field_type = field_dict['input_type']
+        if field_type == 'QLineEdit':
+            field_input = QLineEdit()
+        elif field_type == 'QComboBox':
+            field_input = QComboBox()
+        return field_input
+
     def build_pulse_input_fields(self):
         """Change input fields if pulse selector dropdown has been changed."""
 
         # Remove old entries.
         self._remove_variable_pulse_fields()
 
-        # Retrieve combobox-value
-        current_pulsetype = str(self.pulse_selector_pulse_drop_down.currentText())
-
         # Load pulsetype settings
-        pulsetype_dict = [pulsedict for pulsedict in self.config_dict['pulse_types'] if pulsedict['name'] == current_pulsetype][0]
+        pulsetype_dict = self._current_pulsetype_dict()
 
         for field in pulsetype_dict['fields']:
 
             # Add label.
             field_label = QLabel(field['label'])
 
-            # Build field.
-            field_type = field['input_type']
-            if field_type == 'QLineEdit':
-                field_input = QLineEdit()
-            elif field_type == 'QComboBox':
-                field_input = QComboBox()
+            # Get field type
+            field_input = self._get_pulse_fieldtype(field)
+
+            # Add choices to combobox.
+            if type(field_input) is QComboBox:
                 for choice in field['combo_choice']:
                     field_input.addItem(choice)
 
             # Auto create name of widget:
-            input_widget_name = f"{slugify(field['label'])}_{field_type}"
+            input_widget_name = self._get_form_field_widget_name(field)
             field_input.setObjectName(input_widget_name)
 
             self.pulse_selector_form_layout_variable.addRow(field_label, field_input)

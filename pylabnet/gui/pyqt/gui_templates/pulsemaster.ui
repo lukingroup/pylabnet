@@ -229,6 +229,19 @@ background-color: rgb(170, 170, 255);</string>
       </property>
      </widget>
     </widget>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
+      <rect>
+       <x>450</x>
+       <y>30</y>
+       <width>771</width>
+       <height>431</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Pulse Blocks</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

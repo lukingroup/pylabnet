@@ -33,7 +33,29 @@ class LaserStabilizer:
             autosave=1, save_name=1, stop=1, clear=1)
 
         self.widgets['config'].setText(config)
+        self._load_config_file(config)
+        
+        #Now initialize control/output voltage to 0, and set up label
+        self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
+        self.widgets['p_outputVoltage'].valueChanged.connect(self._set_output_voltage_from_label)
+        self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
+        #Update the input power label
+        self._last_power_text_update = 0
+        self._update_power_label()
+
+        self._initialize_graphs()
+
+        #Finally hookup the final buttons
+        self.widgets['start'].clicked.connect(lambda: self.start(update_st_gui=True))
+        self.widgets['stop'].clicked.connect(self.stop)
+        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=5000))
+
+        #Initially the program starts in the "unlocked" phase
+        self._is_stabilizing = False
+
+    def _load_config_file(self, config):
+        """Loads the config file"""
         #Now load the config file 
         self.config = load_config(config, logger=None)
 
@@ -71,24 +93,6 @@ class LaserStabilizer:
 
         self.numReadsPerCycle = self.config["reads_per_cycle"] #Number of the reads on the DAQ card that are averaged over for an update cycle.
 
-        #Now initialize control/output voltage to 0, and set up label
-        self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
-        self.widgets['p_outputVoltage'].valueChanged.connect(self._set_output_voltage_from_label)
-        self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
-
-        #Update the input power label
-        self._last_power_text_update = 0
-        self.update_power_label()
-
-        self._initialize_graphs()
-
-        #Finally hookup the final buttons
-        self.widgets['start'].clicked.connect(lambda: self.start(update_vs_gui=True))
-        self.widgets['stop'].clicked.connect(self.stop)
-        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=5000))
-
-        #Initially the program starts in the "unlocked" phase
-        self._is_stabilizing = False
     def run(self):
         """Main function to update both teh feedback loop as well as the gui"""
         if self._is_stabilizing:
@@ -99,7 +103,7 @@ class LaserStabilizer:
         #We always need to update the plots as well and power label
            
         self._update_plots()
-        self.update_power_label()
+        self._update_power_label()
         
         self.gui.force_update()
 
@@ -128,7 +132,7 @@ class LaserStabilizer:
         self._is_stabilizing = False
 
 
-    def update_power_label(self):
+    def _update_power_label(self):
         """Updates the power reading text on the GUI"""
 
         #Checks if > 0.5s has elapsed since the last change to the power reading label
@@ -165,7 +169,7 @@ class LaserStabilizer:
         """Allows an external program to directly set the control/output voltage in use by the stabilizer
         :param value: (float) value to set output voltage to"""
         self._curr_output_voltage = value
-        self._update_output_voltage_label
+        self._update_output_voltage_label()
 
     def _update_voltageSetpoint_fromGUI(self):
         """Update the voltage setpoint to whatever value is currently in the setpoint spin box"""
@@ -196,7 +200,7 @@ class LaserStabilizer:
         currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
 
         #Add new data to the pid
-        self.pid.set_pv(np.mean(currSignal))
+        self.pid.set_pv(np.atleast_1d(np.mean(currSignal)))
 
         #Now compute the new control value and update the AO
         self.pid.set_cv()

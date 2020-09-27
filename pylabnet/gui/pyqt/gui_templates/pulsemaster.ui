@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1827</width>
+    <width>2536</width>
     <height>1190</height>
    </rect>
   </property>
@@ -89,10 +89,10 @@
    <widget class="QTabWidget" name="config_tab">
     <property name="geometry">
      <rect>
-      <x>1460</x>
-      <y>60</y>
-      <width>351</width>
-      <height>351</height>
+      <x>2130</x>
+      <y>70</y>
+      <width>381</width>
+      <height>381</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -163,81 +163,49 @@ background-color: rgb(170, 170, 255);</string>
    <widget class="QGroupBox" name="pm_qhbox">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>70</y>
-      <width>1421</width>
-      <height>341</height>
+      <x>20</x>
+      <y>60</y>
+      <width>1601</width>
+      <height>491</height>
      </rect>
     </property>
     <property name="title">
      <string>Pulse Builder</string>
     </property>
-    <widget class="QWidget" name="horizontalLayoutWidget">
+    <widget class="QGroupBox" name="pulse_add_groupbox">
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>20</y>
-       <width>399</width>
-       <height>257</height>
+       <y>30</y>
+       <width>411</width>
+       <height>431</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="add_pulse_layout"/>
-    </widget>
-    <widget class="QWidget" name="horizontalLayoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>1010</x>
-       <y>20</y>
-       <width>391</width>
-       <height>311</height>
-      </rect>
+     <property name="title">
+      <string>Pulse Selector</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <widget class="QFrame" name="frame">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
-        </property>
-        <widget class="QLabel" name="ip_label_2">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>0</y>
-           <width>141</width>
-           <height>33</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <family>Calibri Light</family>
-           <pointsize>12</pointsize>
-          </font>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">color: rgb(255, 255, 255);</string>
-         </property>
-         <property name="text">
-          <string>Variable register</string>
-         </property>
-        </widget>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-    <widget class="QPushButton" name="pushButton">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>280</y>
-       <width>395</width>
-       <height>52</height>
-      </rect>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">    background-color:rgb(135, 135, 135);
+     <widget class="QWidget" name="verticalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>30</y>
+        <width>381</width>
+        <height>321</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="add_pulse_layout"/>
+     </widget>
+     <widget class="QPushButton" name="add_pulse_button">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>360</y>
+        <width>395</width>
+        <height>52</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">    background-color:rgb(135, 135, 135);
     color: white;
     border-style:outset;
     border-color:  rgb(77,77,77);
@@ -245,20 +213,21 @@ background-color: rgb(170, 170, 255);</string>
     border-radius: 7px;
     padding: 6px;
     font: 25 12pt &quot;Calibri Light&quot;;</string>
-     </property>
-     <property name="text">
-      <string>Add Pulse</string>
-     </property>
-     <property name="icon">
-      <iconset>
-       <normaloff>add_pulse.svg</normaloff>add_pulse.svg</iconset>
-     </property>
-     <property name="iconSize">
-      <size>
-       <width>40</width>
-       <height>40</height>
-      </size>
-     </property>
+      </property>
+      <property name="text">
+       <string>Add Pulse</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>add_pulse.svg</normaloff>add_pulse.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>40</width>
+        <height>40</height>
+       </size>
+      </property>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -267,7 +236,7 @@ background-color: rgb(170, 170, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1827</width>
+     <width>2536</width>
      <height>26</height>
     </rect>
    </property>

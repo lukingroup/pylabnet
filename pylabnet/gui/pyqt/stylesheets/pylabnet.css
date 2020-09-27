@@ -20,6 +20,25 @@ QLabel {
     color: rgb(255, 255, 255);
 }
 
+
+QGroupBox#pulse_static_input{
+    border-width: 0px;
+    border-radius: 0px;
+}
+
+QGroupBox#pulse_var_input{
+    border-width: 0px;
+    border-radius: 0px;
+}
+
+QGroupBox#pulse_add_groupbox{
+    background-color:rgb(77,77,77);
+    color: white;
+
+}
+
+
+
 QComboBox{
     background-color:rgb(176, 176, 176);
     color: white;
@@ -29,6 +48,13 @@ QComboBox{
     border-radius: 7px;
     padding: 6px;
     font: 25 12pt "Calibri Light";
+}
+
+
+QLineEdit {
+    color: white;
+    font: 25 12pt "Calibri Light";
+
 }
 
 

@@ -1,4 +1,3 @@
-
 import pylabnet.utils.pulseblock.pulse as po
 from pylabnet.utils.helper_methods import load_config
 import pylabnet.utils.pulseblock.pulse as po
@@ -26,6 +25,9 @@ from PyQt5.QtWidgets import QGroupBox, QFormLayout, QComboBox, QMainWindow, QApp
 
 
 from PyQt5.QtGui import QBrush, QColor
+from pylabnet.utils.helper_methods import slugify
+
+
 
 
 class PulseMaster:
@@ -79,7 +81,8 @@ class PulseMaster:
         self.gui.apply_stylesheet()
 
     def setup_pulse_selector_form(self):
-        self.pulse_selector_form = QGroupBox("Pulse selector")
+        self.pulse_selector_form_static = QGroupBox()
+        self.pulse_selector_form_static.setObjectName("pulse_static_input")
         self.pulse_selector_channelselection = QLineEdit()
         self.pulse_selector_pulse_drop_down = QComboBox()
 
@@ -89,17 +92,38 @@ class PulseMaster:
         # Connect to change function
         self.pulse_selector_pulse_drop_down.currentTextChanged.connect(self.build_pulse_input_fields)
 
-        self.pulse_selector_form_layout = QFormLayout()
-        self.pulse_selector_form_layout.addRow(QLabel("Channel:"), self.pulse_selector_channelselection)
-        self.pulse_selector_form_layout.addRow(QLabel("Pulse Type:"), self.pulse_selector_pulse_drop_down)
-        self.pulse_selector_form.setLayout(self.pulse_selector_form_layout)
+        # Create one Form to contain the for fields that never change.
+        self.pulse_selector_form_layout_static = QFormLayout()
+        self.pulse_selector_form_layout_static.addRow(QLabel("Channel:"), self.pulse_selector_channelselection)
+        self.pulse_selector_form_layout_static.addRow(QLabel("Pulse Type:"), self.pulse_selector_pulse_drop_down)
+        self.pulse_selector_form_static.setLayout(self.pulse_selector_form_layout_static)
 
-        # Add form to Hbox layout
-        self.widgets['add_pulse_layout'].addWidget(self.pulse_selector_form)
 
+        # Add a second form containing the fields that change from pulsetype to pulsetype
+        self.pulse_selector_form_variable = QGroupBox()
+        self.pulse_selector_form_variable.setObjectName("pulse_var_input")
+
+        self.pulse_selector_form_layout_variable = QFormLayout()
+        self.pulse_selector_form_variable.setLayout(self.pulse_selector_form_layout_variable)
+
+        # Add forms to Hbox layout
+        self.widgets['add_pulse_layout'].addWidget(self.pulse_selector_form_static)
+        self.widgets['add_pulse_layout'].addWidget(self.pulse_selector_form_variable)
+
+        # Build pulse-specific fileds.
+        self.build_pulse_input_fields()
+
+    def _remove_variable_pulse_fields(self):
+        """Remove all pulse-type specific fields from layout."""
+        num_rows =  self.pulse_selector_form_layout_variable.rowCount()
+        for _ in range(num_rows):
+            self.pulse_selector_form_layout_variable.removeRow(0)
 
     def build_pulse_input_fields(self):
         """Change input fields if pulse selector dropdown has been changed."""
+
+        # Remove old entries.
+        self._remove_variable_pulse_fields()
 
         # Retrieve combobox-value
         current_pulsetype = str(self.pulse_selector_pulse_drop_down.currentText())
@@ -121,7 +145,11 @@ class PulseMaster:
                 for choice in field['combo_choice']:
                     field_input.addItem(choice)
 
-            self.pulse_selector_form_layout.addRow(field_label, field_input)
+            # Auto create name of widget:
+            input_widget_name = f"{slugify(field['label'])}_{field_type}"
+            field_input.setObjectName(input_widget_name)
+
+            self.pulse_selector_form_layout_variable.addRow(field_label, field_input)
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()

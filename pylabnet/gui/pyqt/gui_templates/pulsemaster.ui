@@ -14,7 +14,7 @@
    <string>Pulsemaster</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="layoutWidget">
@@ -22,7 +22,7 @@
      <rect>
       <x>20</x>
       <y>10</y>
-      <width>320</width>
+      <width>347</width>
       <height>35</height>
      </rect>
     </property>
@@ -37,12 +37,12 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
+         <family>MS Shell Dlg 2</family>
          <pointsize>12</pointsize>
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">background-color: rgb(170, 170, 255);</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>STOP</string>
@@ -56,12 +56,12 @@
       <widget class="QLabel" name="ip_label">
        <property name="font">
         <font>
-         <family>Calibri Light</family>
+         <family>MS Shell Dlg 2</family>
          <pointsize>12</pointsize>
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(255, 255, 255);</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>IP Address: N/A</string>
@@ -72,12 +72,12 @@
       <widget class="QLabel" name="port_label">
        <property name="font">
         <font>
-         <family>Calibri Light</family>
+         <family>MS Shell Dlg 2</family>
          <pointsize>12</pointsize>
         </font>
        </property>
        <property name="styleSheet">
-        <string notr="true">color: rgb(255, 255, 255);</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>GUI Port: N/A</string>
@@ -126,7 +126,7 @@
       <item>
        <widget class="QTableView" name="DIO_table">
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(72, 72, 72);</string>
+         <string notr="true"/>
         </property>
        </widget>
       </item>
@@ -142,9 +142,7 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load DIO assignment from config file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="styleSheet">
-         <string notr="true">
-
-background-color: rgb(170, 170, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>Update DIO Assignment</string>
@@ -205,14 +203,7 @@ background-color: rgb(170, 170, 255);</string>
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">    background-color:rgb(135, 135, 135);
-    color: white;
-    border-style:outset;
-    border-color:  rgb(77,77,77);
-    border-width: 0px;
-    border-radius: 7px;
-    padding: 6px;
-    font: 25 12pt &quot;Calibri Light&quot;;</string>
+       <string notr="true"/>
       </property>
       <property name="text">
        <string>Add Pulse</string>
@@ -255,12 +246,12 @@ background-color: rgb(170, 170, 255);</string>
         <widget class="QLabel" name="ip_label_2">
          <property name="font">
           <font>
-           <family>Calibri Light</family>
+           <family>MS Shell Dlg 2</family>
            <pointsize>12</pointsize>
           </font>
          </property>
          <property name="styleSheet">
-          <string notr="true">color: rgb(255, 255, 255);</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>Available Pulseblocks:</string>
@@ -268,19 +259,16 @@ background-color: rgb(170, 170, 255);</string>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="pulseblock_combo"/>
+        <widget class="QComboBox" name="pulseblock_combo">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="new_pulseblock_button">
          <property name="styleSheet">
-          <string notr="true">    background-color:rgb(135, 135, 135);
-    color: white;
-    border-style:outset;
-    border-color:  rgb(77,77,77);
-    border-width: 0px;
-    border-radius: 7px;
-    padding: 6px;
-    font: 25 12pt &quot;Calibri Light&quot;;</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>New Pulse Block</string>
@@ -322,14 +310,7 @@ background-color: rgb(170, 170, 255);</string>
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">    background-color:rgb(135, 135, 135);
-    color: white;
-    border-style:outset;
-    border-color:  rgb(77,77,77);
-    border-width: 0px;
-    border-radius: 7px;
-    padding: 6px;
-    font: 25 12pt &quot;Calibri Light&quot;;</string>
+       <string notr="true"/>
       </property>
       <property name="text">
        <string>Add Variable</string>
@@ -355,7 +336,7 @@ background-color: rgb(170, 170, 255);</string>
        </rect>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: rgb(72, 72, 72);</string>
+       <string notr="true"/>
       </property>
      </widget>
     </widget>

@@ -50,10 +50,14 @@ class CountMonitor:
 
         # Instantiate GUI window
         self.gui = Window(
-            gui_template=ui, 
-            host=socket.gethostbyname(socket.gethostname()), 
+            gui_template=ui,
+            host=socket.gethostbyname(socket.gethostname()),
             port=server_port
         )
+
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
@@ -103,7 +107,7 @@ class CountMonitor:
             self._ctr.start_trace(
                 name='monitor',
                 ch_list=self._ch_list,
-                bin_width=self._bin_width, 
+                bin_width=self._bin_width,
                 n_bins=self._n_bins
             )
 
@@ -184,7 +188,7 @@ class CountMonitor:
                 self.widgets[f'curve_{channel}'],
                 ' - '+f'Channel {channel}'
             )
-            
+
 
             # Assign scalar
             # self.gui_handler.assign_label(

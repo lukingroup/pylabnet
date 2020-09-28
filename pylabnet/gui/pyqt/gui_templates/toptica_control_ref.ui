@@ -20,7 +20,7 @@
    <string>Toptica Control</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">background-color: rgb(0, 0, 0);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="layoutDirection">
@@ -115,7 +115,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Laser emission</string>
@@ -155,7 +155,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Temperature Setpoint (C):</string>
@@ -171,7 +171,9 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -216,7 +218,9 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">background-color: rgb(170, 170, 255);
+font: 25 12pt &quot;Calibri Light&quot;;
+</string>
       </property>
       <property name="text">
        <string>Update</string>
@@ -238,7 +242,7 @@
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
        <string>Temperature Actual (C):</string>
@@ -254,7 +258,9 @@
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
       </property>
       <property name="frame">
        <bool>false</bool>
@@ -305,7 +311,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Current Setpoint (mA):</string>
@@ -321,7 +327,9 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -366,7 +374,8 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
+background-color: rgb(170, 170, 255);</string>
       </property>
       <property name="text">
        <string>Update</string>
@@ -388,7 +397,7 @@
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
        <string>Current Actual (mA):</string>
@@ -404,7 +413,9 @@
        </font>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
       </property>
       <property name="frame">
        <bool>false</bool>
@@ -449,7 +460,9 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -492,7 +505,9 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -535,7 +550,9 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);
+selection-background-color: rgb(0, 85, 0);
+selection-color: rgb(255, 255, 255);</string>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -584,7 +601,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Scan Amplitude (V):</string>
@@ -606,7 +623,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Scan Frequency (Hz):</string>
@@ -628,7 +645,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>Scan Offset (V):</string>
@@ -650,7 +667,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true"/>
+         <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
          <string>     Scan</string>

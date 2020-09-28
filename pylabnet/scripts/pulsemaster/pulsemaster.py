@@ -46,17 +46,15 @@ class DictionaryTableModel(QAbstractTableModel):
         super(DictionaryTableModel, self).__init__()
 
         # Prepare data.
-        data_ok, data = self.__prepare_data(data)
+        data_ok, datadict = self.__prepare_data(data)
 
         assert data_ok, "Input dictionary invalid."
 
-        self.data = data
+        self.datadict = datadict
         self._header = header
 
         # Set editing mode.
         self.editable = editable
-
-
 
     def flags(self, index):
         """ Make table fields editable."""
@@ -71,7 +69,7 @@ class DictionaryTableModel(QAbstractTableModel):
             return self._header[section]
         return QAbstractTableModel.headerData(self, section, orientation, role)
 
-    def _prepare_single_string_dict(self, data):
+    def _prepare_single_string_dict(self, datadict):
         """ Transform data dict into list of lists.
 
         To be used if dictionary values are strings.
@@ -79,16 +77,16 @@ class DictionaryTableModel(QAbstractTableModel):
 
         data_list = []
 
-        for key, item in data.items():
+        for key, item in datadict.items():
             data_list.append([key, item])
 
 
         if data_list == []:
-            data_list = [["fdf", "df"]]
+            data_list = [["", ""]]
 
         return data_list
 
-    def _prepare_list_dict(self, data):
+    def _prepare_list_dict(self, datadict):
         """ Transform data dict into list of lists.
 
         To be used if dictionary values are lists.
@@ -97,7 +95,7 @@ class DictionaryTableModel(QAbstractTableModel):
 
         data_list = []
 
-        for i, (key, item) in enumerate(data.items()):
+        for i, (key, item) in enumerate(datadict.items()):
             entry_list = []
             entry_list.append(key)
             for list_entry in item:
@@ -105,14 +103,14 @@ class DictionaryTableModel(QAbstractTableModel):
 
         return data_list
 
-    def __prepare_data(self, data):
+    def __prepare_data(self, datadict):
         """Check if dictioanry is either containing strings as values,
         or lists of the same length.
 
         Generate list out of dictionary.
         """
 
-        values = data.values()
+        values = datadict.values()
         data_ok = False
 
         # Check if all values are one allowed datatype:
@@ -120,8 +118,8 @@ class DictionaryTableModel(QAbstractTableModel):
         for allowed_datatype in allowed_datatypes:
             if all(isinstance(value, allowed_datatype) for value in values):
                 data_ok = True
-                data = self._prepare_single_string_dict(data)
-                return data_ok, data
+                datadict = self._prepare_single_string_dict(datadict)
+                return data_ok, datadict
 
         # Check if values are all lists.
         if all(isinstance(value, list) for value in values):
@@ -135,8 +133,8 @@ class DictionaryTableModel(QAbstractTableModel):
                 return data_ok, None
             else:
                 data_ok = True
-                data = self._prepare_list_dict(data)
-                return data_ok, data
+                datadict = self._prepare_list_dict(datadict)
+                return data_ok, datadict
         else:
             data_ok = False
             return data_ok, None
@@ -147,11 +145,11 @@ class DictionaryTableModel(QAbstractTableModel):
         row=index.row()
         column=index.column()
 
-        if row>len(self.data): return QVariant()
-        if column>len(self.data[row]): return QVariant()
+        if row>len(self.datadict): return QVariant()
+        if column>len(self.datadict[row]): return QVariant()
 
         if role == Qt.EditRole or role == Qt.DisplayRole:
-            return QVariant(self.data[row][column])
+            return QVariant(self.datadict[row][column])
 
         return QVariant()
 
@@ -161,22 +159,22 @@ class DictionaryTableModel(QAbstractTableModel):
             if role == Qt.EditRole:
                 row = index.row()
                 column=index.column()
-                if row>len(self.data) or column>len(self.data[row]):
+                if row>len(self.datadict) or column>len(self.datadict[row]):
                     return False
                 else:
-                    self.data[row][column]=value
+                    self.datadict[row][column]=value
                     self.dataChanged.emit(index, index)
                     return True
         return False
 
     def rowCount(self, index):
         # The length of the outer list.
-        return len(self.data)
+        return len(self.datadict)
 
     def columnCount(self, index):
         # The following takes the first sub-list, and returns
         # the length (only works if all rows are an equal length)
-        return len(self.data[0])
+        return len(self.datadict[0])
 
 
     def add_dict(self, data_dict):
@@ -272,12 +270,19 @@ class PulseMaster:
         # Connect change of vartiable data to update variable dict function.
         self.variable_table_model.dataChanged.connect(self._update_variable_dict)
 
+        # Store completers
+        self.var_completer  = QCompleter(self.vars.keys())
+
         # Connect Add variable button.
         self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
 
 
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
+
+
+        # Store widget which store variable autocomplete.
+        self.var_completer_widgets = []
 
         # Initilize Pulse Selector Form
         self.setup_pulse_selector_form()
@@ -295,19 +300,49 @@ class PulseMaster:
 
         self.add_pb_popup = None
 
+    def validate_and_clean_vars_data(self, table_data):
+        """Validate and typecast variable table data"""
+
+        validated = True
+
+        for i, row in enumerate(table_data):
+            varname = row[0]
+            var_val = row[1:][0]
+            if varname == "":
+                validated = False
+                self.log.warn(f'Variable name {varname} is valid.')
+
+            # Try typecast
+            try:
+                # Typecast and update data.
+                var_val_float = float(var_val)
+            except ValueError:
+                self.log.warn(f'Variable value {var_val} cannot be typecast to float.')
+                validated =  False
+
+        return validated, table_data
+
     def _update_variable_dict(self):
         """ Get variables from table and store in dict."""
-        table_data = np.asarray(self.variable_table_model.data)
+        table_data = np.asarray(self.variable_table_model.datadict)
+
+        # If data are not valid, do nothing.
+        validated, cleaned_data = self.validate_and_clean_vars_data(table_data)
+        if not validated:
+            return
 
         # Reset variable dict:
         self.vars = {}
 
         # Update data
-        for row in table_data:
+        for row in cleaned_data:
             self.vars[row[0]] = float(row[1:][0])
 
+        # Update completer
+        self.update_var_completer()
+
     def _add_row_to_var_table(self):
-        self.variable_table_model.data.append(["", ""])
+        self.variable_table_model.datadict.append(["", ""])
         self.variable_table_model.layoutChanged.emit()
 
     def add_pulseblock(self):
@@ -409,6 +444,13 @@ class PulseMaster:
 
         return channel
 
+    def update_var_completer(self):
+        """ Update variable completer """
+        self.var_completer  = QCompleter(self.vars.keys())
+
+        for widget in self.var_completer_widgets:
+                widget.setCompleter(self.var_completer)
+
 
     def setup_pulse_selector_form(self):
         self.pulse_selector_form_static = QGroupBox()
@@ -488,6 +530,9 @@ class PulseMaster:
         # Remove old entries.
         self._remove_variable_pulse_fields()
 
+        # Resset widget list
+        self.var_completer_widgets = []
+
         # Load pulsetype settings
         pulsetype_dict = self._current_pulsetype_dict()
 
@@ -502,6 +547,10 @@ class PulseMaster:
             # Add choices to combobox.
             if type(field_input) is QComboBox:
                     field_input.addItems(field['combo_choice'])
+            else:
+                # Add completer
+                self.var_completer_widgets.append(field_input)
+                field_input.setCompleter(self.var_completer)
 
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(field)

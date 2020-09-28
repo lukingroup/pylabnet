@@ -28,16 +28,7 @@ from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayou
 
 from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
-
-class MyDelegate(QItemDelegate):
-    """ From https://stackoverflow.com/questions/37548782/edit-table-in-pyqt-qabstracttablemodel-without-deletion-of-content """
-
-    def createEditor(self, parent, option, index):
-        return super(MyDelegate, self).createEditor(parent, option, index)
-
-    def setEditorData(self, editor, index):
-        text = index.data(Qt.EditRole) or index.data(Qt.DisplayRole)
-        editor.setText(text)
+from PyQt5.QtCore import QVariant
 
 
 class DictionaryTableModel(QAbstractTableModel):
@@ -65,15 +56,17 @@ class DictionaryTableModel(QAbstractTableModel):
         self.editable = editable
 
     def flags(self, index):
+        """ Make table fields editable."""
         if self.editable:
             return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        else:
+            return Qt.NoItemFlags
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         """Set header."""
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._header[section]
         return QAbstractTableModel.headerData(self, section, orientation, role)
-
 
     def _prepare_single_string_dict(self, data):
         """ Transform data dict into list of lists.
@@ -88,7 +81,7 @@ class DictionaryTableModel(QAbstractTableModel):
 
 
         if data_list == []:
-            data_list = [["", ""]]
+            data_list = [["fdf", "df"]]
 
         return data_list
 
@@ -145,13 +138,32 @@ class DictionaryTableModel(QAbstractTableModel):
             data_ok = False
             return data_ok, None
 
-
     def data(self, index, role):
-        if role == Qt.DisplayRole:
-            # See below for the nested-list data structure.
-            # .row() indexes into the outer list,
-            # .column() indexes into the sub-list
-            return self._data[index.row()][index.column()]
+        """ From https://stackoverflow.com/questions/28186118/how-to-make-qtableview-to-enter-the-editing-mode-only-on-double-click"""
+        if not index.isValid(): return QVariant()
+        row=index.row()
+        column=index.column()
+
+        if row>len(self._data): return QVariant()
+        if column>len(self._data[row]): return QVariant()
+
+        if role == Qt.EditRole or role == Qt.DisplayRole:
+            return QVariant(self._data[row][column])
+
+        return QVariant()
+
+    def setData(self, index, value, role=Qt.EditRole):
+        """ From https://stackoverflow.com/questions/28186118/how-to-make-qtableview-to-enter-the-editing-mode-only-on-double-click"""
+        if index.isValid():
+            if role == Qt.EditRole:
+                row = index.row()
+                column=index.column()
+                if row>len(self._data) or column>len(self._data[row]):
+                    return False
+                else:
+                    self._data[row][column]=value
+                    return True
+        return False
 
     def rowCount(self, index):
         # The length of the outer list.
@@ -173,8 +185,6 @@ class DictionaryTableModel(QAbstractTableModel):
             item = QTableWidgetItem(item)
             self.setItem(i,0,key)
             self.setItem(i,1,str(item))
-
-
 
 
 class AddPulseblockPopup(QWidget):
@@ -246,9 +256,6 @@ class PulseMaster:
 
         self.variable_table =self.widgets['variable_table_view']
 
-        delegate = MyDelegate()
-        self.variable_table.setItemDelegate(delegate)
-
         self.model = DictionaryTableModel(
             self.vars,
             header=["Variable", "Value"],
@@ -256,6 +263,9 @@ class PulseMaster:
         )
 
         self.variable_table.setModel(self.model)
+
+
+
 
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)

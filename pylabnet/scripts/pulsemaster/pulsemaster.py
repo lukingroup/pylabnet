@@ -6,6 +6,8 @@ from pylabnet.utils.pulseblock.pb_sample import pb_sample
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.hardware.staticline import staticline
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
+from pylabnet.utils.helper_methods import slugify
+
 
 
 """ Generic script for monitoring counts from a counter """
@@ -24,13 +26,23 @@ from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_
 from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
-from PyQt5.QtGui import QBrush, QColor, QPainter
+from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
-from pylabnet.utils.helper_methods import slugify
+
+class MyDelegate(QItemDelegate):
+    """ From https://stackoverflow.com/questions/37548782/edit-table-in-pyqt-qabstracttablemodel-without-deletion-of-content """
+
+    def createEditor(self, parent, option, index):
+        return super(MyDelegate, self).createEditor(parent, option, index)
+
+    def setEditorData(self, editor, index):
+        text = index.data(Qt.EditRole) or index.data(Qt.DisplayRole)
+        editor.setText(text)
+
 
 class DictionaryTableModel(QAbstractTableModel):
     """ Table Model with data which can be access and set via a python dictionary."""
-    def __init__(self, data, header):
+    def __init__(self, data, header, editable=False):
         """Instanciating  TableModel
 
         :data: Dictionary which should fill table,
@@ -49,14 +61,21 @@ class DictionaryTableModel(QAbstractTableModel):
         self._data = data
         self._header = header
 
+        # Set editing mode.
+        self.editable = editable
+
+    def flags(self, index):
+        if self.editable:
+            return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
-            if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-                return self._header[section]
-            return QAbstractTableModel.headerData(self, section, orientation, role)
+        """Set header."""
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self._header[section]
+        return QAbstractTableModel.headerData(self, section, orientation, role)
 
 
-    def _prepare_singel_string_dict(self, data):
+    def _prepare_single_string_dict(self, data):
         """ Transform data dict into list of lists.
 
         To be used if dictionary values are strings.
@@ -105,7 +124,7 @@ class DictionaryTableModel(QAbstractTableModel):
         for allowed_datatype in allowed_datatypes:
             if all(isinstance(value, allowed_datatype) for value in values):
                 data_ok = True
-                data = self._prepare_singel_string_dict(data)
+                data = self._prepare_single_string_dict(data)
                 return data_ok, data
 
         # Check if values are all lists.
@@ -154,6 +173,9 @@ class DictionaryTableModel(QAbstractTableModel):
             item = QTableWidgetItem(item)
             self.setItem(i,0,key)
             self.setItem(i,1,str(item))
+
+
+
 
 class AddPulseblockPopup(QWidget):
     """ Widget class of Add pulseblock popup"""
@@ -216,7 +238,6 @@ class PulseMaster:
             variable_table_view = 1
         )
 
-
         # Initialize empty pulseblock dictionary.
         self.pulseblocks = {}
 
@@ -225,9 +246,16 @@ class PulseMaster:
 
         self.variable_table =self.widgets['variable_table_view']
 
-        self.model = DictionaryTableModel(self.vars, header=["Variable", "Value"])
-        self.variable_table.setModel(self.model)
+        delegate = MyDelegate()
+        self.variable_table.setItemDelegate(delegate)
 
+        self.model = DictionaryTableModel(
+            self.vars,
+            header=["Variable", "Value"],
+            editable=True
+        )
+
+        self.variable_table.setModel(self.model)
 
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)

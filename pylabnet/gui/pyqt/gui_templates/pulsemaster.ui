@@ -315,7 +315,7 @@ background-color: rgb(170, 170, 255);</string>
      <widget class="QPushButton" name="new_pulseblock_button_3">
       <property name="geometry">
        <rect>
-        <x>60</x>
+        <x>80</x>
         <y>360</y>
         <width>232</width>
         <height>52</height>
@@ -348,10 +348,10 @@ background-color: rgb(170, 170, 255);</string>
      <widget class="QTableView" name="variable_table_view">
       <property name="geometry">
        <rect>
-        <x>90</x>
-        <y>90</y>
-        <width>256</width>
-        <height>192</height>
+        <x>10</x>
+        <y>30</y>
+        <width>361</width>
+        <height>311</height>
        </rect>
       </property>
       <property name="styleSheet">

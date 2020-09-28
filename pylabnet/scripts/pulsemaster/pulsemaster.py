@@ -24,7 +24,7 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
 from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
@@ -305,7 +305,7 @@ class PulseMaster:
 
         validated = True
 
-        for i, row in enumerate(table_data):
+        for row in table_data:
             varname = row[0]
             var_val = row[1:][0]
             if varname == "":
@@ -426,23 +426,107 @@ class PulseMaster:
         # Get pulsetype dict
         pulsetype_dict = self._current_pulsetype_dict()
 
-        pulse_params = self.read_pulse_params_from_form()
+        valid, pulsedict = self.read_pulse_params_from_form()
+
+        if not valid:
+            return
+
+        self.showerror(str(pulsedict))
 
         # # Create new pulse
         # if pulsetype_dict["pulseblock_type"] == "PTrue":
         #     new_pulse = po.PTrue(ch=laser_1, dur=delta_t_laser_1)
 
 
+    def return_pulsedict(self, pulsetype_dict):
+        """ Return values of pulse fields."""
+
+        # Retreive values
+        qline__field_names =   [self._get_form_field_widget_name(field) for field in pulsetype_dict['fields'] if field['input_type'] == "QLineEdit"]
+        combobox_field_names = [self._get_form_field_widget_name(field) for field in pulsetype_dict['fields'] if field['input_type'] == "QComboBox"]
+
+        qline__field_vars =   [field['var'] for field in pulsetype_dict['fields'] if field['input_type'] == "QLineEdit"]
+        combobox_field_vars = [field['var'] for field in pulsetype_dict['fields'] if field['input_type'] == "QComboBox"]
+
+        qlineedits = [self.pulse_selector_form_variable.findChild(QLineEdit, field_name).text() for field_name in qline__field_names ]
+        comboboxs =  [self.pulse_selector_form_variable.findChild(QComboBox, field_name).currentText() for field_name in combobox_field_names]
+
+
+        # Construc data
+        pulsedict_data = {}
+        for field_name, field_val in zip(qline__field_vars, qlineedits):
+            pulsedict_data[field_name] = field_val
+
+        for field_name, field_val in zip(combobox_field_vars, comboboxs):
+            pulsedict_data[field_name] = field_val
+
+        return pulsedict_data
+
+
+    def clean_and_validate_pulsedict(self, pulsedict):
+        """ Check if input values are valid and typecast values"""
+        validated = True
+        typecast_error = []
+        for key, val in pulsedict.items():
+            try:
+                # Typecast and update data.
+                var_val_float = float(val)
+                pulsedict[key] = var_val_float
+            except ValueError:
+                # if typecasting failed, check value is variable.
+                if val not in self.vars.keys() and key != "tref":
+                    typecast_error.append(key)
+                    validated =  False
+
+        if not validated:
+            if len(typecast_error) > 1:
+                error_msg = f"Invalid entries for parameters: {typecast_error}"
+            else:
+                error_msg = f"Invalid entry for parameter {typecast_error[0]}"
+            self.showerror(error_msg)
+
+        return validated, pulsedict
+
     def read_pulse_params_from_form(self):
+        """ Read pulse parameters from input form, perfomr
+        integrity check and return a check flag as well as a dictioanry.
+        """
+
         channel = self.pulse_selector_channelselection.text()
-        pulsetype_dict = self._current_pulsetype_dict()
+        if channel not in self.DIO_assignment_dict.keys():
+            self.showerror("Please provide valid channel name.")
+            channel_validated = False
+        else:
+            channel_validated = True
+
+        # Get data from fields
+        if channel_validated:
+            pulsetype_dict = self._current_pulsetype_dict()
+            pulsedict_data = self.return_pulsedict(pulsetype_dict)
+
+            # Validate data
+            data_validated, pulsedict = self.clean_and_validate_pulsedict(pulsedict_data)
+
+            # Add channel to dict
+            pulsedict['channel'] = channel
+        else:
+            data_validated = False
+            pulsedict = None
+
+        if  data_validated and channel_validated:
+            valid = True
+        else:
+            valid = False
+
+        return valid, pulsedict
 
 
-        duration_field = [field for field in pulsetype_dict['fields'] if field['pulseblock_input_name'] == "dur"][0]
-        duration_field_name = self._get_form_field_widget_name(duration_field)
-        self.log.info(duration_field_name)
+    def showerror(self, error_message):
+        """ Show error message."""
+        error_dialog = QErrorMessage()
+        error_dialog.showMessage(error_message)
+        error_dialog.exec_()
 
-        return channel
 
     def update_var_completer(self):
         """ Update variable completer """

@@ -124,7 +124,7 @@
      </attribute>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
-       <widget class="QTableWidget" name="DIO_table">
+       <widget class="QTableView" name="DIO_table">
         <property name="styleSheet">
          <string notr="true">background-color: rgb(72, 72, 72);</string>
         </property>
@@ -354,8 +354,24 @@ background-color: rgb(170, 170, 255);</string>
         <height>192</height>
        </rect>
       </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(72, 72, 72);</string>
+      </property>
      </widget>
     </widget>
+   </widget>
+   <widget class="QTableWidget" name="DIO_table_old">
+    <property name="geometry">
+     <rect>
+      <x>1820</x>
+      <y>460</y>
+      <width>353</width>
+      <height>295</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(72, 72, 72);</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

@@ -209,20 +209,12 @@ class PulseMaster:
         self.pulseblocks = {}
 
         # Initialize Variable dict
-        self.vars = {
-            "tau": [5, 5],
-            "delta": [10, 5]
-        }
+        self.vars = {}
 
-        self.table =self.widgets['variable_table_view']
+        self.variable_table =self.widgets['variable_table_view']
 
         self.model = DictionaryTableModel(self.vars)
-        self.table.setModel(self.model)
-
-
-
-        #self.setCentralWidget(self.table)
-
+        self.variable_table.setModel(self.model)
 
 
         # Connect "Update DIO Assignment" Button
@@ -471,35 +463,13 @@ class PulseMaster:
         # Update DIO assignments from dict
         self.load_dio_assignment_from_dict()
 
-        dio_table = self.widgets['DIO_table']
+        self.model = DictionaryTableModel(self.DIO_assignment_dict)
+        self.widgets['DIO_table'].setModel(self.model)
 
-        # Define table size
-        dio_table.setRowCount(len(self.DIO_assignment_dict.keys()))
-        dio_table.setColumnCount(2)
+        # Update completer.
+        self.set_dio_channel_completer()
 
-        # Define header
-        # header = QStandardItemModel()
-        # header.setHorizontalHeaderLabels(['Staticline Name', 'DIO bit'])
-        # dio_table.setModel(header)
-
-        for i, (dio_name, dio_bit) in enumerate(self.DIO_assignment_dict.items()):
-            #Populate it
-
-            # Define table entries
-            dio_name_item = QTableWidgetItem(str(dio_name))
-            dio_bit_item = QTableWidgetItem(str(dio_bit))
-
-            # Color entries
-            dio_name_item.setForeground(QBrush(QColor(255, 255, 255)))
-            dio_bit_item.setForeground(QBrush(QColor(255, 255, 255)))
-
-            dio_table.setItem(i , 0, dio_name_item)
-            dio_table.setItem(i , 1, dio_bit_item)
-
-            # Update completer.
-            self.set_dio_channel_completer()
-
-            self.log.info('DIO settings successfully loaded.')
+        self.log.info('DIO settings successfully loaded.')
 
     def run(self):
         """ Runs an iteration of checks for updates and implements

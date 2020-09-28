@@ -30,7 +30,7 @@ from pylabnet.utils.helper_methods import slugify
 
 class DictionaryTableModel(QAbstractTableModel):
     """ Table Model with data which can be access and set via a python dictionary."""
-    def __init__(self, data):
+    def __init__(self, data, header):
         """Instanciating  TableModel
 
         :data: Dictionary which should fill table,
@@ -47,6 +47,14 @@ class DictionaryTableModel(QAbstractTableModel):
         assert data_ok, "Input dictionary invalid."
 
         self._data = data
+        self._header = header
+
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+            if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+                return self._header[section]
+            return QAbstractTableModel.headerData(self, section, orientation, role)
+
 
     def _prepare_singel_string_dict(self, data):
         """ Transform data dict into list of lists.
@@ -58,6 +66,10 @@ class DictionaryTableModel(QAbstractTableModel):
 
         for key, item in data.items():
             data_list.append([key, item])
+
+
+        if data_list == []:
+            data_list = [["", ""]]
 
         return data_list
 
@@ -213,7 +225,7 @@ class PulseMaster:
 
         self.variable_table =self.widgets['variable_table_view']
 
-        self.model = DictionaryTableModel(self.vars)
+        self.model = DictionaryTableModel(self.vars, header=["Variable", "Value"])
         self.variable_table.setModel(self.model)
 
 
@@ -463,7 +475,7 @@ class PulseMaster:
         # Update DIO assignments from dict
         self.load_dio_assignment_from_dict()
 
-        self.model = DictionaryTableModel(self.DIO_assignment_dict)
+        self.model = DictionaryTableModel(self.DIO_assignment_dict, header=["Channel Name", "DIO Bit"])
         self.widgets['DIO_table'].setModel(self.model)
 
         # Update completer.

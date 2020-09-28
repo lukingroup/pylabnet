@@ -30,7 +30,7 @@ from pylabnet.utils.helper_methods import slugify
 
 class DictionaryTableModel(QAbstractTableModel):
     """ Table Model with data which can be access and set via a python dictionary."""
-    def __init__(self, data, logger=None):
+    def __init__(self, data):
         """Instanciating  TableModel
 
         :data: Dictionary which should fill table,
@@ -41,38 +41,79 @@ class DictionaryTableModel(QAbstractTableModel):
         """
         super(DictionaryTableModel, self).__init__()
 
-        # Check if dictionary is valid.
-        self._check_dict_integrity(data)
+        # Prepare data.
+        data_ok, data = self.__prepare_data(data)
+
+        assert data_ok, "Input dictionary invalid."
 
         self._data = data
 
+    def _prepare_singel_string_dict(self, data):
+        """ Transform data dict into list of lists.
 
-    def _check_dict_integrity(self, data):
+        To be used if dictionary values are strings.
+        """
+
+        data_list = []
+
+        for key, item in data.items():
+            data_list.append([key, item])
+
+        return data_list
+
+    def _prepare_list_dict(self, data):
+        """ Transform data dict into list of lists.
+
+        To be used if dictionary values are lists.
+        TODO: Test this.
+        """
+
+        data_list = []
+
+        for i, (key, item) in enumerate(data.items()):
+            entry_list = []
+            entry_list.append(key)
+            for list_entry in item:
+                entry_list.append(list_entry)
+
+        return data_list
+
+    def __prepare_data(self, data):
         """Check if dictioanry is either containing strings as values,
         or lists of the same length.
+
+        Generate list out of dictionary.
         """
 
         values = data.values()
+        data_ok = False
 
-        # Check if all values are strings:
-        if all(isinstance(value, str) for value in values):
-            self.logger.info("Filling table with string values.")
-            return
+        # Check if all values are one allowed datatype:
+        allowed_datatypes = [str, int, float]
+        for allowed_datatype in allowed_datatypes:
+            if all(isinstance(value, allowed_datatype) for value in values):
+                data_ok = True
+                data = self._prepare_singel_string_dict(data)
+                return data_ok, data
 
         # Check if values are all lists.
-        elif all(isinstance(value, list) for value in values):
+        if all(isinstance(value, list) for value in values):
 
             # Check if lists are of same length.
             it = iter(values)
             the_len = len(next(it))
 
             if not all(len(l) == the_len for l in it):
-                self.logger.error("Dictionary keys are lists of unequal size.")
-                return
+                data_ok = False
+                return data_ok, None
             else:
-                self.logger.info("Filling table with list values.")
+                data_ok = True
+                data = self._prepare_list_dict(data)
+                return data_ok, data
         else:
-            self.logger.error("Dictionary keys are neither strings nor lists.")
+            data_ok = False
+            return data_ok, None
+
 
     def data(self, index, role):
         if role == Qt.DisplayRole:
@@ -88,8 +129,6 @@ class DictionaryTableModel(QAbstractTableModel):
     def columnCount(self, index):
         # The following takes the first sub-list, and returns
         # the length (only works if all rows are an equal length)
-        self._data.values
-
         return len(self._data[0])
 
 
@@ -171,8 +210,8 @@ class PulseMaster:
 
         # Initialize Variable dict
         self.vars = {
-            "tau": 5,
-            "delta": 10
+            "tau": [5, 5],
+            "delta": [10, 5]
         }
 
         self.table =self.widgets['variable_table_view']

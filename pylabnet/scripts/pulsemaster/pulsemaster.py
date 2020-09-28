@@ -7,6 +7,7 @@ from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.hardware.staticline import staticline
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
 from pylabnet.utils.helper_methods import slugify
+import numpy as np
 
 
 
@@ -49,11 +50,13 @@ class DictionaryTableModel(QAbstractTableModel):
 
         assert data_ok, "Input dictionary invalid."
 
-        self._data = data
+        self.data = data
         self._header = header
 
         # Set editing mode.
         self.editable = editable
+
+
 
     def flags(self, index):
         """ Make table fields editable."""
@@ -144,11 +147,11 @@ class DictionaryTableModel(QAbstractTableModel):
         row=index.row()
         column=index.column()
 
-        if row>len(self._data): return QVariant()
-        if column>len(self._data[row]): return QVariant()
+        if row>len(self.data): return QVariant()
+        if column>len(self.data[row]): return QVariant()
 
         if role == Qt.EditRole or role == Qt.DisplayRole:
-            return QVariant(self._data[row][column])
+            return QVariant(self.data[row][column])
 
         return QVariant()
 
@@ -158,21 +161,22 @@ class DictionaryTableModel(QAbstractTableModel):
             if role == Qt.EditRole:
                 row = index.row()
                 column=index.column()
-                if row>len(self._data) or column>len(self._data[row]):
+                if row>len(self.data) or column>len(self.data[row]):
                     return False
                 else:
-                    self._data[row][column]=value
+                    self.data[row][column]=value
+                    self.dataChanged.emit(index, index)
                     return True
         return False
 
     def rowCount(self, index):
         # The length of the outer list.
-        return len(self._data)
+        return len(self.data)
 
     def columnCount(self, index):
         # The following takes the first sub-list, and returns
         # the length (only works if all rows are an equal length)
-        return len(self._data[0])
+        return len(self.data[0])
 
 
     def add_dict(self, data_dict):
@@ -245,7 +249,8 @@ class PulseMaster:
             add_pulse_button=1,
             new_pulseblock_button=1,
             pulseblock_combo=1,
-            variable_table_view = 1
+            variable_table_view = 1,
+            add_variable_button = 1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -256,15 +261,19 @@ class PulseMaster:
 
         self.variable_table =self.widgets['variable_table_view']
 
-        self.model = DictionaryTableModel(
+        self.variable_table_model = DictionaryTableModel(
             self.vars,
             header=["Variable", "Value"],
             editable=True
         )
 
-        self.variable_table.setModel(self.model)
+        self.variable_table.setModel(self.variable_table_model)
 
+        # Connect change of vartiable data to update variable dict function.
+        self.variable_table_model.dataChanged.connect(self._update_variable_dict)
 
+        # Connect Add variable button.
+        self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
 
 
         # Connect "Update DIO Assignment" Button
@@ -286,6 +295,20 @@ class PulseMaster:
 
         self.add_pb_popup = None
 
+    def _update_variable_dict(self):
+        """ Get variables from table and store in dict."""
+        table_data = np.asarray(self.variable_table_model.data)
+
+        # Reset variable dict:
+        self.vars = {}
+
+        # Update data
+        for row in table_data:
+            self.vars[row[0]] = float(row[1:][0])
+
+    def _add_row_to_var_table(self):
+        self.variable_table_model.data.append(["", ""])
+        self.variable_table_model.layoutChanged.emit()
 
     def add_pulseblock(self):
         self.add_pb_popup = AddPulseblockPopup()

@@ -312,7 +312,7 @@ background-color: rgb(170, 170, 255);</string>
      <property name="title">
       <string>Variable Explorer</string>
      </property>
-     <widget class="QPushButton" name="new_pulseblock_button_3">
+     <widget class="QPushButton" name="add_variable_button">
       <property name="geometry">
        <rect>
         <x>80</x>

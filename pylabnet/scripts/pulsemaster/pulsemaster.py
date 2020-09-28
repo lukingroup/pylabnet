@@ -21,15 +21,91 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QPushButton, QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayout, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
 from PyQt5.QtGui import QBrush, QColor, QPainter
-from PyQt5.QtCore import QRect
+from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from pylabnet.utils.helper_methods import slugify
 
+class DictionaryTableModel(QAbstractTableModel):
+    """ Table Model with data which can be access and set via a python dictionary."""
+    def __init__(self, data, logger=None):
+        """Instanciating  TableModel
+
+        :data: Dictionary which should fill table,
+            The key will be used to populate the first column entry,
+            the item will be used to populate the subsequent columns.
+            If item is String, only one column will be added. If Item is List,
+            one new colum for every list item will be added.
+        """
+        super(DictionaryTableModel, self).__init__()
+
+        # Check if dictionary is valid.
+        self._check_dict_integrity(data)
+
+        self._data = data
+
+
+    def _check_dict_integrity(self, data):
+        """Check if dictioanry is either containing strings as values,
+        or lists of the same length.
+        """
+
+        values = data.values()
+
+        # Check if all values are strings:
+        if all(isinstance(value, str) for value in values):
+            self.logger.info("Filling table with string values.")
+            return
+
+        # Check if values are all lists.
+        elif all(isinstance(value, list) for value in values):
+
+            # Check if lists are of same length.
+            it = iter(values)
+            the_len = len(next(it))
+
+            if not all(len(l) == the_len for l in it):
+                self.logger.error("Dictionary keys are lists of unequal size.")
+                return
+            else:
+                self.logger.info("Filling table with list values.")
+        else:
+            self.logger.error("Dictionary keys are neither strings nor lists.")
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            # See below for the nested-list data structure.
+            # .row() indexes into the outer list,
+            # .column() indexes into the sub-list
+            return self._data[index.row()][index.column()]
+
+    def rowCount(self, index):
+        # The length of the outer list.
+        return len(self._data)
+
+    def columnCount(self, index):
+        # The following takes the first sub-list, and returns
+        # the length (only works if all rows are an equal length)
+        self._data.values
+
+        return len(self._data[0])
+
+
+    def add_dict(self, data_dict):
+        """Populate table from dictionary.
+
+        :data_dict: Dictionary to populate table from.
+        """
+        for i, (key, item) in enumerate(data_dict.items()):
+            key = QTableWidgetItem(key)
+            item = QTableWidgetItem(item)
+            self.setItem(i,0,key)
+            self.setItem(i,1,str(item))
 
 class AddPulseblockPopup(QWidget):
+    """ Widget class of Add pulseblock popup"""
     def __init__(self):
         QWidget.__init__(self)
 
@@ -85,12 +161,29 @@ class PulseMaster:
             add_pulse_layout=1,
             add_pulse_button=1,
             new_pulseblock_button=1,
-            pulseblock_combo=1
+            pulseblock_combo=1,
+            variable_table_view = 1
         )
 
 
         # Initialize empty pulseblock dictionary.
         self.pulseblocks = {}
+
+        # Initialize Variable dict
+        self.vars = {
+            "tau": 5,
+            "delta": 10
+        }
+
+        self.table =self.widgets['variable_table_view']
+
+        self.model = DictionaryTableModel(self.vars)
+        self.table.setModel(self.model)
+
+
+
+        #self.setCentralWidget(self.table)
+
 
 
         # Connect "Update DIO Assignment" Button
@@ -137,7 +230,6 @@ class PulseMaster:
         # Create one Form to contain the for fields that never change.
         self.add_pb_popup.form_layout.addRow(QLabel("Pulseblock Name:"), self.add_pb_popup.pulseblock_name_field)
         self.add_pb_popup.form_layout.addRow(QLabel("Inherit from:"), self.add_pb_popup.pulseblock_inherit_field)
-
         self.add_pb_popup.form_groupbox.setLayout(self.add_pb_popup.form_layout)
 
         # Set Layout

@@ -234,7 +234,7 @@ background-color: rgb(170, 170, 255);</string>
       <rect>
        <x>450</x>
        <y>30</y>
-       <width>771</width>
+       <width>751</width>
        <height>431</height>
       </rect>
      </property>
@@ -298,6 +298,62 @@ background-color: rgb(170, 170, 255);</string>
         </widget>
        </item>
       </layout>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>1210</x>
+       <y>30</y>
+       <width>381</width>
+       <height>431</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Variable Explorer</string>
+     </property>
+     <widget class="QPushButton" name="new_pulseblock_button_3">
+      <property name="geometry">
+       <rect>
+        <x>60</x>
+        <y>360</y>
+        <width>232</width>
+        <height>52</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">    background-color:rgb(135, 135, 135);
+    color: white;
+    border-style:outset;
+    border-color:  rgb(77,77,77);
+    border-width: 0px;
+    border-radius: 7px;
+    padding: 6px;
+    font: 25 12pt &quot;Calibri Light&quot;;</string>
+      </property>
+      <property name="text">
+       <string>Add Variable</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>add_var.svg</normaloff>add_var.svg</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>40</width>
+        <height>40</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QTableView" name="variable_table_view">
+      <property name="geometry">
+       <rect>
+        <x>90</x>
+        <y>90</y>
+        <width>256</width>
+        <height>192</height>
+       </rect>
+      </property>
      </widget>
     </widget>
    </widget>

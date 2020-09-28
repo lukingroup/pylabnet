@@ -175,8 +175,8 @@ class LaserStabilizer:
         """Update the voltage setpoint to whatever value is currently in the setpoint spin box"""
         self.voltageSetpoint = self.widgets['p_setpoint'].value()/self.gain
 
-    def set_voltageSetpoint(self, value):
-        """Updates the voltage setpoint, for use by external programs wishing to interface with
+    def set_setpoint(self, value):
+        """Updates the power setpoint, for use by external programs wishing to interface with
         this one. 
         :param value: (float) setpoint value to use in units of power (not voltage!)
         NOTE: Using the GUI this is not normally automatically called. Instead the user must

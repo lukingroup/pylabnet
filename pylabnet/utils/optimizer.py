@@ -132,7 +132,7 @@ class IQOptimizer(Optimizer):
 
 		# Marker for upper sideband.
 		self.upp_sb_marker = sa_hardware.E4405BMarker(self.sa,'Upper Sideband',1)
-		print(float(self.upp_sb_marker))
+		print(self.upp_sb_marker)
 		self.lower_sb_marker = sa_hardware.E4405BMarker(self.sa,'Lower Sideband',2)
 		print(self.lower_sb_marker)
 		self.carrier_marker = sa_hardware.E4405BMarker(self.sa,'Carrier',3)

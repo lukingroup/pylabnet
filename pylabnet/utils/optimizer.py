@@ -60,7 +60,7 @@ class IQOptimizer(Optimizer):
 	CUSHION_PARAM = 2
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, num_points = 30, reopt = False,
+		self, mw_source, hd, sa, carrier, signal_freq, num_points = 25, reopt = False,
 		param_guess = ([60, 0.85, 0.65, 0.005, 0.005]), phase_window = 20, q_window = 0.3, dc_i_window = 0.02,
 		dc_q_window = 0.02, plot_traces = True
 	):
@@ -83,6 +83,11 @@ class IQOptimizer(Optimizer):
 		self.num_points = num_points
 		self.reopt = reopt
 		self.plot_traces = plot_traces
+
+		#Set mw freq
+		self.mw_source.output_on()
+		self.mw_source.set_freq(self.carrier)
+
 
 		#Instantiate IQ Optimizer sweep window
 		self.phase_min = param_guess[0]-phase_window/2
@@ -144,7 +149,7 @@ class IQOptimizer(Optimizer):
 		# define target frequencies
 		markers = [self.upp_sb_marker, self.lower_sb_marker, self.carrier_marker]
 		target_freqs = np.array([self.carrier + self.signal_freq, self.carrier - self.signal_freq, self.carrier])
-		max_deviation = 1e7
+		max_deviation = 1e6
 
 		for marker, target_freq in zip(markers, target_freqs):
 			marker_freq = marker.read_freq()

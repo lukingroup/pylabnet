@@ -12,6 +12,10 @@ class Service(ServiceBase):
             ao_channel=ao_channel,
             voltages=voltages
         )
+    
+    def exposed_get_ai_voltage(self, ai_channel, num_samples, max_range):
+        voltages = self._module.get_ai_voltage(ai_channel=ai_channel, num_samples=num_samples, max_range=max_range)
+        return pickle.dumps(voltages)
 
     def exposed_create_timed_counter(
         self, counter_channel, physical_channel, duration=0.1, name=None
@@ -41,6 +45,20 @@ class Client(ClientBase):
             ao_channel=ao_channel,
             voltage_pickle=voltage_pickle
         )
+
+    def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10):
+        """Measures the analog input voltage of NI DAQ mx card
+
+        :param ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
+        :aram num_samplies: (int) Number of samples to take
+        :param max_range: (float) Maximum range of voltage that will be measured
+        """
+        voltages_pickle = self._service.exposed_get_ai_voltage(
+            ai_channel=ai_channel,
+            num_samples=num_samples,
+            max_range=max_range
+        )
+        return pickle.loads(voltages_pickle)
 
     def create_timed_counter(
         self, counter_channel, physical_channel, duration=0.1, name=None

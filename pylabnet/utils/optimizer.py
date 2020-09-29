@@ -144,7 +144,7 @@ class IQOptimizer(Optimizer):
 		# define target frequencies
 		markers = [self.upp_sb_marker, self.lower_sb_marker, self.carrier_marker]
 		target_freqs = np.array([self.carrier + self.signal_freq, self.carrier - self.signal_freq, self.carrier])
-		max_deviation = 1e6
+		max_deviation = 1e7
 
 		for marker, target_freq in zip(markers, target_freqs):
 			marker_freq = marker.read_freq()

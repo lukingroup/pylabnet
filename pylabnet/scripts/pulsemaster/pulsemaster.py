@@ -248,7 +248,8 @@ class PulseMaster:
             new_pulseblock_button=1,
             pulseblock_combo=1,
             variable_table_view = 1,
-            add_variable_button = 1
+            add_variable_button = 1,
+            pulse_scrollbox = 1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -297,6 +298,11 @@ class PulseMaster:
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
+
+
+        # Make pulse toolbox invisible
+        self.widgets['pulse_scrollbox'].hide()
+
 
         self.add_pb_popup = None
 
@@ -431,11 +437,23 @@ class PulseMaster:
         if not valid:
             return
 
-        self.showerror(str(pulsedict))
-
         # # Create new pulse
-        # if pulsetype_dict["pulseblock_type"] == "PTrue":
-        #     new_pulse = po.PTrue(ch=laser_1, dur=delta_t_laser_1)
+        if pulsetype_dict["pulseblock_type"] == "PTrue":
+            new_pulse = po.PTrue(
+                ch=pulsedict["channel"],
+                dur=pulsedict["dur"]
+            )
+        elif pulsetype_dict["pulseblock_type"] == "PSin":
+            new_pulse = po.PSin(
+                ch=pulsedict["channel"],
+                dur=pulsedict["dur"],
+                amp=pulsedict["amp"],
+                freq=pulsedict["freq"],
+                ph=pulsedict["ph"]
+            )
+
+        self.showerror(str(new_pulse))
+
 
 
     def return_pulsedict(self, pulsetype_dict):

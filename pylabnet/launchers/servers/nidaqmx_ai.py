@@ -47,7 +47,7 @@ def launch(**kwargs):
 
 
         ni_driver = nidaqmx_card.Driver(
-            device_name=config['device'],
+            device_name=config['device_ai'],
             logger=ni_daqmx_logger
         )
     except OSError:

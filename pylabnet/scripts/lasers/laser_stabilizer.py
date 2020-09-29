@@ -21,22 +21,21 @@ class LaserStabilizer:
     def __init__(self, config='toptica_laser_stabilization', ao_client=None, ai_client=None):
         """Instantiates LaserStabilizer script object for stabilizing the laser
              :param config: (str) name of config file """
-                
+
         # Instantiate GUI
         self.gui = Window(
             gui_template='power_stabilizer',
             host=socket.gethostbyname(socket.gethostname())
         )
         self.widgets = get_gui_widgets(self.gui, p_setpoint=1, p_outputVoltage=1, label_power=1, config=1,
-            graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, start=1,
-            hardware_control=1, save_name=1, stop=1, clear=1)
+            graph=2, legend=2, hardware_control=1, clear=1, start=1, stop=1)
 
         self._ao_client = ao_client
         self._ai_client = ai_client
 
         self.widgets['config'].setText(config)
         self._load_config_file(config)
-        
+
         #Now initialize control/output voltage to 0, and set up label
         self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
         self.widgets['p_outputVoltage'].valueChanged.connect(self._set_output_voltage_from_label)
@@ -63,15 +62,15 @@ class LaserStabilizer:
 
     def _load_config_file(self, config):
         """Loads the config file"""
-        #Now load the config file 
+        #Now load the config file
         self.config = load_config(config, logger=None)
 
         #Instantiate links to power input (AI) and control output (AO) if the clients
         #were not passed in directly. THis allows us to still run this off of main
-        #instead of a launcher if required. 
+        #instead of a launcher if required.
         if self._ai_client == None:
             self._ai_client = nidaqmx_card_server.Client(
-                host=self.config["power_input_host"], 
+                host=self.config["power_input_host"],
                 port=self.config["power_input_port"]
             )
         if self._ao_client == None:
@@ -79,19 +78,19 @@ class LaserStabilizer:
                 host=self.config["ctrl_output_host"],
                 port=self.config["ctrl_output_port"]
             )
-            
+
 
         self._ai_channel = self.config["power_input_channel"]
         self._hwc_ai_channel = self.config['hardware_ctrl_input_channel']
         self._ao_channel = self.config["ctrl_output_channel"]
-        
+
         # Configure default parameters
         self.min_voltage = self.config['min_output_voltage'] #Minimum output voltage
         self.max_voltage = self.config['max_output_voltage'] #Maximum output voltage
         self.gain = self.config['gain'] #"Gain" between measured voltage and corresponding power
                                         # NOTE: Internally we store all measured powers as the raw voltages
                                         # we then only multiply by the gain factor when displaying
-                                        # it to the user. 
+                                        # it to the user.
         self.max_input_voltage =  self.config['max_input_voltage'] #Maximum possible input voltage, used for scaling
                                                                     #the DAQ acquisition range.
 
@@ -118,10 +117,10 @@ class LaserStabilizer:
             self._update_output_voltage_label()
 
         #We always need to update the plots as well and power label
-           
+
         self._update_plots()
         self._update_power_label()
-        
+
         self.gui.force_update()
 
     def start(self, update_st_gui=True, display_pts = 5000):
@@ -131,10 +130,10 @@ class LaserStabilizer:
                                 an external program wishes to start power locking the laser and manually sets the setpoint.
             :param display_pts: (int) number of display points to use in the plots"""
         if update_st_gui:
-            #First, update the setpoint based on the text in the GUI 
+            #First, update the setpoint based on the text in the GUI
             self._update_voltageSetpoint_fromGUI()
             self._set_output_voltage_from_label()
-        
+
         #Update hte PID parameters, which will save the new setpoint to the PID object we use
         self._update_PID()
 
@@ -143,7 +142,7 @@ class LaserStabilizer:
 
         #Finally turn on the power stabilization
         self._is_stabilizing = True
-        
+
     def stop(self):
         """This stops power stabilization"""
         self._is_stabilizing = False
@@ -151,7 +150,7 @@ class LaserStabilizer:
     def _update_hardware_control_from_gui(self):
         """Updates hardware_control based on the widget being checked"""
         self._under_hardware_control = self.widgets['hardware_control'].isChecked()
-    
+
     def _check_hardware_control(self):
         """Method updates whether the program is stabilizing the power or not
         dependent on the status of the voltage at the input port"""
@@ -164,7 +163,7 @@ class LaserStabilizer:
             else:
                 if v_input > self._hwc_thresh:
                     self.start()
-                
+
 
     def set_hardware_control(self, value):
         """Allows external program to set hardware control to the value inputed
@@ -180,15 +179,15 @@ class LaserStabilizer:
 
         #Checks if > 0.5s has elapsed since the last change to the power reading label
         #I do this since otherwise the text label updates too quickly and it's annoying
-        #to read. 
+        #to read.
         currTime = time.time()
-        if currTime - self._last_power_text_update > 0.5: 
-            #If it updates, reads in the power and updates 
+        if currTime - self._last_power_text_update > 0.5:
+            #If it updates, reads in the power and updates
             #TODO: Read the power in one function only and then all of the places that use it (updating feedback, updating power label, and plotting)
-            #access that member variable. Not a huge deal will slightly speed it up I guess and is a bit cleaner. 
+            #access that member variable. Not a huge deal will slightly speed it up I guess and is a bit cleaner.
             power = self.gain*np.array(self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage))
             self.widgets['label_power'].setText(str(power[-1]))
-            self._last_power = power[-1]/self.gain; 
+            self._last_power = power[-1]/self.gain;
             self._last_power_text_update = currTime
 
     #TODO: Can potentially use some getters/setters to clean up the below two functions make them a little more cllean for the user.
@@ -197,14 +196,14 @@ class LaserStabilizer:
         This is called when the laser is "locked" and the PID loop is actively changing
         the output voltage"""
         self.widgets['p_outputVoltage'].setValue((self._curr_output_voltage))
-        
+
     def _set_output_voltage_from_label(self):
         """Updates the output control voltage based on the text in the output voltage text box.
         This method is automatically run when the user changes the value in the text box, allowing
         the user to control the output voltage  directly when the laser power is not "locked".
         """
         if (~self._is_stabilizing): #Only updates value if we are not stabilizing, otherwise the PID loop will be driving the output voltage
-                                    #as opposed to the user. 
+                                    #as opposed to the user.
             self._curr_output_voltage = self.widgets['p_outputVoltage'].value()
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
@@ -220,7 +219,7 @@ class LaserStabilizer:
 
     def set_setpoint(self, value):
         """Updates the power setpoint, for use by external programs wishing to interface with
-        this one. 
+        this one.
         :param value: (float) setpoint value to use in units of power (not voltage!)
         NOTE: Using the GUI this is not normally automatically called. Instead the user must
         hit start agian to update the setpoint if they are in the middle of power stabilizing"""
@@ -228,7 +227,7 @@ class LaserStabilizer:
         self.widgets['p_setpoint'].setValue(value)
         #Need to reset the PID loop with this new setpoint value
         self._update_PID()
-        
+
 
     def _update_PID(self):
         """Creates a new PID object based on the current PID member variables to be used for power
@@ -324,7 +323,7 @@ class LaserStabilizer:
         )
 
         self._clear_data_plots(5000)
-        
+
 
     def _update_plots(self):
         """Updates the plots, both by adding in the new data and then drawing the data on the graph"""
@@ -342,7 +341,7 @@ class LaserStabilizer:
         # Now update voltage polots
         self.widgets['curve'][2].setData(self.out_voltages)
         self.widgets['curve'][3].setData(self.errors*self.gain)
-        
+
 class Service(ServiceBase):
     """ A service to enable external updating of LaserStabilizer parameters """
     def exposed_start(self):
@@ -372,7 +371,7 @@ def main():
     laser_stabilizer=LaserStabilizer('toptica_laser_stabilization')
     while True:
         laser_stabilizer.run()
-        
+
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 

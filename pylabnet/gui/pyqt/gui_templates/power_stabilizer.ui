@@ -506,12 +506,15 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          <string notr="true">color: rgb(255, 255, 255);</string>
         </property>
         <property name="text">
-         <string>Autosave:</string>
+         <string>Hardware Control:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="autosave">
+       <widget class="QPushButton" name="hardware_control">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="font">
          <font>
           <family>Calibri Light</family>

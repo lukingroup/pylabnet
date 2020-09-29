@@ -30,7 +30,7 @@ class LaserStabilizer:
         )
         self.widgets = get_gui_widgets(self.gui, p_setpoint=1, p_outputVoltage=1, label_power=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, start=1,
-            autosave=1, save_name=1, stop=1, clear=1)
+            hardware_control=1, save_name=1, stop=1, clear=1)
 
         self.widgets['config'].setText(config)
         self._load_config_file(config)
@@ -45,6 +45,11 @@ class LaserStabilizer:
         self._update_power_label()
 
         self._initialize_graphs()
+
+        #Setting up hardware power control options
+        self.widgets['hardware_control'].enabled = False
+        self._under_hardware_control = False
+        self.widgets['hardware_control'].toggled.connect(self._update_hardware_control_from_gui)
 
         #Finally hookup the final buttons
         self.widgets['start'].clicked.connect(lambda: self.start(update_st_gui=True))
@@ -66,6 +71,7 @@ class LaserStabilizer:
         )
 
         self._ai_channel = self.config["power_input_channel"]
+        self._hwc_ai_channel = self.config['hardware_ctrl_input_channel']
         
         self._ao_client = nidaqmx_card_server.Client(
             host=self.config["ctrl_output_host"],
@@ -83,6 +89,8 @@ class LaserStabilizer:
         self.max_input_voltage =  self.config['max_input_voltage'] #Maximum possible input voltage, used for scaling
                                                                     #the DAQ acquisition range.
 
+        self._hwc_thresh = self.config['hardware_ctrl_thresh']; #Threshold to turn hardware control on/off
+
         #Loading PID parameters
         self.paramP = self.config["pid"]["p"]
         self.paramI = self.config["pid"]["i"]
@@ -95,6 +103,9 @@ class LaserStabilizer:
 
     def run(self):
         """Main function to update both teh feedback loop as well as the gui"""
+
+        self._check_hardware_control()
+
         if self._is_stabilizing:
             #If we are locking the power, then need to update teh feedback loop and change the output label
             self._update_feedback()
@@ -130,6 +141,32 @@ class LaserStabilizer:
     def stop(self):
         """This stops power stabilization"""
         self._is_stabilizing = False
+
+    def _update_hardware_control_from_gui(self):
+        """Updates hardware_control based on the widget being checked"""
+        self._under_hardware_control = self.widgets['hardware_control'].isChecked()
+    
+    def _check_hardware_control(self):
+        """Method updates whether the program is stabilizing the power or not
+        dependent on the status of the voltage at the input port"""
+        if self._under_hardware_control:
+            v_input = self._ai_client.get_ai_voltage(self._hwc_ai_channel, max_range=10) #CHeck status of hwc voltage input
+            v_input = v_input[-1]
+            if self._is_stabilizing:
+                if v_input < self._hwc_thresh:
+                    self.stop()
+            else:
+                if v_input > self._hwc_thresh:
+                    self.start()
+                
+
+    def set_hardware_control(self, value):
+        """Allows external program to set hardware control to the value inputed
+            :param value: (Boolean) whether hardware control should be turned off or no
+            """
+        self.widgets['hardware_control'].setChecked(value)
+        self._under_hardware_control = value
+
 
 
     def _update_power_label(self):
@@ -212,7 +249,13 @@ class LaserStabilizer:
 
 
         #Finally updating the analog output
-        self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
+
+        #Do a final check to make sure that if you are in hardware control mode that the voltage control is still HIGH
+        #This is to avoid the potential error if the voltage control is toggled low between the last call of _check_hardware_control
+        #and update_feedback, whcih would mean that currSignal would be 0 (assuming a pulsed experiment), and causing a garbage
+        #feedback which could be an issue in the next pulse.
+        if (~self._under_hardware_control or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
+            self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
     def _clear_data_plots(self, display_pts = 5000):
         """Initializes/clears the variables holding the data which is plotted"""

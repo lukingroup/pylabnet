@@ -47,6 +47,12 @@ class Client(ClientBase):
         )
 
     def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10):
+        """Measures the analog input voltage of NI DAQ mx card
+
+        :param ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
+        :aram num_samplies: (int) Number of samples to take
+        :param max_range: (float) Maximum range of voltage that will be measured
+        """
         voltages_pickle = self._service.exposed_get_ai_voltage(
             ai_channel=ai_channel,
             num_samples=num_samples,

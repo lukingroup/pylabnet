@@ -16,10 +16,9 @@ import pickle
 import socket
 import pyqtgraph as pg
 
-
 class LaserStabilizer:
     """A class for stabilizing the laser power given a DAQ input, a power control output, and a setpoint"""
-    def __init__(self, config='toptica_laser_stabilization'):
+    def __init__(self, config='toptica_laser_stabilization', ao_client=None, ai_client=None):
         """Instantiates LaserStabilizer script object for stabilizing the laser
              :param config: (str) name of config file """
                 
@@ -31,6 +30,9 @@ class LaserStabilizer:
         self.widgets = get_gui_widgets(self.gui, p_setpoint=1, p_outputVoltage=1, label_power=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, start=1,
             hardware_control=1, save_name=1, stop=1, clear=1)
+
+        self._ao_client = ao_client
+        self._ai_client = ai_client
 
         self.widgets['config'].setText(config)
         self._load_config_file(config)
@@ -64,19 +66,23 @@ class LaserStabilizer:
         #Now load the config file 
         self.config = load_config(config, logger=None)
 
-        #Instantiate links to power input (AI) and control output (AO)
-        self._ai_client = nidaqmx_card_server.Client(
-            host=self.config["power_input_host"], 
-            port=self.config["power_input_port"]
-        )
+        #Instantiate links to power input (AI) and control output (AO) if the clients
+        #were not passed in directly. THis allows us to still run this off of main
+        #instead of a launcher if required. 
+        if self._ai_client == None:
+            self._ai_client = nidaqmx_card_server.Client(
+                host=self.config["power_input_host"], 
+                port=self.config["power_input_port"]
+            )
+        if self._ao_client == None:
+            self._ao_client = nidaqmx_card_server.Client(
+                host=self.config["ctrl_output_host"],
+                port=self.config["ctrl_output_port"]
+            )
+            
 
         self._ai_channel = self.config["power_input_channel"]
         self._hwc_ai_channel = self.config['hardware_ctrl_input_channel']
-        
-        self._ao_client = nidaqmx_card_server.Client(
-            host=self.config["ctrl_output_host"],
-            port=self.config["ctrl_output_port"]
-        )
         self._ao_channel = self.config["ctrl_output_channel"]
         
         # Configure default parameters
@@ -337,11 +343,66 @@ class LaserStabilizer:
         self.widgets['curve'][2].setData(self.out_voltages)
         self.widgets['curve'][3].setData(self.errors*self.gain)
         
+class Service(ServiceBase):
+    """ A service to enable external updating of LaserStabilizer parameters """
+    def exposed_start(self):
+        return self._module.start()
+    def exposed_stop(self):
+        return self._module.stop()
+    def exposed_set_control_voltage(self, value):
+        return self._module.set_control_voltage(value)
+    def exposed_set_setpoint(self, value):
+        return self._module.set_setpoint(value)
+    def exposed_set_hardware_control(self, value):
+        return self._module.set_hardware_control(value)
+
+class Client(ClientBase):
+    def start(self):
+        return self._service.exposed_start()
+    def stop(self):
+        return self._service.exposed_stop()
+    def set_control_voltage(self, value):
+        return self._service.exposed_set_control_voltage(value)
+    def set_setpoint(self, value):
+        return self._service.exposed_set_setpoint(value)
+    def set_hardware_control(self, value):
+        return self._service.set_hardware_control(value)
+
 def main():
     laser_stabilizer=LaserStabilizer('toptica_laser_stabilization')
     while True:
         laser_stabilizer.run()
         
+def launch(**kwargs):
+    """ Launches the WLM monitor + lock script """
+
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    config = load_config(kwargs['config'], logger=logger)
+
+    ao_client = clients['nidaqmx']
+    ai_client = clients['nidaqmx_ai']
+
+    # Instantiate Monitor script
+    laser_stabilizer = LaserStabilizer(
+        config=kwargs['config'],
+        ao_client=ao_client,
+        ai_client=ai_client
+    )
+
+    update_service = Service()
+    update_service.assign_module(module=laser_stabilizer)
+    update_service.assign_logger(logger=logger)
+    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
+    logger.update_data(data={'port': update_port})
+    laser_stabilizer.gui.set_network_info(port=update_port)
+    update_server.start()
+
+    # Run continuously
+    # Note that the actual operation inside run() can be paused using the update server
+    while True:
+
+        laser_stabilizer.run()
+
 
 if __name__ == '__main__':
     main()

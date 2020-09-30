@@ -162,6 +162,11 @@ class StaticLineHardwareHandler():
         self.down = lambda: self.hardware_module.turn_off()
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
 
+    def _setup_abstract_device(self, **kwargs):
+
+        self.up = self.hardware_module.function
+        self.down = self.hardware_module.function
+
     def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''Handler connecting hardware class to StaticLine instance
 
@@ -187,7 +192,8 @@ class StaticLineHardwareHandler():
         registered_staticline_modules = {
             'zi_hdawg':  self._setup_HDWAGDriver,
             'nidaqmx_card': self._setup_NiDaqMxDriver,
-            'toptica': self._setup_toptica
+            'toptica': self._setup_toptica,
+            'abstract_device' : self._setup_abstract_device
         }
 
         # Check if hardware module is registered.

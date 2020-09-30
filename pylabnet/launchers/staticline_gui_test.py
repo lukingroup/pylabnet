@@ -8,10 +8,11 @@ from pylabnet.scripts.staticlines import staticline_gui_generic
 def main():
 
     launcher = Launcher(
-        script=[staticline_gui_generic],
+        script=[staticline_gui_generic], 
         server_req=[abstract],
-        gui_req=['staticline_generic'],
+        gui_req=['staticline_generic'], # TODO: To be removed.
         params=[None]
+        #config='config_filename' # TODO: Implement in future.
     )
     launcher.launch()
 

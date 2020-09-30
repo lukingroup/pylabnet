@@ -1,5 +1,7 @@
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
 from pylabnet.utils.helper_methods import unpack_launcher
+import pylabnet.hardware.staticline.staticline as staticline
+from pylabnet.hardware.staticline.staticline_devices import AbstractDevice
 
 import time
 
@@ -23,10 +25,21 @@ class StaticLineGUIGeneric():
         logger_client
     ):
 
-        # Instanciate gui handler
+        # Instantiate gui handler
         self.gui_handler = GUIHandler(gui_client, logger_client)
 
-        self.staticline = staticline_client
+        # TODO: Make it support >1 device/GUI block - need to find a way to autospecify hardware_handler 
+        # TODO: Use config files - prob pass configs to Driver() then to hardware_handler()
+        # Both TBD after we decide how the GUI is generated and accessed.
+        self.staticline = staticline.Driver(
+            name='Laser Green',
+            logger=logger_client,
+            hardware_client=staticline_client,
+            hardware_handler=AbstractDevice,
+            ao_output='ao2',
+            down_voltage=0,
+            up_voltage=3.3,
+        )
 
     def initialize_button(
         self,
@@ -91,7 +104,7 @@ class StaticLineGUIGeneric():
 
         # Mark running flag
         self.gui_handler.is_running = True
-        while self.gui_handler.is_running:
+        while self.gui_handler.is_running and self.gui_handler.gui_connected:
             self.check_buttons()
             time.sleep(0.02)
 
@@ -104,7 +117,9 @@ def launch(**kwargs):
     # Instantiate StaticLineGUIGeneric
     try:
         staticline_gui = StaticLineGUIGeneric(
-            staticline_client=clients['abstract'], gui_client=guis['staticline_generic'], logger_client=logger
+            staticline_client=clients['abstract'],  # TODO: Support multiple devices
+            gui_client=guis['staticline_generic'],  # TODO: Remove this in future.
+            logger_client=logger
         )
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

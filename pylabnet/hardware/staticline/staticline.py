@@ -158,8 +158,8 @@ class StaticLineHardwareHandler():
 
     def _setup_toptica(self, **kwargs):
 
-        self.up = lambda: self.hardware_module.turn_on()
-        self.down = lambda: self.hardware_module.turn_off()
+        self.up = self.hardware_module.turn_on
+        self.down = self.hardware_module.turn_off
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
 
     def _setup_abstract_device(self, **kwargs):

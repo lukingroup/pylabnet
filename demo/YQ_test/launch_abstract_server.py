@@ -8,10 +8,10 @@ log_client = LogClient(
     module_tag='abstract_server')
 
 # Driver sets up the device state
-abstract_driver = AbstractDevice.AbstractDriver(logger=log_client, init_value=2)
+abstract_driver = AbstractDevice.Driver(logger=log_client, init_value=2)
 
 # Service will hold the device driver and will be hosted by the device server
-abstract_service = AbstractDevice.AbstractService()
+abstract_service = AbstractDevice.Service()
 abstract_service.assign_module(module=abstract_driver)
 abstract_service.assign_logger(logger=log_client)
 

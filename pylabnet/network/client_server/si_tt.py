@@ -147,7 +147,7 @@ class Client(ClientBase):
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, gated bins)
+        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, gated, bins)
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,

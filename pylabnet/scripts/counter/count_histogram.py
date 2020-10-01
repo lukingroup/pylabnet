@@ -17,7 +17,7 @@ class TimeTrace:
     """ Convenience class for handling time-trace measurements """
 
     def __init__(self, ctr: si_tt.Client, log: LogClient,
-                 click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5, 
+                 click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5,
                  correlation=False, **kwargs):
         """ Instantiates TimeTrace measurement
 
@@ -64,7 +64,7 @@ class TimeTrace:
                 binwidth=self.binwidth,
                 n_bins=self.n_bins
             )
-        
+
         else:
             self.ctr.start_histogram(
                 name=self.hist,
@@ -186,10 +186,16 @@ class TimeTraceGui(TimeTrace):
         if 'type' in self.config:
             if self.config['type'] == 'correlation':
                 self.correlation = True
+
+        if 'gate_ch' in config:
+            ctr.create_gated_channel(self, 'gated_hist', config['click_ch'], config['gate_ch'])
+            click_ch_id = 'gated_hist'
+        else:
+            click_ch_id = self.config['click_ch']
         super().__init__(
             ctr=ctr,
             log=log,
-            click_ch=self.config['click_ch'],
+            click_ch=click_ch_id,
             start_ch=self.config['start_ch'],
             binwidth=int(self._get_binwidth()),
             n_bins=self.gui.n_bins.value(),

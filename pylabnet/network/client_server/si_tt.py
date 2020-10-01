@@ -39,14 +39,26 @@ class Service(ServiceBase):
         )
         return pickle.dumps(res_pickle)
 
-    def exposed_start_gated_counter(self, name, click_ch, gate_ch, bins=1000):
-        return self._module.start_gated_counter(name, click_ch, gate_ch, bins)
+    def exposed_start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
+        return self._module.start_gated_counter(name, click_ch, gate_ch, gated, bins)
 
     def exposed_start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                                 sync_ch=-134217728, binwidth=1000, n_bins=1000,
                                 n_histograms=1):
         return self._module.start_histogram(name, start_ch, click_ch, next_ch=next_ch,
                                             sync_ch=sync_ch, binwidth=binwidth, n_bins=n_bins, n_histograms=n_histograms)
+
+    def exposed_start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
+        return self._module.start_correlation(name, ch_1, ch_2, binwidth, n_bins)
+
+    def exposed_start(self, name):
+        return self._module.start(name)
+
+    def exposed_stop(self, name):
+        return self._module.stop(name)
+
+    def exposed_create_gated_channel(self, channel_name, click_ch, gate_ch):
+        return self._module.create_gated_channel(channel_name, click_ch, gate_ch)
 
 
 class Client(ClientBase):
@@ -124,16 +136,18 @@ class Client(ClientBase):
         )
         return pickle.loads(res_pickle)
 
-    def start_gated_counter(self, name, click_ch, gate_ch, bins=1000):
+    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
         """ Starts a new gated counter
 
         :param name: (str) name of counter measurement to use
         :param click_ch: (int) click channel number -8...-1, 1...8
         :param gate_ch: (int) gate channel number -8...-1, 1...8
+        :param gated: (bool) whether or not to physicall gate, or just count between
+            gate_ch edges
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, bins)
+        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, gated bins)
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,
@@ -158,3 +172,51 @@ class Client(ClientBase):
                                                      sync_ch=sync_ch,
                                                      binwidth=binwidth, n_bins=n_bins,
                                                      n_histograms=n_histograms)
+
+    def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
+        """ Sets up a correlation measurement using TT.Correlation measurement class
+
+        :param name: (str) name of measurement for future reference
+        :param ch_1: (int or str) index of first click channel -8...-1, 1...8
+            if physical, otherwise channel name if virtual
+        :param ch_2: (int or str) index of second click channel -8...-1, 1...8
+            if physical, otherwise channel name if virtual
+        :param binwidth: (int) width of bin in ps
+        :param n_Bins: (int) number of bins for total measurement
+        """
+
+        return self._service.exposed_start_correlation(
+            name, ch_1, ch_2, binwidth, n_bins
+        )
+
+    def start(self, name):
+        """ Starts a measurement.
+
+        Can be used to restart a measurement once it has been stopped
+        :param name: (str) name of the measurement for identification
+        """
+
+        return self._service.exposed_start(name)
+
+    def stop(self, name):
+        """ Stops a measurement.
+
+        Can be used to stop a measurement
+        :param name: (str) name of the measurement for identification
+        """
+
+        return self._service.exposed_stop(name)
+
+    def create_gated_channel(self, channel_name, click_ch, gate_ch):
+        """ Creates a virtual channel that is gated
+
+        :param channel_name: (str) name of channel for future reference
+        :param click_ch: (int) index of click channel -8...-1, 1...8
+        :param gate_ch: (int) index of gate channel -8...-1, 1...8
+            Assumes gate starts on rising edge (if positive) and ends
+            on falling edge
+        """
+
+        return self._service.exposed_create_gated_channel(
+            channel_name, click_ch, gate_ch
+        )

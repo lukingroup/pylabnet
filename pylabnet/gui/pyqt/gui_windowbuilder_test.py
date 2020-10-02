@@ -4,12 +4,12 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
 #from PyQt5.QtCore import QSize
 from pylabnet.utils.helper_methods import load_config   
 
-class gui_window_from_config(QMainWindow):
+class GUIWindowFromConfig(QMainWindow):
+
     
     def __init__(self, config=None):
         
         QMainWindow.__init__(self)
-
         
         self.config = load_config(config)
         self.N_staticlines = len(self.config) #N_staticlines
@@ -68,8 +68,6 @@ class gui_window_from_config(QMainWindow):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    mainWin = gui_window_from_config(config='test_config_sl')
+    mainWin = GUIWindowFromConfig(config='test_config_sl')
     mainWin.show()
     sys.exit( app.exec_() )
-
-    mainWin["analog dvice"]["AIN"].connect(do something)

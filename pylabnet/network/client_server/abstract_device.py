@@ -18,6 +18,14 @@ class Driver:
         self.value /= 2
         self.logger.info(f"The value is now {self.value}")
 
+    def set_value_function(self, value):
+        try:
+            self.value = float(value)
+        except ValueError:
+            self.logger.error(f"Invalid value {value} provided.")
+            self.value = 2
+        self.logger.info(f"The value is now {self.value}")
+
 class Service(ServiceBase):
     """
     Interfaces with the device by directly calling the device driver functions. Listens for commands from clients that use the exposed wrapper functions.
@@ -29,6 +37,9 @@ class Service(ServiceBase):
 
     def exposed_down_function(self):
         return self._module.down_function()
+
+    def exposed_set_value_function(self, value):
+        return self._module.set_value_function(value)
 
 class Client(ClientBase):
     """
@@ -42,3 +53,6 @@ class Client(ClientBase):
 
     def down_function(self):
         return self._service.exposed_down_function()
+
+    def set_value_function(self, value):
+        return self._service.exposed_set_value_function(value)

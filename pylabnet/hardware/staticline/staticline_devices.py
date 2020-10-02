@@ -1,32 +1,36 @@
 from abc import ABC, abstractmethod
 
-class StaticLineDevice(ABC):
+class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
 
     Main task of this instance is to define the device-specific function
     which should correspond to setting the staticline to high or low, and
     to set up the hardware accordingly.
 
-    :hardware_client: Hardware client to be used to toggle the staticline.
-    :log: Instance of loghandler.
-    :name: Name of StaticLine instance.
-    :**kwargs: Additional keyword arguments which depending on the hardware module
-    contain values needed to setup the hardware as a staticline.
+    :hardware_client: (object)
+        Hardware client to be used to toggle the staticline.
+    :log: (object)
+        Instance of loghandler.
+    :name: (str)
+        Name of StaticLine instance.
+    :config: (dict)
+            Contains parameters needed to setup the hardware as a staticline.
     '''
 
-    def __init__(self, hardware_client, log, name, **kwargs):
-        self.hardware_client = hardware_client
-        self.log = log
+    def __init__(self, name, log, hardware_client, config):
         self.name = name
+        self.log = log
+        self.hardware_client = hardware_client
         self.hardware_name = str(hardware_client.__class__).split('.')[-2]
+        self.config = config
 
-        self.setup(**kwargs)
+        self.setup()
         self.log.info(
             f"Setup of staticline {name} using module {self.hardware_name} successful."
             )
 
     @abstractmethod
-    def setup(self, **kwargs):
+    def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the 
         device client function calls. This is an abstract method as each 
         subclass implements its own version based on its own functions.
@@ -34,7 +38,7 @@ class StaticLineDevice(ABC):
         pass
 
 
-class HDAWG(StaticLineDevice):
+class HDAWG(StaticLineHardwareHandler):
 
     def _HDAWG_toggle(self, newval):
         ''' Set DIO_bit to high or low
@@ -64,14 +68,14 @@ class HDAWG(StaticLineDevice):
 
         self.hardware_client.seti('dios/0/output', new_output)
 
-    def setup(self, **kwargs):
+    def setup(self):
         ''' Setup a ZI HDAWG driver module to be used as a staticline toggle.
 
         :DIO_bit: Which bit to toggle, in decimal notation.
         '''
 
         # Retrieve arguments from keyword argument dictionary.
-        DIO_bit = kwargs['DIO_bit']
+        DIO_bit = self.config['DIO_bit']
 
         # Drive 8-bit bus containing DIO_bit to be toggled.
         # Note that the buses are enabled by using the decimal equivalent
@@ -106,22 +110,21 @@ class HDAWG(StaticLineDevice):
         # Set correct mode to manual
         self.hardware_client.seti('dios/0/mode', 0)
 
-class NiDaqMx(StaticLineDevice):
+class NiDaqMx(StaticLineHardwareHandler):
 
-    def setup(self, **kwargs):
+    def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the 
         device client function calls.
         '''
-
-        # Retrieve arguments from keyword argument dictionary,
-        # if not found apply default value.
+        
+        # Retrieve arguments from configs, if not found apply default value.
         try:
-            down_voltage = kwargs['down_voltage']
+            down_voltage = self.config['down_voltage']
         except KeyError:
             down_voltage = 0
 
         try:
-            up_voltage = kwargs['up_voltage']
+            up_voltage = self.config['up_voltage']
         except KeyError:
             up_voltage = 3.3
 
@@ -131,10 +134,10 @@ class NiDaqMx(StaticLineDevice):
         if not -10 <= up_voltage <= 10:
             self.log.error(f'Up voltage of {up_voltage} V is invalid, must be between -10 V and 10 V.')
 
-        ao_output = kwargs['ao_output']
+        ao_output = self.config['ao_output']
 
         # Register up/down function.
-        ao_output = kwargs['ao_output']
+        ao_output = self.config['ao_output']
         self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, up_voltage)
         self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, down_voltage)
 
@@ -144,9 +147,9 @@ class NiDaqMx(StaticLineDevice):
         # Log successfull setup.
         self.log.info(f"NiDaq {self.hardware_client.dev} output {ao_output} successfully assigned to staticline {self.name}.")
 
-class Toptica(StaticLineDevice):
+class Toptica(StaticLineHardwareHandler):
 
-    def setup(self, **kwargs):
+    def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the 
         device client function calls.
         '''
@@ -155,13 +158,21 @@ class Toptica(StaticLineDevice):
         self.down = self.hardware_client.turn_off
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
 
-class AbstractDevice(StaticLineDevice):
+class AbstractDevice(StaticLineHardwareHandler):
     
 
-    def setup(self, **kwargs):
+    def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the 
         device client function calls.
         '''
 
         self.up = self.hardware_client.up_function
         self.down = self.hardware_client.down_function
+        self.set_value = self.hardware_client.set_value_function
+
+registered_staticline_modules = {
+    'zi_hdawg':  HDAWG,
+    'nidaqmx_card': NiDaqMx,
+    'toptica': Toptica,
+    'abstract': AbstractDevice
+}

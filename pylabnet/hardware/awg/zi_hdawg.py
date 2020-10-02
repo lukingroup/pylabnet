@@ -527,7 +527,7 @@ class Sequence():
                 self.hd.log.warn(f"Placeholder {placeholder} not found in sequence.")
             else:
                 self.sequence = self.sequence.replace(f"{placeholder_wrapped}", str(value))
-                self.unresolved_placeholders.discard(placeholder)
+                self.unresolved_placeholders.remove(placeholder)
 
     def replace_waveforms(self, waveform_dict):
         """ Replace a placeholder by a waveform
@@ -543,7 +543,7 @@ class Sequence():
             waveform_wrapped = f"{self.marker_string}{waveform}{self.marker_string}"
             waveform_vector = 'vect(' + ','.join([str(x) for x in value]) + ')'
             self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(waveform_vector))
-            self.unresolved_placeholders.discard(waveform)
+            self.unresolved_placeholders.remove(waveform)
 
 
     def get_placeholders(self):
@@ -607,7 +607,7 @@ class Sequence():
         self.placeholders = self.get_placeholders()
 
         # Keeps track of which placeholders has not been replaced yet.
-        self.unresolved_placeholders = set(copy.deepcopy(self.placeholders))
+        self.unresolved_placeholders = copy.deepcopy(self.placeholders)
 
         if placeholder_dict is not None:
             # Some sanity checks.

@@ -187,8 +187,8 @@ class TimeTraceGui(TimeTrace):
             if self.config['type'] == 'correlation':
                 self.correlation = True
 
-        if 'gate_ch' in config:
-            ctr.create_gated_channel(self, 'gated_hist', config['click_ch'], config['gate_ch'])
+        if 'gate_ch' in self.config:
+            ctr.create_gated_channel('gated_hist', self.config['click_ch'], self.config['gate_ch'])
             click_ch_id = 'gated_hist'
         else:
             click_ch_id = self.config['click_ch']

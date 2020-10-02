@@ -286,7 +286,7 @@ class PulseMaster:
             pulseblock_combo=1,
             variable_table_view = 1,
             add_variable_button = 1,
-            pulse_toolbox = 1
+            pulse_toolbox = 1,
         )
 
         # Initialize empty pulseblock dictionary.
@@ -346,7 +346,9 @@ class PulseMaster:
 
 
         # Make pulse toolbox invisible
-        self.widgets['pulse_toolbox'].hide()
+        #self.widgets['pulse_toolbox'].hide()
+        #self.widgets['pulse_scrollArea'].setWidget(self.widgets['pulse_toolbox'])
+
 
 
         self.add_pb_popup = None

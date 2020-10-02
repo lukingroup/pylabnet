@@ -296,51 +296,7 @@
         <height>291</height>
        </rect>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QScrollArea" name="pulse_scrollArea">
-         <property name="widgetResizable">
-          <bool>true</bool>
-         </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>707</width>
-            <height>287</height>
-           </rect>
-          </property>
-          <widget class="QToolBox" name="pulse_toolbox">
-           <property name="geometry">
-            <rect>
-             <x>10</x>
-             <y>6</y>
-             <width>681</width>
-             <height>261</height>
-            </rect>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <widget class="QWidget" name="page_4">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>681</width>
-              <height>230</height>
-             </rect>
-            </property>
-            <attribute name="label">
-             <string>Page 2</string>
-            </attribute>
-           </widget>
-          </widget>
-         </widget>
-        </widget>
-       </item>
-      </layout>
+      <layout class="QVBoxLayout" name="verticalLayout"/>
      </widget>
     </widget>
     <widget class="QGroupBox" name="groupBox_2">
@@ -394,6 +350,32 @@
        <string notr="true"/>
       </property>
      </widget>
+    </widget>
+   </widget>
+   <widget class="QToolBox" name="pulse_toolbox">
+    <property name="geometry">
+     <rect>
+      <x>360</x>
+      <y>620</y>
+      <width>681</width>
+      <height>261</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="page_4">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>681</width>
+       <height>230</height>
+      </rect>
+     </property>
+     <attribute name="label">
+      <string>Page 2</string>
+     </attribute>
     </widget>
    </widget>
   </widget>

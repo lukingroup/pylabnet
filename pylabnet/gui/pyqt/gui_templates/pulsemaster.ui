@@ -254,7 +254,7 @@
           <string notr="true"/>
          </property>
          <property name="text">
-          <string>Available Pulseblocks:</string>
+          <string>Selected Pulseblocks:</string>
          </property>
         </widget>
        </item>
@@ -311,7 +311,7 @@
             <height>287</height>
            </rect>
           </property>
-          <widget class="QToolBox" name="pulse_scrollbox">
+          <widget class="QToolBox" name="pulse_toolbox">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -323,26 +323,13 @@
            <property name="currentIndex">
             <number>0</number>
            </property>
-           <widget class="QWidget" name="page_3">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>681</width>
-              <height>199</height>
-             </rect>
-            </property>
-            <attribute name="label">
-             <string>Page 1</string>
-            </attribute>
-           </widget>
            <widget class="QWidget" name="page_4">
             <property name="geometry">
              <rect>
               <x>0</x>
               <y>0</y>
-              <width>98</width>
-              <height>28</height>
+              <width>681</width>
+              <height>230</height>
              </rect>
             </property>
             <attribute name="label">

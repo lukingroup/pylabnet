@@ -7,11 +7,7 @@ from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.hardware.staticline import staticline
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
 from pylabnet.utils.helper_methods import slugify
-import numpy as np
 
-
-
-""" Generic script for monitoring counts from a counter """
 
 import numpy as np
 import time
@@ -30,6 +26,20 @@ from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayou
 from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
+
+
+
+
+
+class PulseblockConstructor():
+
+    def __init__(self, name):
+
+        self.name = name
+
+        # Contains
+        self.var_dict = {}
+        self.pulse_dicts = []
 
 
 class DictionaryTableModel(QAbstractTableModel):
@@ -200,14 +210,14 @@ class AddPulseblockPopup(QWidget):
         self.form_groupbox = None
         self.global_hbox = None
 
-    def return_pulseblock_new_pulseblock(self):
+    def return_pulseblock_new_pulseblock_constructor(self):
         """ Add new pulseblock by clicking the "Add Pb" button."""
 
         # Get pulseblock name
         pb_name = self.pulseblock_name_field.text()
-        pulseblock= pb.PulseBlock(name=pb_name)
+        pb_constructor= PulseblockConstructor(name=pb_name)
 
-        return pb_name, pulseblock
+        return pb_name, pb_constructor
 
 
 class PulseMaster:
@@ -249,11 +259,16 @@ class PulseMaster:
             pulseblock_combo=1,
             variable_table_view = 1,
             add_variable_button = 1,
-            pulse_scrollbox = 1
+            pulse_toolbox = 1
         )
 
         # Initialize empty pulseblock dictionary.
         self.pulseblocks = {}
+
+
+        # Initialize empty dictionary containing the contruction
+        # Instructions for the currently displayed pulseblock.
+        self.pulseblock_constructors = []
 
         # Initialize Variable dict
         self.vars = {}
@@ -301,10 +316,39 @@ class PulseMaster:
 
 
         # Make pulse toolbox invisible
-        self.widgets['pulse_scrollbox'].hide()
+        self.widgets['pulse_toolbox'].hide()
 
 
         self.add_pb_popup = None
+
+
+    def get_pb_contructor_list(self):
+        """ Return list of names of all instanciated Pulseblock contructors."""
+        return  [pb_constructor.name for pb_constructor in self.pulseblock_constructors]
+
+    def get_pb_contructor_by_name(self, name):
+        """ For a given pulseblock name, return the corresponding PulseblockConstrutor"""
+
+        # Query associated pb constructor element.
+        matching_constructors = [pb_constructor for pb_constructor in self.pulseblock_constructors if pb_constructor.name == name]
+
+        if len(matching_constructors) > 1:
+            pb_constructor = None
+            self.log.warn(f"More than one Pulseblock contructors associated with curren pulseblock {name} found.")
+        elif len(matching_constructors) == 0:
+            self.showerror('Please initilize at least one Pulseblock in order to add pulse.')
+            pb_constructor = None
+        else:
+            pb_constructor = matching_constructors[0]
+
+        return pb_constructor
+
+    def get_current_pb_constructor(self):
+        """ Return PulseblockCOnstructor of currently selected Pulseblock."""
+        # Read current pulesblock name from Combobox.
+        current_pb_name = self.widgets["pulseblock_combo"].currentText()
+
+        return self.get_pb_contructor_by_name(current_pb_name)
 
     def validate_and_clean_vars_data(self, table_data):
         """Validate and typecast variable table data"""
@@ -369,8 +413,7 @@ class PulseMaster:
         self.add_pb_popup.pulseblock_inherit_field = QComboBox()
 
         # Add pulseblock choices.
-        self.add_pb_popup.pulseblock_inherit_field.addItems(self.get_pulseblock_names())
-
+        self.add_pb_popup.pulseblock_inherit_field.addItems(self.get_pb_contructor_list())
 
         # Create one Form to contain the for fields that never change.
         self.add_pb_popup.form_layout.addRow(QLabel("Pulseblock Name:"), self.add_pb_popup.pulseblock_name_field)
@@ -401,7 +444,7 @@ class PulseMaster:
         """Update pulseblock dropdown"""
 
         self.widgets['pulseblock_combo'].clear()
-        self.widgets['pulseblock_combo'].addItems(self.get_pulseblock_names())
+        self.widgets['pulseblock_combo'].addItems(self.get_pb_contructor_list())
 
     def get_pulseblock_names(self):
         return self.pulseblocks.keys()
@@ -411,10 +454,12 @@ class PulseMaster:
         """Create new pulseblock instance and add to pb dictionary"""
 
         # Get pulseblocks from Popup class
-        pb_name, pulseblock = self.add_pb_popup.return_pulseblock_new_pulseblock()
+        _, pb_constructor = self.add_pb_popup.return_pulseblock_new_pulseblock_constructor()
 
-        # Add pulseblock
-        self.pulseblocks[pb_name] = pulseblock
+        # Add empty pulseblock constructor to pulseblock constructor list.
+        self.pulseblock_constructors.append(
+            pb_constructor
+        )
 
         # Update pulseblock dropdown.
         self.update_pulseblock_dropdown()
@@ -437,23 +482,24 @@ class PulseMaster:
         if not valid:
             return
 
-        # # Create new pulse
-        if pulsetype_dict["pulseblock_type"] == "PTrue":
-            new_pulse = po.PTrue(
-                ch=pulsedict["channel"],
-                dur=pulsedict["dur"]
-            )
-        elif pulsetype_dict["pulseblock_type"] == "PSin":
-            new_pulse = po.PSin(
-                ch=pulsedict["channel"],
-                dur=pulsedict["dur"],
-                amp=pulsedict["amp"],
-                freq=pulsedict["freq"],
-                ph=pulsedict["ph"]
-            )
+        # # # Create new pulse
+        # if pulsetype_dict["pulseblock_type"] == "PTrue":
+        #     new_pulse = po.PTrue(
+        #         ch=pulsedict["channel"],
+        #         dur=pulsedict["dur"]
+        #     )
+        # elif pulsetype_dict["pulseblock_type"] == "PSin":
+        #     new_pulse = po.PSin(
+        #         ch=pulsedict["channel"],
+        #         dur=pulsedict["dur"],
+        #         amp=pulsedict["amp"],
+        #         freq=pulsedict["freq"],
+        #         ph=pulsedict["ph"]
+        #     )
 
-        self.showerror(str(new_pulse))
-
+        # Add pulse to currently selected pulseblockconstructor.
+        active_pb_constructor = self.get_current_pb_constructor()
+        active_pb_constructor.pulse_dicts.append(pulsedict)
 
 
     def return_pulsedict(self, pulsetype_dict):

@@ -422,9 +422,9 @@ class TimeTraceGui(TimeTrace):
         """ Configures delay updates when a value is changed """
 
         for channel_name, delay in self.delays.items():
-            delay.valueChanged.connect(lambda: self.gates[channel_name].ctr.update_delay(
-                channel_name=channel_name,
-                delay=delay.value()
+            delay.valueChanged.connect(lambda state, x=channel_name: self.gates[channel_name].ctr.update_delay(
+                channel_name=x,
+                delay=state
             ))
     
     def save(self, filename=None, directory=None):

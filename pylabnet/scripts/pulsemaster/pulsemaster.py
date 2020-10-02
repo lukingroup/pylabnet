@@ -346,6 +346,9 @@ class PulseMaster:
         self.widgets['add_pulse_button'].clicked.connect(self.add_pulse_from_form)
         self.widgets['new_pulseblock_button'].clicked.connect(self.add_pulseblock)
 
+        # Connect pulseblock selector object
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
+
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
 
@@ -361,29 +364,34 @@ class PulseMaster:
         """Read in PulseblockContructor of currently selected Pulseblock
         and display it in the pulse-list toolbox."""
 
-        current_pb_construtor = self.get_current_pb_constructor()
+        current_pb_constructor = self.get_current_pb_constructor()
 
         # Hide Toolbox
         pulse_toolbox = self.widgets['pulse_toolbox']
         pulse_toolbox.hide()
 
-        # Get number of entries
+        # If no pulses are added, keep toolbox hidden.
 
+        if len(current_pb_constructor.pulse_specifiers) == 0:
+            return
+
+        # Get number of entries
         prev_num_items = pulse_toolbox.count()
 
         # Delete previous entries.
         for i in range(prev_num_items):
-            pu
+            pulse_toolbox.removeItem(i)
 
-
-        for i, pulse_specifier in enumerate(current_pb_construtor.pulse_specifiers):
+        # Add new Entries.
+        for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
             label = QLabel()
-            self.widgets["pulse_toolbox"].addItem(
+            pulse_toolbox.insertItem(
+                i,
                 label,
                 f"{str(i)}: {pulse_specifier.get_printable_name()}"
             )
 
-        self.widgets['pulse_toolbox'].show()
+        pulse_toolbox.show()
 
 
     def get_pb_contructor_list(self):

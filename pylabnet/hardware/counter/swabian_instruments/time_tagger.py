@@ -239,7 +239,7 @@ class Wrap:
 
         self._ctr[name].stop()
     
-    def create_gated_channel(self, channel_name, click_ch, gate_ch):
+    def create_gated_channel(self, channel_name, click_ch, gate_ch, delay=None):
         """ Creates a virtual channel that is gated
 
         :param channel_name: (str) name of channel for future reference
@@ -247,16 +247,46 @@ class Wrap:
         :param gate_ch: (int) index of gate channel -8...-1, 1...8
             Assumes gate starts on rising edge (if positive) and ends
             on falling edge
+        :param delay: (optional, float) amount to delay gate by
         """
 
+        # Create a delayed channel for the gate if needed
+        if delay is not None:
+            self._channels[f'{channel_name}_delayed'] = TT.DelayedChannel(
+                tagger=self._tagger,
+                input_channel=gate_ch,
+                delay=int(delay)
+            )
+            self._channels[f'{channel_name}_delayed_falling'] = TT.DelayedChannel(
+                tagger=self._tagger,
+                input_channel=-gate_ch,
+                delay=int(delay)
+            )
+            self.log.info(f'Created delayed gate {channel_name}_delayed for gate channel {gate_ch}')
+            gate_ch = self._get_channel(f'{channel_name}_delayed')
+            gate_stop_ch = self._get_channel(f'{channel_name}_delayed_falling')            
+        else:
+            gate_stop_ch = -gate_ch
+        
         self._channels[channel_name] = TT.GatedChannel(
             tagger=self._tagger,
             input_channel=click_ch,
             gate_start_channel=gate_ch,
-            gate_stop_channel=-gate_ch
+            gate_stop_channel=gate_stop_ch
         )
         self.log.info(f'Created gated channel {channel_name}, '
                       f'click channel: {click_ch}, gate channel: {gate_ch}')
+
+    def update_delay(self, channel_name, delay):
+        """ Updates the delay for a gated + delayed channel
+
+        :param channel_name: (str) identifier name of gated channel
+        :param delay: (float) value of delay to update to in ps
+        """
+
+        self._channels[f'{channel_name}_delayed'].setDelay(int(delay))
+        self._channels[f'{channel_name}_delayed_falling'].setDelay(int(delay))
+        self.log.info(f'Updated {channel_name} delay to {delay}')
     
     def _get_channel(self, ch):
         """ Handle virtual channel input 

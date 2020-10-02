@@ -57,8 +57,11 @@ class Service(ServiceBase):
     def exposed_stop(self, name):
         return self._module.stop(name)
 
-    def exposed_create_gated_channel(self, channel_name, click_ch, gate_ch):
-        return self._module.create_gated_channel(channel_name, click_ch, gate_ch)
+    def exposed_create_gated_channel(self, channel_name, click_ch, gate_ch, delay):
+        return self._module.create_gated_channel(channel_name, click_ch, gate_ch, delay)
+
+    def exposed_update_delay(self, channel_name, delay):
+        return self._module.update_delay(channel_name, delay)
 
 
 class Client(ClientBase):
@@ -207,7 +210,7 @@ class Client(ClientBase):
 
         return self._service.exposed_stop(name)
 
-    def create_gated_channel(self, channel_name, click_ch, gate_ch):
+    def create_gated_channel(self, channel_name, click_ch, gate_ch, delay=None):
         """ Creates a virtual channel that is gated
 
         :param channel_name: (str) name of channel for future reference
@@ -215,8 +218,18 @@ class Client(ClientBase):
         :param gate_ch: (int) index of gate channel -8...-1, 1...8
             Assumes gate starts on rising edge (if positive) and ends
             on falling edge
+        :param delay: (optional, float) amount to delay gate by
         """
 
         return self._service.exposed_create_gated_channel(
-            channel_name, click_ch, gate_ch
+            channel_name, click_ch, gate_ch, delay
         )
+
+    def update_delay(self, channel_name, delay):
+        """ Updates the delay for a gated + delayed channel
+
+        :param channel_name: (str) identifier name of gated channel
+        :param delay: (float) value of delay to update to in ps
+        """
+
+        return self._service.exposed_update_delay(channel_name, delay)

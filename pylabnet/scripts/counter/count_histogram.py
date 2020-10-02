@@ -11,6 +11,7 @@ import numpy as np
 import time
 import socket
 import pyqtgraph as pg
+from PyQt5 import QtWidgets
 
 
 class TimeTrace:
@@ -164,6 +165,8 @@ class TimeTraceGui(TimeTrace):
     """ Same as TimeTrace but with a dedicated GUI for display
     and parameter setting"""
 
+    STYLESHEET = 'color: rgb(255, 255, 255); font: 25 12pt "Calibri Light";'
+
     def __init__(self, ctr: si_tt.Client, log: LogClient, config, ui='histogram', **kwargs):
         """ Instantiates TimeTrace measurement
 
@@ -206,11 +209,19 @@ class TimeTraceGui(TimeTrace):
             # Handle singular input
             if not isinstance(self.config['gate_ch'], list):
                 self.config['gate_ch'] = [self.config['gate_ch']]
+
+            # Update GUI to handle gates
+            self._configure_gui_gates()
             
             # Setup gated channels
             for gate_ch in self.config['gate_ch']:
                 ch_name = f'Gated histogram channel {gate_ch}'
-                ctr.create_gated_channel(ch_name, self.config['click_ch'], gate_ch)
+                ctr.create_gated_channel(
+                    ch_name, 
+                    self.config['click_ch'], 
+                    gate_ch,
+                    delay=self.delays[ch_name].value()
+                )
                 self.gates[ch_name] = TimeTrace(
                     ctr=ctr,
                     log=log,
@@ -233,6 +244,7 @@ class TimeTraceGui(TimeTrace):
             directory=self.config['save_path']
         ))
         self.gui.run.clicked.connect(self.run)
+        self._configure_delay_updates()
 
         # Initialize plot info
         self.curve = self.gui.graph.plot(
@@ -369,6 +381,52 @@ class TimeTraceGui(TimeTrace):
         elif unit_index == 3:
             return val*1e9
 
+    def _configure_gui_gates(self):
+        """ Configures the gates part of the GUI """
+
+        # Configure base layout for all gates
+        gate_box = QtWidgets.QGroupBox("Gates")
+        gate_box.setStyleSheet(self.STYLESHEET)
+        vbox = QtWidgets.QVBoxLayout()
+
+        # Now add widgets for each gate
+        self.delays = {}
+        for index, gate_ch in enumerate(self.config['gate_ch']):
+
+            # Configure widgets
+            ch_name = f'Gated histogram channel {gate_ch}'
+            hbox = QtWidgets.QHBoxLayout()
+            hbox.addWidget(QtWidgets.QLabel(text=f'Gate {gate_ch}'))
+            hbox.addWidget(QtWidgets.QLabel(text='Delay: '))
+            self.delays[ch_name] = QtWidgets.QDoubleSpinBox()
+            self.delays[ch_name].setMaximum(1e12)
+            self.delays[ch_name].setSuffix(' ps')
+            self.delays[ch_name].setButtonSymbols(2)
+            hbox.addWidget(self.delays[ch_name])
+            
+            # Check for preconfigured delay and set the value
+            if 'delays' in self.config:
+                try:
+                    self.delays[ch_name].setValue(self.config['delays'][index])
+                except IndexError:
+                    pass
+
+            # Add to vertical layout
+            vbox.addLayout(hbox)
+
+        # Configure layout to a group box and add to GUI in layout
+        gate_box.setLayout(vbox)
+        self.gui.graph_layout.addWidget(gate_box)
+    
+    def _configure_delay_updates(self):
+        """ Configures delay updates when a value is changed """
+
+        for channel_name, delay in self.delays.items():
+            delay.valueChanged.connect(lambda: self.gates[channel_name].ctr.update_delay(
+                channel_name=channel_name,
+                delay=delay.value()
+            ))
+    
     def save(self, filename=None, directory=None):
         """ Saves the current data """
 

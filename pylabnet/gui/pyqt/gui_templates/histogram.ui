@@ -20,7 +20,8 @@
    <string>Count Histogram</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true">background-color: rgb(0, 0, 0);
+color: rgb(255, 255, 255);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -364,7 +365,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="graph_layout">
       <item>
        <widget class="PlotWidget" name="graph" native="true">
         <property name="sizePolicy">
@@ -385,13 +386,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <widget class="GraphicsView" name="legend">
         <property name="minimumSize">
          <size>
-          <width>150</width>
+          <width>300</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>200</width>
+          <width>300</width>
           <height>16777215</height>
          </size>
         </property>
@@ -651,7 +652,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      <x>0</x>
      <y>0</y>
      <width>1700</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

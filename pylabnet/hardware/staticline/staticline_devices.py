@@ -174,5 +174,6 @@ registered_staticline_modules = {
     'zi_hdawg':  HDAWG,
     'nidaqmx_card': NiDaqMx,
     'toptica': Toptica,
-    'abstract': AbstractDevice
+    'abstract': AbstractDevice,
+    'abstract2': AbstractDevice
 }

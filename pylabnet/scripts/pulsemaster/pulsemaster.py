@@ -29,9 +29,10 @@ from PyQt5.QtCore import QVariant
 
 
 
-
-
 class PulseblockConstructor():
+    """Container Class which stores all necessary information to compile full Pulseblock,
+    while retaining the ability to change variables and easy save/load functionality.
+    """
 
     def __init__(self, name):
 
@@ -39,7 +40,41 @@ class PulseblockConstructor():
 
         # Contains
         self.var_dict = {}
-        self.pulse_dicts = []
+        self.pulse_specifiers = []
+
+    def compile_pulseblock(self):
+        pass
+
+    def save_as_dict(self):
+        pass
+
+    def load_as_dict(self):
+        pass
+
+
+class PulseSpecifier():
+    """Container storing info pully specifiying pulse within pulse sequence."""
+
+
+    def __init__(self, channel, pulsetype, pulsetype_name):
+        self.channel = channel
+        self.pulsetype = pulsetype
+        self.pulsetype_name = pulsetype_name
+
+    def set_timing_info(self, offset, dur, tref):
+        self.offset = offset
+        self.dur = dur
+        self.tref = tref
+
+    def set_pulse_params(self, pulsevar_dict):
+        self.pulsevar_dict = pulsevar_dict
+
+    def get_printable_name(self):
+        return f"{self.channel.capitalize()} ({self.pulsetype_name})"
+
+    # Reader friendly string return.
+    def __str__(self):
+        return self.get_printable_name()
 
 
 class DictionaryTableModel(QAbstractTableModel):
@@ -322,6 +357,35 @@ class PulseMaster:
         self.add_pb_popup = None
 
 
+    def update_pulse_list_toolbox(self):
+        """Read in PulseblockContructor of currently selected Pulseblock
+        and display it in the pulse-list toolbox."""
+
+        current_pb_construtor = self.get_current_pb_constructor()
+
+        # Hide Toolbox
+        pulse_toolbox = self.widgets['pulse_toolbox']
+        pulse_toolbox.hide()
+
+        # Get number of entries
+
+        prev_num_items = pulse_toolbox.count()
+
+        # Delete previous entries.
+        for i in range(prev_num_items):
+            pu
+
+
+        for i, pulse_specifier in enumerate(current_pb_construtor.pulse_specifiers):
+            label = QLabel()
+            self.widgets["pulse_toolbox"].addItem(
+                label,
+                f"{str(i)}: {pulse_specifier.get_printable_name()}"
+            )
+
+        self.widgets['pulse_toolbox'].show()
+
+
     def get_pb_contructor_list(self):
         """ Return list of names of all instanciated Pulseblock contructors."""
         return  [pb_constructor.name for pb_constructor in self.pulseblock_constructors]
@@ -468,6 +532,44 @@ class PulseMaster:
         self.add_pb_popup.close()
 
 
+    def gen_pulse_specifier(self, pulsetype_dict, pulse_data_dict):
+        """ Generates instance of PulseSpecifier which contain full
+        information of pulse (Pulsetype, channel_number, pulsetype, pulse_parameters,
+        timing information)
+
+        :pulsetype_dict: Dictionary specifying pulsetype (read from config JSON)
+        :pulse_data_dict: Dictionary containing the pulse-specific cdata retreived from input fields.
+        """
+
+        pulse_specifier = PulseSpecifier(
+            channel = pulse_data_dict["channel"],
+            pulsetype = pulsetype_dict["pulseblock_type"],
+            pulsetype_name = pulsetype_dict["name"]
+        )
+
+        # Add timing info.
+        pulse_specifier.set_timing_info(
+            offset=pulse_data_dict['dur'],
+            dur=pulse_data_dict['offset'],
+            tref=pulse_data_dict['tref']
+        )
+
+
+        # Add pulse var info.
+        pulsevar_dict = {}
+
+        for pulsedict_field in pulsetype_dict["fields"]:
+            if not pulsedict_field['var'] in ['dur', 'tref', 'offset']:
+                pulse_param_name = pulsedict_field['var']
+                pulse_param_value = pulse_data_dict[pulse_param_name]
+                pulsevar_dict[pulse_param_name] = pulse_param_value
+
+        pulse_specifier.set_pulse_params(
+            pulsevar_dict = pulsevar_dict
+        )
+
+        return pulse_specifier
+
     def add_pulse_from_form(self):
         """Get pulse info from form, create Pulse object and add to pulse list"""
 
@@ -477,10 +579,18 @@ class PulseMaster:
         # Get pulsetype dict
         pulsetype_dict = self._current_pulsetype_dict()
 
-        valid, pulsedict = self.read_pulse_params_from_form()
+        valid, puls_data_dict = self.read_pulse_params_from_form()
+
 
         if not valid:
             return
+
+        # Generate dictionary fully specifying the pulse.
+        pulse_specifier = self.gen_pulse_specifier(
+            pulsetype_dict=pulsetype_dict,
+            pulse_data_dict=puls_data_dict
+        )
+
 
         # # # Create new pulse
         # if pulsetype_dict["pulseblock_type"] == "PTrue":
@@ -499,7 +609,10 @@ class PulseMaster:
 
         # Add pulse to currently selected pulseblockconstructor.
         active_pb_constructor = self.get_current_pb_constructor()
-        active_pb_constructor.pulse_dicts.append(pulsedict)
+        active_pb_constructor.pulse_specifiers.append(pulse_specifier)
+
+        # Update toolbox.
+        self.update_pulse_list_toolbox()
 
 
     def return_pulsedict(self, pulsetype_dict):

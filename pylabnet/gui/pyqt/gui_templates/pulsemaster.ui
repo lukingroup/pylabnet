@@ -96,11 +96,11 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab_1">
      <attribute name="title">
-      <string>Tab 1</string>
+      <string>Channel Delay</string>
      </attribute>
     </widget>
     <widget class="QWidget" name="tab_2">

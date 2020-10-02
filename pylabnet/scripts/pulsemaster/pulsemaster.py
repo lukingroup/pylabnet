@@ -379,8 +379,8 @@ class PulseMaster:
         prev_num_items = pulse_toolbox.count()
 
         # Delete previous entries.
-        for i in range(prev_num_items):
-            pulse_toolbox.removeItem(i)
+        for i in range(prev_num_items+1):
+            pulse_toolbox.removeItem(0)
 
         # Add new Entries.
         for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
@@ -485,6 +485,7 @@ class PulseMaster:
         self.add_pb_popup.pulseblock_inherit_field = QComboBox()
 
         # Add pulseblock choices.
+        self.add_pb_popup.pulseblock_inherit_field.addItem("")
         self.add_pb_popup.pulseblock_inherit_field.addItems(self.get_pb_contructor_list())
 
         # Create one Form to contain the for fields that never change.
@@ -504,7 +505,7 @@ class PulseMaster:
         self.add_pb_popup.global_hbox.addWidget(add_pb_button)
 
         # Connect Button to add pulseblock function
-        add_pb_button.clicked.connect(self.add_pulseblock_from_popup)
+        add_pb_button.clicked.connect(self.add_pulseblock_constructors_from_popup)
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
@@ -522,19 +523,34 @@ class PulseMaster:
         return self.pulseblocks.keys()
 
 
-    def add_pulseblock_from_popup(self):
+    def add_pulseblock_constructors_from_popup(self):
         """Create new pulseblock instance and add to pb dictionary"""
 
         # Get pulseblocks from Popup class
         _, pb_constructor = self.add_pb_popup.return_pulseblock_new_pulseblock_constructor()
+
+        # Check if constructor with same name already exists
+        if pb_constructor.name in [pb_constructor.name for pb_constructor in self.pulseblock_constructors]:
+            self.showerror(f"You have already initilized a pulsblock with the name '{pb_constructor.name}'.")
+            self.add_pb_popup.close()
+            return
 
         # Add empty pulseblock constructor to pulseblock constructor list.
         self.pulseblock_constructors.append(
             pb_constructor
         )
 
+
+         #Temporarliy disconnect the currentIndexChanged so it does not fire during the
+        # constructor generation
+        self.widgets["pulseblock_combo"].currentIndexChanged.disconnect()
+
+
         # Update pulseblock dropdown.
         self.update_pulseblock_dropdown()
+
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
+
 
         # Close popup
         self.add_pb_popup.close()
@@ -617,7 +633,9 @@ class PulseMaster:
 
         # Add pulse to currently selected pulseblockconstructor.
         active_pb_constructor = self.get_current_pb_constructor()
-        active_pb_constructor.pulse_specifiers.append(pulse_specifier)
+
+        if active_pb_constructor is not None:
+            active_pb_constructor.pulse_specifiers.append(pulse_specifier)
 
         # Update toolbox.
         self.update_pulse_list_toolbox()

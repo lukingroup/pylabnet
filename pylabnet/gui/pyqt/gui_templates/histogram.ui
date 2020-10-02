@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1700</width>
+    <width>1891</width>
     <height>1087</height>
    </rect>
   </property>
@@ -24,7 +24,7 @@
 color: rgb(255, 255, 255);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="sizeConstraint">
@@ -365,7 +365,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
      </layout>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="graph_layout">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
        <widget class="PlotWidget" name="graph" native="true">
         <property name="sizePolicy">
@@ -383,20 +383,24 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        </widget>
       </item>
       <item>
-       <widget class="GraphicsView" name="legend">
-        <property name="minimumSize">
-         <size>
-          <width>300</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>300</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="graph_layout">
+        <item>
+         <widget class="GraphicsView" name="legend">
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -651,7 +655,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1700</width>
+     <width>1891</width>
      <height>26</height>
     </rect>
    </property>

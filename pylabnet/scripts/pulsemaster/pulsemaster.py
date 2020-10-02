@@ -7,7 +7,7 @@ from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.hardware.staticline import staticline
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
 from pylabnet.utils.helper_methods import slugify
-
+import copy
 
 import numpy as np
 import time
@@ -50,7 +50,6 @@ class PulseblockConstructor():
 
     def load_as_dict(self):
         pass
-
 
 class PulseSpecifier():
     """Container storing info pully specifiying pulse within pulse sequence."""
@@ -245,14 +244,7 @@ class AddPulseblockPopup(QWidget):
         self.form_groupbox = None
         self.global_hbox = None
 
-    def return_pulseblock_new_pulseblock_constructor(self):
-        """ Add new pulseblock by clicking the "Add Pb" button."""
 
-        # Get pulseblock name
-        pb_name = self.pulseblock_name_field.text()
-        pb_constructor= PulseblockConstructor(name=pb_name)
-
-        return pb_name, pb_constructor
 
 
 class PulseMaster:
@@ -359,6 +351,22 @@ class PulseMaster:
 
         self.add_pb_popup = None
 
+    def  return_pulseblock_new_pulseblock_constructor(self):
+        """ Add new pulseblock by clicking the "Add Pb" button."""
+
+        inherit_combobox_text = self.add_pb_popup.pulseblock_inherit_field.currentText()
+        pb_name = self.add_pb_popup.pulseblock_name_field.text()
+
+        # If no option is choosen in the dropdown, generate new pb contructor.
+        if inherit_combobox_text == "":
+            pb_constructor= PulseblockConstructor(name=pb_name)
+
+        # Otherwise copy and rename constructor.
+        else:
+            pb_constructor = copy.deepcopy(self.get_pb_contructor_by_name(inherit_combobox_text))
+            pb_constructor.name = pb_name
+
+        return pb_constructor
 
     def update_pulse_list_toolbox(self):
         """Read in PulseblockContructor of currently selected Pulseblock
@@ -527,7 +535,7 @@ class PulseMaster:
         """Create new pulseblock instance and add to pb dictionary"""
 
         # Get pulseblocks from Popup class
-        _, pb_constructor = self.add_pb_popup.return_pulseblock_new_pulseblock_constructor()
+        pb_constructor = self.return_pulseblock_new_pulseblock_constructor()
 
         # Check if constructor with same name already exists
         if pb_constructor.name in [pb_constructor.name for pb_constructor in self.pulseblock_constructors]:

@@ -255,6 +255,8 @@ class Wrap:
             gate_start_channel=gate_ch,
             gate_stop_channel=-gate_ch
         )
+        self.log.info(f'Created gated channel {channel_name}, '
+                      f'click channel: {click_ch}, gate channel: {gate_ch}')
     
     def _get_channel(self, ch):
         """ Handle virtual channel input 

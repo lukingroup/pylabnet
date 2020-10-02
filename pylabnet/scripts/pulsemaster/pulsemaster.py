@@ -20,7 +20,7 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QTableWidgetItem, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
 from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
@@ -286,7 +286,8 @@ class PulseMaster:
             pulseblock_combo=1,
             variable_table_view = 1,
             add_variable_button = 1,
-            pulse_toolbox = 1,
+            pulse_list_vlayout=1,
+            pulse_scrollarea=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -345,6 +346,9 @@ class PulseMaster:
         self.gui.apply_stylesheet()
 
 
+        self.pulse_toolbox = QToolBox()
+
+
         # Make pulse toolbox invisible
         #self.widgets['pulse_toolbox'].hide()
         #self.widgets['pulse_scrollArea'].setWidget(self.widgets['pulse_toolbox'])
@@ -376,32 +380,32 @@ class PulseMaster:
 
         current_pb_constructor = self.get_current_pb_constructor()
 
-        # Hide Toolbox
-        pulse_toolbox = self.widgets['pulse_toolbox']
-        pulse_toolbox.hide()
+        # Close previous Toolbox.
+        if self.pulse_toolbox is not None:
+            self.pulse_toolbox.close()
+
+        self.pulse_toolbox = QToolBox()
+
+        # Add Toolbox to layout
+        self.widgets["pulse_scrollarea"].setWidget(self.pulse_toolbox)
 
         # If no pulses are added, keep toolbox hidden.
-
         if len(current_pb_constructor.pulse_specifiers) == 0:
             return
 
-        # Get number of entries
-        prev_num_items = pulse_toolbox.count()
-
-        # Delete previous entries.
-        for i in range(prev_num_items+1):
-            pulse_toolbox.removeItem(0)
 
         # Add new Entries.
         for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
             label = QLabel()
-            pulse_toolbox.insertItem(
+            self.pulse_toolbox.insertItem(
                 i,
                 label,
                 f"{str(i)}: {pulse_specifier.get_printable_name()}"
             )
 
-        pulse_toolbox.show()
+
+
+
 
 
     def get_pb_contructor_list(self):

@@ -1,0 +1,15 @@
+{ 
+    "1": {
+        "type": "digital",
+        "name": "Digital staticline device 1"
+    },
+    "2": {
+        "type": "digital",
+        "name": "wavemeter"
+    },
+    "3": {
+        "type": "analog",
+        "name": "Analog staticline device 1"
+    }
+
+}

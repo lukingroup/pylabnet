@@ -444,6 +444,27 @@ class PulseMaster:
 
             field_input.setObjectName(input_widget_name)
 
+            # Now let's add data.
+
+            # First look for the timing info:
+            if field['var'] == 'dur':
+                value = pulse_specifier.dur
+            elif field['var'] == 'offset':
+                value = pulse_specifier.offset
+            elif field['var'] == 'tref':
+                value = pulse_specifier.tref
+            # If file does not contain timing info, look
+            # at pulse parameter dictionary.
+            else:
+                value = pulse_specifier.pulsevar_dict[field['var']]
+
+            # Update COmbobox
+            if field['var'] == 'tref':
+                field_input.setCurrentIndex(field_input.findText(value))
+            # Update QLineedit
+            else:
+                field_input.setText(str(value))
+
             qform_layout.addRow(field_label, field_input)
 
         return form, qform_layout

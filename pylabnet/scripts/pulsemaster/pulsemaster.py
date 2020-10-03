@@ -355,7 +355,7 @@ class PulseMaster:
 
         # Make pulse toolbox invisible
         #self.widgets['pulse_toolbox'].hide()
-        #self.widgets['pulse_scrollArea'].setWidget(self.widgets['pulse_toolbox'])
+        self.widgets['pulse_scrollarea'].setWidget(self.pulse_toolbox)
 
 
 
@@ -402,11 +402,18 @@ class PulseMaster:
         for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
             pulse_form, pulse_layout = self.get_pulse_specifier_form(pulse_specifier)
 
+
             self.pulse_toolbox.insertItem(
                 i,
                 pulse_form,
                 f"{str(i)}: {pulse_specifier.get_printable_name()}"
             )
+
+            # Select last item and set minimum heigt.
+            self.pulse_toolbox.setCurrentWidget(pulse_form)
+            pulse_form.parent().parent().setMinimumHeight(100)
+
+
 
     def get_pulse_specifier_form(self, pulse_specifier):
 
@@ -1028,6 +1035,11 @@ def launch(**kwargs):
         pulsemaster = PulseMaster(
             hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port'], config=kwargs['config']
         )
+
+        constructor = PulseblockConstructor(name='test')
+        pulsemaster.pulseblock_constructors.append(constructor)
+        pulsemaster.update_pulseblock_dropdown()
+
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>2536</width>
-    <height>1190</height>
+    <height>1346</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -184,7 +184,7 @@
       </property>
       <property name="icon">
        <iconset>
-        <normaloff>add_pulse.svg</normaloff>add_pulse.svg</iconset>
+        <normaloff>../../../../../.designer/backup/add_pulse.svg</normaloff>../../../../../.designer/backup/add_pulse.svg</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -249,7 +249,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>add_pulseblock.svg</normaloff>add_pulseblock.svg</iconset>
+           <normaloff>../../../../../.designer/backup/add_pulseblock.svg</normaloff>../../../../../.designer/backup/add_pulseblock.svg</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -320,7 +320,7 @@
       </property>
       <property name="icon">
        <iconset>
-        <normaloff>add_var.svg</normaloff>add_var.svg</iconset>
+        <normaloff>../../../../../.designer/backup/add_var.svg</normaloff>../../../../../.designer/backup/add_var.svg</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -344,6 +344,41 @@
      </widget>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="groupBox_7">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>560</y>
+      <width>1541</width>
+      <height>711</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Pulse Plotter</string>
+    </property>
+    <widget class="PlotWidget" name="graph_1" native="true">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>1500</width>
+       <height>652</height>
+      </rect>
+     </property>
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>1500</width>
+       <height>200</height>
+      </size>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -357,6 +392,14 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QWidget</extends>
+   <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>config_tab</tabstop>
  </tabstops>

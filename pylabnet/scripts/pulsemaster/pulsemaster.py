@@ -39,12 +39,50 @@ class PulseblockConstructor():
 
         self.name = name
 
-        # Contains
         self.var_dict = {}
         self.pulse_specifiers = []
+        self.pulseblock = None
 
     def compile_pulseblock(self):
-        pass
+        """ Compiles the list of pulse_specifiers and var dists into valid
+        Pulseblock.
+        """
+
+        pulseblock = pb.PulseBlock(name=self.name)
+
+        for pb_spec in self.pulse_specifiers:
+
+            # Construct single pulse.
+            if pb_spec.pulsetype == "PTrue":
+                pulse = po.PTrue(ch=pb_spec.channel, dur=pb_spec.dur)
+
+            elif pb_spec.pulsetype == "PSin":
+
+                 pulse = po.PSin(
+                     ch=pb_spec.pulsetype,
+                     dur=pb_spec.dur,
+                     amp=pb_spec.pulsevar_dict['amp'],
+                     freq=pb_spec.pulsevar_dict['freq'],
+                     ph=pb_spec.pulsevar_dict['ph']
+                )
+
+            # Insert pulse to correct position in pulseblock.
+            if pb_spec.tref == "Absolute":
+                pb_dur = pulseblock.dur
+                pulseblock.append_po_as_pb(
+                    p_obj=pulse,
+                    offset=-pb_dur+pb_spec.dur
+                )
+
+            elif pb_spec.tref == "Last Pulse":
+                pulseblock.append_po_as_pb(
+                    p_obj=pulse,
+                    offset=pb_spec.dur
+                )
+
+        self.pulseblock =  pulseblock
+
+
 
     def save_as_dict(self):
         pass
@@ -291,7 +329,8 @@ class PulseMaster:
             variable_table_view = 1,
             add_variable_button = 1,
             pulse_list_vlayout=1,
-            pulse_scrollarea=1
+            pulse_scrollarea=1,
+            pulse_graph=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -360,6 +399,42 @@ class PulseMaster:
 
 
         self.add_pb_popup = None
+
+
+
+    def plot_pulseblock(self):
+
+        # x2 = np.linspace(-100, 100, 1000)
+        # data2 = np.sin(x2) / x2
+        # p8 = win.addPlot(title="Region Selection")
+        # p8.plot(data2, pen=(255,255,255,200))
+        # lr = pg.LinearRegionItem([400,700])
+        # lr.setZValue(-10)
+        # p8.addItem(lr)
+
+        # p9 = win.addPlot(title="Zoom on selected region")
+        # p9.plot(data2)
+        # def updatePlot():
+        #     p9.setXRange(*lr.getRegion(), padding=0)
+        # def updateRegion():
+        #     lr.setRegion(p9.getViewBox().viewRange()[0])
+        # lr.sigRegionChanged.connect(updatePlot)
+        # p9.sigXRangeChanged.connect(updateRegion)
+        # updatePlot()
+
+
+
+    def compile_current_pulseblock(self):
+
+        # Retrieve current pulseblcok contructor.
+        pb_constructor = self.get_current_pb_constructor()
+
+        # Update variables.
+        self._update_variable_dict()
+
+        pb_constructor.compile_pulseblock()
+
+
 
     def  return_pulseblock_new_pulseblock_constructor(self):
         """ Add new pulseblock by clicking the "Add Pb" button."""
@@ -737,22 +812,6 @@ class PulseMaster:
             pulse_data_dict=puls_data_dict
         )
 
-
-        # # # Create new pulse
-        # if pulsetype_dict["pulseblock_type"] == "PTrue":
-        #     new_pulse = po.PTrue(
-        #         ch=pulsedict["channel"],
-        #         dur=pulsedict["dur"]
-        #     )
-        # elif pulsetype_dict["pulseblock_type"] == "PSin":
-        #     new_pulse = po.PSin(
-        #         ch=pulsedict["channel"],
-        #         dur=pulsedict["dur"],
-        #         amp=pulsedict["amp"],
-        #         freq=pulsedict["freq"],
-        #         ph=pulsedict["ph"]
-        #     )
-
         # Add pulse to currently selected pulseblockconstructor.
         active_pb_constructor = self.get_current_pb_constructor()
 
@@ -761,6 +820,9 @@ class PulseMaster:
 
         # Update toolbox.
         self.update_pulse_list_toolbox()
+
+        # Compile pulseblock
+        self.compile_current_pulseblock()
 
 
     def return_pulsedict(self, pulsetype_dict):

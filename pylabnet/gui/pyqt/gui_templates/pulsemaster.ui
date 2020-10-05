@@ -356,13 +356,13 @@
     <property name="title">
      <string>Pulse Plotter</string>
     </property>
-    <widget class="PlotWidget" name="graph_1" native="true">
+    <widget class="PlotWidget" name="pulse_graph" native="true">
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>30</y>
+       <y>71</y>
        <width>1500</width>
-       <height>652</height>
+       <height>611</height>
       </rect>
      </property>
      <property name="sizePolicy">

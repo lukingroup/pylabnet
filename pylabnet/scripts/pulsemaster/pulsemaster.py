@@ -12,6 +12,7 @@ import copy
 import numpy as np
 import time
 import socket
+showingimport sys
 import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
@@ -20,7 +21,7 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
 from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
@@ -35,13 +36,33 @@ class PulseblockConstructor():
     while retaining the ability to change variables and easy save/load functionality.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, log, var_dict):
 
         self.name = name
+        self.log = log
 
-        self.var_dict = {}
+        self.var_dict = var_dict
         self.pulse_specifiers = []
         self.pulseblock = None
+
+
+    def resolve_value(self, input_val):
+        """ Return float value of input_val.
+
+        Inpuinput_valt is either already float, in which case it will be returned.
+        Alternatively, the input value could be a variable, as defined in the keys
+        in the var_dict. In this case the value associeted with this variable will be
+        returned.
+        :input: (str of float) Float value or variabel string.
+        """
+
+        if type(input_val) is float:
+            return input_val
+        else:
+            try:
+                return self.var_dict[input_val]
+            except KeyError:
+                self.log.error(f"Could not resolve variable '{input_val}'.")
 
     def compile_pulseblock(self):
         """ Compiles the list of pulse_specifiers and var dists into valid
@@ -52,18 +73,25 @@ class PulseblockConstructor():
 
         for pb_spec in self.pulse_specifiers:
 
+            dur = self.resolve_value(pb_spec.dur)
+            offset = self.resolve_value(pb_spec.offset)
+
             # Construct single pulse.
             if pb_spec.pulsetype == "PTrue":
-                pulse = po.PTrue(ch=pb_spec.channel, dur=pb_spec.dur)
+
+                pulse = po.PTrue(
+                    ch=pb_spec.channel,
+                    dur=dur
+                )
 
             elif pb_spec.pulsetype == "PSin":
 
                  pulse = po.PSin(
                      ch=pb_spec.pulsetype,
-                     dur=pb_spec.dur,
-                     amp=pb_spec.pulsevar_dict['amp'],
-                     freq=pb_spec.pulsevar_dict['freq'],
-                     ph=pb_spec.pulsevar_dict['ph']
+                     dur=dur,
+                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
+                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
+                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
                 )
 
             # Insert pulse to correct position in pulseblock.
@@ -71,13 +99,13 @@ class PulseblockConstructor():
                 pb_dur = pulseblock.dur
                 pulseblock.append_po_as_pb(
                     p_obj=pulse,
-                    offset=-pb_dur+pb_spec.dur
+                    offset=-pb_dur+offset
                 )
 
             elif pb_spec.tref == "Last Pulse":
                 pulseblock.append_po_as_pb(
                     p_obj=pulse,
-                    offset=pb_spec.dur
+                    offset=offset
                 )
 
         self.pulseblock =  pulseblock
@@ -367,10 +395,6 @@ class PulseMaster:
         # Connect "Update DIO Assignment" Button
         self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
 
-
-        # Store widget which store variable autocomplete.
-        self.var_completer_widgets = []
-
         # Initilize Pulse Selector Form
         self.setup_pulse_selector_form()
 
@@ -403,24 +427,25 @@ class PulseMaster:
 
 
     def plot_pulseblock(self):
+        pass
 
-        # x2 = np.linspace(-100, 100, 1000)
-        # data2 = np.sin(x2) / x2
-        # p8 = win.addPlot(title="Region Selection")
-        # p8.plot(data2, pen=(255,255,255,200))
-        # lr = pg.LinearRegionItem([400,700])
-        # lr.setZValue(-10)
-        # p8.addItem(lr)
+    # x2 = np.linspace(-100, 100, 1000)
+    # data2 = np.sin(x2) / x2
+    # p8 = win.addPlot(title="Region Selection")
+    # p8.plot(data2, pen=(255,255,255,200))
+    # lr = pg.LinearRegionItem([400,700])
+    # lr.setZValue(-10)
+    # p8.addItem(lr)
 
-        # p9 = win.addPlot(title="Zoom on selected region")
-        # p9.plot(data2)
-        # def updatePlot():
-        #     p9.setXRange(*lr.getRegion(), padding=0)
-        # def updateRegion():
-        #     lr.setRegion(p9.getViewBox().viewRange()[0])
-        # lr.sigRegionChanged.connect(updatePlot)
-        # p9.sigXRangeChanged.connect(updateRegion)
-        # updatePlot()
+    # p9 = win.addPlot(title="Zoom on selected region")
+    # p9.plot(data2)
+    # def updatePlot():
+    #     p9.setXRange(*lr.getRegion(), padding=0)
+    # def updateRegion():
+    #     lr.setRegion(p9.getViewBox().viewRange()[0])
+    # lr.sigRegionChanged.connect(updatePlot)
+    # p9.sigXRangeChanged.connect(updateRegion)
+    # updatePlot()
 
 
 
@@ -432,7 +457,15 @@ class PulseMaster:
         # Update variables.
         self._update_variable_dict()
 
-        pb_constructor.compile_pulseblock()
+        # Update variable dict
+        pb_constructor.var_dict = self.vars
+
+
+        # try to compile the pulseblock
+        try:
+            pb_constructor.compile_pulseblock()
+        except ValueError as e:
+            self.showerror(str(e))
 
 
 
@@ -444,7 +477,11 @@ class PulseMaster:
 
         # If no option is choosen in the dropdown, generate new pb contructor.
         if inherit_combobox_text == "":
-            pb_constructor= PulseblockConstructor(name=pb_name)
+            pb_constructor= PulseblockConstructor(
+                name=pb_name,
+                log=self.log,
+                var_dict = self.var_dict
+            )
 
         # Otherwise copy and rename constructor.
         else:
@@ -513,10 +550,6 @@ class PulseMaster:
             # Add choices to combobox.
             if type(field_input) is QComboBox:
                     field_input.addItems(field['combo_choice'])
-            else:
-                # Add completer
-                self.var_completer_widgets.append(field_input)
-                field_input.setCompleter(self.var_completer)
 
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(
@@ -555,7 +588,7 @@ class PulseMaster:
         """ Setup form displayed in every tab of "Defined-Pulse" Toolbox."""
 
         self.pulse_selector_form_static = QGroupBox()
-        self.pulse_selector_form_static.setObjectName("pulse_static_input")
+        self.pulse_selector_form_static.setObjectName("pulse_static_toolbox")
         self.pulse_selector_channelselection = QLineEdit()
         self.pulse_selector_pulse_drop_down = QComboBox()
 
@@ -574,7 +607,7 @@ class PulseMaster:
 
         # Add a second form containing the fields that change from pulsetype to pulsetype
         self.pulse_selector_form_variable = QGroupBox()
-        self.pulse_selector_form_variable.setObjectName("pulse_var_input")
+        self.pulse_selector_form_variable.setObjectName("pulse_var_toolbox")
 
         self.pulse_selector_form_layout_variable = QFormLayout()
         self.pulse_selector_form_variable.setLayout(self.pulse_selector_form_layout_variable)
@@ -585,9 +618,6 @@ class PulseMaster:
 
         # Build pulse-specific fileds.
         self.build_pulse_input_fields()
-
-
-
 
     def get_pb_contructor_list(self):
         """ Return list of names of all instanciated Pulseblock contructors."""
@@ -735,7 +765,6 @@ class PulseMaster:
             pb_constructor
         )
 
-
          #Temporarliy disconnect the currentIndexChanged so it does not fire during the
         # constructor generation
         self.widgets["pulseblock_combo"].currentIndexChanged.disconnect()
@@ -788,9 +817,6 @@ class PulseMaster:
         )
 
         return pulse_specifier
-
-
-
 
     def add_pulse_from_form(self):
         """Get pulse info from form, create Pulse object and add to pulse list"""
@@ -910,16 +936,29 @@ class PulseMaster:
 
     def showerror(self, error_message):
         """ Show error message."""
-        error_dialog = QErrorMessage()
-        error_dialog.showMessage(error_message)
-        error_dialog.exec_()
-
+        error_dialog = QMessageBox.critical(
+            self.gui, "Error",
+            error_message,
+            QMessageBox.Ok,
+            QMessageBox.NoButton
+        )
 
     def update_var_completer(self):
         """ Update variable completer """
         self.var_completer  = QCompleter(self.vars.keys())
 
-        for widget in self.var_completer_widgets:
+        # Retrieve all Qlineedits
+        var_completer_widgets = []
+
+        # This groupbox contains the pulse
+        for groubox in self.gui.findChildren(QGroupBox, "pulse_var_input"):
+            for qlinedit in groubox.findChildren(QLineEdit):
+                var_completer_widgets.append(qlinedit)
+
+        for qlinedit in self.widgets["pulse_list_vlayout"].findChildren(QLineEdit):
+            var_completer_widgets.append(qlinedit)
+
+        for widget in var_completer_widgets:
                 widget.setCompleter(self.var_completer)
 
 
@@ -1015,9 +1054,6 @@ class PulseMaster:
         # Remove old entries.
         self._remove_variable_pulse_fields()
 
-        # Resset widget list
-        self.var_completer_widgets = []
-
         # Load pulsetype settings
         pulsetype_dict = self._current_pulsetype_dict()
 
@@ -1032,10 +1068,6 @@ class PulseMaster:
             # Add choices to combobox.
             if type(field_input) is QComboBox:
                     field_input.addItems(field['combo_choice'])
-            else:
-                # Add completer
-                self.var_completer_widgets.append(field_input)
-                field_input.setCompleter(self.var_completer)
 
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(field)
@@ -1092,15 +1124,22 @@ def launch(**kwargs):
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
+
+
     # Instantiate Pulsemaster
     try:
         pulsemaster = PulseMaster(
             hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port'], config=kwargs['config']
         )
 
-        constructor = PulseblockConstructor(name='test')
+        constructor = PulseblockConstructor(
+            name='test',
+            log=logger,
+            var_dict = {}
+        )
         pulsemaster.pulseblock_constructors.append(constructor)
         pulsemaster.update_pulseblock_dropdown()
+
 
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

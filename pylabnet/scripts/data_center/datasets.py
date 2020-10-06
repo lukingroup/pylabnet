@@ -2,18 +2,24 @@ import pyqtgraph as pg
 import numpy as np
 
 from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.utils.logging.logger import LogClient, LogHandler
 
 
 class Dataset:
 
-    def __init__(self, gui: Window, data=None, x=None, graph=None):
+    def __init__(self, gui:Window, log:LogClient=None, data=None, 
+        x=None, graph=None):
         """ Instantiates an empty generic dataset 
         
         :param gui: (Window) GUI window for data graphing
+        :param log: (LogClient)
         :param data: initial data to set
         :param x: x axis
         :param graph: (pg.PlotWidget) graph to use
         """
+
+        self.log = LogHandler(log)
+        self.metadata = self.log.get_metadata()
 
         # Set data registers
         self.data = data
@@ -39,7 +45,7 @@ class Dataset:
         else:
             graph = self.graph
 
-        self.children[name] = Dataset(
+        self.children[name] = self.__class__(
             gui=self.gui, 
             data=self.data,
             graph=graph
@@ -95,6 +101,39 @@ class Dataset:
 
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
+
+    def __init__(self, gui:Window, log:LogClient=None, data=None, 
+        x=None, graph=None):
+        """ Instantiates an empty generic dataset 
+        
+        :param gui: (Window) GUI window for data graphing
+        :param log: (LogClient)
+        :param data: initial data to set
+        :param x: x axis
+        :param graph: (pg.PlotWidget) graph to use
+        """
+
+        self.recent_data = None
+        self.preselection_passed = True
+        super().__init__(gui, log, data, x, graph)
+
+    def set_data(self, data=None, x=None):
+        """ Sets data by adding to previous histogram
+
+        :param data: new data to set
+        :param x: x axis
+        """
+
+        # Cast as a numpy array if needed
+        if isinstance(data, list):
+            self.recent_data = np.array(data)
+        else:
+            self.recent_data = data
+
+        if self.data is None:
+            self.data = self.recent_data
+        else:
+            self.data += self.recent_data
 
 
 # Useful mappings

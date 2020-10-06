@@ -73,7 +73,7 @@ class DataTaker:
             exp_content = exp_file.read()
 
         self.gui.exp_preview.setText(exp_content)
-        self.gui.exp_preview.setStyleSheet('font: 12pt "Consolas"; '
+        self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(0, 0, 0);')
 
@@ -112,7 +112,7 @@ class DataTaker:
         self.experiment = self.module.experiment
 
         self.log.info(f'Experiment {exp_name} configured')
-        self.gui.exp_preview.setStyleSheet('font: 12pt "Consolas"; '
+        self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
 

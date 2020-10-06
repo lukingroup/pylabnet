@@ -145,6 +145,27 @@ class Window(QtWidgets.QMainWindow):
             self.port=port
             self.port_label.setText(f'Port: {port}')
 
+    def add_graph(self, graph_layout=None, index=None):
+        """ Adds a new pyqtgraph to a graph layout and returns
+        
+        :param graph_layout: (str) name of graph layout to add to
+        :param index: (int) index if inserting into layout at a
+            particular location
+        """
+
+        if graph_layout is None:
+            layout = getattr(self, 'graph_layout')
+        else:
+            layout = getattr(self, graph_layout)
+
+        graph = pg.PlotWidget()
+        if index is None:
+            layout.addWidget(graph)
+        else:
+            layout.insertWidget(index, graph)
+
+        return graph
+    
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 

@@ -79,6 +79,24 @@ class LogHandler:
         except:
             return -1
 
+    def update_metadata(self, **metadata):
+        """ Updates experiment-related metadata
+
+        :param metadata: (dict) dictionary containing relevant metadata
+        """
+        try:
+            return self._logger.update_metadata(**metadata)
+        except:
+            return -1
+    
+    def get_metadata(self):
+        """ Returns all metadata"""
+
+        try:
+            return self._logger.get_metadata()
+        except:
+            return -1
+
 
 class ILog:
     pass

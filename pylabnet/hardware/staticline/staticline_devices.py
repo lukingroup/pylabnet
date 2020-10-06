@@ -31,8 +31,8 @@ class StaticLineHardwareHandler(ABC):
 
     @abstractmethod
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
-        device client function calls. This is an abstract method as each 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls. This is an abstract method as each
         subclass implements its own version based on its own functions.
         '''
         pass
@@ -113,10 +113,10 @@ class HDAWG(StaticLineHardwareHandler):
 class NiDaqMx(StaticLineHardwareHandler):
 
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
-        
+
         # Retrieve arguments from configs, if not found apply default value.
         try:
             down_voltage = self.config['down_voltage']
@@ -150,7 +150,7 @@ class NiDaqMx(StaticLineHardwareHandler):
 class Toptica(StaticLineHardwareHandler):
 
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
 
@@ -159,10 +159,10 @@ class Toptica(StaticLineHardwareHandler):
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
 
 class AbstractDevice(StaticLineHardwareHandler):
-    
+
 
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
 

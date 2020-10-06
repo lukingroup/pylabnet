@@ -1,43 +1,53 @@
 import pyqtgraph as pg
+import numpy as np
 
 from pylabnet.gui.pyqt.external_gui import Window
 
 
 class Dataset:
 
-    def __init__(self, gui: Window, data=None, x=None):
+    def __init__(self, gui: Window, data=None, x=None, graph=None):
         """ Instantiates an empty generic dataset 
         
         :param gui: (Window) GUI window for data graphing
         :param data: initial data to set
         :param x: x axis
+        :param graph: (pg.PlotWidget) graph to use
         """
 
         # Set data registers
         self.data = data
         self.x = x
+        self.children = {}
+        self.mapping = {}
 
         # Configure data visualization
         self.gui = gui
-        self.visualize()
+        self.visualize(graph)
 
-    def process(self, name, mapping=None):
-        """ Processes data to produce a new processed dataset
+    def add_child(self, name, mapping=None, new_plot=True):
+        """ Adds a child dataset with a particular data mapping
         
         :param name: (str) name of processed dataset
             becomes a Dataset object (or child) as attribute of self
         :param mapping: (function) function which transforms Dataset to processed Dataset
+        :param new_plot: (bool) whether or not to use a new plot
         """
 
-        # If there is no mapping we just make a copy of the data
-        # if mapping is None:
-        #     setattr(self, name, Dataset(gui, self.data, self.x))
+        if new_plot:
+            graph = None
+        else:
+            graph = self.graph
 
-        # # Otherwise we apply the process
-        # else:
-        #     setattr(self, name, mapping(self))
-        pass
+        self.children[name] = Dataset(
+            gui=self.gui, 
+            data=self.data,
+            graph=graph
+        )
 
+        if mapping is not None:
+            self.mapping[name] = mapping
+    
     def set_data(self, data=None, x=None):
         """ Sets data
 
@@ -50,12 +60,20 @@ class Dataset:
         if x is not None:
             self.x = x
 
-    def visualize(self):
-        """ Prepare data visualization on GUI """
+    def visualize(self, graph):
+        """ Prepare data visualization on GUI 
+        
+        :param graph: (pg.PlotWidget) graph to use
+        """
 
-        self.graph = self.gui.add_graph()
+        if graph is None:
+            self.graph = self.gui.add_graph()
+        else:
+            self.graph = graph
         self.curve = self.graph.plot(
-            pen=pg.mkPen(self.gui.COLOR_LIST[0])
+            pen=pg.mkPen(self.gui.COLOR_LIST[
+                len(self.graph.getPlotItem().curves)
+            ])
         )
         self.update()
 
@@ -67,3 +85,22 @@ class Dataset:
                 self.curve.setData(self.x, self.data)
             else:
                 self.curve.setData(self.data)
+
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+            child.update()
+
+
+class AveragedHistogram(Dataset):
+    """ Subclass for plotting averaged histogram """
+
+
+# Useful mappings
+
+def moving_average(dataset, prev_dataset=None):
+	n=20
+	ret = np.cumsum(dataset.data)
+	ret[n:] = ret[n:] - ret[:-n]
+	prev_dataset.set_data(data=ret[n-1:]/n)

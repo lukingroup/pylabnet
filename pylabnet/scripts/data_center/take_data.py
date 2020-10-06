@@ -15,7 +15,7 @@ from pylabnet.utils.helper_methods import load_config
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 10    # refresh rate in ms
+REFRESH_RATE = 50    # refresh rate in ms, try increasing if GUI lags
 
 class DataTaker:
 
@@ -80,6 +80,15 @@ class DataTaker:
     def configure(self):
         """ Configures the currently selected experiment + dataset """
 
+        # If the experiment is running, do nothing
+        try:
+            if self.experiment_thread.isRunning():
+                self.log.warn('Did not configure experiment, since it '
+                              'is still in progress')
+                return
+        except:
+            pass
+        
         # Set all experiments to normal state and highlight configured expt
         for item_no in range(self.gui.exp.count()):
             self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
@@ -88,9 +97,16 @@ class DataTaker:
         self.module = importlib.import_module(exp_name)
         self.module = importlib.reload(self.module)
 
+        # Clear graph area and set up dataset
+        for index in reversed(range(self.gui.graph_layout.count())):
+            self.gui.graph_layout.itemAt(index).widget().deleteLater()
+        self.dataset = getattr(datasets, self.gui.dataset.currentText())(
+            gui=self.gui
+        )
+
         # Run any pre-experiment configuration
         try:
-            self.module.configure(**self.clients)
+            self.module.configure(dataset=self.dataset, **self.clients)
         except AttributeError:
             pass
         self.experiment = self.module.experiment
@@ -99,13 +115,6 @@ class DataTaker:
         self.gui.exp_preview.setStyleSheet('font: 12pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
-
-        # Clear graph area and set up dataset
-        for index in reversed(range(self.gui.graph_layout.count())):
-            self.gui.graph_layout.itemAt(index).widget().deleteLater()
-        self.dataset = getattr(datasets, self.gui.dataset.currentText())(
-            gui=self.gui
-        )
 
     def run(self):
         """ Runs/stops the experiment """
@@ -122,21 +131,25 @@ class DataTaker:
                 gui=self.gui,
                 **self.clients
             )
-            self.update_thread = UpdateThread(
-                dataset=self.dataset
-            )
-            self.experiment_thread.finished.connect(self.run)
+            self.update_thread = UpdateThread()
+            self.update_thread.data_updated.connect(self.dataset.update)
+            self.experiment_thread.finished.connect(self.stop)
 
         # Stop experiment
         else:
-            self.gui.run.setStyleSheet('background-color: green')
-            self.gui.run.setText('Run')
-            self.log.info('Experiment stopped')
             self.experiment_thread.running = False
-            self.update_thread.running = False
+
+    def stop(self):
+        """ Stops the experiment"""
+
+        self.gui.run.setStyleSheet('background-color: green')
+        self.gui.run.setText('Run')
+        self.log.info('Experiment stopped')
+        self.update_thread.running = False
 
 
 class ExperimentThread(QtCore.QThread):
+    """ Thread that simply runs the experiment repeatedly """
 
     def __init__(self, experiment, **params):
         self.experiment = experiment
@@ -150,16 +163,18 @@ class ExperimentThread(QtCore.QThread):
             self.experiment(**self.params)
 
 class UpdateThread(QtCore.QThread):
+    """ Thread that continuously signals GUI to update data """
 
-    def __init__(self, dataset):
-        self.dataset = dataset
+    data_updated = QtCore.pyqtSignal()
+
+    def __init__(self):
         self.running = True
         super().__init__()
         self.start()
     
     def run(self):
         while self.running:
-            self.dataset.update()
+            self.data_updated.emit()
             self.msleep(REFRESH_RATE)
 
 

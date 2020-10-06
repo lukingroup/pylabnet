@@ -48,7 +48,7 @@ def launch(**kwargs):
             config = {}
 
     for channel, trig_level in config.items():
-        tagger.setTriggerLevel(int(channel)+1, float(trig_level))
+        tagger.setTriggerLevel(int(channel), float(trig_level))
 
     cnt_trace_wrap = Wrap(
         tagger=tagger,

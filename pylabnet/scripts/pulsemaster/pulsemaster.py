@@ -11,8 +11,10 @@ import copy
 
 import numpy as np
 import time
+import pyqtgraph as pg
+
 import socket
-showingimport sys
+
 import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
@@ -30,6 +32,21 @@ from PyQt5.QtCore import QVariant
 import uuid
 
 
+class CustomViewBox(pg.ViewBox):
+    def __init__(self, *args, **kwds):
+        pg.ViewBox.__init__(self, *args, **kwds)
+        self.setMouseMode(self.RectMode)
+
+    ## reimplement right-click to zoom out
+    def mouseClickEvent(self, ev):
+        if ev.button() == Qt.RightButton:
+            self.autoRange()
+
+    def mouseDragEvent(self, ev):
+        if ev.button() == Qt.RightButton:
+            ev.ignore()
+        else:
+            pg.ViewBox.mouseDragEvent(self, ev)
 
 class PulseblockConstructor():
     """Container Class which stores all necessary information to compile full Pulseblock,
@@ -109,8 +126,6 @@ class PulseblockConstructor():
                 )
 
         self.pulseblock =  pulseblock
-
-
 
     def save_as_dict(self):
         pass
@@ -358,7 +373,7 @@ class PulseMaster:
             add_variable_button = 1,
             pulse_list_vlayout=1,
             pulse_scrollarea=1,
-            pulse_graph=1
+            pulse_layout_widget=1,
         )
 
         # Initialize empty pulseblock dictionary.
@@ -426,28 +441,127 @@ class PulseMaster:
 
 
 
-    def plot_pulseblock(self):
-        pass
-
-    # x2 = np.linspace(-100, 100, 1000)
-    # data2 = np.sin(x2) / x2
-    # p8 = win.addPlot(title="Region Selection")
-    # p8.plot(data2, pen=(255,255,255,200))
-    # lr = pg.LinearRegionItem([400,700])
-    # lr.setZValue(-10)
-    # p8.addItem(lr)
-
-    # p9 = win.addPlot(title="Zoom on selected region")
-    # p9.plot(data2)
-    # def updatePlot():
-    #     p9.setXRange(*lr.getRegion(), padding=0)
-    # def updateRegion():
-    #     lr.setRegion(p9.getViewBox().viewRange()[0])
-    # lr.sigRegionChanged.connect(updatePlot)
-    # p9.sigXRangeChanged.connect(updateRegion)
-    # updatePlot()
+    def setup_plot(self):
 
 
+        win = self.widgets["pulse_layout_widget"]
+        win.clear()
+
+
+        label = pg.LabelItem(justify='right')
+        win.addItem(label)
+        p1 = win.addPlot(row=1, col=0, colspan=2)
+        p2 = win.addPlot(row=1, col=2)
+
+        p1.hideAxis('left')
+        p2.hideAxis('left')
+
+        lr = pg.LinearRegionItem([0,10])
+        lr.setZValue(-10)
+        p1.addItem(lr)
+
+        def updatePlot():
+            p2.setXRange(*lr.getRegion(), padding=0)
+        def updateRegion():
+            lr.setRegion(p2.getViewBox().viewRange()[0])
+        lr.sigRegionChanged.connect(updatePlot)
+        p2.sigXRangeChanged.connect(updateRegion)
+        updatePlot()
+
+        return p1, p2
+
+    def prep_plotdata(self, pb_obj):
+
+
+        p1, p2 = self.setup_plot()
+
+        # Iterate through p_dict.keys() and dflt_dict.keys()
+        # and create a trace for each channel
+        #  - create sorted list of channels
+        d_ch_set = set(pb_obj.dflt_dict.keys())
+        p_ch_set = set(pb_obj.p_dict.keys())
+        ch_list = list(d_ch_set | p_ch_set)
+        ch_list.sort()
+
+        # - iterate trough ch_list
+        trace_list = []
+        for ch_index, ch in enumerate(ch_list):
+
+            #
+            # Build x_ar, y_ar, text_ar
+            #
+
+            # initial zero-point - default pulse object printout
+            x_ar = [0]
+            y_ar = [ch_index]
+            if ch in pb_obj.dflt_dict.keys():
+                text_ar = [
+                    '{}'.format(
+                        str(pb_obj.dflt_dict[ch])
+                    )
+                ]
+            else:
+                text_ar = ['']
+
+            # Iterate through pulse list and create a rectangular
+            # arc for each pulse. The mid-point on the upper segment
+            # contains printout of the pulse object
+            if ch in pb_obj.p_dict.keys():
+                for p_item in pb_obj.p_dict[ch]:
+                    # edges of the pulse
+                    t1 = p_item.t0
+                    t2 = p_item.t0 + p_item.dur
+
+                    # left vertical line
+                    if t1 == 0:
+                        # If pulse starts at the origin,
+                        # do not overwrite (x=0, y=ch_index) point
+                        # which contains dflt_dict[ch] printout
+                        x_ar.append(t1)
+                        y_ar.append(ch_index + 0.8)
+                    else:
+                        x_ar.extend([t1, t1])
+                        y_ar.extend([ch_index, ch_index + 0.8])
+
+                    # mid-point, which will contain printout
+                    x_ar.append((t1 + t2) / 2)
+                    y_ar.append(ch_index + 0.8)
+
+                    # right vertical line
+                    x_ar.extend([t2, t2])
+                    y_ar.extend([ch_index + 0.8, ch_index])
+
+                    # set mid-point text to object printout
+                    if t1 == 0:
+                        # If pulse starts at the origin,
+                        # do not overwrite (x=0, y=ch_index) point
+                        # which contains dflt_dict[ch] printout
+                        text_ar.extend(
+                            [
+                                '{:.2e}'.format(t1),
+                                '{}'.format(str(p_item)),
+                                '{:.2e}'.format(t2),
+                                '{:.2e}'.format(t2)
+                            ]
+                        )
+                    else:
+                        text_ar.extend(
+                            [
+                                '{:.2e}'.format(t1),
+                                '{:.2e}'.format(t1),
+                                '{}'.format(str(p_item)),
+                                '{:.2e}'.format(t2),
+                                '{:.2e}'.format(t2)
+                            ]
+                        )
+
+            # final zero-point
+            x_ar.append(pb_obj.dur)
+            y_ar.append(ch_index)
+            text_ar.append('{:.2e}'.format(pb_obj.dur))
+
+            p2.plot(x_ar, y_ar, pen="w")
+            p1.plot(x_ar, y_ar, pen="w")
 
     def compile_current_pulseblock(self):
 
@@ -464,10 +578,22 @@ class PulseMaster:
         # try to compile the pulseblock
         try:
             pb_constructor.compile_pulseblock()
+            compliation_successful= True
         except ValueError as e:
             self.showerror(str(e))
+            compliation_successful = False
 
+        return compliation_successful
 
+    def plot_current_pulseblock(self):
+
+        # Compile pulseblock
+        if not self.compile_current_pulseblock():
+            return
+
+        xarr, yarr, text_arr, trace_list = self.prep_plotdata(self.get_current_pb_constructor().pulseblock)
+
+        self.plot_pb(xarr, yarr, text_arr, trace_list)
 
     def  return_pulseblock_new_pulseblock_constructor(self):
         """ Add new pulseblock by clicking the "Add Pb" button."""
@@ -841,14 +967,22 @@ class PulseMaster:
         # Add pulse to currently selected pulseblockconstructor.
         active_pb_constructor = self.get_current_pb_constructor()
 
+        # Append pb_constructor to pulsebloack and attempt compilation.
         if active_pb_constructor is not None:
             active_pb_constructor.pulse_specifiers.append(pulse_specifier)
+
+        compilation_successful = self.compile_current_pulseblock()
+
+        # If compilation failed, remove pb_specifiera and exit
+        if not compilation_successful:
+            active_pb_constructor.pulse_specifiers.remove(pulse_specifier)
+            return
 
         # Update toolbox.
         self.update_pulse_list_toolbox()
 
-        # Compile pulseblock
-        self.compile_current_pulseblock()
+        # Plot
+        self.plot_current_pulseblock()
 
 
     def return_pulsedict(self, pulsetype_dict):
@@ -1115,6 +1249,7 @@ class PulseMaster:
         """ Runs an iteration of checks for updates and implements
         """
 
+
         time.sleep(0.01)
         self.gui.force_update()
 
@@ -1145,25 +1280,6 @@ def launch(**kwargs):
         logger.error('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
-
-    # try:
-    #     config = load_config('counters')
-    #     ch_list = list(config['channels'])
-    #     plot_1 = list(config['plot_1'])
-    #     plot_2 = list(config['plot_2'])
-    #     plot_list = [plot_1, plot_2]
-    # except:
-    #     config = None
-    #     ch_list = [7, 8]
-    #     plot_list = [[7], [8]]
-
-
-    # # Set parameters
-    # if params is None:
-    #     params = dict(bin_width=2e10, n_bins=1e3, ch_list=ch_list, plot_list=plot_list)
-    # monitor.set_params(**params)
-
-    # Run
 
     while True:
         pulsemaster.run()

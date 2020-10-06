@@ -70,7 +70,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>4</number>
     </property>
     <widget class="QWidget" name="tab_1">
      <attribute name="title">
@@ -154,7 +154,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Pulse Selector</string>
+      <string>Pulse Selector </string>
      </property>
      <widget class="QWidget" name="verticalLayoutWidget">
       <property name="geometry">
@@ -344,38 +344,26 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="groupBox_7">
+   <widget class="QGroupBox" name="pulse_plotter_groupbox">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>560</y>
-      <width>1541</width>
+      <width>1601</width>
       <height>711</height>
      </rect>
     </property>
     <property name="title">
      <string>Pulse Plotter</string>
     </property>
-    <widget class="PlotWidget" name="pulse_graph" native="true">
+    <widget class="GraphicsLayoutWidget" name="pulse_layout_widget">
      <property name="geometry">
       <rect>
        <x>20</x>
-       <y>71</y>
-       <width>1500</width>
-       <height>611</height>
+       <y>31</y>
+       <width>1571</width>
+       <height>661</height>
       </rect>
-     </property>
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>1500</width>
-       <height>200</height>
-      </size>
      </property>
     </widget>
    </widget>
@@ -394,10 +382,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PlotWidget</class>
-   <extends>QWidget</extends>
-   <header>pyqtgraph</header>
-   <container>1</container>
+   <class>GraphicsLayoutWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

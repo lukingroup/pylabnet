@@ -33,6 +33,8 @@ from PyQt5.QtCore import QVariant
 import uuid
 from simpleeval import simple_eval, NameNotDefined
 
+from syntax_highlighting import MyHighlighter,highlightBlock
+
 
 DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]
 
@@ -382,7 +384,10 @@ class PulseMaster:
             pulse_layout_widget=1,
             load_seq_vars= 1,
             seq_var_table=1,
-            save_seq_variables_dict=1
+            save_seq_variables_dict=1,
+            seqt_textedit=1,
+            load_seqt=1,
+            save_seqt=1
 
         )
 
@@ -474,7 +479,23 @@ class PulseMaster:
         # Connect change of variable data to update variable dict function.
         self.seq_variable_table_model.dataChanged.connect(self._update_seq_var_dict)
 
+
+        # Connect load and save sequence template buttons.
+        self.widgets["load_seqt"].clicked.connect(self.load_sequence_template)
+
         self.add_pb_popup = None
+
+
+    def load_sequence_template(self):
+        seq_temp_filename = self.get_filename(filetype="Sequencer Template files (*.seqct)")
+
+        # Open seqct file and store sequence template as member variable.
+        f = open(seq_temp_filename[0], "r")
+        self.seq_temp = f.read()
+
+        # Set value to textbox.
+        self.widgets['seqt_textedit'].setText(self.seq_temp )
+
 
     def json_file_save(self, data):
         """ Generic file saving."""

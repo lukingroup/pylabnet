@@ -60,78 +60,6 @@
      </item>
     </layout>
    </widget>
-   <widget class="QTabWidget" name="config_tab">
-    <property name="geometry">
-     <rect>
-      <x>2130</x>
-      <y>70</y>
-      <width>381</width>
-      <height>381</height>
-     </rect>
-    </property>
-    <property name="currentIndex">
-     <number>4</number>
-    </property>
-    <widget class="QWidget" name="tab_1">
-     <attribute name="title">
-      <string>Channel Delay</string>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="tab_2">
-     <attribute name="title">
-      <string>Tab 2</string>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="tab">
-     <attribute name="title">
-      <string>Page</string>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="tab_3">
-     <attribute name="title">
-      <string/>
-     </attribute>
-    </widget>
-    <widget class="QWidget" name="dio_tab">
-     <attribute name="title">
-      <string>DIO setup</string>
-     </attribute>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QTableView" name="DIO_table">
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="update_DIO_button">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load DIO assignment from config file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Update DIO Assignment</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
    <widget class="QGroupBox" name="pm_qhbox">
     <property name="geometry">
      <rect>
@@ -184,7 +112,7 @@
       </property>
       <property name="icon">
        <iconset>
-        <normaloff>../../../../../.designer/backup/add_pulse.svg</normaloff>../../../../../.designer/backup/add_pulse.svg</iconset>
+        <normaloff>add_pulse.svg</normaloff>add_pulse.svg</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -249,7 +177,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>../../../../../.designer/backup/add_pulseblock.svg</normaloff>../../../../../.designer/backup/add_pulseblock.svg</iconset>
+           <normaloff>add_pulseblock.svg</normaloff>add_pulseblock.svg</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -320,7 +248,7 @@
       </property>
       <property name="icon">
        <iconset>
-        <normaloff>../../../../../.designer/backup/add_var.svg</normaloff>../../../../../.designer/backup/add_var.svg</iconset>
+        <normaloff>add_var.svg</normaloff>add_var.svg</iconset>
       </property>
       <property name="iconSize">
        <size>
@@ -368,6 +296,173 @@
      <property name="styleSheet">
       <string notr="true">background: #32414B</string>
      </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_7">
+    <property name="geometry">
+     <rect>
+      <x>1640</x>
+      <y>560</y>
+      <width>881</width>
+      <height>711</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>AWG Upload</string>
+    </property>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>861</width>
+       <height>661</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Sequence Upload</string>
+      </attribute>
+     </widget>
+     <widget class="QWidget" name="tab_3">
+      <attribute name="title">
+       <string>Sequencer Variables</string>
+      </attribute>
+      <widget class="QWidget" name="verticalLayoutWidget_7">
+       <property name="geometry">
+        <rect>
+         <x>9</x>
+         <y>19</y>
+         <width>841</width>
+         <height>601</height>
+        </rect>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QTableView" name="seq_var_table"/>
+        </item>
+        <item>
+         <widget class="QPushButton" name="load_seq_vars">
+          <property name="text">
+           <string>Load Sequencer Variables</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string>AWG Settings</string>
+      </attribute>
+      <widget class="QTextEdit" name="textEdit_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>104</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="html">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;TODO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_8">
+    <property name="geometry">
+     <rect>
+      <x>1640</x>
+      <y>60</y>
+      <width>881</width>
+      <height>491</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Pulse Settings</string>
+    </property>
+    <widget class="QTabWidget" name="config_tab">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>871</width>
+       <height>451</height>
+      </rect>
+     </property>
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="dio_tab">
+      <attribute name="title">
+       <string>DIO setup</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QTableView" name="DIO_table">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="update_DIO_button">
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Load DIO assignment from config file&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>Update DIO Assignment</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_1">
+      <attribute name="title">
+       <string>Channel Delay</string>
+      </attribute>
+      <widget class="QTextEdit" name="textEdit">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>104</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="html">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;TODO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
   </widget>

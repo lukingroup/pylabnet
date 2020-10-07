@@ -13,6 +13,7 @@ import numpy as np
 import time
 import pyqtgraph as pg
 
+import json
 import socket
 
 import pyqtgraph as pg
@@ -23,14 +24,14 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
 from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
 import uuid
-import simple_eval, NameNotDefined
+from simpleeval import simple_eval, NameNotDefined
 
 
 DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]
@@ -250,8 +251,7 @@ class DictionaryTableModel(QAbstractTableModel):
 
         # Check if all values are one allowed datatype:
         allowed_datatypes = [str, int, float]
-        for allowed_datatype in allowed_datatypes:
-            if all(isinstance(value, allowed_datatype) for value in values):
+        if all([type(value) in allowed_datatypes for value in values]):
                 data_ok = True
                 datadict = self._prepare_single_string_dict(datadict)
                 return data_ok, datadict
@@ -380,6 +380,9 @@ class PulseMaster:
             pulse_list_vlayout=1,
             pulse_scrollarea=1,
             pulse_layout_widget=1,
+            load_seq_vars= 1,
+            seq_var_table=1
+
         )
 
         # Initialize empty pulseblock dictionary.
@@ -403,7 +406,7 @@ class PulseMaster:
 
         self.variable_table.setModel(self.variable_table_model)
 
-        # Connect change of vartiable data to update variable dict function.
+        # Connect change of variable data to update variable dict function.
         self.variable_table_model.dataChanged.connect(self._update_variable_dict)
 
         # Store completers
@@ -447,7 +450,56 @@ class PulseMaster:
         self.widgets["pulse_layout_widget"].setBackground('#19232D')
 
 
+        # Connect
+        self.widgets["load_seq_vars"].clicked.connect(self.get_seq_var_dict_from_file)
+        self.seq_var_table = self.widgets['seq_var_table']
+        self.seq_var_table.dataChanged.connect(self._update_seq_var_dict)
+
+
         self.add_pb_popup = None
+
+
+    def _update_seq_var_dict(self):
+        """ Read new sequencer variables from the table,
+        update the member variable as well as the JSON file.
+        """
+        seq_var_data = np.asarray(self.seq_var_table.datadict)
+
+
+    def get_seq_var_dict_from_file(self):
+        """ Load assignment dictionary from file."""
+
+        # Get filepath from file-sepector popup.
+        seq_var_filename = self.get_filename()
+        self.seq_var_filename = seq_var_filename
+
+        self.log.info(seq_var_filename)
+
+        # Opening JSON file
+        f = open(seq_var_filename[0])
+
+        # returns JSON object as
+        # a dictionary
+        seq_var_dict = json.load(f)
+
+        self.seq_var_dict = seq_var_dict
+
+
+        # Display dictionary
+        self.model = DictionaryTableModel(
+            self.seq_var_dict, header=["Placeholder Name", "Value"],
+            editable=True
+        )
+
+        self.widgets['seq_var_table'].setModel(self.model)
+
+
+
+
+    def get_filename(self, filetype="JSON files (*.json)"):
+        """Open file selector widget and get files."""
+        return QFileDialog.getOpenFileName(self.gui, 'Open file', '',filetype)
+
 
     def prep_plotdata(self, pb_obj):
 

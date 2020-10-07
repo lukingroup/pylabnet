@@ -33,138 +33,7 @@ from PyQt5.QtCore import QVariant
 import uuid
 from simpleeval import simple_eval, NameNotDefined
 
-DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]
-
-
-class CustomViewBox(pg.ViewBox):
-    def __init__(self, *args, **kwds):
-        pg.ViewBox.__init__(self, *args, **kwds)
-        self.setMouseMode(self.RectMode)
-
-    ## reimplement right-click to zoom out
-    def mouseClickEvent(self, ev):
-        if ev.button() == Qt.RightButton:
-            self.autoRange()
-
-    def mouseDragEvent(self, ev):
-        if ev.button() == Qt.RightButton:
-            ev.ignore()
-        else:
-            pg.ViewBox.mouseDragEvent(self, ev)
-
-
-
-
-class PulseblockConstructor():
-    """Container Class which stores all necessary information to compile full Pulseblock,
-    while retaining the ability to change variables and easy save/load functionality.
-    """
-
-    def __init__(self, name, log, var_dict):
-
-        self.name = name
-        self.log = log
-
-        self.var_dict = var_dict
-        self.pulse_specifiers = []
-        self.pulseblock = None
-
-    def resolve_value(self, input_val):
-        """ Return float value of input_val.
-
-        Inpuinput_valt is either already float, in which case it will be returned.
-        Alternatively, the input value could be a variable, as defined in the keys
-        in the var_dict. In this case the value associeted with this variable will be
-        returned.
-        :input: (str of float) Float value or variabel string.
-        """
-
-        if type(input_val) is float:
-            return input_val
-        else:
-            try:
-                return simple_eval(input_val, names=self.var_dict)
-            except KeyError:
-                self.log.error(f"Could not resolve variable '{input_val}'.")
-
-    def compile_pulseblock(self):
-        """ Compiles the list of pulse_specifiers and var dists into valid
-        Pulseblock.
-        """
-
-        pulseblock = pb.PulseBlock(name=self.name)
-
-        for pb_spec in self.pulse_specifiers:
-
-            dur = self.resolve_value(pb_spec.dur) * 1e-6
-            offset = self.resolve_value(pb_spec.offset)  * 1e-6
-
-            # Construct single pulse.
-            if pb_spec.pulsetype == "PTrue":
-
-                pulse = po.PTrue(
-                    ch=pb_spec.channel,
-                    dur=dur
-                )
-
-            elif pb_spec.pulsetype == "PSin":
-
-                 pulse = po.PSin(
-                     ch=pb_spec.pulsetype,
-                     dur=dur,
-                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
-                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
-                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
-                )
-
-            # Insert pulse to correct position in pulseblock.
-            if pb_spec.tref == "Absolute":
-                pb_dur = pulseblock.dur
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=-pb_dur+offset
-                )
-
-            elif pb_spec.tref == "Last Pulse":
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=offset
-                )
-
-        self.pulseblock =  pulseblock
-
-    def save_as_dict(self):
-        pass
-
-    def load_as_dict(self):
-        pass
-
-class PulseSpecifier():
-    """Container storing info pully specifiying pulse within pulse sequence."""
-
-
-    def __init__(self, channel, pulsetype, pulsetype_name):
-        self.channel = channel
-        self.pulsetype = pulsetype
-        self.pulsetype_name = pulsetype_name
-
-        # Generate random unique identifier.
-        self.uid = uuid.uuid1()
-
-    def set_timing_info(self, offset, dur, tref):
-        self.offset = offset
-        self.dur = dur
-        self.tref = tref
-
-    def set_pulse_params(self, pulsevar_dict):
-        self.pulsevar_dict = pulsevar_dict
-
-    def get_printable_name(self):
-        return f"{self.channel.capitalize()} ({self.pulsetype_name})"
-
-    # Reader friendly string return.
-    def __str__(self):
-        return self.get_printable_name()
+from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
 
 class DictionaryTableModel(QAbstractTableModel):
@@ -337,16 +206,127 @@ class AddPulseblockPopup(QWidget):
 
 
 
+
+class PulseblockConstructor():
+    """Container Class which stores all necessary information to compile full Pulseblock,
+    while retaining the ability to change variables and easy save/load functionality.
+    """
+
+    def __init__(self, name, log, var_dict):
+
+        self.name = name
+        self.log = log
+
+        self.var_dict = var_dict
+        self.pulse_specifiers = []
+        self.pulseblock = None
+
+    def resolve_value(self, input_val):
+        """ Return float value of input_val.
+
+        Inpuinput_valt is either already float, in which case it will be returned.
+        Alternatively, the input value could be a variable, as defined in the keys
+        in the var_dict. In this case the value associeted with this variable will be
+        returned.
+        :input: (str of float) Float value or variabel string.
+        """
+
+        if type(input_val) is float:
+            return input_val
+        else:
+            try:
+                return simple_eval(input_val, names=self.var_dict)
+            except KeyError:
+                self.log.error(f"Could not resolve variable '{input_val}'.")
+
+    def compile_pulseblock(self):
+        """ Compiles the list of pulse_specifiers and var dists into valid
+        Pulseblock.
+        """
+
+        pulseblock = pb.PulseBlock(name=self.name)
+
+        for pb_spec in self.pulse_specifiers:
+
+            dur = self.resolve_value(pb_spec.dur) * 1e-6
+            offset = self.resolve_value(pb_spec.offset)  * 1e-6
+
+            # Construct single pulse.
+            if pb_spec.pulsetype == "PTrue":
+
+                pulse = po.PTrue(
+                    ch=pb_spec.channel,
+                    dur=dur
+                )
+
+            elif pb_spec.pulsetype == "PSin":
+
+                 pulse = po.PSin(
+                     ch=pb_spec.pulsetype,
+                     dur=dur,
+                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
+                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
+                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
+                )
+
+            # Insert pulse to correct position in pulseblock.
+            if pb_spec.tref == "Absolute":
+                pb_dur = pulseblock.dur
+                pulseblock.append_po_as_pb(
+                    p_obj=pulse,
+                    offset=-pb_dur+offset
+                )
+
+            elif pb_spec.tref == "Last Pulse":
+                pulseblock.append_po_as_pb(
+                    p_obj=pulse,
+                    offset=offset
+                )
+
+        self.pulseblock =  pulseblock
+
+    def save_as_dict(self):
+        pass
+
+    def load_as_dict(self):
+        pass
+
+class PulseSpecifier():
+    """Container storing info pully specifiying pulse within pulse sequence."""
+
+
+    def __init__(self, channel, pulsetype, pulsetype_name):
+        self.channel = channel
+        self.pulsetype = pulsetype
+        self.pulsetype_name = pulsetype_name
+
+        # Generate random unique identifier.
+        self.uid = uuid.uuid1()
+
+    def set_timing_info(self, offset, dur, tref):
+        self.offset = offset
+        self.dur = dur
+        self.tref = tref
+
+    def set_pulse_params(self, pulsevar_dict):
+        self.pulsevar_dict = pulsevar_dict
+
+    def get_printable_name(self):
+        return f"{self.channel.capitalize()} ({self.pulsetype_name})"
+
+    # Reader friendly string return.
+    def __str__(self):
+        return self.get_printable_name()
+
 class PulseMaster:
 
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, hd, config, ui='pulsemaster', logger_client=None, server_port=None):
+    def __init__(self, config, ui='pulsemaster', logger_client=None, server_port=None):
         """ TODO
         """
 
-        self.hd = hd
         self.log = logger_client
 
         # Load config dict.
@@ -354,6 +334,10 @@ class PulseMaster:
             config_filename=config,
             logger=self.log
         )
+
+        # Instanciate HD
+        dev_id = self.config_dict['HDAWG_dev_id']
+        self.hd = Driver(dev_id, logger=self.log)
 
         # Load dio configs.
         self.load_dio_assignment_from_dict()
@@ -388,7 +372,9 @@ class PulseMaster:
             start_hdawg=1,
             stop_hdawg=1,
             autostart=1,
-            upload_hdawg=1
+            upload_hdawg=1,
+            awg_num_val=1,
+            preview_seq_area=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -467,9 +453,6 @@ class PulseMaster:
     def assign_actions(self):
         """Perform all button of data-changed connections in here."""
 
-        # Connect change of variable data to update variable dict function.
-        self.seq_variable_table_model.dataChanged.connect(self._update_seq_var_dict)
-
         # Connect load and save sequence template buttons.
         self.widgets["load_seqt"].clicked.connect(self.load_sequence_template)
         self.widgets["save_seqt"].clicked.connect(self.save_sequence_template)
@@ -495,28 +478,71 @@ class PulseMaster:
         self.variable_table_model.dataChanged.connect(self._update_variable_dict)
 
         # Connect HDAWG buttons
-        self.widgets["stop_hdawg"].clicked.connect(self.stop_hdawg())
-        self.widgets["start_hdawg"].clicked.connect(self.start_hdawg())
-        self.widgets["upload_hdawg"].clicked.connect(self.upload_hdawg())
+        self.widgets["stop_hdawg"].clicked.connect(self.stop_hdawg)
+        self.widgets["start_hdawg"].clicked.connect(self.start_hdawg)
+        self.widgets["upload_hdawg"].clicked.connect(self.upload_hdawg)
 
 
     def start_hdawg(self):
         """Start the AWG core."""
-        return
+        self.awg.start()
 
     def stop_hdawg(self):
         """Stop the AWG core."""
-        return
+        self.awg.stop()
 
     def upload_hdawg(self):
         """ Embedd current pulseblock in sequence template and
         upload to HDAWG.
         """
-        #Compile pulseblock
+        #Compile pulseblock.
         self.compile_current_pulseblock()
 
-        # Retrieve compiled pulseblock
+        # Retrieve compiled pulseblock.
         pulseblock = self.get_current_pb_constructor().pulseblock
+
+        # Get sequence template from textbox.
+        seq_template = self.widgets['seqt_textedit'].toPlainText()
+        if seq_template == "":
+            self.showerror('No sequence template defined.')
+            return
+
+        # Retrieve AWG number from settings.
+        awg_num = self.widgets['awg_num_val'].value()
+
+        # Retrieve placeholder dictionary from table.
+        placeholder_dict = self.get_seq_var_dict()
+
+        self.pulsed_experiment = PulsedExperiment(
+            pulseblocks=pulseblock,
+            placeholder_dict=placeholder_dict,
+            assignment_dict=self.DIO_assignment_dict ,
+            hd=self.hd,
+            use_template=False,
+            sequence_string=seq_template,
+            iplot=False
+        )
+
+        # Upload to HDAWG
+        self.awg = self.pulsed_experiment.get_ready(awg_num)
+
+        # Retrieve uploaded sequence
+        uploaded_sequence = self.pulsed_experiment.seq.sequence
+
+        # Set sequence previewer.
+        self.widgets['preview_seq_area'].setText(uploaded_sequence)
+        self.widgets['preview_seq_area'].selectAll()
+        self.widgets['preview_seq_area'].setFontPointSize(10)
+
+        # Unselect
+        cursor = self.widgets['preview_seq_area'].textCursor()
+        cursor.clearSelection()
+        self.widgets['preview_seq_area'].setTextCursor(cursor)
+
+        # If the Autostart check is true, start the HDAWG
+        if self.widgets['autostart'].isChecked():
+            self.start_hdawg()
+
 
     def save_sequence_template(self):
         """Save a sequence template from a file."""
@@ -559,16 +585,14 @@ class PulseMaster:
     def save_seq_variables_dict(self):
         """Save sequencer variables in file."""
         # Get Data
-        data = dict(self.seq_variable_table_model.datadict)
+        data = self.get_seq_var_dict()
 
         self.json_file_save(data)
 
-    def _update_seq_var_dict(self):
+    def get_seq_var_dict(self):
         """ Read new sequencer variables from the table,
-        update the member variable as well as the JSON file.
         """
-        seq_var_data = self.seq_variable_table_model.datadict
-
+        return dict(self.seq_variable_table_model.datadict)
 
     def get_seq_var_dict_from_file(self):
         """ Load assignment dictionary from file."""
@@ -598,9 +622,6 @@ class PulseMaster:
         )
 
         self.seq_var_table.setModel(self.seq_variable_table_model)
-
-        # Connect change of variable data to update variable dict function.
-        self.seq_variable_table_model.dataChanged.connect(self._update_seq_var_dict)
 
 
     def get_filename(self, filetype="JSON files (*.json)"):
@@ -706,8 +727,6 @@ class PulseMaster:
             self.widgets["pulse_layout_widget"].addLegend()
             self.widgets["pulse_layout_widget"].plot(x_ar, y_ar, pen=pen, name=ch)
 
-
-
     def compile_current_pulseblock(self, update_variables=True):
         """Compile the current pulseblock
 
@@ -732,6 +751,7 @@ class PulseMaster:
         try:
             pb_constructor.compile_pulseblock()
             compliation_successful= True
+            self.log.info(f"Succesfully compiled pulseblock {pb_constructor.name}.")
         except ValueError as e:
             self.showerror(str(e))
             compliation_successful = False
@@ -1417,16 +1437,16 @@ def launch(**kwargs):
     # Instantiate Pulsemaster
     try:
         pulsemaster = PulseMaster(
-            hd=clients['zi_hdawg'], logger_client=logger, server_port=kwargs['server_port'], config=kwargs['config']
+            logger_client=logger, server_port=kwargs['server_port'], config=kwargs['config']
         )
 
-        constructor = PulseblockConstructor(
-            name='test',
-            log=logger,
-            var_dict = {}
-        )
-        pulsemaster.pulseblock_constructors.append(constructor)
-        pulsemaster.update_pulseblock_dropdown()
+        # constructor = PulseblockConstructor(
+        #     name='test',
+        #     log=logger,
+        #     var_dict = {}
+        # )
+        # pulsemaster.pulseblock_constructors.append(constructor)
+        # pulsemaster.update_pulseblock_dropdown()
 
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

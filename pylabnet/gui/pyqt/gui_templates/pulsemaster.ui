@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>2536</width>
-    <height>1346</height>
+    <height>1347</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -127,7 +127,7 @@
       <rect>
        <x>450</x>
        <y>30</y>
-       <width>741</width>
+       <width>891</width>
        <height>431</height>
       </rect>
      </property>
@@ -139,7 +139,7 @@
        <rect>
         <x>30</x>
         <y>40</y>
-        <width>711</width>
+        <width>841</width>
         <height>80</height>
        </rect>
       </property>
@@ -194,7 +194,7 @@
        <rect>
         <x>30</x>
         <y>130</y>
-        <width>711</width>
+        <width>841</width>
         <height>291</height>
        </rect>
       </property>
@@ -209,7 +209,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>707</width>
+            <width>837</width>
             <height>287</height>
            </rect>
           </property>
@@ -222,9 +222,9 @@
     <widget class="QGroupBox" name="groupBox_2">
      <property name="geometry">
       <rect>
-       <x>1210</x>
+       <x>1360</x>
        <y>30</y>
-       <width>381</width>
+       <width>421</width>
        <height>431</height>
       </rect>
      </property>
@@ -271,71 +271,6 @@
       </property>
      </widget>
     </widget>
-    <widget class="QGroupBox" name="groupBox_9">
-     <property name="geometry">
-      <rect>
-       <x>1600</x>
-       <y>30</y>
-       <width>191</width>
-       <height>431</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Launch</string>
-     </property>
-     <widget class="QPushButton" name="upload_hdawg">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>30</y>
-        <width>141</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Upload to HDAWG</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="start_hdawg">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>110</y>
-        <width>141</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Start HDAWG</string>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="autostart">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>80</y>
-        <width>81</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Auto Start</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="stop_hdawg">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>160</y>
-        <width>141</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Stop HDAWG</string>
-      </property>
-     </widget>
-    </widget>
    </widget>
    <widget class="QGroupBox" name="pulse_plotter_groupbox">
     <property name="geometry">
@@ -373,20 +308,68 @@
      </rect>
     </property>
     <property name="title">
-     <string>AWG Upload</string>
+     <string>AWG Control</string>
     </property>
     <widget class="QTabWidget" name="tabWidget">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>40</y>
-       <width>861</width>
-       <height>661</height>
+       <x>20</x>
+       <y>30</y>
+       <width>651</width>
+       <height>541</height>
       </rect>
      </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <widget class="QWidget" name="tab_4">
+      <attribute name="title">
+       <string>Sequence Preview</string>
+      </attribute>
+      <widget class="QScrollArea" name="scrollArea_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>621</width>
+         <height>491</height>
+        </rect>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>619</width>
+          <height>489</height>
+         </rect>
+        </property>
+        <widget class="QTextEdit" name="preview_seq_area">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>601</width>
+           <height>461</height>
+          </rect>
+         </property>
+         <property name="html">
+          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Upload to HDAWG for sequence preview. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+     </widget>
      <widget class="QWidget" name="tab">
       <attribute name="title">
        <string>Sequence Template</string>
@@ -394,8 +377,8 @@
       <widget class="QPushButton" name="load_seqt">
        <property name="geometry">
         <rect>
-         <x>0</x>
-         <y>570</y>
+         <x>10</x>
+         <y>450</y>
          <width>231</width>
          <height>51</height>
         </rect>
@@ -407,8 +390,8 @@
       <widget class="QPushButton" name="save_seqt">
        <property name="geometry">
         <rect>
-         <x>440</x>
-         <y>570</y>
+         <x>400</x>
+         <y>450</y>
          <width>231</width>
          <height>51</height>
         </rect>
@@ -420,10 +403,10 @@
       <widget class="QScrollArea" name="scrollArea">
        <property name="geometry">
         <rect>
-         <x>0</x>
+         <x>10</x>
          <y>10</y>
-         <width>851</width>
-         <height>551</height>
+         <width>621</width>
+         <height>431</height>
         </rect>
        </property>
        <property name="widgetResizable">
@@ -434,17 +417,17 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>849</width>
-          <height>549</height>
+          <width>619</width>
+          <height>429</height>
          </rect>
         </property>
         <widget class="QTextEdit" name="seqt_textedit">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>0</y>
-           <width>841</width>
-           <height>561</height>
+           <y>10</y>
+           <width>601</width>
+           <height>411</height>
           </rect>
          </property>
         </widget>
@@ -460,8 +443,8 @@
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>661</width>
-         <height>561</height>
+         <width>621</width>
+         <height>431</height>
         </rect>
        </property>
       </widget>
@@ -469,7 +452,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>580</y>
+         <y>450</y>
          <width>231</width>
          <height>51</height>
         </rect>
@@ -481,8 +464,8 @@
       <widget class="QPushButton" name="save_seq_vars">
        <property name="geometry">
         <rect>
-         <x>440</x>
-         <y>580</y>
+         <x>400</x>
+         <y>450</y>
          <width>231</width>
          <height>51</height>
         </rect>
@@ -496,23 +479,97 @@
       <attribute name="title">
        <string>AWG Settings</string>
       </attribute>
-      <widget class="QTextEdit" name="textEdit_2">
+      <widget class="QSpinBox" name="awg_num_val">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>10</y>
-         <width>104</width>
-         <height>31</height>
+         <x>120</x>
+         <y>30</y>
+         <width>131</width>
+         <height>51</height>
         </rect>
        </property>
-       <property name="html">
-        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;TODO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <property name="maximum">
+        <number>3</number>
        </property>
       </widget>
+      <widget class="QLabel" name="label">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>30</y>
+         <width>91</width>
+         <height>51</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>AWG Number:</string>
+       </property>
+      </widget>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_10">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>590</y>
+       <width>671</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>AWG Launch</string>
+     </property>
+     <widget class="QPushButton" name="upload_hdawg">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>40</y>
+        <width>141</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Upload to HDAWG</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="start_hdawg">
+      <property name="geometry">
+       <rect>
+        <x>350</x>
+        <y>40</y>
+        <width>141</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Start HDAWG</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="autostart">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>50</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Auto Start</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="stop_hdawg">
+      <property name="geometry">
+       <rect>
+        <x>510</x>
+        <y>40</y>
+        <width>141</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Stop HDAWG</string>
+      </property>
      </widget>
     </widget>
    </widget>

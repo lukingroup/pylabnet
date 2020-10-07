@@ -30,13 +30,10 @@ from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
 import uuid
+forforfrom simpleeval import simple_eval, NameNotDefined
 
 
 DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]
-
-
-
-
 
 
 class CustomViewBox(pg.ViewBox):
@@ -55,6 +52,9 @@ class CustomViewBox(pg.ViewBox):
         else:
             pg.ViewBox.mouseDragEvent(self, ev)
 
+
+
+
 class PulseblockConstructor():
     """Container Class which stores all necessary information to compile full Pulseblock,
     while retaining the ability to change variables and easy save/load functionality.
@@ -68,7 +68,6 @@ class PulseblockConstructor():
         self.var_dict = var_dict
         self.pulse_specifiers = []
         self.pulseblock = None
-
 
     def resolve_value(self, input_val):
         """ Return float value of input_val.
@@ -84,7 +83,7 @@ class PulseblockConstructor():
             return input_val
         else:
             try:
-                return self.var_dict[input_val]
+                return simple_eval(input_val, names=self.var_dict)
             except KeyError:
                 self.log.error(f"Could not resolve variable '{input_val}'.")
 
@@ -97,8 +96,8 @@ class PulseblockConstructor():
 
         for pb_spec in self.pulse_specifiers:
 
-            dur = self.resolve_value(pb_spec.dur)
-            offset = self.resolve_value(pb_spec.offset)
+            dur = self.resolve_value(pb_spec.dur) * 1e-6
+            offset = self.resolve_value(pb_spec.offset)  * 1e-6
 
             # Construct single pulse.
             if pb_spec.pulsetype == "PTrue":
@@ -550,17 +549,25 @@ class PulseMaster:
 
 
 
-    def compile_current_pulseblock(self):
+    def compile_current_pulseblock(self, update_variables=True):
+        """Compile the current pulseblock
+
+        :update_variables: If True, update variables.
+        """
 
         # Retrieve current pulseblcok contructor.
         pb_constructor = self.get_current_pb_constructor()
 
+        # Do nothing if no constructor found.
+        if pb_constructor == None:
+            return
+
         # Update variables.
-        self._update_variable_dict()
+        if update_variables:
+            self._update_variable_dict()
 
         # Update variable dict
         pb_constructor.var_dict = self.vars
-
 
         # try to compile the pulseblock
         try:
@@ -572,15 +579,14 @@ class PulseMaster:
 
         return compliation_successful
 
-    def plot_current_pulseblock(self):
+    def plot_current_pulseblock(self, update_variables=True):
 
         # Compile pulseblock
-        if not self.compile_current_pulseblock():
+        if not self.compile_current_pulseblock(update_variables):
             return
 
-        xarr, yarr, text_arr, trace_list = self.prep_plotdata(self.get_current_pb_constructor().pulseblock)
+        self.prep_plotdata(self.get_current_pb_constructor().pulseblock)
 
-        self.plot_pb(xarr, yarr, text_arr, trace_list)
 
     def  return_pulseblock_new_pulseblock_constructor(self):
         """ Add new pulseblock by clicking the "Add Pb" button."""
@@ -593,7 +599,7 @@ class PulseMaster:
             pb_constructor= PulseblockConstructor(
                 name=pb_name,
                 log=self.log,
-                var_dict = self.var_dict
+                var_dict = self.vars
             )
 
         # Otherwise copy and rename constructor.
@@ -627,7 +633,6 @@ class PulseMaster:
         for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
             pulse_form, pulse_layout = self.get_pulse_specifier_form(pulse_specifier)
 
-
             self.pulse_toolbox.insertItem(
                 i,
                 pulse_form,
@@ -637,8 +642,6 @@ class PulseMaster:
             # Select last item and set minimum heigt.
             self.pulse_toolbox.setCurrentWidget(pulse_form)
             pulse_form.parent().parent().setMinimumHeight(100)
-
-
 
     def get_pulse_specifier_form(self, pulse_specifier):
 
@@ -746,7 +749,7 @@ class PulseMaster:
             pb_constructor = None
             self.log.warn(f"More than one Pulseblock contructors associated with curren pulseblock {name} found.")
         elif len(matching_constructors) == 0:
-            self.showerror('Please initilize at least one Pulseblock in order to add pulse.')
+            self.log.warn('No matching pulseblock found.')
             pb_constructor = None
         else:
             pb_constructor = matching_constructors[0]
@@ -800,6 +803,8 @@ class PulseMaster:
 
         # Update completer
         self.update_var_completer()
+
+        self.plot_current_pulseblock(update_variables=False)
 
     def _add_row_to_var_table(self):
         self.variable_table_model.datadict.append(["", ""])
@@ -915,7 +920,6 @@ class PulseMaster:
             tref=pulse_data_dict['tref']
         )
 
-
         # Add pulse var info.
         pulsevar_dict = {}
 
@@ -996,7 +1000,6 @@ class PulseMaster:
 
         return pulsedict_data
 
-
     def clean_and_validate_pulsedict(self, pulsedict):
         """ Check if input values are valid and typecast values"""
         validated = True
@@ -1007,10 +1010,14 @@ class PulseMaster:
                 var_val_float = float(val)
                 pulsedict[key] = var_val_float
             except ValueError:
-                # if typecasting failed, check value is variable.
-                if val not in self.vars.keys() and key != "tref":
-                    typecast_error.append(key)
-                    validated =  False
+                # if typecasting failed, check value is variable or arithmetic expression.
+                if key != "tref":
+                    try:
+                        # Try to resolve arithmetic expression containing variables.
+                        simple_eval(val, names=self.vars)
+                    except NameNotDefined:
+                        typecast_error.append(key)
+                        validated = False
 
         if not validated:
             if len(typecast_error) > 1:
@@ -1261,7 +1268,6 @@ def launch(**kwargs):
         )
         pulsemaster.pulseblock_constructors.append(constructor)
         pulsemaster.update_pulseblock_dropdown()
-
 
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

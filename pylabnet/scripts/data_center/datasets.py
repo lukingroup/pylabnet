@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 class Dataset:
 
     def __init__(self, gui:Window, log:LogClient=None, data=None, 
-        x=None, graph=None):
+        x=None, graph=None, name=None):
         """ Instantiates an empty generic dataset 
         
         :param gui: (Window) GUI window for data graphing
@@ -21,6 +21,10 @@ class Dataset:
 
         self.log = LogHandler(log)
         self.metadata = self.log.get_metadata()
+        if name is None:
+            self.name = self.__class__.__name__
+        else:
+            self.name = name
 
         # Set data registers
         self.data = data
@@ -49,7 +53,8 @@ class Dataset:
         self.children[name] = self.__class__(
             gui=self.gui, 
             data=self.data,
-            graph=graph
+            graph=graph,
+            name=name
         )
 
         if mapping is not None:
@@ -75,11 +80,12 @@ class Dataset:
 
         if graph is None:
             self.graph = self.gui.add_graph()
+            self.graph.getPlotItem().setTitle(self.name)
         else:
             self.graph = graph
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
-                len(self.graph.getPlotItem().curves)
+                self.gui.graph_layout.count()-1
             ])
         )
         self.update()
@@ -103,8 +109,7 @@ class Dataset:
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
 
-    def __init__(self, gui:Window, log:LogClient=None, data=None, 
-        x=None, graph=None):
+    def __init__(self, *args, **kwargs):
         """ Instantiates an empty generic dataset 
         
         :param gui: (Window) GUI window for data graphing
@@ -112,11 +117,12 @@ class AveragedHistogram(Dataset):
         :param data: initial data to set
         :param x: x axis
         :param graph: (pg.PlotWidget) graph to use
+        :param name: (str) name of dataset
         """
 
         self.recent_data = None
         self.preselection = True
-        super().__init__(gui, log, data, x, graph)
+        super().__init__(*args, **kwargs)
 
     def set_data(self, data=None, x=None):
         """ Sets data by adding to previous histogram

@@ -24,10 +24,10 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
 
-from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QShortcut, QTableWidgetItem, QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 
-from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
+from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate, QKeySequence
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
 import uuid
@@ -482,6 +482,12 @@ class PulseMaster:
         self.widgets["start_hdawg"].clicked.connect(self.start_hdawg)
         self.widgets["upload_hdawg"].clicked.connect(self.upload_hdawg)
 
+        # Connect ctr+enter to upload AWG
+        self.msgSc1 = QShortcut(QKeySequence('Ctrl+Return'), self.gui)
+        self.msgSc2 = QShortcut(QKeySequence('Ctrl+Enter'), self.gui)
+        self.msgSc1.activated.connect(self.upload_hdawg)
+        self.msgSc2.activated.connect(self.upload_hdawg)
+
 
     def start_hdawg(self):
         """Start the AWG core."""
@@ -531,13 +537,7 @@ class PulseMaster:
 
         # Set sequence previewer.
         self.widgets['preview_seq_area'].setText(uploaded_sequence)
-        self.widgets['preview_seq_area'].selectAll()
-        self.widgets['preview_seq_area'].setFontPointSize(10)
 
-        # Unselect
-        cursor = self.widgets['preview_seq_area'].textCursor()
-        cursor.clearSelection()
-        self.widgets['preview_seq_area'].setTextCursor(cursor)
 
         # If the Autostart check is true, start the HDAWG
         if self.widgets['autostart'].isChecked():

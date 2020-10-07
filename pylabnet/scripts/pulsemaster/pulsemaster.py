@@ -33,9 +33,6 @@ from PyQt5.QtCore import QVariant
 import uuid
 from simpleeval import simple_eval, NameNotDefined
 
-from syntax_highlighting import MyHighlighter,highlightBlock
-
-
 DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]
 
 
@@ -382,13 +379,16 @@ class PulseMaster:
             pulse_list_vlayout=1,
             pulse_scrollarea=1,
             pulse_layout_widget=1,
-            load_seq_vars= 1,
             seq_var_table=1,
-            save_seq_variables_dict=1,
+            load_seq_vars= 1,
+            save_seq_vars=1,
             seqt_textedit=1,
             load_seqt=1,
-            save_seqt=1
-
+            save_seqt=1,
+            start_hdawg=1,
+            stop_hdawg=1,
+            autostart=1,
+            upload_hdawg=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -412,18 +412,8 @@ class PulseMaster:
 
         self.variable_table.setModel(self.variable_table_model)
 
-        # Connect change of variable data to update variable dict function.
-        self.variable_table_model.dataChanged.connect(self._update_variable_dict)
-
         # Store completers
         self.var_completer  = QCompleter(self.vars.keys())
-
-        # Connect Add variable button.
-        self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
-
-
-        # Connect "Update DIO Assignment" Button
-        self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
 
         # Initilize Pulse Selector Form
         self.setup_pulse_selector_form()
@@ -431,35 +421,11 @@ class PulseMaster:
          # Populate DIO table
         self.populate_dio_table_from_dict()
 
-
-        # Connect add pulse button.
-        self.widgets['add_pulse_button'].clicked.connect(self.add_pulse_from_form)
-        self.widgets['new_pulseblock_button'].clicked.connect(self.add_pulseblock)
-
-        # Connect pulseblock selector object
-        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
-
-        # Apply CSS stylesheet
-        self.gui.apply_stylesheet()
-
-
         self.pulse_toolbox = QToolBox()
-
 
         # Make pulse toolbox invisible
         #self.widgets['pulse_toolbox'].hide()
         self.widgets['pulse_scrollarea'].setWidget(self.pulse_toolbox)
-
-
-        # Set background of custom PoltWidgets
-        self.widgets["pulse_layout_widget"].getViewBox().setBackgroundColor('#19232D')
-        self.widgets["pulse_layout_widget"].setBackground('#19232D')
-
-
-        # Connect Load Sequencer Button
-        self.widgets["load_seq_vars"].clicked.connect(self.get_seq_var_dict_from_file)
-        self.widgets["save_seq_variables_dict"].clicked.connect(self.save_seq_variables_dict)
-
 
 
         # Initilize sequencer table
@@ -476,26 +442,111 @@ class PulseMaster:
 
         self.seq_var_table.setModel(self.seq_variable_table_model)
 
+        self.add_pb_popup = None
+
+         # Apply CSS stylesheet
+        self.gui.apply_stylesheet()
+
+        # Assign all actions to buttons and data-change events
+        self.assign_actions()
+
+        # Apply all custom styles
+        self.apply_custom_styles()
+
+    def apply_custom_styles(self):
+        """Apply all style changes which are not specified in the .css file."""
+
+        # Set background of custom PoltWidgets
+        self.widgets["pulse_layout_widget"].getViewBox().setBackgroundColor('#19232D')
+        self.widgets["pulse_layout_widget"].setBackground('#19232D')
+
+        # Color HDAWG buttons.
+        self.widgets["stop_hdawg"].setStyleSheet("background-color : #6a040f")
+        self.widgets["start_hdawg"].setStyleSheet("background-color : #006d77")
+
+    def assign_actions(self):
+        """Perform all button of data-changed connections in here."""
+
         # Connect change of variable data to update variable dict function.
         self.seq_variable_table_model.dataChanged.connect(self._update_seq_var_dict)
 
-
         # Connect load and save sequence template buttons.
         self.widgets["load_seqt"].clicked.connect(self.load_sequence_template)
+        self.widgets["save_seqt"].clicked.connect(self.save_sequence_template)
 
-        self.add_pb_popup = None
+        # Connect Load Sequencer Button
+        self.widgets["load_seq_vars"].clicked.connect(self.get_seq_var_dict_from_file)
+        self.widgets["save_seq_vars"].clicked.connect(self.save_seq_variables_dict)
 
+        # Connect add pulse button.
+        self.widgets['add_pulse_button'].clicked.connect(self.add_pulse_from_form)
+        self.widgets['new_pulseblock_button'].clicked.connect(self.add_pulseblock)
+
+        # Connect pulseblock selector object
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
+
+        # Connect Add variable button.
+        self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
+
+        # Connect "Update DIO Assignment" Button
+        self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
+
+        # Connect change of variable data to update variable dict function.
+        self.variable_table_model.dataChanged.connect(self._update_variable_dict)
+
+        # Connect HDAWG buttons
+        self.widgets["stop_hdawg"].clicked.connect(self.stop_hdawg())
+        self.widgets["start_hdawg"].clicked.connect(self.start_hdawg())
+        self.widgets["upload_hdawg"].clicked.connect(self.upload_hdawg())
+
+
+    def start_hdawg(self):
+        """Start the AWG core."""
+        return
+
+    def stop_hdawg(self):
+        """Stop the AWG core."""
+        return
+
+    def upload_hdawg(self):
+        """ Embedd current pulseblock in sequence template and
+        upload to HDAWG.
+        """
+        #Compile pulseblock
+        self.compile_current_pulseblock()
+
+        # Retrieve compiled pulseblock
+        pulseblock = self.get_current_pb_constructor().pulseblock
+
+    def save_sequence_template(self):
+        """Save a sequence template from a file."""
+        current_seq_template = self.widgets['seqt_textedit'].toPlainText()
+        self.text_filesave(data=current_seq_template)
 
     def load_sequence_template(self):
-        seq_temp_filename = self.get_filename(filetype="Sequencer Template files (*.seqct)")
+        """Load a sequence template from a file."""
+        seq_temp_filename = self.get_filename(filetype="Sequencer-template files (*.seqct)")
 
         # Open seqct file and store sequence template as member variable.
         f = open(seq_temp_filename[0], "r")
         self.seq_temp = f.read()
 
         # Set value to textbox.
-        self.widgets['seqt_textedit'].setText(self.seq_temp )
+        self.widgets['seqt_textedit'].setText(self.seq_temp)
+        self.widgets['seqt_textedit'].selectAll()
+        self.widgets['seqt_textedit'].setFontPointSize(10)
 
+        # Unselect
+        cursor = self.widgets['seqt_textedit'].textCursor()
+        cursor.clearSelection()
+        self.widgets['seqt_textedit'].setTextCursor(cursor)
+
+
+    def text_filesave(self, data, filetype="Sequencer-template files (*.seqct)"):
+        """ Generic text file save."""
+        name = QFileDialog.getSaveFileName( self.gui, 'Save File', '', filetype)
+        with open(name[0], "w") as text_file:
+            text_file.write(data)
 
     def json_file_save(self, data):
         """ Generic file saving."""

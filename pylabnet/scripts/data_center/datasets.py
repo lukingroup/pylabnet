@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 import numpy as np
 import copy
+from PyQt5 import QtWidgets
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient, LogHandler
@@ -121,6 +122,7 @@ class Dataset:
             self.gui.presel_status.setText(status)
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
+
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
 
@@ -195,6 +197,42 @@ class PreselectedHistogram(AveragedHistogram):
     @staticmethod
     def recent(dataset, prev_dataset):
 	    prev_dataset.data = dataset.recent_data
+
+
+class PreselectionPopup(QtWidgets.QWidget):
+    """ Widget class of Add preselection popup"""
+
+    def __init__(self, **presel_params):
+        """ Instantiates window
+
+        :param presel_params: (dict) with keys giving parameter
+            name and value giving parameter type
+        """
+
+        QtWidgets.QWidget.__init__(self)
+
+        # Create layout
+        self.base_layout = QtWidgets.QVBoxLayout()
+        self.setLayout(self.base_layout)
+        self.params = {}
+
+        # Add labels and widgets to layout
+        for param_name, param_type in presel_params:
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(QtWidgets.QLabel(param_name))
+            if param_type is int:
+                self.params[param_name] = QtWidgets.QSpinBox()
+            elif param_type is float:
+                self.params[param_name] = QtWidgets.QDoubleSpinBox()
+            else:
+                self.params[param_name] = QtWidgets.QLabel()
+            layout.addWidget(self.params[param_name])
+            self.base_layout.addLayout(layout)
+
+        # Add button to configure
+        self.configure_button = QtWidgets.QPushButton(text='Configure Preselection')
+        self.base_layout.addWidget(self.configure_button)
+        self.configure_button.clicked.connect(self.return_params)
 
 # Useful mappings
 

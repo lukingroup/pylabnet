@@ -356,7 +356,7 @@
     <property name="title">
      <string>Pulse Plotter</string>
     </property>
-    <widget class="GraphicsLayoutWidget" name="pulse_layout_widget">
+    <widget class="MyPlotWidget" name="pulse_layout_widget">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -382,9 +382,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>GraphicsLayoutWidget</class>
+   <class>MyPlotWidget</class>
    <extends>QGraphicsView</extends>
-   <header>pyqtgraph.h</header>
+   <header>pulsemaster\pulsemaster_customwidget</header>
   </customwidget>
  </customwidgets>
  <tabstops>

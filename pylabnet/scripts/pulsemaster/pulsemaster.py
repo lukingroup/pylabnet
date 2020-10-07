@@ -444,36 +444,36 @@ class PulseMaster:
     def setup_plot(self):
 
 
-        win = self.widgets["pulse_layout_widget"]
-        win.clear()
+        pw = self.widgets["pulse_layout_widget"]
 
+        #winaddLabel("Pulse Sequence", row=1, col=0,  colspan=3)
+        #win.addLabel("Zoom View", row=1, col=2, colspan=1)
+        #win.nextRow()
 
-        label = pg.LabelItem(justify='right')
-        win.addItem(label)
-        p1 = win.addPlot(row=1, col=0, colspan=2)
-        p2 = win.addPlot(row=1, col=2)
+        # #p1 = pw.addPlot(row=1, col=0, colspan=3)
+        # #p2 = pw.addPlot(row=1, col=2)
 
-        p1.hideAxis('left')
-        p2.hideAxis('left')
+        # p1.hideAxis('left')
+        # p2.hideAxis('left')
 
-        lr = pg.LinearRegionItem([0,10])
-        lr.setZValue(-10)
-        p1.addItem(lr)
+        # lr = pg.LinearRegionItem([0,10])
+        # lr.setZValue(-10)
+        # p1.addItem(lr)
 
-        def updatePlot():
-            p2.setXRange(*lr.getRegion(), padding=0)
-        def updateRegion():
-            lr.setRegion(p2.getViewBox().viewRange()[0])
-        lr.sigRegionChanged.connect(updatePlot)
-        p2.sigXRangeChanged.connect(updateRegion)
-        updatePlot()
+        # def updatePlot():
+        #     p2.setXRange(*lr.getRegion(), padding=0)
+        # def updateRegion():
+        #     lr.setRegion(p2.getViewBox().viewRange()[0])
+        # lr.sigRegionChanged.connect(updatePlot)
+        # p2.sigXRangeChanged.connect(updateRegion)
+        # updatePlot()
 
-        return p1, p2
+        return pw
 
     def prep_plotdata(self, pb_obj):
 
 
-        p1, p2 = self.setup_plot()
+        pw = self.setup_plot()
 
         # Iterate through p_dict.keys() and dflt_dict.keys()
         # and create a trace for each channel
@@ -560,8 +560,8 @@ class PulseMaster:
             y_ar.append(ch_index)
             text_ar.append('{:.2e}'.format(pb_obj.dur))
 
-            p2.plot(x_ar, y_ar, pen="w")
-            p1.plot(x_ar, y_ar, pen="w")
+            pw.plot(x_ar, y_ar, pen="w")
+            pw.plot(x_ar, y_ar, pen="w")
 
     def compile_current_pulseblock(self):
 
@@ -923,8 +923,8 @@ class PulseMaster:
 
         # Add timing info.
         pulse_specifier.set_timing_info(
-            offset=pulse_data_dict['dur'],
-            dur=pulse_data_dict['offset'],
+            offset=pulse_data_dict['offset'],
+            dur=pulse_data_dict['dur'],
             tref=pulse_data_dict['tref']
         )
 

@@ -104,18 +104,6 @@ class DataTaker:
             gui=self.gui
         )
 
-        # If preselection in dataset, add status indicator
-        for i in reversed(range(self.gui.preselection_layout.count())): 
-            self.gui.preselection_layout.itemAt(i).widget().setParent(
-                None
-            )
-        if hasattr(self.dataset, 'preselection'):
-            self.gui.preselection_layout.addWidget(
-                QtWidgets.QLabel('Preselection status:')
-            )
-            self.presel_status = QtWidgets.QLabel('OK')
-            self.gui.preselection_layout.addWidget(self.presel_status)
-
         # Run any pre-experiment configuration
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
@@ -141,11 +129,6 @@ class DataTaker:
             self.update_thread = UpdateThread()
             self.update_thread.data_updated.connect(self.dataset.update)
 
-            # Run monitor thread
-            if hasattr(self.dataset, 'preselection'):
-                self.monitor_thread = MonitorThread(self.dataset)
-                self.monitor_thread.preselection_flag.connect(self._preselection_change)
-            
             self.experiment_thread = ExperimentThread(
                 self.experiment,
                 dataset=self.dataset,
@@ -153,6 +136,7 @@ class DataTaker:
                 **self.clients
             )
             
+            self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
             self.experiment_thread.finished.connect(self.stop)
 
         # Stop experiment
@@ -166,23 +150,13 @@ class DataTaker:
         self.gui.run.setText('Run')
         self.log.info('Experiment stopped')
         self.update_thread.running = False
-        if hasattr(self.dataset, 'preselection'):
-            self.monitor_thread.running = False
-
-    def _preselection_change(self):
-        """ Responds to a change in preselection status """
-
-        if self.dataset.preselection:
-            self.presel_status.setText('OK')
-            self.presel_status.setStyleSheet('')
-        else:
-            self.presel_status.setText('BAD')
-            self.presel_status.setStyleSheet('background-color: red;')
-
 
 
 class ExperimentThread(QtCore.QThread):
     """ Thread that simply runs the experiment repeatedly """
+
+    # Flag to monitor whether experiment alarm goes off
+    status_flag = QtCore.pyqtSignal(str)
 
     def __init__(self, experiment, **params):
         self.experiment = experiment
@@ -193,7 +167,7 @@ class ExperimentThread(QtCore.QThread):
     
     def run(self):
         while self.running:
-            self.experiment(**self.params)
+            self.experiment(status_flag=self.status_flag, **self.params)
 
 class UpdateThread(QtCore.QThread):
     """ Thread that continuously signals GUI to update data """
@@ -208,25 +182,6 @@ class UpdateThread(QtCore.QThread):
     def run(self):
         while self.running:
             self.data_updated.emit()
-            self.msleep(REFRESH_RATE)
-
-class MonitorThread(QtCore.QThread):
-    """ Thread that monitors for preselection status """
-
-    preselection_flag = QtCore.pyqtSignal()
-
-    def __init__(self, dataset):
-        self.running = True
-        self.dataset = dataset
-        self.presel_status = self.dataset.preselection
-        super().__init__()
-        self.start()
-
-    def run(self):
-        while self.running:
-            if self.dataset.preselection != self.presel_status:
-                self.preselection_flag.emit()
-                self.presel_status = self.dataset.preselection
             self.msleep(REFRESH_RATE)
 
 

@@ -286,7 +286,59 @@ color: rgb(255, 255, 255);</string>
          <enum>QLayout::SetMinimumSize</enum>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="preselection_layout"/>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="param_9">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
+              <weight>3</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">color: rgb(255, 255, 255);</string>
+            </property>
+            <property name="text">
+             <string>Data type:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="dataset">
+            <property name="styleSheet">
+             <string notr="true">color: rgb(255, 255, 255);
+font: 25 12pt &quot;Calibri Light&quot;;</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="preselection_layout">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Preselection status:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="presel_status">
+            <property name="text">
+             <string>OK</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -332,13 +384,6 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           </item>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>TextLabel</string>
-              </property>
-             </widget>
-            </item>
             <item>
              <widget class="QLabel" name="param_6">
               <property name="maximumSize">
@@ -413,39 +458,6 @@ background-color: rgb(0, 0, 0);</string>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QLabel" name="param_9">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Calibri Light</family>
-              <pointsize>12</pointsize>
-              <weight>3</weight>
-              <italic>false</italic>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);</string>
-            </property>
-            <property name="text">
-             <string>Data type:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="dataset">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <widget class="QPushButton" name="configure">
             <property name="maximumSize">

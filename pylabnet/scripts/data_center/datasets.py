@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 class Dataset:
 
     def __init__(self, gui:Window, log:LogClient=None, data=None, 
-        x=None, graph=None, name=None):
+        x=None, graph=None, name=None, **kwargs):
         """ Instantiates an empty generic dataset 
         
         :param gui: (Window) GUI window for data graphing
@@ -105,6 +105,21 @@ class Dataset:
                 self.mapping[name](self, prev_dataset=child)
             child.update()
 
+    def interpret_status(self, status):
+        """ Interprets a status flag for exepriment monitoring
+        
+        :param status: (str) current status message
+        """
+
+        if status == 'OK':
+            self.gui.presel_status.setText(status)
+            self.gui.presel_status.setStyleSheet('')
+        elif status == 'BAD':
+            self.gui.presel_status.setText(status)
+            self.gui.presel_status.setStyleSheet('background-color: red;')
+        else:
+            self.gui.presel_status.setText(status)
+            self.gui.presel_status.setStyleSheet('background-color: gray;')
 
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
@@ -159,6 +174,27 @@ class AveragedHistogram(Dataset):
         for child in self.children.values():
             child.update()
 
+
+class PreselectedHistogram(AveragedHistogram):
+    """ Measurement class for showing raw averaged, single trace,
+        and preselected data """
+
+    def __init__(self, *args, **kwargs):
+        """ Instantiates preselected histogram measurement 
+        
+        see parent classes for details
+        """
+
+        super().__init__(*args, **kwargs)
+        self.add_child(name='Single Trace', mapping=self.recent)
+        self.setup_preselection()
+
+    def setup_preselection(self):
+        pass
+    
+    @staticmethod
+    def recent(dataset, prev_dataset):
+	    prev_dataset.data = dataset.recent_data
 
 # Useful mappings
 

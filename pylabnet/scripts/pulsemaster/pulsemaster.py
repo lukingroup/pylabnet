@@ -30,7 +30,7 @@ from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
 import uuid
-forforfrom simpleeval import simple_eval, NameNotDefined
+import simple_eval, NameNotDefined
 
 
 DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]

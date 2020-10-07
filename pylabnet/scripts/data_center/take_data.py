@@ -137,14 +137,22 @@ class DataTaker:
             self.gui.run.setText('Stop')
             self.log.info('Experiment started')
 
+            # Run update thread
+            self.update_thread = UpdateThread()
+            self.update_thread.data_updated.connect(self.dataset.update)
+
+            # Run monitor thread
+            if hasattr(self.dataset, 'preselection'):
+                self.monitor_thread = MonitorThread(self.dataset)
+                self.monitor_thread.preselection_flag.connect(self._preselection_change)
+            
             self.experiment_thread = ExperimentThread(
                 self.experiment,
                 dataset=self.dataset,
                 gui=self.gui,
                 **self.clients
             )
-            self.update_thread = UpdateThread()
-            self.update_thread.data_updated.connect(self.dataset.update)
+            
             self.experiment_thread.finished.connect(self.stop)
 
         # Stop experiment
@@ -158,12 +166,23 @@ class DataTaker:
         self.gui.run.setText('Run')
         self.log.info('Experiment stopped')
         self.update_thread.running = False
+        if hasattr(self.dataset, 'preselection'):
+            self.monitor_thread.running = False
+
+    def _preselection_change(self):
+        """ Responds to a change in preselection status """
+
+        if self.dataset.preselection:
+            self.presel_status.setText('OK')
+            self.presel_status.setStyleSheet('')
+        else:
+            self.presel_status.setText('BAD')
+            self.presel_status.setStyleSheet('background-color: red;')
+
 
 
 class ExperimentThread(QtCore.QThread):
     """ Thread that simply runs the experiment repeatedly """
-
-    status_flag = QtCore.pyqtSignal(str)
 
     def __init__(self, experiment, **params):
         self.experiment = experiment
@@ -191,7 +210,24 @@ class UpdateThread(QtCore.QThread):
             self.data_updated.emit()
             self.msleep(REFRESH_RATE)
 
+class MonitorThread(QtCore.QThread):
+    """ Thread that monitors for preselection status """
 
+    preselection_flag = QtCore.pyqtSignal()
+
+    def __init__(self, dataset):
+        self.running = True
+        self.dataset = dataset
+        self.presel_status = self.dataset.preselection
+        super().__init__()
+        self.start()
+
+    def run(self):
+        while self.running:
+            if self.dataset.preselection != self.presel_status:
+                self.preselection_flag.emit()
+                self.presel_status = self.dataset.preselection
+            self.msleep(REFRESH_RATE)
 
 
 def main():

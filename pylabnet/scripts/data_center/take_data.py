@@ -11,7 +11,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import load_config
+from pylabnet.utils.helper_methods import load_config, generic_save
 from pylabnet.scripts.data_center import datasets
 
 
@@ -22,6 +22,7 @@ class DataTaker:
     def __init__(self, logger=None, clients={}, config=None):
 
         self.log = LogHandler(logger)
+        self.dataset = None
         
         # Instantiate GUI window
         self.gui = Window(
@@ -53,6 +54,7 @@ class DataTaker:
         # Configure button clicks
         self.gui.configure.clicked.connect(self.configure)
         self.gui.run.clicked.connect(self.run)
+        self.gui.save.clicked.connect(self.save)
         
     def update_experiment_list(self):
         """ Updates list of experiments """
@@ -97,13 +99,16 @@ class DataTaker:
         self.module = importlib.import_module(exp_name)
         self.module = importlib.reload(self.module)
 
-        # Clear graph area and set up dataset
+        # Clear graph area and set up new or cleaned up dataset
         for index in reversed(range(self.gui.graph_layout.count())):
             self.gui.graph_layout.itemAt(index).widget().deleteLater()
+            # If we're not setting up a new measurement type, just clear the data
         self.dataset = getattr(datasets, self.gui.dataset.currentText())(
-            gui=self.gui
+            gui=self.gui,
+            log=self.log
         )
 
+        
         # Run any pre-experiment configuration
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
@@ -151,6 +156,19 @@ class DataTaker:
         self.log.info('Experiment stopped')
         self.update_thread.running = False
 
+        # Autosave if relevant
+        if self.gui.autosave.isChecked():
+            self.save()
+
+    def save(self):
+        """ Saves data """
+
+        self.dataset.save(
+            filename=self.gui.save_name.text(),
+            directory=self.config['save_path'],
+            date_dir=True
+        )
+
 
 class ExperimentThread(QtCore.QThread):
     """ Thread that simply runs the experiment repeatedly """
@@ -167,7 +185,10 @@ class ExperimentThread(QtCore.QThread):
     
     def run(self):
         while self.running:
-            self.experiment(status_flag=self.status_flag, **self.params)
+            self.experiment(
+                thread = self,
+                status_flag=self.status_flag,
+                **self.params)
 
 class UpdateThread(QtCore.QThread):
     """ Thread that continuously signals GUI to update data """

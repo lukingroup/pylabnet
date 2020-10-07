@@ -359,6 +359,23 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
         os.mkdir(directory)
         np.savetxt(filepath, data)
 
+def save_metadata(log, filename=None, directory=None, date_dir=False):
+    """ Saves metadata stored in the logger
+
+    :param log: (LogClient)
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(f'{filename}_metadata', directory, date_dir)
+
+    with open(filepath, 'w') as outfile:
+        try:
+            json.dump(log.get_metadata, outfile, indent=4)
+        except TypeError:
+            log.warn('Did not save metadata')
+
 
 def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):
     """ Saves plotly_figure as png

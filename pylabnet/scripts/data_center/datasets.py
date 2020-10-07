@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient, LogHandler
+from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save
 
 
 class Dataset:
@@ -37,12 +38,13 @@ class Dataset:
         self.gui = gui
         self.visualize(graph)
 
-    def add_child(self, name, mapping=None, new_plot=True):
+    def add_child(self, name, mapping=None, data_type=None, new_plot=True):
         """ Adds a child dataset with a particular data mapping
         
         :param name: (str) name of processed dataset
             becomes a Dataset object (or child) as attribute of self
         :param mapping: (function) function which transforms Dataset to processed Dataset
+        :param data_type: (Class) type of Dataset to add
         :param new_plot: (bool) whether or not to use a new plot
         """
 
@@ -51,7 +53,10 @@ class Dataset:
         else:
             graph = self.graph
 
-        self.children[name] = self.__class__(
+        if data_type is None:
+            data_type = self.__class__
+        
+        self.children[name] = data_type(
             gui=self.gui, 
             data=self.data,
             graph=graph,
@@ -122,24 +127,37 @@ class Dataset:
             self.gui.presel_status.setText(status)
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
+    def save(self, filename=None, directory=None, date_dir=True):
+        
+        generic_save(
+            data=self.data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
+        if self.x is not None:
+            generic_save(
+                data=self.x,
+                filename=f'{filename}_{self.name}_{self.x}',
+                directory=directory,
+                date_dir=date_dir
+            )
+        
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getPlotItem(), 
+                f'{filename}_{self.name}', 
+                directory, 
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
 
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
-
-    def __init__(self, *args, **kwargs):
-        """ Instantiates an empty generic dataset 
-        
-        :param gui: (Window) GUI window for data graphing
-        :param log: (LogClient)
-        :param data: initial data to set
-        :param x: x axis
-        :param graph: (pg.PlotWidget) graph to use
-        :param name: (str) name of dataset
-        """
-
-        self.recent_data = None
-        self.preselection = True
-        super().__init__(*args, **kwargs)
 
     def set_data(self, data=None, x=None):
         """ Sets data by adding to previous histogram
@@ -179,7 +197,7 @@ class AveragedHistogram(Dataset):
 
 class PreselectedHistogram(AveragedHistogram):
     """ Measurement class for showing raw averaged, single trace,
-        and preselected data """
+        and preselected data using a gated counter for preselection"""
 
     def __init__(self, *args, **kwargs):
         """ Instantiates preselected histogram measurement 
@@ -187,10 +205,13 @@ class PreselectedHistogram(AveragedHistogram):
         see parent classes for details
         """
 
+        kwargs['name'] = 'Average Histogram'
+        self.preselection = True
         super().__init__(*args, **kwargs)
-        self.add_child(name='Single Trace', mapping=self.recent)
+        self.add_child(name='Single Trace', mapping=self.recent, data_type=Dataset)
+        self.add_child(name='Preselection Counts', data_type=InvisibleData)
         self.presel_params = None
-        self.setup_preselection(threshold=int)
+        self.setup_preselection(threshold=float)
 
     def setup_preselection(self, **kwargs):
         
@@ -200,50 +221,39 @@ class PreselectedHistogram(AveragedHistogram):
     def fill_parameters(self, params):
 
         self.presel_params = params
-        self.add_child(name='Preselected Trace', mapping=self.preselect)
+        self.add_child(
+            name='Preselected Trace', 
+            mapping=self.preselect, 
+            data_type=AveragedHistogram
+        )
+        self.log.update_metadata(presel_params = self.presel_params)
     
     def preselect(self, dataset, prev_dataset):
         """ Preselects based on user input parameters """
-
-        if np.sum(dataset.recent_data) > self.presel_params['threshold']:
-            dataset.preselection = False
-        else:
-            dataset.preselection = True
         
-        if dataset.preselection:
-
+        if np.mean(dataset.children['Preselection Counts'].data) < self.presel_params['threshold']:
+            dataset.preselection = True
             if prev_dataset.data is None:
                 prev_dataset.data = dataset.recent_data
             else:
                 prev_dataset.data += dataset.recent_data
-    
-    def add_child(self, name, mapping=None, new_plot=True):
-        """ Adds a child dataset with a particular data mapping
-        
-        :param name: (str) name of processed dataset
-            becomes a Dataset object (or child) as attribute of self
-        :param mapping: (function) function which transforms Dataset to processed Dataset
-        :param new_plot: (bool) whether or not to use a new plot
-        """
-
-        if new_plot:
-            graph = None
         else:
-            graph = self.graph
-
-        self.children[name] = AveragedHistogram(
-            gui=self.gui, 
-            data=self.data,
-            graph=graph,
-            name=name
-        )
-
-        if mapping is not None:
-            self.mapping[name] = mapping
+            dataset.preselection = False
     
+    def set_data(self, data=None, x=None, preselection_data=None):
+        self.children['Preselection Counts'].set_data(preselection_data)
+        super().set_data(data, x)
+
     @staticmethod
     def recent(dataset, prev_dataset):
 	    prev_dataset.data = dataset.recent_data
+
+
+class InvisibleData(Dataset):
+    """ Dataset which does not plot """
+
+    def visualize(self, graph):
+        self.curve = pg.PlotDataItem()
 
 
 class PreselectionPopup(QtWidgets.QWidget):
@@ -261,6 +271,11 @@ class PreselectionPopup(QtWidgets.QWidget):
 
         # Create layout
         self.base_layout = QtWidgets.QVBoxLayout()
+        self.setStyleSheet('background-color: rgb(0, 0, 0);'
+                           'font: 25 12pt "Calibri Light";'
+                           'color: rgb(255, 255, 255);')
+        self.setWindowTitle('Preselection Parameters')
+        self.setMinimumWidth(300)
         self.setLayout(self.base_layout)
         self.params = {}
 

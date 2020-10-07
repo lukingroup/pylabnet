@@ -20,7 +20,9 @@
    <string>Data Taker</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true">background-color: rgb(0, 0, 0);
+font: 25 12pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -41,6 +43,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -66,6 +71,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -88,6 +96,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -110,6 +121,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -132,6 +146,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -157,6 +174,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -179,6 +199,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -207,6 +230,9 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -222,7 +248,10 @@
         <property name="font">
          <font>
           <family>Calibri Light</family>
-          <pointsize>14</pointsize>
+          <pointsize>12</pointsize>
+          <weight>3</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -257,6 +286,9 @@
          <enum>QLayout::SetMinimumSize</enum>
         </property>
         <item>
+         <layout class="QHBoxLayout" name="preselection_layout"/>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_9">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -272,6 +304,9 @@
                <font>
                 <family>Calibri Light</family>
                 <pointsize>12</pointsize>
+                <weight>3</weight>
+                <italic>false</italic>
+                <bold>false</bold>
                </font>
               </property>
               <property name="styleSheet">
@@ -298,6 +333,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLabel" name="param_6">
               <property name="maximumSize">
                <size>
@@ -309,6 +351,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <font>
                 <family>Calibri Light</family>
                 <pointsize>12</pointsize>
+                <weight>3</weight>
+                <italic>false</italic>
+                <bold>false</bold>
                </font>
               </property>
               <property name="styleSheet">
@@ -380,6 +425,9 @@ background-color: rgb(0, 0, 0);</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
+              <weight>3</weight>
+              <italic>false</italic>
+              <bold>false</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -410,6 +458,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
+              <weight>3</weight>
+              <italic>false</italic>
+              <bold>false</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -435,6 +486,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
+              <weight>3</weight>
+              <italic>false</italic>
+              <bold>false</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -460,6 +514,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
+              <weight>3</weight>
+              <italic>false</italic>
+              <bold>false</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -488,7 +545,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2565</width>
-     <height>38</height>
+     <height>45</height>
     </rect>
    </property>
   </widget>

@@ -1,5 +1,6 @@
 import pyqtgraph as pg
 import numpy as np
+import copy
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient, LogHandler
@@ -114,7 +115,7 @@ class AveragedHistogram(Dataset):
         """
 
         self.recent_data = None
-        self.preselection_passed = True
+        self.preselection = True
         super().__init__(gui, log, data, x, graph)
 
     def set_data(self, data=None, x=None):
@@ -131,9 +132,26 @@ class AveragedHistogram(Dataset):
             self.recent_data = data
 
         if self.data is None:
-            self.data = self.recent_data
+            self.data = copy.deepcopy(self.recent_data)
         else:
             self.data += self.recent_data
+
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+
+    def update(self):
+        """ Updates current data to plot"""
+
+        if self.data is not None:
+            if self.x is not None:
+                self.curve.setData(self.x, self.data)
+            else:
+                self.curve.setData(self.data)
+
+        for child in self.children.values():
+            child.update()
 
 
 # Useful mappings

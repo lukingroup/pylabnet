@@ -104,6 +104,18 @@ class DataTaker:
             gui=self.gui
         )
 
+        # If preselection in dataset, add status indicator
+        for i in reversed(range(self.gui.preselection_layout.count())): 
+            self.gui.preselection_layout.itemAt(i).widget().setParent(
+                None
+            )
+        if hasattr(self.dataset, 'preselection'):
+            self.gui.preselection_layout.addWidget(
+                QtWidgets.QLabel('Preselection status:')
+            )
+            self.presel_status = QtWidgets.QLabel('OK')
+            self.gui.preselection_layout.addWidget(self.presel_status)
+
         # Run any pre-experiment configuration
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
@@ -150,6 +162,8 @@ class DataTaker:
 
 class ExperimentThread(QtCore.QThread):
     """ Thread that simply runs the experiment repeatedly """
+
+    status_flag = QtCore.pyqtSignal(str)
 
     def __init__(self, experiment, **params):
         self.experiment = experiment

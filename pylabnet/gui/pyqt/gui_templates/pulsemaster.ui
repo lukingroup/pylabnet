@@ -342,12 +342,26 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QTableView" name="seq_var_table"/>
+         <widget class="QTableView" name="seq_var_table">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="load_seq_vars">
           <property name="text">
            <string>Load Sequencer Variables</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="save_seq_variables_dict">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Save Sequencer Variables</string>
           </property>
          </widget>
         </item>

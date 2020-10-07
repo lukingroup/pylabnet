@@ -182,7 +182,7 @@ class DictionaryTableModel(QAbstractTableModel):
         super(DictionaryTableModel, self).__init__()
 
         # Prepare data.
-        data_ok, datadict = self.__prepare_data(data)
+        data_ok, datadict = self.prepare_data(data)
 
         assert data_ok, "Input dictionary invalid."
 
@@ -239,7 +239,7 @@ class DictionaryTableModel(QAbstractTableModel):
 
         return data_list
 
-    def __prepare_data(self, datadict):
+    def prepare_data(self, datadict):
         """Check if dictioanry is either containing strings as values,
         or lists of the same length.
 
@@ -381,7 +381,8 @@ class PulseMaster:
             pulse_scrollarea=1,
             pulse_layout_widget=1,
             load_seq_vars= 1,
-            seq_var_table=1
+            seq_var_table=1,
+            save_seq_variables_dict=1
 
         )
 
@@ -450,20 +451,51 @@ class PulseMaster:
         self.widgets["pulse_layout_widget"].setBackground('#19232D')
 
 
-        # Connect
+        # Connect Load Sequencer Button
         self.widgets["load_seq_vars"].clicked.connect(self.get_seq_var_dict_from_file)
-        self.seq_var_table = self.widgets['seq_var_table']
-        self.seq_var_table.dataChanged.connect(self._update_seq_var_dict)
+        self.widgets["save_seq_variables_dict"].clicked.connect(self.save_seq_variables_dict)
 
+
+
+        # Initilize sequencer table
+        self.seq_var_dict = {}
+
+        # Initialize Sequencer Variable table.
+        self.seq_var_table = self.widgets['seq_var_table']
+
+        self.seq_variable_table_model = DictionaryTableModel(
+            self.seq_var_dict,
+            header=["Channel Name", "DIO Bit"],
+            editable=True
+        )
+
+        self.seq_var_table.setModel(self.seq_variable_table_model)
+
+        # Connect change of variable data to update variable dict function.
+        self.seq_variable_table_model.dataChanged.connect(self._update_seq_var_dict)
 
         self.add_pb_popup = None
 
+    def json_file_save(self, data):
+        """ Generic file saving."""
+        name = QFileDialog.getSaveFileName( self.gui, 'Save File', '', "JSON files (*.json)")
+        with open(name[0],'w') as fp:
+            json.dump(data, fp)
+
+        self.log.info(f"Successfully saved data as {name[0]}")
+
+    def save_seq_variables_dict(self):
+        """Save sequencer variables in file."""
+        # Get Data
+        data = dict(self.seq_variable_table_model.datadict)
+
+        self.json_file_save(data)
 
     def _update_seq_var_dict(self):
         """ Read new sequencer variables from the table,
         update the member variable as well as the JSON file.
         """
-        seq_var_data = np.asarray(self.seq_var_table.datadict)
+        seq_var_data = self.seq_variable_table_model.datadict
 
 
     def get_seq_var_dict_from_file(self):
@@ -484,16 +516,19 @@ class PulseMaster:
 
         self.seq_var_dict = seq_var_dict
 
+        # Initialize Sequencer Variable table.
+        self.seq_var_table = self.widgets['seq_var_table']
 
-        # Display dictionary
-        self.model = DictionaryTableModel(
-            self.seq_var_dict, header=["Placeholder Name", "Value"],
+        self.seq_variable_table_model = DictionaryTableModel(
+            self.seq_var_dict,
+            header=["Variable", "Value"],
             editable=True
         )
 
-        self.widgets['seq_var_table'].setModel(self.model)
+        self.seq_var_table.setModel(self.seq_variable_table_model)
 
-
+        # Connect change of variable data to update variable dict function.
+        self.seq_variable_table_model.dataChanged.connect(self._update_seq_var_dict)
 
 
     def get_filename(self, filetype="JSON files (*.json)"):

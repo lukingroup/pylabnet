@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 import numpy as np
 import copy
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient, LogHandler
@@ -189,10 +189,57 @@ class PreselectedHistogram(AveragedHistogram):
 
         super().__init__(*args, **kwargs)
         self.add_child(name='Single Trace', mapping=self.recent)
-        self.setup_preselection()
+        self.presel_params = None
+        self.setup_preselection(threshold=int)
 
-    def setup_preselection(self):
-        pass
+    def setup_preselection(self, **kwargs):
+        
+        self.popup = PreselectionPopup(**kwargs)
+        self.popup.parameters.connect(self.fill_parameters)
+    
+    def fill_parameters(self, params):
+
+        self.presel_params = params
+        self.add_child(name='Preselected Trace', mapping=self.preselect)
+    
+    def preselect(self, dataset, prev_dataset):
+        """ Preselects based on user input parameters """
+
+        if np.sum(dataset.recent_data) > self.presel_params['threshold']:
+            dataset.preselection = False
+        else:
+            dataset.preselection = True
+        
+        if dataset.preselection:
+
+            if prev_dataset.data is None:
+                prev_dataset.data = dataset.recent_data
+            else:
+                prev_dataset.data += dataset.recent_data
+    
+    def add_child(self, name, mapping=None, new_plot=True):
+        """ Adds a child dataset with a particular data mapping
+        
+        :param name: (str) name of processed dataset
+            becomes a Dataset object (or child) as attribute of self
+        :param mapping: (function) function which transforms Dataset to processed Dataset
+        :param new_plot: (bool) whether or not to use a new plot
+        """
+
+        if new_plot:
+            graph = None
+        else:
+            graph = self.graph
+
+        self.children[name] = AveragedHistogram(
+            gui=self.gui, 
+            data=self.data,
+            graph=graph,
+            name=name
+        )
+
+        if mapping is not None:
+            self.mapping[name] = mapping
     
     @staticmethod
     def recent(dataset, prev_dataset):
@@ -201,6 +248,7 @@ class PreselectedHistogram(AveragedHistogram):
 
 class PreselectionPopup(QtWidgets.QWidget):
     """ Widget class of Add preselection popup"""
+    parameters = QtCore.pyqtSignal(dict)
 
     def __init__(self, **presel_params):
         """ Instantiates window
@@ -217,7 +265,7 @@ class PreselectionPopup(QtWidgets.QWidget):
         self.params = {}
 
         # Add labels and widgets to layout
-        for param_name, param_type in presel_params:
+        for param_name, param_type in presel_params.items():
             layout = QtWidgets.QHBoxLayout()
             layout.addWidget(QtWidgets.QLabel(param_name))
             if param_type is int:
@@ -233,6 +281,20 @@ class PreselectionPopup(QtWidgets.QWidget):
         self.configure_button = QtWidgets.QPushButton(text='Configure Preselection')
         self.base_layout.addWidget(self.configure_button)
         self.configure_button.clicked.connect(self.return_params)
+        self.show()
+
+    def return_params(self):
+        """ Returns all parameter values and closes """
+
+        ret = {}
+        for param_name, widget in self.params.items():
+            try:
+                ret[param_name] = widget.value()
+            except AttributeError:
+                ret[param_name] = widget.text()
+        self.parameters.emit(ret)
+        self.close()
+
 
 # Useful mappings
 

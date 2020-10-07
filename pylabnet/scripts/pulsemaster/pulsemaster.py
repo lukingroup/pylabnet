@@ -32,6 +32,13 @@ from PyQt5.QtCore import QVariant
 import uuid
 
 
+DARK_COLORLIST =["d8f3dc","b7e4c7","95d5b2","74c69d","52b788","40916c","2d6a4f","1b4332","081c15"]
+
+
+
+
+
+
 class CustomViewBox(pg.ViewBox):
     def __init__(self, *args, **kwds):
         pg.ViewBox.__init__(self, *args, **kwds)
@@ -436,44 +443,16 @@ class PulseMaster:
         self.widgets['pulse_scrollarea'].setWidget(self.pulse_toolbox)
 
 
+        # Set background of custom PoltWidgets
+        self.widgets["pulse_layout_widget"].getViewBox().setBackgroundColor('#19232D')
+        self.widgets["pulse_layout_widget"].setBackground('#19232D')
+
 
         self.add_pb_popup = None
 
-
-
-    def setup_plot(self):
-
-
-        pw = self.widgets["pulse_layout_widget"]
-
-        #winaddLabel("Pulse Sequence", row=1, col=0,  colspan=3)
-        #win.addLabel("Zoom View", row=1, col=2, colspan=1)
-        #win.nextRow()
-
-        # #p1 = pw.addPlot(row=1, col=0, colspan=3)
-        # #p2 = pw.addPlot(row=1, col=2)
-
-        # p1.hideAxis('left')
-        # p2.hideAxis('left')
-
-        # lr = pg.LinearRegionItem([0,10])
-        # lr.setZValue(-10)
-        # p1.addItem(lr)
-
-        # def updatePlot():
-        #     p2.setXRange(*lr.getRegion(), padding=0)
-        # def updateRegion():
-        #     lr.setRegion(p2.getViewBox().viewRange()[0])
-        # lr.sigRegionChanged.connect(updatePlot)
-        # p2.sigXRangeChanged.connect(updateRegion)
-        # updatePlot()
-
-        return pw
-
     def prep_plotdata(self, pb_obj):
 
-
-        pw = self.setup_plot()
+        self.widgets["pulse_layout_widget"].clear()
 
         # Iterate through p_dict.keys() and dflt_dict.keys()
         # and create a trace for each channel
@@ -560,8 +539,16 @@ class PulseMaster:
             y_ar.append(ch_index)
             text_ar.append('{:.2e}'.format(pb_obj.dur))
 
-            pw.plot(x_ar, y_ar, pen="w")
-            pw.plot(x_ar, y_ar, pen="w")
+            pen=pg.mkPen(
+               color=self.gui.COLOR_LIST[
+                ch_index
+            ],
+            width=3
+            )
+            self.widgets["pulse_layout_widget"].addLegend()
+            self.widgets["pulse_layout_widget"].plot(x_ar, y_ar, pen=pen, name=ch)
+
+
 
     def compile_current_pulseblock(self):
 

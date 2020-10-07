@@ -365,6 +365,9 @@
        <height>661</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background: #32414B</string>
+     </property>
     </widget>
    </widget>
   </widget>
@@ -384,7 +387,7 @@
   <customwidget>
    <class>MyPlotWidget</class>
    <extends>QGraphicsView</extends>
-   <header>pulsemaster\pulsemaster_customwidget</header>
+   <header>pylabnet/scripts/pulsemaster/pulsemaster_customwidget</header>
   </customwidget>
  </customwidgets>
  <tabstops>

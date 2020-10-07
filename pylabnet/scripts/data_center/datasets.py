@@ -156,6 +156,7 @@ class Dataset:
 
         save_metadata(self.log, filename, directory, date_dir)
 
+
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
 

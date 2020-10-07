@@ -352,6 +352,8 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     """
 
     filepath = generate_filepath(filename, directory, date_dir)
+    if not filepath.endswith('.txt'):
+        filepath += '.txt'
 
     try:
         np.savetxt(filepath, data)
@@ -369,10 +371,12 @@ def save_metadata(log, filename=None, directory=None, date_dir=False):
     """
 
     filepath = generate_filepath(f'{filename}_metadata', directory, date_dir)
+    if not filepath.endswith('.json'):
+        filepath += '.json'
 
     with open(filepath, 'w') as outfile:
         try:
-            json.dump(log.get_metadata, outfile, indent=4)
+            json.dump(log.get_metadata(), outfile, indent=4)
         except TypeError:
             log.warn('Did not save metadata')
 

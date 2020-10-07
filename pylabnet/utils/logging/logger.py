@@ -489,6 +489,7 @@ class LogService(rpyc.Service):
         """ Updates metadata """
 
         self.metadata.update(pickle.loads(metadata))
+        self.logger.info('Metadata updated')
     
     def exposed_get_metadata(self):
         """ Returns all client metadata"""

@@ -11,7 +11,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import load_config, generic_save
+from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher
 from pylabnet.scripts.data_center import datasets
 
 
@@ -168,6 +168,7 @@ class DataTaker:
             directory=self.config['save_path'],
             date_dir=True
         )
+        self.log.info('Data saved')
 
 
 class ExperimentThread(QtCore.QThread):
@@ -190,6 +191,7 @@ class ExperimentThread(QtCore.QThread):
                 status_flag=self.status_flag,
                 **self.params)
 
+
 class UpdateThread(QtCore.QThread):
     """ Thread that continuously signals GUI to update data """
 
@@ -208,6 +210,21 @@ class UpdateThread(QtCore.QThread):
 
 def main():
     control = DataTaker(config='laser_scan')
+    control.gui.app.exec_()
+
+def launch(**kwargs):
+
+    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+
+    # Instantiate Monitor script
+    control = DataTaker(
+        logger=logger,
+        clients=clients,
+        config=kwargs['config'],
+    )
+    control.gui.set_network_info(port=kwargs['server_port'])
+
+    # Run continuously
     control.gui.app.exec_()
 
 if __name__== '__main__':

@@ -1,5 +1,5 @@
 
-exporetimport copy
+import copy
 from datetime import datetime
 import numpy as np
 import time
@@ -269,16 +269,11 @@ class PulseblockConstructor():
 
         self.pulseblock =  pulseblock
 
-    def save(self):
-        """Save a dictionary representing pulseblock."""
+    def get_dict(self):
+        """Get dictionary representing the pulseblock."""
 
         # Compile
         self.compile_pulseblock()
-
-        pb_constructor_dict = self.get_dict()
-
-    def get_dict(self):
-        """Get dictionary representing the pulseblock."""
         pb_dictionary = {}
         pb_dictionary["name"] = self.name
         pb_dictionary["timestamp"] = datetime.now().strftime("%d-%b-%Y_%H_%M_%S")
@@ -511,7 +506,10 @@ class PulseMaster:
         """ Save current Pulseblock constructor as .json file"""
 
         current_pb = self.get_current_pb_constructor()
-        current_pb.save()
+        current_pb_dict = current_pb.get_dict()
+
+        # Save as JSON file.
+        self.json_file_save(current_pb_dict)
 
     def start_hdawg(self):
         """Start the AWG core."""
@@ -574,7 +572,6 @@ class PulseMaster:
         if self.widgets['autostart'].isChecked():
             self.start_hdawg()
 
-
     def save_sequence_template(self):
         """Save a sequence template from a file."""
         current_seq_template = self.widgets['seqt_textedit'].toPlainText()
@@ -609,7 +606,7 @@ class PulseMaster:
         """ Generic file saving."""
         name = QFileDialog.getSaveFileName( self.gui, 'Save File', '', "JSON files (*.json)")
         with open(name[0],'w') as fp:
-            json.dump(data, fp)
+            json.dump(data, fp, indent=4)
 
         self.log.info(f"Successfully saved data as {name[0]}")
 

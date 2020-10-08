@@ -1,101 +1,101 @@
-from pylabnet.gui.pyqt.gui_handler import GUIHandler
-from pylabnet.utils.helper_methods import unpack_launcher
+import sys
+import time 
+from PyQt5 import QtWidgets
 
-import time
+import pylabnet.hardware.staticline.staticline as staticline
+from pylabnet.gui.pyqt.gui_windowbuilder_test import GUIWindowFromConfig
+
+from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.utils.helper_methods import unpack_launcher, load_config
 
 
 class StaticLineGUIGeneric():
-    """Generic Static Line GUI
+    """Static Line GUI
 
-    :gui_client: (object)
-        GUI client to be called.
+    :config: (str)
+        Path to a config file specifying the staticlines to be included in this
+        GUI.
+    :staticline_clients: (dict)
+        Dictionary of {hardware type (str) : instance of device Client}. The 
+        hardware type must be same as those listed in the config files.
     :logger_client: (object)
-        Logger client used for error logging in  @handle_gui_errors
-        decorator.
-    :staticline: (object)
-        Instance of staticline.Driver
+        Instance of logger client.
     """
 
-    def __init__(
-        self,
-        gui_client,
-        staticline_client,
-        logger_client
-    ):
+    def __init__(self, config, staticline_clients=None, logger_client=None):
 
-        # Instanciate gui handler
-        self.gui_handler = GUIHandler(gui_client, logger_client)
+        self.log = LogHandler(logger=logger_client)
+        self.config_path = config
+        self.config = load_config(config, logger=self.log)
 
-        # store shutter client
-        self.staticline = staticline_client
-        # self.staticline_HDAWG = staticline_hdawg
+        # Dictionary storing {device name : instance of staticline Driver}
+        self.staticlines = {}
 
-    def initialize_button(
-        self,
-        button_widget='button_label',
-        button_widget_label='button_label_label',
-        button_up_widget='up_button',
-        button_up_widget_label='up_button_label',
-        button_down_widget='down_button',
-        button_down_widget_label='down_button_label',
+        if staticline_clients is not None:
+            for hardware_type, hardware_client in staticline_clients.items():
+                
+                # Find the device entry in the config file by matching the 
+                # hardware type with the clients in the client list.
+                # This requires the hardware_type to match the device server 
+                # names as listed in server_req in the Launcher.
+                # TODO: only works with 1 device per hardware_type.
+                for device_params in self.config.values():
+                     if device_params['hardware_type'] == hardware_type:
+                         break
+                
+                device_name = device_params['name']
 
-    ):
-        """Initialize label to staticline name, assignes labels."""
+                # Store the staticline driver under the specified device name
+                self.staticlines[device_name] = staticline.Driver(
+                    name=device_name,
+                    logger=logger_client,
+                    hardware_client=hardware_client,
+                    hardware_type=hardware_type,
+                    config=device_params
+                )
 
-        label_widgets = [
-            button_widget,
-        ]
+    def initialize_buttons(self):
+        """Binds the function of each button of each device to the functions
+        set up by each the device's staticline driver.
+        """
 
-        label_labels = [
-            button_widget_label,
+        # Iterate through all devices in the config file
+        for device_params in self.config.values():
 
-        ]
+            staticline_type = device_params['type']
+            name = device_params['name']
+            staticline_driver = self.staticlines[name]
+            widget = self.widgets[name]
 
-        button_widgets = [
-            button_up_widget,
-            button_down_widget,
-        ]
+            # Digital: Have an up and down button
+            if staticline_type == 'digital':
+                widget['on'].clicked.connect(staticline_driver.up)
+                widget['off'].clicked.connect(staticline_driver.down)
 
-        button_labels = [
-            button_up_widget_label,
-            button_down_widget_label,
-        ]
-
-        # Assign label labels
-        for widget, label in zip(label_widgets, label_labels):
-            self.gui_handler.assign_label(widget, label)
-
-        # Assign buttons
-        for widget, label in zip(button_widgets, button_labels):
-            self.gui_handler.assign_event_button(widget, label)
-
-        # Retrieve staticline names
-        staticline_name = self.staticline.get_name()
-
-        # Set value of label staticline names.
-        self.gui_handler.set_label(staticline_name, button_widget_label)
-
-        # Store label name
-        self.button_up_widget_label = button_up_widget_label
-        self.button_down_widget_label = button_down_widget_label
-
-    def check_buttons(self):
-        """ Checks state of buttons and sets shutter accordingly"""
-        if self.gui_handler.was_button_pressed(event_label=self.button_up_widget_label):
-            self.staticline.up()
-        elif self.gui_handler.was_button_pressed(event_label=self.button_down_widget_label):
-            self.staticline.down()
+            # Analog: "Apply" does something based on the text field value
+            elif staticline_type == 'analog':
+                widget['apply'].clicked.connect(lambda:
+                    staticline_driver.set_value(widget['AIN'].text()))
+                
+            else:
+                self.log.error(f'Invalid staticline type for device {name}. '
+                                'Should be analog or digital.')
 
     def run(self):
+        """Starts up the staticline GUI and initializes the buttons. """
 
-        # Initialize button
-        self.initialize_button()
+        # Starts up an application for the window
+        self.app = QtWidgets.QApplication(sys.argv)
+        
+        # Create a GUI window with layout determined by the config file
+        self.gui = GUIWindowFromConfig(config=self.config_path)
+        self.gui.show()
+        self.widgets = self.gui.all_widgets
 
-        # Mark running flag
-        self.gui_handler.is_running = True
-        while self.gui_handler.is_running:
-            self.check_buttons()
-            time.sleep(0.02)
+        # Binds the function of the buttons to the staticline Driver functions
+        self.initialize_buttons()
+        
+        self.app.exec_()
 
 
 def launch(**kwargs):
@@ -103,13 +103,24 @@ def launch(**kwargs):
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
-    # Instantiate StaticLineGUIGeneric
     try:
         staticline_gui = StaticLineGUIGeneric(
-            staticline_client=clients['staticline_nidaqmx'], gui_client=guis['staticline_generic'], logger_client=logger
+            config=kwargs['config'],
+            staticline_clients=clients,
+            logger_client=logger,
         )
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')
 
-    # Run
     staticline_gui.run()
+
+def main():
+    """Main function for debugging. """
+
+    staticline_gui = StaticLineGUIGeneric(
+        config='test_config_sl',
+    )
+    staticline_gui.run()
+
+if __name__ == '__main__':
+    main()

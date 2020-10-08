@@ -1418,21 +1418,10 @@ class PulseMaster:
 
         self.log.info('DIO settings successfully loaded.')
 
-    def run(self):
-        """ Runs an iteration of checks for updates and implements
-        """
-
-
-        time.sleep(0.01)
-        self.gui.force_update()
-
-
 def launch(**kwargs):
     """ Launches the pulsemaster script """
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-
-
 
     # Instantiate Pulsemaster
     try:
@@ -1453,5 +1442,4 @@ def launch(**kwargs):
         time.sleep(15)
         raise
 
-    while True:
-        pulsemaster.run()
+    pulsemaster.gui.app.exec_()

@@ -17,7 +17,8 @@ class TimeTrace:
     """ Convenience class for handling time-trace measurements """
 
     def __init__(self, ctr: si_tt.Client, log: LogClient,
-                 click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5, **kwargs):
+                 click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5,
+                 correlation=False, **kwargs):
         """ Instantiates TimeTrace measurement
 
         :param ctr: (si_tt.Client) client to timetagger hardware
@@ -30,6 +31,7 @@ class TimeTrace:
             :param update_interval: (float) interval in seconds to wait between updates
                 Note, don't go too small (< 100 ms, not precisely tested yet),
                 otherwise we might lag in jupyter notebook
+            :param correlation: (bool) whether or not this is correlation meas
             TODO: in future, can implement multiple histograms if useful
         """
 
@@ -42,7 +44,11 @@ class TimeTrace:
         self.binwidth = binwidth
         self.n_bins = n_bins
 
-        self.hist = f'histogram_{np.random.randint(1000)}'
+        self.correlation = correlation
+        if self.correlation:
+            self.hist = f'correlation_{np.random.randint(1000)}'
+        else:
+            self.hist = f'histogram_{np.random.randint(1000)}'
         self.plot = None
         self.is_paused = False
         self.up_in = update_interval
@@ -51,13 +57,23 @@ class TimeTrace:
     def start_acquisition(self):
         """ Begins time-trace acquisition """
 
-        self.ctr.start_histogram(
-            name=self.hist,
-            start_ch=self.start_ch,
-            click_ch=self.click_ch,
-            binwidth=self.binwidth,
-            n_bins=self.n_bins
-        )
+        if self.correlation:
+            self.ctr.start_correlation(
+                name=self.hist,
+                ch_1 = self.start_ch,
+                ch_2 = self.click_ch,
+                binwidth=self.binwidth,
+                n_bins=self.n_bins
+            )
+
+        else:
+            self.ctr.start_histogram(
+                name=self.hist,
+                start_ch=self.start_ch,
+                click_ch=self.click_ch,
+                binwidth=self.binwidth,
+                n_bins=self.n_bins
+            )
 
         self.log.info(f'Histogram counter {self.hist} started acquiring'
                       f' with click channel {self.click_ch} and start channel'
@@ -170,14 +186,25 @@ class TimeTraceGui(TimeTrace):
         self.gui.apply_stylesheet()
 
         self.config = load_config(config, logger=log)
+        self.correlation = False
+        if 'type' in self.config:
+            if self.config['type'] == 'correlation':
+                self.correlation = True
+
+        if 'gate_ch' in config:
+            ctr.create_gated_channel(self, 'gated_hist', config['click_ch'], config['gate_ch'])
+            click_ch_id = 'gated_hist'
+        else:
+            click_ch_id = self.config['click_ch']
         super().__init__(
             ctr=ctr,
             log=log,
-            click_ch=self.config['click_ch'],
+            click_ch=click_ch_id,
             start_ch=self.config['start_ch'],
             binwidth=int(self._get_binwidth()),
             n_bins=self.gui.n_bins.value(),
-            update_interval=0
+            update_interval=0,
+            correlation=self.correlation
         )
 
         # Configure clicks

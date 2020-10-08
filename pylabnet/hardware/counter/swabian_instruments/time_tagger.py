@@ -47,6 +47,7 @@ class Wrap:
 
         # Counter instance
         self._ctr = {}
+        self._channels = {}
 
     def start_trace(self, name=None, ch_list=[1], bin_width=1000000000, 
                     n_bins=10000):
@@ -143,22 +144,32 @@ class Wrap:
         time.sleep(integration)
         return self._ctr[name].getData()
 
-    def start_gated_counter(self, name, click_ch, gate_ch, bins=1000):
+    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
         """ Starts a new gated counter
 
         :param name: (str) name of counter measurement to use
         :param click_ch: (int) click channel number -8...-1, 1...8
         :param gate_ch: (int) gate channel number -8...-1, 1...8
+        :param gated: (bool) whether or not to physicall gate, or just count between
+            gate_ch edges
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._ctr[name] = TT.CountBetweenMarkers(
-            self._tagger,
-            click_ch,
-            gate_ch,
-            end_channel=-gate_ch,
-            n_values=bins
-        )
+        if gated:
+            self._ctr[name] = TT.CountBetweenMarkers(
+                self._tagger,
+                click_ch,
+                gate_ch,
+                end_channel=-gate_ch,
+                n_values=bins
+            )
+        else:
+            self._ctr[name] = TT.CountBetweenMarkers(
+                self._tagger,
+                click_ch,
+                gate_ch,
+                n_values=bins
+            )
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,
@@ -168,7 +179,8 @@ class Wrap:
 
         :param name: (str) name of measurement for future reference
         :param start_ch: (int) index of start channel -8...-1, 1...8
-        :param click_ch: (int) index of counts channel -8...-1, 1...8
+        :param click_ch: (int or str) index of counts channel -8...-1, 1...8
+            if physical, otherwise channel name if virtual
         :param next_ch: (int, optional) channel used to mark transition
             to next histogram (for multi-channel histograms)
         :param sync_ch: (int, optional) channel used to mark reset of
@@ -180,7 +192,7 @@ class Wrap:
 
         self._ctr[name] = TT.TimeDifferences(
             tagger=self._tagger,
-            click_channel=click_ch,
+            click_channel=self._get_channel(click_ch),
             start_channel=start_ch,
             next_channel=next_ch,
             sync_channel=sync_ch,
@@ -189,6 +201,73 @@ class Wrap:
             n_histograms=n_histograms
         )
     
+    def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
+        """ Sets up a correlation measurement using TT.Correlation measurement class
+
+        :param name: (str) name of measurement for future reference
+        :param ch_1: (int or str) index of first click channel -8...-1, 1...8
+            if physical, otherwise channel name if virtual
+        :param ch_2: (int or str) index of second click channel -8...-1, 1...8
+            if physical, otherwise channel name if virtual
+        :param binwidth: (int) width of bin in ps
+        :param n_Bins: (int) number of bins for total measurement
+        """
+
+        self._ctr[name] = TT.Correlation(
+            tagger=self._tagger,
+            channel_1=self._get_channel(ch_1),
+            channel_2=self._get_channel(ch_2),
+            binwidth=binwidth,
+            n_bins=n_bins
+        )
+    
+    def start(self, name):
+        """ Starts a measurement.
+
+        Can be used to restart a measurement once it has been stopped
+        :param name: (str) name of the measurement for identification
+        """
+
+        self._ctr[name].start()
+    
+    def stop(self, name):
+        """ Stops a measurement.
+
+        Can be used to stop a measurement
+        :param name: (str) name of the measurement for identification
+        """
+
+        self._ctr[name].stop()
+    
+    def create_gated_channel(self, channel_name, click_ch, gate_ch):
+        """ Creates a virtual channel that is gated
+
+        :param channel_name: (str) name of channel for future reference
+        :param click_ch: (int) index of click channel -8...-1, 1...8
+        :param gate_ch: (int) index of gate channel -8...-1, 1...8
+            Assumes gate starts on rising edge (if positive) and ends
+            on falling edge
+        """
+
+        self._channels[channel_name] = TT.GatedChannel(
+            tagger=self._tagger,
+            input_channel=click_ch,
+            gate_start_channel=gate_ch,
+            gate_stop_channel=-gate_ch
+        )
+    
+    def _get_channel(self, ch):
+        """ Handle virtual channel input 
+        
+        :param ch: (int or str) channel index (if physical) or name (virtual)
+
+        :return: (int) channel number of physical or virtual channel
+        """
+
+        if isinstance(ch, str):
+            return self._channels[ch].getChannel()
+        else:
+            return ch
     
     @staticmethod
     def handle_name(name):

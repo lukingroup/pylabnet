@@ -1,0 +1,21 @@
+while (1) {
+    /* Run full sequence */
+    if (getUserReg($trigger_user_reg$) == $trigger_up_val$) {
+        repeat ($repetitions$) {
+        $dig_sequence0$
+        setDIO(0);
+        wait(1000);
+        }
+
+    }
+    /* Run preselection sequence without triggering histogram */
+    if (getUserReg($check_sequence_user_reg$) == $trigger_up_val$) {
+         repeat ($repetitions$) {
+        $dig_sequence1$
+        setDIO(0);
+        wait(1000);
+        }
+    }
+    setUserReg($trigger_user_reg$, $trigger_down_val$);
+    setUserReg($check_sequence_user_reg$, $trigger_down_val$);
+}

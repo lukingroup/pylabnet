@@ -144,7 +144,7 @@ class Dataset:
         if self.x is not None:
             generic_save(
                 data=self.x,
-                filename=f'{filename}_{self.name}_{self.x}',
+                filename=f'{filename}_{self.name}_x',
                 directory=directory,
                 date_dir=date_dir
             )
@@ -216,6 +216,12 @@ class PreselectedHistogram(AveragedHistogram):
         self.preselection = True
         super().__init__(*args, **kwargs)
         self.add_child(name='Single Trace', mapping=self.recent, data_type=Dataset)
+        if 'presel_params' in self.config:
+            self.presel_params = self.config['presel_params']
+            self.fill_parameters(self.presel_params)
+        else:
+            self.presel_params = None
+            self.setup_preselection(threshold=float)
         if 'presel_data_length' in self.config:
             presel_data_length = self.config['presel_data_length']
         else:
@@ -225,12 +231,6 @@ class PreselectedHistogram(AveragedHistogram):
             data_type=InfiniteRollingLine,
             data_length=presel_data_length
         )
-        if 'presel_params' in self.config:
-            self.presel_params = self.config['presel_params']
-            self.fill_parameters(self.presel_params)
-        else:
-            self.presel_params = None
-            self.setup_preselection(threshold=float)
 
     def setup_preselection(self, **kwargs):
         
@@ -263,6 +263,17 @@ class PreselectedHistogram(AveragedHistogram):
         self.children['Preselection Counts'].set_data(preselection_data)
         super().set_data(data, x)
 
+    def interpret_status(self, status):
+        super().interpret_status(status)
+
+        for name, child in self.children.items():
+            if name in self.mapping and self.mapping[name] == self.preselect:
+                vb = child.graph.getPlotItem().getViewBox()
+                if status == 'BAD':
+                    vb.setBackgroundColor(0.1)
+                else:
+                    vb.setBackgroundColor(0.0)
+    
     @staticmethod
     def recent(dataset, prev_dataset):
 	    prev_dataset.data = dataset.recent_data

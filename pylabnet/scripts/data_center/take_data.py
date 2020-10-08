@@ -58,6 +58,7 @@ class DataTaker:
         self.gui.run.clicked.connect(self.run)
         self.gui.save.clicked.connect(self.save)
         self.gui.load_config.clicked.connect(self.reload_config)
+        self.gui.showMaximized()
         
     def update_experiment_list(self):
         """ Updates list of experiments """
@@ -175,6 +176,7 @@ class DataTaker:
     def save(self):
         """ Saves data """
 
+        self.log.update_metadata(notes=self.gui.notes.toPlainText())
         self.dataset.save(
             filename=self.gui.save_name.text(),
             directory=self.config['save_path'],

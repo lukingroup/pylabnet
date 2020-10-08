@@ -334,6 +334,9 @@ color: rgb(255, 255, 255);</string>
              <string notr="true">color: rgb(255, 255, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>
             </property>
+            <property name="sizeAdjustPolicy">
+             <enum>QComboBox::AdjustToContents</enum>
+            </property>
            </widget>
           </item>
          </layout>
@@ -441,35 +444,93 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </layout>
         </item>
         <item>
-         <widget class="QLabel" name="label">
-          <property name="styleSheet">
-           <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
-          </property>
-          <property name="text">
-           <string>Experiment preview:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QTextBrowser" name="exp_preview">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>500</height>
-           </size>
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
           </property>
           <property name="styleSheet">
-           <string notr="true">font: 12pt &quot;Consolas&quot;;
+           <string notr="true">QTabBar::tab {color: rgb(0,0,0);}</string>
+          </property>
+          <property name="tabShape">
+           <enum>QTabWidget::Rounded</enum>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <property name="tabBarAutoHide">
+           <bool>false</bool>
+          </property>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>Experiment preview</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QTextBrowser" name="exp_preview">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>700</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 12pt &quot;Consolas&quot;;
 color: rgb(255, 255, 255);
 background-color: rgb(0, 0, 0);</string>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="lineWrapMode">
-           <enum>QTextEdit::NoWrap</enum>
-          </property>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="lineWrapMode">
+               <enum>QTextEdit::NoWrap</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="tab_2">
+           <attribute name="title">
+            <string>Notes</string>
+           </attribute>
+           <attribute name="toolTip">
+            <string>Add experiment metadata notes here</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <widget class="QTextBrowser" name="notes">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>700</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>Consolas</family>
+                <pointsize>12</pointsize>
+                <weight>50</weight>
+                <italic>false</italic>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">font: 12pt &quot;Consolas&quot;;
+color: rgb(255, 255, 255);
+background-color: rgb(0, 0, 0);</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="lineWrapMode">
+               <enum>QTextEdit::NoWrap</enum>
+              </property>
+              <property name="readOnly">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
         <item>

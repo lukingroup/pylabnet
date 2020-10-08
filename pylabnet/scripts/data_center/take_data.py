@@ -25,10 +25,10 @@ class DataTaker:
 
         self.log = LogHandler(logger)
         self.dataset = None
-        
+
         # Instantiate GUI window
         self.gui = Window(
-            gui_template='data_taker', 
+            gui_template='data_taker',
             host=socket.gethostbyname(socket.gethostname())
         )
 
@@ -46,7 +46,7 @@ class DataTaker:
         for client_name, client_obj in self.clients.items():
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setToolTip(str(client_obj))
-            self.clients.addItem(client_item)
+            self.gui.clients.addItem(client_item)
 
         # Configure dataset menu
         for name, obj in inspect.getmembers(datasets):
@@ -59,7 +59,7 @@ class DataTaker:
         self.gui.save.clicked.connect(self.save)
         self.gui.load_config.clicked.connect(self.reload_config)
         self.gui.showMaximized()
-        
+
     def update_experiment_list(self):
         """ Updates list of experiments """
 
@@ -83,7 +83,7 @@ class DataTaker:
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(0, 0, 0);')
         self.log.update_metadata(experiment_file=exp_content)
-    
+
     def configure(self):
         """ Configures the currently selected experiment + dataset """
 
@@ -95,7 +95,7 @@ class DataTaker:
                 return
         except:
             pass
-        
+
         # Set all experiments to normal state and highlight configured expt
         for item_no in range(self.gui.exp.count()):
             self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
@@ -114,7 +114,7 @@ class DataTaker:
             config=self.config
         )
 
-        
+
         # Run any pre-experiment configuration
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
@@ -146,7 +146,7 @@ class DataTaker:
                 gui=self.gui,
                 **self.clients
             )
-            
+
             self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
             self.experiment_thread.finished.connect(self.stop)
             self.log.update_metadata(
@@ -204,7 +204,7 @@ class ExperimentThread(QtCore.QThread):
         self.running = True
         super().__init__()
         self.start()
-    
+
     def run(self):
         while self.running:
             self.experiment(
@@ -222,7 +222,7 @@ class UpdateThread(QtCore.QThread):
         self.running = True
         super().__init__()
         self.start()
-    
+
     def run(self):
         while self.running:
             self.data_updated.emit()

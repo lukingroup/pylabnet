@@ -422,7 +422,7 @@ class PulseMaster:
 
         self.seq_variable_table_model = DictionaryTableModel(
             self.seq_var_dict,
-            header=["Channel Name", "DIO Bit"],
+            header=["Sequence Variable", "Value"],
             editable=True
         )
 
@@ -438,6 +438,8 @@ class PulseMaster:
 
         # Apply all custom styles
         self.apply_custom_styles()
+
+        self.awg_running = False
 
     def apply_custom_styles(self):
         """Apply all style changes which are not specified in the .css file."""
@@ -492,15 +494,22 @@ class PulseMaster:
     def start_hdawg(self):
         """Start the AWG core."""
         self.awg.start()
+        self.awg_running = True
 
     def stop_hdawg(self):
         """Stop the AWG core."""
         self.awg.stop()
+        self.awg_running = False
 
     def upload_hdawg(self):
         """ Embedd current pulseblock in sequence template and
         upload to HDAWG.
         """
+
+        # Stop AWG if it's running.
+        if self.awg_running:
+            self.stop_hdawg()
+
         #Compile pulseblock.
         self.compile_current_pulseblock()
 
@@ -810,7 +819,10 @@ class PulseMaster:
 
         # Add new Entries.
         for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
-            pulse_form, pulse_layout = self.get_pulse_specifier_form(pulse_specifier)
+            pulse_form, pulse_layout = self.get_pulse_specifier_form(
+                pulse_specifier=pulse_specifier,
+                pb_constructor=current_pb_constructor
+            )
 
             self.pulse_toolbox.insertItem(
                 i,
@@ -822,7 +834,17 @@ class PulseMaster:
             self.pulse_toolbox.setCurrentWidget(pulse_form)
             pulse_form.parent().parent().setMinimumHeight(100)
 
-    def get_pulse_specifier_form(self, pulse_specifier):
+    def remove_pulse_specifier(self, pulse_specifier, pb_constructor):
+        """"Remove pulse specifier from Pb constructor."""
+        pb_constructor.pulse_specifiers.remove(pulse_specifier)
+
+        # Redraw toolbox
+        self.update_pulse_list_toolbox()
+
+        # Recompile pulseblock
+        self.plot_current_pulseblock()
+
+    def get_pulse_specifier_form(self, pulse_specifier, pb_constructor):
 
         """Change input fields if pulse selector dropdown has been changed."""
 
@@ -876,6 +898,18 @@ class PulseMaster:
                 field_input.setText(str(value))
 
             qform_layout.addRow(field_label, field_input)
+
+        delete_button = QPushButton("Delete Pulse")
+        delete_button.setStyleSheet("background-color : #6a040f")
+
+        remove_pulse_function = lambda: self.remove_pulse_specifier(
+            pulse_specifier=pulse_specifier,
+            pb_constructor=pb_constructor
+        )
+
+        delete_button.clicked.connect(remove_pulse_function)
+
+        qform_layout.addRow("", delete_button)
 
         return form, qform_layout
 

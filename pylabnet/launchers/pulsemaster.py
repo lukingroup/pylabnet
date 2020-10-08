@@ -12,7 +12,7 @@ def main():
         gui_req=[None],
         params=[None],
         config='pulsemaster',
-        script_server=False
+        script_server=True
     )
     launcher.launch()
 

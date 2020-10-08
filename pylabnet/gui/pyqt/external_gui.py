@@ -131,8 +131,6 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
 
-        # Apply stylesheet.
-        #app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5'))
 
     def apply_stylesheet(self):
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())

@@ -106,6 +106,9 @@ class Controller(MultiChSweep1D):
             hmap.view.invertY(False)
             self.widgets['hmap'].append(hmap)
 
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
+
     def display_experiment(self, item):
         """ Displays the currently clicked experiment in the text browser
 
@@ -163,7 +166,7 @@ class Controller(MultiChSweep1D):
             self.min = self.widgets['p_min'].value()
             self.max = self.widgets['p_max'].value()
             self.pts = self.widgets['pts'].value()
-            
+
             self.run()
             self.widgets['rep_tracker'].setValue(0)
             self.widgets['reps'].setValue(0)
@@ -406,7 +409,7 @@ class Controller(MultiChSweep1D):
     def _clear_show_trace(self, index):
         """ Clears or shows the single scan trace of a graph
 
-        :param index: (int) index of graph 
+        :param index: (int) index of graph
         """
 
         # Check status of button

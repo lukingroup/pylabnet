@@ -51,6 +51,10 @@ class Controller:
         self.scan = False
         self.emission = False
 
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
+
         self._setup_GUI()
 
     def run(self, check_vals=False):

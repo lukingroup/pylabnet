@@ -53,6 +53,7 @@ class TimeTrace:
         self.is_paused = False
         self.up_in = update_interval
 
+
     def start_acquisition(self):
         """ Begins time-trace acquisition """
 
@@ -180,6 +181,9 @@ class TimeTraceGui(TimeTrace):
             gui_template='histogram',
             host=socket.gethostbyname(socket.gethostname())
         )
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
 
         self.config = load_config(config, logger=log)
         self.correlation = False

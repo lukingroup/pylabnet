@@ -28,6 +28,8 @@ would be thrown in case the GUI crashes. This enables scripts to continue runnin
 """
 
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
+import qdarkstyle
+
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -85,7 +87,6 @@ class Window(QtWidgets.QMainWindow):
 
         self._ui = None  # .ui file to use as a template
 
-
         # Holds all widgets assigned to the GUI from an external script
         # Reference is by keyword (widget_label), and the keyword can be used to access the widget once assigned
         self.plots = {}
@@ -129,6 +130,10 @@ class Window(QtWidgets.QMainWindow):
                 self.port = port
         except:
             pass
+
+
+    def apply_stylesheet(self):
+        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
     def set_network_info(self, host=None, port=None):
         """ Sets IP and port labels

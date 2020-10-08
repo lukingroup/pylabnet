@@ -43,6 +43,11 @@ class WlmMonitor:
             host=socket.gethostbyname(socket.gethostname()),
             port=port,
         )
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
+
+
         self.widgets = get_gui_widgets(
             gui=self.gui,
             freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,

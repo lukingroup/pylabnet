@@ -57,9 +57,10 @@ class Window(QtWidgets.QMainWindow):
         main_window = Window(app, gui_template="my_favorite_gui")
     """
 
+    # '#ffe119', 
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
-    COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+    COLOR_LIST = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 
@@ -150,6 +151,27 @@ class Window(QtWidgets.QMainWindow):
             self.port=port
             self.port_label.setText(f'Port: {port}')
 
+    def add_graph(self, graph_layout=None, index=None):
+        """ Adds a new pyqtgraph to a graph layout and returns
+        
+        :param graph_layout: (str) name of graph layout to add to
+        :param index: (int) index if inserting into layout at a
+            particular location
+        """
+
+        if graph_layout is None:
+            layout = getattr(self, 'graph_layout')
+        else:
+            layout = getattr(self, graph_layout)
+
+        graph = pg.PlotWidget()
+        if index is None:
+            layout.addWidget(graph)
+        else:
+            layout.insertWidget(index, graph)
+
+        return graph
+    
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
@@ -650,6 +672,65 @@ class Window(QtWidgets.QMainWindow):
             gui=self,
             widget=container_widget
         )
+
+
+class ParameterPopup(QtWidgets.QWidget):
+    """ Widget class of to add parameter prompting popup"""
+    parameters = QtCore.pyqtSignal(dict)
+
+    def __init__(self, **params):
+        """ Instantiates window
+
+        :param params: (dict) with keys giving parameter
+            name and value giving parameter type
+        """
+
+        QtWidgets.QWidget.__init__(self)
+
+        # Create layout
+        self.base_layout = QtWidgets.QVBoxLayout()
+        self.setStyleSheet('background-color: rgb(0, 0, 0);'
+                           'font: 25 12pt "Calibri Light";'
+                           'color: rgb(255, 255, 255);')
+        self.setWindowTitle('Parameter Configurator')
+        self.setMinimumWidth(300)
+        self.setLayout(self.base_layout)
+        self.params = {}
+
+        # Add labels and widgets to layout
+        for param_name, param_type in params.items():
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(QtWidgets.QLabel(param_name))
+            if param_type is int:
+                self.params[param_name] = QtWidgets.QSpinBox()
+                self.params[param_name].setMaximum(100000000)
+            elif param_type is float:
+                self.params[param_name] = QtWidgets.QDoubleSpinBox()
+                self.params[param_name].setMaximum(100000000)
+            else:
+                self.params[param_name] = QtWidgets.QLabel()
+            layout.addWidget(self.params[param_name])
+            self.base_layout.addLayout(layout)
+
+        # Add button to configure
+        self.configure_button = QtWidgets.QPushButton(text='Configure Parameters')
+        self.configure_button.setStyleSheet('background-color: rgb(170, 170, 255);')
+        self.base_layout.addWidget(self.configure_button)
+        self.configure_button.clicked.connect(self.return_params)
+        self.show()
+
+    def return_params(self):
+        """ Returns all parameter values and closes """
+
+        ret = {}
+        for param_name, widget in self.params.items():
+            try:
+                ret[param_name] = widget.value()
+            except AttributeError:
+                ret[param_name] = widget.text()
+        self.parameters.emit(ret)
+        self.close()
+
 
 class Plot:
     """ Class for plot widgets inside of a Window

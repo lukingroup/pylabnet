@@ -163,6 +163,22 @@ color: rgb(255, 255, 255);</string>
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="load_config">
+        <property name="maximumSize">
+         <size>
+          <width>75</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(170, 170, 255);</string>
+        </property>
+        <property name="text">
+         <string>Load</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="param_8">
         <property name="maximumSize">
          <size>
@@ -327,7 +343,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           <item>
            <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>Preselection status:</string>
+             <string>Experiment status:</string>
             </property>
            </widget>
           </item>

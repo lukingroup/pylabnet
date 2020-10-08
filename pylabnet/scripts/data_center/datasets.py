@@ -22,6 +22,10 @@ class Dataset:
         """
 
         self.log = LogHandler(log)
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
         self.metadata = self.log.get_metadata()
         if name is None:
             self.name = self.__class__.__name__
@@ -38,7 +42,8 @@ class Dataset:
         self.gui = gui
         self.visualize(graph)
 
-    def add_child(self, name, mapping=None, data_type=None, new_plot=True):
+    def add_child(self, name, mapping=None, data_type=None, 
+        new_plot=True, **kwargs):
         """ Adds a child dataset with a particular data mapping
         
         :param name: (str) name of processed dataset
@@ -60,7 +65,8 @@ class Dataset:
             gui=self.gui, 
             data=self.data,
             graph=graph,
-            name=name
+            name=name,
+            **kwargs
         )
 
         if mapping is not None:
@@ -210,13 +216,25 @@ class PreselectedHistogram(AveragedHistogram):
         self.preselection = True
         super().__init__(*args, **kwargs)
         self.add_child(name='Single Trace', mapping=self.recent, data_type=Dataset)
-        self.add_child(name='Preselection Counts', data_type=InvisibleData)
-        self.presel_params = None
-        self.setup_preselection(threshold=float)
+        if 'presel_data_length' in self.config:
+            presel_data_length = self.config['presel_data_length']
+        else:
+            presel_data_length = None
+        self.add_child(
+            name='Preselection Counts', 
+            data_type=InfiniteRollingLine,
+            data_length=presel_data_length
+        )
+        if 'presel_params' in self.config:
+            self.presel_params = self.config['presel_params']
+            self.fill_parameters(self.presel_params)
+        else:
+            self.presel_params = None
+            self.setup_preselection(threshold=float)
 
     def setup_preselection(self, **kwargs):
         
-        self.popup = PreselectionPopup(**kwargs)
+        self.popup = ParameterPopup(**kwargs)
         self.popup.parameters.connect(self.fill_parameters)
     
     def fill_parameters(self, params):
@@ -232,7 +250,7 @@ class PreselectedHistogram(AveragedHistogram):
     def preselect(self, dataset, prev_dataset):
         """ Preselects based on user input parameters """
         
-        if np.mean(dataset.children['Preselection Counts'].data) < self.presel_params['threshold']:
+        if dataset.children['Preselection Counts'].data[-1] < self.presel_params['threshold']:
             dataset.preselection = True
             if prev_dataset.data is None:
                 prev_dataset.data = dataset.recent_data
@@ -257,14 +275,86 @@ class InvisibleData(Dataset):
         self.curve = pg.PlotDataItem()
 
 
-class PreselectionPopup(QtWidgets.QWidget):
+class RollingLine(Dataset):
+    """ Implements a rolling dataset where new values are
+        added incrementally e.g. in time-traces """
+
+    def __init__(self, *args, **kwargs):
+
+        # We need to know the data length, so prompt if necessary
+        if 'data_length' in kwargs and kwargs['data_length'] is not None:
+            self.data_length = kwargs['data_length']
+        else:
+            self.popup = ParameterPopup(data_length=int)
+            self.waiting = True
+            self.popup.parameters.connect(self.setup_axis)
+        super().__init__(*args, **kwargs)
+
+    def setup_axis(self, params):
+
+        self.data_length = params['data_length']
+        self.waiting = False
+
+    def set_data(self, data):
+        """ Updates data 
+        
+        :param data: (scalar) data to add
+        """
+
+        if self.data is None:
+            self.data = np.array([data])
+        
+        else:
+            if len(self.data) == self.data_length:
+                self.data = np.append(self.data, data)[1:]
+            else:
+                self.data = np.append(self.data, data)
+
+
+class InfiniteRollingLine(RollingLine):
+    """ Extension of RollingLine that stores the data
+        indefinitely, but still only plots a finite amount """
+
+    def set_data(self, data):
+        """ Updates data 
+        
+        :param data: (scalar) data to add
+        """
+
+        if self.data is None:
+            self.data = np.array([data])
+        
+        else:
+            self.data = np.append(self.data, data)
+
+    def update(self):
+        """ Updates current data to plot"""
+
+        if self.data is not None:
+
+            if len(self.data) > self.data_length:
+                if self.x is not None:
+                    self.curve.setData(self.x, self.data[-self.data_length:])
+                else:
+                    self.curve.setData(self.data[-self.data_length:])
+
+                for name, child in self.children.items():
+                    # If we need to process the child data, do it
+                    if name in self.mapping:
+                        self.mapping[name](self, prev_dataset=child)
+                    child.update()
+            else:
+                super().update()
+
+
+class ParameterPopup(QtWidgets.QWidget):
     """ Widget class of Add preselection popup"""
     parameters = QtCore.pyqtSignal(dict)
 
-    def __init__(self, **presel_params):
+    def __init__(self, **params):
         """ Instantiates window
 
-        :param presel_params: (dict) with keys giving parameter
+        :param params: (dict) with keys giving parameter
             name and value giving parameter type
         """
 
@@ -275,26 +365,29 @@ class PreselectionPopup(QtWidgets.QWidget):
         self.setStyleSheet('background-color: rgb(0, 0, 0);'
                            'font: 25 12pt "Calibri Light";'
                            'color: rgb(255, 255, 255);')
-        self.setWindowTitle('Preselection Parameters')
+        self.setWindowTitle('Parameter Configurator')
         self.setMinimumWidth(300)
         self.setLayout(self.base_layout)
         self.params = {}
 
         # Add labels and widgets to layout
-        for param_name, param_type in presel_params.items():
+        for param_name, param_type in params.items():
             layout = QtWidgets.QHBoxLayout()
             layout.addWidget(QtWidgets.QLabel(param_name))
             if param_type is int:
                 self.params[param_name] = QtWidgets.QSpinBox()
+                self.params[param_name].setMaximum(100000000)
             elif param_type is float:
                 self.params[param_name] = QtWidgets.QDoubleSpinBox()
+                self.params[param_name].setMaximum(100000000)
             else:
                 self.params[param_name] = QtWidgets.QLabel()
             layout.addWidget(self.params[param_name])
             self.base_layout.addLayout(layout)
 
         # Add button to configure
-        self.configure_button = QtWidgets.QPushButton(text='Configure Preselection')
+        self.configure_button = QtWidgets.QPushButton(text='Configure Parameters')
+        self.configure_button.setStyleSheet('background-color: rgb(170, 170, 255);')
         self.base_layout.addWidget(self.configure_button)
         self.configure_button.clicked.connect(self.return_params)
         self.show()

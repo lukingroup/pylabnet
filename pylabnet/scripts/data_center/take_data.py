@@ -7,6 +7,8 @@ import sys
 import inspect
 import importlib
 import time
+import pickle
+from datetime import datetime
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
@@ -55,6 +57,7 @@ class DataTaker:
         self.gui.configure.clicked.connect(self.configure)
         self.gui.run.clicked.connect(self.run)
         self.gui.save.clicked.connect(self.save)
+        self.gui.load_config.clicked.connect(self.reload_config)
         
     def update_experiment_list(self):
         """ Updates list of experiments """
@@ -78,7 +81,8 @@ class DataTaker:
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(0, 0, 0);')
-
+        self.log.update_metadata(experiment_file=exp_content)
+    
     def configure(self):
         """ Configures the currently selected experiment + dataset """
 
@@ -105,7 +109,8 @@ class DataTaker:
             # If we're not setting up a new measurement type, just clear the data
         self.dataset = getattr(datasets, self.gui.dataset.currentText())(
             gui=self.gui,
-            log=self.log
+            log=self.log,
+            config=self.config
         )
 
         
@@ -143,6 +148,9 @@ class DataTaker:
             
             self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
             self.experiment_thread.finished.connect(self.stop)
+            self.log.update_metadata(
+                exp_start_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
+            )
 
         # Stop experiment
         else:
@@ -155,6 +163,10 @@ class DataTaker:
         self.gui.run.setText('Run')
         self.log.info('Experiment stopped')
         self.update_thread.running = False
+
+        self.log.update_metadata(
+                exp_stop_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
+            )
 
         # Autosave if relevant
         if self.gui.autosave.isChecked():
@@ -169,6 +181,13 @@ class DataTaker:
             date_dir=True
         )
         self.log.info('Data saved')
+
+    def reload_config(self):
+        """ Loads a new config file """
+
+        self.config=load_config(
+            self.gui.config.text(), logger=self.log
+        )
 
 
 class ExperimentThread(QtCore.QThread):

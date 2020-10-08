@@ -668,6 +668,65 @@ class Window(QtWidgets.QMainWindow):
             widget=container_widget
         )
 
+
+class ParameterPopup(QtWidgets.QWidget):
+    """ Widget class of to add parameter prompting popup"""
+    parameters = QtCore.pyqtSignal(dict)
+
+    def __init__(self, **params):
+        """ Instantiates window
+
+        :param params: (dict) with keys giving parameter
+            name and value giving parameter type
+        """
+
+        QtWidgets.QWidget.__init__(self)
+
+        # Create layout
+        self.base_layout = QtWidgets.QVBoxLayout()
+        self.setStyleSheet('background-color: rgb(0, 0, 0);'
+                           'font: 25 12pt "Calibri Light";'
+                           'color: rgb(255, 255, 255);')
+        self.setWindowTitle('Parameter Configurator')
+        self.setMinimumWidth(300)
+        self.setLayout(self.base_layout)
+        self.params = {}
+
+        # Add labels and widgets to layout
+        for param_name, param_type in params.items():
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(QtWidgets.QLabel(param_name))
+            if param_type is int:
+                self.params[param_name] = QtWidgets.QSpinBox()
+                self.params[param_name].setMaximum(100000000)
+            elif param_type is float:
+                self.params[param_name] = QtWidgets.QDoubleSpinBox()
+                self.params[param_name].setMaximum(100000000)
+            else:
+                self.params[param_name] = QtWidgets.QLabel()
+            layout.addWidget(self.params[param_name])
+            self.base_layout.addLayout(layout)
+
+        # Add button to configure
+        self.configure_button = QtWidgets.QPushButton(text='Configure Parameters')
+        self.configure_button.setStyleSheet('background-color: rgb(170, 170, 255);')
+        self.base_layout.addWidget(self.configure_button)
+        self.configure_button.clicked.connect(self.return_params)
+        self.show()
+
+    def return_params(self):
+        """ Returns all parameter values and closes """
+
+        ret = {}
+        for param_name, widget in self.params.items():
+            try:
+                ret[param_name] = widget.value()
+            except AttributeError:
+                ret[param_name] = widget.text()
+        self.parameters.emit(ret)
+        self.close()
+
+
 class Plot:
     """ Class for plot widgets inside of a Window
 

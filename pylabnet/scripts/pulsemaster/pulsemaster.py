@@ -1,38 +1,26 @@
-import pylabnet.utils.pulseblock.pulse as po
-from pylabnet.utils.helper_methods import load_config
-import pylabnet.utils.pulseblock.pulse as po
-import pylabnet.utils.pulseblock.pulse_block as pb
-from pylabnet.utils.pulseblock.pb_sample import pb_sample
-from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
-from pylabnet.hardware.staticline import staticline
-from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
-from pylabnet.utils.helper_methods import slugify
-import copy
 
+exporetimport copy
+from datetime import datetime
 import numpy as np
 import time
 import pyqtgraph as pg
-
 import json
 import socket
+import uuid
 
-import pyqtgraph as pg
-from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.logging.logger import LogClient
-from pylabnet.scripts.pause_script import PauseService
-from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
-
-from PyQt5.QtWidgets import QShortcut, QTableWidgetItem, QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
-
-
-from PyQt5.QtGui import QBrush, QColor, QPainter, QItemDelegate, QKeySequence
+from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QComboBox, QWidget, QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QLabel, QLineEdit
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
-import uuid
+
 from simpleeval import simple_eval, NameNotDefined
 
+import pylabnet.utils.pulseblock.pulse as po
+import pylabnet.utils.pulseblock.pulse_block as pb
+from pylabnet.hardware.awg.zi_hdawg import Driver
+from pylabnet.utils.helper_methods import slugify
+from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
 
@@ -83,7 +71,6 @@ class DictionaryTableModel(QAbstractTableModel):
 
         for key, item in datadict.items():
             data_list.append([key, item])
-
 
         if data_list == []:
             data_list = [["", ""]]
@@ -204,9 +191,6 @@ class AddPulseblockPopup(QWidget):
         self.global_hbox = None
 
 
-
-
-
 class PulseblockConstructor():
     """Container Class which stores all necessary information to compile full Pulseblock,
     while retaining the ability to change variables and easy save/load functionality.
@@ -285,8 +269,23 @@ class PulseblockConstructor():
 
         self.pulseblock =  pulseblock
 
-    def save_as_dict(self):
-        pass
+    def save(self):
+        """Save a dictionary representing pulseblock."""
+
+        # Compile
+        self.compile_pulseblock()
+
+        pb_constructor_dict = self.get_dict()
+
+    def get_dict(self):
+        """Get dictionary representing the pulseblock."""
+        pb_dictionary = {}
+        pb_dictionary["name"] = self.name
+        pb_dictionary["timestamp"] = datetime.now().strftime("%d-%b-%Y_%H_%M_%S")
+        pb_dictionary["var_dict"] =  self.var_dict
+        pb_dictionary["pulse_specifiers_dicts"] = [ps.get_dict() for ps in self.pulse_specifiers]
+        self.log.info(str(pb_dictionary))
+        return pb_dictionary
 
     def load_as_dict(self):
         pass
@@ -317,6 +316,20 @@ class PulseSpecifier():
     # Reader friendly string return.
     def __str__(self):
         return self.get_printable_name()
+
+    def get_dict(self):
+        """Store all member variables as dictionary for easy saving."""
+        pulse_specifier_dict = {}
+        pulse_specifier_dict['pulsetype'] = self.pulsetype
+        pulse_specifier_dict['channel'] = self.channel
+
+
+        pulse_specifier_dict['dur'] = self.dur
+        pulse_specifier_dict['offset'] = self.offset
+        pulse_specifier_dict['tref'] = self.tref
+        pulse_specifier_dict['pulse_vars'] = self.pulsevar_dict
+        return pulse_specifier_dict
+
 
 class PulseMaster:
 
@@ -374,7 +387,8 @@ class PulseMaster:
             autostart=1,
             upload_hdawg=1,
             awg_num_val=1,
-            preview_seq_area=1
+            preview_seq_area=1,
+            save_pulseblock=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -490,6 +504,14 @@ class PulseMaster:
         self.msgSc1.activated.connect(self.upload_hdawg)
         self.msgSc2.activated.connect(self.upload_hdawg)
 
+        #Save Pulseblock Button
+        self.widgets["save_pulseblock"].clicked.connect(self.save_current_pb_constructor)
+
+    def save_current_pb_constructor(self):
+        """ Save current Pulseblock constructor as .json file"""
+
+        current_pb = self.get_current_pb_constructor()
+        current_pb.save()
 
     def start_hdawg(self):
         """Start the AWG core."""

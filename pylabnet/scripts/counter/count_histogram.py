@@ -204,9 +204,9 @@ class TimeTraceGui(TimeTrace):
             update_interval=0,
             correlation=self.correlation
         )
-        
+
         # If we also want to plot gated trace(s)
-        
+
         self.gates = {}
         if 'gate_ch' in self.config:
 
@@ -216,13 +216,13 @@ class TimeTraceGui(TimeTrace):
 
             # Update GUI to handle gates
             self._configure_gui_gates()
-            
+
             # Setup gated channels
             for gate_ch in self.config['gate_ch']:
                 ch_name = f'Gated histogram channel {gate_ch}'
                 ctr.create_gated_channel(
-                    ch_name, 
-                    self.config['click_ch'], 
+                    ch_name,
+                    self.config['click_ch'],
                     gate_ch,
                     delay=self.delays[ch_name].value()
                 )
@@ -274,7 +274,7 @@ class TimeTraceGui(TimeTrace):
         self.clear()
         for gate in self.gates.values():
             gate.clear()
-    
+
     def update_parameters(self, binwidth, n_bins):
         """ Updates parameters of all histograms
 
@@ -285,7 +285,7 @@ class TimeTraceGui(TimeTrace):
         self.set_parameters(binwidth, n_bins)
         for gate in self.gates.values():
             gate.set_parameters(binwidth, n_bins)
-    
+
     def run(self):
         """ Handles run button click """
 
@@ -331,7 +331,7 @@ class TimeTraceGui(TimeTrace):
             if self.gui.auto_clear.isChecked():
                 current_time = time.time()
                 if current_time - last_clear > self.gui.clear_time.value():
-                    self.clear()
+                    self.clear_all()
                     last_clear = current_time
             self._update_data()
             self.gui.force_update()
@@ -407,7 +407,7 @@ class TimeTraceGui(TimeTrace):
             self.delays[ch_name].setSuffix(' ps')
             self.delays[ch_name].setButtonSymbols(2)
             hbox.addWidget(self.delays[ch_name])
-            
+
             # Check for preconfigured delay and set the value
             if 'delays' in self.config:
                 try:
@@ -421,7 +421,7 @@ class TimeTraceGui(TimeTrace):
         # Configure layout to a group box and add to GUI in layout
         gate_box.setLayout(vbox)
         self.gui.graph_layout.addWidget(gate_box)
-    
+
     def _configure_delay_updates(self):
         """ Configures delay updates when a value is changed """
 
@@ -430,7 +430,7 @@ class TimeTraceGui(TimeTrace):
                 channel_name=x,
                 delay=state
             ))
-    
+
     def save(self, filename=None, directory=None):
         """ Saves the current data """
 

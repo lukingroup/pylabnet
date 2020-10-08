@@ -49,7 +49,7 @@ class Sweep1D:
         self.autosave = False
 
         # Setup stylesheet.
-        self.gui.apply_stylesheet()
+        #self.gui.apply_stylesheet()
 
 
     def set_parameters(self, **kwargs):

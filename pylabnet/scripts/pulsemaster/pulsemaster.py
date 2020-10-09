@@ -567,6 +567,10 @@ class PulseMaster:
         # Set sequence previewer.
         self.widgets['preview_seq_area'].setText(uploaded_sequence)
 
+        # Upload sequence to metadata
+        self.log.update_metadata(
+            pulseblock_constructor=self.get_current_pb_constructor().get_dict()
+        )
 
         # If the Autostart check is true, start the HDAWG
         if self.widgets['autostart'].isChecked():

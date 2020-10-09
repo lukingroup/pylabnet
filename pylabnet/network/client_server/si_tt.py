@@ -139,18 +139,33 @@ class Client(ClientBase):
         )
         return pickle.loads(res_pickle)
 
-    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
+    def start_gated_counter(self, name, click_ch, gate_ch, bins=1000):
         """ Starts a new gated counter
+
+        Starts counting at rising edge of gate, and returns count value into array
+        after falling edge of gate
 
         :param name: (str) name of counter measurement to use
         :param click_ch: (int) click channel number -8...-1, 1...8
         :param gate_ch: (int) gate channel number -8...-1, 1...8
-        :param gated: (bool) whether or not to physicall gate, or just count between
-            gate_ch edges
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, gated, bins)
+        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, True, bins)
+
+    def count_between_markers(self, name, click_ch, marker_ch, bins=1000):
+        """ Starts a new counter that counts at the rising edge of a marker
+        
+        Starts counting at rising edge of marker channel, and returns count value 
+        into array at the next marker rising edge
+
+        :param name: (str) name of counter measurement to use
+        :param click_ch: (int) click channel number -8...-1, 1...8
+        :param marker_ch: (int) marker channel number -8...-1, 1...8
+        :param bins: (int) number of bins (gate windows) to store
+        """
+
+        self._service.exposed_start_gated_counter(name, click_ch, marker_ch, False, bins)
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,

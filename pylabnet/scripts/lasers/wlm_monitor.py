@@ -103,7 +103,7 @@ class WlmMonitor:
 
         # Initialize each channel individually
         for channel_param_set in channel_params:
-            self.channels.append(Channel(channel_param_set, self.ao_clients))
+            self.channels.append(Channel(channel_param_set, self.ao_clients, log=self.log))
 
     def update_parameters(self, parameters):
         """ Updates only the parameters given. Can be used in the middle of the script operation via an update client.
@@ -472,16 +472,18 @@ class Client(ClientBase):
 class Channel:
     """Object containing all information regarding a single wavemeter channel"""
 
-    def __init__(self, channel_params, ao_clients=None):
+    def __init__(self, channel_params, ao_clients=None, log: LogHandler = None):
         """
         Initializes all parameters given, sets others to default. Also sets up some defaults + placeholders for data
 
         :param channel_params: (dict) Dictionary of channel parameters (see WlmMonitor.set_parameters() for details)
         :param ao_clients: (dict, optional) Dictionary containing ao clients tying a keyname string to the actual client
+        :param log: (LogHandler) instance of LogHandler for logging metadata
         """
 
         # Set channel parameters to default values
         self.ao_clients = ao_clients
+        self.log = log
         self.ao = None  # Dict with client name and channel for ao to use
         self.voltage = None  # Array of voltage values for ao, used for plotting/monitoring voltage
         self.current_voltage = 0
@@ -557,6 +559,8 @@ class Channel:
         # Check if the GUI has changed, and if so, update the setpoint in the script to match
         if self.gui_setpoint != self.prev_gui_setpoint:
             self.setpoint = copy.deepcopy(self.gui_setpoint)
+            metadata = {f'{self.name}_laser_setpoint': self.setpoint}
+            self.log.update_metadata(**metadata)
 
             # Otherwise the GUI is static AND parameters haven't been updated so we don't change the setpoint at all
 

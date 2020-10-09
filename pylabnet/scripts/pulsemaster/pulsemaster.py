@@ -616,6 +616,7 @@ class PulseMaster:
 
     def save_seq_variables_dict(self):
         """Save sequencer variables in file."""
+
         # Get Data
         data = self.get_seq_var_dict()
 
@@ -641,6 +642,9 @@ class PulseMaster:
         # returns JSON object as
         # a dictionary
         seq_var_dict = json.load(f)
+
+        # Retrieve sub-dictionary
+        seq_var_dict = seq_var_dict['sequence_vars']
 
         self.seq_var_dict = seq_var_dict
 

@@ -10,10 +10,10 @@ from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph
 
 class Dataset:
 
-    def __init__(self, gui:Window, log:LogClient=None, data=None, 
+    def __init__(self, gui:Window, log:LogClient=None, data=None,
         x=None, graph=None, name=None, **kwargs):
-        """ Instantiates an empty generic dataset 
-        
+        """ Instantiates an empty generic dataset
+
         :param gui: (Window) GUI window for data graphing
         :param log: (LogClient)
         :param data: initial data to set
@@ -42,10 +42,10 @@ class Dataset:
         self.gui = gui
         self.visualize(graph)
 
-    def add_child(self, name, mapping=None, data_type=None, 
+    def add_child(self, name, mapping=None, data_type=None,
         new_plot=True, **kwargs):
         """ Adds a child dataset with a particular data mapping
-        
+
         :param name: (str) name of processed dataset
             becomes a Dataset object (or child) as attribute of self
         :param mapping: (function) function which transforms Dataset to processed Dataset
@@ -60,9 +60,9 @@ class Dataset:
 
         if data_type is None:
             data_type = self.__class__
-        
+
         self.children[name] = data_type(
-            gui=self.gui, 
+            gui=self.gui,
             data=self.data,
             graph=graph,
             name=name,
@@ -71,7 +71,7 @@ class Dataset:
 
         if mapping is not None:
             self.mapping[name] = mapping
-    
+
     def set_data(self, data=None, x=None):
         """ Sets data
 
@@ -85,8 +85,8 @@ class Dataset:
             self.x = x
 
     def visualize(self, graph):
-        """ Prepare data visualization on GUI 
-        
+        """ Prepare data visualization on GUI
+
         :param graph: (pg.PlotWidget) graph to use
         """
 
@@ -119,7 +119,7 @@ class Dataset:
 
     def interpret_status(self, status):
         """ Interprets a status flag for exepriment monitoring
-        
+
         :param status: (str) current status message
         """
 
@@ -134,7 +134,7 @@ class Dataset:
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
     def save(self, filename=None, directory=None, date_dir=True):
-        
+
         generic_save(
             data=self.data,
             filename=f'{filename}_{self.name}',
@@ -148,12 +148,12 @@ class Dataset:
                 directory=directory,
                 date_dir=date_dir
             )
-        
+
         if hasattr(self, 'graph'):
             pyqtgraph_save(
-                self.graph.getPlotItem(), 
-                f'{filename}_{self.name}', 
-                directory, 
+                self.graph.getPlotItem(),
+                f'{filename}_{self.name}',
+                directory,
                 date_dir
             )
 
@@ -207,8 +207,8 @@ class PreselectedHistogram(AveragedHistogram):
         and preselected data using a gated counter for preselection"""
 
     def __init__(self, *args, **kwargs):
-        """ Instantiates preselected histogram measurement 
-        
+        """ Instantiates preselected histogram measurement
+
         see parent classes for details
         """
 
@@ -227,29 +227,29 @@ class PreselectedHistogram(AveragedHistogram):
         else:
             presel_data_length = None
         self.add_child(
-            name='Preselection Counts', 
+            name='Preselection Counts',
             data_type=InfiniteRollingLine,
             data_length=presel_data_length
         )
 
     def setup_preselection(self, **kwargs):
-        
+
         self.popup = ParameterPopup(**kwargs)
         self.popup.parameters.connect(self.fill_parameters)
-    
+
     def fill_parameters(self, params):
 
         self.presel_params = params
         self.add_child(
-            name='Preselected Trace', 
-            mapping=self.preselect, 
+            name='Preselected Trace',
+            mapping=self.preselect,
             data_type=AveragedHistogram
         )
         self.log.update_metadata(presel_params = self.presel_params)
-    
+
     def preselect(self, dataset, prev_dataset):
         """ Preselects based on user input parameters """
-        
+
         if dataset.children['Preselection Counts'].data[-1] < self.presel_params['threshold']:
             dataset.preselection = True
             if prev_dataset.data is None:
@@ -258,8 +258,17 @@ class PreselectedHistogram(AveragedHistogram):
                 prev_dataset.data += dataset.recent_data
         else:
             dataset.preselection = False
-    
+
     def set_data(self, data=None, x=None, preselection_data=None):
+        """ Sets the data for a new round of acquisition
+
+        :param data: histogram data from latest acquisition
+            note the histogram should have been cleared prior to acquisition
+        :param x: x axis for data
+        :param preselection_data: (float) value of preselection indicator
+            from latest acquisition
+        """
+
         self.children['Preselection Counts'].set_data(preselection_data)
         super().set_data(data, x)
 
@@ -273,7 +282,7 @@ class PreselectedHistogram(AveragedHistogram):
                     vb.setBackgroundColor(0.1)
                 else:
                     vb.setBackgroundColor(0.0)
-    
+
     @staticmethod
     def recent(dataset, prev_dataset):
 	    prev_dataset.data = dataset.recent_data
@@ -307,14 +316,14 @@ class RollingLine(Dataset):
         self.waiting = False
 
     def set_data(self, data):
-        """ Updates data 
-        
+        """ Updates data
+
         :param data: (scalar) data to add
         """
 
         if self.data is None:
             self.data = np.array([data])
-        
+
         else:
             if len(self.data) == self.data_length:
                 self.data = np.append(self.data, data)[1:]
@@ -327,14 +336,14 @@ class InfiniteRollingLine(RollingLine):
         indefinitely, but still only plots a finite amount """
 
     def set_data(self, data):
-        """ Updates data 
-        
+        """ Updates data
+
         :param data: (scalar) data to add
         """
 
         if self.data is None:
             self.data = np.array([data])
-        
+
         else:
             self.data = np.append(self.data, data)
 

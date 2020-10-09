@@ -49,7 +49,7 @@ class Wrap:
         self._ctr = {}
         self._channels = {}
 
-    def start_trace(self, name=None, ch_list=[1], bin_width=1000000000, 
+    def start_trace(self, name=None, ch_list=[1], bin_width=1000000000,
                     n_bins=10000):
         """Start counter - used for count-trace applications
 
@@ -158,16 +158,16 @@ class Wrap:
         if gated:
             self._ctr[name] = TT.CountBetweenMarkers(
                 self._tagger,
-                click_ch,
-                gate_ch,
+                self._get_channel(click_ch),
+                self._get_channel(gate_ch),
                 end_channel=-gate_ch,
                 n_values=bins
             )
         else:
             self._ctr[name] = TT.CountBetweenMarkers(
                 self._tagger,
-                click_ch,
-                gate_ch,
+                self._get_channel(click_ch),
+                self._get_channel(gate_ch),
                 n_values=bins
             )
 
@@ -200,7 +200,7 @@ class Wrap:
             n_bins=n_bins,
             n_histograms=n_histograms
         )
-    
+
     def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
         """ Sets up a correlation measurement using TT.Correlation measurement class
 
@@ -220,7 +220,7 @@ class Wrap:
             binwidth=binwidth,
             n_bins=n_bins
         )
-    
+
     def start(self, name):
         """ Starts a measurement.
 
@@ -229,7 +229,7 @@ class Wrap:
         """
 
         self._ctr[name].start()
-    
+
     def stop(self, name):
         """ Stops a measurement.
 
@@ -238,7 +238,7 @@ class Wrap:
         """
 
         self._ctr[name].stop()
-    
+
     def create_gated_channel(self, channel_name, click_ch, gate_ch, delay=None):
         """ Creates a virtual channel that is gated
 
@@ -264,10 +264,10 @@ class Wrap:
             )
             self.log.info(f'Created delayed gate {channel_name}_delayed for gate channel {gate_ch}')
             gate_ch = self._get_channel(f'{channel_name}_delayed')
-            gate_stop_ch = self._get_channel(f'{channel_name}_delayed_falling')            
+            gate_stop_ch = self._get_channel(f'{channel_name}_delayed_falling')
         else:
             gate_stop_ch = -gate_ch
-        
+
         self._channels[channel_name] = TT.GatedChannel(
             tagger=self._tagger,
             input_channel=click_ch,
@@ -287,10 +287,10 @@ class Wrap:
         self._channels[f'{channel_name}_delayed'].setDelay(int(delay))
         self._channels[f'{channel_name}_delayed_falling'].setDelay(int(delay))
         self.log.info(f'Updated {channel_name} delay to {delay}')
-    
+
     def _get_channel(self, ch):
-        """ Handle virtual channel input 
-        
+        """ Handle virtual channel input
+
         :param ch: (int or str) channel index (if physical) or name (virtual)
 
         :return: (int) channel number of physical or virtual channel
@@ -300,7 +300,7 @@ class Wrap:
             return self._channels[ch].getChannel()
         else:
             return ch
-    
+
     @staticmethod
     def handle_name(name):
         if name is None:

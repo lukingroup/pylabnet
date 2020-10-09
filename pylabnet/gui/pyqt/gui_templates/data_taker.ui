@@ -20,9 +20,7 @@
    <string>Data Taker</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -43,7 +41,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -71,7 +69,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -96,7 +94,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -121,7 +119,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -146,7 +144,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -190,7 +188,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -215,7 +213,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -246,7 +244,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -265,7 +263,7 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -315,7 +313,7 @@ color: rgb(255, 255, 255);</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
-              <weight>3</weight>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -375,7 +373,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <font>
                 <family>Calibri Light</family>
                 <pointsize>12</pointsize>
-                <weight>3</weight>
+                <weight>50</weight>
                 <italic>false</italic>
                 <bold>false</bold>
                </font>
@@ -415,7 +413,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <font>
                 <family>Calibri Light</family>
                 <pointsize>12</pointsize>
-                <weight>3</weight>
+                <weight>50</weight>
                 <italic>false</italic>
                 <bold>false</bold>
                </font>
@@ -445,6 +443,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
         </item>
         <item>
          <widget class="QTabWidget" name="tabWidget">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>1000</height>
+           </size>
+          </property>
           <property name="focusPolicy">
            <enum>Qt::TabFocus</enum>
           </property>
@@ -547,7 +551,7 @@ background-color: rgb(0, 0, 0);</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
-              <weight>3</weight>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -575,7 +579,7 @@ background-color: rgb(0, 0, 0);</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
-              <weight>3</weight>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -603,7 +607,7 @@ background-color: rgb(0, 0, 0);</string>
              <font>
               <family>Calibri Light</family>
               <pointsize>12</pointsize>
-              <weight>3</weight>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -634,7 +638,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2565</width>
-     <height>45</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

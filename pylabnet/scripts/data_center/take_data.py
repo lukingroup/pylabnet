@@ -59,6 +59,7 @@ class DataTaker:
         self.gui.save.clicked.connect(self.save)
         self.gui.load_config.clicked.connect(self.reload_config)
         self.gui.showMaximized()
+        self.gui.apply_stylesheet()
 
     def update_experiment_list(self):
         """ Updates list of experiments """

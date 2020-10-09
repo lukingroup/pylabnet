@@ -268,6 +268,8 @@ class TimeTraceGui(TimeTrace):
             index += 1
             add_to_legend(self.legend, self.gate_curves[gate], gate)
 
+        self.gui.apply_stylesheet()
+
     def clear_all(self):
         """ Clears all plots """
 

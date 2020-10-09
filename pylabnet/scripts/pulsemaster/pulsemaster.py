@@ -502,6 +502,97 @@ class PulseMaster:
         #Save Pulseblock Button
         self.widgets["save_pulseblock"].clicked.connect(self.save_current_pb_constructor)
 
+
+    def get_pb_specifier_from_dict(self, pulsedict):
+        """ Create PulseSpecifier object from dictioanry."""
+
+        pb_specifier = PulseSpecifier(
+            channel = pulsedict['channel'],
+            pulsetype = pulsedict['pulsetype'],
+            pulsetype_name = ""
+        )
+
+        pb_specifier.set_timing_info(
+            offset = pulsedict['offset'],
+            dur = pulsedict['dur'],
+            tref = pulsedict['tref']
+        )
+
+        pb_specifier.set_pulse_params(
+            pulsevar_dict = pulsedict['pulse_vars']
+        )
+
+        return pb_specifier
+
+
+    def get_pb_constructor_from_dict(self, pb_dict):
+        """Generate Pb contructor from dictionary."""
+
+        new_var_dict = pb_dict['var_dict']
+
+        # Update variable dict
+        self.vars.update(new_var_dict)
+
+        pb_constructor = PulseblockConstructor(
+            name=pb_dict['name'],
+            log=self.log,
+            var_dict=new_var_dict
+        )
+
+
+        for pulsedict in pb_dict['pulse_specifiers_dicts']:
+            new_pb_specifier = self.get_pb_specifier_from_dict(pulsedict)
+            pb_constructor.pulse_specifiers.append(new_pb_specifier)
+
+        return pb_constructor
+
+    def load_pulseblock_from_file(self):
+        """ Load PB constructor from file"""
+
+        # Get filename from pop-up.
+        pb_dict = self.load_json_dict()
+
+        # Create pulseblock contructor.
+        imported_contructor = self.get_pb_constructor_from_dict(pb_dict)
+
+        # Append to contructor.
+        self.pulseblock_constructors.append(imported_contructor)
+
+        #Temporarliy disconnect the currentIndexChanged so it does not fire during the
+        # constructor generation
+        self.widgets["pulseblock_combo"].currentIndexChanged.disconnect()
+
+
+        # Update pulseblock dropdown.
+        self.update_pulseblock_dropdown()
+
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
+
+         # Close popup
+        self.add_pb_popup.close()
+
+        # Select newest Pb.
+        self.widgets["pulseblock_combo"].setCurrentIndex(0)
+        self.plot_current_pulseblock()
+
+        # TODO find out how to update table without re-instanciation.
+        # Update Variable table.
+        self.variable_table_model = DictionaryTableModel(
+            self.vars,
+            header=["Variable", "Value"],
+            editable=True
+        )
+
+        self.variable_table.setModel(self.variable_table_model)
+
+        # Connect change of variable data to update variable dict function.
+        self.variable_table_model.dataChanged.connect(self._update_variable_dict)
+
+        # Update Toolbox.
+        self.update_pulse_list_toolbox()
+
+
+
     def save_current_pb_constructor(self):
         """ Save current Pulseblock constructor as .json file"""
 
@@ -631,17 +722,7 @@ class PulseMaster:
         """ Load assignment dictionary from file."""
 
         # Get filepath from file-sepector popup.
-        seq_var_filename = self.get_filename()
-        self.seq_var_filename = seq_var_filename
-
-        self.log.info(seq_var_filename)
-
-        # Opening JSON file
-        f = open(seq_var_filename[0])
-
-        # returns JSON object as
-        # a dictionary
-        seq_var_dict = json.load(f)
+        seq_var_dict = self.load_json_dict()
 
         # Retrieve sub-dictionary
         seq_var_dict = seq_var_dict['sequence_vars']
@@ -663,6 +744,19 @@ class PulseMaster:
     def get_filename(self, filetype="JSON files (*.json)"):
         """Open file selector widget and get files."""
         return QFileDialog.getOpenFileName(self.gui, 'Open file', '',filetype)
+
+    def load_json_dict(self):
+        """Open pop-up, search for JSON file and return as dict."""
+
+        filename = self.get_filename()
+
+        f = open(filename[0])
+
+        # returns JSON object as
+        # a dictionary
+        dictionary = json.load(f)
+
+        return dictionary
 
 
     def prep_plotdata(self, pb_obj):
@@ -1082,6 +1176,12 @@ class PulseMaster:
         # Add to global hbox
         self.add_pb_popup.global_hbox.addWidget(self.add_pb_popup.form_groupbox)
 
+         # Add load pb button
+        load_pb_button = QPushButton('Load Pulseblock')
+        load_pb_button.setObjectName("load_pb_button")
+        self.add_pb_popup.global_hbox.addWidget(load_pb_button)
+
+
         # Add button
         add_pb_button = QPushButton('Add Pulseblock')
         add_pb_button.setObjectName("add_pb_button")
@@ -1089,6 +1189,7 @@ class PulseMaster:
 
         # Connect Button to add pulseblock function
         add_pb_button.clicked.connect(self.add_pulseblock_constructors_from_popup)
+        load_pb_button.clicked.connect(self.load_pulseblock_from_file)
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()

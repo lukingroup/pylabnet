@@ -157,5 +157,7 @@ class PulseSpecifier():
         pulse_specifier_dict['offset'] = self.offset
         pulse_specifier_dict['tref'] = self.tref
         pulse_specifier_dict['pulse_vars'] = self.pulsevar_dict
+        pulse_specifier_dict['name'] = self.pulsetype_name
+
         return pulse_specifier_dict
 

@@ -1,12 +1,11 @@
 
 import copy
-from datetime import datetime
 import numpy as np
 import time
 import pyqtgraph as pg
 import json
 import socket
-import uuid
+
 
 from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QComboBox, QWidget, QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QLabel, QLineEdit
 from PyQt5.QtGui import QKeySequence
@@ -23,324 +22,8 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
-
-class DictionaryTableModel(QAbstractTableModel):
-    """ Table Model with data which can be access and set via a python dictionary."""
-    def __init__(self, data, header, editable=False):
-        """Instanciating  TableModel
-
-        :data: Dictionary which should fill table,
-            The key will be used to populate the first column entry,
-            the item will be used to populate the subsequent columns.
-            If item is String, only one column will be added. If Item is List,
-            one new colum for every list item will be added.
-        """
-        super(DictionaryTableModel, self).__init__()
-
-        # Prepare data.
-        data_ok, datadict = self.prepare_data(data)
-
-        assert data_ok, "Input dictionary invalid."
-
-        self.datadict = datadict
-        self._header = header
-
-        # Set editing mode.
-        self.editable = editable
-
-    def flags(self, index):
-        """ Make table fields editable."""
-        if self.editable:
-            return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
-        else:
-            return Qt.NoItemFlags
-
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        """Set header."""
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
-            return self._header[section]
-        return QAbstractTableModel.headerData(self, section, orientation, role)
-
-    def _prepare_single_string_dict(self, datadict):
-        """ Transform data dict into list of lists.
-
-        To be used if dictionary values are strings.
-        """
-
-        data_list = []
-
-        for key, item in datadict.items():
-            data_list.append([key, item])
-
-        if data_list == []:
-            data_list = [["", ""]]
-
-        return data_list
-
-    def _prepare_list_dict(self, datadict):
-        """ Transform data dict into list of lists.
-
-        To be used if dictionary values are lists.
-        TODO: Test this.
-        """
-
-        data_list = []
-
-        for i, (key, item) in enumerate(datadict.items()):
-            entry_list = []
-            entry_list.append(key)
-            for list_entry in item:
-                entry_list.append(list_entry)
-
-        return data_list
-
-    def prepare_data(self, datadict):
-        """Check if dictioanry is either containing strings as values,
-        or lists of the same length.
-
-        Generate list out of dictionary.
-        """
-
-        values = datadict.values()
-        data_ok = False
-
-        # Check if all values are one allowed datatype:
-        allowed_datatypes = [str, int, float]
-        if all([type(value) in allowed_datatypes for value in values]):
-                data_ok = True
-                datadict = self._prepare_single_string_dict(datadict)
-                return data_ok, datadict
-
-        # Check if values are all lists.
-        if all(isinstance(value, list) for value in values):
-
-            # Check if lists are of same length.
-            it = iter(values)
-            the_len = len(next(it))
-
-            if not all(len(l) == the_len for l in it):
-                data_ok = False
-                return data_ok, None
-            else:
-                data_ok = True
-                datadict = self._prepare_list_dict(datadict)
-                return data_ok, datadict
-        else:
-            data_ok = False
-            return data_ok, None
-
-    def data(self, index, role):
-        """ From https://stackoverflow.com/questions/28186118/how-to-make-qtableview-to-enter-the-editing-mode-only-on-double-click"""
-        if not index.isValid(): return QVariant()
-        row=index.row()
-        column=index.column()
-
-        if row>len(self.datadict): return QVariant()
-        if column>len(self.datadict[row]): return QVariant()
-
-        if role == Qt.EditRole or role == Qt.DisplayRole:
-            return QVariant(self.datadict[row][column])
-
-        return QVariant()
-
-    def setData(self, index, value, role=Qt.EditRole):
-        """ From https://stackoverflow.com/questions/28186118/how-to-make-qtableview-to-enter-the-editing-mode-only-on-double-click"""
-        if index.isValid():
-            if role == Qt.EditRole:
-                row = index.row()
-                column=index.column()
-                if row>len(self.datadict) or column>len(self.datadict[row]):
-                    return False
-                else:
-                    self.datadict[row][column]=value
-                    self.dataChanged.emit(index, index)
-                    return True
-        return False
-
-    def rowCount(self, index):
-        # The length of the outer list.
-        return len(self.datadict)
-
-    def columnCount(self, index):
-        # The following takes the first sub-list, and returns
-        # the length (only works if all rows are an equal length)
-        return len(self.datadict[0])
-
-
-    def add_dict(self, data_dict):
-        """Populate table from dictionary.
-
-        :data_dict: Dictionary to populate table from.
-        """
-        for i, (key, item) in enumerate(data_dict.items()):
-            key = QTableWidgetItem(key)
-            item = QTableWidgetItem(item)
-            self.setItem(i,0,key)
-            self.setItem(i,1,str(item))
-
-
-class AddPulseblockPopup(QWidget):
-    """ Widget class of Add pulseblock popup"""
-    def __init__(self):
-        QWidget.__init__(self)
-
-        self.pulseblock_name_field = None
-        self.pulseblock_inherit_field = None
-        self.form_layout = None
-        self.form_groupbox = None
-        self.global_hbox = None
-
-
-class PulseblockConstructor():
-    """Container Class which stores all necessary information to compile full Pulseblock,
-    while retaining the ability to change variables and easy save/load functionality.
-    """
-
-    def __init__(self, name, log, var_dict):
-
-        self.name = name
-        self.log = log
-
-        self.var_dict = var_dict
-        self.pulse_specifiers = []
-        self.pulseblock = None
-
-    def resolve_value(self, input_val):
-        """ Return float value of input_val.
-
-        Inpuinput_valt is either already float, in which case it will be returned.
-        Alternatively, the input value could be a variable, as defined in the keys
-        in the var_dict. In this case the value associeted with this variable will be
-        returned.
-        :input: (str of float) Float value or variabel string.
-        """
-
-        if type(input_val) is float:
-            return input_val
-        else:
-            try:
-                return simple_eval(input_val, names=self.var_dict)
-            except KeyError:
-                self.log.error(f"Could not resolve variable '{input_val}'.")
-
-    def compile_pulseblock(self):
-        """ Compiles the list of pulse_specifiers and var dists into valid
-        Pulseblock.
-        """
-
-        pulseblock = pb.PulseBlock(name=self.name)
-
-        for i, pb_spec in enumerate(self.pulse_specifiers):
-
-            dur = self.resolve_value(pb_spec.dur) * 1e-6
-            offset = self.resolve_value(pb_spec.offset)  * 1e-6
-
-            # Construct single pulse.
-            if pb_spec.pulsetype == "PTrue":
-
-                pulse = po.PTrue(
-                    ch=pb_spec.channel,
-                    dur=dur
-                )
-
-            elif pb_spec.pulsetype == "PSin":
-
-                 pulse = po.PSin(
-                     ch=pb_spec.pulsetype,
-                     dur=dur,
-                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
-                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
-                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
-                )
-
-            # Insert pulse to correct position in pulseblock.
-            if pb_spec.tref == "Absolute":
-                pb_dur = pulseblock.dur
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=-pb_dur+offset
-                )
-
-            elif pb_spec.tref == "After Last Pulse":
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=offset
-                )
-
-            elif pb_spec.tref == "With Last Pulse":
-
-                # Retrieve previous pulseblock:
-                if i != 0:
-                    previous_pb_spec = self.pulse_specifiers[i-1]
-                else:
-                    raise ValueError(
-                       "Cannot chose timing reference 'With Last Pulse' for first pulse in pulse-sequence."
-                    )
-
-                # Retrieve duration of previous pulseblock.
-                prev_dur = self.resolve_value(previous_pb_spec.dur) * 1e-6
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=-prev_dur + offset
-                )
-
-        self.pulseblock =  pulseblock
-
-    def get_dict(self):
-        """Get dictionary representing the pulseblock."""
-
-        # Compile
-        self.compile_pulseblock()
-        pb_dictionary = {}
-        pb_dictionary["name"] = self.name
-        pb_dictionary["timestamp"] = datetime.now().strftime("%d-%b-%Y_%H_%M_%S")
-        pb_dictionary["var_dict"] =  self.var_dict
-        pb_dictionary["pulse_specifiers_dicts"] = [ps.get_dict() for ps in self.pulse_specifiers]
-        self.log.info(str(pb_dictionary))
-        return pb_dictionary
-
-    def load_as_dict(self):
-        pass
-
-class PulseSpecifier():
-    """Container storing info pully specifiying pulse within pulse sequence."""
-
-
-    def __init__(self, channel, pulsetype, pulsetype_name):
-        self.channel = channel
-        self.pulsetype = pulsetype
-        self.pulsetype_name = pulsetype_name
-
-        # Generate random unique identifier.
-        self.uid = uuid.uuid1()
-
-    def set_timing_info(self, offset, dur, tref):
-        self.offset = offset
-        self.dur = dur
-        self.tref = tref
-
-    def set_pulse_params(self, pulsevar_dict):
-        self.pulsevar_dict = pulsevar_dict
-
-    def get_printable_name(self):
-        return f"{self.channel.capitalize()} ({self.pulsetype_name})"
-
-    # Reader friendly string return.
-    def __str__(self):
-        return self.get_printable_name()
-
-    def get_dict(self):
-        """Store all member variables as dictionary for easy saving."""
-        pulse_specifier_dict = {}
-        pulse_specifier_dict['pulsetype'] = self.pulsetype
-        pulse_specifier_dict['channel'] = self.channel
-
-
-        pulse_specifier_dict['dur'] = self.dur
-        pulse_specifier_dict['offset'] = self.offset
-        pulse_specifier_dict['tref'] = self.tref
-        pulse_specifier_dict['pulse_vars'] = self.pulsevar_dict
-        return pulse_specifier_dict
+from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
+from pylabnet.scripts.pulsemaster.pulsemaster_customwidget import DictionaryTableModel, AddPulseblockPopup
 
 
 class PulseMaster:
@@ -400,7 +83,8 @@ class PulseMaster:
             upload_hdawg=1,
             awg_num_val=1,
             preview_seq_area=1,
-            save_pulseblock=1
+            save_pulseblock=1,
+            load_pulseblock=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -494,7 +178,7 @@ class PulseMaster:
         self.widgets['new_pulseblock_button'].clicked.connect(self.add_pulseblock)
 
         # Connect pulseblock selector object
-        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.pulseblock_dropdown_changed)
 
         # Connect Add variable button.
         self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
@@ -518,7 +202,12 @@ class PulseMaster:
 
         #Save Pulseblock Button
         self.widgets["save_pulseblock"].clicked.connect(self.save_current_pb_constructor)
+        self.widgets["load_pulseblock"].clicked.connect(self.load_pulseblock_from_file)
 
+
+    def pulseblock_dropdown_changed(self):
+        self.update_pulse_list_toolbox()
+        self.plot_current_pulseblock()
 
     def get_pb_specifier_from_dict(self, pulsedict):
         """ Create PulseSpecifier object from dictioanry."""
@@ -579,17 +268,13 @@ class PulseMaster:
         # constructor generation
         self.widgets["pulseblock_combo"].currentIndexChanged.disconnect()
 
-
         # Update pulseblock dropdown.
         self.update_pulseblock_dropdown()
 
-        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
-
-         # Close popup
-        self.add_pb_popup.close()
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.pulseblock_dropdown_changed)
 
         # Select newest Pb.
-        self.widgets["pulseblock_combo"].setCurrentIndex(0)
+        self.widgets["pulseblock_combo"].setCurrentText(imported_contructor.name)
         self.plot_current_pulseblock()
 
         # TODO find out how to update table without re-instanciation.
@@ -607,8 +292,6 @@ class PulseMaster:
 
         # Update Toolbox.
         self.update_pulse_list_toolbox()
-
-
 
     def save_current_pb_constructor(self):
         """ Save current Pulseblock constructor as .json file"""
@@ -775,7 +458,6 @@ class PulseMaster:
 
         return dictionary
 
-
     def prep_plotdata(self, pb_obj):
 
         self.widgets["pulse_layout_widget"].clear()
@@ -913,6 +595,24 @@ class PulseMaster:
 
         self.prep_plotdata(self.get_current_pb_constructor().pulseblock)
 
+    def copy_pulseblock_constructor(self, pb_constructor, new_name):
+        """ Generate new instance of pulseblock constructor which is identical to reference instance,
+        with the excpetion of the name.
+
+        :pb_constructor: PulseblockCOntructor object to be copied.
+        :new_name: New name of copied instance.
+        """
+
+        # Retrieve pulseblock contructor dictionary from old constructor.
+        pb_constructor_dict = pb_constructor.get_dict()
+
+        # Generate copy of constructor using the dictionary.
+        copied_constructor = self.get_pb_constructor_from_dict(pb_constructor_dict)
+
+        # Replace name of copy.
+        copied_constructor.name = new_name
+
+        return copied_constructor
 
     def  return_pulseblock_new_pulseblock_constructor(self):
         """ Add new pulseblock by clicking the "Add Pb" button."""
@@ -930,8 +630,11 @@ class PulseMaster:
 
         # Otherwise copy and rename constructor.
         else:
-            pb_constructor = copy.deepcopy(self.get_pb_contructor_by_name(inherit_combobox_text))
-            pb_constructor.name = pb_name
+            ref_pb_constructor = self.get_pb_contructor_by_name(inherit_combobox_text)
+            pb_constructor = self.copy_pulseblock_constructor(
+                pb_constructor = ref_pb_constructor,
+                new_name = pb_name
+            )
 
         return pb_constructor
 
@@ -1193,12 +896,6 @@ class PulseMaster:
         # Add to global hbox
         self.add_pb_popup.global_hbox.addWidget(self.add_pb_popup.form_groupbox)
 
-         # Add load pb button
-        load_pb_button = QPushButton('Load Pulseblock')
-        load_pb_button.setObjectName("load_pb_button")
-        self.add_pb_popup.global_hbox.addWidget(load_pb_button)
-
-
         # Add button
         add_pb_button = QPushButton('Add Pulseblock')
         add_pb_button.setObjectName("add_pb_button")
@@ -1206,7 +903,6 @@ class PulseMaster:
 
         # Connect Button to add pulseblock function
         add_pb_button.clicked.connect(self.add_pulseblock_constructors_from_popup)
-        load_pb_button.clicked.connect(self.load_pulseblock_from_file)
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
@@ -1245,12 +941,16 @@ class PulseMaster:
         # constructor generation
         self.widgets["pulseblock_combo"].currentIndexChanged.disconnect()
 
-
         # Update pulseblock dropdown.
         self.update_pulseblock_dropdown()
 
-        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.update_pulse_list_toolbox)
+        # Select newest pulseblock
+        self.widgets["pulseblock_combo"].setCurrentText(pb_constructor.name)
 
+        self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.pulseblock_dropdown_changed)
+
+        # Update toolbox.
+        self.update_pulse_list_toolbox()
 
         # Close popup
         self.add_pb_popup.close()

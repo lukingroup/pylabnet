@@ -76,7 +76,6 @@ class DictionaryTableModel(QAbstractTableModel):
         for key, item in datadict.items():
             data_list.append([key, item])
 
-
         if data_list == []:
             data_list = [["", ""]]
 
@@ -182,3 +181,15 @@ class DictionaryTableModel(QAbstractTableModel):
             item = QTableWidgetItem(item)
             self.setItem(i,0,key)
             self.setItem(i,1,str(item))
+
+
+class AddPulseblockPopup(QWidget):
+    """ Widget class of Add pulseblock popup"""
+    def __init__(self):
+        QWidget.__init__(self)
+
+        self.pulseblock_name_field = None
+        self.pulseblock_inherit_field = None
+        self.form_layout = None
+        self.form_groupbox = None
+        self.global_hbox = None

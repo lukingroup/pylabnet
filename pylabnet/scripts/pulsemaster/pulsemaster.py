@@ -230,7 +230,7 @@ class PulseblockConstructor():
 
         pulseblock = pb.PulseBlock(name=self.name)
 
-        for pb_spec in self.pulse_specifiers:
+        for i, pb_spec in enumerate(self.pulse_specifiers):
 
             dur = self.resolve_value(pb_spec.dur) * 1e-6
             offset = self.resolve_value(pb_spec.offset)  * 1e-6
@@ -261,10 +261,27 @@ class PulseblockConstructor():
                     offset=-pb_dur+offset
                 )
 
-            elif pb_spec.tref == "Last Pulse":
+            elif pb_spec.tref == "After Last Pulse":
                 pulseblock.append_po_as_pb(
                     p_obj=pulse,
                     offset=offset
+                )
+
+            elif pb_spec.tref == "With Last Pulse":
+
+                # Retrieve previous pulseblock:
+                if i != 0:
+                    previous_pb_spec = self.pulse_specifiers[i-1]
+                else:
+                    raise ValueError(
+                       "Cannot chose timing reference 'With Last Pulse' for first pulse in pulse-sequence."
+                    )
+
+                # Retrieve duration of previous pulseblock.
+                prev_dur = self.resolve_value(previous_pb_spec.dur) * 1e-6
+                pulseblock.append_po_as_pb(
+                    p_obj=pulse,
+                    offset=-prev_dur + offset
                 )
 
         self.pulseblock =  pulseblock
@@ -1401,7 +1418,6 @@ class PulseMaster:
             valid = False
 
         return valid, pulsedict
-
 
     def showerror(self, error_message):
         """ Show error message."""

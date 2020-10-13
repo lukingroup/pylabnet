@@ -37,6 +37,7 @@ class Dataset:
         self.x = x
         self.children = {}
         self.mapping = {}
+        self.widgets = {}
 
         # Configure data visualization
         self.gui = gui
@@ -173,6 +174,32 @@ class Dataset:
             child.save(filename, directory, date_dir)
 
         save_metadata(self.log, filename, directory, date_dir)
+
+    def add_params_to_gui(self, **params):
+        """ Adds parameters of dataset to gui 
+        
+        :params: (dict) containing all parameter names and values
+        """
+
+        for name, value in params.items():
+
+            hbox = QtWidgets.QHBoxLayout()
+            hbox.addWidget(QtWidgets.QLabel(name))
+            if type(value) is int:
+                self.widgets[name] = QtWidgets.QSpinBox()
+                self.widgets[name].setMaximum(1000000000)
+                self.widgets[name].setMinimum(-1000000000)
+                self.widgets[name].setValue(value)
+            elif type(value) is float:
+                self.widgets[name] = QtWidgets.QDoubleSpinBox()
+                self.widgets[name].setMaximum(1000000000.)
+                self.widgets[name].setMinimum(-1000000000.)
+                self.widgets[name].setValue(value)
+            else:
+                self.widgets[name] = QtWidgets.QLabel(str(value))
+
+            hbox.addWidget(self.widgets[name])
+            self.gui.dataset_layout.addLayout(hbox)
 
 
 class AveragedHistogram(Dataset):
@@ -378,6 +405,7 @@ class TriangleScan1D(Dataset):
         self.kwargs = kwargs
         self.all_data = None
         self.update_hmap = False
+        self.stop = False
         if 'config' in kwargs:
             self.config = kwargs['config']
         else:
@@ -392,12 +420,12 @@ class TriangleScan1D(Dataset):
         else:
             self.popup = ParameterPopup(min=float, max=float, pts=int)
             self.popup.parameters.connect(self.fill_params)
-
+    
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
 
         self.min, self.max, self.pts = config['min'], config['max'], config['pts']
-
+        
         if 'backward' in self.kwargs:
             self.backward = True
             self.kwargs.update(dict(
@@ -443,6 +471,13 @@ class TriangleScan1D(Dataset):
                 color_index=1
             )
 
+            self.add_params_to_gui(
+                min=config['min'],
+                max=config['max'],
+                pts=config['pts'],
+                reps=0
+            )
+
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """
 
@@ -467,6 +502,14 @@ class TriangleScan1D(Dataset):
         if len(self.data) > self.pts:
             self.update_hmap = True
             self.reps += 1
+
+            try:
+                reps_to_do = self.widgets['reps'].value()
+                if reps_to_do > 0 and self.reps > reps_to_do:
+                    self.stop = True
+            except KeyError:
+                pass
+
             if self.all_data is None:
                 self.all_data = self.data[:-1]
             else:
@@ -489,7 +532,7 @@ class TriangleScan1D(Dataset):
 
     def hmap(self, dataset, prev_dataset):
 
-        if len(dataset.x) == len(dataset.data):
+        if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
             
             if 'Bwd' in prev_dataset.name:

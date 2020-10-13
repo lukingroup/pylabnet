@@ -84,6 +84,16 @@ class Dataset:
         if x is not None:
             self.x = x
 
+        self.set_children_data()
+
+    def set_children_data(self):
+        """ Sets all children data with mappings """
+
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+    
     def visualize(self, graph):
         """ Prepare data visualization on GUI
 
@@ -107,14 +117,11 @@ class Dataset:
 
         if self.data is not None:
             if self.x is not None:
-                self.curve.setData(self.x, self.data)
+                self.curve.setData(self.x[:len(self.data)], self.data)
             else:
                 self.curve.setData(self.data)
 
-        for name, child in self.children.items():
-            # If we need to process the child data, do it
-            if name in self.mapping:
-                self.mapping[name](self, prev_dataset=child)
+        for child in self.children.values():
             child.update()
 
     def interpret_status(self, status):
@@ -184,22 +191,7 @@ class AveragedHistogram(Dataset):
         else:
             self.data += self.recent_data
 
-        for name, child in self.children.items():
-            # If we need to process the child data, do it
-            if name in self.mapping:
-                self.mapping[name](self, prev_dataset=child)
-
-    def update(self):
-        """ Updates current data to plot"""
-
-        if self.data is not None:
-            if self.x is not None:
-                self.curve.setData(self.x, self.data)
-            else:
-                self.curve.setData(self.data)
-
-        for child in self.children.values():
-            child.update()
+        self.set_children_data()
 
 
 class PreselectedHistogram(AveragedHistogram):
@@ -330,6 +322,11 @@ class RollingLine(Dataset):
             else:
                 self.data = np.append(self.data, data)
 
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+
 
 class InfiniteRollingLine(RollingLine):
     """ Extension of RollingLine that stores the data
@@ -366,6 +363,100 @@ class InfiniteRollingLine(RollingLine):
             else:
                 super().update()
 
+
+class TriangleScan1D(Dataset):
+    """ 1D Triangle sweep of a parameter """
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.all_data = None
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.config.update(kwargs)
+
+        # Get scan parameters from config
+        if set(['min', 'max', 'pts']).issubset(self.kwargs.keys()):
+            self.fill_params(self.kwargs)
+
+        # Prompt user if not provided in config
+        else:
+            self.popup = ParameterPopup(min=float, max=float, pts=int)
+            self.popup.parameters.connect(self.fill_params)
+
+    def fill_params(self, config):
+        """ Fills the min max and pts parameters """
+
+        self.min, self.max, self.pts = config['min'], config['max'], config['pts']
+
+        if 'backward' in self.kwargs:
+            self.backward = True
+            self.kwargs.update(dict(
+                x=np.linspace(self.max, self.min, self.pts),
+                name='Bwd trace'
+            ))
+        else:
+            self.backward = False
+            self.kwargs.update(dict(
+                x=np.linspace(self.min, self.max, self.pts),
+                name='Fwd trace'
+            ))
+        super().__init__(*self.args, **self.kwargs)
+
+        # Add child for averaged plot
+        self.add_child(
+            name=f'{"Bwd" if self.backward else "Fwd"} avg',
+            mapping=self.avg,
+            data_type=Dataset,
+            new_plot=False,
+            x=self.x
+        )
+
+        # Add child for backward plot
+        if not self.backward:
+            self.add_child(
+                name='Bwd trace',
+                min=self.min,
+                max=self.max,
+                pts=self.pts,
+                backward=True
+            )
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+
+        prev_dataset.data = dataset.data
+
+    def set_data(self, value):
+
+        if self.data is None:
+            self.reps = 1
+            self.data = np.array([value])
+        else:
+            self.data = np.append(self.data, value)
+
+        if len(self.data) > self.pts:
+            self.reps += 1
+            if self.all_data is None:
+                self.all_data = self.data[:-1]
+            else:
+                self.all_data = np.vstack((self.all_data, self.data[:-1]))
+            self.data = np.array([self.data[-1]])
+
+        self.set_children_data()
+
+    def update(self):
+        """ Updates current data to plot"""
+
+        if self.data is not None and len(self.data) <= len(self.x):
+            
+            self.curve.setData(self.x[:len(self.data)], self.data)
+                
+        for child in self.children.values():
+            child.update()
 
 # Useful mappings
 

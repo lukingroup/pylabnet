@@ -443,12 +443,6 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
         </item>
         <item>
          <widget class="QTabWidget" name="tabWidget">
-          <property name="minimumSize">
-           <size>
-            <width>750</width>
-            <height>1000</height>
-           </size>
-          </property>
           <property name="focusPolicy">
            <enum>Qt::TabFocus</enum>
           </property>
@@ -471,12 +465,6 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            <layout class="QHBoxLayout" name="horizontalLayout_4">
             <item>
              <widget class="QTextBrowser" name="exp_preview">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>700</height>
-               </size>
-              </property>
               <property name="styleSheet">
                <string notr="true">font: 12pt &quot;Consolas&quot;;
 color: rgb(255, 255, 255);
@@ -502,12 +490,6 @@ background-color: rgb(0, 0, 0);</string>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
              <widget class="QTextBrowser" name="notes">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>700</height>
-               </size>
-              </property>
               <property name="font">
                <font>
                 <family>Consolas</family>

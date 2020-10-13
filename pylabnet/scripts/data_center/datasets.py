@@ -40,7 +40,7 @@ class Dataset:
 
         # Configure data visualization
         self.gui = gui
-        self.visualize(graph)
+        self.visualize(graph, **kwargs)
 
     def add_child(self, name, mapping=None, data_type=None,
         new_plot=True, **kwargs):
@@ -94,7 +94,7 @@ class Dataset:
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
     
-    def visualize(self, graph):
+    def visualize(self, graph, **kwargs):
         """ Prepare data visualization on GUI
 
         :param graph: (pg.PlotWidget) graph to use
@@ -105,9 +105,14 @@ class Dataset:
             self.graph.getPlotItem().setTitle(self.name)
         else:
             self.graph = graph
+
+        if 'color_index' in kwargs:
+            color_index = kwargs['color_index']
+        else:
+            color_index = self.gui.graph_layout.count()-1
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
-                self.gui.graph_layout.count()-1
+                color_index
             ])
         )
         self.update()
@@ -283,7 +288,7 @@ class PreselectedHistogram(AveragedHistogram):
 class InvisibleData(Dataset):
     """ Dataset which does not plot """
 
-    def visualize(self, graph):
+    def visualize(self, graph, **kwargs):
         self.curve = pg.PlotDataItem()
 
 
@@ -412,7 +417,8 @@ class TriangleScan1D(Dataset):
             mapping=self.avg,
             data_type=Dataset,
             new_plot=False,
-            x=self.x
+            x=self.x,
+            color_index=2
         )
 
         # Add child for backward plot

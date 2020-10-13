@@ -412,6 +412,16 @@ class TriangleScan1D(Dataset):
             self.config = {}
         self.config.update(kwargs)
 
+        # # First, try to get scan parameters from GUI
+        # if hasattr(self, 'widgets'):
+        #     if set(['min', 'max', 'pts', 'reps']).issubset(self.widgets.keys()):
+        #         self.widgets['reps'].setValue(0)
+        #         self.fill_params(dict(
+        #             min = self.widgets['min'].value(),
+        #             max = self.widgets['max'].value(),
+        #             pts = self.widgets['pts'].value()
+        #         ))
+
         # Get scan parameters from config
         if set(['min', 'max', 'pts']).issubset(self.kwargs.keys()):
             self.fill_params(self.kwargs)
@@ -471,6 +481,8 @@ class TriangleScan1D(Dataset):
                 color_index=1
             )
 
+            for i in reversed(range(self.gui.dataset_layout.count())): 
+                self.gui.dataset_layout.itemAt(i).setParent(None)
             self.add_params_to_gui(
                 min=config['min'],
                 max=config['max'],

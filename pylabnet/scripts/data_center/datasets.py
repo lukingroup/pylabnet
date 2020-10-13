@@ -428,7 +428,15 @@ class TriangleScan1D(Dataset):
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """
 
-        prev_dataset.data = dataset.data
+        # If we have already integrated a full dataset, avg
+        if dataset.reps > 1:
+            current_index = len(dataset.data) - 1
+            prev_dataset.data[current_index] = (
+                prev_dataset.data[current_index]*(dataset.reps-1)
+                + dataset.data[-1]
+            )/(dataset.reps)
+        else:
+            prev_dataset.data = dataset.data
 
     def set_data(self, value):
 

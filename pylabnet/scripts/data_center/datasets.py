@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save
+from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
 
 
 class Dataset:
@@ -115,9 +115,9 @@ class Dataset:
                 color_index
             ])
         )
-        self.update()
+        self.update(**kwargs)
 
-    def update(self):
+    def update(self, **kwargs):
         """ Updates current data to plot"""
 
         if self.data is not None:
@@ -127,7 +127,7 @@ class Dataset:
                 self.curve.setData(self.data)
 
         for child in self.children.values():
-            child.update()
+            child.update(**kwargs)
 
     def interpret_status(self, status):
         """ Interprets a status flag for exepriment monitoring
@@ -349,7 +349,7 @@ class InfiniteRollingLine(RollingLine):
         else:
             self.data = np.append(self.data, data)
 
-    def update(self):
+    def update(self, **kwargs):
         """ Updates current data to plot"""
 
         if self.data is not None:
@@ -364,9 +364,9 @@ class InfiniteRollingLine(RollingLine):
                     # If we need to process the child data, do it
                     if name in self.mapping:
                         self.mapping[name](self, prev_dataset=child)
-                    child.update()
+                    child.update(**kwargs)
             else:
-                super().update()
+                super().update(**kwargs)
 
 
 class TriangleScan1D(Dataset):
@@ -377,6 +377,7 @@ class TriangleScan1D(Dataset):
         self.args = args
         self.kwargs = kwargs
         self.all_data = None
+        self.update_hmap = False
         if 'config' in kwargs:
             self.config = kwargs['config']
         else:
@@ -421,6 +422,16 @@ class TriangleScan1D(Dataset):
             color_index=2
         )
 
+        # Add child for HMAP
+        self.add_child(
+            name=f'{"Bwd" if self.backward else "Fwd"} scans',
+            mapping=self.hmap,
+            data_type=HeatMap,
+            min=self.min,
+            max=self.max,
+            pts=self.pts
+        )
+
         # Add child for backward plot
         if not self.backward:
             self.add_child(
@@ -428,7 +439,8 @@ class TriangleScan1D(Dataset):
                 min=self.min,
                 max=self.max,
                 pts=self.pts,
-                backward=True
+                backward=True,
+                color_index=1
             )
 
     def avg(self, dataset, prev_dataset):
@@ -453,6 +465,7 @@ class TriangleScan1D(Dataset):
             self.data = np.append(self.data, value)
 
         if len(self.data) > self.pts:
+            self.update_hmap = True
             self.reps += 1
             if self.all_data is None:
                 self.all_data = self.data[:-1]
@@ -462,15 +475,91 @@ class TriangleScan1D(Dataset):
 
         self.set_children_data()
 
-    def update(self):
+    def update(self, **kwargs):
         """ Updates current data to plot"""
 
-        if self.data is not None and len(self.data) <= len(self.x):
-            
+        if self.data is not None and len(self.data) <= len(self.x):  
             self.curve.setData(self.x[:len(self.data)], self.data)
-                
+        
         for child in self.children.values():
-            child.update()
+            child.update(update_hmap=copy.deepcopy(self.update_hmap))
+
+        if self.update_hmap:
+            self.update_hmap = False
+
+    def hmap(self, dataset, prev_dataset):
+
+        if len(dataset.x) == len(dataset.data):
+            prev_dataset.data = dataset.all_data
+            
+            if 'Bwd' in prev_dataset.name:
+                try:
+                    prev_dataset.data = np.fliplr(prev_dataset.data)
+                except ValueError:
+                    prev_dataset.data = np.flip(prev_dataset.data)
+
+
+class HeatMap(Dataset):
+
+    def visualize(self, graph, **kwargs):
+        
+        self.graph = pg.ImageView(view=pg.PlotItem())
+        self.gui.graph_layout.addWidget(self.graph)
+        self.graph.show()
+        self.graph.view.setAspectLocked(False)
+        self.graph.view.invertY(False)
+        self.graph.setPredefinedGradient('inferno')
+        if set(['min', 'max', 'pts']).issubset(kwargs.keys()):
+            self.min, self.max, self.pts = kwargs['min'], kwargs['max'], kwargs['pts']
+            self.graph.view.setLimits(xMin=kwargs['min'], xMax=kwargs['max'])
+
+    def update(self, **kwargs):
+        
+        if 'update_hmap' in kwargs and kwargs['update_hmap']:
+            try:
+                if hasattr(self, 'min'):
+                    self.graph.setImage(
+                        img=np.transpose(self.data),
+                        autoRange=False,
+                        scale=((self.max-self.min)/self.pts,1),
+                        pos=(self.min, 0)
+                    )
+                else:
+                    self.graph.setImage(
+                        img=np.transpose(self.data),
+                        autoRange=False
+                    )
+            except:
+                pass
+
+    def save(self, filename=None, directory=None, date_dir=True):
+
+        generic_save(
+            data=self.data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
+        if self.x is not None:
+            generic_save(
+                data=self.x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getView(),
+                f'{filename}_{self.name}',
+                directory,
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
 
 # Useful mappings
 

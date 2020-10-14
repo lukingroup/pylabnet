@@ -89,10 +89,11 @@ class StaticLineGUIGeneric():
 
                 # Analog: "Apply" does something based on the text field value
                 elif staticline_type == 'analog':
-
-                    widget['apply'].clicked.connect(lambda:
-                        staticline_driver.set_value(widget['AIN'].text()))
-                    
+                    # Must not integrate this defn into the button function call or the 
+                    # value of widget might be overwritten when button is pressed.
+                    ain = widget['AIN'] 
+                    widget['apply'].clicked.connect(lambda: staticline_driver.set_value(ain.text()))
+    
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
                                     'Should be analog or digital.')

@@ -95,6 +95,7 @@ class Window(QtWidgets.QMainWindow):
         self.labels = {}
         self.event_buttons = {}
         self.containers = {}
+        self.windows = {}
         self.auto_close = auto_close
 
         # Configuration queue lists

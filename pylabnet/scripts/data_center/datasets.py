@@ -208,20 +208,18 @@ class Dataset:
             if 'window' in kwargs:
 
                 # Check whether this window exists
-                if not hasattr(self.gui, kwargs['window']):
+                if not kwargs['window'] in self.gui.windows:
       
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
                         window_title = 'Graph Holder'
-                    setattr(
-                        self.gui, 
-                        kwargs['window'],
-                        GraphPopup(window_title=window_title, size=(700,300))
+                    self.gui.windows[kwargs['window']] = GraphPopup(
+                        window_title=window_title, size=(700,300)
                     )
 
                 self.graph = pg.PlotWidget()
-                getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                self.gui.windows[kwargs['window']].graph_layout.addWidget(
                     self.graph
                 )
                 

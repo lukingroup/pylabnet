@@ -1,7 +1,6 @@
 import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
-#from PyQt5.QtCore import QSize
 from pylabnet.utils.helper_methods import load_config   
 
 class GUIWindowFromConfig(QMainWindow):

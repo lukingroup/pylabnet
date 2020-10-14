@@ -3,7 +3,7 @@ import time
 from PyQt5 import QtWidgets
 
 import pylabnet.hardware.staticline.staticline as staticline
-from pylabnet.gui.pyqt.gui_windowbuilder_test import GUIWindowFromConfig
+from pylabnet.gui.pyqt.gui_windowbuilder import GUIWindowFromConfig
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import unpack_launcher, load_config

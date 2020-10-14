@@ -4,7 +4,7 @@ import copy
 import time
 from PyQt5 import QtWidgets, QtCore
 
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
 
@@ -102,11 +102,7 @@ class Dataset:
         :param graph: (pg.PlotWidget) graph to use
         """
 
-        if graph is None:
-            self.graph = self.gui.add_graph()
-            self.graph.getPlotItem().setTitle(self.name)
-        else:
-            self.graph = graph
+        self.handle_new_window(graph, **kwargs)
 
         if 'color_index' in kwargs:
             color_index = kwargs['color_index']
@@ -202,6 +198,41 @@ class Dataset:
 
             hbox.addWidget(self.widgets[name])
             self.gui.dataset_layout.addLayout(hbox)
+
+    def handle_new_window(self, graph, **kwargs):
+        """ Handles visualizing and possibility of new popup windows """
+
+        if graph is None:
+
+            # If we want to use a separate window
+            if 'window' in kwargs:
+
+                # Check whether this window exists
+                if not hasattr(self.gui, kwargs['window']):
+      
+                    if 'window_title' in kwargs:
+                        window_title = kwargs['window_title']
+                    else:
+                        window_title = 'Graph Holder'
+                    setattr(
+                        self.gui, 
+                        kwargs['window'],
+                        GraphPopup(window_title=window_title, size=(700,300))
+                    )
+
+                self.graph = pg.PlotWidget()
+                getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                    self.graph
+                )
+                
+            # Otherwise, add a graph to the main layout
+            else:
+                self.graph = self.gui.add_graph()
+            self.graph.getPlotItem().setTitle(self.name)
+
+        # Reuse a PlotWidget if provided
+        else:
+            self.graph = graph
 
 
 class AveragedHistogram(Dataset):
@@ -412,7 +443,7 @@ class TriangleScan1D(Dataset):
             self.config = kwargs['config']
         else:
             self.config = {}
-        self.config.update(kwargs)
+        self.kwargs.update(self.config)
 
         # # First, try to get scan parameters from GUI
         # if hasattr(self, 'widgets'):
@@ -560,8 +591,8 @@ class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
         
-        self.graph = pg.ImageView(view=pg.PlotItem())
-        self.gui.graph_layout.addWidget(self.graph)
+        self.handle_new_window(graph, **kwargs)
+        
         self.graph.show()
         self.graph.view.setAspectLocked(False)
         self.graph.view.invertY(False)
@@ -618,6 +649,34 @@ class HeatMap(Dataset):
 
         save_metadata(self.log, filename, directory, date_dir)
 
+    def handle_new_window(self, graph, **kwargs):
+
+        # If we want to use a separate window
+        if 'window' in kwargs:
+
+            # Check whether this window exists
+            if not hasattr(self.gui, kwargs['window']):
+    
+                if 'window_title' in kwargs:
+                    window_title = kwargs['window_title']
+                else:
+                    window_title = 'Graph Holder'
+                setattr(
+                    self.gui, 
+                    kwargs['window'],
+                    GraphPopup(window_title=window_title)
+                )
+
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                self.graph
+            )
+            
+        # Otherwise, add a graph to the main layout
+        else:
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            self.gui.graph_layout.addWidget(self.graph)
+
 
 class LockedCavityScan1D(TriangleScan1D):
 
@@ -633,12 +692,17 @@ class LockedCavityScan1D(TriangleScan1D):
         if not self.backward:
             self.add_child(
                 name='Cavity lock',
-                data_type=Dataset
+                data_type=Dataset,
+                window='lock_monitor',
+                window_title='Cavity lock monitor',
+                color_index=3
             )
             self.add_child(
                 name='Cavity history',
                 data_type=InfiniteRollingLine,
-                data_length=10000
+                data_length=10000,
+                window='lock_monitor',
+                color_index=4
             )
             self.add_params_to_gui(
                 voltage=0.0

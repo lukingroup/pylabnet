@@ -27,6 +27,10 @@ class StaticLineGUIGeneric():
         self.log = LogHandler(logger=logger_client)
         self.config_path = config
         self.config = load_config(config, logger=self.log)
+        self.initialize_drivers(staticline_clients, logger_client)
+
+
+    def initialize_drivers(self, staticline_clients, logger_client):
 
         # Dictionary storing {device name : instance of staticline Driver}
         self.staticlines = {}
@@ -44,15 +48,20 @@ class StaticLineGUIGeneric():
                          break
                 
                 device_name = device_params['name']
+                self.staticlines[device_name] = dict()
 
-                # Store the staticline driver under the specified device name
-                self.staticlines[device_name] = staticline.Driver(
-                    name=device_name,
-                    logger=logger_client,
-                    hardware_client=hardware_client,
-                    hardware_type=hardware_type,
-                    config=device_params
-                )
+                for staticline_idx in range(len(device_params["staticline_names"])):
+
+                    staticline_name = device_params["staticline_names"][staticline_idx]
+
+                    # Store the staticline driver under the specified device name
+                    self.staticlines[device_name][staticline_name] = staticline.Driver(
+                        name=device_name + "_" + staticline_name,
+                        logger=logger_client,
+                        hardware_client=hardware_client,
+                        hardware_type=hardware_type,
+                        config=device_params["staticline_configs"][staticline_idx]
+                    )
 
     def initialize_buttons(self):
         """Binds the function of each button of each device to the functions
@@ -60,26 +69,32 @@ class StaticLineGUIGeneric():
         """
 
         # Iterate through all devices in the config file
-        for device_params in self.config.values():
+        for device in self.config.values():
 
-            staticline_type = device_params['type']
-            name = device_params['name']
-            staticline_driver = self.staticlines[name]
-            widget = self.widgets[name]
+            device_name = device['name']
+            staticline_driver = self.staticlines[device_name]
 
-            # Digital: Have an up and down button
-            if staticline_type == 'digital':
-                widget['on'].clicked.connect(staticline_driver.up)
-                widget['off'].clicked.connect(staticline_driver.down)
+            for staticline_idx in range(len(device["staticline_names"])):
 
-            # Analog: "Apply" does something based on the text field value
-            elif staticline_type == 'analog':
-                widget['apply'].clicked.connect(lambda:
-                    staticline_driver.set_value(widget['AIN'].text()))
+                staticline_name = device["staticline_names"][staticline_idx]
+                staticline_configs = device["staticline_configs"][staticline_idx]
+                staticline_type = staticline_configs["type"]
                 
-            else:
-                self.log.error(f'Invalid staticline type for device {name}. '
-                                'Should be analog or digital.')
+                widget = self.widgets[device_name][staticline_name]
+
+                # Digital: Have an up and down button
+                if staticline_type == 'digital':
+                    widget['on'].clicked.connect(staticline_driver.up)
+                    widget['off'].clicked.connect(staticline_driver.down)
+
+                # Analog: "Apply" does something based on the text field value
+                elif staticline_type == 'analog':
+                    widget['apply'].clicked.connect(lambda:
+                        staticline_driver.set_value(widget['AIN'].text()))
+                    
+                else:
+                    self.log.error(f'Invalid staticline type for device {device_name}. '
+                                    'Should be analog or digital.')
 
     def run(self):
         """Starts up the staticline GUI and initializes the buttons. """
@@ -90,7 +105,7 @@ class StaticLineGUIGeneric():
         # Create a GUI window with layout determined by the config file
         self.gui = GUIWindowFromConfig(config=self.config_path)
         self.gui.show()
-        self.widgets = self.gui.all_widgets
+        self.widgets = self.gui.widgets
 
         # Binds the function of the buttons to the staticline Driver functions
         self.initialize_buttons()

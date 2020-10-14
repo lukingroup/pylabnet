@@ -12,12 +12,9 @@ class GUIWindowFromConfig(QMainWindow):
         QMainWindow.__init__(self)
         
         self.config = load_config(config)
-        self.N_staticlines = len(self.config) #N_staticlines
-
-        self.labels = []
-
-        self.all_widgets = dict()
-
+        self.N_staticlines = len(self.config)
+        # self.labels = [] # TODO: Need to store labels?
+        self.widgets = dict()
         self.setStyleSheet("background-color: black;")
 
         #self.setMinimumSize(QSize(640, 480))    
@@ -32,38 +29,70 @@ class GUIWindowFromConfig(QMainWindow):
         self.unpack_config_file()
 
     def unpack_config_file(self):
-        for ii in range(self.N_staticlines):
+        row_num  = 0
 
-            device_name = self.config["{}".format(ii+1)]["name"]
+        for device in self.config.values():
 
-            self.labels.append(QtWidgets.QLabel(device_name, self))
-            self.labels[ii].setStyleSheet("color: white;")
-            self.gridLayout.addWidget(self.labels[ii], ii, 0)
+            device_name = device["name"]
 
-            self.all_widgets[device_name] = dict()
+            # TODO: Need to store labels?
+            # self.labels.append(QtWidgets.QLabel(device_name, self))
+            # self.labels[device_num].setStyleSheet("color: white;")
+            # self.gridLayout.addWidget(self.labels[device_num], row_num, 0)
 
-            if self.config["{}".format(ii+1)]["type"] == "digital":
-                self.make_digital_row(position=ii, device_name=device_name)
-            if self.config["{}".format(ii+1)]["type"] == "analog":
-                self.make_analog_row(position=ii, device_name=device_name)
+            # Label for the device name
+            label = QtWidgets.QLabel(device_name, self)
+            label.setStyleSheet("color: white;")
+            self.gridLayout.addWidget(label, row_num, 0)
 
-    def make_digital_row(self, position=0, device_name=''):
-        self.all_widgets[device_name]["on"] = QtWidgets.QPushButton('I', self)
-        self.all_widgets[device_name]["on"].setStyleSheet("color: white;  background-color: #17F02E")
-        self.all_widgets[device_name]["on"].setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        self.gridLayout.addWidget(self.all_widgets[device_name]["on"], position, 2)
-        self.all_widgets[device_name]["off"] = QtWidgets.QPushButton('O', self)
-        self.all_widgets[device_name]["off"].setStyleSheet("color: white;  background-color: #A4A4A4")
-        self.all_widgets[device_name]["off"].setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
-        self.gridLayout.addWidget(self.all_widgets[device_name]["off"], position, 3)
+            self.widgets[device_name] = dict()
 
-    def make_analog_row(self, position=0, device_name=''):
-        self.all_widgets[device_name]["AIN"] = QtWidgets.QLineEdit('0.000', self)
-        self.all_widgets[device_name]["AIN"].setStyleSheet("color:  white;  background-color: black")
-        self.gridLayout.addWidget(self.all_widgets[device_name]["AIN"], position, 1)
-        self.all_widgets[device_name]["apply"] = QtWidgets.QPushButton('Apply', self)
-        self.all_widgets[device_name]["apply"].setStyleSheet("color: white;  background-color: #2A6BFF")
-        self.gridLayout.addWidget(self.all_widgets[device_name]["apply"], position, 2)
+            # TODO: Check that staticline_types and staticline_names have same lengths
+            # iterate over all staticlines for the current device
+            for staticline_idx, staticline_name in enumerate(device["staticline_names"]):
+
+                staticline_type = device["staticline_configs"][staticline_idx]["type"]
+                
+                # Label for the staticline name
+                label = QtWidgets.QLabel(staticline_name, self)
+                label.setStyleSheet("color: white;")
+                self.gridLayout.addWidget(label, row_num, 1)
+
+                self.widgets[device_name][staticline_name] = dict()
+
+                # Create the appropriate buttons for that device
+                if staticline_type == "digital":
+                    self.make_digital_row(position=row_num, device_name=device_name, staticline_name=staticline_name)
+                elif staticline_type == "analog":
+                    self.make_analog_row(position=row_num, device_name=device_name, staticline_name=staticline_name)
+                else:
+                    continue # TODO: Print error message?
+            
+                row_num += 1
+
+    def make_digital_row(self, position=0, device_name='', staticline_name=''):
+        on_button = QtWidgets.QPushButton('I', self)
+        on_button.setStyleSheet("color: white;  background-color: #17F02E")
+        on_button.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
+        self.widgets[device_name][staticline_name]["on"] = on_button
+        self.gridLayout.addWidget(on_button, position, 3)
+
+        off_button = QtWidgets.QPushButton('O', self)
+        off_button.setStyleSheet("color: white;  background-color: #A4A4A4")
+        off_button.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
+        self.widgets[device_name][staticline_name]["off"] = off_button
+        self.gridLayout.addWidget(off_button, position, 4)
+
+    def make_analog_row(self, position=0, device_name='', staticline_name=''):
+        ain_field = QtWidgets.QLineEdit('0.000', self)
+        ain_field.setStyleSheet("color:  white;  background-color: black")
+        self.widgets[device_name][staticline_name]["AIN"] = ain_field
+        self.gridLayout.addWidget(ain_field, position, 2)
+
+        apply_button = QtWidgets.QPushButton('Apply', self)
+        apply_button.setStyleSheet("color: white;  background-color: #2A6BFF")
+        self.widgets[device_name][staticline_name]["apply"] = apply_button
+        self.gridLayout.addWidget(apply_button, position, 3)
 
 
 if __name__ == "__main__":

@@ -170,6 +170,8 @@ class AbstractDevice(StaticLineHardwareHandler):
         self.down = self.hardware_client.down_function
         self.set_value = self.hardware_client.set_value_function
 
+################################################################################
+
 registered_staticline_modules = {
     'zi_hdawg':  HDAWG,
     'nidaqmx_card': NiDaqMx,

@@ -95,7 +95,7 @@ class Dataset:
             # If we need to process the child data, do it
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
-    
+
     def visualize(self, graph, **kwargs):
         """ Prepare data visualization on GUI
 
@@ -173,8 +173,8 @@ class Dataset:
         save_metadata(self.log, filename, directory, date_dir)
 
     def add_params_to_gui(self, **params):
-        """ Adds parameters of dataset to gui 
-        
+        """ Adds parameters of dataset to gui
+
         :params: (dict) containing all parameter names and values
         """
 
@@ -209,13 +209,13 @@ class Dataset:
 
                 # Check whether this window exists
                 if not hasattr(self.gui, kwargs['window']):
-      
+
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
                         window_title = 'Graph Holder'
                     setattr(
-                        self.gui, 
+                        self.gui,
                         kwargs['window'],
                         GraphPopup(window_title=window_title, size=(700,300))
                     )
@@ -224,7 +224,7 @@ class Dataset:
                 getattr(self.gui, kwargs['window']).graph_layout.addWidget(
                     self.graph
                 )
-                
+
             # Otherwise, add a graph to the main layout
             else:
                 self.graph = self.gui.add_graph()
@@ -463,12 +463,12 @@ class TriangleScan1D(Dataset):
         else:
             self.popup = ParameterPopup(min=float, max=float, pts=int)
             self.popup.parameters.connect(self.fill_params)
-    
+
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
 
         self.min, self.max, self.pts = config['min'], config['max'], config['pts']
-        
+
         if 'backward' in self.kwargs:
             self.backward = True
             self.kwargs.update(dict(
@@ -514,7 +514,7 @@ class TriangleScan1D(Dataset):
                 color_index=1
             )
 
-            for i in reversed(range(self.gui.dataset_layout.count())): 
+            for i in reversed(range(self.gui.dataset_layout.count())):
                 self.gui.dataset_layout.itemAt(i).setParent(None)
             self.add_params_to_gui(
                 min=config['min'],
@@ -566,9 +566,9 @@ class TriangleScan1D(Dataset):
     def update(self, **kwargs):
         """ Updates current data to plot"""
 
-        if self.data is not None and len(self.data) <= len(self.x):  
+        if self.data is not None and len(self.data) <= len(self.x):
             self.curve.setData(self.x[:len(self.data)], self.data)
-        
+
         for child in self.children.values():
             child.update(update_hmap=copy.deepcopy(self.update_hmap))
 
@@ -579,7 +579,7 @@ class TriangleScan1D(Dataset):
 
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
-            
+
             if 'Bwd' in prev_dataset.name:
                 try:
                     prev_dataset.data = np.fliplr(prev_dataset.data)
@@ -590,9 +590,9 @@ class TriangleScan1D(Dataset):
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
-        
+
         self.handle_new_window(graph, **kwargs)
-        
+
         self.graph.show()
         self.graph.view.setAspectLocked(False)
         self.graph.view.invertY(False)
@@ -602,7 +602,7 @@ class HeatMap(Dataset):
             self.graph.view.setLimits(xMin=kwargs['min'], xMax=kwargs['max'])
 
     def update(self, **kwargs):
-        
+
         if 'update_hmap' in kwargs and kwargs['update_hmap']:
             try:
                 if hasattr(self, 'min'):
@@ -656,13 +656,13 @@ class HeatMap(Dataset):
 
             # Check whether this window exists
             if not hasattr(self.gui, kwargs['window']):
-    
+
                 if 'window_title' in kwargs:
                     window_title = kwargs['window_title']
                 else:
                     window_title = 'Graph Holder'
                 setattr(
-                    self.gui, 
+                    self.gui,
                     kwargs['window'],
                     GraphPopup(window_title=window_title)
                 )
@@ -671,7 +671,7 @@ class HeatMap(Dataset):
             getattr(self.gui, kwargs['window']).graph_layout.addWidget(
                 self.graph
             )
-            
+
         # Otherwise, add a graph to the main layout
         else:
             self.graph = pg.ImageView(view=pg.PlotItem())
@@ -684,8 +684,11 @@ class LockedCavityScan1D(TriangleScan1D):
 
         self.t0 = time.time()
         self.v = None
+        self.sasha_aom = None
+        self.toptica_aom = None
+
         super().__init__(*args, **kwargs)
-    
+
     def fill_params(self, config):
 
         super().fill_params(config)

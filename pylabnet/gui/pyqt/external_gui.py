@@ -689,9 +689,9 @@ class ParameterPopup(QtWidgets.QWidget):
 
         # Create layout
         self.base_layout = QtWidgets.QVBoxLayout()
-        self.setStyleSheet('background-color: rgb(0, 0, 0);'
-                           'font: 25 12pt "Calibri Light";'
-                           'color: rgb(255, 255, 255);')
+        # self.setStyleSheet('background-color: rgb(0, 0, 0);'
+        #                    'font: 25 12pt "Calibri Light";'
+        #                    'color: rgb(255, 255, 255);')
         self.setWindowTitle('Parameter Configurator')
         self.setMinimumWidth(300)
         self.setLayout(self.base_layout)
@@ -707,6 +707,7 @@ class ParameterPopup(QtWidgets.QWidget):
             elif param_type is float:
                 self.params[param_name] = QtWidgets.QDoubleSpinBox()
                 self.params[param_name].setMaximum(100000000)
+                self.params[param_name].setDecimals(6)
             else:
                 self.params[param_name] = QtWidgets.QLabel()
             layout.addWidget(self.params[param_name])
@@ -730,6 +731,28 @@ class ParameterPopup(QtWidgets.QWidget):
                 ret[param_name] = widget.text()
         self.parameters.emit(ret)
         self.close()
+
+
+class GraphPopup(QtWidgets.QWidget):
+    """ Widget class for holding new graphs """
+
+    def __init__(self, **kwargs):
+
+        QtWidgets.QWidget.__init__(self)
+
+        self.graph_layout = QtWidgets.QVBoxLayout()
+
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+        
+        self.setWindowTitle(window_title)
+        self.setLayout(self.graph_layout)
+        self.show()
 
 
 class Plot:

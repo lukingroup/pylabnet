@@ -1,11 +1,12 @@
 import pyqtgraph as pg
 import numpy as np
 import copy
+import time
 from PyQt5 import QtWidgets, QtCore
 
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save
+from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
 
 
 class Dataset:
@@ -37,10 +38,11 @@ class Dataset:
         self.x = x
         self.children = {}
         self.mapping = {}
+        self.widgets = {}
 
         # Configure data visualization
         self.gui = gui
-        self.visualize(graph)
+        self.visualize(graph, **kwargs)
 
     def add_child(self, name, mapping=None, data_type=None,
         new_plot=True, **kwargs):
@@ -84,38 +86,46 @@ class Dataset:
         if x is not None:
             self.x = x
 
-    def visualize(self, graph):
-        """ Prepare data visualization on GUI
+        self.set_children_data()
 
-        :param graph: (pg.PlotWidget) graph to use
-        """
-
-        if graph is None:
-            self.graph = self.gui.add_graph()
-            self.graph.getPlotItem().setTitle(self.name)
-        else:
-            self.graph = graph
-        self.curve = self.graph.plot(
-            pen=pg.mkPen(self.gui.COLOR_LIST[
-                self.gui.graph_layout.count()-1
-            ])
-        )
-        self.update()
-
-    def update(self):
-        """ Updates current data to plot"""
-
-        if self.data is not None:
-            if self.x is not None:
-                self.curve.setData(self.x, self.data)
-            else:
-                self.curve.setData(self.data)
+    def set_children_data(self):
+        """ Sets all children data with mappings """
 
         for name, child in self.children.items():
             # If we need to process the child data, do it
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
-            child.update()
+    
+    def visualize(self, graph, **kwargs):
+        """ Prepare data visualization on GUI
+
+        :param graph: (pg.PlotWidget) graph to use
+        """
+
+        self.handle_new_window(graph, **kwargs)
+
+        if 'color_index' in kwargs:
+            color_index = kwargs['color_index']
+        else:
+            color_index = self.gui.graph_layout.count()-1
+        self.curve = self.graph.plot(
+            pen=pg.mkPen(self.gui.COLOR_LIST[
+                color_index
+            ])
+        )
+        self.update(**kwargs)
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None:
+            if self.x is not None:
+                self.curve.setData(self.x[:len(self.data)], self.data)
+            else:
+                self.curve.setData(self.data)
+
+        for child in self.children.values():
+            child.update(**kwargs)
 
     def interpret_status(self, status):
         """ Interprets a status flag for exepriment monitoring
@@ -162,6 +172,68 @@ class Dataset:
 
         save_metadata(self.log, filename, directory, date_dir)
 
+    def add_params_to_gui(self, **params):
+        """ Adds parameters of dataset to gui 
+        
+        :params: (dict) containing all parameter names and values
+        """
+
+        for name, value in params.items():
+
+            hbox = QtWidgets.QHBoxLayout()
+            hbox.addWidget(QtWidgets.QLabel(name))
+            if type(value) is int:
+                self.widgets[name] = QtWidgets.QSpinBox()
+                self.widgets[name].setMaximum(1000000000)
+                self.widgets[name].setMinimum(-1000000000)
+                self.widgets[name].setValue(value)
+            elif type(value) is float:
+                self.widgets[name] = QtWidgets.QDoubleSpinBox()
+                self.widgets[name].setMaximum(1000000000.)
+                self.widgets[name].setMinimum(-1000000000.)
+                self.widgets[name].setDecimals(6)
+                self.widgets[name].setValue(value)
+            else:
+                self.widgets[name] = QtWidgets.QLabel(str(value))
+
+            hbox.addWidget(self.widgets[name])
+            self.gui.dataset_layout.addLayout(hbox)
+
+    def handle_new_window(self, graph, **kwargs):
+        """ Handles visualizing and possibility of new popup windows """
+
+        if graph is None:
+
+            # If we want to use a separate window
+            if 'window' in kwargs:
+
+                # Check whether this window exists
+                if not hasattr(self.gui, kwargs['window']):
+      
+                    if 'window_title' in kwargs:
+                        window_title = kwargs['window_title']
+                    else:
+                        window_title = 'Graph Holder'
+                    setattr(
+                        self.gui, 
+                        kwargs['window'],
+                        GraphPopup(window_title=window_title, size=(700,300))
+                    )
+
+                self.graph = pg.PlotWidget()
+                getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                    self.graph
+                )
+                
+            # Otherwise, add a graph to the main layout
+            else:
+                self.graph = self.gui.add_graph()
+            self.graph.getPlotItem().setTitle(self.name)
+
+        # Reuse a PlotWidget if provided
+        else:
+            self.graph = graph
+
 
 class AveragedHistogram(Dataset):
     """ Subclass for plotting averaged histogram """
@@ -184,22 +256,7 @@ class AveragedHistogram(Dataset):
         else:
             self.data += self.recent_data
 
-        for name, child in self.children.items():
-            # If we need to process the child data, do it
-            if name in self.mapping:
-                self.mapping[name](self, prev_dataset=child)
-
-    def update(self):
-        """ Updates current data to plot"""
-
-        if self.data is not None:
-            if self.x is not None:
-                self.curve.setData(self.x, self.data)
-            else:
-                self.curve.setData(self.data)
-
-        for child in self.children.values():
-            child.update()
+        self.set_children_data()
 
 
 class PreselectedHistogram(AveragedHistogram):
@@ -291,7 +348,7 @@ class PreselectedHistogram(AveragedHistogram):
 class InvisibleData(Dataset):
     """ Dataset which does not plot """
 
-    def visualize(self, graph):
+    def visualize(self, graph, **kwargs):
         self.curve = pg.PlotDataItem()
 
 
@@ -330,6 +387,11 @@ class RollingLine(Dataset):
             else:
                 self.data = np.append(self.data, data)
 
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+
 
 class InfiniteRollingLine(RollingLine):
     """ Extension of RollingLine that stores the data
@@ -347,7 +409,7 @@ class InfiniteRollingLine(RollingLine):
         else:
             self.data = np.append(self.data, data)
 
-    def update(self):
+    def update(self, **kwargs):
         """ Updates current data to plot"""
 
         if self.data is not None:
@@ -362,10 +424,296 @@ class InfiniteRollingLine(RollingLine):
                     # If we need to process the child data, do it
                     if name in self.mapping:
                         self.mapping[name](self, prev_dataset=child)
-                    child.update()
+                    child.update(**kwargs)
             else:
-                super().update()
+                super().update(**kwargs)
 
+
+class TriangleScan1D(Dataset):
+    """ 1D Triangle sweep of a parameter """
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.all_data = None
+        self.update_hmap = False
+        self.stop = False
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        # # First, try to get scan parameters from GUI
+        # if hasattr(self, 'widgets'):
+        #     if set(['min', 'max', 'pts', 'reps']).issubset(self.widgets.keys()):
+        #         self.widgets['reps'].setValue(0)
+        #         self.fill_params(dict(
+        #             min = self.widgets['min'].value(),
+        #             max = self.widgets['max'].value(),
+        #             pts = self.widgets['pts'].value()
+        #         ))
+
+        # Get scan parameters from config
+        if set(['min', 'max', 'pts']).issubset(self.kwargs.keys()):
+            self.fill_params(self.kwargs)
+
+        # Prompt user if not provided in config
+        else:
+            self.popup = ParameterPopup(min=float, max=float, pts=int)
+            self.popup.parameters.connect(self.fill_params)
+    
+    def fill_params(self, config):
+        """ Fills the min max and pts parameters """
+
+        self.min, self.max, self.pts = config['min'], config['max'], config['pts']
+        
+        if 'backward' in self.kwargs:
+            self.backward = True
+            self.kwargs.update(dict(
+                x=np.linspace(self.max, self.min, self.pts),
+                name='Bwd trace'
+            ))
+        else:
+            self.backward = False
+            self.kwargs.update(dict(
+                x=np.linspace(self.min, self.max, self.pts),
+                name='Fwd trace'
+            ))
+        super().__init__(*self.args, **self.kwargs)
+
+        # Add child for averaged plot
+        self.add_child(
+            name=f'{"Bwd" if self.backward else "Fwd"} avg',
+            mapping=self.avg,
+            data_type=Dataset,
+            new_plot=False,
+            x=self.x,
+            color_index=2
+        )
+
+        # Add child for HMAP
+        self.add_child(
+            name=f'{"Bwd" if self.backward else "Fwd"} scans',
+            mapping=self.hmap,
+            data_type=HeatMap,
+            min=self.min,
+            max=self.max,
+            pts=self.pts
+        )
+
+        # Add child for backward plot
+        if not self.backward:
+            self.add_child(
+                name='Bwd trace',
+                min=self.min,
+                max=self.max,
+                pts=self.pts,
+                backward=True,
+                color_index=1
+            )
+
+            for i in reversed(range(self.gui.dataset_layout.count())): 
+                self.gui.dataset_layout.itemAt(i).setParent(None)
+            self.add_params_to_gui(
+                min=config['min'],
+                max=config['max'],
+                pts=config['pts'],
+                reps=0
+            )
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+
+        # If we have already integrated a full dataset, avg
+        if dataset.reps > 1:
+            current_index = len(dataset.data) - 1
+            prev_dataset.data[current_index] = (
+                prev_dataset.data[current_index]*(dataset.reps-1)
+                + dataset.data[-1]
+            )/(dataset.reps)
+        else:
+            prev_dataset.data = dataset.data
+
+    def set_data(self, value):
+
+        if self.data is None:
+            self.reps = 1
+            self.data = np.array([value])
+        else:
+            self.data = np.append(self.data, value)
+
+        if len(self.data) > self.pts:
+            self.update_hmap = True
+            self.reps += 1
+
+            try:
+                reps_to_do = self.widgets['reps'].value()
+                if reps_to_do > 0 and self.reps > reps_to_do:
+                    self.stop = True
+            except KeyError:
+                pass
+
+            if self.all_data is None:
+                self.all_data = self.data[:-1]
+            else:
+                self.all_data = np.vstack((self.all_data, self.data[:-1]))
+            self.data = np.array([self.data[-1]])
+
+        self.set_children_data()
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None and len(self.data) <= len(self.x):  
+            self.curve.setData(self.x[:len(self.data)], self.data)
+        
+        for child in self.children.values():
+            child.update(update_hmap=copy.deepcopy(self.update_hmap))
+
+        if self.update_hmap:
+            self.update_hmap = False
+
+    def hmap(self, dataset, prev_dataset):
+
+        if dataset.update_hmap:
+            prev_dataset.data = dataset.all_data
+            
+            if 'Bwd' in prev_dataset.name:
+                try:
+                    prev_dataset.data = np.fliplr(prev_dataset.data)
+                except ValueError:
+                    prev_dataset.data = np.flip(prev_dataset.data)
+
+
+class HeatMap(Dataset):
+
+    def visualize(self, graph, **kwargs):
+        
+        self.handle_new_window(graph, **kwargs)
+        
+        self.graph.show()
+        self.graph.view.setAspectLocked(False)
+        self.graph.view.invertY(False)
+        self.graph.setPredefinedGradient('inferno')
+        if set(['min', 'max', 'pts']).issubset(kwargs.keys()):
+            self.min, self.max, self.pts = kwargs['min'], kwargs['max'], kwargs['pts']
+            self.graph.view.setLimits(xMin=kwargs['min'], xMax=kwargs['max'])
+
+    def update(self, **kwargs):
+        
+        if 'update_hmap' in kwargs and kwargs['update_hmap']:
+            try:
+                if hasattr(self, 'min'):
+                    self.graph.setImage(
+                        img=np.transpose(self.data),
+                        autoRange=False,
+                        scale=((self.max-self.min)/self.pts,1),
+                        pos=(self.min, 0)
+                    )
+                else:
+                    self.graph.setImage(
+                        img=np.transpose(self.data),
+                        autoRange=False
+                    )
+            except:
+                pass
+
+    def save(self, filename=None, directory=None, date_dir=True):
+
+        generic_save(
+            data=self.data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
+        if self.x is not None:
+            generic_save(
+                data=self.x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getView(),
+                f'{filename}_{self.name}',
+                directory,
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
+
+    def handle_new_window(self, graph, **kwargs):
+
+        # If we want to use a separate window
+        if 'window' in kwargs:
+
+            # Check whether this window exists
+            if not hasattr(self.gui, kwargs['window']):
+    
+                if 'window_title' in kwargs:
+                    window_title = kwargs['window_title']
+                else:
+                    window_title = 'Graph Holder'
+                setattr(
+                    self.gui, 
+                    kwargs['window'],
+                    GraphPopup(window_title=window_title)
+                )
+
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                self.graph
+            )
+            
+        # Otherwise, add a graph to the main layout
+        else:
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            self.gui.graph_layout.addWidget(self.graph)
+
+
+class LockedCavityScan1D(TriangleScan1D):
+
+    def __init__(self, *args, **kwargs):
+
+        self.t0 = time.time()
+        self.v = None
+        super().__init__(*args, **kwargs)
+    
+    def fill_params(self, config):
+
+        super().fill_params(config)
+        if not self.backward:
+            self.add_child(
+                name='Cavity lock',
+                data_type=Dataset,
+                window='lock_monitor',
+                window_title='Cavity lock monitor',
+                color_index=3
+            )
+            self.add_child(
+                name='Cavity history',
+                data_type=InfiniteRollingLine,
+                data_length=10000,
+                window='lock_monitor',
+                color_index=4
+            )
+            self.add_params_to_gui(
+                voltage=0.0
+            )
+
+    def set_v(self, v):
+        """ Updates voltage """
+
+        self.v = v
+        self.widgets['voltage'].setValue(self.v)
+        self.children['Cavity history'].set_data(self.v)
 
 # Useful mappings
 

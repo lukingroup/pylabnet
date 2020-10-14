@@ -108,6 +108,7 @@ class DataTaker:
         # Clear graph area and set up new or cleaned up dataset
         for index in reversed(range(self.gui.graph_layout.count())):
             self.gui.graph_layout.itemAt(index).widget().deleteLater()
+        self.gui.windows = {}
             # If we're not setting up a new measurement type, just clear the data
         self.dataset = getattr(datasets, self.gui.dataset.currentText())(
             gui=self.gui,

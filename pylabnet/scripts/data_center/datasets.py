@@ -704,15 +704,15 @@ class LockedCavityScan1D(TriangleScan1D):
                 window='lock_monitor',
                 color_index=4
             )
-            self.add_params_to_gui(
-                voltage=0.0
-            )
+            # self.add_params_to_gui(
+            #     voltage=0.0
+            # )
 
     def set_v(self, v):
         """ Updates voltage """
 
         self.v = v
-        self.widgets['voltage'].setValue(self.v)
+        # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
 
 # Useful mappings

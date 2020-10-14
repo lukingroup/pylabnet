@@ -187,7 +187,8 @@ class StaticLineHardwareHandler():
         registered_staticline_modules = {
             'zi_hdawg':  self._setup_HDWAGDriver,
             'nidaqmx_card': self._setup_NiDaqMxDriver,
-            'toptica': self._setup_toptica
+            'toptica': self._setup_toptica,
+            'hdawg': self._setup_HDWAGDriver, # For hdawg client usage
         }
 
         # Check if hardware module is registered.

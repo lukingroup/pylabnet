@@ -1073,6 +1073,9 @@ class PulseMaster:
         # Update toolbox.
         self.update_pulse_list_toolbox()
 
+        # Update completer
+        self.update_var_completer()
+
         # Plot
         self.plot_current_pulseblock()
 
@@ -1183,8 +1186,10 @@ class PulseMaster:
             for qlinedit in groubox.findChildren(QLineEdit):
                 var_completer_widgets.append(qlinedit)
 
-        for qlinedit in self.widgets["pulse_list_vlayout"].findChildren(QLineEdit):
-            var_completer_widgets.append(qlinedit)
+        # TODO: Find out why this doesn't work (issue148)
+        # for qlinedit in self.widgets["pulse_scrollarea"].findChildren(QLineEdit):
+        #     var_completer_widgets.append(qlinedit)
+        #     self.log.info(qlinedit.objectName())
 
         for widget in var_completer_widgets:
                 widget.setCompleter(self.var_completer)

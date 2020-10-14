@@ -74,6 +74,9 @@ class Controller(MultiChSweep1D):
             client_item.setToolTip(str(client_obj))
             self.widgets['clients'].addItem(client_item)
 
+        # Manually add logger to client
+        self.clients['logger'] = logger
+
         # Configure button
         self.widgets['configure'].clicked.connect(self.configure_experiment)
         self.widgets['run'].clicked.connect(self.run_pressed)

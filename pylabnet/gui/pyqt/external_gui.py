@@ -707,6 +707,7 @@ class ParameterPopup(QtWidgets.QWidget):
             elif param_type is float:
                 self.params[param_name] = QtWidgets.QDoubleSpinBox()
                 self.params[param_name].setMaximum(100000000)
+                self.params[param_name].setDecimals(6)
             else:
                 self.params[param_name] = QtWidgets.QLabel()
             layout.addWidget(self.params[param_name])

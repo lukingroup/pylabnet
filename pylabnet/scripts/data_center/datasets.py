@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 import numpy as np
 import copy
+import time
 from PyQt5 import QtWidgets, QtCore
 
 from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
@@ -194,6 +195,7 @@ class Dataset:
                 self.widgets[name] = QtWidgets.QDoubleSpinBox()
                 self.widgets[name].setMaximum(1000000000.)
                 self.widgets[name].setMinimum(-1000000000.)
+                self.widgets[name].setDecimals(6)
                 self.widgets[name].setValue(value)
             else:
                 self.widgets[name] = QtWidgets.QLabel(str(value))
@@ -615,6 +617,39 @@ class HeatMap(Dataset):
             child.save(filename, directory, date_dir)
 
         save_metadata(self.log, filename, directory, date_dir)
+
+
+class LockedCavityScan1D(TriangleScan1D):
+
+    def __init__(self, *args, **kwargs):
+
+        self.t0 = time.time()
+        self.v = None
+        super().__init__(*args, **kwargs)
+    
+    def fill_params(self, config):
+
+        super().fill_params(config)
+        if not self.backward:
+            self.add_child(
+                name='Cavity lock',
+                data_type=Dataset
+            )
+            self.add_child(
+                name='Cavity history',
+                data_type=InfiniteRollingLine,
+                data_length=10000
+            )
+            self.add_params_to_gui(
+                voltage=0.0
+            )
+
+    def set_v(self, v):
+        """ Updates voltage """
+
+        self.v = v
+        self.widgets['voltage'].setValue(self.v)
+        self.children['Cavity history'].set_data(self.v)
 
 # Useful mappings
 

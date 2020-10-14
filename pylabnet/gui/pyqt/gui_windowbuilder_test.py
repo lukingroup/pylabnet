@@ -13,7 +13,6 @@ class GUIWindowFromConfig(QMainWindow):
         
         self.config = load_config(config)
         self.N_staticlines = len(self.config)
-        # self.labels = [] # TODO: Need to store labels?
         self.widgets = dict()
         self.setStyleSheet("background-color: black;")
 
@@ -35,11 +34,6 @@ class GUIWindowFromConfig(QMainWindow):
 
             device_name = device["name"]
 
-            # TODO: Need to store labels?
-            # self.labels.append(QtWidgets.QLabel(device_name, self))
-            # self.labels[device_num].setStyleSheet("color: white;")
-            # self.gridLayout.addWidget(self.labels[device_num], row_num, 0)
-
             # Label for the device name
             label = QtWidgets.QLabel(device_name, self)
             label.setStyleSheet("color: white;")
@@ -48,7 +42,7 @@ class GUIWindowFromConfig(QMainWindow):
             self.widgets[device_name] = dict()
 
             # TODO: Check that staticline_types and staticline_names have same lengths
-            # iterate over all staticlines for the current device
+            # Iterate over all staticlines for the current device
             for staticline_idx, staticline_name in enumerate(device["staticline_names"]):
 
                 staticline_type = device["staticline_configs"][staticline_idx]["type"]

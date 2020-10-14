@@ -166,9 +166,9 @@ class AbstractDevice(StaticLineHardwareHandler):
         device client function calls.
         '''
 
-        self.up = self.hardware_client.up_function
-        self.down = self.hardware_client.down_function
-        self.set_value = self.hardware_client.set_value_function
+        self.up = lambda: self.hardware_client.up_function(self.config["ch"])
+        self.down = lambda: self.hardware_client.down_function(self.config["ch"])
+        self.set_value = lambda value: self.hardware_client.set_value_function(value, self.config["ch"])
 
 ################################################################################
 

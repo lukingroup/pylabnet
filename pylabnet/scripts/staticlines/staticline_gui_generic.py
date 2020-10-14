@@ -29,7 +29,6 @@ class StaticLineGUIGeneric():
         self.config = load_config(config, logger=self.log)
         self.initialize_drivers(staticline_clients, logger_client)
 
-
     def initialize_drivers(self, staticline_clients, logger_client):
 
         # Dictionary storing {device name : instance of staticline Driver}
@@ -72,11 +71,12 @@ class StaticLineGUIGeneric():
         for device in self.config.values():
 
             device_name = device['name']
-            staticline_driver = self.staticlines[device_name]
 
             for staticline_idx in range(len(device["staticline_names"])):
 
                 staticline_name = device["staticline_names"][staticline_idx]
+                staticline_driver = self.staticlines[device_name][staticline_name]
+
                 staticline_configs = device["staticline_configs"][staticline_idx]
                 staticline_type = staticline_configs["type"]
                 
@@ -89,6 +89,7 @@ class StaticLineGUIGeneric():
 
                 # Analog: "Apply" does something based on the text field value
                 elif staticline_type == 'analog':
+
                     widget['apply'].clicked.connect(lambda:
                         staticline_driver.set_value(widget['AIN'].text()))
                     

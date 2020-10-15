@@ -277,7 +277,7 @@ class PreselectedHistogram(AveragedHistogram):
             self.fill_parameters(self.presel_params)
         else:
             self.presel_params = None
-            self.setup_preselection(threshold=float)
+            self.setup_preselection(threshold=float, less_than=True)
         if 'presel_data_length' in self.config:
             presel_data_length = self.config['presel_data_length']
         else:
@@ -306,14 +306,24 @@ class PreselectedHistogram(AveragedHistogram):
     def preselect(self, dataset, prev_dataset):
         """ Preselects based on user input parameters """
 
-        if dataset.children['Preselection Counts'].data[-1] < self.presel_params['threshold']:
-            dataset.preselection = True
-            if prev_dataset.data is None:
-                prev_dataset.data = dataset.recent_data
+        if self.presel_params['less_than'] == 'True':
+            if dataset.children['Preselection Counts'].data[-1] < self.presel_params['threshold']:
+                dataset.preselection = True
+                if prev_dataset.data is None:
+                    prev_dataset.data = dataset.recent_data
+                else:
+                    prev_dataset.data += dataset.recent_data
             else:
-                prev_dataset.data += dataset.recent_data
+                dataset.preselection = False
         else:
-            dataset.preselection = False
+            if dataset.children['Preselection Counts'].data[-1] > self.presel_params['threshold']:
+                dataset.preselection = True
+                if prev_dataset.data is None:
+                    prev_dataset.data = dataset.recent_data
+                else:
+                    prev_dataset.data += dataset.recent_data
+            else:
+                dataset.preselection = False
 
     def set_data(self, data=None, x=None, preselection_data=None):
         """ Sets the data for a new round of acquisition
@@ -482,6 +492,10 @@ class TriangleScan1D(Dataset):
             ))
         super().__init__(*self.args, **self.kwargs)
 
+        pass_kwargs = dict()
+        if 'window' in config:
+            pass_kwargs['window'] = config['window']
+
         # Add child for averaged plot
         self.add_child(
             name=f'{"Bwd" if self.backward else "Fwd"} avg',
@@ -499,7 +513,8 @@ class TriangleScan1D(Dataset):
             data_type=HeatMap,
             min=self.min,
             max=self.max,
-            pts=self.pts
+            pts=self.pts,
+            **pass_kwargs
         )
 
         # Add child for backward plot
@@ -510,7 +525,8 @@ class TriangleScan1D(Dataset):
                 max=self.max,
                 pts=self.pts,
                 backward=True,
-                color_index=1
+                color_index=1,
+                **pass_kwargs
             )
 
             for i in reversed(range(self.gui.dataset_layout.count())):
@@ -716,6 +732,50 @@ class LockedCavityScan1D(TriangleScan1D):
         self.v = v
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
+
+
+class LockedCavityPreselectedHistogram(PreselectedHistogram):
+
+    def __init__(self, *args, **kwargs):
+
+        self.t0 = time.time()
+        self.v = None
+        self.sasha_aom = None
+        self.toptica_aom = None
+
+        super().__init__(*args, **kwargs)
+
+    def fill_parameters(self, params):
+
+        super().fill_parameters(params)
+        self.add_child(
+            name='Cavity lock',
+            data_type=Dataset,
+            window='lock_monitor',
+            window_title='Cavity lock monitor',
+            color_index=3
+        )
+        self.add_child(
+            name='Cavity history',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            window='lock_monitor',
+            color_index=4
+        )
+        self.add_child(
+            name='Single photons',
+            data_type=AveragedHistogram,
+            window='photon',
+            window_title='Single photons'
+        )
+
+    def set_v(self, v):
+        """ Updates voltage """
+
+        self.v = v
+        # self.widgets['voltage'].setValue(self.v)
+        self.children['Cavity history'].set_data(self.v)
+
 
 # Useful mappings
 

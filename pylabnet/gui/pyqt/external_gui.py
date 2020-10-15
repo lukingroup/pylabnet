@@ -57,7 +57,7 @@ class Window(QtWidgets.QMainWindow):
         main_window = Window(app, gui_template="my_favorite_gui")
     """
 
-    # '#ffe119', 
+    # '#ffe119',
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
     COLOR_LIST = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
@@ -154,7 +154,7 @@ class Window(QtWidgets.QMainWindow):
 
     def add_graph(self, graph_layout=None, index=None):
         """ Adds a new pyqtgraph to a graph layout and returns
-        
+
         :param graph_layout: (str) name of graph layout to add to
         :param index: (int) index if inserting into layout at a
             particular location
@@ -172,7 +172,7 @@ class Window(QtWidgets.QMainWindow):
             layout.insertWidget(index, graph)
 
         return graph
-    
+
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
@@ -750,7 +750,7 @@ class GraphPopup(QtWidgets.QWidget):
 
         if 'size' in kwargs:
             self.setMinimumSize(*kwargs['size'])
-        
+
         self.setWindowTitle(window_title)
         self.setLayout(self.graph_layout)
         self.show()

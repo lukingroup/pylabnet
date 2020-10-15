@@ -123,6 +123,8 @@ class Wrap:
         if name is None:
             name = str(len(self._ctr))
 
+        ch_list = [self._get_channel(ch) for ch in ch_list]
+
         # Instantiate Counter instance, see TT documentation
         self._ctr[name] = TT.Countrate(
             self._tagger,

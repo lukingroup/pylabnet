@@ -173,7 +173,7 @@ class Wrap:
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,
-                        n_histograms=1):
+                        n_histograms=1, start_delay=None):
         """ Sets up a Histogram measurement using the TT.TimeDifferences
         measurement class
 
@@ -188,12 +188,21 @@ class Wrap:
         :param binwidth: (int) width of bin in ps
         :param n_bins: (int) number of bins for total measurement
         :param n_histograms: (int) total number of histograms
+        :param start_delay: (optional, int) delay for marker in ps
         """
 
+        if start_delay is not None:
+            self._channels[name] = TT.DelayedChannel(
+                tagger=self._tagger,
+                input_channel=start_ch,
+                delay=start_delay
+            )
+            start_ch = name
+        
         self._ctr[name] = TT.TimeDifferences(
             tagger=self._tagger,
             click_channel=self._get_channel(click_ch),
-            start_channel=start_ch,
+            start_channel=self._get_channel(start_ch),
             next_channel=next_ch,
             sync_channel=sync_ch,
             binwidth=binwidth,
@@ -276,6 +285,20 @@ class Wrap:
         )
         self.log.info(f'Created gated channel {channel_name}, '
                       f'click channel: {click_ch}, gate channel: {gate_ch}')
+
+    def create_combined_channel(self, channel_name, channel_list):
+        """ Creates a combined virtual channel which includes events from multiple cahnnels 
+        
+        :param channel_name: (str) name, identifier of the channel
+        :param channel_list: (list) list of channel numbers or names to combine
+        """
+
+        # Handle virtual channels in channel_list
+        channels = [self._get_channel(ch) for ch in channel_list]
+        self._channels[channel_name] = TT.Combiner(
+            tagger=self._tagger,
+            channels=channels
+        )   
 
     def update_delay(self, channel_name, delay):
         """ Updates the delay for a gated + delayed channel

@@ -44,9 +44,10 @@ class Service(ServiceBase):
 
     def exposed_start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                                 sync_ch=-134217728, binwidth=1000, n_bins=1000,
-                                n_histograms=1):
+                                n_histograms=1, start_delay=None):
         return self._module.start_histogram(name, start_ch, click_ch, next_ch=next_ch,
-                                            sync_ch=sync_ch, binwidth=binwidth, n_bins=n_bins, n_histograms=n_histograms)
+                                            sync_ch=sync_ch, binwidth=binwidth, n_bins=n_bins, n_histograms=n_histograms,
+                                            start_delay=start_delay)
 
     def exposed_start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
         return self._module.start_correlation(name, ch_1, ch_2, binwidth, n_bins)
@@ -63,6 +64,9 @@ class Service(ServiceBase):
     def exposed_update_delay(self, channel_name, delay):
         return self._module.update_delay(channel_name, delay)
 
+    def exposed_create_combined_channel(self, channel_name, channel_list):
+        channel_list = pickle.loads(channel_list)
+        return self._module.create_combined_channel(channel_name, channel_list)
 
 class Client(ClientBase):
 
@@ -169,7 +173,7 @@ class Client(ClientBase):
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,
-                        n_histograms=1):
+                        n_histograms=1, start_delay=None):
         """ Sets up a Histogram measurement using the TT.TimeDifferences
         measurement class
 
@@ -183,13 +187,15 @@ class Client(ClientBase):
         :param binwidth: (int) width of bin in ps
         :param n_bins: (int) number of bins for total measurement
         :param n_histograms: (int) total number of histograms
+        :param start_delay: (optional, int) delay for marker in ps
         """
 
         return self._service.exposed_start_histogram(name, start_ch, click_ch,
                                                      next_ch=next_ch,
                                                      sync_ch=sync_ch,
                                                      binwidth=binwidth, n_bins=n_bins,
-                                                     n_histograms=n_histograms)
+                                                     n_histograms=n_histograms,
+                                                     start_delay=start_delay)
 
     def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
         """ Sets up a correlation measurement using TT.Correlation measurement class
@@ -238,6 +244,16 @@ class Client(ClientBase):
 
         return self._service.exposed_create_gated_channel(
             channel_name, click_ch, gate_ch, delay
+        )
+
+    def create_combined_channel(self, channel_name, channel_list):
+        """ Creates a combined virtual channel which includes events from multiple cahnnels 
+        
+        :param channel_name: (str) name, identifier of the channel
+        :param channel_list: (list) list of channel numbers or names to combine
+        """  
+        return self._service.exposed_create_combined_channel(
+            channel_name, pickle.dumps(channel_list)
         )
 
     def update_delay(self, channel_name, delay):

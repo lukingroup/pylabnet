@@ -95,7 +95,7 @@ class Dataset:
             # If we need to process the child data, do it
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
-    
+
     def visualize(self, graph, **kwargs):
         """ Prepare data visualization on GUI
 
@@ -173,8 +173,8 @@ class Dataset:
         save_metadata(self.log, filename, directory, date_dir)
 
     def add_params_to_gui(self, **params):
-        """ Adds parameters of dataset to gui 
-        
+        """ Adds parameters of dataset to gui
+
         :params: (dict) containing all parameter names and values
         """
 
@@ -209,11 +209,12 @@ class Dataset:
 
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
-      
+
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
                         window_title = 'Graph Holder'
+
                     self.gui.windows[kwargs['window']] = GraphPopup(
                         window_title=window_title, size=(700,300)
                     )
@@ -222,7 +223,7 @@ class Dataset:
                 self.gui.windows[kwargs['window']].graph_layout.addWidget(
                     self.graph
                 )
-                
+
             # Otherwise, add a graph to the main layout
             else:
                 self.graph = self.gui.add_graph()
@@ -276,7 +277,7 @@ class PreselectedHistogram(AveragedHistogram):
             self.fill_parameters(self.presel_params)
         else:
             self.presel_params = None
-            self.setup_preselection(threshold=float)
+            self.setup_preselection(threshold=float, less_than=True)
         if 'presel_data_length' in self.config:
             presel_data_length = self.config['presel_data_length']
         else:
@@ -305,14 +306,24 @@ class PreselectedHistogram(AveragedHistogram):
     def preselect(self, dataset, prev_dataset):
         """ Preselects based on user input parameters """
 
-        if dataset.children['Preselection Counts'].data[-1] < self.presel_params['threshold']:
-            dataset.preselection = True
-            if prev_dataset.data is None:
-                prev_dataset.data = dataset.recent_data
+        if self.presel_params['less_than'] == 'True':
+            if dataset.children['Preselection Counts'].data[-1] < self.presel_params['threshold']:
+                dataset.preselection = True
+                if prev_dataset.data is None:
+                    prev_dataset.data = dataset.recent_data
+                else:
+                    prev_dataset.data += dataset.recent_data
             else:
-                prev_dataset.data += dataset.recent_data
+                dataset.preselection = False
         else:
-            dataset.preselection = False
+            if dataset.children['Preselection Counts'].data[-1] > self.presel_params['threshold']:
+                dataset.preselection = True
+                if prev_dataset.data is None:
+                    prev_dataset.data = dataset.recent_data
+                else:
+                    prev_dataset.data += dataset.recent_data
+            else:
+                dataset.preselection = False
 
     def set_data(self, data=None, x=None, preselection_data=None):
         """ Sets the data for a new round of acquisition
@@ -461,12 +472,12 @@ class TriangleScan1D(Dataset):
         else:
             self.popup = ParameterPopup(min=float, max=float, pts=int)
             self.popup.parameters.connect(self.fill_params)
-    
+
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
 
         self.min, self.max, self.pts = config['min'], config['max'], config['pts']
-        
+
         if 'backward' in self.kwargs:
             self.backward = True
             self.kwargs.update(dict(
@@ -480,6 +491,10 @@ class TriangleScan1D(Dataset):
                 name='Fwd trace'
             ))
         super().__init__(*self.args, **self.kwargs)
+
+        pass_kwargs = dict()
+        if 'window' in config:
+            pass_kwargs['window'] = config['window']
 
         # Add child for averaged plot
         self.add_child(
@@ -498,7 +513,8 @@ class TriangleScan1D(Dataset):
             data_type=HeatMap,
             min=self.min,
             max=self.max,
-            pts=self.pts
+            pts=self.pts,
+            **pass_kwargs
         )
 
         # Add child for backward plot
@@ -509,10 +525,11 @@ class TriangleScan1D(Dataset):
                 max=self.max,
                 pts=self.pts,
                 backward=True,
-                color_index=1
+                color_index=1,
+                **pass_kwargs
             )
 
-            for i in reversed(range(self.gui.dataset_layout.count())): 
+            for i in reversed(range(self.gui.dataset_layout.count())):
                 self.gui.dataset_layout.itemAt(i).setParent(None)
             self.add_params_to_gui(
                 min=config['min'],
@@ -564,9 +581,9 @@ class TriangleScan1D(Dataset):
     def update(self, **kwargs):
         """ Updates current data to plot"""
 
-        if self.data is not None and len(self.data) <= len(self.x):  
+        if self.data is not None and len(self.data) <= len(self.x):
             self.curve.setData(self.x[:len(self.data)], self.data)
-        
+
         for child in self.children.values():
             child.update(update_hmap=copy.deepcopy(self.update_hmap))
 
@@ -577,7 +594,7 @@ class TriangleScan1D(Dataset):
 
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
-            
+
             if 'Bwd' in prev_dataset.name:
                 try:
                     prev_dataset.data = np.fliplr(prev_dataset.data)
@@ -588,9 +605,9 @@ class TriangleScan1D(Dataset):
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
-        
+
         self.handle_new_window(graph, **kwargs)
-        
+
         self.graph.show()
         self.graph.view.setAspectLocked(False)
         self.graph.view.invertY(False)
@@ -600,7 +617,7 @@ class HeatMap(Dataset):
             self.graph.view.setLimits(xMin=kwargs['min'], xMax=kwargs['max'])
 
     def update(self, **kwargs):
-        
+
         if 'update_hmap' in kwargs and kwargs['update_hmap']:
             try:
                 if hasattr(self, 'min'):
@@ -654,13 +671,13 @@ class HeatMap(Dataset):
 
             # Check whether this window exists
             if not hasattr(self.gui, kwargs['window']):
-    
+
                 if 'window_title' in kwargs:
                     window_title = kwargs['window_title']
                 else:
                     window_title = 'Graph Holder'
                 setattr(
-                    self.gui, 
+                    self.gui,
                     kwargs['window'],
                     GraphPopup(window_title=window_title)
                 )
@@ -669,7 +686,7 @@ class HeatMap(Dataset):
             getattr(self.gui, kwargs['window']).graph_layout.addWidget(
                 self.graph
             )
-            
+
         # Otherwise, add a graph to the main layout
         else:
             self.graph = pg.ImageView(view=pg.PlotItem())
@@ -682,8 +699,11 @@ class LockedCavityScan1D(TriangleScan1D):
 
         self.t0 = time.time()
         self.v = None
+        self.sasha_aom = None
+        self.toptica_aom = None
+
         super().__init__(*args, **kwargs)
-    
+
     def fill_params(self, config):
 
         super().fill_params(config)
@@ -712,6 +732,50 @@ class LockedCavityScan1D(TriangleScan1D):
         self.v = v
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
+
+
+class LockedCavityPreselectedHistogram(PreselectedHistogram):
+
+    def __init__(self, *args, **kwargs):
+
+        self.t0 = time.time()
+        self.v = None
+        self.sasha_aom = None
+        self.toptica_aom = None
+
+        super().__init__(*args, **kwargs)
+
+    def fill_parameters(self, params):
+
+        super().fill_parameters(params)
+        self.add_child(
+            name='Cavity lock',
+            data_type=Dataset,
+            window='lock_monitor',
+            window_title='Cavity lock monitor',
+            color_index=3
+        )
+        self.add_child(
+            name='Cavity history',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            window='lock_monitor',
+            color_index=4
+        )
+        self.add_child(
+            name='Single photons',
+            data_type=AveragedHistogram,
+            window='photon',
+            window_title='Single photons'
+        )
+
+    def set_v(self, v):
+        """ Updates voltage """
+
+        self.v = v
+        # self.widgets['voltage'].setValue(self.v)
+        self.children['Cavity history'].set_data(self.v)
+
 
 # Useful mappings
 

@@ -200,7 +200,7 @@ class Wrap:
                 delay=start_delay
             )
             start_ch = name
-        
+
         self._ctr[name] = TT.TimeDifferences(
             tagger=self._tagger,
             click_channel=self._get_channel(click_ch),
@@ -229,7 +229,7 @@ class Wrap:
             label = f'{name}_delayed'
             self._channels[label] = TT.DelayedChannel(
                 tagger=self._tagger,
-                input_channel=ch_1,
+                input_channel=self._get_channel(ch_1),
                 delay=int(delay)
             )
             ch_1 = label
@@ -299,8 +299,8 @@ class Wrap:
                       f'click channel: {click_ch}, gate channel: {gate_ch}')
 
     def create_combined_channel(self, channel_name, channel_list):
-        """ Creates a combined virtual channel which includes events from multiple cahnnels 
-        
+        """ Creates a combined virtual channel which includes events from multiple cahnnels
+
         :param channel_name: (str) name, identifier of the channel
         :param channel_list: (list) list of channel numbers or names to combine
         """
@@ -310,7 +310,7 @@ class Wrap:
         self._channels[channel_name] = TT.Combiner(
             tagger=self._tagger,
             channels=channels
-        )   
+        )
 
     def update_delay(self, channel_name, delay):
         """ Updates the delay for a gated + delayed channel

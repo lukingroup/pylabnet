@@ -88,7 +88,7 @@ class LogHandler:
             return self._logger.update_metadata(**metadata)
         except:
             return -1
-    
+
     def get_metadata(self):
         """ Returns all metadata"""
 
@@ -489,8 +489,7 @@ class LogService(rpyc.Service):
         """ Updates metadata """
 
         self.metadata.update(pickle.loads(metadata))
-        self.logger.info('Metadata updated')
-    
+
     def exposed_get_metadata(self):
         """ Returns all client metadata"""
 

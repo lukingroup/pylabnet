@@ -39,7 +39,7 @@ class LaserStabilizer:
         #Now initialize control/output voltage to 0, and set up label
         self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
         self.widgets['p_outputVoltage'].valueChanged.connect(self._set_output_voltage_from_label)
-        self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
+        # self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
         #Update the input power label
         self._last_power_text_update = 0

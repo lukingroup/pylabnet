@@ -17,7 +17,7 @@ from pylabnet.utils.helper_methods import load_config, generic_save, unpack_laun
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 50    # refresh rate in ms, try increasing if GUI lags
+REFRESH_RATE = 75    # refresh rate in ms, try increasing if GUI lags
 
 class DataTaker:
 
@@ -107,7 +107,10 @@ class DataTaker:
 
         # Clear graph area and set up new or cleaned up dataset
         for index in reversed(range(self.gui.graph_layout.count())):
-            self.gui.graph_layout.itemAt(index).widget().deleteLater()
+            try:
+                self.gui.graph_layout.itemAt(index).widget().deleteLater()
+            except AttributeError:
+                pass
         self.gui.windows = {}
             # If we're not setting up a new measurement type, just clear the data
         self.dataset = getattr(datasets, self.gui.dataset.currentText())(

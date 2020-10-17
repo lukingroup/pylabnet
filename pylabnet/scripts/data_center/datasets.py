@@ -270,6 +270,9 @@ class PreselectedHistogram(AveragedHistogram):
 
         kwargs['name'] = 'Average Histogram'
         self.preselection = True
+        self.presel_success_indicator = pg.SpinBox(value=0.0)
+        self.presel_success_indicator.setStyleSheet('font-size: 12pt')
+        self.presel_success_value = 0
         super().__init__(*args, **kwargs)
         self.add_child(name='Single Trace', mapping=self.recent, data_type=Dataset)
         if 'presel_params' in self.config:
@@ -277,16 +280,25 @@ class PreselectedHistogram(AveragedHistogram):
             self.fill_parameters(self.presel_params)
         else:
             self.presel_params = None
-            self.setup_preselection(threshold=float, less_than=True)
+            self.setup_preselection(threshold=float, less_than=str, avg_values=int)
         if 'presel_data_length' in self.config:
             presel_data_length = self.config['presel_data_length']
         else:
             presel_data_length = None
+
+        hbox = QtWidgets.QHBoxLayout()
+
+        label = QtWidgets.QLabel('Recent preselection average: ')
+        label.setStyleSheet('font-size: 12pt')
+        hbox.addWidget(label)
+        hbox.addWidget(self.presel_success_indicator)
+        self.gui.graph_layout.addLayout(hbox)
         self.add_child(
             name='Preselection Counts',
             data_type=InfiniteRollingLine,
             data_length=presel_data_length
         )
+        self.children['Preselection Counts'].graph.getPlotItem().addLine(y=self.presel_params['threshold'])
 
     def setup_preselection(self, **kwargs):
 
@@ -325,6 +337,16 @@ class PreselectedHistogram(AveragedHistogram):
             else:
                 dataset.preselection = False
 
+        # Calculate most recent preselection value
+
+        presel_trace = dataset.children['Preselection Counts'].data
+        presel_trace_len = len(presel_trace)
+        if presel_trace_len > 0:
+            if self.presel_params['avg_values'] > presel_trace_len:
+                self.presel_success_value = np.mean(presel_trace)
+            else:
+                self.presel_success_value = np.mean(presel_trace[-self.presel_params['avg_values']:])
+
     def set_data(self, data=None, x=None, preselection_data=None):
         """ Sets the data for a new round of acquisition
 
@@ -348,6 +370,11 @@ class PreselectedHistogram(AveragedHistogram):
                     vb.setBackgroundColor(0.1)
                 else:
                     vb.setBackgroundColor(0.0)
+
+    def update(self, **kwargs):
+
+        self.presel_success_indicator.setValue(self.presel_success_value)
+        super().update(**kwargs)
 
     @staticmethod
     def recent(dataset, prev_dataset):
@@ -777,6 +804,109 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
         self.children['Cavity history'].set_data(self.v)
 
 
+class ErrorBarGraph(Dataset):
+
+    def visualize(self, graph, **kwargs):
+        """ Prepare data visualization on GUI
+
+        :param graph: (pg.PlotWidget) graph to use
+        """
+
+        self.error=None
+        self.handle_new_window(graph, **kwargs)
+
+        if 'color_index' in kwargs:
+            color_index = kwargs['color_index']
+        else:
+            if 'window' in kwargs:
+                color_index = self.gui.windows[kwargs['window']].graph_layout.count()-1
+            else:
+                color_index = self.gui.graph_layout.count()-1
+        self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index]), width=0.5)
+        self.error_curve = pg.ErrorBarItem(pen=None, symbol='o', beam=0.5)
+        self.graph.addItem(self.curve)
+        self.graph.addItem(self.error_curve)
+        self.update(**kwargs)
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None:
+            if self.x is not None:
+                try:
+                    width = (self.x[1]-self.x[0])/2
+                except IndexError:
+                    width = 0.5
+                self.curve.setOpts(x=self.x, height=self.data, width=width)
+            else:
+                self.x = np.arange(0, len(self.data))
+                self.curve.setOpts(x=self.x, height=self.data, width=0.5)
+
+        if self.error is not None:
+            if self.x is not None:
+                try:
+                    width = (self.x[1]-self.x[0])/2
+                except IndexError:
+                    width = 0.5
+                self.error_curve.setData(x=self.x, y=self.data, height=self.error, beam=width)
+            else:
+                self.error_curve.setData(y=self.data, height=self.error, beam=0.5)
+
+        for child in self.children.values():
+            child.update(**kwargs)
+
+
+class ErrorBarPlot(Dataset):
+
+    def visualize(self, graph, **kwargs):
+        """ Prepare data visualization on GUI
+
+        :param graph: (pg.PlotWidget) graph to use
+        """
+
+        self.error=None
+        self.handle_new_window(graph, **kwargs)
+
+        if 'color_index' in kwargs:
+            color_index = kwargs['color_index']
+        else:
+            color_index = self.gui.graph_layout.count()-1
+        self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[color_index]), symbol='o')
+        self.graph.addItem(self.curve)
+        self.update(**kwargs)
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None and self.error is not None:
+            if self.x is not None:
+                try:
+                    width = (self.x[1]-self.x[0])/2
+                except IndexError:
+                    width = 0.5
+                self.curve.setData(x=self.x, y=self.data, height=self.error, beam=width)
+            else:
+                self.curve.setData(x=np.arange(len(self.data)), y=self.data, height=self.error, beam=0.5)
+
+        for child in self.children.values():
+            child.update(**kwargs)
+
+class PhotonErrorBarPlot(ErrorBarPlot):
+    un_normalized = np.array([])
+    total_events = 0
+    reps=0
+
+    def visualize(self, graph, **kwargs):
+
+        super().visualize(graph, **kwargs)
+        self.add_child(
+            name='Photon probabilities, log scale',
+            mapping=passthru,
+            data_type=Dataset,
+            window=kwargs['window']
+        )
+        self.children['Photon probabilities, log scale'].graph.getPlotItem().setLogMode(False, True)
+
 # Useful mappings
 
 def moving_average(dataset, prev_dataset=None):
@@ -784,3 +914,6 @@ def moving_average(dataset, prev_dataset=None):
 	ret = np.cumsum(dataset.data)
 	ret[n:] = ret[n:] - ret[:-n]
 	prev_dataset.set_data(data=ret[n-1:]/n)
+
+def passthru(dataset, prev_dataset):
+        prev_dataset.set_data(x=dataset.x, data=dataset.data)

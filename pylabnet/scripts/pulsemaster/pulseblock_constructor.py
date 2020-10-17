@@ -109,6 +109,7 @@ class PulseblockConstructor():
         self.compile_pulseblock()
         pb_dictionary = {}
         pb_dictionary["name"] = self.name
+        pb_dictionary["dur"] = self.pulseblock.dur
         pb_dictionary["timestamp"] = datetime.now().strftime("%d-%b-%Y_%H_%M_%S")
         pb_dictionary["var_dict"] =  self.var_dict
         pb_dictionary["pulse_specifiers_dicts"] = [ps.get_dict() for ps in self.pulse_specifiers]

@@ -49,8 +49,8 @@ class Service(ServiceBase):
                                             sync_ch=sync_ch, binwidth=binwidth, n_bins=n_bins, n_histograms=n_histograms,
                                             start_delay=start_delay)
 
-    def exposed_start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
-        return self._module.start_correlation(name, ch_1, ch_2, binwidth, n_bins)
+    def exposed_start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000, delay=None):
+        return self._module.start_correlation(name, ch_1, ch_2, binwidth, n_bins, delay)
 
     def exposed_start(self, name):
         return self._module.start(name)
@@ -197,7 +197,7 @@ class Client(ClientBase):
                                                      n_histograms=n_histograms,
                                                      start_delay=start_delay)
 
-    def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
+    def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000, delay=None):
         """ Sets up a correlation measurement using TT.Correlation measurement class
 
         :param name: (str) name of measurement for future reference
@@ -207,10 +207,11 @@ class Client(ClientBase):
             if physical, otherwise channel name if virtual
         :param binwidth: (int) width of bin in ps
         :param n_Bins: (int) number of bins for total measurement
+        :param delay: (optional, int) delay for channel 1
         """
 
         return self._service.exposed_start_correlation(
-            name, ch_1, ch_2, binwidth, n_bins
+            name, ch_1, ch_2, binwidth, n_bins, delay
         )
 
     def start(self, name):

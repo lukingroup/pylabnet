@@ -793,7 +793,7 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
             name='Single photons',
             data_type=AveragedHistogram,
             window='photon',
-            window_title='Single photons'
+            window_title='Single-photon data'
         )
 
     def set_v(self, v):
@@ -890,6 +890,7 @@ class ErrorBarPlot(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
+
 
 class PhotonErrorBarPlot(ErrorBarPlot):
     un_normalized = np.array([])

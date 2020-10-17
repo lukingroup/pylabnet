@@ -212,7 +212,7 @@ class Wrap:
             n_histograms=n_histograms
         )
 
-    def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000):
+    def start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000, delay=None):
         """ Sets up a correlation measurement using TT.Correlation measurement class
 
         :param name: (str) name of measurement for future reference
@@ -222,7 +222,17 @@ class Wrap:
             if physical, otherwise channel name if virtual
         :param binwidth: (int) width of bin in ps
         :param n_Bins: (int) number of bins for total measurement
+        :param delay: (optional, int) delay for channel 1
         """
+
+        if delay is not None:
+            label = f'{name}_delayed'
+            self._channels[label] = TT.DelayedChannel(
+                tagger=self._tagger,
+                input_channel=ch_1,
+                delay=int(delay)
+            )
+            ch_1 = label
 
         self._ctr[name] = TT.Correlation(
             tagger=self._tagger,

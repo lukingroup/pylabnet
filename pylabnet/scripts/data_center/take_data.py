@@ -110,7 +110,10 @@ class DataTaker:
             try:
                 self.gui.graph_layout.itemAt(index).widget().deleteLater()
             except AttributeError:
-                pass
+                try:
+                    self.gui.graph_layout.itemAt(index).layout().deleteLater()
+                except AttributeError:
+                    pass
         self.gui.windows = {}
             # If we're not setting up a new measurement type, just clear the data
         self.dataset = getattr(datasets, self.gui.dataset.currentText())(

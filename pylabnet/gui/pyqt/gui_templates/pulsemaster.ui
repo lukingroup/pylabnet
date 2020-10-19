@@ -329,37 +329,12 @@
       <rect>
        <x>20</x>
        <y>31</y>
-       <width>1591</width>
+       <width>1761</width>
        <height>661</height>
       </rect>
      </property>
      <property name="styleSheet">
       <string notr="true">background: #32414B</string>
-     </property>
-    </widget>
-    <widget class="GraphicsView" name="legend">
-     <property name="geometry">
-      <rect>
-       <x>1620</x>
-       <y>30</y>
-       <width>171</width>
-       <height>661</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>150</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>200</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="styleSheet">
-      <string notr="true"/>
      </property>
     </widget>
    </widget>
@@ -769,11 +744,6 @@ p, li { white-space: pre-wrap; }
    <class>MyPlotWidget</class>
    <extends>QGraphicsView</extends>
    <header>pylabnet/scripts/pulsemaster/pulsemaster_customwidget</header>
-  </customwidget>
-  <customwidget>
-   <class>GraphicsView</class>
-   <extends>QGraphicsView</extends>
-   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <tabstops>

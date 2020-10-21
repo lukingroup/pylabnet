@@ -31,7 +31,7 @@ class StaticLineGUIGeneric():
 
     def initialize_drivers(self, staticline_clients, logger_client):
 
-        # Dictionary storing {device name : instance of staticline Driver}
+        # Dictionary storing {device name : dict of staticline Drivers}
         self.staticlines = {}
 
         if staticline_clients is not None:
@@ -49,6 +49,8 @@ class StaticLineGUIGeneric():
                 device_name = device_params['name']
                 self.staticlines[device_name] = dict()
 
+                # Iterate over all staticlines for that device and create a 
+                # driver instance for each line.
                 for staticline_idx in range(len(device_params["staticline_names"])):
 
                     staticline_name = device_params["staticline_names"][staticline_idx]
@@ -66,6 +68,12 @@ class StaticLineGUIGeneric():
         """Binds the function of each button of each device to the functions
         set up by each the device's staticline driver.
         """
+
+        def set_value_fn(driver, text_widget):
+            """ Helper function that we use to bind to text buttons for analog
+            inputs, in order to avoid lambda scoping issues.
+            """
+            return lambda: driver.set_value(text_widget['AIN'].text())
 
         # Iterate through all devices in the config file
         for device in self.config.values():
@@ -89,11 +97,11 @@ class StaticLineGUIGeneric():
 
                 # Analog: "Apply" does something based on the text field value
                 elif staticline_type == 'analog':
-                    # Must not integrate this defn into the button function call or the 
-                    # value of widget might be overwritten when button is pressed.
-                    ain = widget['AIN'] 
-                    widget['apply'].clicked.connect(lambda: staticline_driver.set_value(ain.text()))
-    
+                    # Cannot use a lambda directly because this would lead to 
+                    # the values of staticline_driver and widget being referenced
+                    # only at time of button click.
+                    widget['apply'].clicked.connect(
+                        set_value_fn(staticline_driver, widget))
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
                                     'Should be analog or digital.')

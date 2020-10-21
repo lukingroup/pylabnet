@@ -160,7 +160,6 @@ class Toptica(StaticLineHardwareHandler):
 
 class AbstractDevice(StaticLineHardwareHandler):
     
-
     def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the 
         device client function calls.

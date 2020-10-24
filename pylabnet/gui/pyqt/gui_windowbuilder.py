@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
 from pylabnet.utils.helper_methods import load_config   
 
 class GUIWindowFromConfig(QMainWindow):
-
     
     def __init__(self, config=None):
         
@@ -118,16 +117,12 @@ class GUIWindowFromConfig(QMainWindow):
         self.widgets[device_name][staticline_name]["off"].setEnabled(mode)
         self.widgets[device_name][staticline_name]["on"].setEnabled(not mode)
 
-        if mode:
-            self.widgets[device_name][staticline_name]["off"].setStyleSheet(
-                "color: black;  background-color: #FF4040")
-            self.widgets[device_name][staticline_name]["on"].setStyleSheet(
-                "color: white;  background-color: #A4A4A4")
-        else:
-            self.widgets[device_name][staticline_name]["on"].setStyleSheet(
-                "color: black;  background-color: #FF4040")
-            self.widgets[device_name][staticline_name]["off"].setStyleSheet(
-                "color: white;  background-color: #A4A4A4")
+        switch = ["on", "off"]
+
+        self.widgets[device_name][staticline_name][switch[mode]].setStyleSheet(
+            "color: black;  background-color: #FF4040")
+        self.widgets[device_name][staticline_name][switch[not mode]].setStyleSheet(
+            "color: white;  background-color: #A4A4A4")
 
     def upd_cur_val(self, device_name='', staticline_name=''):
         self.widgets[device_name][staticline_name]["current_val"].setText(

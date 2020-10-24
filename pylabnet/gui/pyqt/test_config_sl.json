@@ -1,15 +1,12 @@
 { 
     "1": {
-        "type": "digital",
-        "name": "Digital staticline device 1"
-    },
-    "2": {
-        "type": "digital",
-        "name": "wavemeter"
-    },
-    "3": {
-        "type": "analog",
-        "name": "Analog staticline device 1"
+        "name": "Digital staticline device 1",
+        "hardware_type": "abstract",
+        "hardware_id": 1234,
+        "staticline_names": ["channel 1", "set value of ch 1"],
+        "staticline_config": [
+            {"type": "digital", "ch": 1},
+            {"type": "analog", "ch": 1}
+        ]
     }
-
 }

@@ -361,6 +361,10 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
+    except ValueError:
+        # TODO: Potentially incorporate with logger and except hook
+        pass
+
 
 def save_metadata(log, filename=None, directory=None, date_dir=False):
     """ Saves metadata stored in the logger

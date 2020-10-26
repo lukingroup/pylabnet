@@ -769,6 +769,8 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
         self.v = None
         self.sasha_aom = None
         self.toptica_aom = None
+        self.snspd_7 = None
+        self.snspd_8 = None
 
         super().__init__(*args, **kwargs)
 
@@ -892,13 +894,29 @@ class ErrorBarPlot(Dataset):
             child.update(**kwargs)
 
 
-class PhotonErrorBarPlot(ErrorBarPlot):
+# class PhotonErrorBarPlot(ErrorBarPlot):
+    # un_normalized = np.array([])
+    # total_events = 0
+    # reps=0
+
+    # def visualize(self, graph, **kwargs):
+
+    #     super().visualize(graph, **kwargs)
+    #     self.add_child(
+    #         name='Photon probabilities, log scale',
+    #         mapping=passthru,
+    #         data_type=Dataset,
+    #         window=kwargs['window']
+    #     )
+    #     self.children['Photon probabilities, log scale'].graph.getPlotItem().setLogMode(False, True)
+
+
+class PhotonErrorBarPlot(ErrorBarGraph):
     un_normalized = np.array([])
     total_events = 0
     reps=0
 
     def visualize(self, graph, **kwargs):
-
         super().visualize(graph, **kwargs)
         self.add_child(
             name='Photon probabilities, log scale',
@@ -907,6 +925,8 @@ class PhotonErrorBarPlot(ErrorBarPlot):
             window=kwargs['window']
         )
         self.children['Photon probabilities, log scale'].graph.getPlotItem().setLogMode(False, True)
+
+
 
 # Useful mappings
 

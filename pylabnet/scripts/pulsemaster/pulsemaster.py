@@ -420,6 +420,8 @@ class PulseMaster:
         # Get Data
         data = self.get_seq_var_dict()
 
+
+
         self.json_file_save(data)
 
     def get_seq_var_dict(self):

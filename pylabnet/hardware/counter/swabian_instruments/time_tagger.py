@@ -291,9 +291,9 @@ class Wrap:
 
         self._channels[channel_name] = TT.GatedChannel(
             tagger=self._tagger,
-            input_channel=click_ch,
-            gate_start_channel=gate_ch,
-            gate_stop_channel=gate_stop_ch
+            input_channel=self._get_channel(click_ch),
+            gate_start_channel=self._get_channel(gate_ch),
+            gate_stop_channel=self._get_channel(gate_stop_ch)
         )
         self.log.info(f'Created gated channel {channel_name}, '
                       f'click channel: {click_ch}, gate channel: {gate_ch}')

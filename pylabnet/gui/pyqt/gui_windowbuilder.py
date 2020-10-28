@@ -30,9 +30,7 @@ class GUIWindowFromConfig(QMainWindow):
     def unpack_config_file(self):
         block_num  = 0
 
-        for device in self.config.values():
-
-            device_name = device["name"]
+        for device_name, device in self.config.items():
 
             # Label for the device name
             label = QtWidgets.QLabel("  " + device_name + "  ", self)

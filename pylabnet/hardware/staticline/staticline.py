@@ -35,11 +35,11 @@ class Driver():
                 f"Compatible modules are: {registered_staticline_modules.keys()}")
 
         # Acquire the correct handler for the hardware type
-        hardware_handler = registered_staticline_modules[hardware_type]
+        HardwareHandler = registered_staticline_modules[hardware_type]
 
         # Instantiate hardware handler. The hardware_handler will handle any
         # calls to the staticline functions like up/down.
-        self.hardware_handler = hardware_handler(
+        self.hardware_handler = HardwareHandler(
             name=name, 
             log=self.log, 
             hardware_client=hardware_client, 

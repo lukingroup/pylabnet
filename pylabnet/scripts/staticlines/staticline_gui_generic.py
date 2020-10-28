@@ -42,7 +42,7 @@ class StaticLineGUIGeneric():
                 # This requires the hardware_type to match the device server 
                 # names as listed in server_req in the Launcher.
                 match = False 
-                for device_params in self.config.values():
+                for device_name, device_params in self.config.items():
                     
                     ### TODO: YQ: COMPATIBILITY CHECK (for configs that don't have ID's yet) ###
 
@@ -56,8 +56,6 @@ class StaticLineGUIGeneric():
                 if not match:
                     self.log.error(f"Hardware type {hardware_type}, ID = {device_id} has no matching entry in the config file.")
                     continue
-                
-                device_name = device_params['name']
 
                 # If the device name is duplicated, we ignore this hardware client.
                 if device_name not in self.staticlines:
@@ -94,16 +92,14 @@ class StaticLineGUIGeneric():
             return lambda: driver.set_value(text_widget['AIN'].text())
 
         # Iterate through all devices in the config file
-        for device in self.config.values():
+        for device_name, device_params in self.config.items():
 
-            device_name = device['name']
+            for staticline_idx in range(len(device_params["staticline_names"])):
 
-            for staticline_idx in range(len(device["staticline_names"])):
-
-                staticline_name = device["staticline_names"][staticline_idx]
+                staticline_name = device_params["staticline_names"][staticline_idx]
                 staticline_driver = self.staticlines[device_name][staticline_name]
 
-                staticline_configs = device["staticline_configs"][staticline_idx]
+                staticline_configs = device_params["staticline_configs"][staticline_idx]
                 staticline_type = staticline_configs["type"]
                 
                 widget = self.widgets[device_name][staticline_name]

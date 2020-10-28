@@ -123,8 +123,6 @@ class Launcher:
         # Connect to logger.
         self.logger = self._connect_to_logger()
 
-        self.logger.error(f"F\nF\nF\nF\n{self.args}\n")
-
         # Halt execution and wait for debugger connection if debug flag is up.
         if self.debug == 1:
             import ptvsd

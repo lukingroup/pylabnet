@@ -72,12 +72,17 @@ def main():
         log_ip = args['logip']
     else:
         log_ip = 'localhost'
+    if 'device_name' in args:
+        device_name = args['device_name']
+    else:
+        device_name = ""
     if 'device_id' in args:
         device_id = args['device_id']
     else:
         device_id = ""
 
-    # Instantiate logger
+    # Instantiate logger. This creates a client_data entry in the LogServer
+    # that is populated with the server name, port.
     server_logger = LogClient(
         host=log_ip,
         port=log_port,
@@ -120,7 +125,7 @@ def main():
             server_port = np.random.randint(1024, 49151)
             update_flag = True
         try:
-            mod_inst.launch(logger=server_logger, port=server_port, device_id=device_id, config=config)
+            mod_inst.launch(logger=server_logger, port=server_port, device_name=device_name, device_id=device_id, config=config)
             if update_flag:
                 server_logger.update_data(data=dict(port=server_port))
             tries = 10

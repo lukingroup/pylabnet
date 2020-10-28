@@ -316,7 +316,7 @@ class Launcher:
                         self._launch_new_gui(gui)
                     hide_console()
 
-    def _launch_new_server(self, module, device_id=""):
+    def _launch_new_server(self, module, device_name=None):
         """ Launches a new server
 
         :param module: (obj) reference to the module which can invoke the relevant server via module.launch()
@@ -325,13 +325,18 @@ class Launcher:
         connected = False
         timeout = 0
         host = socket.gethostbyname_ex(socket.gethostname())[2][0]
+        
+        if self.config is not None and device_name is not None:
+            device_id = self.config_dict[device_name]["device_id"]
+        else:
+            device_id = ""
 
         while not connected and timeout < 1000:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --device_id {} --debug {} --config {}'.format(
+                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --device_name {} --device_id {} --debug {} --config {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -340,6 +345,7 @@ class Launcher:
                     self.log_port,
                     server_port,
                     server,
+                    device_name,
                     device_id,
                     self.server_debug,
                     self.config
@@ -372,7 +378,7 @@ class Launcher:
                               f'\nPort: {server_port}')
             raise ConnectionRefusedError()
 
-    def _connect_to_server(self, module, host, port, device_id=""):
+    def _connect_to_server(self, module, host, port, device_name=None):
         """ Connects to a server and stores the client as an attribute, to be used in the main script(s)
 
         :param module: (object) module from which client can be instantiated using module.Client()
@@ -381,12 +387,17 @@ class Launcher:
         """
 
         server = module.__name__.split('.')[-1]
+        if self.config is not None and device_name is not None:
+            device_id = self.config_dict[device_name]["device_id"]
+        else:
+            device_id = ""
+
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
         try:
             self.clients[(server, device_id)] = module.Client(host=host, port=port)
         except ConnectionRefusedError:
             self.logger.warn('Failed to connect. Instantiating new server instead')
-            self._launch_new_server(module, device_id)
+            self._launch_new_server(module, device_name)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """
@@ -399,17 +410,17 @@ class Launcher:
             if self.config_dict is None:
                 device_configs = []
             else:
-                device_configs = self.config_dict.values()
+                device_configs = self.config_dict.items()
 
-            for dev_config in device_configs:
+            for device_name, device_config in device_configs:
                 # Ignore any devices in the config that don't have the same
                 # device type as the server we want to launch.
-                if (type(dev_config) != dict or 
-                    'hardware_type' not in dev_config or 
-                    dev_config['hardware_type'] != module_name):
+                if (type(device_config) != dict or 
+                    'hardware_type' not in device_config or 
+                    device_config['hardware_type'] != module_name):
                     continue
 
-                device_id = dev_config["device_id"]
+                device_id = device_config["device_id"]
                 matches = []
                 for connector in self.connectors.values():
 
@@ -423,12 +434,12 @@ class Launcher:
                 if num_matches == 0:
                     self.logger.info(f'No active servers matching {module_name}'
                                     ' were found. Instantiating a new server')
-                    self._launch_new_server(module, device_id)
+                    self._launch_new_server(module, device_name)
 
                 # If there is exactly 1 match, try to connect automatically
                 elif num_matches == 1 and self.auto_connect:
                     self.logger.info(f'Found exactly 1 match for {module_name}.')
-                    self._connect_to_server(module, host=matches[0].ip, port=matches[0].port, device_id=device_id)
+                    self._connect_to_server(module, host=matches[0].ip, port=matches[0].port, device_name=device_name)
 
                 # If there are multiple matches, force the user to choose in the launched console
                 else:
@@ -451,12 +462,12 @@ class Launcher:
                     # If the user's choice falls within a relevant GUI, attempt to connect.
                     try:
                         host, port = matches[use_index - 1].ip, matches[use_index - 1].port
-                        self._connect_to_server(module, host, port, device_id)
+                        self._connect_to_server(module, host, port, device_name)
 
                     # If the user's choice did not exist, just launch a new GUI
                     except IndexError:
                         self.logger.info('Launching new server')
-                        self._launch_new_server(module, device_id)
+                        self._launch_new_server(module, device_name)
                     hide_console()
 
     def _launch_scripts(self):

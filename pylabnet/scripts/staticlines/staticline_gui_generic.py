@@ -35,19 +35,37 @@ class StaticLineGUIGeneric():
         self.staticlines = {}
 
         if staticline_clients is not None:
-            for hardware_type, hardware_client in staticline_clients.items():
-                
+            for (hardware_type, device_id), hardware_client in staticline_clients.items():
+
                 # Find the device entry in the config file by matching the 
                 # hardware type with the clients in the client list.
                 # This requires the hardware_type to match the device server 
                 # names as listed in server_req in the Launcher.
-                # TODO: only works with 1 device per hardware_type.
+                match = False 
                 for device_params in self.config.values():
-                     if device_params['hardware_type'] == hardware_type:
-                         break
+                    
+                    ### TODO: YQ: COMPATIBILITY CHECK (for configs that don't have ID's yet) ###
+
+                    ### END COMPATIBILITY CHECK ###
+
+                    if (device_params['hardware_type'] == hardware_type) and (device_params['device_id'] == device_id):
+                        match = True
+                        break  
+                
+                # If no match in config file, we ignore this hardware client.
+                if not match:
+                    self.log.error(f"Hardware type {hardware_type}, ID = {device_id} has no matching entry in the config file.")
+                    continue
                 
                 device_name = device_params['name']
-                self.staticlines[device_name] = dict()
+
+                # If the device name is duplicated, we ignore this hardware client.
+                if device_name not in self.staticlines:
+                    self.staticlines[device_name] = dict()
+                else:
+                    self.log.error(f"Device name {device_name} has been matched to multiple hardware clients."
+                    "Subsequent matched hardware clients are ignored.")
+                    continue
 
                 # Iterate over all staticlines for that device and create a 
                 # driver instance for each line.

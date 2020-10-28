@@ -439,6 +439,10 @@ class Controller:
                 client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
             )
 
+            # Add device ID of client's corresponding hardware, if applicable 
+            if 'device_id' in self.client_data[client]:
+                bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
+
             # Add port of client's server, if applicable
             if 'port' in self.client_data[client]:
                 bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])

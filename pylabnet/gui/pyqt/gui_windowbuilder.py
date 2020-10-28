@@ -73,13 +73,13 @@ class GUIWindowFromConfig(QMainWindow):
 
     def make_digital_row(self, position=[0,0], device_name='', staticline_name=''):
         on_button = QtWidgets.QPushButton('I', self)
-        on_button.setStyleSheet("color: black;  background-color: #FF4040")
+        on_button.setStyleSheet("color: black;  background-color: #C1C1C1")
         on_button.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         self.widgets[device_name][staticline_name]["on"] = on_button
         self.blockgridLayout[position[0]].addWidget(on_button, position[1], 2)
         
         off_button = QtWidgets.QPushButton('O', self)
-        off_button.setStyleSheet("color: white;  background-color: #A4A4A4")
+        off_button.setStyleSheet("color: white;  background-color: #FF4040")
         off_button.setFont(QtGui.QFont("Arial", weight=QtGui.QFont.Bold))
         self.widgets[device_name][staticline_name]["off"] = off_button
         self.blockgridLayout[position[0]].addWidget(off_button, position[1], 3)
@@ -119,10 +119,17 @@ class GUIWindowFromConfig(QMainWindow):
 
         switch = ["on", "off"]
 
-        self.widgets[device_name][staticline_name][switch[mode]].setStyleSheet(
-            "color: black;  background-color: #FF4040")
-        self.widgets[device_name][staticline_name][switch[not mode]].setStyleSheet(
-            "color: white;  background-color: #A4A4A4")
+        if mode:
+            self.widgets[device_name][staticline_name]["on"].setStyleSheet(
+                "color: white;  background-color: #3CD070")
+            self.widgets[device_name][staticline_name]["off"].setStyleSheet(
+                "color: black;  background-color: #C1C1C1")
+
+        else:
+            self.widgets[device_name][staticline_name]["on"].setStyleSheet(
+                "color: black;  background-color: #C1C1C1")
+            self.widgets[device_name][staticline_name]["off"].setStyleSheet(
+                "color: white;  background-color: #FF4040")
 
     def upd_cur_val(self, device_name='', staticline_name=''):
         self.widgets[device_name][staticline_name]["current_val"].setText(

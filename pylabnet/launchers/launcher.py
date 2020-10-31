@@ -92,7 +92,6 @@ class Launcher:
         self.gui_req = gui_req
         self.auto_connect = auto_connect
         self.config = config
-        self.config_dict = load_config(config)
         self.params = params
         self.use_script_server = script_server
         if name is None:
@@ -122,6 +121,10 @@ class Launcher:
 
         # Connect to logger.
         self.logger = self._connect_to_logger()
+        if self.config is not None:
+            self.config_dict = load_config(config, logger=self.logger)
+        else:
+            self.config_dict = None
 
         # Halt execution and wait for debugger connection if debug flag is up.
         if self.debug == 1:
@@ -316,7 +319,7 @@ class Launcher:
                         self._launch_new_gui(gui)
                     hide_console()
 
-    def _launch_new_server(self, module, device_name=None):
+    def _launch_new_server(self, module, device_name=None, device_id=None):
         """ Launches a new server
 
         :param module: (obj) reference to the module which can invoke the relevant server via module.launch()
@@ -325,18 +328,13 @@ class Launcher:
         connected = False
         timeout = 0
         host = socket.gethostbyname_ex(socket.gethostname())[2][0]
-        
-        if self.config is not None and device_name is not None:
-            device_id = self.config_dict[device_name]["device_id"]
-        else:
-            device_id = ""
 
         while not connected and timeout < 1000:
             try:
                 server_port = np.random.randint(1, 9999)
                 server = module.__name__.split('.')[-1]
 
-                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --device_name {} --device_id {} --debug {} --config {}'.format(
+                cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {} --config {}'.format(
                     server+"_server",
                     time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
                     sys.executable,
@@ -345,12 +343,15 @@ class Launcher:
                     self.log_port,
                     server_port,
                     server,
-                    device_name,
-                    device_id,
                     self.server_debug,
                     self.config
                 )
 
+                if device_name is not None:
+                    cmd += f' --device_name {device_name}' 
+                if device_id is not None:
+                    cmd += f' --device_id {device_id}' 
+                    
                 subprocess.Popen(cmd, shell=True)
                 connected = True
             except ConnectionRefusedError:
@@ -378,7 +379,7 @@ class Launcher:
                               f'\nPort: {server_port}')
             raise ConnectionRefusedError()
 
-    def _connect_to_server(self, module, host, port, device_name=None):
+    def _connect_to_server(self, module, host, port, device_name=None, device_id=None):
         """ Connects to a server and stores the client as an attribute, to be used in the main script(s)
 
         :param module: (object) module from which client can be instantiated using module.Client()
@@ -387,88 +388,117 @@ class Launcher:
         """
 
         server = module.__name__.split('.')[-1]
-        if self.config is not None and device_name is not None:
-            device_id = self.config_dict[device_name]["device_id"]
-        else:
-            device_id = ""
 
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
         try:
             self.clients[(server, device_id)] = module.Client(host=host, port=port)
         except ConnectionRefusedError:
             self.logger.warn('Failed to connect. Instantiating new server instead')
-            self._launch_new_server(module, device_name)
+            self._launch_new_server(module, device_name, device_id)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """
 
         for module in self.server_req:
-
             module_name = module.__name__.split('.')[-1]
 
-            # List of devices that are specified in the config file
-            if self.config_dict is None:
-                device_configs = []
+            if self.config is None:
+                device_configs = {None : dict()} # Placeholder since we have no config file
             else:
-                device_configs = self.config_dict.items()
-
-            for device_name, device_config in device_configs:
-                # Ignore any devices in the config that don't have the same
-                # device type as the server we want to launch.
-                if (type(device_config) != dict or 
-                    'hardware_type' not in device_config or 
-                    device_config['hardware_type'] != module_name):
-                    continue
-
-                device_id = device_config["device_id"]
+                device_configs = self.config_dict
+                
+            # Compatibility for config files that don't have any device ID's
+            # First sweep through the config file to see if there exists any
+            # entry that specifies any device ID for this module.
+            device_id_exists = False
+            for device_name, device_config in device_configs.items():
+                if (type(device_config) == dict and 
+                    'hardware_type' in device_config and 
+                    device_config['hardware_type'] == module_name and
+                    "device_id" in device_config):
+                    device_id_exists = True
+                    break
+            
+            # Case with no ID / no config file
+            if not device_id_exists:   
                 matches = []
                 for connector in self.connectors.values():
-
-                    # If we find a matching server in name and ID, add it
-                    if (module_name+'_'+device_id+'_server' == connector.name) and (device_id == connector.device_id):
+                    # Add servers that have the correct name
+                    # TODO: should this be replaced with startswith() for cases with module_server2?
+                    if module_name+'_server' == connector.name:
                         matches.append(connector)
+                self._connect_matched_servers(matches, module, device_name=None, device_id=None)
+        
+            # If we have at least 1 device ID for this module
+            else:
+                # Iterate through the list of device configs, we connect to each
+                # valid one separately since they have different IDs.
+                for device_name, device_config in device_configs.items():
+                    matches = []
+                    
+                    # Ignore any configs that don't have the correct
+                    # device type or don't have IDs.
+                    if (type(device_config) != dict or
+                        "device_id" not in device_config or
+                        'hardware_type' not in device_config or 
+                        device_config['hardware_type'] != module_name):
+                        continue
 
-                num_matches = len(matches)
+                    device_id = device_config["device_id"]
+                    for connector in self.connectors.values():
+                        # Add servers that have the correct name and ID
+                        if (connector.name.startswith(module_name+'_server_')) and (device_id == connector.device_id):
+                            matches.append(connector)
 
-                # If there are no matches, launch and connect to the server manually
-                if num_matches == 0:
-                    self.logger.info(f'No active servers matching {module_name}'
-                                    ' were found. Instantiating a new server')
-                    self._launch_new_server(module, device_name)
+                    self._connect_matched_servers(matches, module, device_name, device_id)
+                
+                
+    def _connect_matched_servers(self, matches, module, device_name, device_id):
+        """ Connects to a list of servers that have been matched to a given device
+        module. """
 
-                # If there is exactly 1 match, try to connect automatically
-                elif num_matches == 1 and self.auto_connect:
-                    self.logger.info(f'Found exactly 1 match for {module_name}.')
-                    self._connect_to_server(module, host=matches[0].ip, port=matches[0].port, device_name=device_name)
+        num_matches = len(matches)
+        module_name = module.__name__.split('.')[-1]
 
-                # If there are multiple matches, force the user to choose in the launched console
-                else:
-                    show_console()
-                    msg_str = 'Found relevant server(s) already running.\n'
-                    self.logger.info(msg_str)
-                    print(msg_str)
-                    for index, match in enumerate(matches):
-                        msg_str = ('------------------------------------------\n'
-                                + '                    ({})                   \n'.format(index + 1)
-                                + match.summarize())
-                        print(msg_str)
-                        self.logger.info(msg_str)
-                    print('------------------------------------------\n\n'
-                        'Which server would you like to connect to?\n'
-                        'Please enter a choice from {} to {}.'.format(1, len(matches)))
-                    use_index = int(input('Entering any other value will launch a new server.\n\n>> '))
-                    self.logger.info(f'User chose ({use_index})')
+        # If there are no matches, launch and connect to the server manually
+        if num_matches == 0:
+            self.logger.info(f'No active servers matching module {module_name}_{device_name}' 
+                            ' were found. Instantiating a new server.')
+            self._launch_new_server(module, device_name, device_id)
 
-                    # If the user's choice falls within a relevant GUI, attempt to connect.
-                    try:
-                        host, port = matches[use_index - 1].ip, matches[use_index - 1].port
-                        self._connect_to_server(module, host, port, device_name)
+        # If there is exactly 1 match, try to connect automatically
+        elif num_matches == 1 and self.auto_connect:
+            self.logger.info(f'Found exactly 1 match for {module_name}.')
+            self._connect_to_server(module, matches[0].ip, matches[0].port, device_name, device_id)
 
-                    # If the user's choice did not exist, just launch a new GUI
-                    except IndexError:
-                        self.logger.info('Launching new server')
-                        self._launch_new_server(module, device_name)
-                    hide_console()
+        # If there are multiple matches, force the user to choose in the launched console
+        else:
+            show_console()
+            msg_str = 'Found relevant server(s) already running.\n'
+            self.logger.info(msg_str)
+            print(msg_str)
+            for index, match in enumerate(matches):
+                msg_str = ('------------------------------------------\n'
+                        + '                    ({})                   \n'.format(index + 1)
+                        + match.summarize())
+                print(msg_str)
+                self.logger.info(msg_str)
+            print('------------------------------------------\n\n'
+                'Which server would you like to connect to?\n'
+                'Please enter a choice from {} to {}.'.format(1, len(matches)))
+            use_index = int(input('Entering any other value will launch a new server.\n\n>> '))
+            self.logger.info(f'User chose ({use_index})')
+
+            # If the user's choice falls within a relevant GUI, attempt to connect.
+            try:
+                host, port = matches[use_index - 1].ip, matches[use_index - 1].port
+                self._connect_to_server(module, host, port, device_name, device_id)
+
+            # If the user's choice did not exist, just launch a new GUI
+            except IndexError:
+                self.logger.info('Launching new server')
+                self._launch_new_server(module, device_name, device_id)
+            hide_console()
 
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """

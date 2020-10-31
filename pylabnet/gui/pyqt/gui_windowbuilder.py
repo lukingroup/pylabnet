@@ -32,6 +32,10 @@ class GUIWindowFromConfig(QMainWindow):
 
         for device_name, device in self.config.items():
 
+            # Ignore non-device configs
+            if type(device) != dict:
+                continue
+
             # Label for the device name
             label = QtWidgets.QLabel("  " + device_name + "  ", self)
             label.setStyleSheet("color: black; background-color: #FADA5E")

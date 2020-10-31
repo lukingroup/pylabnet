@@ -75,23 +75,28 @@ def main():
     if 'device_name' in args:
         device_name = args['device_name']
     else:
-        device_name = ""
+        device_name = None
     if 'device_id' in args:
         device_id = args['device_id']
     else:
-        device_id = ""
+        device_id = None
 
+    if device_name is None:
+        logger_tag = server + '_server'
+    else:
+        logger_tag = server + '_server' + '_' + device_name
+    
     # Instantiate logger. This creates a client_data entry in the LogServer
     # that is populated with the server name, port.
     server_logger = LogClient(
         host=log_ip,
         port=log_port,
-        module_tag=server+'_'+device_id+'_server',
+        module_tag=logger_tag,
         server_port=server_port
     )
     # Add device ID of server to LogClient data dict
     server_logger.update_data(data=dict(device_id=device_id))
-
+    
     # Retrieve debug flag.
     debug = int(args['debug'])
 

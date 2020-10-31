@@ -2,6 +2,13 @@ import numpy as np
 from IPython.display import clear_output
 import itertools as it
 import pylabnet.hardware.spectrum_analyzer.agilent_e4405B as sa_hardware
+import time
+
+import pandas as pd
+import seaborn as sns
+import matplotlib
+import matplotlib.pyplot as plt
+from IPython.display import clear_output, display
 
 """Unnecessary code for instantiating array with desired guess parameters
 
@@ -57,10 +64,10 @@ class IQOptimizer(Optimizer):
 	"""
 
 	# Constants
-	CUSHION_PARAM = 2
+	CUSHION_PARAM = 10
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, num_points = 25, reopt = False,
+		self, mw_source, hd, sa, carrier, signal_freq, max_lower_sideband_pow = -40, max_carrier_pow = -40, num_points = 25, reopt = False,
 		param_guess = ([60, 0.85, 0.65, 0.005, 0.005]), phase_window = 20, q_window = 0.3, dc_i_window = 0.02,
 		dc_q_window = 0.02, plot_traces = True
 	):
@@ -132,6 +139,9 @@ class IQOptimizer(Optimizer):
 		self.phases = np.linspace(self.phase_min, self.phase_max, self.num_points)
 		self.qs = np.linspace(self.q_min, self.q_max, self.num_points)
 		self.lower_sideband_power = np.zeros((self.num_points, self.num_points))
+		self.opt_lower_sideband_pow = float("inf")
+		self.max_lower_sideband_pow = max_lower_sideband_pow
+		self.max_carrier_pow = max_carrier_pow
 
 		# Instantiate and set markers
 		self.upp_sb_marker = None
@@ -164,6 +174,7 @@ class IQOptimizer(Optimizer):
 		max_deviation = 1e6
 
 		for marker, target_freq in zip(markers, target_freqs):
+			time.sleep(1)
 			marker_freq = marker.read_freq()
 
 			#assert abs(marker_freq - target_freq) < max_deviation, f"{marker.name} has wrong frequecy: {marker_freq / 1e9} GHz"
@@ -177,16 +188,22 @@ class IQOptimizer(Optimizer):
 	def opt_lower_sideband(self):
 
 		# Rough sweep
-		# Instantiate variables
-
 		self._sweep_phase_amp_imbalance()
 		self._set_optimal_vals()
 
-		if self.reopt == False:
+		# Instantiate variables
+		q_max2=self.q_max
+		q_min2 = self.q_min
+		phase_max2 = self.phase_max
+		phase_min2 = self.phase_min
 
-			# Finer sweep over portion of phase-amplitude-imbalance space
-			q_cushion = self.CUSHION_PARAM*(self.q_max-self.q_min)/self.num_points
-			phase_cushion = self.CUSHION_PARAM*(self.phase_max-self.phase_min)/self.num_points
+		max_iterations = 3
+		num_iterations = 0
+
+		while self.opt_lower_sideband_pow > self.max_lower_sideband_pow and num_iterations < max_iterations:
+
+			q_cushion = np.abs(q_max2-q_min2)/self.CUSHION_PARAM
+			phase_cushion = np.abs(phase_max2-phase_min2)/self.CUSHION_PARAM
 
 			# Reset sweep window to zoom in on minimum
 			q_max2 = self.opt_q + q_cushion
@@ -201,6 +218,30 @@ class IQOptimizer(Optimizer):
 
 			self._sweep_phase_amp_imbalance()
 			self._set_optimal_vals()
+
+			num_iterations = num_iterations + 1
+			print(self.opt_lower_sideband_pow)
+			time.sleep(5)
+
+		# if self.reopt == False:
+
+		# 	# Finer sweep over portion of phase-amplitude-imbalance space
+		# 	q_cushion = self.CUSHION_PARAM*(self.q_max-self.q_min)/self.num_points
+		# 	phase_cushion = self.CUSHION_PARAM*(self.phase_max-self.phase_min)/self.num_points
+
+		# 	# Reset sweep window to zoom in on minimum
+		# 	q_max2 = self.opt_q + q_cushion
+		# 	q_min2 = self.opt_q - q_cushion
+		# 	phase_max2 = self.opt_phase + phase_cushion
+		# 	phase_min2 = self.opt_phase - phase_cushion
+
+		# 	# Instantiate variables
+		# 	self.phases = np.linspace(phase_min2, phase_max2, self.num_points)
+		# 	self.qs = np.linspace(q_min2, q_max2, self.num_points)
+		# 	self.lower_sideband_power = np.zeros((self.num_points, self.num_points))
+
+		# 	self._sweep_phase_amp_imbalance()
+		# 	self._set_optimal_vals()
 
 
 		if self.plot_traces == True:
@@ -288,14 +329,15 @@ class IQOptimizer(Optimizer):
 			# Read lower sideband power
 			self.lower_sideband_power[i,j] = self.lower_sb_marker.get_power()
 
-			print(f'{i/self.num_points * 50*2**(int(self.reopt == True))} % done')
-			clear_output(wait=True)
+			# print(f'{i/self.num_points * 50*2**(int(self.reopt == True))} % done')
+			# clear_output(wait=True)
 
 
 	def _set_optimal_vals(self):
 
 		self.opt_phase = self.phases[np.where(self.lower_sideband_power == np.amin(self.lower_sideband_power))[0][0]]
 		self.opt_q = self.qs[np.where(self.lower_sideband_power == np.amin(self.lower_sideband_power))[1][0]]
+		self.opt_lower_sideband_pow = np.amin(self.lower_sideband_power)
 
 		self.amp_i_opt = 2 * self.opt_q / (1 + self.opt_q) * self.a0
 		self.amp_q_opt = 2 * self.a0 / (1 + self.opt_q)
@@ -306,6 +348,15 @@ class IQOptimizer(Optimizer):
 
 		# Set optimal phaseshift
 		self.hd.setd('sines/0/phaseshift', self.opt_phase)
+
+		# Store results in dataframe for easy plotting
+		lower_sideband_data = pd.DataFrame(self.lower_sideband_power,
+        index=np.round(self.phases, 1),
+        columns=np.round(self.qs, 2))
+		fig1, ax1 = plt.subplots(figsize=(8, 5))
+		ax1 = sns.heatmap(lower_sideband_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'lower sideband power [dBm]'})
+		ax1.set(ylabel='Phase shift', xlabel='Amplitude imbalance')
+		print(self.opt_phase, self.opt_q)
 
 
 	def _sweep_dc_offsets(self):

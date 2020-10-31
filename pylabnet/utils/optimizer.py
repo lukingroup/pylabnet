@@ -74,6 +74,24 @@ class IQOptimizer(Optimizer):
 		:kwarg reopt: dictates whether we want to optimize or reoptimize
 		:kwarg plot_traces: user decides if displaying power vs. frequency plots is desired
 		"""
+		# Configure hd settings
+		# Assign oscillator 1 to sine output 2
+		hd.seti('sines/1/oscselect', 0)
+
+		# Set carrier frequency
+		hd.setd('oscs/0/freq', signal_freq)
+
+		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
+		hd.setd('sines/0/amplitudes/0', 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
+		hd.setd('sines/1/amplitudes/1', 2*param_guess[2]*(1/(1+param_guess[1])))
+
+		# Set phase offset between I and Q
+		hd.setd('sines/0/phaseshift', param_guess[0])
+
+		# Enable sine waves
+		hd.seti('sines/0/enables/0', 1)
+		hd.seti('sines/1/enables/1', 1)
+
 
 		self.mw_source = mw_source
 		self.hd = hd
@@ -87,7 +105,6 @@ class IQOptimizer(Optimizer):
 		#Set mw freq
 		self.mw_source.output_on()
 		self.mw_source.set_freq(self.carrier)
-
 
 		#Instantiate IQ Optimizer sweep window
 		self.phase_min = param_guess[0]-phase_window/2
@@ -127,21 +144,16 @@ class IQOptimizer(Optimizer):
 	def set_markers(self):
 
 		# Configure hd to enable outputs
-		self.hd.enable_output(0)
-		self.hd.enable_output(1)
+		# self.hd.enable_output(0)
+		# self.hd.enable_output(1)
 
 		# Center frequency at carrier frequency
 		self.sa.set_center_frequency(self.carrier)
 		self.sa.set_frequency_span(6*self.signal_freq)
-
-
 		# Marker for upper sideband.
 		self.upp_sb_marker = sa_hardware.E4405BMarker(self.sa,'Upper Sideband',1)
-		print(self.upp_sb_marker)
 		self.lower_sb_marker = sa_hardware.E4405BMarker(self.sa,'Lower Sideband',2)
-		print(self.lower_sb_marker)
 		self.carrier_marker = sa_hardware.E4405BMarker(self.sa,'Carrier',3)
-		print(self.carrier_marker)
 
 		self.upp_sb_marker.look_right()
 		self.lower_sb_marker.look_left()
@@ -154,7 +166,7 @@ class IQOptimizer(Optimizer):
 		for marker, target_freq in zip(markers, target_freqs):
 			marker_freq = marker.read_freq()
 
-			assert abs(marker_freq - target_freq) < max_deviation, f"{marker.name} has wrong frequecy: {marker_freq / 1e9} GHz"
+			#assert abs(marker_freq - target_freq) < max_deviation, f"{marker.name} has wrong frequecy: {marker_freq / 1e9} GHz"
 			print(f"Marker '{marker.name}' parked at {marker_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
 
 		if self.plot_traces == True:
@@ -230,9 +242,12 @@ class IQOptimizer(Optimizer):
 		)
 
 		#Introduce error so that markers can be reset
+		epsilon3 = 0.003
+		epsilon2 = 10
+		epsilon1 = 0.001
 		# Set optimal I and Q amplitudes
-		self.hd.setd('sines/0/amplitudes/0', self.amp_i_opt + epsilon)
-		self.hd.setd('sines/1/amplitudes/1', self.amp_q_opt + epsilon)
+		self.hd.setd('sines/0/amplitudes/0', self.amp_i_opt + epsilon1)
+		self.hd.setd('sines/1/amplitudes/1', self.amp_q_opt + epsilon1)
 
 		# Set optimal phaseshift
 		self.hd.setd('sines/0/phaseshift', self.opt_phase + epsilon2)

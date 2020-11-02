@@ -64,10 +64,10 @@ class IQOptimizer(Optimizer):
 	"""
 
 	# Constants
-	CUSHION_PARAM = 10
+	CUSHION_PARAM = 5
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, max_lower_sideband_pow = -40, max_carrier_pow = -40, num_points = 25, reopt = False,
+		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -50, max_carrier_pow = -50, num_points = 25, reopt = False,
 		param_guess = ([60, 0.85, 0.65, 0.005, 0.005]), phase_window = 20, q_window = 0.3, dc_i_window = 0.02,
 		dc_q_window = 0.02, plot_traces = True
 	):
@@ -106,6 +106,7 @@ class IQOptimizer(Optimizer):
 		self.carrier = carrier
 		self.signal_freq = signal_freq
 		self.num_points = num_points
+		self.max_iterations = max_iterations
 		self.reopt = reopt
 		self.plot_traces = plot_traces
 
@@ -132,6 +133,8 @@ class IQOptimizer(Optimizer):
 		self.opt_q = None
 		self.amp_q_opt = None
 		self.amp_i_opt = None
+		# self.dc_offset_i_opt = 0
+		# self.dc_offset_q_opt = 0
 		self.dc_offset_i_opt = None
 		self.dc_offset_q_opt = None
 
@@ -140,6 +143,7 @@ class IQOptimizer(Optimizer):
 		self.qs = np.linspace(self.q_min, self.q_max, self.num_points)
 		self.lower_sideband_power = np.zeros((self.num_points, self.num_points))
 		self.opt_lower_sideband_pow = float("inf")
+		self.opt_carrier_pow = float("inf")
 		self.max_lower_sideband_pow = max_lower_sideband_pow
 		self.max_carrier_pow = max_carrier_pow
 
@@ -197,10 +201,9 @@ class IQOptimizer(Optimizer):
 		phase_max2 = self.phase_max
 		phase_min2 = self.phase_min
 
-		max_iterations = 3
 		num_iterations = 0
 
-		while self.opt_lower_sideband_pow > self.max_lower_sideband_pow and num_iterations < max_iterations:
+		while self.opt_lower_sideband_pow > self.max_lower_sideband_pow and num_iterations < self.max_iterations:
 
 			q_cushion = np.abs(q_max2-q_min2)/self.CUSHION_PARAM
 			phase_cushion = np.abs(phase_max2-phase_min2)/self.CUSHION_PARAM
@@ -220,30 +223,9 @@ class IQOptimizer(Optimizer):
 			self._set_optimal_vals()
 
 			num_iterations = num_iterations + 1
-			print(self.opt_lower_sideband_pow)
-			time.sleep(5)
+			print('Lower sideband power is ' + str(self.opt_lower_sideband_pow) + ' dBm')
 
-		# if self.reopt == False:
-
-		# 	# Finer sweep over portion of phase-amplitude-imbalance space
-		# 	q_cushion = self.CUSHION_PARAM*(self.q_max-self.q_min)/self.num_points
-		# 	phase_cushion = self.CUSHION_PARAM*(self.phase_max-self.phase_min)/self.num_points
-
-		# 	# Reset sweep window to zoom in on minimum
-		# 	q_max2 = self.opt_q + q_cushion
-		# 	q_min2 = self.opt_q - q_cushion
-		# 	phase_max2 = self.opt_phase + phase_cushion
-		# 	phase_min2 = self.opt_phase - phase_cushion
-
-		# 	# Instantiate variables
-		# 	self.phases = np.linspace(phase_min2, phase_max2, self.num_points)
-		# 	self.qs = np.linspace(q_min2, q_max2, self.num_points)
-		# 	self.lower_sideband_power = np.zeros((self.num_points, self.num_points))
-
-		# 	self._sweep_phase_amp_imbalance()
-		# 	self._set_optimal_vals()
-
-
+		print('Number of iterations is ' + str(num_iterations))
 		if self.plot_traces == True:
 			self.sa.plot_trace()
 
@@ -251,15 +233,56 @@ class IQOptimizer(Optimizer):
 	def opt_carrier(self):
 
 		#DC offset sweep
-		carrier_power, voltages_i, voltages_q = self._sweep_dc_offsets()
+		# Sweep 2D parameter space of DC offsets and record carrier power
+		voltages_i = np.linspace(self.dc_min_i, self.dc_max_i, self.num_points)
+		voltages_q = np.linspace(self.dc_min_q, self.dc_max_q, self.num_points)
+		carrier_power = np.zeros((self.num_points, self.num_points))
 
-		# Retrieve optimal DC offsets
-		self.dc_offset_i_opt = voltages_i[np.where(carrier_power == np.amin(carrier_power))[0][0]]
-		self.dc_offset_q_opt = voltages_q[np.where(carrier_power == np.amin(carrier_power))[1][0]]
+		dc_max_i2 = self.dc_max_i
+		dc_min_i2 = self.dc_min_i
+		dc_max_q2 = self.dc_max_q
+		dc_min_q2 = self.dc_min_q
+
+		num_iterations = 0
+		while self.opt_carrier_pow > self.max_carrier_pow and num_iterations < self.max_iterations:
+
+			carrier_power, voltages_i, voltages_q = self._sweep_dc_offsets(voltages_i, voltages_q, carrier_power)
+
+			# Retrieve optimal DC offsets
+			self.dc_offset_i_opt = voltages_i[np.where(carrier_power == np.amin(carrier_power))[0][0]]
+			self.dc_offset_q_opt = voltages_q[np.where(carrier_power == np.amin(carrier_power))[1][0]]
+			self.opt_carrier_pow = np.amin(carrier_power)
+
+			i_cushion = np.abs(dc_max_i2-dc_min_i2)/self.CUSHION_PARAM
+			q_cushion = np.abs(dc_max_q2-dc_min_q2)/self.CUSHION_PARAM
+
+			# Reset sweep window to zoom in on minimum
+			dc_max_i2 = self.dc_offset_i_opt + i_cushion
+			dc_min_i2 = self.dc_offset_i_opt - i_cushion
+			dc_max_q2 = self.dc_offset_q_opt + q_cushion
+			dc_min_q2 = self.dc_offset_q_opt - q_cushion
+
+			# Reinstantiate variables
+			voltages_i = np.linspace(dc_min_i2, dc_max_i2, self.num_points)
+			voltages_q = np.linspace(dc_min_q2, dc_max_q2, self.num_points)
+
+			num_iterations = num_iterations + 1
+			#Store results in dataframe for easy plotting
+			dc_sweep_data = pd.DataFrame(carrier_power, columns=np.round(voltages_q/1e-3, 1), index=np.round(voltages_i/1e-3, 1))
+			fig, ax = plt.subplots(figsize=(8, 5))
+			ax = sns.heatmap(dc_sweep_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'carrier power [dBm]'})
+			ax.set(xlabel='DC offset Q signal [mV]', ylabel='DC offset I signal [mV]')
+
+			self.sa.plot_trace()
+
+			print(self.dc_offset_i_opt, self.dc_offset_q_opt, self.opt_carrier_pow)
 
 		# Set optimal offset
 		self.hd.setd('sigouts/0/offset', self.dc_offset_i_opt)
 		self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt)
+
+		print(self.dc_offset_i_opt, self.dc_offset_q_opt)
+		print('Number of iterations is ' + str(num_iterations))
 
 		if self.plot_traces == True:
 			self.sa.plot_trace()
@@ -268,6 +291,7 @@ class IQOptimizer(Optimizer):
 	def opt(self):
 
 		self.opt_lower_sideband()
+		time.sleep(5)
 		self.opt_carrier()
 
 
@@ -359,13 +383,7 @@ class IQOptimizer(Optimizer):
 		print(self.opt_phase, self.opt_q)
 
 
-	def _sweep_dc_offsets(self):
-
-		# Sweep 2D parameter space of DC offsets and record carrier power
-		voltages_i = np.linspace(self.dc_min_i, self.dc_max_i, self.num_points)
-		voltages_q = np.linspace(self.dc_min_q, self.dc_max_q, self.num_points)
-
-		carrier_power = np.zeros((self.num_points, self.num_points))
+	def _sweep_dc_offsets(self,voltages_i, voltages_q ,carrier_power):
 
 		for i, j in it.product(range(self.num_points), repeat=2):
 
@@ -377,7 +395,5 @@ class IQOptimizer(Optimizer):
 
 			# Read carrier power
 			carrier_power[i,j] = self.carrier_marker.get_power()
-			print(f'{i/self.num_points * 100} % done')
-			clear_output(wait=True)
 
 		return carrier_power, voltages_i, voltages_q

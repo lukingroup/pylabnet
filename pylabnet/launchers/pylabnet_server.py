@@ -41,9 +41,9 @@ def main():
                          'python launch_gui.py --logport 1234 --serverport 5678 --server servername')
     # If pylabnet.server is launched directly, it might not use a configs flag.
     if 'config' in args:
-        configs = args['config']
+        config = args['config']
     else:
-        configs = None
+        config = None
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
@@ -69,19 +69,35 @@ def main():
         server = files[server_index][:-3]
         hide_console()
     if 'logip' in args:
-        host = args['logip']
+        log_ip = args['logip']
     else:
-        host = 'localhost'
+        log_ip = 'localhost'
+    if 'device_name' in args:
+        device_name = args['device_name']
+    else:
+        device_name = None
+    if 'device_id' in args:
+        device_id = args['device_id']
+    else:
+        device_id = None
 
-    # Instantiate logger
+    if device_name is None:
+        logger_tag = server + '_server'
+    else:
+        logger_tag = server + '_server' + '_' + device_name
+
+    # Instantiate logger. This creates a client_data entry in the LogServer
+    # that is populated with the server name, port.
     server_logger = LogClient(
-        host=host,
+        host=log_ip,
         port=log_port,
-        module_tag=server+'_server',
+        module_tag=logger_tag,
         server_port=server_port
     )
+    # Add device ID of server to LogClient data dict
+    server_logger.update_data(data=dict(device_id=device_id))
 
-        # Retrieve debug flag.
+    # Retrieve debug flag.
     debug = int(args['debug'])
 
     # Halt execution and wait for debugger connection if debug flag is up.
@@ -114,7 +130,7 @@ def main():
             server_port = np.random.randint(1024, 49151)
             update_flag = True
         try:
-            mod_inst.launch(logger=server_logger, port=server_port, config=configs)
+            mod_inst.launch(logger=server_logger, port=server_port, device_name=device_name, device_id=device_id, config=config)
             if update_flag:
                 server_logger.update_data(data=dict(port=server_port))
             tries = 10
@@ -123,7 +139,7 @@ def main():
             tries += 1
             if tries == 10:
                 raise
-            
+
 
     hide_console()
 

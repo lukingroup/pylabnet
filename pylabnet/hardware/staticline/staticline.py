@@ -8,16 +8,16 @@ class Driver():
 
         This class is used in conjunction with hardware modules to send out digital
         signals ('voltage low' and 'voltage high'). This top level class is hardware agnostic.
-        With the use of a StaticLineHardwareHandler, this class will be associated 
+        With the use of a StaticLineHardwareHandler, this class will be associated
         with the necessary setup functions and output functions of a hardware module.
 
-        :name:(str) 
-            A easily recognizable name for this staticline, ideally referring to 
+        :name:(str)
+            A easily recognizable name for this staticline, ideally referring to
             the device being controlled by it, e.g. 'Shutter 1'.
         :logger: (object)
             An instance of a LogClient.
-        :hardware_client: (object) 
-            An instance of a hardware Client. 
+        :hardware_client: (object)
+            An instance of a hardware Client.
         :hardware_type: (str)
             Name of the hardware to be controlled, naming is determined by the
             device server name.
@@ -35,14 +35,14 @@ class Driver():
                 f"Compatible modules are: {registered_staticline_modules.keys()}")
 
         # Acquire the correct handler for the hardware type
-        hardware_handler = registered_staticline_modules[hardware_type]
+        HardwareHandler = registered_staticline_modules[hardware_type]
 
         # Instantiate hardware handler. The hardware_handler will handle any
         # calls to the staticline functions like up/down.
-        self.hardware_handler = hardware_handler(
-            name=name, 
-            log=self.log, 
-            hardware_client=hardware_client, 
+        self.hardware_handler = HardwareHandler(
+            name=name,
+            log=self.log,
+            hardware_client=hardware_client,
             config=config
         )
 

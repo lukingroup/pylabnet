@@ -163,7 +163,7 @@ def main():
     """Main function for debugging. """
 
     staticline_gui = StaticLineGUIGeneric(
-        config='test_config_sl',
+        config='staticline_config',
     )
     staticline_gui.run()
 

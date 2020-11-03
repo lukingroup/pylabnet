@@ -184,6 +184,7 @@ class Launcher:
             # Check if there is a port for this client, instantiate connector if so
             port_name = 'port{}'.format(client_index + 1)
             client_name = self.args['client{}'.format(client_index+1)]
+
             try:
                 self.connectors[client_name] = Connector(
                             name=client_name,

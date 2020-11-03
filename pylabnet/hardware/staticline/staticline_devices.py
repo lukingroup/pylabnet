@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pylabnet.utils.helper_methods import load_config
 
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
@@ -75,7 +76,10 @@ class HDAWG(StaticLineHardwareHandler):
         '''
 
         # Retrieve arguments from keyword argument dictionary.
-        DIO_bit = self.config['DIO_bit']
+
+        assignment_dict = load_config('dio_assignment_global')
+
+        DIO_bit = assignment_dict[self.config['bit_name']]
 
         # Drive 8-bit bus containing DIO_bit to be toggled.
         # Note that the buses are enabled by using the decimal equivalent
@@ -138,14 +142,22 @@ class NiDaqMx(StaticLineHardwareHandler):
 
         # Register up/down function.
         ao_output = self.config['ao_output']
+
+        #Save the voltage in teh hardware client to allow it to be shared between multiple Staticline Objects
+        #This probably isn't the cleanest way to do this, its a bit hacky, in future should add an extended
+        #staticline type "both" that combines analog and digital control
+        self.hardware_client.up_votlage = up_voltage
+        self.hardware_client.down_voltage =  down_voltage
+
         self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, up_voltage)
         self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, down_voltage)
+        self.set_value = lambda value:self.hardware_client.set_ao_voltage(ao_output, value)
 
         # Set voltage to down.
         self.down()
 
         # Log successfull setup.
-        self.log.info(f"NiDaq {self.hardware_client.dev} output {ao_output} successfully assigned to staticline {self.name}.")
+        self.log.info(f"NiDaq output {ao_output} successfully assigned to staticline {self.name}.")
 
 class Toptica(StaticLineHardwareHandler):
 
@@ -173,7 +185,7 @@ class AbstractDevice(StaticLineHardwareHandler):
 
 registered_staticline_modules = {
     'zi_hdawg':  HDAWG,
-    'nidaqmx_card': NiDaqMx,
+    'nidaqmx_green': NiDaqMx,
     'toptica': Toptica,
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice

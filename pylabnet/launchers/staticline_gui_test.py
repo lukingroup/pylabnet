@@ -11,7 +11,7 @@ def main():
         server_req=[zi_hdawg],
         gui_req=[None],
         params=[None],
-        config='staticline_config'
+        config='test_config_sl'
     )
     launcher.launch()
 

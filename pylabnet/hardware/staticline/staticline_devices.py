@@ -143,10 +143,10 @@ class NiDaqMx(StaticLineHardwareHandler):
         # Register up/down function.
         ao_output = self.config['ao_output']
 
-        #Save the voltage in teh hardware client to allow it to be shared between multiple Staticline Objects
+        #Save the voltage in the hardware client to allow it to be shared between multiple Staticline Objects
         #This probably isn't the cleanest way to do this, its a bit hacky, in future should add an extended
         #staticline type "both" that combines analog and digital control
-        self.hardware_client.up_votlage = up_voltage
+        self.hardware_client.up_voltage = up_voltage
         self.hardware_client.down_voltage =  down_voltage
 
         self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, up_voltage)

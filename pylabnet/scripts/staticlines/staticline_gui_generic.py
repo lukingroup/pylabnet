@@ -108,20 +108,28 @@ class StaticLineGUIGeneric():
                 staticline_configs = device_params["staticline_configs"][staticline_idx]
                 staticline_type = staticline_configs["type"]
 
-                widget = self.widgets[device_name][staticline_name]
-
                 # Digital: Have an up and down button
                 if staticline_type == 'digital':
+                    widget = self.widgets[device_name][staticline_name]
                     widget['on'].clicked.connect(staticline_driver.up)
                     widget['off'].clicked.connect(staticline_driver.down)
 
                 # Analog: "Apply" does something based on the text field value
                 elif staticline_type == 'analog':
+                    widget = self.widgets[device_name][staticline_name]
                     # Cannot use a lambda directly because this would lead to
                     # the values of staticline_driver and widget being referenced
                     # only at time of button click.
                     widget['apply'].clicked.connect(
                         set_value_fn(staticline_driver, widget))
+                # Have both types of buttons
+                elif staticline_type == 'adjustable_digital':
+                    analog_widget = self.widgets[device_name][staticline_name+"_analog"]
+                    digital_widget = self.widgets[device_name][staticline_name+"_digital"]
+                    digital_widget['on'].clicked.connect(staticline_driver.up)
+                    digital_widget['off'].clicked.connect(staticline_driver.down)
+                    analog_widget['apply'].clicked.connect(
+                        set_value_fn(staticline_driver, analog_widget))
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
                                     'Should be analog or digital.')

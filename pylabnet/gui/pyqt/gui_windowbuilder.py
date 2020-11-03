@@ -59,13 +59,19 @@ class GUIWindowFromConfig(QMainWindow):
                 label.setStyleSheet("color: white;")
                 self.blockgridLayout[block_num].addWidget(label, row_num, 0)
 
-                self.widgets[device_name][staticline_name] = dict()
 
                 # Create the appropriate buttons for that device
                 if staticline_type == "digital":
+                    self.widgets[device_name][staticline_name] = dict()
                     self.make_digital_row(position=[block_num, row_num], device_name=device_name, staticline_name=staticline_name)
                 elif staticline_type == "analog":
+                    self.widgets[device_name][staticline_name] = dict()
                     self.make_analog_row(position=[block_num, row_num], device_name=device_name, staticline_name=staticline_name)
+                elif staticline_type == "adjustable_digital":
+                    self.widgets[device_name][staticline_name + "_analog"] = dict()
+                    self.widgets[device_name][staticline_name + "_digital"] = dict()
+                    self.make_adjustable_digital_row(position=[block_num, row_num], device_name=device_name, staticline_name=staticline_name)
+                    row_num += 1 # Advance by 1 here so that overall it will advance by 2
                 else:
                     continue # TODO: Print error message?
             
@@ -115,11 +121,14 @@ class GUIWindowFromConfig(QMainWindow):
         self.widgets[device_name][staticline_name]["apply"].clicked.connect(lambda:
             self.upd_cur_val(device_name=device_name, staticline_name=staticline_name))
 
+    def make_adjustable_digital_row(self, position=[0,0], device_name='', staticline_name=''):
+        block_num, row_num = position
+        self.make_analog_row([block_num, row_num], device_name, staticline_name + "_analog")
+        self.make_digital_row([block_num, row_num+1], device_name, staticline_name + "_digital")
+
     def enable_buttons(self, device_name='', staticline_name='', mode=True):
         self.widgets[device_name][staticline_name]["off"].setEnabled(mode)
         self.widgets[device_name][staticline_name]["on"].setEnabled(not mode)
-
-        switch = ["on", "off"]
 
         if mode:
             self.widgets[device_name][staticline_name]["on"].setStyleSheet(
@@ -132,6 +141,7 @@ class GUIWindowFromConfig(QMainWindow):
                 "color: black;  background-color: #C1C1C1")
             self.widgets[device_name][staticline_name]["off"].setStyleSheet(
                 "color: white;  background-color: #FF4040")
+
 
     def upd_cur_val(self, device_name='', staticline_name=''):
         self.widgets[device_name][staticline_name]["current_val"].setText(

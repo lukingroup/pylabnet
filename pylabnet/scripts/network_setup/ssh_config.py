@@ -16,6 +16,9 @@ def launch(**kwargs):
     hosts = load_config(kwargs['config'], logger=kwargs['logger'])['hosts']
 
     for host in hosts:
+        logger.info(f"Will connect to {host}")
+
+    for host in hosts:
 
         # Initiate SSH connection
         hostname = host['hostname']
@@ -48,6 +51,8 @@ def launch(**kwargs):
         for server in servers:
 
             servername = server['servername']
+            logger.info(f"Trying to connect to {servername} on {hostname}.")
+
 
             try:
                 disable = bool(server['disable'])

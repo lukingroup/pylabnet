@@ -399,6 +399,11 @@ class WlmMonitor:
             channel_list.append(channel.number)
         return channel_list
 
+    def get_wavelength(self, channel):
+        # Index of channel
+        physical_channel = self.channels[self._get_channels().index(channel)]
+        return self.wlm_client.get_wavelength(physical_channel.number)
+
 
 class Service(ServiceBase):
     """ A service to enable external updating of WlmMonitor parameters """
@@ -433,6 +438,9 @@ class Service(ServiceBase):
     def exposed_go_to(self, channel, value, step_size, hold_time):
         return self._module.go_to(channel, value, step_size, hold_time)
 
+    def exposed_get_wavelength(self, channel):
+        return self._module.get_wavelength(channel)
+
 
 class Client(ClientBase):
 
@@ -440,6 +448,9 @@ class Client(ClientBase):
 
         params_pickle = pickle.dumps(params)
         return self._service.exposed_update_parameters(params_pickle)
+
+    def get_wavelength(self, channel):
+        return self._service.exposed_get_wavelength(channel)
 
     def clear_channel(self, channel):
         return self._service.exposed_clear_channel(channel)

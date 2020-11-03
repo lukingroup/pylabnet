@@ -384,6 +384,8 @@ def save_metadata(log, filename=None, directory=None, date_dir=False):
             json.dump(log.get_metadata(), outfile, indent=4)
         except TypeError:
             log.warn('Did not save metadata')
+        except OSError:
+            log.warn('Did not save metadata')
 
 
 def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):

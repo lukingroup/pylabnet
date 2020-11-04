@@ -13,7 +13,7 @@ def main():
         server_req=[zi_hdawg, nidaqmx_green, dio_breakout],
         gui_req=[None],
         params=[None],
-        config='test_config_sl'
+        config='sl_config'
     )
     launcher.launch()
 

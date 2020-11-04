@@ -84,6 +84,11 @@ class StaticLineGUIGeneric():
                         config=device_params["staticline_configs"][staticline_idx]
                     )
 
+                    #If it has an initial default value, set that initially using set_value command
+                    if "default" in device_params["staticline_configs"][staticline_idx]:
+                        defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
+                        self.staticlines[device_name][staticline_name].set_value(defaultValue)
+
     def initialize_buttons(self):
         """Binds the function of each button of each device to the functions
         set up by each the device's staticline driver.
@@ -120,8 +125,11 @@ class StaticLineGUIGeneric():
                     # Cannot use a lambda directly because this would lead to
                     # the values of staticline_driver and widget being referenced
                     # only at time of button click.
-                    widget['apply'].clicked.connect(
-                        set_value_fn(staticline_driver, widget))
+                    widget['apply'].clicked.connect(set_value_fn(staticline_driver, widget))
+                    if "default" in staticline_configs:
+                        #set initial text to initial value specified in config file
+                        widget['AIN'].setText(str(staticline_configs["default"]))
+
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
                                     'Should be analog or digital.')

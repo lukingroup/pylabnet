@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pylabnet.utils.helper_methods import load_config
+from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
@@ -159,6 +160,22 @@ class NiDaqMx(StaticLineHardwareHandler):
         # Log successfull setup.
         self.log.info(f"NiDaq output {ao_output} successfully assigned to staticline {self.name}.")
 
+class DioBreakout(StaticLineHardwareHandler):
+    def setup(self):
+        assignment_dict = load_config('dio_assignment_global')
+
+        DIO_bit = assignment_dict[self.config['bit_name']]
+        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit)
+        self.isHighVoltage = self.config['is_high_volt']
+
+
+    def set_value(self, value):
+        if self.isHighVoltage:
+            self.hardware_client.set_high_voltage(self.board, self.channel, value)
+        else:
+            self.hardware_client.set_low_voltage(self.board, self.channel, value)
+
+
 class Toptica(StaticLineHardwareHandler):
 
     def setup(self):
@@ -186,6 +203,7 @@ class AbstractDevice(StaticLineHardwareHandler):
 registered_staticline_modules = {
     'zi_hdawg':  HDAWG,
     'nidaqmx_green': NiDaqMx,
+    'dio_breakout': DioBreakout,
     'toptica': Toptica,
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice

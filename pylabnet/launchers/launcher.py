@@ -185,12 +185,20 @@ class Launcher:
             port_name = 'port{}'.format(client_index + 1)
             client_name = self.args['client{}'.format(client_index+1)]
 
+
+            #First see if there is a device id
+            try:
+                device_id = self.args['device_id{}'.format(client_index+1)]
+            except KeyError:
+                #If no device_id (likely due to a wrong branch incompatibility issue, use the default device_id)
+                device_id = None
+                self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
             try:
                 self.connectors[client_name] = Connector(
                             name=client_name,
                             ip=self.args['ip{}'.format(client_index+1)],
                             port=self.args[port_name],
-                            device_id=self.args['device_id{}'.format(client_index+1)]
+                            device_id=device_id
                         )
             except KeyError:
                 pass

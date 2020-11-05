@@ -142,23 +142,20 @@ class NiDaqMx(StaticLineHardwareHandler):
         ao_output = self.config['ao_output']
 
         # Register up/down function.
-        ao_output = self.config['ao_output']
+        self.up_voltage = up_voltage
+        self.down_voltage = down_voltage
 
-        #Save the voltage in the hardware client to allow it to be shared between multiple Staticline Objects
-        #This probably isn't the cleanest way to do this, its a bit hacky, in future should add an extended
-        #staticline type "both" that combines analog and digital control
-        self.hardware_client.up_voltage = up_voltage
-        self.hardware_client.down_voltage =  down_voltage
-
-        self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, up_voltage)
-        self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, down_voltage)
-        self.set_value = lambda value:self.hardware_client.set_ao_voltage(ao_output, value)
+        self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, self.up_voltage)
+        self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, self.down_voltage)
 
         # Set voltage to down.
         self.down()
 
         # Log successfull setup.
         self.log.info(f"NiDaq output {ao_output} successfully assigned to staticline {self.name}.")
+
+    def set_value(self, value):
+        self.up_voltage = value
 
 class DioBreakout(StaticLineHardwareHandler):
     def setup(self):

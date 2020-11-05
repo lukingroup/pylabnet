@@ -127,6 +127,12 @@ class StaticLineGUIGeneric():
                     # only at time of button click.
                     widget['apply'].clicked.connect(
                         set_value_fn(staticline_driver, widget))
+
+                    #Set text of analog to default value
+                    if "default" in staticline_configs:
+                        #set initial text to initial value specified in config file
+                        widget['AIN'].setText(str(staticline_configs["default"]))
+
                 # Have both types of buttons
                 elif staticline_type == 'adjustable_digital':
                     analog_widget = self.widgets[device_name][staticline_name+"_analog"]
@@ -135,6 +141,11 @@ class StaticLineGUIGeneric():
                     digital_widget['off'].clicked.connect(staticline_driver.down)
                     analog_widget['apply'].clicked.connect(
                         set_value_fn(staticline_driver, analog_widget))
+
+                    #Set text of analog to default value
+                    if "default" in staticline_configs:
+                        #set initial text to initial value specified in config file
+                        analog_widget['AIN'].setText(str(staticline_configs["default"]))
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
                                     'Should be analog or digital.')

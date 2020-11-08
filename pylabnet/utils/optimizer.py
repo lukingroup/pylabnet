@@ -297,41 +297,41 @@ class IQOptimizer(Optimizer):
 		print('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
 		print('Carrier power is ' + str(self.carrier_marker.get_power()) + ' dBm')
 
-	def initialize_reopt_params(
-		self, reopt = True, phase_window = 10, q_window = 0.2, dc_i_window = 0.01, dc_q_window = 0.01
-	):
-		self.param_guess = (
-			[self.opt_phase,
-			self.opt_q,
-			(self.amp_q_opt*self.amp_i_opt) / 2,
-			self.dc_offset_i_opt,
-			self.dc_offset_q_opt]
-		)
+	# def initialize_reopt_params(
+	# 	self, reopt = True, phase_window = 10, q_window = 0.2, dc_i_window = 0.01, dc_q_window = 0.01
+	# ):
+	# 	self.param_guess = (
+	# 		[self.opt_phase,
+	# 		self.opt_q,
+	# 		(self.amp_q_opt*self.amp_i_opt) / 2,
+	# 		self.dc_offset_i_opt,
+	# 		self.dc_offset_q_opt]
+	# 	)
 
-		#Introduce error so that markers can be reset
-		epsilon3 = 0.003
-		epsilon2 = 10
-		epsilon1 = 0.001
-		# Set optimal I and Q amplitudes
-		self.hd.setd('sines/0/amplitudes/0', self.amp_i_opt + epsilon1)
-		self.hd.setd('sines/1/amplitudes/1', self.amp_q_opt + epsilon1)
+		# #Introduce error so that markers can be reset
+		# epsilon3 = 0.003
+		# epsilon2 = 10
+		# epsilon1 = 0.001
+		# # Set optimal I and Q amplitudes
+		# self.hd.setd('sines/0/amplitudes/0', self.amp_i_opt + epsilon1)
+		# self.hd.setd('sines/1/amplitudes/1', self.amp_q_opt + epsilon1)
 
-		# Set optimal phaseshift
-		self.hd.setd('sines/0/phaseshift', self.opt_phase + epsilon2)
+		# # Set optimal phaseshift
+		# self.hd.setd('sines/0/phaseshift', self.opt_phase + epsilon2)
 
-		# Set I DC-offset
-		self.hd.setd('sigouts/0/offset', self.dc_offset_i_opt + epsilon3)
+		# # Set I DC-offset
+		# self.hd.setd('sigouts/0/offset', self.dc_offset_i_opt + epsilon3)
 
-		# Set Q DC-offset
-		self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt + epsilon3)
+		# # Set Q DC-offset
+		# self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt + epsilon3)
 
-		self.reopt = reopt
-		self.phase_window = phase_window
-		self.q_window =q_window
-		self.dc_i_window = dc_i_window
-		self.dc_q_window = dc_q_window
+		# self.reopt = reopt
+		# self.phase_window = phase_window
+		# self.q_window =q_window
+		# self.dc_i_window = dc_i_window
+		# self.dc_q_window = dc_q_window
 
-		self.set_markers()
+		# self.set_markers()
 
 
 	def _sweep_phase_amp_imbalance(self):

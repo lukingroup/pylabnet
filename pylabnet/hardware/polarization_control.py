@@ -62,35 +62,15 @@ class MPC320:
             else:
                 print("a problem occured when trying to connect to device")
 
-            
-
-            #serialNo = _wtoi(argv[1])
-            #testSerialNo =  "A= %d\n, B = %s\n, " % (testSerialNoSize, serialNo)
-            #print(testSerialNo)
-
-            #get MPCx20 serial numbers
-                
-            ctypes.c_char = searchContext
-            #for sure somthing else in left side 
-            #ctypes.c_char_p = "A= %d\n, B = %s\n, " % (serialNos, &searchContext)
-            #searchContext = ctypes.c_char_p
-            #p = ctypes.c_char_p 
-            #p ="A= %d\n, B = %s\n, " % (serialNos, searchContext)
-
-            
-                
-           
-            
-                
-
-
-            serial_number = ctypes.wintypse.DWORd /  ctypes.c_char_p 
+            close = self._polarizationdll.TLI_MPC_Close(ctypes.POINTER(self._TLI_DeviceInfo.serialNo)
+            if (close == 0):
+                print("Disconnected succesfully to device")
+            else:
+                print("a problem occured when trying to disconnect device")
 
 
 def _configure_functions(self):
         """ Defines arguments and results for c functions """
-
-
 
              self._polarizationdll.TLI_BuildDeviceList()
              self._polarizationdll.TLI_GetDeviceListSize.restype = ctype.c_short

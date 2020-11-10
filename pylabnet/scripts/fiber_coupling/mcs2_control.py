@@ -136,13 +136,13 @@ class Controller:
         if self.lock_status[stack]:
             self.lock_status[stack] = False
             self.widgets['lock_button'][stack].setStyleSheet(
-                'background-color:green'
+                'background-color:rgb(100,0,0)'
             )
             self.widgets['lock_button'][stack].setText('Lock')
         else:
             self.lock_status[stack] = True
             self.widgets['lock_button'][stack].setStyleSheet(
-                'background-color:red'
+                'background-color:rgb(0,100,0)'
             )
             self.widgets['lock_button'][stack].setText('Unlock')
 
@@ -177,10 +177,12 @@ class Controller:
 
             if self.pos.is_moving(channel):
 
-                self.widgets['is_moving'][channel].setChecked(True)
                 while self.pos.is_moving(channel):
+                    self.widgets['is_moving'][channel].setCheckable(True)
+                    self.widgets['is_moving'][channel].setChecked(True)
                     self.gui.force_update()
                 self.widgets['is_moving'][channel].setChecked(False)
+                self.widgets['is_moving'][channel].setCheckable(False)
 
             self.widgets['step_left'][channel].setStyleSheet(
                 'background-color:black'
@@ -206,10 +208,12 @@ class Controller:
 
             if self.pos.is_moving(channel):
 
-                self.widgets['is_moving'][channel].setChecked(True)
                 while self.pos.is_moving(channel):
+                    self.widgets['is_moving'][channel].setCheckable(True)
+                    self.widgets['is_moving'][channel].setChecked(True)
                     self.gui.force_update()
                 self.widgets['is_moving'][channel].setChecked(False)
+                self.widgets['is_moving'][channel].setCheckable(False)
 
             self.widgets['step_right'][channel].setStyleSheet(
                 'background-color:black'
@@ -228,9 +232,11 @@ class Controller:
                 self.pos.move(channel, backward=True)
 
                 while self.pos.is_moving(channel):
+                    self.widgets['is_moving'][channel].setCheckable(True)
                     self.widgets['is_moving'][channel].setChecked(True)
                     self.gui.force_update()
                 self.widgets['is_moving'][channel].setChecked(False)
+                self.widgets['is_moving'][channel].setCheckable(False)
 
                 if not self.widgets['walk_left'][channel].isDown():
                     self.widgets['walk_left'][channel].setStyleSheet(
@@ -250,9 +256,11 @@ class Controller:
                 self.pos.move(channel, backward=True)
 
                 while self.pos.is_moving(channel):
+                    self.widgets['is_moving'][channel].setCheckable(True)
                     self.widgets['is_moving'][channel].setChecked(True)
                     self.gui.force_update()
                 self.widgets['is_moving'][channel].setChecked(False)
+                self.widgets['is_moving'][channel].setCheckable(False)
 
                 if not self.widgets['walk_right'][channel].isDown():
                     self.widgets['walk_right'][channel].setStyleSheet(
@@ -279,12 +287,12 @@ class Controller:
             self.pos.set_voltage(channel, voltage)
 
             if self.pos.is_moving(channel):
-                self.widgets['is_moving'][channel].setChecked(True)
-
                 while self.pos.is_moving(channel):
+                    self.widgets['is_moving'][channel].setCheckable(True)
+                    self.widgets['is_moving'][channel].setChecked(True)
                     self.gui.force_update()
-
                 self.widgets['is_moving'][channel].setChecked(False)
+                self.widgets['is_moving'][channel].setCheckable(False)
     
     def _setup_gui(self):
         """ Configures what all buttons do """

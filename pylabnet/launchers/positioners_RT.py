@@ -9,7 +9,7 @@ def main():
     launcher = Launcher(
         script=[mcs2_control],
         server_req=[mcs2],
-        gui_req=[],
+        gui_req=[None],
         params=[None],
         config='positioners_RT'
     )

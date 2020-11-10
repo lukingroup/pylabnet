@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import socket
+import copy
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
@@ -40,11 +41,7 @@ class Controller:
         )
         self.gui.apply_stylesheet()
 
-        self.widgets = get_gui_widgets(**self.WIDGET_DICT)
-        # Unpack all widgets
-        # (self.step_left, self.step_right, self.walk_left, self.walk_right,
-        #  self.n_steps, self.is_moving, self.amplitude, self.frequency,
-        #  self.velocity, self.voltage, self.lock_button) = generate_widgets(self.WIDGET_DICT)
+        self.widgets = get_gui_widgets(self.gui, **self.WIDGET_DICT)
         self.save_params = generate_widgets(dict(
             n_steps=self.NUM_CHANNELS, amplitude=self.NUM_CHANNELS, frequency=self.NUM_CHANNELS, velocity=self.NUM_CHANNELS
         ))
@@ -58,7 +55,7 @@ class Controller:
         self.config=config
         self.lock_status = [False]*int(self.NUM_CHANNELS/3)
         self.released = [False]*self.NUM_CHANNELS
-        self.widgets['config_label'].setText(self.config)
+        self.gui.config_label.setText(self.config)
 
         # Configure all button and parameter updates
         self._setup_gui()
@@ -104,9 +101,9 @@ class Controller:
     def load_settings(self):
         """ Loads settings from configuration """
         self.gui.load_gui(
-                self.gui.get_text('config_label'),
-                logger=self.log
-            )
+            self.gui.config_label.text(),
+            logger=self.log
+        )
 
     # Technical methods
 
@@ -133,7 +130,7 @@ class Controller:
             scalars=scalars
         )
 
-    def _lock_stack(self, stack):
+    def _lock_stack(self, stack: int):
         """ Locks/unlocks a particular stack"""
 
         if self.lock_status[stack]:
@@ -149,7 +146,7 @@ class Controller:
             )
             self.widgets['lock_button'][stack].setText('Unlock')
 
-    def _is_axis_locked(self, channel):
+    def _is_axis_locked(self, channel: int):
         """ Checks if an axis is locked and returns boolean
 
         :param channel: (int) axis to check
@@ -162,7 +159,7 @@ class Controller:
 
         return locked
     
-    def _step_left(self, channel):
+    def _step_left(self, channel: int):
         """ Steps a particular channel if unlocked
 
         :param channel: (int) channel to step
@@ -189,7 +186,7 @@ class Controller:
                 'background-color:black'
             )
     
-    def _step_right(self, channel):
+    def _step_right(self, channel: int):
         """ Steps a particular channel if unlocked
 
         :param channel: (int) channel to step
@@ -216,12 +213,12 @@ class Controller:
                 'background-color:black'
             )
 
-    def _walk_left(self, channel):
+    def _walk_left(self, channel: int):
 
         if not self._is_axis_locked(channel):
 
             if not self.pos.is_moving(channel):
-                self.widgets['walk_left'].setStyleSheet(
+                self.widgets['walk_left'][channel].setStyleSheet(
                     'background-color:red'
                 )
                 self.pos.move(channel, backward=True)
@@ -232,16 +229,16 @@ class Controller:
                 self.widgets['is_moving'][channel].setChecked(False)
 
                 if not self.widgets['walk_left'][channel].isDown():
-                    self.widgets['walk_left'].setStyleSheet(
+                    self.widgets['walk_left'][channel].setStyleSheet(
                         'background-color:black'
                     )
 
-    def _walk_right(self, channel):
+    def _walk_right(self, channel: int):
 
         if not self._is_axis_locked(channel):
 
             if not self.pos.is_moving(channel):
-                self.widgets['walk_right'].setStyleSheet(
+                self.widgets['walk_right'][channel].setStyleSheet(
                     'background-color:red'
                 )
                 self.pos.move(channel, backward=True)
@@ -252,11 +249,11 @@ class Controller:
                 self.widgets['is_moving'][channel].setChecked(False)
 
                 if not self.widgets['walk_right'][channel].isDown():
-                    self.widgets['walk_right'].setStyleSheet(
+                    self.widgets['walk_right'][channel].setStyleSheet(
                         'background-color:black'
                     )
     
-    def _update_voltage(self, channel, voltage):
+    def _update_voltage(self, channel: int, voltage: float):
         """ Updates the channels DC voltage
 
         :param channel: (int) channel to update
@@ -283,56 +280,60 @@ class Controller:
         # Stack based items (common to 3 axes)
         for stack in range(int(self.NUM_CHANNELS/3)):
 
+            stack_no = copy.deepcopy(stack)
+
             # Lock button
             self.widgets['lock_button'][stack].clicked.connect(
-                lambda: self._lock_stack(stack)
+                lambda stack=stack_no: self._lock_stack(stack)
             )
         
         for channel in range(self.NUM_CHANNELS):
 
+            channel_no = copy.deepcopy(channel)
+
             # Step buttons
-            self.widgets['step_left'][channel].clicked.connect(
-                lambda: self._step_left(channel)
+            self.widgets['step_left'][channel_no].pressed.connect(
+                lambda channel=channel_no: self._step_left(channel)
             )
-            self.widgets['step_right'][channel].clicked.connect(
-                lambda: self._step_right(channel)
+            self.widgets['step_right'][channel_no].pressed.connect(
+                lambda channel=channel_no: self._step_right(channel)
             )
 
             # Walk buttons
-            self.widgets['walk_left'][channel].pressed.connect(
-                lambda: self._walk_left(channel)
+            self.widgets['walk_left'][channel_no].pressed.connect(
+                lambda channel=channel_no: self._walk_left(channel)
             )
-            self.widgets['walk_left'][channel].released.connect(
-                lambda: self.pos.stop(channel)
+            self.widgets['walk_left'][channel_no].released.connect(
+                lambda channel=channel_no: self.pos.stop(channel)
             )
-            self.widgets['walk_right'][channel].pressed.connect(
-                lambda: self._walk_right(channel)
+            self.widgets['walk_right'][channel_no].pressed.connect(
+                lambda channel=channel_no: self._walk_right(channel)
             )
-            self.widgets['walk_right'][channel].released.connect(
-                lambda: self.pos.stop(channel)
+            self.widgets['walk_right'][channel_no].released.connect(
+                lambda channel=channel_no: self.pos.stop(channel)
             )
 
             # Parameters
-            self.widgets['voltage'][channel].valueChanged.connect(
-                lambda state, channel=channel: self._update_voltage(
+            self.widgets['voltage'][channel_no].valueChanged.connect(
+                lambda state, channel=channel_no: self._update_voltage(
                     channel=channel,
                     voltage=state
                 ) 
             )
-            self.widgets['amplitude'][channel].valueChanged.connect(
-                lambda state, channel=channel: self.pos.set_parameters(
+            self.widgets['amplitude'][channel_no].valueChanged.connect(
+                lambda state, channel=channel_no: self.pos.set_parameters(
                     channel=channel,
                     amplitude=state
                 )
             )
-            self.widgets['frequency'][channel].valueChanged.connect(
-                lambda state, channel=channel: self.pos.set_parameters(
+            self.widgets['frequency'][channel_no].valueChanged.connect(
+                lambda state, channel=channel_no: self.pos.set_parameters(
                     channel=channel,
                     frequency=state
                 )
             )
-            self.widgets['velocity'][channel].valueChanged.connect(
-                lambda state, channel=channel: self.pos.set_parameters(
+            self.widgets['velocity'][channel_no].valueChanged.connect(
+                lambda state, channel=channel_no: self.pos.set_parameters(
                     channel=channel,
                     dc_vel=state
                 )
@@ -345,10 +346,10 @@ def launch(**kwargs):
     # Unpack and assign parameters
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
     nanopos_client = clients['mcs2']
-    gui_client = guis['positioner_control']
+    gui_client = 'positioner_control'
 
     # Instantiate controller
-    control = Controller(nanopos_client, gui_client, logger, config=kwargs['config'])
+    control = Controller(nanopos_client, gui_client, logger, config=kwargs['config'], port=kwargs['server_port'])
 
     # Initialize parameters
     for channel_index in range(control.NUM_CHANNELS):

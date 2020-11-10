@@ -185,6 +185,8 @@ class Controller:
             self.widgets['step_left'][channel].setStyleSheet(
                 'background-color:black'
             )
+
+            self._set_voltage_display(channel)
     
     def _step_right(self, channel: int):
         """ Steps a particular channel if unlocked
@@ -213,6 +215,8 @@ class Controller:
                 'background-color:black'
             )
 
+            self._set_voltage_display(channel)
+
     def _walk_left(self, channel: int):
 
         if not self._is_axis_locked(channel):
@@ -233,6 +237,8 @@ class Controller:
                         'background-color:black'
                     )
 
+                    self._set_voltage_display(channel)
+
     def _walk_right(self, channel: int):
 
         if not self._is_axis_locked(channel):
@@ -252,6 +258,8 @@ class Controller:
                     self.widgets['walk_right'][channel].setStyleSheet(
                         'background-color:black'
                     )
+
+                    self._set_voltage_display(channel)
     
     def _update_voltage(self, channel: int, voltage: float):
         """ Updates the channels DC voltage
@@ -269,6 +277,14 @@ class Controller:
         # Otherwise set the DC voltage
         else:
             self.pos.set_voltage(channel, voltage)
+
+            if self.pos.is_moving(channel):
+                self.widgets['is_moving'][channel].setChecked(True)
+
+                while self.pos.is_moving(channel):
+                    self.gui.force_update()
+
+                self.widgets['is_moving'][channel].setChecked(False)
     
     def _setup_gui(self):
         """ Configures what all buttons do """
@@ -283,7 +299,7 @@ class Controller:
             stack_no = copy.deepcopy(stack)
 
             # Lock button
-            self.widgets['lock_button'][stack].clicked.connect(
+            self.widgets['lock_button'][stack].pressed.connect(
                 lambda stack=stack_no: self._lock_stack(stack)
             )
         

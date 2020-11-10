@@ -1,4 +1,6 @@
 
+""" Module for controlling Thorlabs motorized pollarization paddles """
+
 import ctypes
 from ctypes import wintypes
 from comtypes.typeinfo import SAFEARRAYABOUND
@@ -19,15 +21,20 @@ class TVI_DeviceInfo(Structure):
                 ("maxChannels", c_short)
                 ("maxPaddles", c_short)]
 
-class PolarizerParameters(Structure):
+class TVI_PolarizerParameters(Structure):
     _fields_ = [("Velocity", c_ushort)
                 ("HomePosition", c_double)
                 ("JogSize1", c_double)
                 ("JogSize2", c_double)
                 ("JogSize3", c_double)]
 
-#class SAFEARRAY (structure)
-#    _fields_ [("cDims")]
+class SAFEARRAY(Structure):
+    _fields_ = [("cDims", c_ushort),
+                ("fFeatures", c_ushort),
+                ("cbElements", c_ulong),
+                ("cLocks", c_ulong),
+                ("pvData", c_void_p),
+                ("rgsabound", SAFEARRAYBOUND * 1)]
 
 class MPC320:
     def __init__(self, logger=None):
@@ -60,13 +67,13 @@ class MPC320:
             if (result == 0):
                 print("Connected succesfully to device")
             else:
-                print("a problem occured when trying to connect to device")
+                print("A problem occured when trying to connect to device")
 
             close = self._polarizationdll.TLI_MPC_Close(ctypes.POINTER(self._TLI_DeviceInfo.serialNo)
             if (close == 0):
-                print("Disconnected succesfully to device")
+                print("Disconnected succesfully from device")
             else:
-                print("a problem occured when trying to disconnect device")
+                print("A problem occured when trying to disconnect device")
 
 
 def _configure_functions(self):
@@ -78,7 +85,7 @@ def _configure_functions(self):
              self._polarizationdll.TLI_GetDeviceInfo.restype = #?
              self._polarizationdll.TLI_GetDeviceList.restype = ctypes.POINTER(POINTER(safearray))
              self._polarizationdll.TLI_GetDeviceList.restype = ctypes.POINTER(POINTER(safearray))
-            self._polarizationdll.TLI_GetDeviceListByTypeExt.argtypes =[ctypes.POINTER(ctypes.c_char), .wintypes.DWORD ctypes.c_int)
+             self._polarizationdll.TLI_GetDeviceListByTypeExt.argtypes =[ctypes.POINTER(ctypes.c_char), .wintypes.DWORD ctypes.c_int)
              self._polarizationdll.TLI_GetDeviceListByTypeExt.restype = ctypes.POINTER(POINTER(safearray)) 
             
              

@@ -10,40 +10,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 from IPython.display import clear_output, display
 
-"""Unnecessary code for instantiating array with desired guess parameters
-
-        init_params is a large 3D array of values with stored starting conditions for carrier in range 11.1 to 13.0 GHz and signal_freq in range 100 MHz to 765 MHz
-        User should be able to override init_params array if necessary
-
-        init_params = np.zeros((20,20,5))
-
-        init_params[i, j] => init_params[9,6] => set initial values stored in array
-        init_params[9,6]=([60, 0.85, 0.65, 0.005, 0.005])
-
-        Convert to GHz and MHz, respectively, for easier numerical manipulation
-	    car = carrier*e-9
-        sig = signal_freq*e-6
-
-        indices i and j are calculated from carrier and signal_freq; allows user to access parameters stored in array
-        i = 10(round(car,1)-11.1)
-        j = round((sig-100)/35)
-
-        self.phase_min = init_params[i,j,0]-10
-        self.phase_max = init_params[i,j,0]+10
-
-        self.q_min = init_params[i,j,1]-0.15
-        self.q_max = init_params[i,j,1]+0.15
-
-        self.a0_init = init_params[i,j,2]
-
-        self.dc_min_i = init_params[i,j,3]-0.01
-        self.dc_max_i = init_params[i,j,3]+0.01
-        self.dc_min_q = init_params[i,j,4]-0.01
-        self.dc_max_q = init_params[i,j,4]+0.01
-
-Array could be stored externally as text file, but will likely not be necessary"""
-
-
 
 class Optimizer:
 
@@ -52,24 +18,11 @@ class Optimizer:
 
 
 class IQOptimizer(Optimizer):
-	"""<IQOptimizer planned implementation example:>
-
-	opt1 = IQOptimizer(mw_source, hd, sa, carrier, signal_freq)
-	opt1.opt()
-	<Sets optimized values using param_guess given (or default param_guess array)>
-	<Now, if we want to reoptimize, we run the following:>
-	opt1.initialize_reopt_params()
-	opt1.opt()
-	<This now runs a faster optimization using the parameters collected from the first optimization.>
-	"""
-
-	# Constants
-	CUSHION_PARAM = 5
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -50, max_carrier_pow = -50, num_points = 25, reopt = False,
-		param_guess = ([60, 0.85, 0.65, 0.005, 0.005]), phase_window = 20, q_window = 0.3, dc_i_window = 0.02,
-		dc_q_window = 0.02, plot_traces = True
+		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -55, max_carrier_pow = -55, num_points = 25, CUSHION_PARAM = 5,
+		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_window = 44, q_window = 0.34, dc_i_window = 0.0135,
+		dc_q_window = 0.0115, plot_traces = True
 	):
 		""" Instantiate IQ optimizer
 		:param mw_source: instance of HMC_T2220 client
@@ -78,9 +31,21 @@ class IQOptimizer(Optimizer):
 		:param carrier: desired carrier frequency (in Hz)
 		:param signal_freq: desired signal frequency (in Hz)
 		:kwarg num_points: number of points for scan window
-		:kwarg reopt: dictates whether we want to optimize or reoptimize
 		:kwarg plot_traces: user decides if displaying power vs. frequency plots is desired
+		:kwarg max_iterations: maximum number of iterations to minimize carrier and lower sideband
+		:kwarg max_lower_sideband_pow: desired upper bound for lower sideband power (in dBm)
+		:kwarg max_carrier_pow: desired upper bound for carrier power (in dBm)
+		:kwarg CUSHION_PARAM: positive real number positively correlated with speed of zooming in on minimum
+		:kwarg param_guess: starting parameters for optimization:
+
+		([phase shift, q := (amp_i/amp_q) amplitude imbalance, a0 := (amp_i+amp_q)/2 average amplitude, dc_offset_i, dc_offset_q])
+
+		:kwarg phase_window: size of initial phase scan (in degrees)
+		:q_window: size of initial amplitude imbalance scan window (unitless)
+		:dc_i_window: size of initial dc i offset scan window (in V)
+		:dc_q_window: size of initial dc q offset scan window (in V)
 		"""
+
 		# Configure hd settings
 		# Assign oscillator 1 to sine output 2
 		hd.seti('sines/1/oscselect', 0)
@@ -107,8 +72,8 @@ class IQOptimizer(Optimizer):
 		self.signal_freq = signal_freq
 		self.num_points = num_points
 		self.max_iterations = max_iterations
-		self.reopt = reopt
 		self.plot_traces = plot_traces
+		self.CUSHION_PARAM = CUSHION_PARAM
 
 		#Set mw freq
 		self.mw_source.output_on()
@@ -128,17 +93,15 @@ class IQOptimizer(Optimizer):
 		self.dc_min_q = param_guess[4]-dc_q_window/2
 		self.dc_max_q = param_guess[4]+dc_q_window/2
 
-		# Instantiate params necessary for reoptimization
+		# Instantiate params we will optimize
 		self.opt_phase = None
 		self.opt_q = None
 		self.amp_q_opt = None
 		self.amp_i_opt = None
-		# self.dc_offset_i_opt = 0
-		# self.dc_offset_q_opt = 0
 		self.dc_offset_i_opt = None
 		self.dc_offset_q_opt = None
 
-		# Instantiate libraries for optimizer values
+		# Instantiate arrays and bounds
 		self.phases = np.linspace(self.phase_min, self.phase_max, self.num_points)
 		self.qs = np.linspace(self.q_min, self.q_max, self.num_points)
 		self.lower_sideband_power = np.zeros((self.num_points, self.num_points))
@@ -156,6 +119,7 @@ class IQOptimizer(Optimizer):
 
 
 	def set_markers(self):
+		#This method is not robust and should be rewritten at some point
 
 		# Configure hd to enable outputs
 		# self.hd.enable_output(0)
@@ -188,22 +152,21 @@ class IQOptimizer(Optimizer):
 			self.sa.plot_trace()
 
 
-
 	def opt_lower_sideband(self):
 
 		# Rough sweep
 		self._sweep_phase_amp_imbalance()
 		self._set_optimal_vals()
 
-		# Instantiate variables
-		q_max2=self.q_max
+		# Instantiate local variables for the loop
+		q_max2 = self.q_max
 		q_min2 = self.q_min
 		phase_max2 = self.phase_max
 		phase_min2 = self.phase_min
 
 		num_iterations = 0
 
-		while self.opt_lower_sideband_pow > self.max_lower_sideband_pow and num_iterations < self.max_iterations:
+		while self.opt_lower_sideband_pow > self.max_lower_sideband_pow and num_iterations < self.max_iterations - 1:
 
 			q_cushion = np.abs(q_max2-q_min2)/self.CUSHION_PARAM
 			phase_cushion = np.abs(phase_max2-phase_min2)/self.CUSHION_PARAM
@@ -223,17 +186,33 @@ class IQOptimizer(Optimizer):
 			self._set_optimal_vals()
 
 			num_iterations = num_iterations + 1
-			print('Lower sideband power is ' + str(self.opt_lower_sideband_pow) + ' dBm')
 
-		print('Number of iterations is ' + str(num_iterations))
+		if num_iterations < self.max_iterations:
+			print('Lower sideband optimization completed in ' + str(num_iterations + 1) + ' iterations')
+		else:
+			print('Lower sideband optimization failed to reach threshold in ' + str(num_iterations + 1) +  ' iterations')
+
+		time.sleep(1)
+		print('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
+
 		if self.plot_traces == True:
+			# Heatmap plot
+			lower_sideband_data = pd.DataFrame(self.lower_sideband_power,
+			index=np.round(self.phases, 1),
+			columns=np.round(self.qs, 2))
+			fig1, ax1 = plt.subplots(figsize=(8, 5))
+			ax1 = sns.heatmap(lower_sideband_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'lower sideband power [dBm]'})
+			ax1.set(ylabel='Phase shift', xlabel='Amplitude imbalance')
+			# Frequency plot
 			self.sa.plot_trace()
 
 
 	def opt_carrier(self):
 
+		num_iterations = 0
+
+		# If carrier power already below threshold, no need to optimize carrier
 		if self.carrier_marker.get_power() >  self.max_carrier_pow:
-			#DC offset sweep
 			# Sweep 2D parameter space of DC offsets and record carrier power
 			voltages_i = np.linspace(self.dc_min_i, self.dc_max_i, self.num_points)
 			voltages_q = np.linspace(self.dc_min_q, self.dc_max_q, self.num_points)
@@ -244,7 +223,6 @@ class IQOptimizer(Optimizer):
 			dc_max_q2 = self.dc_max_q
 			dc_min_q2 = self.dc_min_q
 
-			num_iterations = 0
 			while self.opt_carrier_pow > self.max_carrier_pow and num_iterations < self.max_iterations:
 
 				carrier_power, voltages_i, voltages_q = self._sweep_dc_offsets(voltages_i, voltages_q, carrier_power)
@@ -268,70 +246,38 @@ class IQOptimizer(Optimizer):
 				voltages_q = np.linspace(dc_min_q2, dc_max_q2, self.num_points)
 
 				num_iterations = num_iterations + 1
-				#Store results in dataframe for easy plotting
-				dc_sweep_data = pd.DataFrame(carrier_power, columns=np.round(voltages_q/1e-3, 1), index=np.round(voltages_i/1e-3, 1))
-				fig, ax = plt.subplots(figsize=(8, 5))
-				ax = sns.heatmap(dc_sweep_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'carrier power [dBm]'})
-				ax.set(xlabel='DC offset Q signal [mV]', ylabel='DC offset I signal [mV]')
-
-				print(self.dc_offset_i_opt, self.dc_offset_q_opt, self.opt_carrier_pow)
 
 			# Set optimal offset
 			self.hd.setd('sigouts/0/offset', self.dc_offset_i_opt)
 			self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt)
 
-		print('Number of iterations is ' + str(num_iterations))
+		if num_iterations < self.max_iterations:
+			print('Carrier optimization completed in ' + str(num_iterations) + ' iterations')
+		else:
+			print('Carrier optimization failed to reach threshold in ' + str(num_iterations) +  ' iterations')
+
+		time.sleep(1)
 		print('Carrier power is ' + str(self.carrier_marker.get_power()))
 
 		if self.plot_traces == True:
+			# Heatmap plot
+			dc_sweep_data = pd.DataFrame(carrier_power, columns=np.round(voltages_q/1e-3, 1), index=np.round(voltages_i/1e-3, 1))
+			fig, ax = plt.subplots(figsize=(8, 5))
+			ax = sns.heatmap(dc_sweep_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'carrier power [dBm]'})
+			ax.set(xlabel='DC offset Q signal [mV]', ylabel='DC offset I signal [mV]')
+			# Frequency plot
 			self.sa.plot_trace()
 
 
 	def opt(self):
 
 		self.opt_lower_sideband()
-		time.sleep(1)
 		self.opt_carrier()
 		time.sleep(1)
-		print('Optimized parameters are (' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(.5*(self.amp_q_opt + self.amp_i_opt)) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + ')')
+
+		print('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(.5*(self.amp_q_opt + self.amp_i_opt)) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
 		print('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
 		print('Carrier power is ' + str(self.carrier_marker.get_power()) + ' dBm')
-
-	# def initialize_reopt_params(
-	# 	self, reopt = True, phase_window = 10, q_window = 0.2, dc_i_window = 0.01, dc_q_window = 0.01
-	# ):
-	# 	self.param_guess = (
-	# 		[self.opt_phase,
-	# 		self.opt_q,
-	# 		(self.amp_q_opt*self.amp_i_opt) / 2,
-	# 		self.dc_offset_i_opt,
-	# 		self.dc_offset_q_opt]
-	# 	)
-
-		# #Introduce error so that markers can be reset
-		# epsilon3 = 0.003
-		# epsilon2 = 10
-		# epsilon1 = 0.001
-		# # Set optimal I and Q amplitudes
-		# self.hd.setd('sines/0/amplitudes/0', self.amp_i_opt + epsilon1)
-		# self.hd.setd('sines/1/amplitudes/1', self.amp_q_opt + epsilon1)
-
-		# # Set optimal phaseshift
-		# self.hd.setd('sines/0/phaseshift', self.opt_phase + epsilon2)
-
-		# # Set I DC-offset
-		# self.hd.setd('sigouts/0/offset', self.dc_offset_i_opt + epsilon3)
-
-		# # Set Q DC-offset
-		# self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt + epsilon3)
-
-		# self.reopt = reopt
-		# self.phase_window = phase_window
-		# self.q_window =q_window
-		# self.dc_i_window = dc_i_window
-		# self.dc_q_window = dc_q_window
-
-		# self.set_markers()
 
 
 	def _sweep_phase_amp_imbalance(self):
@@ -341,11 +287,11 @@ class IQOptimizer(Optimizer):
 			phase = self.phases[i]
 			q = self.qs[j]
 
-			# Calculate amplitudes
+			# Calculate i and q amplitudes from q and a0
 			amp_i = 2 * q / (1 + q) * self.a0
 			amp_q = 2 * self.a0 / (1 + q)
 
-			# Set I and Q amplitudes
+			# Set i and q amplitudes
 			self.hd.setd('sines/0/amplitudes/0', amp_i)
 			self.hd.setd('sines/1/amplitudes/1', amp_q)
 
@@ -354,9 +300,6 @@ class IQOptimizer(Optimizer):
 
 			# Read lower sideband power
 			self.lower_sideband_power[i,j] = self.lower_sb_marker.get_power()
-
-			# print(f'{i/self.num_points * 50*2**(int(self.reopt == True))} % done')
-			# clear_output(wait=True)
 
 
 	def _set_optimal_vals(self):
@@ -375,14 +318,6 @@ class IQOptimizer(Optimizer):
 		# Set optimal phaseshift
 		self.hd.setd('sines/0/phaseshift', self.opt_phase)
 
-		# Store results in dataframe for easy plotting
-		lower_sideband_data = pd.DataFrame(self.lower_sideband_power,
-        index=np.round(self.phases, 1),
-        columns=np.round(self.qs, 2))
-		fig1, ax1 = plt.subplots(figsize=(8, 5))
-		ax1 = sns.heatmap(lower_sideband_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'lower sideband power [dBm]'})
-		ax1.set(ylabel='Phase shift', xlabel='Amplitude imbalance')
-		print(self.opt_phase, self.opt_q)
 
 
 	def _sweep_dc_offsets(self,voltages_i, voltages_q ,carrier_power):

@@ -78,75 +78,6 @@ class Controller:
         # Measure DC voltage and set it in the GUI
         self._set_voltage_display(channel)
 
-    # def run(self):
-    #     """ Runs the Positioner control (takes any necessary action) """
-
-    #     # Iterate through channels
-    #     for channel_index in range(self.NUM_CHANNELS):
-
-    #         # Check for lock events
-    #         locked = self._handle_lock(channel_index)
-
-    #         # Get GUI values
-    #         params = self.get_GUI_parameters(channel_index)
-
-    #         # Update current status on GUI
-    #         self._update_channel(channel_index, params)
-
-    #         # Handle parameter updates
-    #         self._update_parameters(channel_index, params)
-
-    #         # Handle DC change
-    #         # this line of code was throwing an error (params[5] comes up None), so we handle it here
-    #         voltage_failure = False
-    #         try:
-    #             if np.abs(params[5]-self.prev_voltage[channel_index]) > self.DC_TOLERANCE and not locked:
-    #                 self.pos.set_voltage(channel_index, params[5])
-    #         except Exception as e:
-    #             voltage_failure = True
-    #             self.log.warn(f'{e}, failed to check DC voltage change for channel {channel_index}')
-
-    #         # Handle a step event
-    #         if self.gui.was_button_pressed(self.step_left[channel_index]) and not locked:
-    #             self.gui.change_button_background_color(self.step_left[channel_index], color='red')
-    #             self.pos.n_steps(channel_index, n=-params[0])
-    #             time.sleep(0.15)
-    #             self.gui.change_button_background_color(self.step_left[channel_index], color='black')
-    #             self._set_voltage_display(channel_index)
-    #         if self.gui.was_button_pressed(self.step_right[channel_index]) and not locked:
-    #             self.gui.change_button_background_color(self.step_right[channel_index], color='red')
-    #             self.pos.n_steps(channel_index, n=params[0])
-    #             time.sleep(0.15)
-    #             self.gui.change_button_background_color(self.step_right[channel_index], color='black')
-    #             self._set_voltage_display(channel_index)
-
-    #         # Handle walk event
-    #         walker = self.walk_left[channel_index]
-    #         if self.gui.was_button_pressed(walker) and not locked:
-    #             self._walk(channel_index, walker, params, left=True)
-    #         walker = self.walk_right[channel_index]
-    #         if self.gui.was_button_pressed(walker) and not locked:
-    #             self._walk(channel_index,walker, params, left=False)
-
-    #         # Handle GUI Saving and Loading
-    #         self._load_save_settings()
-
-    #         # Update the previous values for future use
-    #         (
-    #             self.prev_amplitude[channel_index],
-    #             self.prev_frequency[channel_index],
-    #             self.prev_velocity[channel_index]
-    #         ) = params[2], params[3], params[4]
-
-    #         # If we want to override the previous DC voltage reading
-    #         if not self.voltage_override and not voltage_failure:
-    #             self.prev_voltage[channel_index] = params[5]
-    #         else:
-    #             self.voltage_override = False
-
-    #         if self.gui.was_button_pressed('emergency_button'):
-    #             self.stop_all()
-
     def get_GUI_parameters(self, channel):
         """ Gets the current GUI parameters for a given channel
 
@@ -189,21 +120,6 @@ class Controller:
         self.prev_voltage[channel] = voltage
         self.widgets['voltage'][channel].setValue(voltage)
         self.voltage_override = True
-
-    def _update_parameters(self, channel, params):
-        """ Updates current parameters on device
-
-        :param channel: (int) channel index (from 0)
-        :param params: (tuple) params in order n_steps, is_moving, amplitude, frequency, velocity,
-            voltage
-        """
-
-        if params[2] != self.prev_amplitude[channel]:
-            self.pos.set_parameters(channel, amplitude=params[2])
-        if params[3] != self.prev_frequency[channel]:
-            self.pos.set_parameters(channel, frequency=params[3])
-        if params[4] != self.prev_velocity[channel]:
-            self.pos.set_parameters(channel, dc_vel=params[4])
 
     def save(self):
         """Saves or loads settings if relevant"""
@@ -362,6 +278,7 @@ class Controller:
 
         self.gui.load_button.clicked.connect(self.load_settings)
         self.gui.save_button.clicked.connect(self.save)
+        self.gui.emergency_button.clicked.connect(self.stop_all)
         
         # Stack based items (common to 3 axes)
         for stack in range(int(self.NUM_CHANNELS/3)):

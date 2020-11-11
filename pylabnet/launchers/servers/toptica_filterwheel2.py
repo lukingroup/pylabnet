@@ -34,7 +34,7 @@ def launch(**kwargs):
     device_name = filterwheel_dict['device_name']
     port_name = filterwheel_dict['device_id']
     filters = filterwheel_dict['filters']
-    filters = {  f'{i+1}' : f'{filters[i]} ND' for i in range(len(filters))}
+    filters = {  f'{i+1}' : f'{filters[i]} OD' for i in range(len(filters))}
     filterwheel = FW102CFilterWheel(port_name=port_name, device_name=device_name, filters=filters, logger=logger)
 
 

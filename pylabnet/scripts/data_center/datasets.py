@@ -199,9 +199,12 @@ class Dataset:
                 )
             else:
                 self.widgets[name] = QtWidgets.QLabel(str(value))
+            setattr(self.gui, name, self.widgets[name])
 
             hbox.addWidget(self.widgets[name])
             self.gui.dataset_layout.addLayout(hbox)
+
+        self.gui.initialize_step_sizes()
     
     def handle_new_window(self, graph, **kwargs):
         """ Handles visualizing and possibility of new popup windows """

@@ -151,7 +151,7 @@ class DataTaker:
                 save_time=self.gui.autosave_interval.value()
             )
             self.update_thread.data_updated.connect(self.dataset.update)
-            self.update_thread.save_flag.connect(self.dataset.save)
+            self.update_thread.save_flag.connect(self.save)
             self.gui.autosave.toggled.connect(self.update_thread.update_autosave)
             self.gui.autosave_interval.valueChanged.connect(self.update_thread.update_autosave_interval)
 

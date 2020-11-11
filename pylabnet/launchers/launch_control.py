@@ -439,6 +439,10 @@ class Controller:
                 client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
             )
 
+            # Add device ID of client's corresponding hardware, if applicable
+            if 'device_id' in self.client_data[client]:
+                bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
+
             # Add port of client's server, if applicable
             if 'port' in self.client_data[client]:
                 bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
@@ -489,6 +493,8 @@ class Controller:
                 self.client_data[client]['ui'] = info.split('ui: ')[1].split('\n')[0]
             if 'port: ' in info:
                 self.client_data[client]['port'] = info.split('port: ')[1].split('\n')[0]
+            if 'device_id: ' in info:
+                self.client_data[client]['device_id'] = info.split('device_id: ')[1].split('\n')[0]
 
     def _pull_connections(self):
         """ Updates the proxy's client list """
@@ -518,6 +524,10 @@ class Controller:
                 self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
             if 'port: ' in clients[client]:
                 self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+            if 'device_id: ' in clients[client]:
+                self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
+
+
 
         # Remove clients
         for client in remove_clients:
@@ -536,6 +546,8 @@ class Controller:
                     self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
                 if 'port: ' in clients[client]:
                     self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+                if 'device_id: ' in clients[client]:
+                    self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
 
 
     # Defines what to do if debug radio button is clicked.

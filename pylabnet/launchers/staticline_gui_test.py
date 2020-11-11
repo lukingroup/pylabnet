@@ -1,17 +1,19 @@
 """ Launches the staticline GUI test"""
 
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.launchers.servers import staticline_nidaqmx
 from pylabnet.scripts.staticlines import staticline_gui_generic
-
+from pylabnet.launchers.servers import zi_hdawg
+from pylabnet.launchers.servers import nidaqmx_green
+from pylabnet.launchers.servers import dio_breakout
 
 def main():
 
     launcher = Launcher(
         script=[staticline_gui_generic],
-        server_req=[staticline_nidaqmx],
-        gui_req=['staticline_generic'],
-        params=[None]
+        server_req=[zi_hdawg, nidaqmx_green, dio_breakout],
+        gui_req=[None],
+        params=[None],
+        config='sl_config'
     )
     launcher.launch()
 

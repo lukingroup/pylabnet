@@ -2,10 +2,11 @@
 
 import socket
 
-import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
+# import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
 
 from pylabnet.network.client_server.staticline import Service, Client
+import pylabnet.network.client_server.abstract_device as abstract_device
 
 from pylabnet.network.core.generic_server import GenericServer
 
@@ -22,12 +23,13 @@ def launch(**kwargs):
     """
 
     staticline_logger = kwargs['logger']
-    daq = nidaqmx.Driver(device_name=NI_DEVICE_NAME, logger=staticline_logger)
+    # daq = nidaqmx.Driver(device_name=NI_DEVICE_NAME, logger=staticline_logger)
+    hardware_client = abstract_device.AbstractClient('localhost', 1234)
 
     test_staticline = staticline.Driver(
         name='Laser Green',
         logger=kwargs['logger'],
-        hardware_module=daq,
+        hardware_module=hardware_client,
         ao_output='ao2',
         down_voltage=0,
         up_voltage=3.3,

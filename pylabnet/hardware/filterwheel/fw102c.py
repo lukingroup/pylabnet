@@ -110,11 +110,8 @@ class FW102C(object):
             self.log.error("Command error: Device not open")
             return "DEVICE NOT OPEN"
 
-        ans = 'ERROR'
         self._sio.flush()
-        cmd = cmdstr.split('=')[0]
         res = self._sio.write(str(cmdstr+'\r'))
-        ans = self._sio.readlines(NUM_READLINES)
-        return ans
+
 
 

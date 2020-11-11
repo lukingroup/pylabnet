@@ -68,7 +68,11 @@ class TopticaFilterWheelController:
         if filter_index == 1:
             filterwheel = self.filterwheel1
         elif filter_index == 2:
-            filterwheel = self.filterwheel1
+            filterwheel = self.filterwheel2
+
+        # Disable comboboxes
+        self.widgets['comboBox_filter1'].setEnabled(False)
+        self.widgets['comboBox_filter2'].setEnabled(False)
 
         # Change position
         successful_changed = filterwheel.change_filter(new_pos)
@@ -82,6 +86,10 @@ class TopticaFilterWheelController:
 
         # Update OD reading
         self.update_od()
+
+        # Enable combobos
+        self.widgets['comboBox_filter1'].setEnabled(True)
+        self.widgets['comboBox_filter2'].setEnabled(True)
 
     def update_od(self):
 

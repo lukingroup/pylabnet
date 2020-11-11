@@ -170,8 +170,6 @@ class Dataset:
         for child in self.children.values():
             child.save(filename, directory, date_dir)
 
-        save_metadata(self.log, filename, directory, date_dir)
-
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
 

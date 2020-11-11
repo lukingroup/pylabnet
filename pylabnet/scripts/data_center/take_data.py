@@ -14,7 +14,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher
+from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata
 from pylabnet.scripts.data_center import datasets
 
 
@@ -97,6 +97,9 @@ class DataTaker:
                 return
         except:
             pass
+
+        # Load the config
+        self.reload_config()
 
         # Set all experiments to normal state and highlight configured expt
         for item_no in range(self.gui.exp.count()):
@@ -192,11 +195,14 @@ class DataTaker:
         """ Saves data """
 
         self.log.update_metadata(notes=self.gui.notes.toPlainText())
+        filename = self.gui.save_name.text()
+        directory = self.config['save_path']
         self.dataset.save(
-            filename=self.gui.save_name.text(),
-            directory=self.config['save_path'],
+            filename=filename,
+            directory=directory,
             date_dir=True
         )
+        save_metadata(self.log, filename, directory, True)
         self.log.info('Data saved')
 
     def reload_config(self):

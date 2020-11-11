@@ -379,13 +379,13 @@ def save_metadata(log, filename=None, directory=None, date_dir=False):
     if not filepath.endswith('.json'):
         filepath += '.json'
 
-    with open(filepath, 'w') as outfile:
-        try:
+    try:
+        with open(filepath, 'w') as outfile:            
             json.dump(log.get_metadata(), outfile, indent=4)
-        except TypeError:
-            log.warn('Did not save metadata')
-        except OSError:
-            log.warn('Did not save metadata')
+    except TypeError:
+        log.warn('Did not save metadata')
+    except OSError:
+        log.warn('Did not save metadata')
 
 
 def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):

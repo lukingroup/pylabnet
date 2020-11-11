@@ -2,7 +2,7 @@
 #
 # Thorlabs FW102C - Six-Position Motorized Filter Wheel - Python interface
 
-# Gilles Simond <gilles.simond@unige.ch>	
+# Gilles Simond <gilles.simond@unige.ch>
 
 # who       when        what
 # --------  ----------  -------------------------------------------------
@@ -17,13 +17,13 @@ NUM_READLINES = 8
 class FW102C(object):
     """
        Class to control the ThorLabs FW102C filter wheel
-       
+
           fwl = Thorlabs.FW102C(port='COM5')
           fwl.help()
           fwl.command('pos=5')
           fwl.query('pos?')
           fwl.close()
-          
+
        The following table describes all of the available commands and queries:
         *idn?     Get ID: Returns the model number and firmware version
         pos=n     Moves the wheel to filter position n
@@ -43,7 +43,7 @@ class FW102C(object):
         baud=1    Sets the baud rate to 115200
         baud?     Returns the baud rate where 0 = 9600 and 1 = 115200
         save      This will save all the settings as default on power up
-        
+
     """
     isOpen   = False
 
@@ -63,26 +63,26 @@ class FW102C(object):
             return
         self._sio = io.TextIOWrapper(io.BufferedRWPair(self._fw, self._fw, 1),
                        newline=None, encoding='ascii')
-		
+
         self._sio.flush()
         self.isOpen  = True
     # end def __init__
-    
+
     def help(self):
         print(self.__doc__)
     # end def help
-    
+
     def close(self):
         if not self.isOpen:
             print("Close error: Device not open")
             return "ERROR"
         #end if
-        
+
         self._fw.close()
         self.isOpen = False
         return "OK"
     # end def close
-	
+
     def query(self, cmdstr):
         """
            Send query, get and return answer
@@ -91,7 +91,7 @@ class FW102C(object):
             self.log.error("Query error: Device not open")
             return "DEVICE NOT OPEN"
         #end if
-        
+
         ans = 'ERROR'
         self._sio.flush()
         res = self._sio.write(str(cmdstr+'\r'))
@@ -100,7 +100,7 @@ class FW102C(object):
         #print 'queryans=',repr(ans)
         return ans
     # end def query
-	
+
     def command(self, cmdstr):
         """
            Send command, check for error, send query to check and return answer
@@ -109,20 +109,12 @@ class FW102C(object):
         if not self.isOpen:
             self.log.error("Command error: Device not open")
             return "DEVICE NOT OPEN"
-        #end if
-        
+
         ans = 'ERROR'
         self._sio.flush()
         cmd = cmdstr.split('=')[0]
         res = self._sio.write(str(cmdstr+'\r'))
         ans = self._sio.readlines(NUM_READLINES)
-        regerr = re.compile("Command error.*")
-        errors = [m.group(0) for l in ans for m in [regerr.search(l)] if m]
-        #print 'res=',repr(res),'ans=',repr(ans),cmd
-        if len(errors) > 0:
-            return errors[0]
-        ans = self.query(cmd+'?')
-        #print 'ans=',repr(ans),cmd+'?'
         return ans
-	
+
 

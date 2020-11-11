@@ -14,6 +14,9 @@ class TopticaFilterWheelController:
     def __init__(self, filterwheel1, filterwheel2, gui='toptica_filterwheels', logger=None, port=None):
 
 
+        self.filterwheel1 = filterwheel1
+        self.filterwheel2 = filterwheel2
+
         self.log = LogHandler(logger)
 
         # Setup GUI
@@ -31,13 +34,68 @@ class TopticaFilterWheelController:
             nd_label=1
         )
 
-        # Fill comboboxes
-        for filterlabel1, filterlabel2 in zip(filterwheel1.filters.values(), filterwheel2.filters.values()):
-            self.widgets['comboBox_filter1'].addItems(filterlabel1)
-            self.widgets['comboBox_filter2'].addItems(filterlabel2)
+        # Retrieve filter dicts.
+        filters1 = filterwheel1.get_filter_dict()
+        filters2 = filterwheel2.get_filter_dict()
+
+        # Fill comboboxes.
+        self.widgets['comboBox_filter1'].addItems(filters1.values())
+        self.widgets['comboBox_filter2'].addItems(filters2.values())
+
+        # Get current fitler positions
+        self.current_pos_1 = filterwheel1.get_pos()
+        self.current_pos_2 = filterwheel2.get_pos()
+
+        # Set comboboxes to current filter positions.
+        self.widgets['comboBox_filter1'].setCurrentIndex(int(self.current_pos_1)-1)
+        self.widgets['comboBox_filter2'].setCurrentIndex(int(self.current_pos_2)-1)
+
+        # Connect change events
+        self.widgets['comboBox_filter1'].currentTextChanged.connect(lambda : self.change_filter(filter_index=1))
+        self.widgets['comboBox_filter2'].currentTextChanged.connect(lambda:  self.change_filter(filter_index=2))
+
+        # Update OD reading
+        self.update_od()
 
         # Setup stylesheet.
         self.gui.apply_stylesheet()
+
+    def change_filter(self, filter_index):
+        ''' Read in index from combobox and change filter accordingly.'''
+        # Read in new filter.
+        new_pos = int(self.widgets[f'comboBox_filter{filter_index}'].currentIndex())+1
+
+        if filter_index == 1:
+            filterwheel = self.filterwheel1
+        elif filter_index == 2:
+            filterwheel = self.filterwheel1
+
+        # Change position
+        successful_changed = filterwheel.change_filter(new_pos)
+
+        if not successful_changed:
+            # Read in new position to verify
+            changed_position = filterwheel.get_pos()
+
+            # Set combobox to new position
+            self.widgets[f'comboBox_filter{filter_index}'].setCurrentIndex(int(changed_position)-1)
+
+        # Update OD reading
+        self.update_od()
+
+    def update_od(self):
+
+        filter_pos1 = int(self.widgets['comboBox_filter1'].currentIndex())+1
+        filter_string1 = self.filterwheel1.get_filter_dict()[str(filter_pos1)]
+        filter1_od = float(filter_string1.replace(' OD', ""))
+
+        filter_pos2 = int(self.widgets['comboBox_filter2'].currentIndex())+1
+        filter_string2 = self.filterwheel2.get_filter_dict()[str(filter_pos2)]
+        filter2_od = float(filter_string2.replace(' OD', ""))
+
+        new_od_string = f"{filter1_od+filter2_od} OD"
+
+        self.widgets['nd_label'].setText(new_od_string)
 
     def run(self, check_vals=False):
         """ Runs an iteration of checks for updates and implements

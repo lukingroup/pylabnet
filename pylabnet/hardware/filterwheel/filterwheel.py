@@ -26,7 +26,7 @@ class FW102CFilterWheel:
 
         # Instantiate log
         self.log = LogHandler(logger=logger)
-        
+
 
         # Retrieve name and filter options
         self.device_name = device_name
@@ -68,6 +68,8 @@ class FW102CFilterWheel:
         # Update Position
         self.filter_wheel.command('pos={}'.format(new_pos))
 
+        successful_changed = False
+
         # Check if update was successful
         if int(self.get_pos()) == int(new_pos):
             self.log.info(
@@ -77,6 +79,7 @@ class FW102CFilterWheel:
                     position=new_pos,
                     filter=self.filters.get('{}'.format(new_pos)))
             )
+            successful_changed=False
 
             # Open protection shutter if shutter was originally open
             if protect_shutter_client is not None and shutter_open:
@@ -86,6 +89,10 @@ class FW102CFilterWheel:
                 "Filterwheel {device_name}: changing to position failed"
                 "".format(device_name=self.device_name)
             )
+
+        return successful_changed
+
+
 
     # returns filter dictionary
     def get_filter_dict(self):

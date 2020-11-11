@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
-    <height>279</height>
+    <width>586</width>
+    <height>290</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Toptica Control</string>
+   <string>Toptica Filterwheels</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -100,9 +100,9 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>8</x>
       <y>50</y>
-      <width>269</width>
+      <width>271</width>
       <height>81</height>
      </rect>
     </property>
@@ -125,7 +125,7 @@
      <rect>
       <x>290</x>
       <y>50</y>
-      <width>268</width>
+      <width>271</width>
       <height>81</height>
      </rect>
     </property>
@@ -148,19 +148,19 @@
      <rect>
       <x>10</x>
       <y>139</y>
-      <width>541</width>
+      <width>551</width>
       <height>91</height>
      </rect>
     </property>
     <property name="title">
-     <string>Cummulative ND</string>
+     <string>Cummulative Optical Density</string>
     </property>
     <widget class="QLabel" name="nd_label">
      <property name="geometry">
       <rect>
        <x>210</x>
        <y>20</y>
-       <width>141</width>
+       <width>211</width>
        <height>51</height>
       </rect>
      </property>
@@ -170,7 +170,7 @@
       </font>
      </property>
      <property name="text">
-      <string>0 ND</string>
+      <string>0 OD</string>
      </property>
     </widget>
    </widget>
@@ -180,7 +180,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>560</width>
+     <width>586</width>
      <height>26</height>
     </rect>
    </property>

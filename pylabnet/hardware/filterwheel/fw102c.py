@@ -14,6 +14,7 @@ from serial import Serial, SerialException
 
 NUM_READLINES = 8
 
+
 class FW102C(object):
     """
        Class to control the ThorLabs FW102C filter wheel
@@ -93,8 +94,9 @@ class FW102C(object):
         #end if
 
         ans = 'ERROR'
-        self._sio.flush()
+        
         res = self._sio.write(str(cmdstr+'\r'))
+        self._sio.flush()
         if res:
             ans = self._sio.readlines(NUM_READLINES)[1][:-1]
         #print 'queryans=',repr(ans)
@@ -110,8 +112,11 @@ class FW102C(object):
             self.log.error("Command error: Device not open")
             return "DEVICE NOT OPEN"
 
+        ans = 'ERROR'
         self._sio.flush()
         res = self._sio.write(str(cmdstr+'\r'))
+        self._sio.readline()
 
+        return ans
 
 

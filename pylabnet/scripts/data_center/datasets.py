@@ -185,18 +185,24 @@ class Dataset:
                 self.widgets[name].setMaximum(1000000000)
                 self.widgets[name].setMinimum(-1000000000)
                 self.widgets[name].setValue(value)
+                self.widgets[name].valueChanged.connect(
+                    lambda state, obj=self, name=name: setattr(obj, name, state)
+                )
             elif type(value) is float:
                 self.widgets[name] = QtWidgets.QDoubleSpinBox()
                 self.widgets[name].setMaximum(1000000000.)
                 self.widgets[name].setMinimum(-1000000000.)
                 self.widgets[name].setDecimals(6)
                 self.widgets[name].setValue(value)
+                self.widgets[name].valueChanged.connect(
+                    lambda state, obj=self, name=name: setattr(obj, name, state)
+                )
             else:
                 self.widgets[name] = QtWidgets.QLabel(str(value))
 
             hbox.addWidget(self.widgets[name])
             self.gui.dataset_layout.addLayout(hbox)
-
+    
     def handle_new_window(self, graph, **kwargs):
         """ Handles visualizing and possibility of new popup windows """
 
@@ -296,7 +302,7 @@ class PreselectedHistogram(AveragedHistogram):
             data_type=InfiniteRollingLine,
             data_length=presel_data_length
         )
-        self.children['Preselection Counts'].graph.getPlotItem().addLine(y=self.presel_params['threshold'])
+        self.line = self.children['Preselection Counts'].graph.getPlotItem().addLine(y=self.presel_params['threshold'])
 
     def setup_preselection(self, **kwargs):
 
@@ -312,6 +318,9 @@ class PreselectedHistogram(AveragedHistogram):
             data_type=AveragedHistogram
         )
         self.log.update_metadata(presel_params = self.presel_params)
+        self.add_params_to_gui(**self.presel_params)
+
+        self.widgets['threshold'].valueChanged.connect(self.update_threshold)
 
     def preselect(self, dataset, prev_dataset):
         """ Preselects based on user input parameters """
@@ -373,6 +382,16 @@ class PreselectedHistogram(AveragedHistogram):
 
         self.presel_success_indicator.setValue(self.presel_success_value)
         super().update(**kwargs)
+
+    def update_threshold(self, threshold: float):
+        """ Updates the threshold to a new value 
+
+        :param threshold: (float) new value of threshold
+        """
+
+        setattr(self, 'threshold', threshold)
+        self.presel_params['threshold'] = threshold
+        self.line.setValue(self.presel_params['threshold'])
 
     @staticmethod
     def recent(dataset, prev_dataset):

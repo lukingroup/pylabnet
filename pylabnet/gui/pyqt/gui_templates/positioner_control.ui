@@ -712,7 +712,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -875,7 +875,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -1194,7 +1194,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -2078,7 +2078,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -2149,7 +2149,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -2305,7 +2305,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3127,7 +3127,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3283,7 +3283,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3439,7 +3439,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3609,7 +3609,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2432</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

@@ -28,6 +28,8 @@ would be thrown in case the GUI crashes. This enables scripts to continue runnin
 """
 
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
+import qdarkstyle
+
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -38,6 +40,7 @@ import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase
+from pylabnet.utils.helper_methods import load_config, get_config_filepath
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -55,9 +58,10 @@ class Window(QtWidgets.QMainWindow):
         main_window = Window(app, gui_template="my_favorite_gui")
     """
 
+    # '#ffe119',
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
-    COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+    COLOR_LIST = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 
@@ -85,7 +89,6 @@ class Window(QtWidgets.QMainWindow):
 
         self._ui = None  # .ui file to use as a template
 
-
         # Holds all widgets assigned to the GUI from an external script
         # Reference is by keyword (widget_label), and the keyword can be used to access the widget once assigned
         self.plots = {}
@@ -93,6 +96,7 @@ class Window(QtWidgets.QMainWindow):
         self.labels = {}
         self.event_buttons = {}
         self.containers = {}
+        self.windows = {}
         self.auto_close = auto_close
 
         # Configuration queue lists
@@ -130,6 +134,40 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
 
+
+    def load_gui(self, config_filename, folder_root=None, logger=None):
+        """ Loads and applies GUI settings from a config file
+
+        :param config_filename: (str) name of configuration file to save.
+            Can be an existing config file with other configuration parameters
+        :folder_root: (str) Name of folder where the config files are stored. If None,
+        use pylabnet/config
+        :logger: (LogClient) instance of LogClient (or LogHandler)
+        """
+
+        data = load_config(config_filename, folder_root, logger)
+        if 'gui_scalars' in data:
+            for scalar, value in data['gui_scalars'].items():
+                try:
+                    widget = getattr(self, scalar)
+                    try:
+                        widget.setValue(value)
+                    except AttributeError:
+                        widget.setChecked(value)
+                except:
+                    logger.warn(f"Could not load value for {scalar}")
+        if 'gui_labels' in data:
+            for label, text in data['gui_labels'].items():
+                try:
+                    widget = getattr(self, label)
+                    widget.setText(text)
+                except:
+                    logger.warn(f"Could not load value for {label}")
+        logger.info(f'Loaded GUI values from {get_config_filepath(config_filename, folder_root)}')
+    
+    def apply_stylesheet(self):
+        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
     def set_network_info(self, host=None, port=None):
         """ Sets IP and port labels
 
@@ -144,6 +182,27 @@ class Window(QtWidgets.QMainWindow):
         if port is not None:
             self.port=port
             self.port_label.setText(f'Port: {port}')
+
+    def add_graph(self, graph_layout=None, index=None):
+        """ Adds a new pyqtgraph to a graph layout and returns
+
+        :param graph_layout: (str) name of graph layout to add to
+        :param index: (int) index if inserting into layout at a
+            particular location
+        """
+
+        if graph_layout is None:
+            layout = getattr(self, 'graph_layout')
+        else:
+            layout = getattr(self, graph_layout)
+
+        graph = pg.PlotWidget()
+        if index is None:
+            layout.addWidget(graph)
+        else:
+            layout.insertWidget(index, graph)
+
+        return graph
 
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
@@ -645,6 +704,88 @@ class Window(QtWidgets.QMainWindow):
             gui=self,
             widget=container_widget
         )
+
+
+class ParameterPopup(QtWidgets.QWidget):
+    """ Widget class of to add parameter prompting popup"""
+    parameters = QtCore.pyqtSignal(dict)
+
+    def __init__(self, **params):
+        """ Instantiates window
+
+        :param params: (dict) with keys giving parameter
+            name and value giving parameter type
+        """
+
+        QtWidgets.QWidget.__init__(self)
+
+        # Create layout
+        self.base_layout = QtWidgets.QVBoxLayout()
+        # self.setStyleSheet('background-color: rgb(0, 0, 0);'
+        #                    'font: 25 12pt "Calibri Light";'
+        #                    'color: rgb(255, 255, 255);')
+        self.setWindowTitle('Parameter Configurator')
+        self.setMinimumWidth(300)
+        self.setLayout(self.base_layout)
+        self.params = {}
+
+        # Add labels and widgets to layout
+        for param_name, param_type in params.items():
+            layout = QtWidgets.QHBoxLayout()
+            layout.addWidget(QtWidgets.QLabel(param_name))
+            if param_type is int:
+                self.params[param_name] = QtWidgets.QSpinBox()
+                self.params[param_name].setMaximum(100000000)
+            elif param_type is float:
+                self.params[param_name] = QtWidgets.QDoubleSpinBox()
+                self.params[param_name].setMaximum(100000000)
+                self.params[param_name].setDecimals(6)
+            else:
+                self.params[param_name] = QtWidgets.QLabel()
+            layout.addWidget(self.params[param_name])
+            self.base_layout.addLayout(layout)
+
+        # Add button to configure
+        self.configure_button = QtWidgets.QPushButton(text='Configure Parameters')
+        self.configure_button.setStyleSheet('background-color: rgb(170, 170, 255);')
+        self.base_layout.addWidget(self.configure_button)
+        self.configure_button.clicked.connect(self.return_params)
+        self.show()
+
+    def return_params(self):
+        """ Returns all parameter values and closes """
+
+        ret = {}
+        for param_name, widget in self.params.items():
+            try:
+                ret[param_name] = widget.value()
+            except AttributeError:
+                ret[param_name] = widget.text()
+        self.parameters.emit(ret)
+        self.close()
+
+
+class GraphPopup(QtWidgets.QWidget):
+    """ Widget class for holding new graphs """
+
+    def __init__(self, **kwargs):
+
+        QtWidgets.QWidget.__init__(self)
+
+        self.graph_layout = QtWidgets.QVBoxLayout()
+
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+
+        self.setWindowTitle(window_title)
+        self.setLayout(self.graph_layout)
+        self.show()
+
 
 class Plot:
     """ Class for plot widgets inside of a Window

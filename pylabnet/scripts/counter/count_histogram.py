@@ -11,13 +11,15 @@ import numpy as np
 import time
 import socket
 import pyqtgraph as pg
+from PyQt5 import QtWidgets
 
 
 class TimeTrace:
     """ Convenience class for handling time-trace measurements """
 
     def __init__(self, ctr: si_tt.Client, log: LogClient,
-                 click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5, **kwargs):
+                 click_ch=1, start_ch=2, binwidth=1000, n_bins=1000, update_interval=0.5,
+                 correlation=False, **kwargs):
         """ Instantiates TimeTrace measurement
 
         :param ctr: (si_tt.Client) client to timetagger hardware
@@ -30,6 +32,7 @@ class TimeTrace:
             :param update_interval: (float) interval in seconds to wait between updates
                 Note, don't go too small (< 100 ms, not precisely tested yet),
                 otherwise we might lag in jupyter notebook
+            :param correlation: (bool) whether or not this is correlation meas
             TODO: in future, can implement multiple histograms if useful
         """
 
@@ -42,21 +45,36 @@ class TimeTrace:
         self.binwidth = binwidth
         self.n_bins = n_bins
 
-        self.hist = f'histogram_{np.random.randint(1000)}'
+        self.correlation = correlation
+        if self.correlation:
+            self.hist = f'correlation_{np.random.randint(1000)}'
+        else:
+            self.hist = f'histogram_{np.random.randint(1000)}'
         self.plot = None
         self.is_paused = False
         self.up_in = update_interval
 
+
     def start_acquisition(self):
         """ Begins time-trace acquisition """
 
-        self.ctr.start_histogram(
-            name=self.hist,
-            start_ch=self.start_ch,
-            click_ch=self.click_ch,
-            binwidth=self.binwidth,
-            n_bins=self.n_bins
-        )
+        if self.correlation:
+            self.ctr.start_correlation(
+                name=self.hist,
+                ch_1 = self.start_ch,
+                ch_2 = self.click_ch,
+                binwidth=self.binwidth,
+                n_bins=self.n_bins
+            )
+
+        else:
+            self.ctr.start_histogram(
+                name=self.hist,
+                start_ch=self.start_ch,
+                click_ch=self.click_ch,
+                binwidth=self.binwidth,
+                n_bins=self.n_bins
+            )
 
         self.log.info(f'Histogram counter {self.hist} started acquiring'
                       f' with click channel {self.click_ch} and start channel'
@@ -148,6 +166,8 @@ class TimeTraceGui(TimeTrace):
     """ Same as TimeTrace but with a dedicated GUI for display
     and parameter setting"""
 
+    STYLESHEET = 'color: rgb(255, 255, 255); font: 25 12pt "Calibri Light";'
+
     def __init__(self, ctr: si_tt.Client, log: LogClient, config, ui='histogram', **kwargs):
         """ Instantiates TimeTrace measurement
 
@@ -165,7 +185,15 @@ class TimeTraceGui(TimeTrace):
             host=socket.gethostbyname(socket.gethostname())
         )
 
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
+
         self.config = load_config(config, logger=log)
+        self.correlation = False
+        if 'type' in self.config:
+            if self.config['type'] == 'correlation':
+                self.correlation = True
+
         super().__init__(
             ctr=ctr,
             log=log,
@@ -173,28 +201,92 @@ class TimeTraceGui(TimeTrace):
             start_ch=self.config['start_ch'],
             binwidth=int(self._get_binwidth()),
             n_bins=self.gui.n_bins.value(),
-            update_interval=0
+            update_interval=0,
+            correlation=self.correlation
         )
 
+        # If we also want to plot gated trace(s)
+
+        self.gates = {}
+        if 'gate_ch' in self.config:
+
+            # Handle singular input
+            if not isinstance(self.config['gate_ch'], list):
+                self.config['gate_ch'] = [self.config['gate_ch']]
+
+            # Update GUI to handle gates
+            self._configure_gui_gates()
+
+            # Setup gated channels
+            for gate_ch in self.config['gate_ch']:
+                ch_name = f'Gated histogram channel {gate_ch}'
+                ctr.create_gated_channel(
+                    ch_name,
+                    self.config['click_ch'],
+                    gate_ch,
+                    delay=self.delays[ch_name].value()
+                )
+                self.gates[ch_name] = TimeTrace(
+                    ctr=ctr,
+                    log=log,
+                    click_ch=ch_name,
+                    start_ch=self.config['start_ch'],
+                    binwidth=int(self._get_binwidth()),
+                    n_bins=self.gui.n_bins.value(),
+                    update_interval=0,
+                    correlation=self.correlation
+                )
+
         # Configure clicks
-        self.gui.configure.clicked.connect(lambda: self.set_parameters(
+        self.gui.configure.clicked.connect(lambda: self.update_parameters(
             binwidth=int(self._get_binwidth()),
             n_bins=self.gui.n_bins.value()
         ))
-        self.gui.clear.clicked.connect(self.clear)
+        self.gui.clear.clicked.connect(self.clear_all)
         self.gui.save.clicked.connect(lambda: self.save(
             filename=self.gui.save_name.text(),
             directory=self.config['save_path']
         ))
         self.gui.run.clicked.connect(self.run)
+        self._configure_delay_updates()
 
         # Initialize plot info
         self.curve = self.gui.graph.plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
         )
+
         self.gui.graph.getPlotItem().setLabel('bottom', 'Time (s)')
         self.legend = get_legend_from_graphics_view(self.gui.legend)
         add_to_legend(self.legend, self.curve, 'Histogram')
+
+        self.gate_curves = {}
+        index = 1
+        for gate in self.gates:
+            self.gate_curves[gate] = self.gui.graph.plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[index])
+            )
+            index += 1
+            add_to_legend(self.legend, self.gate_curves[gate], gate)
+
+        self.gui.apply_stylesheet()
+
+    def clear_all(self):
+        """ Clears all plots """
+
+        self.clear()
+        for gate in self.gates.values():
+            gate.clear()
+
+    def update_parameters(self, binwidth, n_bins):
+        """ Updates parameters of all histograms
+
+        :param binwidth: (float) binwidth in ps
+        :param n_Bins: (int) total number of bins
+        """
+
+        self.set_parameters(binwidth, n_bins)
+        for gate in self.gates.values():
+            gate.set_parameters(binwidth, n_bins)
 
     def run(self):
         """ Handles run button click """
@@ -214,11 +306,15 @@ class TimeTraceGui(TimeTrace):
                     directory=self.config['save_path']
                 )
             self.pause()
+            for gate in self.gates.values():
+                gate.pause()
 
     def go(self):
         """ Runs counter from scratch """
 
         self.start_acquisition()
+        for gate in self.gates.values():
+            gate.start_acquisition()
         self.init_plot()
 
         self.is_paused = False
@@ -237,7 +333,7 @@ class TimeTraceGui(TimeTrace):
             if self.gui.auto_clear.isChecked():
                 current_time = time.time()
                 if current_time - last_clear > self.gui.clear_time.value():
-                    self.clear()
+                    self.clear_all()
                     last_clear = current_time
             self._update_data()
             self.gui.force_update()
@@ -247,11 +343,18 @@ class TimeTraceGui(TimeTrace):
 
         # Clear existing data
         self.curve.clear()
-        # self.gui.graph.getPlotItem().setLabel('bottom', f'Time {self.gui.units.currentText()}')
+
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
             self.ctr.get_counts(self.hist)[0]
         )
+
+        for gate_name, gate_curve in self.gate_curves.items():
+            gate_curve.clear()
+            gate_curve.setData(
+                self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist)/1e12,
+                self.gates[gate_name].ctr.get_counts(self.gates[gate_name].hist)[0]
+            )
 
     def _update_data(self):
         """ Adds latest data to the plot """
@@ -260,6 +363,12 @@ class TimeTraceGui(TimeTrace):
             self.ctr.get_x_axis(self.hist)/1e12,
             self.ctr.get_counts(self.hist)[0]
         )
+
+        for gate_name, gate_curve in self.gate_curves.items():
+            gate_curve.setData(
+                self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist)/1e12,
+                self.gates[gate_name].ctr.get_counts(self.gates[gate_name].hist)[0]
+            )
 
     def _get_binwidth(self):
         """ Gets the binwidth using the unit combo box
@@ -278,6 +387,52 @@ class TimeTraceGui(TimeTrace):
         elif unit_index == 3:
             return val*1e9
 
+    def _configure_gui_gates(self):
+        """ Configures the gates part of the GUI """
+
+        # Configure base layout for all gates
+        gate_box = QtWidgets.QGroupBox("Gates")
+        gate_box.setStyleSheet(self.STYLESHEET)
+        vbox = QtWidgets.QVBoxLayout()
+
+        # Now add widgets for each gate
+        self.delays = {}
+        for index, gate_ch in enumerate(self.config['gate_ch']):
+
+            # Configure widgets
+            ch_name = f'Gated histogram channel {gate_ch}'
+            hbox = QtWidgets.QHBoxLayout()
+            hbox.addWidget(QtWidgets.QLabel(text=f'Gate {gate_ch}'))
+            hbox.addWidget(QtWidgets.QLabel(text='Delay: '))
+            self.delays[ch_name] = QtWidgets.QDoubleSpinBox()
+            self.delays[ch_name].setMaximum(1e12)
+            self.delays[ch_name].setSuffix(' ps')
+            self.delays[ch_name].setButtonSymbols(2)
+            hbox.addWidget(self.delays[ch_name])
+
+            # Check for preconfigured delay and set the value
+            if 'delays' in self.config:
+                try:
+                    self.delays[ch_name].setValue(self.config['delays'][index])
+                except IndexError:
+                    pass
+
+            # Add to vertical layout
+            vbox.addLayout(hbox)
+
+        # Configure layout to a group box and add to GUI in layout
+        gate_box.setLayout(vbox)
+        self.gui.graph_layout.addWidget(gate_box)
+
+    def _configure_delay_updates(self):
+        """ Configures delay updates when a value is changed """
+
+        for channel_name, delay in self.delays.items():
+            delay.valueChanged.connect(lambda state, x=channel_name: self.gates[channel_name].ctr.update_delay(
+                channel_name=x,
+                delay=state
+            ))
+
     def save(self, filename=None, directory=None):
         """ Saves the current data """
 
@@ -290,6 +445,17 @@ class TimeTraceGui(TimeTrace):
             directory=directory,
             date_dir=True
         )
+
+        for gate_name, gate in self.gates.items():
+            generic_save(
+                data=np.array([
+                    gate.ctr.get_x_axis(gate.hist)/1e12,
+                    gate.ctr.get_counts(gate.hist)[0]
+                ]),
+                filename=gate_name,
+                directory=directory,
+                date_dir=True
+            )
 
         pyqtgraph_save(
             widget=self.gui.graph.getPlotItem(),

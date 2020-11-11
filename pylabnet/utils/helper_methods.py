@@ -212,6 +212,7 @@ def unpack_launcher(**kwargs):
     logport = kwargs['logport']
     params = kwargs['params']
 
+
     return logger, loghost, logport, clients, guis, params
 
 
@@ -352,12 +353,39 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     """
 
     filepath = generate_filepath(filename, directory, date_dir)
+    if not filepath.endswith('.txt'):
+        filepath += '.txt'
 
     try:
         np.savetxt(filepath, data)
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
+    except ValueError:
+        # TODO: Potentially incorporate with logger and except hook
+        pass
+
+
+def save_metadata(log, filename=None, directory=None, date_dir=False):
+    """ Saves metadata stored in the logger
+
+    :param log: (LogClient)
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(f'{filename}_metadata', directory, date_dir)
+    if not filepath.endswith('.json'):
+        filepath += '.json'
+
+    with open(filepath, 'w') as outfile:
+        try:
+            json.dump(log.get_metadata(), outfile, indent=4)
+        except TypeError:
+            log.warn('Did not save metadata')
+        except OSError:
+            log.warn('Did not save metadata')
 
 
 def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):

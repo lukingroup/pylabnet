@@ -279,12 +279,10 @@ def main():
 
 def launch(**kwargs):
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-
     # Instantiate Monitor script
     control = DataTaker(
-        logger=logger,
-        clients=clients,
+        logger=kwargs['logger'],
+        clients=kwargs['clients'],
         config=kwargs['config'],
     )
     control.gui.set_network_info(port=kwargs['server_port'])

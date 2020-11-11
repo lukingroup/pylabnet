@@ -1,7 +1,7 @@
 """ Launches the wavemeter monitor/control application """
 
 from pylabnet.launchers.launcher import Launcher
-# from pylabnet.launchers.servers import si_tt, zi_hdawg, nidaqmx_green, nidaqmx, nidaqmx_ai, dio_breakout
+from pylabnet.launchers.servers import si_tt, zi_hdawg, nidaqmx_green, nidaqmx, nidaqmx_ai, dio_breakout
 from pylabnet.scripts.lasers import wlm_monitor
 from pylabnet.scripts.data_center import take_data
 

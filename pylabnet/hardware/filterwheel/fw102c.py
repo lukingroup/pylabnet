@@ -114,9 +114,11 @@ class FW102C(object):
 
         ans = 'ERROR'
         self._sio.flush()
+        cmd = cmdstr.split('=')[0]
         res = self._sio.write(str(cmdstr+'\r'))
         self._sio.readline()
 
         return ans
 
 
+ 

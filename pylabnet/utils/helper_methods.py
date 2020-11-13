@@ -542,3 +542,33 @@ def fill_2dlist(list_in):
         list_manipulate[-1] += [list_manipulate[-1][0]]*(len(list_manipulate[0])-len(list_manipulate[-1]))
 
     return np.array(list_manipulate)
+
+def find_keys(input_dict, key_name):
+    """Returns value of dictionary if key_name is either the key of the dict (normal dictionary lookup),
+    or an element of a key that is a tuple or list.
+
+    :input_dict: Dictionary to search.
+    :key_name: Key to lookup.
+    """
+
+    found = [ ]
+    for k, v in input_dict.items():
+        if type(k) in [list, tuple, dict] and key_name in k:
+            found.append(v)
+        elif key_name == k:
+           found.append(v)
+
+    return found
+
+def find_client(logger, client_dict, client_name):
+    """Finds client from unpacked launcher client dictionary."""
+    found_clients = find_keys(client_dict, client_name)
+
+    num_clients = len(found_clients)
+
+    if num_clients == 0:
+        logger.error(f'Client {client_name} could not be found.')
+    elif num_clients > 1:
+        logger.error(f"Multiple ({num_clients}) with name {client_name} found.")
+    else:
+        return found_clients[0]

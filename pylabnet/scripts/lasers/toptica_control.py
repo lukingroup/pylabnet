@@ -1,7 +1,7 @@
 from pylabnet.network.client_server import toptica_dl_pro, external_gui
 from pylabnet.scripts.lasers import wlm_monitor
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets
+from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, find_client
 from pylabnet.gui.pyqt.external_gui import Window
 
 import socket
@@ -181,7 +181,7 @@ def launch(**kwargs):
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
-    dlc_client = clients['toptica_dlc_pro']
+    dlc_client = find_client(logger, clients, 'toptica_dlc_pro')
 
     # Instantiate Monitor script
     toptica_controller = Controller(dlc_client, logger=logger, port=kwargs['server_port'])

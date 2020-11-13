@@ -5,7 +5,7 @@ import copy
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, load_config, generate_widgets
+from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, load_config, generate_widgets, find_client
 from pylabnet.network.client_server import smaract_mcs2
 
 
@@ -158,7 +158,7 @@ class Controller:
                 locked = self.lock_status[index]
 
         return locked
-    
+
     def _step_left(self, channel: int):
         """ Steps a particular channel if unlocked
 
@@ -189,7 +189,7 @@ class Controller:
             )
 
             self._set_voltage_display(channel)
-    
+
     def _step_right(self, channel: int):
         """ Steps a particular channel if unlocked
 
@@ -268,7 +268,7 @@ class Controller:
                     )
 
                     self._set_voltage_display(channel)
-    
+
     def _update_voltage(self, channel: int, voltage: float):
         """ Updates the channels DC voltage
 
@@ -293,14 +293,14 @@ class Controller:
                     self.gui.force_update()
                 self.widgets['is_moving'][channel].setChecked(False)
                 self.widgets['is_moving'][channel].setCheckable(False)
-    
+
     def _setup_gui(self):
         """ Configures what all buttons do """
 
         self.gui.load_button.clicked.connect(self.load_settings)
         self.gui.save_button.clicked.connect(self.save)
         self.gui.emergency_button.clicked.connect(self.stop_all)
-        
+
         # Stack based items (common to 3 axes)
         for stack in range(int(self.NUM_CHANNELS/3)):
 
@@ -310,7 +310,7 @@ class Controller:
             self.widgets['lock_button'][stack].pressed.connect(
                 lambda stack=stack_no: self._lock_stack(stack)
             )
-        
+
         for channel in range(self.NUM_CHANNELS):
 
             channel_no = copy.deepcopy(channel)
@@ -342,7 +342,7 @@ class Controller:
                 lambda state, channel=channel_no: self._update_voltage(
                     channel=channel,
                     voltage=state
-                ) 
+                )
             )
             self.widgets['amplitude'][channel_no].valueChanged.connect(
                 lambda state, channel=channel_no: self.pos.set_parameters(
@@ -369,7 +369,7 @@ def launch(**kwargs):
 
     # Unpack and assign parameters
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    nanopos_client = clients['mcs2']
+    nanopos_client = find_client(logger, clients, 'mcs2')
     gui_client = 'positioner_control'
 
     # Instantiate controller

@@ -3,7 +3,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend)
+    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 
 import numpy as np
@@ -731,13 +731,13 @@ def launch(**kwargs):
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
     config = load_config(kwargs['config'], logger=logger)
 
-    wavemeter_client = clients['high_finesse_ws7']
+    wavemeter_client = find_client(logger, clients, 'high_finesse_ws7')
 
     # Get list of ao client names
     ao_clients = {}
     for channel in config['channels'].values():
         client_name = channel['ao']['client']
-        ao_clients[client_name] = clients[client_name]
+        ao_clients[client_name] = find_client(logger, clients, client_name)
 
     if params is None:
         channel_params = [p for p in config['channels'].values()]

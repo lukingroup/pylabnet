@@ -1,4 +1,3 @@
-""" Launches the staticline GUI test"""
 
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.scripts.staticlines import staticline_gui_generic

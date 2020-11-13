@@ -1,6 +1,6 @@
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets
+from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, find_client
 from pylabnet.gui.pyqt.external_gui import Window
 
 import socket
@@ -116,8 +116,8 @@ def launch(**kwargs):
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
-    filterwheel1 = clients['toptica_filterwheel1']
-    filterwheel2 = clients['toptica_filterwheel2']
+    filterwheel1 = find_client(logger, clients, 'toptica_filterwheel1')
+    filterwheel2 = find_client(logger, clients,'toptica_filterwheel2')
 
     # Instantiate Monitor script
     toptica_controller = TopticaFilterWheelController(

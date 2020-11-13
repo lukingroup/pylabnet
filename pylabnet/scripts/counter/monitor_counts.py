@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client
 
 
 # Static methods
@@ -262,7 +262,7 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['si_tt'], logger_client=logger, server_port=kwargs['server_port']
+            ctr_client=find_client(logger, clients, 'si_tt'), logger_client=logger, server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

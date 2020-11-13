@@ -3,7 +3,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend)
+    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
@@ -378,8 +378,9 @@ def launch(**kwargs):
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
     config = load_config(kwargs['config'], logger=logger)
 
-    ao_client = clients['nidaqmx']
-    ai_client = clients['nidaqmx_ai']
+
+    ao_client = find_client(logger, clients, 'nidaqmx')
+    ai_client = find_client(logger, clients, 'nidaqmx_ai')
 
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(

@@ -4,7 +4,7 @@ from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
-    load_config, pyqtgraph_save)
+    load_config, pyqtgraph_save, find_client)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -472,9 +472,11 @@ def launch(**kwargs):
 
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
+
+
     # Instantiate Monitor script
     trace = TimeTraceGui(
-        ctr = clients['si_tt'],
+        ctr = find_client(logger, clients, 'si_tt'),
         log=logger,
         config=kwargs['config'],
     )

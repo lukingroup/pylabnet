@@ -253,7 +253,7 @@ class Controller:
                 self.widgets['walk_right'][channel].setStyleSheet(
                     'background-color:red'
                 )
-                self.pos.move(channel, backward=True)
+                self.pos.move(channel, backward=False)
 
                 while self.pos.is_moving(channel):
                     self.widgets['is_moving'][channel].setCheckable(True)

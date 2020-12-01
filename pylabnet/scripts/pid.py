@@ -78,4 +78,8 @@ class PID:
         self.error = error[-1]
 
         # Calculate response
-        self.cv = self.p*error[-1] + self.i*np.sum(error)/self.memory + self.d*(error[-1] - error[-2])
+        if len(error) > 1:
+            self.cv = self.p*error[-1] + self.i*np.sum(error)/self.memory + self.d*(error[-1] - error[-2])
+        else:
+            #if only have a single error so far, then derivative is undefined so do not calculate it
+            self.cv = self.p*error[-1] + self.i*np.sum(error)/self.memory 

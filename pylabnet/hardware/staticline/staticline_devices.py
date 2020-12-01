@@ -200,6 +200,7 @@ class AbstractDevice(StaticLineHardwareHandler):
 registered_staticline_modules = {
     'zi_hdawg':  HDAWG,
     'nidaqmx_green': NiDaqMx,
+    'nidaqmx': NiDaqMx,
     'dio_breakout': DioBreakout,
     'toptica': Toptica,
     'abstract': AbstractDevice,

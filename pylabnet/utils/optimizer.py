@@ -20,7 +20,7 @@ class Optimizer:
 class IQOptimizer(Optimizer):
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -55, max_carrier_pow = -55, num_points = 25, CUSHION_PARAM = 5,
+		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -55, max_carrier_pow = -55, num_points = 25, cushion_param = 5,
 		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_window = 44, q_window = 0.34, dc_i_window = 0.0135,
 		dc_q_window = 0.0115, plot_traces = True
 	):
@@ -35,7 +35,7 @@ class IQOptimizer(Optimizer):
 		:kwarg max_iterations: maximum number of iterations to minimize carrier and lower sideband
 		:kwarg max_lower_sideband_pow: desired upper bound for lower sideband power (in dBm)
 		:kwarg max_carrier_pow: desired upper bound for carrier power (in dBm)
-		:kwarg CUSHION_PARAM: positive real number positively correlated with speed of zooming in on minimum
+		:kwarg cushion_param: positive real number positively correlated with speed of zooming in on minimum
 		:kwarg param_guess: starting parameters for optimization:
 
 		([phase shift, q := (amp_i/amp_q) amplitude imbalance, a0 := (amp_i+amp_q)/2 average amplitude, dc_offset_i, dc_offset_q])
@@ -73,7 +73,7 @@ class IQOptimizer(Optimizer):
 		self.num_points = num_points
 		self.max_iterations = max_iterations
 		self.plot_traces = plot_traces
-		self.CUSHION_PARAM = CUSHION_PARAM
+		self.cushion_param = cushion_param
 
 		#Set mw freq
 		self.mw_source.output_on()
@@ -146,7 +146,7 @@ class IQOptimizer(Optimizer):
 			marker_freq = marker.read_freq()
 
 			#assert abs(marker_freq - target_freq) < max_deviation, f"{marker.name} has wrong frequecy: {marker_freq / 1e9} GHz"
-			print(f"Marker '{marker.name}' parked at {marker_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
+			self.hd.log.info(f"Marker '{marker.name}' parked at {marker_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
 
 		if self.plot_traces == True:
 			self.sa.plot_trace()
@@ -168,8 +168,8 @@ class IQOptimizer(Optimizer):
 
 		while self.opt_lower_sideband_pow > self.max_lower_sideband_pow and num_iterations < self.max_iterations - 1:
 
-			q_cushion = np.abs(q_max2-q_min2)/self.CUSHION_PARAM
-			phase_cushion = np.abs(phase_max2-phase_min2)/self.CUSHION_PARAM
+			q_cushion = np.abs(q_max2-q_min2)/self.cushion_param
+			phase_cushion = np.abs(phase_max2-phase_min2)/self.cushion_param
 
 			# Reset sweep window to zoom in on minimum
 			q_max2 = self.opt_q + q_cushion
@@ -188,12 +188,12 @@ class IQOptimizer(Optimizer):
 			num_iterations = num_iterations + 1
 
 		if num_iterations < self.max_iterations:
-			print('Lower sideband optimization completed in ' + str(num_iterations + 1) + ' iterations')
+			self.hd.log.info('Lower sideband optimization completed in ' + str(num_iterations + 1) + ' iterations')
 		else:
-			print('Lower sideband optimization failed to reach threshold in ' + str(num_iterations + 1) +  ' iterations')
+			self.hd.log.info('Lower sideband optimization failed to reach threshold in ' + str(num_iterations + 1) +  ' iterations')
 
 		time.sleep(1)
-		print('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
+		self.hd.log.info('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
 
 		if self.plot_traces == True:
 			# Heatmap plot
@@ -232,8 +232,8 @@ class IQOptimizer(Optimizer):
 				self.dc_offset_q_opt = voltages_q[np.where(carrier_power == np.amin(carrier_power))[1][0]]
 				self.opt_carrier_pow = np.amin(carrier_power)
 
-				i_cushion = np.abs(dc_max_i2-dc_min_i2)/self.CUSHION_PARAM
-				q_cushion = np.abs(dc_max_q2-dc_min_q2)/self.CUSHION_PARAM
+				i_cushion = np.abs(dc_max_i2-dc_min_i2)/self.cushion_param
+				q_cushion = np.abs(dc_max_q2-dc_min_q2)/self.cushion_param
 
 				# Reset sweep window to zoom in on minimum
 				dc_max_i2 = self.dc_offset_i_opt + i_cushion
@@ -252,12 +252,12 @@ class IQOptimizer(Optimizer):
 			self.hd.setd('sigouts/1/offset', self.dc_offset_q_opt)
 
 		if num_iterations < self.max_iterations:
-			print('Carrier optimization completed in ' + str(num_iterations) + ' iterations')
+			self.hd.log.info('Carrier optimization completed in ' + str(num_iterations) + ' iterations')
 		else:
-			print('Carrier optimization failed to reach threshold in ' + str(num_iterations) +  ' iterations')
+			self.hd.log.info('Carrier optimization failed to reach threshold in ' + str(num_iterations) +  ' iterations')
 
 		time.sleep(1)
-		print('Carrier power is ' + str(self.carrier_marker.get_power()))
+		self.hd.log.info('Carrier power is ' + str(self.carrier_marker.get_power()))
 
 		if self.plot_traces == True:
 			# Heatmap plot
@@ -275,9 +275,9 @@ class IQOptimizer(Optimizer):
 		self.opt_carrier()
 		time.sleep(1)
 
-		print('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(.5*(self.amp_q_opt + self.amp_i_opt)) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
-		print('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
-		print('Carrier power is ' + str(self.carrier_marker.get_power()) + ' dBm')
+		self.hd.log.info('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(.5*(self.amp_q_opt + self.amp_i_opt)) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
+		self.hd.log.info('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
+		self.hd.log.info('Carrier power is ' + str(self.carrier_marker.get_power()) + ' dBm')
 
 
 	def _sweep_phase_amp_imbalance(self):

@@ -8,12 +8,12 @@ def main():
         script=[power_monitor_direct],
         server_req=[thorlabs_pm320e],
         gui_req=[None],
-        params=[None],
+        params=[None], 
         auto_connect=False,
         config='fiber_front'
     )
     launcher.launch()
-
+ 
 
 if __name__ == '__main__':
     main()

@@ -69,8 +69,42 @@ class Monitor:
         # Configure Range to be Auto
         self.pm.set_range(1, self.RANGE_LIST[0])
         self.pm.set_range(2, self.RANGE_LIST[0])
-        self.ir_index.append(0)
-        self.rr_index.append(0)
+        self.ir_index = 0
+        self.rr_index = 0
+
+
+        # Connect wavelength change action.
+        self.widgets['number_widget'][-1].valueChanged.connect(self._update_wavelength)
+
+        # Connect range change.
+        self.widgets['combo_widget'][0].currentIndexChanged.connect(lambda: self._update_range(0))
+        self.widgets['combo_widget'][1].currentIndexChanged.connect(lambda: self._update_range(1))
+
+    def _update_wavelength(self):
+        """ Updates wavelength of pm to WL of GUI"""
+
+        gui_wl = self.widgets['number_widget'][-1].value()
+
+        if self.wavelength != gui_wl:
+            self.wavelength = gui_wl
+            self.pm.set_wavelength(1, self.wavelength)
+            self.pm.set_wavelength(2, self.wavelength)
+
+
+    def _update_range(self, channel):
+        """ Update range settings if combobox has been changed."""
+
+        range_index = self.widgets['combo_widget'][channel].currentIndex()
+
+        if channel == 0:
+            if self.ir_index != range_index:
+                self.ir_index = range_index
+                self.pm.set_range(1, self.RANGE_LIST[self.ir_index])
+        elif channel == 1:
+             if self.rr_index != range_index:
+                self.rr_index = range_index
+                self.pm.set_range(2, self.RANGE_LIST[self.rr_index])
+
 
     def update_settings(self, channel=0):
         """ Checks GUI for settings updates and implements

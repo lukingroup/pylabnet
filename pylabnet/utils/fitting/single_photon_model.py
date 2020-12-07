@@ -1,7 +1,7 @@
 """
 This contains a numerical model for stimulated single photon emission from cavity-coupled SiV-
 Author: Wenjie Gong
-Updated: 11/11/2020
+Updated: 12/07/2020
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +11,28 @@ from scipy.signal import savgol_filter, find_peaks
 
 def main():
     return 0
+
+def make_fig(xTitle="xTitle",yTitle="yTitle"):
+    SMALL_SIZE = 14
+    BIGGER_SIZE = 16
+    plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=BIGGER_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    plt.rc('lines', linewidth = 3)
+    plt.rc('figure', figsize= (7, 5))
+    fig = plt.figure()
+    ax = plt.gca()
+    #ax.set_prop_cycle(color=['#002BFF','#A15FFF','#FF0061','#FF8913'])
+    ax.set_xlabel(xTitle,labelpad=6)
+    ax.set_ylabel(yTitle)
+    ax.tick_params(direction='out', length=8, width=2)
+    ax.yaxis.offsetText.set_fontsize(10)
+    ax.tick_params(axis='both', which='major', labelsize=15)
+    return fig, ax
 
 def gaussian(x, amp, mu, sigma):
     '''

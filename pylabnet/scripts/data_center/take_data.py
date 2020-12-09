@@ -9,11 +9,12 @@ import importlib
 import time
 import pickle
 from datetime import datetime
+import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher
+from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata
 from pylabnet.scripts.data_center import datasets
 
 
@@ -97,6 +98,9 @@ class DataTaker:
         except:
             pass
 
+        # Load the config
+        self.reload_config()
+
         # Set all experiments to normal state and highlight configured expt
         for item_no in range(self.gui.exp.count()):
             self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
@@ -145,8 +149,14 @@ class DataTaker:
             self.log.info('Experiment started')
 
             # Run update thread
-            self.update_thread = UpdateThread()
+            self.update_thread = UpdateThread(
+                autosave=self.gui.autosave.isChecked(),
+                save_time=self.gui.autosave_interval.value()
+            )
             self.update_thread.data_updated.connect(self.dataset.update)
+            self.update_thread.save_flag.connect(self.save)
+            self.gui.autosave.toggled.connect(self.update_thread.update_autosave)
+            self.gui.autosave_interval.valueChanged.connect(self.update_thread.update_autosave_interval)
 
             self.experiment_thread = ExperimentThread(
                 self.experiment,
@@ -185,11 +195,14 @@ class DataTaker:
         """ Saves data """
 
         self.log.update_metadata(notes=self.gui.notes.toPlainText())
+        filename = self.gui.save_name.text()
+        directory = self.config['save_path']
         self.dataset.save(
-            filename=self.gui.save_name.text(),
-            directory=self.config['save_path'],
+            filename=filename,
+            directory=directory,
             date_dir=True
         )
+        save_metadata(self.log, filename, directory, True)
         self.log.info('Data saved')
 
     def reload_config(self):
@@ -225,30 +238,51 @@ class UpdateThread(QtCore.QThread):
     """ Thread that continuously signals GUI to update data """
 
     data_updated = QtCore.pyqtSignal()
+    save_flag = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.running = True
+        self.autosave = kwargs['autosave']
+        self.save_time = kwargs['save_time']
         super().__init__()
         self.start()
 
+    def update_autosave(self, status: bool):
+        """ Updates whether or not to autosave
+
+        :param status: (bool) whether or not to autosave
+        """
+
+        self.autosave = status
+
+    def update_autosave_interval(self, interval: int):
+        """ Updates autosave interval
+
+        :param interval: (int) duration in seconds for autosave
+        """
+
+        self.save_time = interval
+    
     def run(self):
+        last_save = time.time()
         while self.running:
             self.data_updated.emit()
+            if self.autosave and np.abs(time.time() - last_save) > self.save_time:
+                self.save_flag.emit()
+                last_save = time.time()
             self.msleep(REFRESH_RATE)
 
 
 def main():
-    control = DataTaker(config='laser_scan')
+    control = DataTaker(config='preselected_histogram')
     control.gui.app.exec_()
 
 def launch(**kwargs):
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-
     # Instantiate Monitor script
     control = DataTaker(
-        logger=logger,
-        clients=clients,
+        logger=kwargs['logger'],
+        clients=kwargs['clients'],
         config=kwargs['config'],
     )
     control.gui.set_network_info(port=kwargs['server_port'])

@@ -562,12 +562,12 @@ class Window(QtWidgets.QMainWindow):
         except FileNotFoundError:
             raise
 
-        self._initialize_step_sizes()
+        self.initialize_step_sizes()
 
         if run:
             self._run_gui()
 
-    def _initialize_step_sizes(self):
+    def initialize_step_sizes(self):
         """ Initializes all QDoubleSpinBox step sizes based on step_sizes widget
 
         If step_sizes widget is not present, does nothing and initializes self.num_widgets to None

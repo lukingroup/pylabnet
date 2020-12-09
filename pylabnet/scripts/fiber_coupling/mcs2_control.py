@@ -8,6 +8,9 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, load_config, generate_widgets, find_client
 from pylabnet.network.client_server import smaract_mcs2
 
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import  QShortcut
+
 
 class Controller:
     """ A script class for controlling MCS2 positioners + interfacing with GUI"""
@@ -17,7 +20,7 @@ class Controller:
         step_left=NUM_CHANNELS, step_right=NUM_CHANNELS, walk_left=NUM_CHANNELS,
         walk_right=NUM_CHANNELS, n_steps=NUM_CHANNELS, is_moving=NUM_CHANNELS,
         amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS,
-        lock_button=int(NUM_CHANNELS/3)
+        lock_button=int(NUM_CHANNELS/3), keyboard_change_combo=1
     )
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
@@ -46,6 +49,8 @@ class Controller:
             n_steps=self.NUM_CHANNELS, amplitude=self.NUM_CHANNELS, frequency=self.NUM_CHANNELS, velocity=self.NUM_CHANNELS
         ))
 
+
+
         # Additional attributes
         self.prev_amplitude = [50]*self.NUM_CHANNELS
         self.prev_frequency = [30]*self.NUM_CHANNELS
@@ -59,6 +64,61 @@ class Controller:
 
         # Configure all button and parameter updates
         self._setup_gui()
+
+
+        # Setup shortcut to use keyboard to step fiber
+        self.press_right = QShortcut(QKeySequence('Right'), self.gui)
+        self.press_left = QShortcut(QKeySequence('Left'), self.gui)
+        self.press_up = QShortcut(QKeySequence('Up'), self.gui)
+        self.press_down = QShortcut(QKeySequence('Down'), self.gui)
+        self.press_up_z = QShortcut(QKeySequence('PgUp'), self.gui)
+        self.press_down_z= QShortcut(QKeySequence('PgDown'), self.gui)
+
+        self.widgets['keyboard_change_combo'].currentIndexChanged.connect(self._bind_arrow_keys)
+
+
+    def _disconnect_arrow_keys(self):
+        """ Unbinds the arrow, up/down keys from any actions."""
+        self.press_right.activated.disconnect()
+        self.press_left.activated.disconnect()
+        self.press_up.activated.disconnect()
+        self.press_down.activated.disconnect()
+        self.press_up_z.activated.disconnect()
+        self.press_down_z.activated.disconnect()
+
+
+    def _bind_arrow_keys(self):
+        """ Binds arroy keys on keyboard to step around front fiber."""
+
+        try:
+            self._disconnect_arrow_keys()
+        except TypeError:
+            self.log.info('Initial call of arrowkey binding.')
+
+        binding_index = self.widgets['keyboard_change_combo'].currentIndex()
+
+        front_names = ['step_left', 'step_right', 'step_left', 'step_right', 'step_right', 'step_left']
+        front_index = [6, 6, 1, 1, 5, 5]
+
+        rear_names = ['step_right', 'step_left',  'step_right',  'step_left', 'step_right', 'step_left']
+        rear_index = [8, 8, 0, 0, 2, 2]
+
+        if binding_index == 0:
+            return
+        if binding_index == 1:
+            names = front_names
+            index = front_index
+        elif binding_index == 2:
+            names = rear_names
+            index = rear_index
+
+        self.press_right.activated.connect(lambda: self.widgets[names[0]][index[0]].animateClick())
+        self.press_left.activated.connect(lambda: self.widgets[names[1]][index[1]].animateClick())
+        self.press_up.activated.connect(lambda: self.widgets[names[2]][index[2]].animateClick())
+        self.press_down.activated.connect(lambda: self.widgets[names[3]][index[3]].animateClick())
+        self.press_up_z.activated.connect(lambda: self.widgets[names[4]][index[4]].animateClick())
+        self.press_down_z.activated.connect(lambda: self.widgets[names[5]][index[5]].animateClick())
+
 
     def initialize_parameters(self, channel, params):
         """ Initializes all parameters to values given by params, except for DC voltage

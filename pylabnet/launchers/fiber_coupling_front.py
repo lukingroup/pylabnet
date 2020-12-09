@@ -1,5 +1,5 @@
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.launchers.servers import thorlabs_pm320e
+from pylabnet.launchers.servers import thorlabs_pm320e_front
 from pylabnet.scripts.fiber_coupling import power_monitor_direct
 
 def main():

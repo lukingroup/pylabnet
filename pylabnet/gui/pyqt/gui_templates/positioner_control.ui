@@ -27,6 +27,32 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
+       <widget class="QLabel" name="label_35">
+        <property name="text">
+         <string>Keyboard Control:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="keyboard_change_combo">
+        <item>
+         <property name="text">
+          <string>None</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Front Fiber</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Rear Fiber</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="ip_label">
         <property name="font">
          <font>
@@ -3609,7 +3635,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2432</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

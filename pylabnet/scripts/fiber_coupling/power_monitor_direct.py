@@ -9,7 +9,7 @@ import pyqtgraph as pg
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, find_client, load_config, get_gui_widgets
 
 # Time between power meter calls to prevent crashes
-BUFFER = 1e-3
+BUFFER = 5e-3
 
 class Monitor:
     RANGE_LIST = [
@@ -201,7 +201,7 @@ def launch(**kwargs):
 
     # Unpack and assign parameters
     logger, loghost, logport, clients, _, params = unpack_launcher(**kwargs)
-    pm_client = find_client(logger, clients, 'thorlabs_pm320e')
+    pm_client = find_client(logger, clients, 'thorlabs_pm320e_front')
 
     # Unpack settings
     settings = load_config(

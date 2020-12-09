@@ -20,7 +20,7 @@
    <string>Fiber Coupling</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -35,14 +35,13 @@
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;IP Address: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -55,14 +54,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;GUI Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -116,14 +114,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>12</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name: N/A&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -270,7 +267,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Input power:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -286,9 +283,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -334,7 +329,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>W</string>
@@ -350,7 +345,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Reflected power:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -366,9 +361,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -414,7 +407,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>W</string>
@@ -430,7 +423,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Coupling Efficiency:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -446,9 +439,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -492,7 +483,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>Wavelength (nm):</string>
@@ -508,9 +499,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="frame">
          <bool>false</bool>
@@ -535,7 +524,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Input Range:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -548,14 +537,13 @@ selection-color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>16</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">font: 25 16pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="editable">
          <bool>true</bool>
@@ -641,7 +629,7 @@ color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reflection range:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -654,14 +642,13 @@ color: rgb(255, 255, 255);</string>
          <font>
           <family>Calibri Light</family>
           <pointsize>16</pointsize>
-          <weight>3</weight>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);
-font: 25 16pt &quot;Calibri Light&quot;;</string>
+         <string notr="true"/>
         </property>
         <property name="editable">
          <bool>true</bool>

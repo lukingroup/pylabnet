@@ -2,7 +2,7 @@ from pyvisa import ResourceManager, VisaIOError
 import socket
 from pylabnet.hardware.awg.dio_breakout import Driver
 from pylabnet.utils.helper_methods import show_console, hide_console, load_config
-from pylabnet.network.client_server.dio_breakout import Service
+from pylabnet.network.client_server.dio_breakout import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 
 

@@ -4,8 +4,7 @@ import time
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.gui_handler import GUIHandler
-from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher
-from pylabnet.utils.helper_methods import load_config
+from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, find_client, load_config
 
 
 class Monitor:
@@ -225,7 +224,7 @@ def launch(**kwargs):
 
     # Unpack and assign parameters
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    pm_client = clients['thorlabs_pm320e']
+    pm_client = find_client(logger, clients, 'thorlabs_pm320e')
     gui_client = guis['fiber_coupling']
 
     # Unpack settings

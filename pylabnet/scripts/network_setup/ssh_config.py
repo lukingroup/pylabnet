@@ -47,12 +47,18 @@ def launch(**kwargs):
 
         for server in servers:
 
-            servername = server['servername']
-
             try:
-                disable = bool(server['disable'])
+                disable_raw = server['disable']
+
+                if disable_raw == 'False':
+                    disable = False
+                else:
+                    disable = True
             except KeyError:
                 disable = False
+
+            servername = server['servername']
+            logger.info(f"Trying to connect to {servername} on {hostname}.")
 
             # Don't execute any ssh commands if flag is set.
             if disable:
@@ -91,7 +97,6 @@ def launch(**kwargs):
                     )
 
             ssh.exec_command(cmd)
-
 
         ssh.close()
 

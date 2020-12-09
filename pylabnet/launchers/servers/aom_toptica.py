@@ -23,7 +23,7 @@ def launch(**kwargs):
 
     staticline_logger = kwargs['logger']
 
-    # Instanciate HDAWG driver.
+    # Instantiate HDAWG driver.
     hd = zi_hdawg.Driver(dev_id, logger=staticline_logger)
 
 

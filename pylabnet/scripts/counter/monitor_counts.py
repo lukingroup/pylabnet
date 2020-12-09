@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client
 
 
 # Static methods
@@ -50,10 +50,14 @@ class CountMonitor:
 
         # Instantiate GUI window
         self.gui = Window(
-            gui_template=ui, 
-            host=socket.gethostbyname(socket.gethostname()), 
+            gui_template=ui,
+            host=socket.gethostbyname(socket.gethostname()),
             port=server_port
         )
+
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
@@ -103,7 +107,7 @@ class CountMonitor:
             self._ctr.start_trace(
                 name='monitor',
                 ch_list=self._ch_list,
-                bin_width=self._bin_width, 
+                bin_width=self._bin_width,
                 n_bins=self._n_bins
             )
 
@@ -184,7 +188,7 @@ class CountMonitor:
                 self.widgets[f'curve_{channel}'],
                 ' - '+f'Channel {channel}'
             )
-            
+
 
             # Assign scalar
             # self.gui_handler.assign_label(
@@ -258,7 +262,7 @@ def launch(**kwargs):
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['si_tt'], logger_client=logger, server_port=kwargs['server_port']
+            ctr_client=find_client(logger, clients, 'si_tt'), logger_client=logger, server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

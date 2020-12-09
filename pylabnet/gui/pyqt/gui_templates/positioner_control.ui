@@ -27,6 +27,32 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
+       <widget class="QLabel" name="label_35">
+        <property name="text">
+         <string>Keyboard Control:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="keyboard_change_combo">
+        <item>
+         <property name="text">
+          <string>None</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Front Fiber</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Rear Fiber</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="ip_label">
         <property name="font">
          <font>
@@ -712,7 +738,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -875,7 +901,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -1194,7 +1220,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -2078,7 +2104,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -2149,7 +2175,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -2305,7 +2331,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3127,7 +3153,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3283,7 +3309,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -3439,7 +3465,7 @@ color: rgb(255, 255, 255);</string>
                <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
              </property>
              <property name="checkable">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>

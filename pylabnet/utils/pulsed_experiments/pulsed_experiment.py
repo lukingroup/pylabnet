@@ -2,8 +2,6 @@
 import os
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
-from pylabnet.utils.pulseblock.pb_iplot import iplot
-
 
 class PulsedExperiment():
     """ Wrapper class for Pulsed experiments using the ZI HDAWG.
@@ -41,6 +39,7 @@ class PulsedExperiment():
         """
 
         if self.iplot:
+            from pylabnet.utils.pulseblock.pb_iplot import iplot
             iplot(pulseblock)
 
         # Instanciate pulseblock handler.

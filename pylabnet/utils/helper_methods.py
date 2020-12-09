@@ -212,6 +212,7 @@ def unpack_launcher(**kwargs):
     logport = kwargs['logport']
     params = kwargs['params']
 
+
     return logger, loghost, logport, clients, guis, params
 
 
@@ -352,12 +353,39 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
     """
 
     filepath = generate_filepath(filename, directory, date_dir)
+    if not filepath.endswith('.txt'):
+        filepath += '.txt'
 
     try:
         np.savetxt(filepath, data)
     except OSError:
         os.mkdir(directory)
         np.savetxt(filepath, data)
+    except ValueError:
+        # TODO: Potentially incorporate with logger and except hook
+        pass
+
+
+def save_metadata(log, filename=None, directory=None, date_dir=False):
+    """ Saves metadata stored in the logger
+
+    :param log: (LogClient)
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    """
+
+    filepath = generate_filepath(f'{filename}_metadata', directory, date_dir)
+    if not filepath.endswith('.json'):
+        filepath += '.json'
+
+    try:
+        with open(filepath, 'w') as outfile:            
+            json.dump(log.get_metadata(), outfile, indent=4)
+    except TypeError:
+        log.warn('Did not save metadata')
+    except OSError:
+        log.warn('Did not save metadata')
 
 
 def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=False):
@@ -514,3 +542,33 @@ def fill_2dlist(list_in):
         list_manipulate[-1] += [list_manipulate[-1][0]]*(len(list_manipulate[0])-len(list_manipulate[-1]))
 
     return np.array(list_manipulate)
+
+def find_keys(input_dict, key_name):
+    """Returns value of dictionary if key_name is either the key of the dict (normal dictionary lookup),
+    or an element of a key that is a tuple or list.
+
+    :input_dict: Dictionary to search.
+    :key_name: Key to lookup.
+    """
+
+    found = [ ]
+    for k, v in input_dict.items():
+        if type(k) in [list, tuple, dict] and key_name in k:
+            found.append(v)
+        elif key_name == k:
+           found.append(v)
+
+    return found
+
+def find_client(logger, client_dict, client_name):
+    """Finds client from unpacked launcher client dictionary."""
+    found_clients = find_keys(client_dict, client_name)
+
+    num_clients = len(found_clients)
+
+    if num_clients == 0:
+        logger.error(f'Client {client_name} could not be found.')
+    elif num_clients > 1:
+        logger.error(f"Multiple ({num_clients}) with name {client_name} found.")
+    else:
+        return found_clients[0]

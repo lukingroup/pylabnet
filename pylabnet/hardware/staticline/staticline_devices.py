@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from pylabnet.utils.helper_methods import load_config
+from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
@@ -31,8 +33,8 @@ class StaticLineHardwareHandler(ABC):
 
     @abstractmethod
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
-        device client function calls. This is an abstract method as each 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls. This is an abstract method as each
         subclass implements its own version based on its own functions.
         '''
         pass
@@ -75,7 +77,10 @@ class HDAWG(StaticLineHardwareHandler):
         '''
 
         # Retrieve arguments from keyword argument dictionary.
-        DIO_bit = self.config['DIO_bit']
+
+        assignment_dict = load_config('dio_assignment_global')
+
+        DIO_bit = assignment_dict[self.config['bit_name']]
 
         # Drive 8-bit bus containing DIO_bit to be toggled.
         # Note that the buses are enabled by using the decimal equivalent
@@ -113,10 +118,10 @@ class HDAWG(StaticLineHardwareHandler):
 class NiDaqMx(StaticLineHardwareHandler):
 
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
-        
+
         # Retrieve arguments from configs, if not found apply default value.
         try:
             down_voltage = self.config['down_voltage']
@@ -137,20 +142,41 @@ class NiDaqMx(StaticLineHardwareHandler):
         ao_output = self.config['ao_output']
 
         # Register up/down function.
-        ao_output = self.config['ao_output']
-        self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, up_voltage)
-        self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, down_voltage)
+        self.up_voltage = up_voltage
+        self.down_voltage = down_voltage
+
+        self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, self.up_voltage)
+        self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, self.down_voltage)
 
         # Set voltage to down.
         self.down()
 
         # Log successfull setup.
-        self.log.info(f"NiDaq {self.hardware_client.dev} output {ao_output} successfully assigned to staticline {self.name}.")
+        self.log.info(f"NiDaq output {ao_output} successfully assigned to staticline {self.name}.")
+
+    def set_value(self, value):
+        self.up_voltage = value
+
+class DioBreakout(StaticLineHardwareHandler):
+    def setup(self):
+        assignment_dict = load_config('dio_assignment_global')
+
+        DIO_bit = assignment_dict[self.config['bit_name']]
+        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit)
+        self.isHighVoltage = self.config['is_high_volt']
+
+
+    def set_value(self, value):
+        if self.isHighVoltage:
+            self.hardware_client.set_high_voltage(self.board, self.channel, value)
+        else:
+            self.hardware_client.set_low_voltage(self.board, self.channel, value)
+
 
 class Toptica(StaticLineHardwareHandler):
 
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
 
@@ -159,20 +185,23 @@ class Toptica(StaticLineHardwareHandler):
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
 
 class AbstractDevice(StaticLineHardwareHandler):
-    
 
     def setup(self):
-        '''Sets up the staticline functions (e.g. up/down) in terms of the 
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
 
-        self.up = self.hardware_client.up_function
-        self.down = self.hardware_client.down_function
-        self.set_value = self.hardware_client.set_value_function
+        self.up = lambda: self.hardware_client.up_function(self.config["ch"])
+        self.down = lambda: self.hardware_client.down_function(self.config["ch"])
+        self.set_value = lambda value: self.hardware_client.set_value_function(value, self.config["ch"])
+
+################################################################################
 
 registered_staticline_modules = {
     'zi_hdawg':  HDAWG,
-    'nidaqmx_card': NiDaqMx,
+    'nidaqmx_green': NiDaqMx,
+    'nidaqmx': NiDaqMx,
+    'dio_breakout': DioBreakout,
     'toptica': Toptica,
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice

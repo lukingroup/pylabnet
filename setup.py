@@ -66,6 +66,7 @@ setup(
         'pyserial>=3.4',
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
+        'qdarkstyle>=2.8.1',
         'rpyc>=4.1.2',
         'si_prefix>=1.2.2'
     ]

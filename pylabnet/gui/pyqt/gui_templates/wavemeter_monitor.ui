@@ -20,7 +20,7 @@
    <string>Wavemeter Monitor</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -41,7 +41,7 @@
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(170, 170, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="text">
          <string>Stop</string>
@@ -68,7 +68,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(255, 255, 255);</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>IP Address: N/A</string>
@@ -84,7 +84,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(255, 255, 255);</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>Port: N/A</string>
@@ -104,7 +104,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(255, 255, 255);</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>Step Size: </string>
@@ -123,9 +123,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+           <string notr="true"/>
           </property>
           <property name="frame">
            <bool>false</bool>
@@ -180,7 +178,7 @@ selection-color: rgb(255, 255, 255);</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="title">
          <string>Plot 1</string>
@@ -213,9 +211,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -267,9 +263,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -303,9 +297,7 @@ selection-color: rgb(255, 255, 255);</string>
            <item>
             <widget class="QPushButton" name="rs_1">
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Set to frequency</string>
@@ -422,8 +414,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
@@ -437,9 +428,7 @@ color: rgb(0, 0, 0);</string>
               </size>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-background-color: rgb(170, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Zero Voltage</string>
@@ -466,7 +455,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="title">
          <string>Plot 1</string>
@@ -496,9 +485,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -550,9 +537,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -586,9 +571,7 @@ selection-color: rgb(255, 255, 255);</string>
            <item>
             <widget class="QPushButton" name="rs_2">
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Set to frequency</string>
@@ -602,6 +585,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <family>Calibri Light</family>
                <pointsize>14</pointsize>
               </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Lock Active</string>
@@ -666,6 +652,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               <height>0</height>
              </size>
             </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
            </widget>
            <widget class="QSplitter" name="splitter_6">
             <property name="orientation">
@@ -705,8 +694,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
@@ -720,9 +708,7 @@ color: rgb(0, 0, 0);</string>
               </size>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-background-color: rgb(170, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Zero Voltage</string>
@@ -749,7 +735,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="title">
          <string>Plot 1</string>
@@ -779,9 +765,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -833,9 +817,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -925,8 +907,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
@@ -940,9 +921,7 @@ color: rgb(0, 0, 0);</string>
               </size>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-background-color: rgb(170, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Zero Voltage</string>
@@ -969,7 +948,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </font>
         </property>
         <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
+         <string notr="true"/>
         </property>
         <property name="title">
          <string>Plot 1</string>
@@ -999,9 +978,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -1053,9 +1030,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-selection-background-color: rgb(0, 85, 0);
-selection-color: rgb(255, 255, 255);</string>
+              <string notr="true"/>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -1145,8 +1120,7 @@ selection-color: rgb(255, 255, 255);</string>
               </font>
              </property>
              <property name="styleSheet">
-              <string notr="true">background-color: rgb(170, 170, 255);
-color: rgb(0, 0, 0);</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>CLEAR PLOT</string>
@@ -1160,9 +1134,7 @@ color: rgb(0, 0, 0);</string>
               </size>
              </property>
              <property name="styleSheet">
-              <string notr="true">color: rgb(255, 255, 255);
-background-color: rgb(170, 0, 0);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true"/>
              </property>
              <property name="text">
               <string>Zero Voltage</string>

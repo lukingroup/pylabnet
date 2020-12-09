@@ -69,7 +69,7 @@ class Driver:
                 self.log.info('Entering dummy mode instead')
 
         self.counters = {}
-        
+
 
     @dummy_wrap
     def set_ao_voltage(self, ao_channel, voltages):
@@ -105,7 +105,7 @@ class Driver:
     ):
         """ Creates a software timed counter channel
 
-        :param counter_channel: (str) channel of counter to use 
+        :param counter_channel: (str) channel of counter to use
             e.g. 'Dev1/ctr0'
         :param physical_channel: (str) physical channel of counter
             e.g. 'Dev1/PFI0'
@@ -120,11 +120,11 @@ class Driver:
         # Create a default name if necessary
         if name is None:
             name = f'counter_{len(self.counters)}'
-        
+
         # Create counter task and assign parameters
         self.counters[name] = TimedCounter(
-            logger=self.log, 
-            counter_channel=counter_channel, 
+            logger=self.log,
+            counter_channel=counter_channel,
             physical_channel=physical_channel
         )
         self.counters[name].set_parameters(duration)
@@ -165,7 +165,7 @@ class Driver:
         """
 
         return int(self.counters[name].count)
-    
+
     # Technical methods
 
     def _gen_ch_path(self, channel):
@@ -221,7 +221,7 @@ class TimedCounter:
             self._status = 'Inactive'
             msg_str = f'Failed to activate counter {counter_channel} with physical channel {physical_channel}'
             self.log.error(msg_str)
-    
+
     def set_parameters(self, duration=0.1):
         """ Initializes gated counter parameters
 

@@ -33,16 +33,16 @@ class Controller:
         self.widgets = get_gui_widgets(
             gui=self.gui,
             on_off=1,
-            temperature=1,
-            temperature_actual=1,
-            current=1,
-            current_actual=1,
-            offset=1,
-            amplitude=1,
-            frequency=1,
-            scan=1,
-            update_temp=1,
-            update_current=1
+            temperature=2,
+            temperature_actual=2,
+            current=2,
+            current_actual=2,
+            offset=2,
+            amplitude=2,
+            frequency=2,
+            scan=2,
+            update_temp=2,
+            update_current=2
         )
 
         self.dlc = dlc

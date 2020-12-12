@@ -30,9 +30,9 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>90</y>
+      <y>50</y>
       <width>701</width>
-      <height>401</height>
+      <height>441</height>
      </rect>
     </property>
     <property name="title">
@@ -42,7 +42,7 @@
      <property name="geometry">
       <rect>
        <x>570</x>
-       <y>130</y>
+       <y>180</y>
        <width>125</width>
        <height>28</height>
       </rect>
@@ -64,7 +64,7 @@
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>80</y>
+       <y>130</y>
        <width>273</width>
        <height>37</height>
       </rect>
@@ -113,7 +113,7 @@
      <property name="geometry">
       <rect>
        <x>9</x>
-       <y>170</y>
+       <y>220</y>
        <width>274</width>
        <height>37</height>
       </rect>
@@ -141,7 +141,7 @@
      <property name="geometry">
       <rect>
        <x>570</x>
-       <y>40</y>
+       <y>90</y>
        <width>125</width>
        <height>28</height>
       </rect>
@@ -163,7 +163,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>220</y>
+       <y>270</y>
        <width>554</width>
        <height>150</height>
       </rect>
@@ -278,7 +278,7 @@
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="amplitude1">
+       <widget class="QDoubleSpinBox" name="amplitude_1">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -406,7 +406,7 @@
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>170</y>
+       <y>220</y>
        <width>273</width>
        <height>37</height>
       </rect>
@@ -455,7 +455,7 @@
      <property name="geometry">
       <rect>
        <x>9</x>
-       <y>80</y>
+       <y>130</y>
        <width>274</width>
        <height>37</height>
       </rect>
@@ -483,7 +483,7 @@
      <property name="geometry">
       <rect>
        <x>11</x>
-       <y>125</y>
+       <y>175</y>
        <width>273</width>
        <height>37</height>
       </rect>
@@ -511,7 +511,7 @@
      <property name="geometry">
       <rect>
        <x>291</x>
-       <y>125</y>
+       <y>175</y>
        <width>272</width>
        <height>37</height>
       </rect>
@@ -560,7 +560,7 @@
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>30</y>
+       <y>80</y>
        <width>272</width>
        <height>37</height>
       </rect>
@@ -609,8 +609,8 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
-       <width>552</width>
+       <y>80</y>
+       <width>241</width>
        <height>37</height>
       </rect>
      </property>
@@ -633,14 +633,56 @@
       <string>Temperature Setpoint (C):</string>
      </property>
     </widget>
+    <widget class="QPushButton" name="on_off_1">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>221</width>
+       <height>37</height>
+      </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>250</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri Light</family>
+       <pointsize>14</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>Laser 1 emission</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>green_LED_off.svg</normaloff>
+       <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <property name="autoExclusive">
+      <bool>false</bool>
+     </property>
+    </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
       <x>720</x>
-      <y>90</y>
+      <y>50</y>
       <width>701</width>
-      <height>401</height>
+      <height>441</height>
      </rect>
     </property>
     <property name="title">
@@ -650,7 +692,7 @@
      <property name="geometry">
       <rect>
        <x>570</x>
-       <y>130</y>
+       <y>180</y>
        <width>125</width>
        <height>28</height>
       </rect>
@@ -672,7 +714,7 @@
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>80</y>
+       <y>130</y>
        <width>273</width>
        <height>37</height>
       </rect>
@@ -721,7 +763,7 @@
      <property name="geometry">
       <rect>
        <x>9</x>
-       <y>170</y>
+       <y>220</y>
        <width>274</width>
        <height>37</height>
       </rect>
@@ -749,7 +791,7 @@
      <property name="geometry">
       <rect>
        <x>570</x>
-       <y>40</y>
+       <y>90</y>
        <width>125</width>
        <height>28</height>
       </rect>
@@ -771,7 +813,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>220</y>
+       <y>270</y>
        <width>554</width>
        <height>150</height>
       </rect>
@@ -1014,7 +1056,7 @@
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>170</y>
+       <y>220</y>
        <width>273</width>
        <height>37</height>
       </rect>
@@ -1063,7 +1105,7 @@
      <property name="geometry">
       <rect>
        <x>9</x>
-       <y>80</y>
+       <y>130</y>
        <width>274</width>
        <height>37</height>
       </rect>
@@ -1091,7 +1133,7 @@
      <property name="geometry">
       <rect>
        <x>11</x>
-       <y>125</y>
+       <y>175</y>
        <width>273</width>
        <height>37</height>
       </rect>
@@ -1119,7 +1161,7 @@
      <property name="geometry">
       <rect>
        <x>291</x>
-       <y>125</y>
+       <y>175</y>
        <width>272</width>
        <height>37</height>
       </rect>
@@ -1168,7 +1210,7 @@
      <property name="geometry">
       <rect>
        <x>290</x>
-       <y>30</y>
+       <y>80</y>
        <width>272</width>
        <height>37</height>
       </rect>
@@ -1217,8 +1259,8 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>30</y>
-       <width>552</width>
+       <y>80</y>
+       <width>221</width>
        <height>37</height>
       </rect>
      </property>
@@ -1241,48 +1283,48 @@
       <string>Temperature Setpoint (C):</string>
      </property>
     </widget>
-   </widget>
-   <widget class="QPushButton" name="on_off">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>50</y>
-      <width>168</width>
-      <height>37</height>
-     </rect>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>250</width>
-      <height>16777215</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <family>Calibri Light</family>
-      <pointsize>14</pointsize>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true"/>
-    </property>
-    <property name="text">
-     <string>Laser emission</string>
-    </property>
-    <property name="icon">
-     <iconset>
-      <normaloff>green_LED_off.svg</normaloff>
-      <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
-    </property>
-    <property name="checkable">
-     <bool>true</bool>
-    </property>
-    <property name="checked">
-     <bool>false</bool>
-    </property>
-    <property name="autoExclusive">
-     <bool>false</bool>
-    </property>
+    <widget class="QPushButton" name="on_off_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>221</width>
+       <height>37</height>
+      </rect>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>250</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>Calibri Light</family>
+       <pointsize>14</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string>Laser 2 emission</string>
+     </property>
+     <property name="icon">
+      <iconset>
+       <normaloff>green_LED_off.svg</normaloff>
+       <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+     <property name="autoExclusive">
+      <bool>false</bool>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">

@@ -32,7 +32,7 @@ class Controller:
         )
         self.widgets = get_gui_widgets(
             gui=self.gui,
-            on_off=1,
+            on_off=2,
             temperature=2,
             temperature_actual=2,
             current=2,
@@ -48,8 +48,8 @@ class Controller:
         self.dlc = dlc
         self.offset = 65
         self.amplitude = 100
-        self.scan = False
-        self.emission = False
+        self.scan = [False, False]
+        self.emission = [False, False]
 
 
         # Setup stylesheet.
@@ -74,57 +74,69 @@ class Controller:
 
 
         # Check for on/off updates
-        if self.widgets['on_off'].isChecked() != self.emission:
+        for i in range(2):
+            if self.widgets['on_off'][i].isChecked() != self.emission[i]:
 
-            # If laser was already on, turn off
-            if self.emission:
-                self.dlc.turn_off()
-                self.emission = False
-                self.log.info('Toptica DL turned off')
+                # If laser was already on, turn off
+                if self.emission[i]:
+                    self.dlc.turn_off(i+1)
+                    self.emission[i] = False
+                    self.log.info(f'Toptica DL {i+1} turned off')
 
-            # Otherwise turn on
-            else:
-                self.dlc.turn_on()
-                self.emission = True
-                self.log.info('Toptica DL turned on')
+                # Otherwise turn on
+                else:
+                    self.dlc.turn_on(i+1)
+                    self.emission[i] = True
+                    self.log.info(f'Toptica DL {i+1} turned on')
 
         # Now handle a scan event
-        if self.widgets['scan'].isChecked() != self.scan:
+        for i in range(2):
+            if self.widgets['scan'][i].isChecked() != self.scan[i]:
 
-            # If we were previously scanning, terminate the scan
-            if self.scan:
-                self.dlc.stop_scan()
-                self.scan = False
-                self.log.info(f'Toptica DL scan stopped')
+                # If we were previously scanning, terminate the scan
+                if self.scan[i]:
+                    self.dlc.stop_scan(i+1)
+                    self.scan[i] = False
+                    self.log.info(f'Toptica DL {i+1} scan stopped')
 
-            # Otherwise, configure and start the scan
-            else:
-                offset = self.widgets['offset'].value()
-                amplitude = self.widgets['amplitude'].value()
-                frequency = self.widgets['frequency'].value()
-                self.dlc.configure_scan(
-                    offset=offset,
-                    amplitude=amplitude,
-                    frequency=frequency
-                )
-                self.dlc.start_scan()
-                self.scan = True
-                self.log.info('Toptica DL Scan initiated '
-                              f'with offset: {offset}, '
-                              f'amplitude: {amplitude}, '
+                # Otherwise, configure and start the scan
+                else:
+                    offset = self.widgets['offset'][i].value()
+                    amplitude = self.widgets['amplitude'][i].value()
+                    frequency = self.widgets['frequency'][i].value()
+                    self.dlc.configure_scan(
+                        offset=offset,
+                        amplitude=amplitude,
+                        frequency=frequency,
+                        laser_num=i+1
+                    )
+                    self.dlc.start_scan(i+1)
+                    self.scan[i] = True
+                    self.log.info(f'Toptica DL Scan {i+1} initiated '
+                                f'with offset: {offset}, '
+                                f'amplitude: {amplitude}, '
                               f'frequency: {frequency}')
 
         # Handle value checking
         if check_vals:
             try:
-                temp = self.dlc.temp_act()
-                if temp < 50:
-                    self.widgets['temperature_actual'].setValue(
-                        temp
+                temp_1 = self.dlc.temp_act(1)
+                if temp_1 < 50:
+                    self.widgets['temperature_actual'][0].setValue(
+                        temp_1
                     )
                 time.sleep(0.1)
-                self.widgets['current_actual'].setValue(
-                    self.dlc.current_act()
+                self.widgets['current_actual'][0].setValue(
+                    self.dlc.current_act(1)
+                )
+                temp_2 = self.dlc.temp_act(2)
+                if temp_2 < 50:
+                    self.widgets['temperature_actual'][1].setValue(
+                        temp_2
+                    )
+                time.sleep(0.1)
+                self.widgets['current_actual'][1].setValue(
+                    self.dlc.current_act(2)
                 )
             except ValueError:
                 pass
@@ -135,46 +147,60 @@ class Controller:
         """ Sets values to current parameters """
 
         # Check if laser is on and update
-        self.emission = self.dlc.is_laser_on()
-        self.widgets['on_off'].setChecked(self.emission)
-        time.sleep(0.1)
+
+        for i in range(2):
+            self.emission[i] = self.dlc.is_laser_on(i+1)
+            self.widgets['on_off'][i].setChecked(self.emission[i])
+            time.sleep(0.1)
 
         # Get temperature setpoint and actual temperature
-        temp_sp=100
-        while temp_sp > 50:
-            temp_sp = self.dlc.temp_sp()
+        temp_sp_1=100
+        while temp_sp_1 > 50:
+            temp_sp_1 = self.dlc.temp_sp(1)
+            temp_sp_2 = self.dlc.temp_sp(2)
             time.sleep(0.1)
 
-        self.widgets['temperature'].setValue(temp_sp)
-        temp_act=100
-        while temp_act > 50:
-            temp_act = self.dlc.temp_act()
+        self.widgets['temperature'][0].setValue(temp_sp_1)
+        self.widgets['temperature'][1].setValue(temp_sp_2)
+
+        temp_act_1=100
+        while temp_act_1 > 50:
+            temp_act_1 = self.dlc.temp_act(1)
+            temp_act_2 = self.dlc.temp_act(2)
             time.sleep(0.1)
-        self.widgets['temperature_actual'].setValue(temp_act)
+        self.widgets['temperature_actual'][0].setValue(temp_act_1)
+        self.widgets['temperature_actual'][1].setValue(temp_act_2)
 
         # Get current setpoint and actual current
-        self.widgets['current'].setValue(self.dlc.current_sp())
+        self.widgets['current'][0].setValue(self.dlc.current_sp(1))
         time.sleep(0.1)
-        self.widgets['current_actual'].setValue(self.dlc.current_act())
+        self.widgets['current'][1].setValue(self.dlc.current_sp(2))
         time.sleep(0.1)
+        self.widgets['current_actual'][0].setValue(self.dlc.current_act(1))
+        time.sleep(0.1)
+        self.widgets['current_actual'][1].setValue(self.dlc.current_act(2))
+        time.sleep(0.1)
+
 
         # Assign button pressing
-        self.widgets['update_temp'].clicked.connect(self._set_temperature)
-        self.widgets['update_current'].clicked.connect(self._set_current)
+        self.widgets['update_temp'][0].clicked.connect(lambda: self._set_temperature(1))
+        self.widgets['update_temp'][1].clicked.connect(lambda: self._set_temperature(2))
+        self.widgets['update_current'][0].clicked.connect(lambda: self._set_current(1))
+        self.widgets['update_current'][1].clicked.connect(lambda: self._set_current(2))
 
-    def _set_temperature(self):
+    def _set_temperature(self, laser_num):
         """ Sets the temperature to the setpoint value in the GUI """
 
-        temperature = self.widgets['temperature'].value()
-        self.dlc.set_temp(temperature)
-        self.log.info(f'Set Toptica temperature setpoint to {temperature}')
+        temperature = self.widgets['temperature'][laser_num-1].value()
+        self.dlc.set_temp(temperature, laser_num)
+        self.log.info(f'Set Toptica {laser_num} temperature setpoint to {temperature}')
 
-    def _set_current(self):
+    def _set_current(self, laser_num):
         """ Sets the current to the setpoint value in the GUI """
 
-        current = self.widgets['current'].value()
-        self.dlc.set_current(current)
-        self.log.info(f'Set Toptica current setpoint to {current}')
+        current = self.widgets['current'][laser_num-1].value()
+        self.dlc.set_current(current, laser_num)
+        self.log.info(f'Set Toptica {laser_num} current setpoint to {current}')
 
 
 def launch(**kwargs):

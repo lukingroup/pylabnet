@@ -6,14 +6,14 @@ from pylabnet.network.core.client_base import ClientBase
 
 class Service(ServiceBase):
 
-    def exposed_is_laser_on(self):
-        return self._module.is_laser_on()
+    def exposed_is_laser_on(self, laser_num=1):
+        return self._module.is_laser_on(laser_num)
 
-    def exposed_turn_on(self):
-        return self._module.turn_on()
+    def exposed_turn_on(self, laser_num=1):
+        return self._module.turn_on(laser_num)
 
-    def exposed_turn_off(self):
-        return self._module.turn_off()
+    def exposed_turn_off(self, laser_num=1):
+        return self._module.turn_off(laser_num)
 
     def exposed_voltage(self, laser_num):
         return self._module.voltage(laser_num)
@@ -79,7 +79,7 @@ class Service(ServiceBase):
         :param amplitude: (float) scan amplitude (peak to peak) in volts
         """
 
-        return self._module.configure_scan(offset, amplitude, frequency)
+        return self._module.configure_scan(offset, amplitude, frequency, laser_num)
 
     def exposed_start_scan(self, laser_num=1):
         """ Starts a piezo scan """
@@ -95,14 +95,14 @@ class Service(ServiceBase):
 
 class Client(ClientBase):
 
-    def is_laser_on(self):
-        return self._service.exposed_is_laser_on()
+    def is_laser_on(self, laser_num=1):
+        return self._service.exposed_is_laser_on(laser_num)
 
-    def turn_on(self):
-        return self._service.exposed_turn_on()
+    def turn_on(self, laser_num=1):
+        return self._service.exposed_turn_on(laser_num)
 
-    def turn_off(self):
-        return self._service.exposed_turn_off()
+    def turn_off(self, laser_num=1):
+        return self._service.exposed_turn_off(laser_num)
 
     def voltage(self, laser_num=1):
         return self._service.exposed_voltage(laser_num)

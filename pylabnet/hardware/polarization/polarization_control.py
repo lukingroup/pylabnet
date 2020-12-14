@@ -124,72 +124,23 @@ class MPC320:
         print(f"Connected to device {self.dev_name}")
 
         #get device info including serial number
-        device_info = TLI_DeviceInfo()  # container for device info
-        self._polarizationdll.TLI_GetDeviceInfo(serialNos[0:8], ctypes.byref(device_info)) #when there will be a few devices figure out how to seperate and access each one
+        self.device_info = TLI_DeviceInfo()  # container for device info
+        self._polarizationdll.TLI_GetDeviceInfo(serialNos[0:8], ctypes.byref(self.device_info)) #when there will be a few devices figure out how to seperate and access each one
 
-        print("Description: ", device_info.description)
-        print("Serial No: ", device_info.serialNo)
-        print("Motor Type: ", device_info.motorType)
-        print("USB PID: ", device_info.PID)
-        print("Max Number of Paddles: ", device_info.maxPaddles)
+        print("Description: ", self.device_info.description)
+        print("Serial No: ", self.device_info.serialNo)
+        print("Motor Type: ", self.device_info.motorType)
+        print("USB PID: ", self.device_info.PID)
+        print("Max Number of Paddles: ", self.device_info.maxPaddles)
 
         # how to pick a specific device?
         #Establishe connection to device
-        result = self._polarizationdll.MPC_Open(device_info.serialNo)
+        result = self._polarizationdll.MPC_Open(self.device_info.serialNo)
         if result == 0:
             print("Connected succesfully to device")
         else:
             print("A problem occured when trying to connect to device")
         
-        Stepperdegree = self._polarizationdll.MPC_GetStepsPerDegree(device_info.serialNo)
-        maxtravel = self._polarizationdll.MPC_GetMaxTravel(device_info.serialNo)
-        #Jog paddle
-        #TLI_PolarizerParameters.JogSize1 = ctypes.c_double(10)
-        #startjog2 = self._polarizationdll.MPC_StartPolling(device_info.serialNo, 200)
-        #if startjog2 == True:
-        #    print(f"succefully started polling of device {device_info.serialNo}")
-        #else:
-        #    print(f"A problem occured when trying to start polling of device {device_info.serialNo}")
-        #home2 = self._polarizationdll.MPC_Home(device_info.serialNo, paddle1)
-        #self.PosJogI = self._polarizationdll.MPC_GetPosition(device_info.serialNo, paddle1)
-        #print(f"Position before jog is {self.PosJogI}")  
-        #self._polarizationdll.MPC_SetJogSize(device_info.serialNo, paddle1, ctypes.c_double(1))
-        #time.sleep(20)
-        #self._polarizationdll.MPC_Jog(device_info.serialNo, paddle1 , MOT_Forwards)
-        #self.PosJogF = self._polarizationdll.MPC_GetPosition(device_info.serialNo, paddle2)
-        #print(f"Position after jog is {self.PosJogF}")
-        #self._polarizationdll.MPC_StopPolling(device_info.serialNo)
-
-        #define parameters for movement
-        paddle = paddle2
-        stepsize = 45 #degrees
-        stepnum = 1
-        initialpos = maxtravel
-
-        #38159764 - fiber device out
-        #Move paddles
-        home = self._polarizationdll.MPC_Home(device_info.serialNo, paddle)
-        self.PosI = self._polarizationdll.MPC_GetPosition(device_info.serialNo, paddle)
-        print(f"Position before move is {self.PosI}")    
-        #move = self._polarizationdll.MPC_MoveToPosition(device_info.serialNo, paddle1, 50.0)
-        #time.sleep(20)
-        #self.PosF = self._polarizationdll.MPC_GetPosition(device_info.serialNo, paddle1)
-        #print(f"Position after move is {self.PosF}")  
-        move = self._polarizationdll.MPC_MoveToPosition(device_info.serialNo, paddle, initialpos) 
-        time.sleep(100)
-        self.PosIn = self._polarizationdll.MPC_GetPosition(device_info.serialNo, paddle)
-        print(f"Moved to initial position: {self.PosIn}")  
-
-        for step in range(1, stepnum, stepsize):
-            mover = self._polarizationdll.MPC_MoveRelative(device_info.serialNo, paddle, stepsize) 
-            time.sleep(1)
-            self.PosF = self._polarizationdll.MPC_GetPosition(device_info.serialNo, paddle)
-            print(f"Position after move relative is {self.PosF}")  
-        self._polarizationdll.MPC_StopPolling(device_info.serialNo)
-        
-        #closes connection to device
-        self._polarizationdll.MPC_Close(device_info.serialNo)
-
     #technical methods
 
     def _configure_functions(self):
@@ -248,8 +199,67 @@ class MPC320:
         self._polarizationdll.MPC_GetStepsPerDegree.argtype = [ctypes.POINTER(ctypes.c_char)]
         self._polarizationdll.MPC_GetStepsPerDegree.result = ctypes.c_double
 
+    #wrap function for external use
+
+    def home(self, device, paddle):
+        home_result = self._polarizationdll.MPC_Home(device, paddle)
+        
+        return home_result
+
+    def move(self, device, paddle, pos):
+        posinitial = self._polarizationdll.MPC_GetPosition(device, paddle)
+        move_result = self._polarizationdll.MPC_MoveToPosition(device, paddle, pos) 
+        time.sleep(10)
+        posfinal = self._polarizationdll.MPC_GetPosition(device, paddle)
+
+
+        return move_result, posinitial, posfinal
+
+    def move_rel(self, device, paddle, step):
+        posinitial = self._polarizationdll.MPC_GetPosition(device, paddle)
+        move_result = self._polarizationdll.MPC_MoveRelative(device, paddle, step) 
+        time.sleep(10)
+        posfinal = self._polarizationdll.MPC_GetPosition(device, paddle)
+
+        return move_result, posinitial, posfinal
+
+    def getangle(self, device, paddle):
+        currentpos = self._polarizationdll.MPC_GetPosition(device, paddle)
+        
+        return currentpos
+
 def main():
     mpc = MPC320()
+
+    Stepperdegree = mpc._polarizationdll.MPC_GetStepsPerDegree(mpc.device_info.serialNo)
+    maxtravel = mpc._polarizationdll.MPC_GetMaxTravel(mpc.device_info.serialNo)
+
+    #define parameters for movement
+    paddle = paddle2
+    device = mpc.device_info.serialNo
+    stepsize = 10 #degrees
+    step = -20
+    stepnum = 10
+    pos = 50
+    
+    #38159764 - fiber device out
+    #Move paddles from home to initial position
+    home = mpc.home(device, paddle)
+    movement = mpc.move(device, paddle, pos)
+    posf = mpc.getangle(device, paddle)
+    movement_rel = mpc.move_rel(device, paddle, step)
+
+    count = 0
+    while count < stepnum:
+        mover = mpc._polarizationdll.MPC_MoveRelative(mpc.device_info.serialNo, paddle, stepsize) 
+        time.sleep(1)
+        count += 1
+        mpc.PosF = mpc._polarizationdll.MPC_GetPosition(mpc.device_info.serialNo, paddle)
+        print(f"Position after move relative is {mpc.PosF}")  
+
+    #mpc._polarizationdll.MPC_StopPolling(device_info.serialNo)
+    #closes connection to device
+    mpc._polarizationdll.MPC_Close(mpc.device_info.serialNo)
 
 if __name__ == "__main__":
     main() 

@@ -72,19 +72,10 @@ def main():
         log_ip = args['logip']
     else:
         log_ip = 'localhost'
-    if 'device_name' in args:
-        device_name = args['device_name']
-    else:
-        device_name = None
-    if 'device_id' in args:
-        device_id = args['device_id']
-    else:
-        device_id = None
 
-    if device_name is None:
-        logger_tag = server + '_server'
-    else:
-        logger_tag = server + '_server' + '_' + device_name
+    device_id = args['device_id']
+    logger_tag = server + '_server' + '_' + device_id
+
 
     # Instantiate logger. This creates a client_data entry in the LogServer
     # that is populated with the server name, port.

@@ -1,16 +1,20 @@
-import time
-
-try:
-    from pylabnet.launchers.launcher import Launcher
-    from pylabnet.launchers.servers import nidaqmx
-    from pylabnet.scripts.fiber_coupling import power_monitor
-except Exception as e:
-    print(e)
-    time.sleep(10)
-
+from pylabnet.launchers.launcher import Launcher
+from pylabnet.launchers.servers import nidaqmx
+from pylabnet.scripts.fiber_coupling import power_monitor
+from pylabnet.scripts.network_setup import ssh_config
 
 
 def main():
+
+    ssh = Launcher(
+        script=[ssh_config],
+        server_req=[None],
+        gui_req=[None],
+        params=[None],
+        config='fibercoupling_b16',
+        script_server=False
+    )
+    ssh.launch()
 
     launcher = Launcher(
         script=[power_monitor],

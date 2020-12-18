@@ -234,11 +234,11 @@ class PMInterface:
         if self.type == 'thorlabs_pm320e':
             return self.client.get_power(channel)
         else:
-            index = self.channels[channel-1]
+            index = channel - 1
             return ((self.m[index]
-                     * (self.client.get_ai_voltage(self.channels[channel-1])
+                     * (self.client.get_ai_voltage(self.channels[index])[0]
                         -self.z[index]))
-                    + self.b[index])
+                    + self.b[index])*1e-6
 
     def get_wavelength(self, channel):
         if self.type == 'thorlabs_pm320e':

@@ -84,7 +84,7 @@ def main():
     if device_name is None:
         logger_tag = server + '_server'
     else:
-        logger_tag = server + '_server' + '_' + device_name
+        logger_tag = server '_' + device_name + '_server'
 
     # Instantiate logger. This creates a client_data entry in the LogServer
     # that is populated with the server name, port.

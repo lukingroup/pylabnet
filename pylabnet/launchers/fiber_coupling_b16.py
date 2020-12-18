@@ -1,3 +1,5 @@
+import time
+
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.launchers.servers import nidaqmx
 from pylabnet.scripts.fiber_coupling import power_monitor
@@ -15,6 +17,7 @@ def main():
         script_server=False
     )
     ssh.launch()
+    time.sleep(3)
 
     launcher = Launcher(
         script=[power_monitor],

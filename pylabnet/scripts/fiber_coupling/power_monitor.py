@@ -18,7 +18,7 @@ class Monitor:
         'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
     ]
 
-    def __init__(self, pm_client: PMInterface, gui='fiber_coupling', logger=None, calibration=None, name=None, port=None):
+    def __init__(self, pm_client, gui='fiber_coupling', logger=None, calibration=None, name=None, port=None):
         """ Instantiates a monitor for 2-ch power meter with GUI
 
         :param pm_clients: (client, list of clients) clients of power meter
@@ -270,13 +270,19 @@ def launch(**kwargs):
 
     # Unpack and assign parameters
     logger, loghost, logport, clients, _, params = unpack_launcher(**kwargs)
-    pm_client = find_client(logger, clients, 'thorlabs_pm320e_front')
 
     # Unpack settings
     settings = load_config(
         kwargs['config'],
         logger=logger
     )
+
+    try:
+        pm_client = clients[('nidaqmx', settings['power_sensor']['device_id'])]
+    except KeyError:
+        logger.warn('Could not find nidaqmx AI for power detection by device ID')
+        logger.info(f'Client dictionary: {clients}')
+        pm_client = find_client(logger, clients, 'thorlabs_pm320e_front')
 
     calibration = [settings['calibration']]
     name = settings['name']

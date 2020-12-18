@@ -1,6 +1,14 @@
-from pylabnet.launchers.launcher import Launcher
-from pylabnet.launchers.servers import nidaqmx
-from pylabnet.scripts.fiber_coupling import power_monitor
+import time
+
+try:
+    from pylabnet.launchers.launcher import Launcher
+    from pylabnet.launchers.servers import nidaqmx
+    from pylabnet.scripts.fiber_coupling import power_monitor
+except Exception as e:
+    print(e)
+    time.sleep(10)
+
+
 
 def main():
 

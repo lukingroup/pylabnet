@@ -7,6 +7,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
 import pyqtgraph as pg
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, find_client, load_config, get_gui_widgets
+from pylabnet.network.client_server import thorlabs_pm320e
 
 # Time between power meter calls to prevent crashes
 BUFFER = 5e-3
@@ -17,7 +18,7 @@ class Monitor:
         'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
     ]
 
-    def __init__(self, pm_client, gui='fiber_coupling', logger=None, calibration=None, name=None, port=None):
+    def __init__(self, pm_client: PMInterface, gui='fiber_coupling', logger=None, calibration=None, name=None, port=None):
         """ Instantiates a monitor for 2-ch power meter with GUI
 
         :param pm_clients: (client, list of clients) clients of power meter
@@ -90,7 +91,6 @@ class Monitor:
             self.pm.set_wavelength(1, self.wavelength)
             self.pm.set_wavelength(2, self.wavelength)
 
-
     def _update_range(self, channel):
         """ Update range settings if combobox has been changed."""
 
@@ -104,7 +104,6 @@ class Monitor:
              if self.rr_index != range_index:
                 self.rr_index = range_index
                 self.pm.set_range(2, self.RANGE_LIST[self.rr_index])
-
 
     def update_settings(self, channel=0):
         """ Checks GUI for settings updates and implements
@@ -196,6 +195,76 @@ class Monitor:
             )
 
 
+class PMInterface:
+    """
+    Interface class to allow other modules to be called in same
+    way as a Thorlabs power meter
+
+    Currently supports NI AI with power calibration curve via config
+    power (uW) = m*(x-z) + b
+    """
+
+    def __init__(self, client, config:dict=None):
+
+        self.client = client
+        self.config = config
+        if isinstance(self.client, thorlabs_pm320e.Client):
+            self.type = 'thorlabs_pm320e'
+        else:
+            self.type = 'nidaqmx'
+            self.channels = [
+                self.config['input']['channel'],
+                self.config['reflection']['channel']
+            ]
+            self.m = [
+                self.config['input']['m'],
+                self.config['reflection']['m']
+            ]
+            self.b = [
+                self.config['input']['b'],
+                self.config['reflection']['b']
+            ]
+            self.z = [
+                self.config['input']['z'],
+                self.config['reflection']['z']
+            ]
+
+    def get_power(self, channel):
+
+        if self.type == 'thorlabs_pm320e':
+            return self.client.get_power(channel)
+        else:
+            index = self.channels[channel-1]
+            return ((self.m[index]
+                     * (self.client.get_ai_voltage(self.channels[channel-1])
+                        -self.z[index]))
+                    + self.b[index])
+
+    def get_wavelength(self, channel):
+        if self.type == 'thorlabs_pm320e':
+            return self.client.get_wavelength(channel)
+        else:
+            return 737
+
+    def get_range(self, channel):
+        if self.type == 'thorlabs_pm320e':
+            return self.client.get_range(channel)
+        else:
+            return 'AUTO'
+
+    def set_wavelength(self, channel, wavelength):
+        if self.type == 'thorlabs_pm320e':
+            return self.client.set_wavelength(channel, wavelength)
+        else:
+            return
+
+    def set_range(self, channel, p_range):
+        if self.type == 'thorlabs_pm320e':
+            return self.client.set_range(channel, p_range)
+        else:
+            return
+
+
 def launch(**kwargs):
     """ Launches the full fiber controll + GUI script """
 
@@ -211,10 +280,11 @@ def launch(**kwargs):
 
     calibration = [settings['calibration']]
     name = settings['name']
+    pm = PMInterface(pm_client, settings)
 
     # Instantiate controller
     control = Monitor(
-        pm_client=pm_client,
+        pm_client=pm,
         logger=logger,
         calibration=calibration,
         name=name,

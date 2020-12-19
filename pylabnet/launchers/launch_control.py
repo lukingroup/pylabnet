@@ -19,7 +19,7 @@ from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -43,6 +43,8 @@ class LaunchWindow(Window):
 
         super().__init__(app, gui_template=gui_template)
         self.controller = controller
+        self.apply_stylesheet()
+        self.buffer_terminal.setVisible(False)
 
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
@@ -456,6 +458,15 @@ class Controller:
         # Launch the new process
         subprocess.Popen(bash_cmd, shell=True)
 
+    def _device_clicked(self, index):
+
+        filepath = self.main_window.devices.model().filePath(index))
+
+        # Check if it is an actual config file
+        if not os.path.isdir(filepath):
+            # TODO: Launch the server with this config file!
+            pass
+    
     def _load_scripts(self):
         """ Loads all relevant scripts from current working directory """
 
@@ -470,6 +481,18 @@ class Controller:
         for file in files:
             self.script_list[file] = QtWidgets.QListWidgetItem(file.split('.')[0])
             self.main_window.script_list.addItem(self.script_list[file])
+
+        # Load config files
+        device_dir = os.path.join(get_config_directory(), 'devices')
+        if os.path.isdir(device_dir):
+            model = QtWidgets.QFileSystemModel()
+            model.setRootPath(device_dir)
+            self.main_window.devices.setModel(model)
+            self.main_window.devices.setRootIndex(model.index(device_dir))
+            self.main_window.devices.hideColumn(1)
+            self.main_window.devices.hideColumn(2)
+            self.main_window.devices.hideColumn(3)
+        self.main_window.devices.doubleClicked.connect(self._device_clicked)
 
     def _copy_master(self):
         """ Updates the GUI to copy the GUI of the master GUI server """

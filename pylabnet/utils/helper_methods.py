@@ -445,6 +445,15 @@ def load_config(config_filename, folder_root=None, logger=None):
 
     return data
 
+def get_config_directory():
+    """ Returns the config directory """
+
+    return os.path.abspath(os.path.join(
+        os.path.dirname( __file__ ),
+        '..',
+        'configs'
+    ))
+
 def get_config_filepath(config_filename, folder_root=None):
     """ Gets the config filepath
 

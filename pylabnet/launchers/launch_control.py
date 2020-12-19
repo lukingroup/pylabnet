@@ -19,7 +19,7 @@ from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -460,12 +460,49 @@ class Controller:
 
     def _device_clicked(self, index):
 
-        filepath = self.main_window.devices.model().filePath(index))
+        filepath = self.main_window.devices.model().filePath(index)
 
         # Check if it is an actual config file
         if not os.path.isdir(filepath):
-            # TODO: Launch the server with this config file!
-            pass
+
+            # Find the name of the server and device config file, load config
+            device_server = os.path.basename(os.path.dirname(filepath))
+            device_config = os.path.basename(filepath)[:-5]
+
+            config_dict = load_device_config(device_server, device_config)
+            print(config_dict)
+
+            # timeout = 0
+            # host = socket.gethostbyname_ex(socket.gethostname())[2][0]
+
+            # while not connected and timeout < 1000:
+            #     try:
+            #         server_port = np.random.randint(1, 9999)
+            #         server = module.__name__.split('.')[-1]
+
+            #         cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
+            #             server+"_server",
+            #             time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
+            #             sys.executable,
+            #             os.path.join(os.path.dirname(os.path.realpath(__file__)), self._SERVER_LAUNCH_SCRIPT),
+            #             self.log_ip,
+            #             self.log_port,
+            #             server_port,
+            #             server,
+            #             self.server_debug
+            #         )
+
+            #         cmd += f' --device_id {device_id}'
+
+            #         subprocess.Popen(cmd, shell=True)
+            #         connected = True
+            #     except ConnectionRefusedError:
+            #         self.logger.warn(f'Failed to start {server} server on {host} with port {server_port}')
+            #         timeout += 1
+            #         time.sleep(0.01)
+            #     if timeout == 1000:
+            #         self.logger.error(f'Failed to start {server} server on {host}')
+            #         raise ConnectionRefusedError()
     
     def _load_scripts(self):
         """ Loads all relevant scripts from current working directory """

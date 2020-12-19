@@ -371,7 +371,7 @@ class Launcher:
         timeout = 0
         while not connected and timeout < 10:
             try:
-                self._add_to_clients(self, module, device_id, host, port):
+                self._add_to_clients(module, device_id, host, server_port)
                 connected = True
             except ConnectionRefusedError:
                 timeout += 1
@@ -394,7 +394,7 @@ class Launcher:
 
         self.logger.info('Trying to connect to active {} server\nHost: {}\nPort: {}'.format(server, host, port))
         try:
-            self._add_to_clients(self, module, device_id, host, port)
+            self._add_to_clients(module, device_id, host, port)
         except ConnectionRefusedError:
             self.logger.warn('Failed to connect. Instantiating new server instead')
             self._launch_new_server(module, device_id)
@@ -423,7 +423,8 @@ class Launcher:
             else:
                 device_configs = self.config_dict
 
-             for connector in self.connectors.values():
+            matches = []
+            for connector in self.connectors.values():
                 # Add servers that have the correct name and ID
                 if (connector.name.startswith(module_name+'_server_')) and (device_id == connector.device_id):
                     matches.append(connector)

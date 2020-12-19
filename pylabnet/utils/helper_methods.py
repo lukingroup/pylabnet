@@ -454,6 +454,34 @@ def get_config_directory():
         'configs'
     ))
 
+def load_device_config(device, config, logger=None):
+    """ Returns the device config directory 
+    
+    :param device: (str) name of the device folder
+    :param config: (str) name of the specific device config file
+    :param logger: instance of LogHandler
+    """
+
+    filepath = os.path.join(get_config_directory(), 'devices', device, f'{config}.json')
+    try:
+        f = open(filepath)
+        # returns JSON object as
+        # a dictionary
+        data = json.load(f)
+        try:
+            logger.info(f'Successfully loaded settings from {config}.json.')
+        # Dont raise error if logger doesn't exist
+        except AttributeError:
+            pass
+
+    except FileNotFoundError:
+        data = None
+        try:
+            logger.error(f'Settings file {filepath} not found.')
+        except AttributeError:
+            raise
+    return data
+
 def get_config_filepath(config_filename, folder_root=None):
     """ Gets the config filepath
 

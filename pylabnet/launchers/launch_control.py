@@ -12,6 +12,7 @@ import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
+import numpy as np
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
@@ -19,7 +20,7 @@ from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -469,8 +470,31 @@ class Controller:
             device_server = os.path.basename(os.path.dirname(filepath))
             device_config = os.path.basename(filepath)[:-5]
 
-            config_dict = load_device_config(device_server, device_config)
-            print(config_dict)
+            # Initial configurations: All flags down.
+            server_debug_flag = '0'
+
+            # Raise flags if selected in combobox
+            if self.debug and self.debug_level == "pylabnet_server":
+                server_debug_flag = '1'
+
+            server_port = np.random.randint(1024, 49151)
+            launch_device_server(
+                server=device_server,
+                config=device_config,
+                log_ip=self.host,
+                log_port=self.log_port,
+                server_port=server_port,
+                debug=server_debug_flag
+            )
+
+            # config_dict = load_device_config(device_server, device_config)
+            
+            # Check if we need to SSH
+            # if 'ssh_config' in config_dict:
+            #     # TODO: perform SSH
+            #     pass
+
+            # Otherwise, launch locally
 
             # timeout = 0
             # host = socket.gethostbyname_ex(socket.gethostname())[2][0]

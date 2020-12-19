@@ -609,3 +609,27 @@ def find_client(logger, client_dict, client_name):
         logger.error(f"Multiple ({num_clients}) with name {client_name} found.")
     else:
         return found_clients[0]
+
+def launch_device_server(server, config, log_ip, log_port, server_port, debug=False):
+    """ Launches a new device server """
+
+    config_dict = load_device_config(server, config)
+    launch_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+        'launchers',
+        'pylabnet_server.py'
+    )
+
+    # Build command
+    cmd = f'start "{server}_server, '
+    cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+    cmd += f'" "{sys.executable}" "{launch_path}" '
+    cmd += f'--logip {log_ip} --logport {log_port} '
+    cmd += f'--serverport {server_port} --server {server} '
+    cmd += f'--config {config} --debug {debug}'
+
+    if 'ssh_config' in config_dict:
+        # TODO: perform SSH
+        pass
+
+    print(cmd)

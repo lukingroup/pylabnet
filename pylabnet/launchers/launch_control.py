@@ -20,7 +20,8 @@ from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server
+from pylabnet.launchers.launcher import Launcher
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -364,7 +365,6 @@ class Controller:
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
-        self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
         self.main_window.close_server.pressed.connect(self._stop_server)
 
     def _stop_server(self):
@@ -466,9 +466,12 @@ class Controller:
         # Check if it is an actual config file
         if not os.path.isdir(filepath):
 
-            # Find the name of the server and device config file, load config
+            # Find the name of the server and device config file
             device_server = os.path.basename(os.path.dirname(filepath))
             device_config = os.path.basename(filepath)[:-5]
+
+            self.log_service.logger.info(f'Launching device {device_server} '
+                                         f'with configuration {device_config}')
 
             # Initial configurations: All flags down.
             server_debug_flag = '0'
@@ -486,64 +489,80 @@ class Controller:
                 server_port=server_port,
                 debug=server_debug_flag
             )
-
-            # config_dict = load_device_config(device_server, device_config)
-            
-            # Check if we need to SSH
-            # if 'ssh_config' in config_dict:
-            #     # TODO: perform SSH
-            #     pass
-
-            # Otherwise, launch locally
-
-            # timeout = 0
-            # host = socket.gethostbyname_ex(socket.gethostname())[2][0]
-
-            # while not connected and timeout < 1000:
-            #     try:
-            #         server_port = np.random.randint(1, 9999)
-            #         server = module.__name__.split('.')[-1]
-
-            #         cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {}'.format(
-            #             server+"_server",
-            #             time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime()),
-            #             sys.executable,
-            #             os.path.join(os.path.dirname(os.path.realpath(__file__)), self._SERVER_LAUNCH_SCRIPT),
-            #             self.log_ip,
-            #             self.log_port,
-            #             server_port,
-            #             server,
-            #             self.server_debug
-            #         )
-
-            #         cmd += f' --device_id {device_id}'
-
-            #         subprocess.Popen(cmd, shell=True)
-            #         connected = True
-            #     except ConnectionRefusedError:
-            #         self.logger.warn(f'Failed to start {server} server on {host} with port {server_port}')
-            #         timeout += 1
-            #         time.sleep(0.01)
-            #     if timeout == 1000:
-            #         self.logger.error(f'Failed to start {server} server on {host}')
-            #         raise ConnectionRefusedError()
     
+    def _script_clicked(self, index):
+        
+        filepath = self.main_window.devices.model().filePath(index)
+
+        # Check if it is an actual config file
+        if not os.path.isdir(filepath):
+
+            # Find the name of the config file
+            script_name = os.path.basename(os.path.dirname(filepath))
+            script_config = os.path.basename(filepath)[:-5]
+
+            self.log_service.logger.info(f'Launching device {script_name} '
+                                         f'with configuration {script_config}')
+
+            # Initial configurations: All flags down.
+            debug_flag, server_debug_flag = '0', '0'
+
+            # Raise flags if selected in combobox
+            if self.debug:
+                if self.debug_level == "launcher":
+                    debug_flag = '1'
+                elif self.debug_level == "pylabnet_server":
+                    server_debug_flag = '1'
+
+            # Build client list cmdline arg
+            client_index = 1
+            bash_cmd = ''
+            for client in self.client_list:
+                bash_cmd += ' --client{} {} --ip{} {}'.format(
+                    client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
+                )
+
+                # Add device ID of client's corresponding hardware, if applicable
+                if 'device_id' in self.client_data[client]:
+                    bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
+
+                # Add port of client's server, if applicable
+                if 'port' in self.client_data[client]:
+                    bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
+
+                # If this client has relevant .ui file, pass this info
+                if 'ui' in self.client_data[client]:
+                    bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
+
+                client_index += 1
+
+            launch_script(
+                script=script_name,
+                config=script_config,
+                log_ip=self.host,
+                log_port=self.log_port,
+                debug_flag=debug_flag,
+                server_debug_flag=server_debug_flag,
+                num_clients=len(self.client_list),
+                client_cmd=bash_cmd
+            )
+
     def _load_scripts(self):
         """ Loads all relevant scripts from current working directory """
 
-        # Get all relevant files
-        current_directory = os.path.dirname(os.path.realpath(__file__))
-        files = [file for file in os.listdir(current_directory) if (
-            os.path.isfile(os.path.join(
-                current_directory, file
-            )) and '.py' in file and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file
-        )]
+        # Load scripts with configuraitons
+        script_dir = os.path.join(get_config_directory(), 'scripts')
+        if os.path.isdir(script_dir):
+            model = QtWidgets.QFileSystemModel()
+            model.setRootPath(script_dir)
+            self.main_window.scripts.setModel(model)
+            self.main_window.scripts.setRootIndex(model.index(script_dir))
+            self.main_window.scripts.hideColumn(1)
+            self.main_window.scripts.hideColumn(2)
+            self.main_window.scripts.hideColumn(3)
+        self.main_window.scripts.doubleClicked.connect(self._script_clicked)
 
-        for file in files:
-            self.script_list[file] = QtWidgets.QListWidgetItem(file.split('.')[0])
-            self.main_window.script_list.addItem(self.script_list[file])
-
-        # Load config files
+        # Load device config files
         device_dir = os.path.join(get_config_directory(), 'devices')
         if os.path.isdir(device_dir):
             model = QtWidgets.QFileSystemModel()

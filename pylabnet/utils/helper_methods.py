@@ -483,6 +483,34 @@ def load_device_config(device, config, logger=None):
             raise
     return data
 
+def load_script_config(script, config, logger=None):
+    """ Returns the script config directory 
+    
+    :param script: (str) name of the script folder
+    :param config: (str) name of the specific script config file
+    :param logger: instance of LogHandler
+    """
+
+    filepath = os.path.join(get_config_directory(), 'scripts', script, f'{config}.json')
+    try:
+        f = open(filepath)
+        # returns JSON object as
+        # a dictionary
+        data = json.load(f)
+        try:
+            logger.info(f'Successfully loaded settings from {config}.json.')
+        # Dont raise error if logger doesn't exist
+        except AttributeError:
+            pass
+
+    except FileNotFoundError:
+        data = None
+        try:
+            logger.error(f'Settings file {filepath} not found.')
+        except AttributeError:
+            raise
+    return data
+
 def get_config_filepath(config_filename, folder_root=None):
     """ Gets the config filepath
 
@@ -621,6 +649,9 @@ def launch_device_server(server, config, log_ip, log_port, server_port, debug=Fa
         'pylabnet_server.py'
     )
 
+    if server_port is None:
+        server_port = np.random.randint(1024, 49151)
+
     # Build command
     cmd = f'start "{server}_server, '
     cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
@@ -633,5 +664,26 @@ def launch_device_server(server, config, log_ip, log_port, server_port, debug=Fa
     if 'ssh_config' in config_dict:
         # TODO: perform SSH
         pass
+
+    subprocess.Popen(cmd, shell=True)
+
+def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd):
+    """ Launches a script """
+
+    launch_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+        'launchers',
+        'launcher.py'
+    )
+
+    # Build command
+    cmd = f'start "{script}_server, '
+    cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+    cmd += f'" "{sys.executable}" "{launch_path}" '
+    cmd += f'--logip {log_ip} --logport {log_port} '
+    cmd += f'--script {script} --num_clients {num_clients}'
+    cmd += f'--config {config} --debug {debug_flag} '
+    cmd += f'--server_debug {server_debug_flag}'
+    cmd += client_cmd
 
     subprocess.Popen(cmd, shell=True)

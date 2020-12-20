@@ -15,9 +15,14 @@ def launch(**kwargs):
 
     log = kwargs['logger']
     log.info(f'Launching with config {kwargs["config"]}')
-    config = load_device_config(os.path.basename(__file__)[:-3], kwargs['config'], log)
+    config = load_device_config(
+        os.path.basename(__file__)[:-3], 
+        kwargs['config'], 
+        log
+    )
 
     dum = Dummy()
+    log.info(f'Created dummy object with configuration parameters {config}')
     dum_service = ServiceBase()
     dum_service.assign_module(module=dum)
     dum_service.assign_logger(logger=log)

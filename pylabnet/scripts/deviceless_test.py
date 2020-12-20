@@ -2,4 +2,5 @@
 
 def launch(**kwargs):
 
-    pass
+    logger = kwargs['logger']
+    logger.info('Running deviceless test')

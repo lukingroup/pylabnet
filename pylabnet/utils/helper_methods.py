@@ -681,7 +681,7 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
     cmd += f'" "{sys.executable}" "{launch_path}" '
     cmd += f'--logip {log_ip} --logport {log_port} '
-    cmd += f'--script {script} --num_clients {num_clients}'
+    cmd += f'--script {script} --num_clients {num_clients} '
     cmd += f'--config {config} --debug {debug_flag} '
     cmd += f'--server_debug {server_debug_flag}'
     cmd += client_cmd

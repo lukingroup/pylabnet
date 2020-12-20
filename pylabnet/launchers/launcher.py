@@ -115,6 +115,7 @@ class Launcher:
                 device_id = self.args['device_id{}'.format(client_index+1)]
             except KeyError:
                 self.logger.error(f'No device_id on client {client_name}, None assigned as default')
+                device_id = None
             try:
                 self.connectors[client_name] = Connector(
                             name=client_name,
@@ -360,3 +361,10 @@ def main():
 
     script = Launcher()
     script.launch()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        time.sleep(10)

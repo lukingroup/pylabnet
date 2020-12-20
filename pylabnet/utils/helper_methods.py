@@ -7,6 +7,7 @@ import sys
 import ctypes
 import copy
 import numpy as np
+import subprocess
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
@@ -626,10 +627,11 @@ def launch_device_server(server, config, log_ip, log_port, server_port, debug=Fa
     cmd += f'" "{sys.executable}" "{launch_path}" '
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
+    cmd += f'--device_id "{config_dict["device_id"]}" '
     cmd += f'--config {config} --debug {debug}'
 
     if 'ssh_config' in config_dict:
         # TODO: perform SSH
         pass
 
-    print(cmd)
+    subprocess.Popen(cmd, shell=True)

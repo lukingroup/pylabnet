@@ -114,7 +114,7 @@ class Launcher:
             try:
                 device_id = self.args['device_id{}'.format(client_index+1)]
             except KeyError:
-                self.logger.error(f'No device_id on client {client_name}, None assigned as default')
+                self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
                 device_id = None
             try:
                 self.connectors[client_name] = Connector(
@@ -151,7 +151,7 @@ class Launcher:
         onto the launched script.
         Dictionary is formatted as a two layer dictionary, where first layer is indexed by the module name,
         and second is indexed by the device_id. This enables an easy lookup"""
-        server = module.__name__.split('.')[-1]
+        server = module
 
         if server not in self.clients:
             self.clients[server] = {} #Instantiate a blank dictionary corresponding to the server module
@@ -160,11 +160,12 @@ class Launcher:
             module,
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
-                'servers'
+                'servers',
+                module+'.py'
             )
         )
         mod = importlib.util.module_from_spec(spec)
-        spec.loader_exec_module(mod)
+        spec.loader.exec_module(mod)
         self.clients[server][device_id] = mod.Client(host=host, port=port)
 
     def _launch_servers(self):
@@ -204,7 +205,7 @@ class Launcher:
         if num_matches == 0:
             self.logger.info(f'No active servers matching module {module_name}'
                             ' were found. Instantiating a new server.')
-            launch_device_server(
+            host, port = launch_device_server(
                 server=module,
                 config=config_name,
                 log_ip=self.log_ip,
@@ -212,6 +213,17 @@ class Launcher:
                 server_port=np.random.randint(1024, 49151),
                 debug=self.server_debug
             )
+
+            tries=0
+            while tries<10:
+                try:
+                    self._connect_to_server(module, host, port, device_id)
+                    tries = 11
+                except ConnectionRefusedError:
+                    time.sleep(0.1)
+                    tries += 1
+            if tries == 10:
+                self.logger.error(f'Failed to connect to {module}')
 
         # If there is exactly 1 match, try to connect automatically
         elif num_matches == 1 and auto_connect:
@@ -252,6 +264,17 @@ class Launcher:
                     server_port=np.random.randint(1024, 49151),
                     debug=self.server_debug
                 )
+
+                tries=0
+                while tries<10:
+                    try:
+                        self._connect_to_server(module, host, port, device_id)
+                        tries = 11
+                    except ConnectionRefusedError:
+                        time.sleep(0.1)
+                        tries += 1
+                if tries == 10:
+                    self.logger.error(f'Failed to connect to {module}')
             hide_console()
 
     def _launch_scripts(self):
@@ -262,7 +285,7 @@ class Launcher:
             self.config_dict['script']
         )
         mod = importlib.util.module_from_spec(spec)
-        spec.loader_exec_module(mod)
+        spec.loader.exec_module(mod)
         
         mod.launch(
             logger=self.logger,

@@ -667,6 +667,8 @@ def launch_device_server(server, config, log_ip, log_port, server_port, debug=Fa
 
     subprocess.Popen(cmd, shell=True)
 
+    return log_ip, server_port
+
 def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd):
     """ Launches a script """
 

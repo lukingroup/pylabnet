@@ -1,5 +1,42 @@
 """ Generic module for launching pylabnet scripts
 
+This script should be invoked from the command line with 
+relevant commandline arguments. For example,
+
+    'start "dummy_testing_server, 2020-12-21, 02:54:27"
+    "C:\\Users\\mbhas\\pylabnet\\venv\\pylabnet-test\\Scripts\\python.exe" 
+    "C:\\Users\\mbhas\\pylabnet\\pylabnet\\launchers\\launcher.py" 
+    --logip 192.168.0.106 --logport 21189 --script dummy_testing 
+    --num_clients 1 --config three_fake_devices --debug 0 --server_debug 0 
+    --client1 logger_GUI --ip1 192.168.0.106 --port1 44847 --ui1 logger_remote'
+
+This command is usually constructed automatically via the Launch Control
+(see pylabnet.launchers.launch_control for details).
+
+The script must have a config dictionary in pylabnet/configs/scripts/my_script.
+This dict must contain the required device servers and the path to the script,
+which is a python file that has a launch(**kwargs) method that launches the script.
+Example config dict:
+
+    {
+    "servers" : [
+        {
+            "type" : "dummy",
+            "config" : "mihir_computer",
+            "auto_connect" : "False"
+        },
+        {
+            "type" : "dummy",
+            "config" : "other_device"
+        },
+        {
+            "type" : "dummy",
+            "config" : "science_tool"
+        }
+    ],
+    "script" : "C:\\Users\\mbhas\\pylabnet\\pylabnet\\scripts\\deviceless_test.py"
+}
+
 NOTE: Requires windows (TODO: make OS agnostic)
 """
 
@@ -22,17 +59,10 @@ class Launcher:
 
     def __init__(self):
         """ Instantiates Launcher object
-
-        :param name: (str) name of script to launch (directory within configs/scripts)
-        :param config: (str) name of config file (specific .json file within configs/scripts/name)
+        
+        Parses commandline arguments, connects to logger, loads script
+        config dictionary, scans available servers
         """
-        # self.script = script
-        # self.server_req = server_req
-        # self.gui_req = gui_req
-        # self.auto_connect = auto_connect
-        # self.config = config
-        # self.params = params
-        # self.use_script_server = script_server
 
         # Get command line arguments as a dict
         self.args = parse_args()
@@ -85,7 +115,7 @@ class Launcher:
         self.script_server = None
 
     def launch(self):
-        """ Checks for GUIS/servers, instantiates required, and launches script(s)"""
+        """ Launches/connects to required servers and runs the script """
 
         if "servers" in self.config_dict:
             self._launch_servers()
@@ -139,6 +169,7 @@ class Launcher:
         :param module: (object) module from which client can be instantiated using module.Client()
         :param host: (str) IP address of host
         :param port: (int) port number of host
+        :param device_id: (str) device_id of server
         """
 
         server = module
@@ -150,7 +181,13 @@ class Launcher:
         """Adds the associated client at host and port to the internal client dictionary that will be passed
         onto the launched script.
         Dictionary is formatted as a two layer dictionary, where first layer is indexed by the module name,
-        and second is indexed by the device_id. This enables an easy lookup"""
+        and second is indexed by the device_id. This enables an easy lookup
+        
+        :param module: (str) name of the hardware/server module (e.g. nidaqmx)
+        :param device_id: (str) device id
+        :param host: (str) host of server
+        :param port: (int) port number of server
+        """
         server = module
 
         if server not in self.clients:
@@ -194,7 +231,13 @@ class Launcher:
 
     def _connect_matched_servers(self, matches, module, config_name, config, auto_connect):
         """ Connects to a list of servers that have been matched to a given device
-        module. """
+        module. 
+        
+        :param matches: (list) list of matching server modules
+        :param config_name: (str) name of the config file for the device server
+        :param config: (dict) actual config dict for the server
+        :param auto_connect: (bool) whether or not to automatically connect to the device/server
+        """
 
         device_id = config['device_id']
 
@@ -256,7 +299,7 @@ class Launcher:
             # If the user's choice did not exist, just launch a new GUI
             except IndexError:
                 self.logger.info('Launching new server')
-                launch_device_server(
+                host, port = launch_device_server(
                     server=module,
                     config=config_name,
                     log_ip=self.log_ip,

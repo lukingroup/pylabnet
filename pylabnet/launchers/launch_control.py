@@ -384,82 +384,11 @@ class Controller:
         else:
             self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
 
-    def _clicked(self):
-        """ Launches the script that has been double-clicked
-
-        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the
-        relevant python script, passing all relevant LogClient information via the commandline
-        """
-
-        script_to_run = list(self.script_list.keys())[list(self.script_list.values()).index(
-            self.main_window.script_list.currentItem()
-        )]
-        launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-        print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
-
-        # Read debug state and set flag value accordingly.
-
-        # Initial configurations: All flags down.
-        debug_flag, server_debug_flag, gui_debug_flag = '0', '0', '0'
-
-        # Raise flags if selected in combobox
-        if self.debug:
-            if self.debug_level == "launcher":
-                debug_flag = '1'
-            elif self.debug_level == "pylabnet_server":
-                server_debug_flag = '1'
-            elif self.debug_level == "pylabnet_gui":
-                gui_debug_flag = '1'
-
-        # Build the bash command to input all active servers and relevant port numbers to script
-        # bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
-        #     script_to_run,
-        #     launch_time,
-        #     sys.executable,
-        #     os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
-        #     self.host,
-        #     self.log_port,
-        #     len(self.client_list),
-        #     debug_flag,
-        #     server_debug_flag,
-        #     gui_debug_flag
-        # )
-        bash_cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
-            script_to_run,
-            launch_time,
-            sys.executable,
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
-            self.host,
-            self.log_port,
-            len(self.client_list),
-            debug_flag,
-            server_debug_flag,
-            gui_debug_flag
-        )
-        client_index = 1
-        for client in self.client_list:
-            bash_cmd += ' --client{} {} --ip{} {}'.format(
-                client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
-            )
-
-            # Add device ID of client's corresponding hardware, if applicable
-            if 'device_id' in self.client_data[client]:
-                bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
-
-            # Add port of client's server, if applicable
-            if 'port' in self.client_data[client]:
-                bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
-
-            # If this client has relevant .ui file, pass this info
-            if 'ui' in self.client_data[client]:
-                bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
-
-            client_index += 1
-
-        # Launch the new process
-        subprocess.Popen(bash_cmd, shell=True)
-
     def _device_clicked(self, index):
+        """ Configures behavior for device double click
+
+        :param index: (QModelIndex) index of file clicked on
+        """
 
         filepath = self.main_window.devices.model().filePath(index)
 
@@ -491,6 +420,10 @@ class Controller:
             )
     
     def _script_clicked(self, index):
+        """ Configures behavior for script double click
+
+        :param index: (QModelIndex) index of file clicked on
+        """
         
         filepath = self.main_window.devices.model().filePath(index)
 
@@ -548,7 +481,7 @@ class Controller:
             )
 
     def _load_scripts(self):
-        """ Loads all relevant scripts from current working directory """
+        """ Loads all relevant scripts/devices from filesystem"""
 
         # Load scripts with configuraitons
         script_dir = os.path.join(get_config_directory(), 'scripts')

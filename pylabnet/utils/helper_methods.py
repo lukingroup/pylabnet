@@ -640,7 +640,18 @@ def find_client(logger, client_dict, client_name):
         return found_clients[0]
 
 def launch_device_server(server, config, log_ip, log_port, server_port, debug=False):
-    """ Launches a new device server """
+    """ Launches a new device server
+    
+    :param server: (str) name of the server. Should be the directory in which the
+        relevant server config file is located, and should have a corresponding
+        launch file server.py in pylabnet.launchers.servers
+    :param config: (str) name of the config file for the server, which specifies
+        the device_id and also any SSH info
+    :param log_ip: (str) logger IP address
+    :param log_port: (int) logger port number
+    :param server_port: (int) port number of server to use
+    :param debug: (bool) whether or not to debug the server launching
+    """
 
     config_dict = load_device_config(server, config)
     launch_path = os.path.join(
@@ -670,7 +681,22 @@ def launch_device_server(server, config, log_ip, log_port, server_port, debug=Fa
     return log_ip, server_port
 
 def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd):
-    """ Launches a script """
+    """ Launches a script 
+    
+    :param script: (str) name of the script. Should be the directory in which the
+        relevant script config file is located
+    :param config: (str) name of the config file for the script, which specifies
+        the device server info and script launching directory (and also script
+        parameters, if desired)
+    :param log_ip: (str) logger IP address
+    :param log_port: (int) logger port number
+    :param debug_flag: (bool) whether or not to debug the script/launcher
+    :param server_debug_flag: (bool) whether or not to debug on the 
+        server-launching level
+    :param num_clients: (int) total number of clients to the log server
+    :param client_cmd: (str) a series of commandline arguments specifying the 
+        client dictionary details for passing to the launcher
+    """
 
     launch_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.realpath(__file__))),

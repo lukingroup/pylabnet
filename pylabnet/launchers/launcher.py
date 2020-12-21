@@ -89,7 +89,7 @@ class Launcher:
 
         if "servers" in self.config_dict:
             self._launch_servers()
-        if not ('script_server' in self.config_dict and bool(self.config_dict['script_server'])):
+        if not ('script_server' in self.config_dict and self.config_dict['script_server'] == 'False'):
             self._launch_script_server()
         hide_console()
         self._launch_scripts()
@@ -185,7 +185,7 @@ class Launcher:
                 if (connector.name.startswith(module_name+'_server_')) and (server_config['device_id'] == connector.device_id):
                     matches.append(connector)
 
-            if 'auto_connect' in server and not bool(server['auto_connect']):
+            if 'auto_connect' in server and server['auto_connect'] == 'False':
                 auto_connect = False
             else:
                 auto_connect = True

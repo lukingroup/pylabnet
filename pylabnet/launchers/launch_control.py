@@ -412,19 +412,19 @@ class Controller:
             server_port = np.random.randint(1024, 49151)
             launch_device_server(
                 server=device_server,
-                config=device_config,
+                dev_config=device_config,
                 log_ip=self.host,
                 log_port=self.log_port,
                 server_port=server_port,
                 debug=server_debug_flag
             )
-    
+
     def _script_clicked(self, index):
         """ Configures behavior for script double click
 
         :param index: (QModelIndex) index of file clicked on
         """
-        
+
         filepath = self.main_window.devices.model().filePath(index)
 
         # Check if it is an actual config file

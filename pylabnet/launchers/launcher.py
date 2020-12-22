@@ -1,13 +1,13 @@
 """ Generic module for launching pylabnet scripts
 
-This script should be invoked from the command line with 
+This script should be invoked from the command line with
 relevant commandline arguments. For example,
 
     'start "dummy_testing_server, 2020-12-21, 02:54:27"
-    "C:\\Users\\mbhas\\pylabnet\\venv\\pylabnet-test\\Scripts\\python.exe" 
-    "C:\\Users\\mbhas\\pylabnet\\pylabnet\\launchers\\launcher.py" 
-    --logip 192.168.0.106 --logport 21189 --script dummy_testing 
-    --num_clients 1 --config three_fake_devices --debug 0 --server_debug 0 
+    "C:\\Users\\mbhas\\pylabnet\\venv\\pylabnet-test\\Scripts\\python.exe"
+    "C:\\Users\\mbhas\\pylabnet\\pylabnet\\launchers\\launcher.py"
+    --logip 192.168.0.106 --logport 21189 --script dummy_testing
+    --num_clients 1 --config three_fake_devices --debug 0 --server_debug 0
     --client1 logger_GUI --ip1 192.168.0.106 --port1 44847 --ui1 logger_remote'
 
 This command is usually constructed automatically via the Launch Control
@@ -59,7 +59,7 @@ class Launcher:
 
     def __init__(self):
         """ Instantiates Launcher object
-        
+
         Parses commandline arguments, connects to logger, loads script
         config dictionary, scans available servers
         """
@@ -80,7 +80,7 @@ class Launcher:
         # Load config
         self.config_dict = load_script_config(
             script=self.name,
-            config=self.config, 
+            config=self.config,
             logger=self.logger
         )
 
@@ -182,7 +182,7 @@ class Launcher:
         onto the launched script.
         Dictionary is formatted as a two layer dictionary, where first layer is indexed by the module name,
         and second is indexed by the device_id. This enables an easy lookup
-        
+
         :param module: (str) name of the hardware/server module (e.g. nidaqmx)
         :param device_id: (str) device id
         :param host: (str) host of server
@@ -192,7 +192,7 @@ class Launcher:
 
         if server not in self.clients:
             self.clients[server] = {} #Instantiate a blank dictionary corresponding to the server module
-        
+
         spec = importlib.util.spec_from_file_location(
             module,
             os.path.join(
@@ -231,8 +231,8 @@ class Launcher:
 
     def _connect_matched_servers(self, matches, module, config_name, config, auto_connect):
         """ Connects to a list of servers that have been matched to a given device
-        module. 
-        
+        module.
+
         :param matches: (list) list of matching server modules
         :param config_name: (str) name of the config file for the device server
         :param config: (dict) actual config dict for the server
@@ -250,11 +250,12 @@ class Launcher:
                             ' were found. Instantiating a new server.')
             host, port = launch_device_server(
                 server=module,
-                config=config_name,
+                dev_config=config_name,
                 log_ip=self.log_ip,
                 log_port=self.log_port,
                 server_port=np.random.randint(1024, 49151),
-                debug=self.server_debug
+                debug=self.server_debug,
+                logger=self.logger
             )
 
             tries=0
@@ -301,11 +302,12 @@ class Launcher:
                 self.logger.info('Launching new server')
                 host, port = launch_device_server(
                     server=module,
-                    config=config_name,
+                    dev_config=config_name,
                     log_ip=self.log_ip,
                     log_port=self.log_port,
                     server_port=np.random.randint(1024, 49151),
-                    debug=self.server_debug
+                    debug=self.server_debug,
+                    logger=self.logger
                 )
 
                 tries=0
@@ -331,7 +333,7 @@ class Launcher:
         spec.loader.exec_module(mod)
 
         self.logger.info(f'Launching script {self.name}')
-        
+
         mod.launch(
             logger=self.logger,
             loghost=self.log_ip,

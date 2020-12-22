@@ -7,7 +7,10 @@ import sys
 import ctypes
 import copy
 import numpy as np
+import socket
 import subprocess
+import paramiko
+import decouple
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
@@ -665,46 +668,98 @@ def find_client(clients, settings, client_type, client_config=None, logger=None)
     else:
         return found_clients[0]
 
-def launch_device_server(server, config, log_ip, log_port, server_port, debug=False):
+def launch_device_server(server, dev_config, log_ip, log_port, server_port, debug=False, logger=None):
     """ Launches a new device server
 
     :param server: (str) name of the server. Should be the directory in which the
         relevant server config file is located, and should have a corresponding
         launch file server.py in pylabnet.launchers.servers
-    :param config: (str) name of the config file for the server, which specifies
+    :param dev_config: (str) name of the config file for the server, which specifies
         the device_id and also any SSH info
     :param log_ip: (str) logger IP address
     :param log_port: (int) logger port number
     :param server_port: (int) port number of server to use
     :param debug: (bool) whether or not to debug the server launching
+    :param logger: (LogHandler)
     """
 
-    config_dict = load_device_config(server, config)
-    launch_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-        'launchers',
-        'pylabnet_server.py'
-    )
+    # First load device config into dict
+    config_dict = load_device_config(server, dev_config)
+
+    # Check if we should SSH in
+    if 'ssh_config' in config_dict:
+        ssh = True
+
+        # Load SSH parameters
+        ssh_params = config_dict['ssh_config']
+        hostname = ssh_params['hostname']
+        host_ip = ssh_params['ip']
+
+        # SSH in
+        ssh = paramiko.SSHClient()
+        ssh.load_system_host_keys()
+        try:
+            ssh.connect(host_ip, username=hostname, password=decouple.config('LOCALHOST_PW'))
+            msg_str = f'Successfully connected via SSH to {hostname}@{host_ip}'
+            if logger is None:
+                print(msg_str)
+            else:
+                logger.info(msg_str)
+        except TimeoutError:
+            msg_str = f'Failed to setup SSH connection to {hostname}@{host_ip}'
+            if logger is None:
+                print(msg_str)
+            else:
+                logger.error(msg_str)
+
+        # Set command arguments
+        python_path = ssh_params['python_path']
+        launch_path = ssh_params['script_path']
+        start = ""
+
+        # Kill processes if required
+        if 'kill_all' in ssh_params and ssh_params['kill_all'] == "True":
+            msg_str = f'Killing all python processes on {hostname}@{host_ip}'
+            if logger is None:
+                print(msg_str)
+            else:
+                logger.warn(msg_str)
+            ssh.exec_command('taskkill /F /IM python.exe /T')
+
+    else:
+        ssh = False
+        start = f'start "{server}_server, '
+        start += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+        start += '" '
+        host_ip = socket.gethostbyname_ex(socket.gethostname())[2][0]
+        python_path = sys.executable
+        launch_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            'launchers',
+            'pylabnet_server.py'
+        )
 
     if server_port is None:
         server_port = np.random.randint(1024, 49151)
 
-    # Build command
-    cmd = f'start "{server}_server, '
-    cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-    cmd += f'" "{sys.executable}" "{launch_path}" '
+    # Build command()
+    cmd = f'{start}"{python_path}" "{launch_path}" '
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
     cmd += f'--device_id "{config_dict["device_id"]}" '
-    cmd += f'--config {config} --debug {debug}'
+    cmd += f'--config {dev_config} --debug {debug}'
 
-    if 'ssh_config' in config_dict:
-        # TODO: perform SSH
-        pass
+    if ssh:
+        msg_str = f'Executing command on {hostname}:\n{cmd}'
+        if logger is None:
+            print(msg_str)
+        else:
+            logger.info(msg_str)
+        ssh.exec_command(cmd)
+    else:
+        subprocess.Popen(cmd, shell=True)
 
-    subprocess.Popen(cmd, shell=True)
-
-    return log_ip, server_port
+    return host_ip, server_port
 
 def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd):
     """ Launches a script

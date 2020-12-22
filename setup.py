@@ -65,6 +65,7 @@ setup(
         'PyQt5>=5.13.0',
         'pyqtgraph>=0.10.0',
         'pyserial>=3.4',
+        'python-decouple>=3.3',
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
         'qdarkstyle>=2.8.1',

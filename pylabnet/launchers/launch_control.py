@@ -399,7 +399,7 @@ class Controller:
             device_server = os.path.basename(os.path.dirname(filepath))
             device_config = os.path.basename(filepath)[:-5]
 
-            self.log_service.logger.info(f'Launching device {device_server} '
+            self.gui_logger.info(f'Launching device {device_server} '
                                          f'with configuration {device_config}')
 
             # Initial configurations: All flags down.
@@ -434,7 +434,7 @@ class Controller:
             script_name = os.path.basename(os.path.dirname(filepath))
             script_config = os.path.basename(filepath)[:-5]
 
-            self.log_service.logger.info(f'Launching device {script_name} '
+            self.gui_logger.info(f'Launching device {script_name} '
                                          f'with configuration {script_config}')
 
             # Initial configurations: All flags down.

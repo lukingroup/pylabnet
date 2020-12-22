@@ -303,7 +303,7 @@ def launch(**kwargs):
         logger=logger,
         calibration=calibration,
         name=name,
-        port=logport
+        port=kwargs['server_port']
     )
 
     time.sleep(2)

@@ -132,14 +132,6 @@ class MPC320:
         print("Motor Type: ", self.device_info.motorType)
         print("USB PID: ", self.device_info.PID)
         print("Max Number of Paddles: ", self.device_info.maxPaddles)
-
-        # how to pick a specific device?
-        #Establishe connection to device
-        result = self._polarizationdll.MPC_Open(self.device_info.serialNo)
-        if result == 0:
-            print("Connected succesfully to device")
-        else:
-            print("A problem occured when trying to connect to device")
         
     #technical methods
 
@@ -160,8 +152,6 @@ class MPC320:
         self._polarizationdll.MPC_Close.restype = ctypes.c_short
         self._polarizationdll.MPC_CheckConnection.argtype = ctypes.c_char_p
         self._polarizationdll.MPC_CheckConnection.restype = ctypes.c_bool           
-        #self._polarizationdll.TLI_MPC_Identify.argtype = ctype.c_char_p
-        #self._polarizationdll.TLI_MPC_Identify.restype = ctype.c_void_p
         self._polarizationdll.MPC_GetPosition.argtypes = [ctypes.POINTER(ctypes.c_char), POL_Paddles]
         self._polarizationdll.MPC_GetPosition.restype = ctypes.c_double
         self._polarizationdll.MPC_RequestPolParams.argtype = ctypes.POINTER(ctypes.c_char)
@@ -170,8 +160,6 @@ class MPC320:
         self._polarizationdll.MPC_GetPolParams.restype = ctypes.c_short 
         self._polarizationdll.MPC_SetPolParams.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(TLI_PolarizerParameters)]
         self._polarizationdll.MPC_SetPolParams.restype = ctypes.c_short
-        #self._polarizationdll.MPC_GetJogSize.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(TLI_PolarizerParameters)]
-        #self._polarizationdll.MPC_GetJogSize.restype = ctypes.c_double
         self._polarizationdll.MPC_SetJogSize.argtypes =  [ctypes.POINTER(ctypes.c_char), POL_Paddles, ctypes.c_double]
         self._polarizationdll.MPC_SetJogSize.restype =  ctypes.c_short
         self._polarizationdll.MPC_Jog.argtypes = [ctypes.POINTER(ctypes.c_char), POL_Paddles, MOT_TravelDirection]
@@ -186,8 +174,6 @@ class MPC320:
         self._polarizationdll.MPC_Home.restype = ctypes.c_short
         self._polarizationdll.MPC_Jog.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.POINTER(TLI_PolarizerParameters), MOT_TravelDirection]
         self._polarizationdll.MPC_Jog.restype = ctypes.c_short
-	    #self._polarizationdll.MPC_SetJogSize.argtypes = [ctypes.POINTER(ctypes.c_char), POL_Paddles, ctypes.c_double]
-	    #self._polarizationdll.MPC_SetJogSize.restype = ctypes.c_short
         self._polarizationdll.MPC_StartPolling.argtypes = [ctypes.POINTER(ctypes.c_char), ctypes.c_int]
         self._polarizationdll.MPC_StartPolling.restype = ctypes.c_bool
         self._polarizationdll.MPC_StopPolling.argtype = ctypes.POINTER(ctypes.c_char)   
@@ -200,6 +186,20 @@ class MPC320:
         self._polarizationdll.MPC_GetStepsPerDegree.result = ctypes.c_double
 
     #wrap function for external use
+  
+    def open(self, device):
+        result = self._polarizationdll.MPC_Open(device)
+        if result == 0:
+            print("Connected succesfully to device")
+        else:
+            print("A problem occured when trying to connect to device")
+
+    def close(self, device):
+        resultc = self._polarizationdll.MPC_Close(device)
+        if resultc == 0:
+            print("Closed connection to device")
+        else:
+            print("A problem occured when trying to diconnect from device")
 
     def home(self, device, paddle):
         home_result = self._polarizationdll.MPC_Home(device, paddle)
@@ -209,9 +209,8 @@ class MPC320:
     def move(self, device, paddle, pos):
         posinitial = self._polarizationdll.MPC_GetPosition(device, paddle)
         move_result = self._polarizationdll.MPC_MoveToPosition(device, paddle, pos) 
-        time.sleep(10)
+        time.sleep(50)
         posfinal = self._polarizationdll.MPC_GetPosition(device, paddle)
-
 
         return move_result, posinitial, posfinal
 
@@ -223,7 +222,7 @@ class MPC320:
 
         return move_result, posinitial, posfinal
 
-    def getangle(self, device, paddle):
+    def get_angle(self, device, paddle):
         currentpos = self._polarizationdll.MPC_GetPosition(device, paddle)
         
         return currentpos
@@ -231,36 +230,27 @@ class MPC320:
 def main():
     mpc = MPC320()
 
-    Stepperdegree = mpc._polarizationdll.MPC_GetStepsPerDegree(mpc.device_info.serialNo)
-    maxtravel = mpc._polarizationdll.MPC_GetMaxTravel(mpc.device_info.serialNo)
-
     #define parameters for movement
     paddle = paddle2
     device = mpc.device_info.serialNo
     stepsize = 10 #degrees
-    step = -20
+    step = 40
     stepnum = 10
     pos = 50
-    
+
+    mpc.open(device)
+
     #38159764 - fiber device out
+    #38154354 - dummy device
+    
     #Move paddles from home to initial position
     home = mpc.home(device, paddle)
     movement = mpc.move(device, paddle, pos)
-    posf = mpc.getangle(device, paddle)
+    posf = mpc.get_angle(device, paddle)
     movement_rel = mpc.move_rel(device, paddle, step)
 
-    count = 0
-    while count < stepnum:
-        mover = mpc._polarizationdll.MPC_MoveRelative(mpc.device_info.serialNo, paddle, stepsize) 
-        time.sleep(1)
-        count += 1
-        mpc.PosF = mpc._polarizationdll.MPC_GetPosition(mpc.device_info.serialNo, paddle)
-        print(f"Position after move relative is {mpc.PosF}")  
-
-    #mpc._polarizationdll.MPC_StopPolling(device_info.serialNo)
-    #closes connection to device
-    mpc._polarizationdll.MPC_Close(mpc.device_info.serialNo)
-
+    mpc.close(device)
+ 
 if __name__ == "__main__":
     main() 
 

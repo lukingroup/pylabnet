@@ -214,6 +214,13 @@ class E4405BMarker():
         Note: Work only if _toggle_freq_count was called, outputs 9e15 if count state is off.
         """
         return float(self.client.query(f':CALCulate:MARKer{self.marker_num}:FCOunt:X?;*WAI'))
+    
+    def set_freq(self, freq):
+        """ Set frequency to freq
+        
+        :freq (float): frequency to set the marker to
+        """
+        self.client.write(f':CALCulate:MARKer{self.marker_num}:X {freq};*WAI')
 
     def get_power(self):
         """Reads out power of marker position (in dbm)"""

@@ -6,7 +6,7 @@ import time
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
 import pyqtgraph as pg
-from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, find_client, load_config, get_gui_widgets
+from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, find_client, load_config, get_gui_widgets, load_script_config
 from pylabnet.network.client_server import thorlabs_pm320e
 
 # Time between power meter calls to prevent crashes
@@ -269,21 +269,30 @@ def launch(**kwargs):
     """ Launches the full fiber controll + GUI script """
 
     # Unpack and assign parameters
-    logger, loghost, logport, clients, _, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    logport = kwargs['logport']
 
     # Unpack settings
-    settings = load_config(
+    settings = load_script_config(
+        'power_monitor',
         kwargs['config'],
         logger=logger
     )
 
+    # Find the client
+    device_config = None
+    for server in settings['servers']:
+        if 'name' in server and server['name'] == 'power_sensor':
+            device_type = server['type']
+            device_config = server['config']
+            break
     try:
-        pm_client = clients[('nidaqmx', settings['power_sensor']['device_id'])]
-    except KeyError:
-        logger.warn('Could not find nidaqmx AI for power detection by device ID')
-        logger.info(f'Client dictionary: {clients}')
-        pm_client = find_client(logger, clients, 'thorlabs_pm320e_front')
+        pm_client = find_client(clients, settings, device_type, device_config, logger)
+    except NameError:
+        logger.error('No power_sensor device identified in script config file')
 
+    logger.info(f'Found PM client {pm_client}')
     calibration = [settings['calibration']]
     name = settings['name']
     pm = PMInterface(pm_client, settings)
@@ -302,7 +311,3 @@ def launch(**kwargs):
 
 
     control.run()
-
-    # Mitigate warnings about unused variables
-    if loghost and logport and params:
-        pass

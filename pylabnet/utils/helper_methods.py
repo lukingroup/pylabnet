@@ -626,7 +626,7 @@ def find_keys(input_dict, key_name):
 
     return found
 
-def find_client(clients, settings, client_type, client_config=None):
+def find_client(clients, settings, client_type, client_config=None, logger=None):
     """ Finds a particular client from client dictionary passed from launcher
 
     :param clients: (dict) client dictionary
@@ -634,6 +634,7 @@ def find_client(clients, settings, client_type, client_config=None):
     :param client_type: (str) type of server (e.g. nidaqmx)
     :param client_config: (str, optional) name of config file for specific device
         only needed if multiple devices of the same type are used in this script
+    :param logger: (LogHandler)
     """
 
     found_clients = find_keys(clients, client_type)
@@ -656,9 +657,9 @@ def find_client(clients, settings, client_type, client_config=None):
             if num_clients == 1:
                 return found_clients[0]
             elif num_clients == 0:
-                logger.error(f'Client ID {device_settings['device_id']} not found')
+                logger.error(f'Client ID {device_settings["device_id"]} not found')
             else:
-                logger.error(f'Multiple clients with client ID {device_settings['device_id']} found')
+                logger.error(f'Multiple clients with client ID {device_settings["device_id"]} found')
 
     # If only 1 matched client, just return
     else:

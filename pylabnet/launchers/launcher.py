@@ -203,7 +203,7 @@ class Launcher:
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        self.clients[server][device_id] = mod.Client(host=host, port=port)
+        self.clients[(server, device_id)] = mod.Client(host=host, port=port)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """
@@ -329,6 +329,8 @@ class Launcher:
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
+
+        self.logger.info(f'Launching script {self.name}')
         
         mod.launch(
             logger=self.logger,
@@ -432,5 +434,6 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
+        show_console()
         print(e)
         time.sleep(10)

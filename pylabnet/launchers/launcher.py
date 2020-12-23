@@ -190,9 +190,6 @@ class Launcher:
         """
         server = module
 
-        if server not in self.clients:
-            self.clients[server] = {} #Instantiate a blank dictionary corresponding to the server module
-
         spec = importlib.util.spec_from_file_location(
             module,
             os.path.join(
@@ -234,6 +231,7 @@ class Launcher:
         module.
 
         :param matches: (list) list of matching server modules
+        :param module: (str) name of module to launch (e.g. nidaqmx)
         :param config_name: (str) name of the config file for the device server
         :param config: (dict) actual config dict for the server
         :param auto_connect: (bool) whether or not to automatically connect to the device/server
@@ -244,30 +242,40 @@ class Launcher:
         num_matches = len(matches)
         module_name = module
 
+        if 'auto_launch' in config and config['auto_launch'] == 'False':
+            launch_stop = True
+        else:
+            launch_stop = False
+
         # If there are no matches, launch and connect to the server manually
         if num_matches == 0:
-            self.logger.info(f'No active servers matching module {module_name}'
-                            ' were found. Instantiating a new server.')
-            host, port = launch_device_server(
-                server=module,
-                dev_config=config_name,
-                log_ip=self.log_ip,
-                log_port=self.log_port,
-                server_port=np.random.randint(1024, 49151),
-                debug=self.server_debug,
-                logger=self.logger
-            )
+            if launch_stop:
+                self.logger.info(f'No No active servers matching module {module_name}'
+                                 'were found. Please instantiate manually.')
+                raise Exception('Server must be launched manually prior to script')
+            else:
+                self.logger.info(f'No active servers matching module {module_name}'
+                                ' were found. Instantiating a new server.')
+                host, port = launch_device_server(
+                    server=module,
+                    dev_config=config_name,
+                    log_ip=self.log_ip,
+                    log_port=self.log_port,
+                    server_port=np.random.randint(1024, 49151),
+                    debug=self.server_debug,
+                    logger=self.logger
+                )
 
-            tries=0
-            while tries<10:
-                try:
-                    self._connect_to_server(module, host, port, device_id)
-                    tries = 11
-                except ConnectionRefusedError:
-                    time.sleep(0.1)
-                    tries += 1
-            if tries == 10:
-                self.logger.error(f'Failed to connect to {module}')
+                tries=0
+                while tries<10:
+                    try:
+                        self._connect_to_server(module, host, port, device_id)
+                        tries = 11
+                    except ConnectionRefusedError:
+                        time.sleep(0.1)
+                        tries += 1
+                if tries == 10:
+                    self.logger.error(f'Failed to connect to {module}')
 
         # If there is exactly 1 match, try to connect automatically
         elif num_matches == 1 and auto_connect:

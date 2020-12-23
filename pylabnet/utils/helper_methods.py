@@ -686,6 +686,14 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     # First load device config into dict
     config_dict = load_device_config(server, dev_config)
 
+    if 'disabled' in config_dict and config_dict['disabled'] == 'True':
+        msg_str = f'Device {server} launching is disabled'
+        if logger is None:
+                print(msg_str)
+        else:
+            logger.error(msg_str)
+        return
+
     # Check if we should SSH in
     if 'ssh_config' in config_dict:
         ssh = True

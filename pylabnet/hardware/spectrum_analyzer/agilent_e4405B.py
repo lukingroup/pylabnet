@@ -60,6 +60,14 @@ class Driver():
         self.device.write(f'POW:ATT {int(db)}dB')
         self.log.info(f'Input attenuation set to {db}dB.')
 
+    def set_reference_level(self, db):
+        """Set reference level
+        :db: Target reference level in dB
+        """
+
+        self.device.write(f':DISPlay:WINDow:TRACe:Y:RLEVel {int(db)}')
+        self.log.info(f'Reference level set to {db}dB.')
+
     def set_center_frequency(self, center_frequency):
         """ Set center frequency of trace.
 

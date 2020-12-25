@@ -20,7 +20,7 @@ class Optimizer:
 class IQOptimizer(Optimizer):
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -55, max_carrier_pow = -55, num_points = 25, cushion_param = 5,
+		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -65, max_carrier_pow = -65, num_points = 25, cushion_param = 5,
 		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_window = 44, q_window = 0.34, dc_i_window = 0.0135,
 		dc_q_window = 0.0115, plot_traces = True, awg_delay_time = 0.0, averages=1, min_rounds=1
 	):
@@ -128,7 +128,7 @@ class IQOptimizer(Optimizer):
 		# self.hd.enable_output(1)
 
 		# Center frequency at carrier frequency
-		self.sa.set_center_frequency(self.carrier)
+		self.sa.set_center_frequency(self.carrier+self.signal_freq)
 		self.sa.set_frequency_span(6*self.signal_freq)
 		# Marker for upper sideband.
 		self.upp_sb_marker = sa_hardware.E4405BMarker(self.sa,'Upper Sideband',1)
@@ -148,6 +148,9 @@ class IQOptimizer(Optimizer):
 			#assert abs(marker_freq - target_freq) < max_deviation, f"{marker.name} has wrong frequecy: {marker_freq / 1e9} GHz"
 			self.hd.log.info(f"Marker '{marker.name}' parked at {target_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
 
+		#Set reference level to just above the height of our signal to minimize our noise floor 
+		self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
+		
 		if self.plot_traces == True:
 			self.sa.plot_trace()
 
@@ -255,6 +258,8 @@ class IQOptimizer(Optimizer):
 			time.sleep(1)
 		else:
 			print('Skipped Carrier')
+			self.dc_offset_i_opt = self.hd.getd('sigouts/2/offset')
+			self.dc_offset_q_opt = self.hd.getd('sigouts/3/offset')
 
 		if num_iterations < self.max_iterations:
 			self.hd.log.info('Carrier optimization completed in ' + str(num_iterations) + ' iterations')
@@ -385,3 +390,16 @@ class IQOptimizer(Optimizer):
 			ax = sns.heatmap(dc_sweep_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'carrier power [dBm]'})
 			ax.set(xlabel='DC offset Q signal [mV]', ylabel='DC offset I signal [mV]')
 
+	def plot_phase_amp_sweep(self, phase_min, phase_max, q_min, q_max, num_points):
+		self.phases = np.linspace(phase_min, phase_max, num_points)	
+		self.qs = np.linspace(q_min, q_max, num_points)
+		self.lower_sideband_power = np.zeros((num_points, num_points))
+
+		self._sweep_phase_amp_imbalance()
+
+		lower_sideband_data = pd.DataFrame(self.lower_sideband_power,
+			index=np.round(self.phases, 1),
+			columns=np.round(self.qs, 2))
+		fig1, ax1 = plt.subplots(figsize=(8, 5))
+		ax1 = sns.heatmap(lower_sideband_data, xticklabels=5,  yticklabels=5,  cbar_kws={'label': 'lower sideband power [dBm]'})
+		ax1.set(ylabel='Phase shift', xlabel='Amplitude imbalance')

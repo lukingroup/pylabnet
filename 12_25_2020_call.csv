@@ -1,0 +1,4 @@
+LO_Power,25
+IF_volt,0.75
+Note: 
+|['LO_F', 'IF_F', 'q', 'phase', 'dc_i', 'dc_q', 'H-1', 'H0', 'H1', 'H2', 'H3']|

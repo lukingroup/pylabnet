@@ -118,7 +118,7 @@ def main():
 	hd = zi_hdawg.Driver(dev_id, logger)
 
 	iq_calibration = IQ_Calibration()
-	iq_calibration.run_calibration("12_25_2020_call.csv", mw_client, hd, sa, 9E9, 12.5E9, 36, 50E6, 500E6, 10, 25, 0.75)
+	iq_calibration.run_calibration("12_25_2020_cal.csv", mw_client, hd, sa, 9E9, 12.5E9, 36, 50E6, 500E6, 10, 25, 0.75)
 
 
 if __name__ == '__main__':

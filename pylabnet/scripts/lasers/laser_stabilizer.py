@@ -187,7 +187,7 @@ class LaserStabilizer:
             #access that member variable. Not a huge deal will slightly speed it up I guess and is a bit cleaner.
             power = self.gain*np.array(self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage))
             self.widgets['label_power'].setText(str(power[-1]))
-            self._last_power = power[-1]/self.gain;
+            self._last_power = power[-1]/self.gain
             self._last_power_text_update = currTime
 
     #TODO: Can potentially use some getters/setters to clean up the below two functions make them a little more cllean for the user.

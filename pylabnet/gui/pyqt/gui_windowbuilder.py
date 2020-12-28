@@ -2,7 +2,7 @@ import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 import qdarkstyle
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
-from pylabnet.utils.helper_methods import load_config
+from pylabnet.utils.helper_methods import load_script_config
 
 class GUIWindowFromConfig(QMainWindow):
 
@@ -10,8 +10,8 @@ class GUIWindowFromConfig(QMainWindow):
 
 		QMainWindow.__init__(self)
 
-		self.config = load_config(config)
-		self.N_staticlines = len(self.config)
+		self.config = load_script_config('staticline', config, logger=None)
+		self.N_staticlines = len(self.config['lines'])
 		self.widgets = dict()
 		self.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
@@ -31,7 +31,7 @@ class GUIWindowFromConfig(QMainWindow):
 	def unpack_config_file(self):
 		block_num  = 0
 
-		for device_name, device in self.config.items():
+		for device_name, device in self.config['lines'].items():
 
 			# Ignore non-device configs
 			if type(device) != dict:

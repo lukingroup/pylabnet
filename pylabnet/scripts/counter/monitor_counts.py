@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
 
 
 # Static methods
@@ -257,28 +257,43 @@ class CountMonitor:
 def launch(**kwargs):
     """ Launches the count monitor script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    config = load_script_config(
+        'monitor_counts',
+        kwargs['config'],
+        logger
+    )
 
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=find_client(logger, clients, 'si_tt'), logger_client=logger, server_port=kwargs['server_port']
+            ctr_client=find_client(
+                clients,
+                config,
+                client_typ='si_tt',
+                client_config='standard_ctr',
+                logger=logger
+            ), 
+            logger_client=logger,
+            server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
 
-    try:
-        config = load_config('counters')
-        ch_list = list(config['channels'])
-        plot_1 = list(config['plot_1'])
-        plot_2 = list(config['plot_2'])
-        plot_list = [plot_1, plot_2]
-    except:
-        config = None
-        ch_list = [7, 8]
-        plot_list = [[7], [8]]
+    # try:
+    config = load_config('counters')
+    ch_list = list(config['channels'])
+    plot_1 = list(config['plot_1'])
+    plot_2 = list(config['plot_2'])
+    plot_list = [plot_1, plot_2]
+    # except:
+    #     config = None
+    #     ch_list = [7, 8]
+    #     plot_list = [[7], [8]]
 
     # Instantiate Pause server
     # try:

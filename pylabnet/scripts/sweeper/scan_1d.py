@@ -446,13 +446,10 @@ def launch(**kwargs):
         config=kwargs['config'],
     )
 
-    update_service = Service()
+    update_service = kwargs['service']
     update_service.assign_module(module=control)
-    update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
-    logger.update_data(data={'port': update_port})
+    update_port = kwargs['server_port']
     control.gui.set_network_info(port=update_port)
-    update_server.start()
 
     # Run continuously
     # Note that the actual operation inside run() can be paused using the update server

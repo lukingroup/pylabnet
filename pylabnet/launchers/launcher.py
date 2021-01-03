@@ -113,6 +113,7 @@ class Launcher:
         # Script server
         self.script_server_port = None
         self.script_server = None
+        self.service = None
 
     def launch(self):
         """ Launches/connects to required servers and runs the script """
@@ -355,21 +356,28 @@ class Launcher:
             clients=self.clients,
             logport=self.log_port,
             config=self.config,
-            server_port=self.script_server_port
+            server_port=self.script_server_port,
+            service=self.service
         )
 
-    def _launch_script_server(self, service=None):
+    def _launch_script_server(self):
         """ Launches a GenericServer attached to this script to enable closing
-
-        :param service: (optional), child of ServiceBase to enable server functionality
-            NOTE: not yet implemented, can be used in future e.g. for pause server
         """
 
-        if service is None:
-            service = ServiceBase()
+        if 'script_service' in self.config_dict and self.config_dict['script_service'] == 'True':
+            spec = importlib.util.spec_from_file_location(
+                self.name,
+                self.config_dict['script']
+            )
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            self.service = mod.Service()
+        else:
+            self.service = ServiceBase()
+        self.service.assign_logger(logger=self.logger)
 
         self.script_server, self.script_server_port = create_server(
-            service=service,
+            service=self.service,
             logger=self.logger,
             host=socket.gethostbyname_ex(socket.gethostname())[2][0]
         )

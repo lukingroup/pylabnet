@@ -11,7 +11,7 @@ import numpy as np
 from pylabnet.scripts.sweeper.sweeper import MultiChSweep1D
 from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import (get_gui_widgets, load_config,
+from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
     unpack_launcher, create_server, pyqtgraph_save)
 
@@ -56,7 +56,7 @@ class Controller(MultiChSweep1D):
 
         # Configure list of experiments
         self.widgets['config'].setText(config)
-        self.config = load_config(config, logger=self.log)
+        self.config = load_script_config('scan1d', config, logger=self.log)
 
         self.exp_path = self.config['exp_path']
         if self.exp_path is None:
@@ -70,7 +70,8 @@ class Controller(MultiChSweep1D):
         # Configure list of clients
         self.clients = clients
         for client_name, client_obj in self.clients.items():
-            client_item = QtWidgets.QListWidgetItem(client_name)
+            client_name_concat = '-'.join(client_name)
+            client_item = QtWidgets.QListWidgetItem(client_name_concat)
             client_item.setToolTip(str(client_obj))
             self.widgets['clients'].addItem(client_item)
 
@@ -147,7 +148,7 @@ class Controller(MultiChSweep1D):
 
         # Run any pre-experiment configuration
         try:
-            self.module.configure(**self.clients)
+            self.module.configure(self.clients)
         except AttributeError:
             pass
 
@@ -316,7 +317,7 @@ class Controller(MultiChSweep1D):
         if backward:
 
             # Single trace
-            self.data_bwd[-1].append(self.experiment(x_value, **self.clients, gui=self.gui))
+            self.data_bwd[-1].append(self.experiment(x_value, self.clients, gui=self.gui))
             cur_ind = len(self.data_bwd[-1])
             self.widgets['curve'][1].setData(
                 self.x_bwd[:cur_ind],
@@ -349,7 +350,7 @@ class Controller(MultiChSweep1D):
                 )
         else:
 
-            self.data_fwd[-1].append(self.experiment(x_value, **self.clients, gui=self.gui))
+            self.data_fwd[-1].append(self.experiment(x_value, self.clients, gui=self.gui))
             cur_ind = len(self.data_fwd[-1])
             self.widgets['curve'][0].setData(
                 self.x_fwd[:cur_ind],
@@ -435,7 +436,8 @@ def main():
 def launch(**kwargs):
     """ Launches the sweeper GUI """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
 
     # Instantiate Monitor script
     control = Controller(

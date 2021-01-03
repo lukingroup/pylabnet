@@ -1,6 +1,7 @@
 from pylabnet.hardware.awg.zi_hdawg import Driver
 from pylabnet.network.client_server.hdawg import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.utils.helper_methods import load_device_config
 
 import socket
 
@@ -10,8 +11,8 @@ def launch(**kwargs):
     # Instantiate driver
     zi_logger = kwargs['logger']
 
-
-    hd = Driver('dev8227', zi_logger)
+    device_id = load_device_config('zi_hdawg', kwargs['config'], logger=kwargs['logger'])['device_id']
+    hd = Driver(device_id, zi_logger)
 
     # Instantiate server
     hd_service = Service()

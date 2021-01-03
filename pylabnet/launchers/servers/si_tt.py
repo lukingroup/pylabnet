@@ -10,7 +10,7 @@ except ModuleNotFoundError:
 from pylabnet.hardware.counter.swabian_instruments.time_tagger import Wrap
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.si_tt import Service, Client
-from pylabnet.utils.helper_methods import load_config
+from pylabnet.utils.helper_methods import load_device_config
 
 
 def launch(**kwargs):
@@ -37,17 +37,17 @@ def launch(**kwargs):
 
     try:
         config = kwargs['config']
-        config = load_config(config, logger=kwargs['logger'])
+        config = load_device_config('si_tt', config, logger=kwargs['logger'])
     except:
         config = None
 
-    if config is None:
-        try:
-            config = load_config('si_tt', logger=kwargs['logger'])
-        except:
-            config = {}
+    # if config is None:
+    #     try:
+    #         config = load_device_config('si_tt', logger=kwargs['logger'])
+    #     except:
+    #         config = {}
 
-    for channel, trig_level in config.items():
+    for channel, trig_level in config['triggers'].items():
         tagger.setTriggerLevel(int(channel), float(trig_level))
 
     cnt_trace_wrap = Wrap(

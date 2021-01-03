@@ -21,41 +21,47 @@ def launch(**kwargs):
     # Instantiate driver
     ni_daqmx_logger = kwargs['logger']
     try:
-        config = load_config(kwargs['config'])
         ni_driver = nidaqmx_card.Driver(
-            device_name=config['device'],
+            device_name=kwargs['device_id'],
             logger=ni_daqmx_logger
         )
     except AttributeError:
-        config_directory = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
-            'configs'
-        )
-        files = [file for file in os.listdir(config_directory) if (
-            os.path.isfile(os.path.join(
-                config_directory, file
-            )) and '.json' in file
-        )]
-        show_console()
-        print('Available config files:\n')
-        for index, file in enumerate(files):
-            print(f'{index}: {file[:-5]}')
-        config_index = int(input('\nPlease enter a config index: '))
-        config = load_config(files[config_index][:-5], logger=ni_daqmx_logger)
-        hide_console()
+        try:
+            config = load_config(kwargs['config'])
+            ni_driver = nidaqmx_card.Driver(
+                device_name=config['device'],
+                logger=ni_daqmx_logger
+            )
+        except AttributeError:
+            config_directory = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
+                'configs'
+            )
+            files = [file for file in os.listdir(config_directory) if (
+                os.path.isfile(os.path.join(
+                    config_directory, file
+                )) and '.json' in file
+            )]
+            show_console()
+            print('Available config files:\n')
+            for index, file in enumerate(files):
+                print(f'{index}: {file[:-5]}')
+            config_index = int(input('\nPlease enter a config index: '))
+            config = load_config(files[config_index][:-5], logger=ni_daqmx_logger)
+            hide_console()
 
 
-        ni_driver = nidaqmx_card.Driver(
-            device_name=config['device'],
-            logger=ni_daqmx_logger
-        )
-    except OSError:
-        ni_daqmx_logger.error(f'Did not find NI daqMX name {config["device"]}')
-        raise
-    except KeyError:
-        ni_daqmx_logger.error('No device name provided. '
-                              'Please make sure proper config file is provided')
-        raise
+            ni_driver = nidaqmx_card.Driver(
+                device_name=config['device'],
+                logger=ni_daqmx_logger
+            )
+        except OSError:
+            ni_daqmx_logger.error(f'Did not find NI daqMX name {config["device"]}')
+            raise
+        except KeyError:
+            ni_daqmx_logger.error('No device name provided. '
+                                'Please make sure proper config file is provided')
+            raise
 
     # Instantiate server
     ni_daqmx_service = Service()

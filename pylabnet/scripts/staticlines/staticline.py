@@ -6,7 +6,7 @@ import pylabnet.hardware.staticline.staticline as staticline
 from pylabnet.gui.pyqt.gui_windowbuilder import GUIWindowFromConfig
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, load_config
+from pylabnet.utils.helper_methods import unpack_launcher, load_script_config, find_client
 
 
 class StaticLineGUIGeneric():
@@ -26,7 +26,7 @@ class StaticLineGUIGeneric():
 
         self.log = LogHandler(logger=logger_client)
         self.config = config
-        self.config_dict = load_config(config, logger=self.log)
+        self.config_dict = load_script_config('staticline', config, logger=self.log)
         self.initialize_drivers(staticline_clients, logger_client)
 
     def initialize_drivers(self, staticline_clients, logger_client):
@@ -34,60 +34,47 @@ class StaticLineGUIGeneric():
         # Dictionary storing {device name : dict of staticline Drivers}
         self.staticlines = {}
 
-        if staticline_clients is not None:
-            for (hardware_type, device_id), hardware_client in staticline_clients.items():
 
-                # Find the device entry in the config file by matching
-                # hardware type with the client's.
-                match = False
-                for device_name, device_params in self.config_dict.items():
+        for device_name, device_params in self.config_dict['lines'].items():
+            # If the device name is duplicated, we ignore this hardware client.
+            if device_name in self.staticlines:
+                self.log.error(f"Device name {device_name} has been matched to multiple hardware clients."
+                "Subsequent matched hardware clients are ignored.")
+                continue
+            # Create a dict to store the staticlines for this device
+            else:
+                self.staticlines[device_name] = dict()
 
-                    # Find the hardware client to have the correct hardware_type
-                    # and device ID matching that specified in the config.
-                    if (type(device_params) == dict and
-                        'hardware_type' in device_params and
-                        device_params['hardware_type'] == hardware_type):
-                        # For configs that don't have IDs, assume it's a match.
-                        if 'device_id' not in device_params:
-                            match = True
-                            break
-                        elif device_params['device_id'] == device_id:
-                            match = True
-                            break
+            hardware_type=device_params['hardware_type']
+            hardware_config=device_params['config_name']
 
-                # If no match in config file, we ignore this hardware client.
-                if not match:
-                    self.log.error(f"Hardware type {hardware_type}, ID = {device_id} has no matching entry in the config file.")
-                    continue
+            #Try to find if we have a matching device client in staticline_clients
+            try:
+                hardware_client = find_client(staticline_clients, self.config_dict, hardware_type, hardware_config, logger_client)
+            except NameError:
+                logger_client.error('No staticline device found for device name: '  + device_name)
 
-                # If the device name is duplicated, we ignore this hardware client.
-                if device_name in self.staticlines:
-                    self.log.error(f"Device name {device_name} has been matched to multiple hardware clients."
-                    "Subsequent matched hardware clients are ignored.")
-                    continue
-                # Create a dict to store the staticlines for this device
-                else:
-                    self.staticlines[device_name] = dict()
 
-                # Iterate over all staticlines for that device and create a
-                # driver instance for each line.
-                for staticline_idx in range(len(device_params["staticline_names"])):
+            # Iterate over all staticlines for that device and create a
+            # driver instance for each line.
+            for staticline_idx in range(len(device_params["staticline_names"])):
+                staticline_name = device_params["staticline_names"][staticline_idx]
 
-                    staticline_name = device_params["staticline_names"][staticline_idx]
+                # Store the staticline driver under the specified device name
+                self.staticlines[device_name][staticline_name] = staticline.Driver(
+                    name=device_name + "_" + staticline_name,
+                    logger=logger_client,
+                    hardware_client=hardware_client,
+                    hardware_type=hardware_type,
+                    config=device_params["staticline_configs"][staticline_idx]
+                )
 
-                    # Store the staticline driver under the specified device name
-                    self.staticlines[device_name][staticline_name] = staticline.Driver(
-                        name=device_name + "_" + staticline_name,
-                        logger=logger_client,
-                        hardware_client=hardware_client,
-                        hardware_type=hardware_type,
-                        config=device_params["staticline_configs"][staticline_idx]
-                    )
+                #If it has an initial default value, set that initially using set_value command
+                if "default" in device_params["staticline_configs"][staticline_idx]:
+                    defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
+                    self.staticlines[device_name][staticline_name].set_value(defaultValue)
 
-                    #If it has an initial default value, set that initially using set_value command
-                    if "default" in device_params["staticline_configs"][staticline_idx]:
-                        defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
-                        self.staticlines[device_name][staticline_name].set_value(defaultValue)
+
 
     def initialize_buttons(self):
         """Binds the function of each button of each device to the functions
@@ -101,7 +88,7 @@ class StaticLineGUIGeneric():
             return lambda: driver.set_value(text_widget['AIN'].text())
 
         # Iterate through all devices in the config file
-        for device_name, device_params in self.config_dict.items():
+        for device_name, device_params in self.config_dict['lines'].items():
             if type(device_params) != dict:
                 continue
 
@@ -170,7 +157,8 @@ class StaticLineGUIGeneric():
 def launch(**kwargs):
     """Launches the script."""
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
 
     try:
         staticline_gui = StaticLineGUIGeneric(

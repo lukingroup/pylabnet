@@ -6,7 +6,7 @@ import os
 from pylabnet.hardware.lasers.toptica import DLC_Pro
 from pylabnet.network.client_server.toptica_dl_pro import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import show_console, hide_console, load_config
+from pylabnet.utils.helper_methods import show_console, hide_console, load_device_config
 
 
 
@@ -18,7 +18,7 @@ def launch(**kwargs):
 
     # Instantiate driver
     toptica_logger = kwargs['logger']
-    config = load_config(kwargs['config'])
+    config = load_device_config('toptica_dlc_pro', kwargs['config'], toptica_logger)
 
 
     dlc = DLC_Pro(

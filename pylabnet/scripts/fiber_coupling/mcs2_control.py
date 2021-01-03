@@ -5,7 +5,7 @@ import copy
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, load_config, generate_widgets, find_client
+from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, load_script_config, generate_widgets, find_client
 from pylabnet.network.client_server import smaract_mcs2
 
 from PyQt5.QtGui import QKeySequence
@@ -160,7 +160,7 @@ class Controller:
 
     def load_settings(self):
         """ Loads settings from configuration """
-        self.gui.load_gui(
+        self.gui.load_gui("mcs2_control",
             self.gui.config_label.text(),
             logger=self.log
         )
@@ -428,8 +428,12 @@ def launch(**kwargs):
     """ Launches the full nanopositioner control + GUI script """
 
     # Unpack and assign parameters
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    nanopos_client = find_client(logger, clients, 'mcs2')
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    config = load_script_config(script='mcs2_control',
+                        config=kwargs['config'],
+                        logger=logger)
+    nanopos_client = find_client(clients=clients, settings=config, client_type='mcs2')
     gui_client = 'positioner_control'
 
     # Instantiate controller

@@ -3,7 +3,8 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
+    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client,
+    load_script_config)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 
 import numpy as np
@@ -693,7 +694,10 @@ class Channel:
             # Convert ao from string to object using lookup
             try:
                 self.ao = {
-                    'client': self.ao_clients[channel_params['ao']['client']],
+                    'client': self.ao_clients[(
+                        channel_params['ao']['client'],
+                        channel_params['ao']['config']
+                    )],
                     'channel': channel_params['ao']['channel']
                 }
 
@@ -728,20 +732,35 @@ class Channel:
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    config = load_config(kwargs['config'], logger=logger)
+    logger = kwargs['logger']
+    config = load_script_config(
+        script='wlm_monitor',
+        config=kwargs['config'],
+        logger=logger
+    )
 
-    wavemeter_client = find_client(logger, clients, 'high_finesse_ws7')
+    wavemeter_client = find_client(
+        clients=kwargs['clients'],
+        settings=config,
+        client_type='high_finesse_ws7',
+        logger=logger
+    )
 
     # Get list of ao client names
     ao_clients = {}
     for channel in config['channels'].values():
         client_name = channel['ao']['client']
-        ao_clients[client_name] = find_client(logger, clients, client_name)
+        device_config = channel['ao']['config']
+        ao_clients[(client_name, device_config)] = find_client(
+            kwargs['clients'],
+            config,
+            client_name,
+            client_config=device_config,
+            logger=logger
+        )
 
-    if params is None:
-        channel_params = [p for p in config['channels'].values()]
-        params = dict(channel_params=channel_params)
+    channel_params = [p for p in config['channels'].values()]
+    params = dict(channel_params=channel_params)
 
     # gui_client = guis['wavemeter_monitor']
 

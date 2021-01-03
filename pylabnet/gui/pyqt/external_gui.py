@@ -40,7 +40,7 @@ import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.helper_methods import load_config, get_config_filepath
+from pylabnet.utils.helper_methods import load_script_config, get_config_filepath
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -135,9 +135,10 @@ class Window(QtWidgets.QMainWindow):
             pass
 
 
-    def load_gui(self, config_filename, folder_root=None, logger=None):
+    def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):
         """ Loads and applies GUI settings from a config file
-
+        :param script_filename: (str) name of the script which wishes to update its GUI
+                                        (used for lookup of the appropriate config file)
         :param config_filename: (str) name of configuration file to save.
             Can be an existing config file with other configuration parameters
         :folder_root: (str) Name of folder where the config files are stored. If None,
@@ -145,7 +146,7 @@ class Window(QtWidgets.QMainWindow):
         :logger: (LogClient) instance of LogClient (or LogHandler)
         """
 
-        data = load_config(config_filename, folder_root, logger)
+        data = load_script_config(script=script_filename, config=config_filename, logger=logger)
         if 'gui_scalars' in data:
             for scalar, value in data['gui_scalars'].items():
                 try:
@@ -164,7 +165,7 @@ class Window(QtWidgets.QMainWindow):
                 except:
                     logger.warn(f"Could not load value for {label}")
         logger.info(f'Loaded GUI values from {get_config_filepath(config_filename, folder_root)}')
-    
+
     def apply_stylesheet(self):
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 

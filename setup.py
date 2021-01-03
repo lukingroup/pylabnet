@@ -24,7 +24,7 @@ with open('README.md', 'r') as fh:
 
 # Needed for jupyter notebook in developer mode
 if len(sys.argv) > 1 and sys.argv[1] == 'develop':
-    install('jupyter')  
+    install('jupyter')
 
 setup(
     name='pylabnet',
@@ -59,11 +59,13 @@ setup(
         'matplotlib>=3.1.3',
         'nidaqmx>=0.5.7',
         'numpy>=1.16.5',
+        'paramiko>=2.7.2',
         'plotly>=4.7.1',
         'ptvsd>=4.3.2',
         'PyQt5>=5.13.0',
         'pyqtgraph>=0.10.0',
         'pyserial>=3.4',
+        'python-decouple>=3.3',
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
         'qdarkstyle>=2.8.1',

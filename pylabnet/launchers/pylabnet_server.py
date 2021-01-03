@@ -39,11 +39,6 @@ def main():
     except IndexError:
         raise IndexError('Please provide command line arguments in the form\n"'
                          'python launch_gui.py --logport 1234 --serverport 5678 --server servername')
-    # If pylabnet.server is launched directly, it might not use a configs flag.
-    if 'config' in args:
-        config = args['config']
-    else:
-        config = None
     if 'serverport' in args:
         server_port = int(args['serverport'])
     else:
@@ -72,19 +67,14 @@ def main():
         log_ip = args['logip']
     else:
         log_ip = 'localhost'
-    if 'device_name' in args:
-        device_name = args['device_name']
+    # If pylabnet.server is launched directly, it might not use a configs flag.
+    if 'config' in args:
+        config = args['config']
     else:
-        device_name = None
-    if 'device_id' in args:
-        device_id = args['device_id']
-    else:
-        device_id = None
+        config = None
 
-    if device_name is None:
-        logger_tag = server + '_server'
-    else:
-        logger_tag = server + '_server' + '_' + device_name
+    device_id = args['device_id']
+    logger_tag = server + '_server' + '_' + device_id
 
     # Instantiate logger. This creates a client_data entry in the LogServer
     # that is populated with the server name, port.
@@ -94,6 +84,7 @@ def main():
         module_tag=logger_tag,
         server_port=server_port
     )
+
     # Add device ID of server to LogClient data dict
     server_logger.update_data(data=dict(device_id=device_id))
 
@@ -130,7 +121,7 @@ def main():
             server_port = np.random.randint(1024, 49151)
             update_flag = True
         try:
-            mod_inst.launch(logger=server_logger, port=server_port, device_name=device_name, device_id=device_id, config=config)
+            mod_inst.launch(logger=server_logger, port=server_port, device_id=device_id, config=config)
             if update_flag:
                 server_logger.update_data(data=dict(port=server_port))
             tries = 10

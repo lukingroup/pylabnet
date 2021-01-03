@@ -124,8 +124,8 @@ class Driver:
         # Create counter task and assign parameters
         self.counters[name] = TimedCounter(
             logger=self.log,
-            counter_channel=counter_channel,
-            physical_channel=physical_channel
+            counter_channel=self._gen_ch_path(counter_channel),
+            physical_channel='/'+self._gen_ch_path(physical_channel)
         )
         self.counters[name].set_parameters(duration)
 
@@ -201,7 +201,7 @@ class TimedCounter:
 
         # Create a task - note we have to be careful and close the task if something goes wrong
         self.task = None
-        self.activate_task(counter_channel, physical_channel='/Dev1/20MHzTimebase')
+        self.activate_task(counter_channel, physical_channel=physical_channel)
 
     def activate_task(self, counter_channel='Dev1/ctr0', physical_channel='/Dev1/20MHzTimebase'):
         """ Activates task. Must be used to restart counting if the close command is called """

@@ -115,16 +115,15 @@ class Client(ClientBase):
 
         return self._service.exposed_set_voltage(voltage, laser_num)
 
-    def set_ao_voltage(self, ao_channel='1', voltages=[0]):
+    def set_ao_voltage(self, ao_channel=1, voltages=[0]):
         """ Wrapper for using this in generic AO context
 
-        :param ao_channel: (list) completely irrelevant
+        :param ao_channel: (
         :param voltages: (list) list containing one element, the voltage to set
         """
+        voltage = pickle.dumps(voltages[0])
+        return self._service.exposed_set_voltage(voltage, ao_channel)
 
-        voltage = voltages[0]
-        laser_num = int(ao_channel)
-        return self.set_voltage(voltage, laser_num)
 
     def current_sp(self, laser_num):
         """ Gets current setpoint

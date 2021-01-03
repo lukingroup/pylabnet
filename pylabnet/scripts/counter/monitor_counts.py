@@ -272,10 +272,10 @@ def launch(**kwargs):
             ctr_client=find_client(
                 clients,
                 config,
-                client_typ='si_tt',
+                client_type='si_tt',
                 client_config='standard_ctr',
                 logger=logger
-            ), 
+            ),
             logger_client=logger,
             server_port=kwargs['server_port']
         )
@@ -283,13 +283,6 @@ def launch(**kwargs):
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
-
-    # try:
-    config = load_config('counters')
-    ch_list = list(config['channels'])
-    plot_1 = list(config['plot_1'])
-    plot_2 = list(config['plot_2'])
-    plot_list = [plot_1, plot_2]
     # except:
     #     config = None
     #     ch_list = [7, 8]
@@ -325,9 +318,7 @@ def launch(**kwargs):
     # pause_server.start()
 
     # Set parameters
-    if params is None:
-        params = dict(bin_width=2e10, n_bins=1e3, ch_list=ch_list, plot_list=plot_list)
-    monitor.set_params(**params)
+    monitor.set_params(**config['params'])
 
     # Run
     monitor.run()

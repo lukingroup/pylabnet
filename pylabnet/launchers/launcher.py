@@ -207,16 +207,23 @@ class Launcher:
 
         for server in self.config_dict['servers']:
             module_name = server['type']
-            server_config = load_device_config(
-                module_name,
-                server['config'],
-                self.logger
-            )
+            if "script" in server and server["script"] == "True":
+                server_config = load_script_config(
+                    module_name,
+                    server['config'],
+                    self.logger
+                )
+            else:
+                server_config = load_device_config(
+                    module_name,
+                    server['config'],
+                    self.logger
+                )
 
             matches = []
             for connector in self.connectors.values():
                 # Add servers that have the correct name and ID
-                if (connector.name.startswith(module_name+'_server_')) and (server_config['device_id'] == connector.device_id):
+                if (connector.name.startswith(module_name)) and (server_config['device_id'] == connector.device_id):
                     matches.append(connector)
 
             if 'auto_connect' in server and server['auto_connect'] == 'False':

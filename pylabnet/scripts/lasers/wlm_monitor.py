@@ -764,8 +764,6 @@ def launch(**kwargs):
     channel_params = [p for p in config['channels'].values()]
     params = dict(channel_params=channel_params)
 
-    # gui_client = guis['wavemeter_monitor']
-
     # Instantiate Monitor script
     wlm_monitor = WlmMonitor(
         wlm_client=wavemeter_client,
@@ -774,15 +772,10 @@ def launch(**kwargs):
         params=params
     )
 
-    update_service = Service()
+    update_service = kwargs['service']
     update_service.assign_module(module=wlm_monitor)
-    update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
-    logger.update_data(data={'port': update_port})
     logger.update_data(data=dict(device_id=device_id))
-    logger.info('Created WLM update port')
-    wlm_monitor.gui.set_network_info(port=update_port)
-    update_server.start()
+    wlm_monitor.gui.set_network_info(port=kwargs['server_port'])
 
     # Run continuously
     # Note that the actual operation inside run() can be paused using the update server

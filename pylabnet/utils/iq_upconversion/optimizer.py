@@ -216,7 +216,7 @@ class IQOptimizer(Optimizer):
 
 		# If carrier power already below threshold, no need to optimize carrier
 		skipped = True
-		if self.carrier_marker.get_power() >  self.max_carrier_pow:
+		if self.carrier_marker.get_power() >  (self.max_carrier_pow-10):
 			skipped = False
 			# Sweep 2D parameter space of DC offsets and record carrier power
 			voltages_i = np.linspace(self.dc_min_i, self.dc_max_i, self.num_points)

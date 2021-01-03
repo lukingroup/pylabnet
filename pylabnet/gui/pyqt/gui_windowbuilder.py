@@ -1,12 +1,13 @@
 import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 import qdarkstyle
-from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
+from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QHBoxLayout
 from pylabnet.utils.helper_methods import load_script_config
+from pylabnet.network.core.client_base import ClientBase
 
 class GUIWindowFromConfig(QMainWindow):
 
-	def __init__(self, config=None):
+	def __init__(self, config=None, host=None, port=None):
 
 		QMainWindow.__init__(self)
 
@@ -26,10 +27,32 @@ class GUIWindowFromConfig(QMainWindow):
 
 		self.blockgridLayout = []
 
+		# Add IP info
+		self.host = host
+		self.port = port
+		self.blockgridLayout.append(QHBoxLayout(self))
+		self.gridLayout.addLayout(self.blockgridLayout[0], 0, 1)
+		self.ip_label = QtWidgets.QLabel(f"IP Address: {host}")
+		self.port_label = QtWidgets.QLabel(f"Port: {port}")
+		self.blockgridLayout[0].addWidget(self.ip_label)
+		self.blockgridLayout[0].addWidget(self.port_label)
+
 		self.unpack_config_file()
 
+	def closeEvent(self, event):
+		""" Occurs when window is closed. Overwrites parent class method"""
+
+		try:
+			close_client = ClientBase(
+				host=self.host,
+				port=self.port
+			)
+			close_client.close_server()
+		except:
+			self.close()
+
 	def unpack_config_file(self):
-		block_num  = 0
+		block_num  = 1
 
 		for device_name, device in self.config['lines'].items():
 

@@ -1,6 +1,9 @@
 import sys
 import time
-from PyQt5 import QtWidgets
+import socket
+import ctypes
+import os
+from PyQt5 import QtWidgets, QtGui
 
 import pylabnet.hardware.staticline.staticline as staticline
 from pylabnet.gui.pyqt.gui_windowbuilder import GUIWindowFromConfig
@@ -22,10 +25,12 @@ class StaticLineGUIGeneric():
         Instance of logger client.
     """
 
-    def __init__(self, config, staticline_clients=None, logger_client=None):
+    def __init__(self, config, staticline_clients=None, logger_client=None, host=None, port=None):
 
         self.log = LogHandler(logger=logger_client)
         self.config = config
+        self.host=host
+        self.port=port
         self.config_dict = load_script_config('staticline', config, logger=self.log)
         self.initialize_drivers(staticline_clients, logger_client)
 
@@ -141,10 +146,14 @@ class StaticLineGUIGeneric():
         """Starts up the staticline GUI and initializes the buttons. """
 
         # Starts up an application for the window
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         self.app = QtWidgets.QApplication(sys.argv)
+        self.app.setWindowIcon(
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        )
 
         # Create a GUI window with layout determined by the config file
-        self.gui = GUIWindowFromConfig(config=self.config)
+        self.gui = GUIWindowFromConfig(config=self.config, host=self.host, port=self.port)
         self.gui.show()
         self.widgets = self.gui.widgets
 
@@ -165,6 +174,8 @@ def launch(**kwargs):
             config=kwargs['config'],
             staticline_clients=clients,
             logger_client=logger,
+            host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+            port=kwargs['server_port']
         )
     except KeyError:
         logger.error('Please make sure the module names for required servers and GUIS are correct.')

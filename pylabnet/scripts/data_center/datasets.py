@@ -486,7 +486,7 @@ class InfiniteRollingLine(RollingLine):
 
 
 class ManualOpenLoopScan(Dataset):
-     def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
 
         self.args = args
         self.kwargs = kwargs
@@ -497,58 +497,40 @@ class ManualOpenLoopScan(Dataset):
             self.config = {}
         self.kwargs.update(self.config)
 
-        # # First, try to get scan parameters from GUI
-        # if hasattr(self, 'widgets'):
-        #     if set(['min', 'max', 'pts', 'reps']).issubset(self.widgets.keys()):
-        #         self.widgets['reps'].setValue(0)
-        #         self.fill_params(dict(
-        #             min = self.widgets['min'].value(),
-        #             max = self.widgets['max'].value(),
-        #             pts = self.widgets['pts'].value()
-        #         ))
+        # self.add_child(
+        #     name='Wavelength',
+        #     data_type=InfiniteRollingLine,
+        #     data_length=1000
+        # )
 
         # Get scan parameters from config
-        if set(['delay', 'max_runs']).issubset(self.kwargs.keys()):
+        if set(['integration', 'max_runs']).issubset(self.kwargs.keys()):
             self.fill_params(self.kwargs)
 
-        # Prompt user if not provided in config
         else:
             self.log.error('Please provide config file parameters "delay", "max_runs".')
 
+    def fill_params(self, config):
+        """ Fills the min max and pts parameters """
+        self.integration, self.max_runs = config['integration'], config['max_runs']
+        # Questions: Why is this line necessary for the plot to appear.
+        self.kwargs.update(dict(
+                x=np.linspace(400, 500, 100),
+                name='Fwd trace'
+            ))
+        super().__init__(*self.args, **self.kwargs)
 
-        def fill_params(self, config):
-            """ Fills the min max and pts parameters """
+    # def set_data(self, data=None, x=None, wavelength=None):
+    #     """ Sets the data for a new round of acquisition
 
-            self.delay, self.max_runs = config['delay'], config['max_runs']
+    #     :param data: histogram data from latest acquisition
+    #         note the histogram should have been cleared prior to acquisition
+    #     :param x: x axis for data
+    #     :param wavelength: (float) value of acquired wavelength
+    #     """
 
-            if 'backward' in self.kwargs:
-                self.backward = True
-                self.kwargs.update(dict(
-                    x=np.linspace(self.max, self.min, self.pts),
-                    name='Bwd trace'
-                ))
-            else:
-                self.backward = False
-                self.kwargs.update(dict(
-                    x=np.linspace(self.min, self.max, self.pts),
-                    name='Fwd trace'
-                ))
-            super().__init__(*self.args, **self.kwargs)
-
-            pass_kwargs = dict()
-            if 'window' in config:
-                pass_kwargs['window'] = config['window']
-
-            # Add child for averaged plot
-            self.add_child(
-                name=f'{"Bwd" if self.backward else "Fwd"} avg',
-                mapping=self.avg,
-                data_type=Dataset,
-                new_plot=False,
-                x=self.x,
-                color_index=2
-            )
-
+    #     self.children['Wavelength'].set_data(wavelength)
+    #     super().set_data(data, x)
 
 class TriangleScan1D(Dataset):
     """ 1D Triangle sweep of a parameter """

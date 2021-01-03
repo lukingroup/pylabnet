@@ -49,8 +49,8 @@ class Driver(WavemeterInterface):
         else:
             msg_str = 'High-Finesse WS7 Wavemeter software not running.\n'
             'Please run the Wavemeter software and try again.'
-            self.log.error(msg_str)
-            raise WavemeterError(msg_str)
+            self.log.warn(msg_str)
+            # raise WavemeterError(msg_str)
 
     def get_wavelength(self, channel=1, units='Frequency (THz)'):
         """ Returns the wavelength in specified units for a given channel

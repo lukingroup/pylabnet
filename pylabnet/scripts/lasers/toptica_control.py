@@ -42,7 +42,8 @@ class Controller:
             frequency=2,
             scan=2,
             update_temp=2,
-            update_current=2
+            update_current=2,
+            update_params=1
         )
 
         self.dlc = dlc
@@ -118,28 +119,40 @@ class Controller:
                               f'frequency: {frequency}')
 
         # Handle value checking
-        if check_vals:
-            try:
-                temp_1 = self.dlc.temp_act(1)
-                if temp_1 < 50:
-                    self.widgets['temperature_actual'][0].setValue(
-                        temp_1
+        if self.widgets['update_params'].isChecked():
+
+            for i in range(2):
+                self.widgets['temperature_actual'][i].setDisabled(False)
+                self.widgets['current_actual'][i].setDisabled(False)
+
+            if check_vals:
+                try:
+                    temp_1 = self.dlc.temp_act(1)
+                    if temp_1 < 50:
+                        self.widgets['temperature_actual'][0].setValue(
+                            temp_1
+                        )
+                    time.sleep(0.1)
+                    self.widgets['current_actual'][0].setValue(
+                        self.dlc.current_act(1)
                     )
-                time.sleep(0.1)
-                self.widgets['current_actual'][0].setValue(
-                    self.dlc.current_act(1)
-                )
-                temp_2 = self.dlc.temp_act(2)
-                if temp_2 < 50:
-                    self.widgets['temperature_actual'][1].setValue(
-                        temp_2
+                    temp_2 = self.dlc.temp_act(2)
+                    if temp_2 < 50:
+                        self.widgets['temperature_actual'][1].setValue(
+                            temp_2
+                        )
+                    time.sleep(0.1)
+                    self.widgets['current_actual'][1].setValue(
+                        self.dlc.current_act(2)
                     )
-                time.sleep(0.1)
-                self.widgets['current_actual'][1].setValue(
-                    self.dlc.current_act(2)
-                )
-            except ValueError:
-                pass
+                except ValueError:
+                    pass
+        else:
+            for i in range(2):
+                self.widgets['temperature_actual'][i].setDisabled(True)
+                self.widgets['current_actual'][i].setDisabled(True)
+
+
 
         self.gui.force_update()
 

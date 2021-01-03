@@ -205,7 +205,7 @@ class Dataset:
             self.gui.dataset_layout.addLayout(hbox)
 
         self.gui.initialize_step_sizes()
-    
+
     def handle_new_window(self, graph, **kwargs):
         """ Handles visualizing and possibility of new popup windows """
 
@@ -387,7 +387,7 @@ class PreselectedHistogram(AveragedHistogram):
         super().update(**kwargs)
 
     def update_threshold(self, threshold: float):
-        """ Updates the threshold to a new value 
+        """ Updates the threshold to a new value
 
         :param threshold: (float) new value of threshold
         """
@@ -485,6 +485,71 @@ class InfiniteRollingLine(RollingLine):
                 super().update(**kwargs)
 
 
+class ManualOpenLoopScan(Dataset):
+     def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.stop = False
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        # # First, try to get scan parameters from GUI
+        # if hasattr(self, 'widgets'):
+        #     if set(['min', 'max', 'pts', 'reps']).issubset(self.widgets.keys()):
+        #         self.widgets['reps'].setValue(0)
+        #         self.fill_params(dict(
+        #             min = self.widgets['min'].value(),
+        #             max = self.widgets['max'].value(),
+        #             pts = self.widgets['pts'].value()
+        #         ))
+
+        # Get scan parameters from config
+        if set(['delay', 'max_runs']).issubset(self.kwargs.keys()):
+            self.fill_params(self.kwargs)
+
+        # Prompt user if not provided in config
+        else:
+            self.log.error('Please provide config file parameters "delay", "max_runs".')
+
+
+        def fill_params(self, config):
+            """ Fills the min max and pts parameters """
+
+            self.delay, self.max_runs = config['delay'], config['max_runs']
+
+            if 'backward' in self.kwargs:
+                self.backward = True
+                self.kwargs.update(dict(
+                    x=np.linspace(self.max, self.min, self.pts),
+                    name='Bwd trace'
+                ))
+            else:
+                self.backward = False
+                self.kwargs.update(dict(
+                    x=np.linspace(self.min, self.max, self.pts),
+                    name='Fwd trace'
+                ))
+            super().__init__(*self.args, **self.kwargs)
+
+            pass_kwargs = dict()
+            if 'window' in config:
+                pass_kwargs['window'] = config['window']
+
+            # Add child for averaged plot
+            self.add_child(
+                name=f'{"Bwd" if self.backward else "Fwd"} avg',
+                mapping=self.avg,
+                data_type=Dataset,
+                new_plot=False,
+                x=self.x,
+                color_index=2
+            )
+
+
 class TriangleScan1D(Dataset):
     """ 1D Triangle sweep of a parameter """
 
@@ -519,6 +584,7 @@ class TriangleScan1D(Dataset):
         else:
             self.popup = ParameterPopup(min=float, max=float, pts=int)
             self.popup.parameters.connect(self.fill_params)
+
 
     def fill_params(self, config):
         """ Fills the min max and pts parameters """

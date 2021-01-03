@@ -739,6 +739,8 @@ def launch(**kwargs):
         logger=logger
     )
 
+    device_id = config['device_id']
+
     wavemeter_client = find_client(
         clients=kwargs['clients'],
         settings=config,
@@ -777,6 +779,8 @@ def launch(**kwargs):
     update_service.assign_logger(logger=logger)
     update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
     logger.update_data(data={'port': update_port})
+    logger.update_data(data=dict(device_id=device_id))
+    logger.info('Created WLM update port')
     wlm_monitor.gui.set_network_info(port=update_port)
     update_server.start()
 

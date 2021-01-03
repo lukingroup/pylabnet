@@ -44,9 +44,9 @@ class DLC_Pro:
         :laser_num: (int) 1 or 2, indicating laser 1 or laser 2.
         """
         self.dlc.read_until(b'>', timeout=1)
-        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:type)\n".encode('utf-8'))
+        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:type)\n".encode('utf'))
         laser_type = self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1]
-        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:serial-number)\n".encode('utf-8'))
+        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:serial-number)\n".encode('utf'))
         serial = int(self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1])
         self.log.info(f'Connected to Toptica {laser_type} {laser_num}, S/N {serial}')
 
@@ -57,7 +57,7 @@ class DLC_Pro:
         :return: (bool) whether or not emission is on or off
         """
 
-        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:cc:emission)\n".encode('utf-8'))
+        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:cc:emission)\n".encode('utf'))
         result = self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')
         status = result[1]
         if status == 't':
@@ -75,7 +75,7 @@ class DLC_Pro:
         if self.is_laser_on(laser_num):
             self.log.info(f'Laser {laser_num} is already on')
         else:
-            self.dlc.write(f"(param-set! 'laser{laser_num}:dl:cc:enabled #t)\n".encode('utf-8'))
+            self.dlc.write(f"(param-set! 'laser{laser_num}:dl:cc:enabled #t)\n".encode('utf'))
             self.dlc.read_until(b'>', timeout=1)
             if self.is_laser_on(laser_num):
                 self.log.info(f'Turned on Toptica DL-Pro laser {laser_num}')
@@ -86,7 +86,7 @@ class DLC_Pro:
         """ Turns off the laser """
 
         if self.is_laser_on(laser_num):
-            self.dlc.write(f"(param-set! 'laser{laser_num}:dl:cc:enabled #f)\n".encode('utf-8'))
+            self.dlc.write(f"(param-set! 'laser{laser_num}:dl:cc:enabled #f)\n".encode('utf'))
             self.dlc.read_until(b'>', timeout=1)
             if self.is_laser_on(laser_num):
                 self.log.warn(f'Failed to verify that DL-Pro laser {laser_num} turned off')
@@ -101,7 +101,7 @@ class DLC_Pro:
         :return: (float) current voltage on piezo
         """
 
-        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:pc:voltage-set)\n".encode('utf-8'))
+        self.dlc.write(f"(param-disp 'laser{laser_num}:dl:pc:voltage-set)\n".encode('utf'))
         voltage = float(self.dlc.read_until(b'>', timeout=1).split()[-3])
 
         return voltage

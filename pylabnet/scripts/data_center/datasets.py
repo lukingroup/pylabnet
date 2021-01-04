@@ -485,52 +485,155 @@ class InfiniteRollingLine(RollingLine):
                 super().update(**kwargs)
 
 
+
 class ManualOpenLoopScan(Dataset):
+
     def __init__(self, *args, **kwargs):
 
         self.args = args
         self.kwargs = kwargs
         self.stop = False
+
+        kwargs['name'] = 'Raw Counts'
+
         if 'config' in kwargs:
             self.config = kwargs['config']
         else:
             self.config = {}
         self.kwargs.update(self.config)
 
-        # self.add_child(
-        #     name='Wavelength',
-        #     data_type=InfiniteRollingLine,
-        #     data_length=1000
-        # )
+        super().__init__(*self.args, **self.kwargs)
+
+        self.add_child(
+            name='Smooth counts',
+            mapping=self.smooth_data,
+            data_type=Dataset
+        )
+
+        self.add_child(
+            name='Wavelength',
+            data_type=InfiniteRollingLine,
+            data_length=1000
+        )
 
         # Get scan parameters from config
-        if set(['integration', 'max_runs']).issubset(self.kwargs.keys()):
+        if set(['integration', 'max_runs', 'rebin_factor']).issubset(self.kwargs.keys()):
             self.fill_params(self.kwargs)
 
         else:
-            self.log.error('Please provide config file parameters "delay", "max_runs".')
+            self.log.error('Please provide config file parameters "delay", "max_runs" and "rebin_factor".')
 
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
-        self.integration, self.max_runs = config['integration'], config['max_runs']
+        self.integration, self.max_runs, self.rebin_factor = config['integration'], config['max_runs'], config['rebin_factor']
         # Questions: Why is this line necessary for the plot to appear.
         self.kwargs.update(dict(
                 x=np.linspace(400, 500, 100),
                 name='Fwd trace'
             ))
-        super().__init__(*self.args, **self.kwargs)
 
-    # def set_data(self, data=None, x=None, wavelength=None):
-    #     """ Sets the data for a new round of acquisition
 
-    #     :param data: histogram data from latest acquisition
-    #         note the histogram should have been cleared prior to acquisition
-    #     :param x: x axis for data
-    #     :param wavelength: (float) value of acquired wavelength
-    #     """
+    def visualize(self, graph, **kwargs):
+        self.handle_new_window(graph, **kwargs)
 
-    #     self.children['Wavelength'].set_data(wavelength)
-    #     super().set_data(data, x)
+        if 'color_index' in kwargs:
+            color_index = kwargs['color_index']
+        else:
+            color_index = self.gui.graph_layout.count()-1
+        self.curve = self.graph.plot(
+            pen=pg.mkPen(self.gui.COLOR_LIST[
+                color_index
+            ]),
+            symbol = 'o',
+            symbolPen = pg.mkPen(self.gui.COLOR_LIST[
+                color_index
+            ]),
+            symbolBrush = pg.mkBrush(self.gui.COLOR_LIST[color_index]),
+            downsample = 10000,
+            downsampleMethod ='mean'
+        )
+        self.update(**kwargs)
+
+
+    def set_data(self, data=None, x=None, wavelength=None):
+        """ Sets the data for a new round of acquisition
+
+        :param data: histogram data from latest acquisition
+            note the histogram should have been cleared prior to acquisition
+        :param x: x axis for data
+        :param wavelength: (float) value of acquired wavelength
+        """
+
+        # Add wavelength to aux monitor.
+        self.children['Wavelength'].set_data(wavelength)
+
+
+
+        # Append new data.
+        if self.data is None:
+            self.data = np.array([data])
+
+        else:
+            self.data = np.append(self.data, data)
+
+        if self.x is None:
+            self.x = np.array([x])
+
+        else:
+            self.x = np.append(self.x, x)
+
+        # Re-order array
+        self.data = self.data[np.argsort(self.x)]
+        self.x = self.x[np.argsort(self.x)]
+
+
+        # Add data to parent dataset.
+        super().set_data(self.data, self.x)
+
+    def smooth_data(self, dataset, prev_dataset):
+
+        previous_x = dataset.x
+        previous_y = dataset.data
+
+        data_len = len(previous_y)
+
+        # Zero-pad arrays such that they are multiples of rebinning factor
+
+        padded_x = np.pad(previous_x, (0, self.rebin_factor - data_len%self.rebin_factor), 'constant')
+        padded_y = np.pad(previous_y, (0, self.rebin_factor - data_len%self.rebin_factor), 'constant')
+
+
+        assert len(padded_x) % self.rebin_factor == 0
+        assert len(padded_y) % self.rebin_factor == 0
+
+        n_bins = int(len(padded_x) / self.rebin_factor)
+
+        self.log.info(padded_y)
+        self.log.info(n_bins)
+
+        # Rebin arrays
+        rebinned_x = np.zeros(n_bins)
+        rebinned_y = np.zeros(n_bins)
+
+        for i in range(n_bins):
+            # Sum counts
+            rebinned_y[i] = np.sum(padded_y[i*self.rebin_factor:(i+1)*self.rebin_factor])
+            # Average wavelength
+            rebinned_x[i] = np.average(padded_x[i*self.rebin_factor:(i+1)*self.rebin_factor])
+
+        self.log.info(rebinned_x)
+
+        prev_dataset.data = rebinned_y[:-1]
+        prev_dataset.x = rebinned_x[:-1]
+
+
+class Scatterplot(Dataset):
+    def visualize(self, graph, **kwargs):
+        self.handle_new_window(graph, **kwargs)
+
+        self.curve = pg.ScatterPlotItem(x=[0], y=[0])
+        self.graph.addItem(self.curve)
+        self.update(**kwargs)
 
 class TriangleScan1D(Dataset):
     """ 1D Triangle sweep of a parameter """
@@ -566,7 +669,6 @@ class TriangleScan1D(Dataset):
         else:
             self.popup = ParameterPopup(min=float, max=float, pts=int)
             self.popup.parameters.connect(self.fill_params)
-
 
     def fill_params(self, config):
         """ Fills the min max and pts parameters """

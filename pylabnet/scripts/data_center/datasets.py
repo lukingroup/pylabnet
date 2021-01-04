@@ -517,15 +517,15 @@ class ManualOpenLoopScan(Dataset):
         )
 
         # Get scan parameters from config
-        if set(['integration', 'max_runs', 'rebin_factor']).issubset(self.kwargs.keys()):
+        if set(['integration', 'max_runs', 'bins_per_ghz', 'min_bins']).issubset(self.kwargs.keys()):
             self.fill_params(self.kwargs)
 
         else:
-            self.log.error('Please provide config file parameters "delay", "max_runs" and "rebin_factor".')
+            self.log.error('Please provide config file parameters "delay", "max_runs", "bins_per_ghz", and "min_bins.')
 
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
-        self.integration, self.max_runs, self.rebin_factor = config['integration'], config['max_runs'], config['rebin_factor']
+        self.integration, self.max_runs, self.bins_per_ghz, self.min_bins = config['integration'], config['max_runs'], config['bins_per_ghz'], config['min_bins']
         # Questions: Why is this line necessary for the plot to appear.
         self.kwargs.update(dict(
                 x=np.linspace(400, 500, 100),
@@ -549,7 +549,7 @@ class ManualOpenLoopScan(Dataset):
                 color_index
             ]),
             symbolBrush = pg.mkBrush(self.gui.COLOR_LIST[color_index]),
-            downsample = 10000,
+            downsample = 0.5,
             downsampleMethod ='mean'
         )
         self.update(**kwargs)
@@ -596,35 +596,55 @@ class ManualOpenLoopScan(Dataset):
         previous_y = dataset.data
 
         data_len = len(previous_y)
+        scan_span =  ((previous_x[-1] - previous_x[0])*1e3)
+        current_bins_per_ghz = data_len / scan_span
 
-        # Zero-pad arrays such that they are multiples of rebinning factor
+        self.log.info(f'Scan span = {scan_span}')
+        self.log.info(f'current_bins_per_ghz = {current_bins_per_ghz}')
+        self.log.info(f'self.bins_per_ghz = {self.bins_per_ghz}')
 
-        padded_x = np.pad(previous_x, (0, self.rebin_factor - data_len%self.rebin_factor), 'constant')
-        padded_y = np.pad(previous_y, (0, self.rebin_factor - data_len%self.rebin_factor), 'constant')
+        new_num_bins = int(scan_span * self.bins_per_ghz)
+        self.log.info(f'new_num_bins = {new_num_bins}')
 
 
-        assert len(padded_x) % self.rebin_factor == 0
-        assert len(padded_y) % self.rebin_factor == 0
 
-        n_bins = int(len(padded_x) / self.rebin_factor)
+        if current_bins_per_ghz < self.bins_per_ghz or scan_span < 0.001 or new_num_bins < self.min_bins:
+            prev_dataset.data = previous_y
+            prev_dataset.x = previous_x
+        else:
 
-        self.log.info(padded_y)
-        self.log.info(n_bins)
+            self.log.info(f'new_num_bins = {new_num_bins}')
+            self.log.info(f'data_len = {data_len}')
 
-        # Rebin arrays
-        rebinned_x = np.zeros(n_bins)
-        rebinned_y = np.zeros(n_bins)
 
-        for i in range(n_bins):
-            # Sum counts
-            rebinned_y[i] = np.sum(padded_y[i*self.rebin_factor:(i+1)*self.rebin_factor])
-            # Average wavelength
-            rebinned_x[i] = np.average(padded_x[i*self.rebin_factor:(i+1)*self.rebin_factor])
+            padded_x = np.pad(previous_x, (0, new_num_bins - data_len%new_num_bins), 'constant')
+            padded_y = np.pad(previous_y, (0, new_num_bins - data_len%new_num_bins), 'constant')
 
-        self.log.info(rebinned_x)
+            binlength = int(len(padded_x) / new_num_bins)
 
-        prev_dataset.data = rebinned_y[:-1]
-        prev_dataset.x = rebinned_x[:-1]
+            # Rebin arrays
+            rebinned_x = np.zeros(new_num_bins)
+            rebinned_y = np.zeros(new_num_bins)
+
+            # Tranform 0s to Nan so they don't change the mean values.
+            padded_x[padded_x == 0] = np.nan
+            padded_y[padded_y == 0] = np.nan
+
+            for i in range(new_num_bins):
+                # Sum counts
+                rebinned_y[i] = np.sum(padded_y[i*binlength:(i+1)*binlength])
+                # Average wavelength
+                rebinned_x[i] = np.average(padded_x[i*binlength:(i+1)*binlength])
+
+            # Remove nans.
+            nan_index = ~np.isnan(rebinned_x)
+            self.log.info(nan_index)
+
+            rebinned_x = rebinned_x[nan_index]
+            rebinned_y = rebinned_y[nan_index]
+
+            prev_dataset.data = rebinned_y[:-1]
+            prev_dataset.x = rebinned_x[:-1]
 
 
 class Scatterplot(Dataset):

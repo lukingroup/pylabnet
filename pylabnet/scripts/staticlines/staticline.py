@@ -9,7 +9,7 @@ import pylabnet.hardware.staticline.staticline as staticline
 from pylabnet.gui.pyqt.gui_windowbuilder import GUIWindowFromConfig
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, load_script_config, find_client
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_script_config, find_client
 
 
 class StaticLineGUIGeneric():
@@ -174,7 +174,7 @@ def launch(**kwargs):
             config=kwargs['config'],
             staticline_clients=clients,
             logger_client=logger,
-            host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+            host=get_ip(),
             port=kwargs['server_port']
         )
     except KeyError:

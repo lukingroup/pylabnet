@@ -739,7 +739,7 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
         start = f'start "{server}_server, '
         start += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
         start += '" '
-        host_ip = socket.gethostbyname_ex(socket.gethostname())[2][0]
+        host_ip = get_ip()
         python_path = sys.executable
         launch_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
@@ -804,3 +804,16 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     cmd += client_cmd
 
     subprocess.Popen(cmd, shell=True)
+
+def get_ip():
+    """ Returns a primary IP address """
+
+    ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
+    if len(ip_list) == 1:
+        return ip_list[0]
+    else:
+        filtered_ip = [ip for ip in ip_list if ip.startswith('140')]
+        if len(filtered_ip) == 0:
+            return ip_list[0]
+        else:
+            return filtered_ip[0]

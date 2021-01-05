@@ -5,7 +5,7 @@ import pyvisa
 from pylabnet.hardware.power_meter.thorlabs_pm320e import Driver
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.thorlabs_pm320e import Service, Client
-from pylabnet.utils.helper_methods import show_console, hide_console, load_config
+from pylabnet.utils.helper_methods import get_ip, show_console, hide_console, load_config
 
 def launch(**kwargs):
     """ Connects to PM320E and instantiates server
@@ -57,7 +57,7 @@ def launch(**kwargs):
     pm_service.assign_logger(logger=kwargs['logger'])
     pm_server = GenericServer(
         service=pm_service,
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        host=get_ip(),
         port=kwargs['port']
     )
     pm_server.start()

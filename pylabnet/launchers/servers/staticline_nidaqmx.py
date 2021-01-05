@@ -7,6 +7,7 @@ import pylabnet.hardware.staticline.staticline as staticline
 
 from pylabnet.network.client_server.staticline import Service, Client
 import pylabnet.network.client_server.abstract_device as abstract_device
+from pylabnet.utils.helper_methods import get_ip
 
 from pylabnet.network.core.generic_server import GenericServer
 
@@ -42,7 +43,7 @@ def launch(**kwargs):
     staticline_service.assign_logger(logger=staticline_logger)
     staticline_service_server = GenericServer(
         service=staticline_service,
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        host=get_ip(),
         port=kwargs['port']
     )
 

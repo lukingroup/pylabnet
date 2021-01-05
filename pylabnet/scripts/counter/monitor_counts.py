@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
 
 
 # Static methods
@@ -307,7 +307,7 @@ def launch(**kwargs):
     #     try:
     #         port = np.random.randint(1, 9999)
     #         pause_server = GenericServer(
-    #             host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+    #             host=get_ip(),
     #             port=port,
     #             service=pause_service)
     #         pause_logger.update_data(data=dict(port=port))

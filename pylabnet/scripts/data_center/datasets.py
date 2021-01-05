@@ -647,6 +647,7 @@ class ManualOpenLoopScan(Dataset):
             prev_dataset.x = rebinned_x[:-1]
 
 
+
 class Scatterplot(Dataset):
     def visualize(self, graph, **kwargs):
         self.handle_new_window(graph, **kwargs)

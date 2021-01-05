@@ -1,4 +1,4 @@
-from pylabnet.utils.helper_methods import load_device_config
+from pylabnet.utils.helper_methods import load_device_config, get_ip
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
@@ -20,8 +20,8 @@ def launch(**kwargs):
     log = kwargs['logger']
     log.info(f'Launching with config {kwargs["config"]}')
     config = load_device_config(
-        os.path.basename(__file__)[:-3], 
-        kwargs['config'], 
+        os.path.basename(__file__)[:-3],
+        kwargs['config'],
         log
     )
 
@@ -32,7 +32,7 @@ def launch(**kwargs):
     dum_service.assign_logger(logger=log)
     dum_server = GenericServer(
         service=dum_service,
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        host=get_ip(),
         port=kwargs['port']
     )
     dum_server.start()

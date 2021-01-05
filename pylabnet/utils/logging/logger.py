@@ -8,7 +8,7 @@ import os
 import ctypes
 import re
 import pickle
-from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath
+from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath, get_ip
 
 
 class LogHandler:
@@ -190,7 +190,7 @@ class LogClient:
                 raise exc_obj
 
             client_data = dict(
-                ip=socket.gethostbyname_ex(socket.gethostname())[2][0],
+                ip=get_ip(),
                 timestamp=time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
             )
             if self._server_port is not None:

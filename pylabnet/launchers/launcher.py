@@ -49,7 +49,7 @@ import os
 import socket
 import importlib.util
 from pylabnet.utils.logging import logger
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
+from pylabnet.utils.helper_methods import get_ip, parse_args, show_console, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
 from pylabnet.network.client_server import external_gui
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.generic_server import GenericServer
@@ -379,7 +379,7 @@ class Launcher:
         self.script_server, self.script_server_port = create_server(
             service=self.service,
             logger=self.logger,
-            host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+            host=get_ip()
         )
         self.script_server.start()
 

@@ -4,7 +4,7 @@ from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
-    load_config, pyqtgraph_save, find_client, get_ip)
+    load_config, pyqtgraph_save, find_client, get_ip, load_script_config)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -188,7 +188,9 @@ class TimeTraceGui(TimeTrace):
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-        self.config = load_config(config, logger=log)
+        # Store config
+        self.config = config
+
         self.correlation = False
         if 'type' in self.config:
             if self.config['type'] == 'correlation':
@@ -470,15 +472,29 @@ class TimeTraceGui(TimeTrace):
 def launch(**kwargs):
     """ Launches the sweeper GUI """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    config = load_script_config(
+        'histogram',
+        kwargs['config'],
+        logger
+    )
 
+    ctr = find_client(
+                clients,
+                config,
+                client_type='si_tt',
+                client_config='standard_ctr',
+                logger=logger
+    )
 
     # Instantiate Monitor script
     trace = TimeTraceGui(
-        ctr = find_client(logger, clients, 'si_tt'),
+        ctr = ctr,
         log=logger,
-        config=kwargs['config'],
+        config=config,
     )
 
     update_service = Service()

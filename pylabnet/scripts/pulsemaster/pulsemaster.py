@@ -19,7 +19,7 @@ import pylabnet.utils.pulseblock.pulse_block as pb
 from pylabnet.hardware.awg.zi_hdawg import Driver
 from pylabnet.utils.helper_methods import slugify
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, load_script_config, get_gui_widgets
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, load_script_config, get_gui_widgets
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
 from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
@@ -54,7 +54,7 @@ class PulseMaster:
         # Instantiate GUI window
         self.gui = Window(
             gui_template=ui,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=get_ip(),
             port=server_port
         )
 

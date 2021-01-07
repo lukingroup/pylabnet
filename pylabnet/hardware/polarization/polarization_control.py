@@ -217,7 +217,7 @@ class MPC320:
     def move_rel(self, device, paddle, step):
         posinitial = self._polarizationdll.MPC_GetPosition(device, paddle)
         move_result = self._polarizationdll.MPC_MoveRelative(device, paddle, step) 
-        time.sleep(10)
+        time.sleep(2)
         posfinal = self._polarizationdll.MPC_GetPosition(device, paddle)
 
         return move_result, posinitial, posfinal

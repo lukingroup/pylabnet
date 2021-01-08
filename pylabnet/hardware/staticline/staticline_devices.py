@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from pylabnet.utils.helper_methods import load_config
 from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 
+# Maximal output for Hittite MW source
+MW_MAXVAL = 20
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
 
@@ -165,13 +167,11 @@ class DioBreakout(StaticLineHardwareHandler):
         self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit)
         self.isHighVoltage = self.config['is_high_volt']
 
-
     def set_value(self, value):
         if self.isHighVoltage:
             self.hardware_client.set_high_voltage(self.board, self.channel, value)
         else:
             self.hardware_client.set_low_voltage(self.board, self.channel, value)
-
 
 class Toptica(StaticLineHardwareHandler):
 
@@ -183,6 +183,28 @@ class Toptica(StaticLineHardwareHandler):
         self.up = self.hardware_client.turn_on
         self.down = self.hardware_client.turn_off
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
+
+class HMCT2220(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.maxval = MW_MAXVAL
+
+        self.up = self.hardware_client.output_on
+        self.down = self.hardware_client.output_off
+        self.log.info(f'HMCT2200 assigned to staticline {self.name}')
+
+    def set_value(self, value):
+
+        if float(value) > self.maxval:
+            self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+            value = self.maxval
+
+        self.hardware_client.set_power(float(value))
+
 
 class AbstractDevice(StaticLineHardwareHandler):
 
@@ -198,6 +220,7 @@ class AbstractDevice(StaticLineHardwareHandler):
 ################################################################################
 
 registered_staticline_modules = {
+    'HMC_T2220':  HMCT2220,
     'zi_hdawg':  HDAWG,
     'nidaqmx_green': NiDaqMx,
     'nidaqmx': NiDaqMx,

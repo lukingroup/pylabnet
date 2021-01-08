@@ -252,6 +252,13 @@ class TimeTraceGui(TimeTrace):
         self.gui.run.clicked.connect(self.run)
         self._configure_delay_updates()
 
+        # Configure window length preview
+        self.gui.n_bins.valueChanged.connect(self.update_window_length_label)
+        self.gui.binwidth.valueChanged.connect(self.update_window_length_label)
+
+        # Configure window length preview
+        self.update_window_length_label()
+
         # Initialize plot info
         self.curve = self.gui.graph.plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
@@ -279,12 +286,21 @@ class TimeTraceGui(TimeTrace):
         for gate in self.gates.values():
             gate.clear()
 
+    def update_window_length_label(self):
+        """ Update label previewing the total window length"""
+        binwidth=int(self._get_binwidth()),
+        n_bins=self.gui.n_bins.value()
+
+        window_length = binwidth[0]*n_bins # in ps
+        self.gui.window_length.setText(f'{window_length/1000} ns')
+
     def update_parameters(self, binwidth, n_bins):
         """ Updates parameters of all histograms
 
         :param binwidth: (float) binwidth in ps
         :param n_Bins: (int) total number of bins
         """
+
 
         self.set_parameters(binwidth, n_bins)
         for gate in self.gates.values():

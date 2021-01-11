@@ -12,10 +12,14 @@ class Service(ServiceBase):
             ao_channel=ao_channel,
             voltages=voltages
         )
-    
+
     def exposed_get_ai_voltage(self, ai_channel, num_samples, max_range):
         voltages = self._module.get_ai_voltage(ai_channel=ai_channel, num_samples=num_samples, max_range=max_range)
         return pickle.dumps(voltages)
+
+    def exposed_get_di_state(self, port, di_channel):
+        state = self._module.get_di_state(port=port, di_channel=di_channel)
+        return pickle.dumps(state)
 
     def exposed_create_timed_counter(
         self, counter_channel, physical_channel, duration=0.1, name=None
@@ -59,6 +63,10 @@ class Client(ClientBase):
             max_range=max_range
         )
         return pickle.loads(voltages_pickle)
+
+    def get_di_state(self, port, di_channel):
+        state_pickle = self._service.exposed_get_di_state(port=port, di_channel=di_channel)
+        return pickle.loads(state_pickle)
 
     def create_timed_counter(
         self, counter_channel, physical_channel, duration=0.1, name=None

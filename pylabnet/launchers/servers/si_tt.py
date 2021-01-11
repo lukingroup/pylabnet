@@ -10,7 +10,7 @@ except ModuleNotFoundError:
 from pylabnet.hardware.counter.swabian_instruments.time_tagger import Wrap
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.si_tt import Service, Client
-from pylabnet.utils.helper_methods import load_device_config
+from pylabnet.utils.helper_methods import get_ip, load_device_config
 
 
 def launch(**kwargs):
@@ -61,7 +61,7 @@ def launch(**kwargs):
     cnt_trace_service.assign_logger(logger=kwargs['logger'])
     cnt_trace_server = GenericServer(
         service=cnt_trace_service,
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        host=get_ip(),
         port=kwargs['port']
     )
     cnt_trace_server.start()

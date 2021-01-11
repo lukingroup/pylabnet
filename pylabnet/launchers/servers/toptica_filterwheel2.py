@@ -7,7 +7,7 @@ from pylabnet.hardware.filterwheel.filterwheel import FW102CFilterWheel
 from pylabnet.network.client_server.filterwheel import Service, Client
 
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import load_config
+from pylabnet.utils.helper_methods import load_config, get_ip
 
 
 FILTERWHEEL_NAME="Toptica Filterwheel 2"
@@ -42,10 +42,9 @@ def launch(**kwargs):
     filterwheel_service.assign_module(module=filterwheel)
     filterwheel_service.assign_logger(logger=logger)
     filterwheel_service_server = GenericServer(
-        service=filterwheel_service, 
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        service=filterwheel_service,
+        host=get_ip(),
         port=kwargs['port']
     )
 
     filterwheel_service_server.start()
-   

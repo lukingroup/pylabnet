@@ -21,7 +21,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -94,7 +94,7 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
-        self.host = socket.gethostbyname_ex(socket.gethostname())[2][0]
+        self.host = get_ip()
         self.update_index = 0
 
         # Find logger if applicable
@@ -161,7 +161,7 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+                    host=get_ip()
                     )
             else:
                 try:
@@ -256,7 +256,7 @@ class Controller:
         if self.LOG_PORT is None:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+                host=get_ip()
                 )
         else:
             try:
@@ -281,7 +281,7 @@ class Controller:
         if self.proxy:
             self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
-            ip_str_2 = f' ({socket.gethostbyname_ex(socket.gethostname())[2][0]})'
+            ip_str_2 = f' ({get_ip()})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2

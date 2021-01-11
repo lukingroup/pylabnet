@@ -2,7 +2,7 @@ from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
+from pylabnet.utils.helper_methods import (get_ip, unpack_launcher, create_server,
     load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
@@ -392,7 +392,7 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=laser_stabilizer)
     update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
+    update_server, update_port = create_server(update_service, logger, host=get_ip())
     logger.update_data(data={'port': update_port})
     laser_stabilizer.gui.set_network_info(port=update_port)
     update_server.start()

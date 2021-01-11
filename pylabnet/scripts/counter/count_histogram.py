@@ -4,7 +4,7 @@ from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
-    load_config, pyqtgraph_save, find_client)
+    load_config, pyqtgraph_save, find_client, get_ip)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -484,7 +484,7 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=trace)
     update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
+    update_server, update_port = create_server(update_service, logger, host=get_ip())
     logger.update_data(data={'port': update_port})
     trace.gui.set_network_info(port=update_port)
     update_server.start()

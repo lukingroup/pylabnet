@@ -18,7 +18,7 @@ import pyqtgraph as pg
 class WlmMonitor:
     """ A script class for monitoring and locking lasers based on the wavemeter """
 
-    def __init__(self, wlm_client, logger_client, gui='wavemeter_monitor', ao_clients=None, display_pts=5000, threshold=0.0002, port=None, params=None):
+    def __init__(self, wlm_client, logger_client, gui='wavemeter_monitor', ao_clients=None, display_pts=5000, threshold=0.0002, port=None, params=None, three_lasers=False):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
 
         :param wlm_client: (obj) instance of wavemeter client
@@ -30,8 +30,13 @@ class WlmMonitor:
         :param threshold: (float, optional) threshold in THz for lock error signal
         :param port: (int) port number for update server
         :param params: (dict) see set_parameters below for details
+        :three_lasers: (bool) If three lasers are in use (instead of 2)
         """
         self.channels = []
+
+        if three_lasers:
+            gui = 'wavemeter_monitor_3lasers'
+
         self.wlm_client = wlm_client
         self.ao_clients = ao_clients
         self.display_pts = display_pts
@@ -48,12 +53,19 @@ class WlmMonitor:
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
+        if three_lasers:
+            self.widgets = get_gui_widgets(
+                gui=self.gui,
+                freq=3, sp=3, rs=3, lock=3, error_status=3, graph=6, legend=6, clear=6,
+                zero=6, voltage=3, error=3
+            )
+        else:
+            self.widgets = get_gui_widgets(
+                gui=self.gui,
+                freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
+                zero=4, voltage=2, error=2
+            )
 
-        self.widgets = get_gui_widgets(
-            gui=self.gui,
-            freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
-            zero=4, voltage=2, error=2
-        )
 
         # Set parameters
         self.set_parameters(**params)
@@ -739,14 +751,18 @@ def launch(**kwargs):
         logger=logger
     )
 
+    # TODO: Generalize this for n lasers.
+    if config['num_lasers'] == 3:
+        three_lasers = True
+    else:
+        three_lasers = False
     device_id = config['device_id']
 
     wavemeter_client = find_client(
         clients=kwargs['clients'],
         settings=config,
         client_type='high_finesse_ws7',
-        logger=logger
-    )
+        logger=logger    )
 
     # Get list of ao client names
     ao_clients = {}
@@ -769,7 +785,8 @@ def launch(**kwargs):
         wlm_client=wavemeter_client,
         ao_clients=ao_clients,
         logger_client=logger,
-        params=params
+        params=params,
+        three_lasers=three_lasers
     )
 
     update_service = kwargs['service']

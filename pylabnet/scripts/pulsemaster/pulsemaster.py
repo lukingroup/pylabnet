@@ -19,7 +19,7 @@ import pylabnet.utils.pulseblock.pulse_block as pb
 from pylabnet.hardware.awg.zi_hdawg import Driver
 from pylabnet.utils.helper_methods import slugify
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets
+from pylabnet.utils.helper_methods import unpack_launcher, load_config, load_script_config, get_gui_widgets
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
 from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
@@ -38,8 +38,9 @@ class PulseMaster:
         self.log = logger_client
 
         # Load config dict.
-        self.config_dict = load_config(
-            config_filename=config,
+        self.config_dict = load_script_config(
+            script='pulsemaster',
+            config=config,
             logger=self.log
         )
 
@@ -1354,7 +1355,8 @@ class PulseMaster:
 def launch(**kwargs):
     """ Launches the pulsemaster script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
 
     # Instantiate Pulsemaster
     try:

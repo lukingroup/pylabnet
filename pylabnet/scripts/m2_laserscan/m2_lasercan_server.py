@@ -10,16 +10,19 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 
 
 IP = '140.247.189.125'
-PORT = 47489
-WM_CHANNEL = 2
+PORT = 49944
+WM_CHANNEL = 6
 class WMServer:
-    def __init__(self, ip, port, channel, log_client):
+    def __init__(self, ip, port, channel, log_client, wavemeterclient):
         self.ip = ip
         self.port = port
         self.log = LogHandler(log_client)
         self.channel = channel
         self.trans_id = 512193
-        self.wmc = WavemeterClient(channel)
+        self.wm = wavemeterclient
+
+    def read_wavelength(self):
+        return self.wm.get_wavelength(channel=self.channel, units="Wavelength (nm)")
 
     def start(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -27,6 +30,7 @@ class WMServer:
         self.sock.bind(self.addr)
         self.sock.listen(1)
         self.log.info(f"Started server on {self.addr}")
+        self.log.info(f"Initial wavelength {self.read_wavelength()}")
         self.loop()
 
     def loop(self):
@@ -63,7 +67,7 @@ class WMServer:
             self.set_task_name(res, 'get-wavelength-reply')
             params = {
                 'status': 'ok',
-                'wavelength': [self.wmc.read_wavelength()],
+                'wavelength': [self.read_wavelength()],
                 'mode': 'fixed',
                 'channel': [self.channel],
                 'calibration': 'inactive',
@@ -113,6 +117,22 @@ class WMServer:
                 'status': 'ok'
             }
             self.set_task_params(res, params)
+        elif task == 'set-switch':
+            self.set_task_name(res, 'set-switch-reply')
+            self.set_task_id(res, self.get_task_id(data))
+            params = {
+                'status': 'ok'
+            }
+            self.set_task_params(res, params)
+        elif task == 'set-exposure':
+            self.set_task_name(res, 'set-exposure-reply')
+            self.set_task_id(res, self.get_task_id(data))
+            params = {
+                'status': 'ok'
+            }
+            self.set_task_params(res, params)
+
+
         return json.dumps(res).encode('ascii')
 
     def set_id(self, data, i):
@@ -147,16 +167,27 @@ class WMServer:
         }
         return data
 
-def main(logger):
-    server = WMServer(IP, PORT, WM_CHANNEL, logger)
+def main(logger, wavemeter_client):
+    server = WMServer(IP, PORT, WM_CHANNEL, logger, wavemeter_client)
     server.start()
 
 
 def launch(**kwargs):
     logger = kwargs['logger']
-    main(logger)
+
+    clients = kwargs['clients']
+    config = load_script_config(script='m2_laserscan',
+                                config=kwargs['config'],
+                                logger=logger)
 
 
-if __name__ == "__main__":
-    logger=None
-    main
+    wavemeter_client = find_client(
+        clients=clients,
+        settings=config,
+        client_type='high_finesse_ws7',
+        logger=logger
+    )
+
+    main(logger, wavemeter_client)
+
+

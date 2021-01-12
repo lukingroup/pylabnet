@@ -1,9 +1,11 @@
 """ Module for controlling Thorlabs motorized pollarization paddles """
-
 import ctypes
 from ctypes import wintypes
 from ctypes import Structure
 import time
+from pylabnet.utils.logging.logger import LogHandler
+
+
 #from comtypes.typeinfo import SAFEARRAYABOUND
 
 #enum FT_Status
@@ -96,43 +98,58 @@ class TLI_PolarizerParameters(Structure):
 #                ("pvData", ctypes.c_void_p),
 #                ("rgsabound", SAFEARRAYBOUND * 1)] 
 
-class MPC320:
-    def __init__(self):
-        """ Instantiate Polarization controllers"""
-     
+class Driver():
+
+    def __init__(self, device_num, logger):
+        """Instantiate driver class.
+
+        device_num is numbering of devices connected via USB. Drivrt then finds serial numbers of polarization paddle by Driver, e.g. b'38154354' """
+
+        # Instantiate log.
+        self.log = LogHandler(logger=logger)
         #Loads polarization contorolles DLL and define arguments and result 5types for c function
         self._polarizationdll = ctypes.cdll.LoadLibrary('Thorlabs.MotionControl.Polarizer.dll')  
         self._devmanagerdll = ctypes.cdll.LoadLibrary('Thorlabs.MotionControl.DeviceManager.dll')
         self._configure_functions()
+        
 
         #get device list size
         if self._polarizationdll.TLI_BuildDeviceList() == 0:
             num_devs = self._polarizationdll.TLI_GetDeviceListSize()
-            print(f"There are {num_devs} devices connected")    
+            #print(f"There are {num_devs} devices connected")    
         
         #Get devices serial numbers
         serialNos = ctypes.create_string_buffer(100) #the way to have a mutable buffer
         serialNosSize = ctypes.c_ulong(ctypes.sizeof(serialNos)) 
         List = self._polarizationdll.TLI_GetDeviceListByTypeExt(serialNos, serialNosSize, 38)
 
-        if List:
-            print("Failed to get device list")
-        else:
-            print("Device list created succesfully") #change these massages to interact with logger
+        #if List:
+        #    print("Failed to get device list")
+        #else:
+        #    print("Device list created succesfully") #change these massages to interact with logger
 
         self.dev_name = serialNos.value.decode("utf-8") #.strip().split(',')
-        print(f"Connected to device {self.dev_name}")
+        #print(f"Connected to device {self.dev_name}")
 
         #get device info including serial number
         self.device_info = TLI_DeviceInfo()  # container for device info
-        self._polarizationdll.TLI_GetDeviceInfo(serialNos[0:8], ctypes.byref(self.device_info)) #when there will be a few devices figure out how to seperate and access each one
+        self._polarizationdll.TLI_GetDeviceInfo(serialNos[(device_num-1)*9:(device_num*9)-1], ctypes.byref(self.device_info)) #when there will be a few devices figure out how to seperate and access each one
+        self.device = serialNos[(device_num-1)*9:(device_num*9)-1]
 
-        print("Description: ", self.device_info.description)
-        print("Serial No: ", self.device_info.serialNo)
-        print("Motor Type: ", self.device_info.motorType)
-        print("USB PID: ", self.device_info.PID)
-        print("Max Number of Paddles: ", self.device_info.maxPaddles)
+        #print("Description: ", self.device_info.description)
+        #print("Serial No: ", self.device_info.serialNo)
+        #print("Motor Type: ", self.device_info.motorType)
+        #print("USB PID: ", self.device_info.PID)
+        #print("Max Number of Paddles: ", self.device_info.maxPaddles)
         
+        #establising connection to device
+
+        connection = self._polarizationdll.MPC_Open(self.device)
+        if connection == 0:
+            self.log.info(f"Successfully connected to {self.device}.")
+        else:        
+            self.log.error(f"Connection to {self.device} failed due to error {connection}.")
+
     #technical methods
 
     def _configure_functions(self):
@@ -184,73 +201,49 @@ class MPC320:
         self._polarizationdll.MPC_MoveRelative.restype = ctypes.c_short
         self._polarizationdll.MPC_GetStepsPerDegree.argtype = [ctypes.POINTER(ctypes.c_char)]
         self._polarizationdll.MPC_GetStepsPerDegree.result = ctypes.c_double
-
-    #wrap function for external use
+    
+        #wrap function for external use
   
-    def open(self, device):
-        result = self._polarizationdll.MPC_Open(device)
+    def open(self):
+        result = self._polarizationdll.MPC_Open(self.device)
         if result == 0:
             print("Connected succesfully to device")
         else:
             print("A problem occured when trying to connect to device")
 
-    def close(self, device):
-        resultc = self._polarizationdll.MPC_Close(device)
+    def close(self):
+        resultc = self._polarizationdll.MPC_Close(self.device)
         if resultc == 0:
             print("Closed connection to device")
         else:
             print("A problem occured when trying to diconnect from device")
 
-    def home(self, device, paddle):
-        home_result = self._polarizationdll.MPC_Home(device, paddle)
+    def home(self, paddle):
+        home_result = self._polarizationdll.MPC_Home(self.device, paddle)
         
         return home_result
 
-    def move(self, device, paddle, pos):
-        posinitial = self._polarizationdll.MPC_GetPosition(device, paddle)
-        move_result = self._polarizationdll.MPC_MoveToPosition(device, paddle, pos) 
-        time.sleep(50)
-        posfinal = self._polarizationdll.MPC_GetPosition(device, paddle)
+    def set_velocity(self, velocity):
+        velocity = self._polarizationdll.MPC_SetVelocity(self.device, velocity)
+
+
+    def move(self, paddle, pos):
+        posinitial = self._polarizationdll.MPC_GetPosition(self.device, paddle)
+        move_result = self._polarizationdll.MPC_MoveToPosition(self.device, paddle, pos) 
+        time.sleep(5)
+        posfinal = self._polarizationdll.MPC_GetPosition(self.device, paddle)
 
         return move_result, posinitial, posfinal
 
-    def move_rel(self, device, paddle, step):
-        posinitial = self._polarizationdll.MPC_GetPosition(device, paddle)
-        move_result = self._polarizationdll.MPC_MoveRelative(device, paddle, step) 
+    def move_rel(self, paddle, step):
+        posinitial = self._polarizationdll.MPC_GetPosition(self.device, paddle)
+        move_result = self._polarizationdll.MPC_MoveRelative(self.device, paddle, step) 
         time.sleep(2)
-        posfinal = self._polarizationdll.MPC_GetPosition(device, paddle)
+        posfinal = self._polarizationdll.MPC_GetPosition(self.device, paddle)
 
         return move_result, posinitial, posfinal
 
-    def get_angle(self, device, paddle):
-        currentpos = self._polarizationdll.MPC_GetPosition(device, paddle)
+    def get_angle(self, paddle):
+        currentpos = self._polarizationdll.MPC_GetPosition(self.device, paddle)
         
         return currentpos
-
-def main():
-    mpc = MPC320()
-
-    #define parameters for movement
-    paddle = paddle2
-    device = mpc.device_info.serialNo
-    stepsize = 10 #degrees
-    step = 40
-    stepnum = 10
-    pos = 50
-
-    mpc.open(device)
-
-    #38159764 - fiber device out
-    #38154354 - dummy device
-    
-    #Move paddles from home to initial position
-    home = mpc.home(device, paddle)
-    movement = mpc.move(device, paddle, pos)
-    posf = mpc.get_angle(device, paddle)
-    movement_rel = mpc.move_rel(device, paddle, step)
-
-    mpc.close(device)
- 
-if __name__ == "__main__":
-    main() 
-

@@ -19,6 +19,8 @@ class StaticLineHardwareHandler(ABC):
         Name of StaticLine instance.
     :config: (dict)
             Contains parameters needed to setup the hardware as a staticline.
+    :config: (int)
+            Contains type of staticline being configured (digital, analog, or adjustable digital)
     '''
 
     def __init__(self, name, log, hardware_client, config):
@@ -141,23 +143,32 @@ class NiDaqMx(StaticLineHardwareHandler):
         if not -10 <= up_voltage <= 10:
             self.log.error(f'Up voltage of {up_voltage} V is invalid, must be between -10 V and 10 V.')
 
-        ao_output = self.config['ao_output']
+        self.ao_output = self.config['ao_output']
 
         # Register up/down function.
         self.up_voltage = up_voltage
         self.down_voltage = down_voltage
 
-        self.up = lambda: self.hardware_client.set_ao_voltage(ao_output, self.up_voltage)
-        self.down = lambda: self.hardware_client.set_ao_voltage(ao_output, self.down_voltage)
-
-        # Set voltage to down.
-        self.down()
+        self.is_up = False
 
         # Log successfull setup.
-        self.log.info(f"NiDaq output {ao_output} successfully assigned to staticline {self.name}.")
+        self.log.info(f"NiDaq output {self.ao_output} successfully assigned to staticline {self.name}.")
 
     def set_value(self, value):
+        self.hardware_client.set_ao_voltage(self.ao_output, value)
+        self.is_up = True
+
+    def up(self):
+        self.hardware_client.set_ao_voltage(self.ao_output, self.up_voltage)
+        self.is_up = True
+
+    def down(self):
+        self.hardware_client.set_ao_voltage(self.ao_output, self.down_voltage)
+        self.is_up = False
+
+    def set_dig_value(self, value):
         self.up_voltage = value
+        if (self.is_up): self.up()
 
 class DioBreakout(StaticLineHardwareHandler):
     def setup(self):

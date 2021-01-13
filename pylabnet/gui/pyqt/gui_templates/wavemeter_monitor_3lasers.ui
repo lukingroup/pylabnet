@@ -23,7 +23,15 @@
    <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>525</width>
+      <height>35</height>
+     </rect>
+    </property>
     <layout class="QHBoxLayout" name="horizontalLayout_8">
      <item>
       <widget class="QPushButton" name="stop_button">
@@ -160,7 +168,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>11</x>
@@ -1308,6 +1316,9 @@
             <property name="text">
              <string>Set to frequency</string>
             </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -1327,7 +1338,7 @@
               <normalon>green_LED_on.svg</normalon>green_LED_off.svg</iconset>
             </property>
             <property name="checkable">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="checked">
              <bool>false</bool>

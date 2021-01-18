@@ -939,17 +939,25 @@ class LockedCavityScan1D(TriangleScan1D):
                 data_length=10000,
                 window='lock_monitor',
                 color_index=4
+            ),
+            self.add_child(
+                name='Max count history',
+                data_type=InfiniteRollingLine,
+                data_length=10000,
+                window='lock_monitor',
+                color_index=5
             )
             # self.add_params_to_gui(
             #     voltage=0.0
             # )
 
-    def set_v(self, v):
-        """ Updates voltage """
+    def set_v_and_counts(self, v, counts):
+        """ Updates voltage and counts"""
 
         self.v = v
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
+        self.children['Max count history'].set_data(counts)
 
 
 class LockedCavityPreselectedHistogram(PreselectedHistogram):

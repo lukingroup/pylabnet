@@ -208,7 +208,7 @@ class HMCT2220(StaticLineHardwareHandler):
         self.down = self.hardware_client.output_off
         self.log.info(f'HMCT2200 assigned to staticline {self.name}')
 
-    def set_value(self, value):
+    def set_dig_value(self, value):
 
         if float(value) > self.maxval:
             self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")

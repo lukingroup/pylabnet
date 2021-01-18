@@ -211,8 +211,10 @@ class CountMonitor:
             # )
 
         # Handle button pressing
+        from functools import partial
+
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
-            clear_button.clicked.connect(lambda: self._clear_plot(plot_index))
+            clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
 
         if self.combined_channel:
             self.widgets['curve_combo'] = self.widgets['graph_widget'][index+1].plot(
@@ -229,13 +231,21 @@ class CountMonitor:
         :param plot_index: (int) index of plot to clear
         """
 
-        # Find all curves in this plot
-        for channel in self._plot_list[plot_index]:
-
+        # First, handle case where combined count channel is clears (very ugly).
+        if self.combined_channel and plot_index == len(self._plot_list):
+            channel = 'combo'
             # Set the curve to constant with last point for all entries
             self.widgets[f'curve_{channel}'].setData(
                 np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
             )
+        else:
+            # Find all curves in this plot
+            for channel in self._plot_list[plot_index]:
+
+                # Set the curve to constant with last point for all entries
+                self.widgets[f'curve_{channel}'].setData(
+                    np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
+                )
 
         self._ctr.clear_ctr(name='monitor')
 

@@ -53,6 +53,7 @@ class DataTaker:
                 clients=client_tuples,
                 settings=client_config,
                 client_type=client_type,
+                client_config = client_config,
                 logger=self.log
             )
             self.clients[f"{client_type}_{client_config}"] = client

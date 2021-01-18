@@ -1,6 +1,5 @@
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.hardware.polarization.polarization_control import Driver
 import time
 
 class Service(ServiceBase):
@@ -11,17 +10,17 @@ class Service(ServiceBase):
     def exposed_close(self):
         return self._module.close()
         
-    def exposed_home(self, paddle):
-        return self._module.home(paddle)
+    def exposed_home(self, paddle_num):
+        return self._module.home(paddle_num)
 
-    def exposed_move(self, paddle, pos):
-        return self._module.move(paddle)
+    def exposed_move(self, paddle_num, pos):
+        return self._module.move(paddle_num, pos)
        
-    def exposed_move_rel(self, paddle, step):
-        return self._module.move_rel(paddle, step)
+    def exposed_move_rel(self, paddle_num, step):
+        return self._module.move_rel(paddle_num, step)
 
-    def exposed_get_angle(self, paddle):
-        return self._module.get_angle(paddle)
+    def exposed_get_angle(self, paddle_num):
+        return self._module.get_angle(paddle_num)
 
 
 class Client(ClientBase):
@@ -32,17 +31,17 @@ class Client(ClientBase):
     def close(self):
         return self._service.exposed_close()
 
-    def home(self, paddle):
-        return self._service.exposed_home(paddle)
+    def home(self, paddle_num):
+        return self._service.exposed_home(paddle_num)
 
-    def move(self, paddle, pos):
-        return self._service.exposed_move(paddle,pos)
+    def move(self, paddle_num, pos):
+        return self._service.exposed_move(paddle_num, pos)
        
-    def move_rel(self, paddle, step):
-        return self._service.exposed.move_rel(paddle, step)
+    def move_rel(self, paddle_num, step):
+        return self._service.exposed.move_rel(paddle_num, step)
 
-    def exposed_get_angle(self, paddle):
-        return self._service.exposed.get_angle(paddle)
+    def exposed_get_angle(self, paddle_num):
+        return self._service.exposed.get_angle(paddle_num)
 
     
 

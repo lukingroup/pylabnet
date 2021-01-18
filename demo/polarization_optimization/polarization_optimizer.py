@@ -17,7 +17,7 @@ device_num = 1 # pick number of device in list. Current pol paddles are device_n
 # Instantiate
 logger = LogClient(
     host='139.180.129.96',
-    port=35691,
+    port=24949,
     module_tag='Polarization Optimizer'
 )
 power_meter = Driver(
@@ -43,8 +43,8 @@ velocity = 100 #percentage from 0 to 100
 pol_paddle.set_velocity(velocity)
 
 for paddle in paddles:
-    home = pol_paddle.home(paddle)
-    move = pol_paddle.move(paddle, 85)
+    home = pol_paddle.home(1)
+    move = pol_paddle.move(1, 85)
 
 Posf = pol_paddle.get_angle(paddle2)
 

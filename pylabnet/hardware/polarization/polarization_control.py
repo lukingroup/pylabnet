@@ -143,6 +143,8 @@ class Driver():
         #print("Max Number of Paddles: ", self.device_info.maxPaddles)
         
         #establising connection to device
+        self.paddles = [paddle1, paddle3, paddle2]
+    
 
         connection = self._polarizationdll.MPC_Open(self.device)
         if connection == 0:
@@ -150,6 +152,7 @@ class Driver():
         else:        
             self.log.error(f"Connection to {self.device} failed due to error {connection}.")
 
+        
     #technical methods
 
     def _configure_functions(self):
@@ -218,8 +221,8 @@ class Driver():
         else:
             print("A problem occured when trying to diconnect from device")
 
-    def home(self, paddle):
-        home_result = self._polarizationdll.MPC_Home(self.device, paddle)
+    def home(self, paddle_num):
+        home_result = self._polarizationdll.MPC_Home(self.device, self.paddles[paddle_num])
         
         return home_result
 
@@ -227,23 +230,23 @@ class Driver():
         velocity = self._polarizationdll.MPC_SetVelocity(self.device, velocity)
 
 
-    def move(self, paddle, pos):
-        posinitial = self._polarizationdll.MPC_GetPosition(self.device, paddle)
-        move_result = self._polarizationdll.MPC_MoveToPosition(self.device, paddle, pos) 
+    def move(self, paddle_num, pos):
+        posinitial = self._polarizationdll.MPC_GetPosition(self.device,  self.paddles[paddle_num])
+        move_result = self._polarizationdll.MPC_MoveToPosition(self.device,  self.paddles[paddle_num], pos) 
         time.sleep(5)
-        posfinal = self._polarizationdll.MPC_GetPosition(self.device, paddle)
+        posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
         return move_result, posinitial, posfinal
 
-    def move_rel(self, paddle, step):
-        posinitial = self._polarizationdll.MPC_GetPosition(self.device, paddle)
-        move_result = self._polarizationdll.MPC_MoveRelative(self.device, paddle, step) 
+    def move_rel(self, paddle_num, step):
+        posinitial = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
+        move_result = self._polarizationdll.MPC_MoveRelative(self.device, self.paddles[paddle_num], step) 
         time.sleep(2)
-        posfinal = self._polarizationdll.MPC_GetPosition(self.device, paddle)
+        posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
         return move_result, posinitial, posfinal
 
-    def get_angle(self, paddle):
-        currentpos = self._polarizationdll.MPC_GetPosition(self.device, paddle)
+    def get_angle(self, paddle_num):
+        currentpos = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
         
         return currentpos

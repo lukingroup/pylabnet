@@ -207,7 +207,7 @@ class MCS2:
         :param voltage: (float) voltage to set from 0 to 100 V (default is 50)
         """
 
-        # Change the  mode to voltage absolute
+        # Change the move mode to voltage absolute
         self.set_parameters(channel, mode='dc')
 
         # Move to desired voltage

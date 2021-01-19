@@ -140,16 +140,16 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
             for p_item in pb_obj.p_dict[ch]:
 
                 # find indexes of pulse edges
-                indx_1 = int(p_item.t0 // t_step)
-                indx_2 = int((p_item.t0 + p_item.dur) // t_step)
+                indx_1 = int(p_item.t0 * samp_rate)
+                indx_2 = int((p_item.t0 + p_item.dur) * samp_rate)
 
                 # calculate new values
                 val_ar = p_item.get_value(
-                    t_ar=t_ar[indx_1 : indx_2+1]
+                    t_ar=t_ar[indx_1 : indx_2]
                 )
 
                 # set the values to sample array
-                samp_dict[ch][indx_1 : indx_2+1] = val_ar
+                samp_dict[ch][indx_1 : indx_2] = val_ar
 
     if debug:
         return samp_dict, n_pts, add_pts, t_ar

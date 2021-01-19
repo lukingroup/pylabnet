@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 gpib_addres = 'USB0::0x1313::0x8022::M00579698::INSTR'
-#device = b'38154354'  #device serial number = b'38154354' #dummy pol setup
+# device = b'38154354'  #device serial number = b'38154354' #dummy pol setup
 device_num = 1 # pick number of device in list. Current pol paddles are device_num = 1 in list.
 
 # Instantiate

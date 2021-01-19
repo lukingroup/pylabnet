@@ -4,7 +4,7 @@ from pylabnet.gui.igui.iplot import SingleTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
-    load_config, pyqtgraph_save, find_client, get_ip)
+    load_config, pyqtgraph_save, find_client, get_ip, load_script_config)
 from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
@@ -188,7 +188,9 @@ class TimeTraceGui(TimeTrace):
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-        self.config = load_config(config, logger=log)
+        # Store config
+        self.config = config
+
         self.correlation = False
         if 'type' in self.config:
             if self.config['type'] == 'correlation':
@@ -250,6 +252,13 @@ class TimeTraceGui(TimeTrace):
         self.gui.run.clicked.connect(self.run)
         self._configure_delay_updates()
 
+        # Configure window length preview
+        self.gui.n_bins.valueChanged.connect(self.update_window_length_label)
+        self.gui.binwidth.valueChanged.connect(self.update_window_length_label)
+
+        # Configure window length preview
+        self.update_window_length_label()
+
         # Initialize plot info
         self.curve = self.gui.graph.plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
@@ -277,12 +286,21 @@ class TimeTraceGui(TimeTrace):
         for gate in self.gates.values():
             gate.clear()
 
+    def update_window_length_label(self):
+        """ Update label previewing the total window length"""
+        binwidth=int(self._get_binwidth()),
+        n_bins=self.gui.n_bins.value()
+
+        window_length = binwidth[0]*n_bins # in ps
+        self.gui.window_length.setText(f'{window_length/1000} ns')
+
     def update_parameters(self, binwidth, n_bins):
         """ Updates parameters of all histograms
 
         :param binwidth: (float) binwidth in ps
         :param n_Bins: (int) total number of bins
         """
+
 
         self.set_parameters(binwidth, n_bins)
         for gate in self.gates.values():
@@ -470,15 +488,29 @@ class TimeTraceGui(TimeTrace):
 def launch(**kwargs):
     """ Launches the sweeper GUI """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
 
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    config = load_script_config(
+        'histogram',
+        kwargs['config'],
+        logger
+    )
 
+    ctr = find_client(
+                clients,
+                config,
+                client_type='si_tt',
+                client_config='standard_ctr',
+                logger=logger
+    )
 
     # Instantiate Monitor script
     trace = TimeTraceGui(
-        ctr = find_client(logger, clients, 'si_tt'),
+        ctr = ctr,
         log=logger,
-        config=kwargs['config'],
+        config=config,
     )
 
     update_service = Service()

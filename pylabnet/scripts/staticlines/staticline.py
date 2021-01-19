@@ -77,7 +77,11 @@ class StaticLineGUIGeneric():
                 #If it has an initial default value, set that initially using set_value command
                 if "default" in device_params["staticline_configs"][staticline_idx]:
                     defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
-                    self.staticlines[device_name][staticline_name].set_value(defaultValue)
+                    sl_type = device_params["staticline_configs"][staticline_idx]['type']
+                    if (sl_type == 'analog'):
+                        self.staticlines[device_name][staticline_name].set_value(defaultValue)
+                    elif (sl_type == 'adjustable_digital'):
+                        self.staticlines[device_name][staticline_name].set_dig_value(defaultValue)
 
 
 
@@ -91,6 +95,13 @@ class StaticLineGUIGeneric():
             inputs, in order to avoid lambda scoping issues.
             """
             return lambda: driver.set_value(text_widget['AIN'].text())
+
+        def set_dig_value_fn(driver, text_widget):
+            """ Helper function that we use to bind to text buttons for adjustable digital
+            inputs, in order to avoid lambda scoping issues.
+            """
+
+            return lambda: driver.set_dig_value(text_widget['AIN'].text())
 
         # Iterate through all devices in the config file
         for device_name, device_params in self.config_dict['lines'].items():
@@ -124,7 +135,7 @@ class StaticLineGUIGeneric():
                     if "default" in staticline_configs:
                         #set initial text to initial value specified in config file
                         widget['AIN'].setText(str(staticline_configs["default"]))
-
+                        self.gui.upd_cur_val(device_name=device_name, staticline_name=staticline_name)
                 # Have both types of buttons
                 elif staticline_type == 'adjustable_digital':
                     analog_widget = self.widgets[device_name][staticline_name+"_analog"]
@@ -132,12 +143,13 @@ class StaticLineGUIGeneric():
                     digital_widget['on'].clicked.connect(staticline_driver.up)
                     digital_widget['off'].clicked.connect(staticline_driver.down)
                     analog_widget['apply'].clicked.connect(
-                        set_value_fn(staticline_driver, analog_widget))
+                        set_dig_value_fn(staticline_driver, analog_widget))
 
                     #Set text of analog to default value
                     if "default" in staticline_configs:
                         #set initial text to initial value specified in config file
                         analog_widget['AIN'].setText(str(staticline_configs["default"]))
+                        self.gui.upd_cur_val(device_name=device_name, staticline_name=staticline_name+"_analog")
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
                                     'Should be analog or digital.')

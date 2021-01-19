@@ -122,6 +122,7 @@ class Client(ClientBase):
         :param voltages: (list) list containing one element, the voltage to set
         """
         voltage = pickle.dumps(voltages[0])
+        ao_channel = pickle.dumps(ao_channel)
         return self._service.exposed_set_voltage(voltage, ao_channel)
 
 

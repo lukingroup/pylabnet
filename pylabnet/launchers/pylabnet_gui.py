@@ -24,7 +24,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console, create_server, load_config
+from pylabnet.utils.helper_methods import get_ip, parse_args, show_console, hide_console, create_server, load_config
 
 import sys
 import socket
@@ -142,18 +142,18 @@ def main():
             gui_server, gui_port = create_server(
                 service=gui_service,
                 logger=gui_logger,
-                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+                host=get_ip()
             )
             gui_logger.update_data(data=dict(port=gui_port))
         else:
             gui_server = GenericServer(
                 service=gui_service,
-                host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+                host=get_ip(),
                 port=gui_port
             )
     except ConnectionRefusedError:
         gui_logger.warn('Tried and failed to create GUI server with \nIP:{}\nPort:{}'.format(
-            socket.gethostbyname_ex(socket.gethostname())[2][0],
+            get_ip(),
             gui_port
         ))
         raise
@@ -162,7 +162,7 @@ def main():
     # Update GUI with server-specific details
     try:
         main_window.ip_label.setText('IP Address: {}'.format(
-            socket.gethostbyname_ex(socket.gethostname())[2][0]
+            get_ip()
         ))
         main_window.port_label.setText('Port: {}'.format(gui_port))
     except AttributeError:

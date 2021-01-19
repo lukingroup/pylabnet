@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
 
 
 # Static methods
@@ -50,10 +50,14 @@ class CountMonitor:
 
         # Instantiate GUI window
         self.gui = Window(
-            gui_template=ui, 
-            host=socket.gethostbyname(socket.gethostname()), 
+            gui_template=ui,
+            host=socket.gethostbyname(socket.gethostname()),
             port=server_port
         )
+
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
@@ -103,7 +107,7 @@ class CountMonitor:
             self._ctr.start_trace(
                 name='monitor',
                 ch_list=self._ch_list,
-                bin_width=self._bin_width, 
+                bin_width=self._bin_width,
                 n_bins=self._n_bins
             )
 
@@ -184,7 +188,7 @@ class CountMonitor:
                 self.widgets[f'curve_{channel}'],
                 ' - '+f'Channel {channel}'
             )
-            
+
 
             # Assign scalar
             # self.gui_handler.assign_label(
@@ -253,28 +257,36 @@ class CountMonitor:
 def launch(**kwargs):
     """ Launches the count monitor script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    config = load_script_config(
+        'monitor_counts',
+        kwargs['config'],
+        logger
+    )
 
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=clients['si_tt'], logger_client=logger, server_port=kwargs['server_port']
+            ctr_client=find_client(
+                clients,
+                config,
+                client_type='si_tt',
+                client_config='standard_ctr',
+                logger=logger
+            ),
+            logger_client=logger,
+            server_port=kwargs['server_port']
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
-
-    try:
-        config = load_config('counters')
-        ch_list = list(config['channels'])
-        plot_1 = list(config['plot_1'])
-        plot_2 = list(config['plot_2'])
-        plot_list = [plot_1, plot_2]
-    except:
-        config = None
-        ch_list = [7, 8]
-        plot_list = [[7], [8]]
+    # except:
+    #     config = None
+    #     ch_list = [7, 8]
+    #     plot_list = [[7], [8]]
 
     # Instantiate Pause server
     # try:
@@ -295,7 +307,7 @@ def launch(**kwargs):
     #     try:
     #         port = np.random.randint(1, 9999)
     #         pause_server = GenericServer(
-    #             host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+    #             host=get_ip(),
     #             port=port,
     #             service=pause_service)
     #         pause_logger.update_data(data=dict(port=port))
@@ -306,9 +318,7 @@ def launch(**kwargs):
     # pause_server.start()
 
     # Set parameters
-    if params is None:
-        params = dict(bin_width=2e10, n_bins=1e3, ch_list=ch_list, plot_list=plot_list)
-    monitor.set_params(**params)
+    monitor.set_params(**config['params'])
 
     # Run
     monitor.run()

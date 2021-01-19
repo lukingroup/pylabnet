@@ -47,15 +47,22 @@ def launch(**kwargs):
 
         for server in servers:
 
-            servername = server['servername']
-
             try:
-                disable = bool(server['disable'])
+                disable_raw = server['disable']
+
+                if disable_raw == 'False':
+                    disable = False
+                else:
+                    disable = True
             except KeyError:
                 disable = False
 
+            servername = server['servername']
+            logger.info(f"Trying to connect to {servername} on {hostname}.")
+
             # Don't execute any ssh commands if flag is set.
             if disable:
+                logger.info(f'Connection to {servername} is disabled')
                 continue
 
             # Look for optional debug flag
@@ -78,7 +85,6 @@ def launch(**kwargs):
             # Activate virtual env
             ssh.exec_command(venv_path)
 
-
             cmd = '"{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {} --config {}'.format(
                         python_path,
                         script_path,
@@ -89,9 +95,14 @@ def launch(**kwargs):
                         debug,
                         config
                     )
+            # Look for device name and ID
+            try:
+                cmd += f" --device_name {server['device_name']} --device_id {server['device_id']}"
+            except KeyError:
+                logger.warn(f'Device name and ID not specified for {servername}')
+            logger.info(f'Executing command on {hostname}:\n{cmd}')
 
             ssh.exec_command(cmd)
-
 
         ssh.close()
 

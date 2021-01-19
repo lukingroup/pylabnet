@@ -6,7 +6,7 @@ import os
 from pylabnet.hardware.ni_daqs import nidaqmx_card
 from pylabnet.network.client_server.nidaqmx_card import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import show_console, hide_console, load_config
+from pylabnet.utils.helper_methods import get_ip, show_console, hide_console, load_config
 
 
 
@@ -64,7 +64,7 @@ def launch(**kwargs):
     ni_daqmx_service.assign_logger(logger=ni_daqmx_logger)
     ni_daqmx_server = GenericServer(
         service=ni_daqmx_service,
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        host=get_ip(),
         port=kwargs['port']
     )
 

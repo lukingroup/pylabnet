@@ -11,7 +11,7 @@ import numpy as np
 from pylabnet.scripts.sweeper.sweeper import MultiChSweep1D
 from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import (get_gui_widgets, load_config,
+from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
     unpack_launcher, create_server, pyqtgraph_save)
 
@@ -56,7 +56,7 @@ class Controller(MultiChSweep1D):
 
         # Configure list of experiments
         self.widgets['config'].setText(config)
-        self.config = load_config(config, logger=self.log)
+        self.config = load_script_config('scan1d', config, logger=self.log)
 
         self.exp_path = self.config['exp_path']
         if self.exp_path is None:
@@ -70,9 +70,13 @@ class Controller(MultiChSweep1D):
         # Configure list of clients
         self.clients = clients
         for client_name, client_obj in self.clients.items():
-            client_item = QtWidgets.QListWidgetItem(client_name)
+            client_name_concat = '-'.join(client_name)
+            client_item = QtWidgets.QListWidgetItem(client_name_concat)
             client_item.setToolTip(str(client_obj))
             self.widgets['clients'].addItem(client_item)
+
+        # Manually add logger to client
+        self.clients['logger'] = logger
 
         # Configure button
         self.widgets['configure'].clicked.connect(self.configure_experiment)
@@ -105,6 +109,9 @@ class Controller(MultiChSweep1D):
             hmap.view.setAspectLocked(False)
             hmap.view.invertY(False)
             self.widgets['hmap'].append(hmap)
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
 
     def display_experiment(self, item):
         """ Displays the currently clicked experiment in the text browser
@@ -141,7 +148,7 @@ class Controller(MultiChSweep1D):
 
         # Run any pre-experiment configuration
         try:
-            self.module.configure(**self.clients)
+            self.module.configure(self.clients)
         except AttributeError:
             pass
 
@@ -163,7 +170,7 @@ class Controller(MultiChSweep1D):
             self.min = self.widgets['p_min'].value()
             self.max = self.widgets['p_max'].value()
             self.pts = self.widgets['pts'].value()
-            
+
             self.run()
             self.widgets['rep_tracker'].setValue(0)
             self.widgets['reps'].setValue(0)
@@ -310,7 +317,7 @@ class Controller(MultiChSweep1D):
         if backward:
 
             # Single trace
-            self.data_bwd[-1].append(self.experiment(x_value, **self.clients, gui=self.gui))
+            self.data_bwd[-1].append(self.experiment(x_value, self.clients, gui=self.gui))
             cur_ind = len(self.data_bwd[-1])
             self.widgets['curve'][1].setData(
                 self.x_bwd[:cur_ind],
@@ -343,7 +350,7 @@ class Controller(MultiChSweep1D):
                 )
         else:
 
-            self.data_fwd[-1].append(self.experiment(x_value, **self.clients, gui=self.gui))
+            self.data_fwd[-1].append(self.experiment(x_value, self.clients, gui=self.gui))
             cur_ind = len(self.data_fwd[-1])
             self.widgets['curve'][0].setData(
                 self.x_fwd[:cur_ind],
@@ -406,7 +413,7 @@ class Controller(MultiChSweep1D):
     def _clear_show_trace(self, index):
         """ Clears or shows the single scan trace of a graph
 
-        :param index: (int) index of graph 
+        :param index: (int) index of graph
         """
 
         # Check status of button
@@ -429,7 +436,8 @@ def main():
 def launch(**kwargs):
     """ Launches the sweeper GUI """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
 
     # Instantiate Monitor script
     control = Controller(
@@ -438,13 +446,10 @@ def launch(**kwargs):
         config=kwargs['config'],
     )
 
-    update_service = Service()
+    update_service = kwargs['service']
     update_service.assign_module(module=control)
-    update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
-    logger.update_data(data={'port': update_port})
+    update_port = kwargs['server_port']
     control.gui.set_network_info(port=update_port)
-    update_server.start()
 
     # Run continuously
     # Note that the actual operation inside run() can be paused using the update server

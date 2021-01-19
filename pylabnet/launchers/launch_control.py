@@ -12,6 +12,7 @@ import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
+import numpy as np
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
@@ -19,7 +20,8 @@ from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath
+from pylabnet.launchers.launcher import Launcher
+from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -43,6 +45,8 @@ class LaunchWindow(Window):
 
         super().__init__(app, gui_template=gui_template)
         self.controller = controller
+        self.apply_stylesheet()
+        self.buffer_terminal.setVisible(False)
 
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
@@ -90,7 +94,7 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
-        self.host = socket.gethostbyname_ex(socket.gethostname())[2][0]
+        self.host = get_ip()
         self.update_index = 0
 
         # Find logger if applicable
@@ -157,7 +161,7 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+                    host=get_ip()
                     )
             else:
                 try:
@@ -252,7 +256,7 @@ class Controller:
         if self.LOG_PORT is None:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=socket.gethostbyname_ex(socket.gethostname())[2][0]
+                host=get_ip()
                 )
         else:
             try:
@@ -277,7 +281,7 @@ class Controller:
         if self.proxy:
             self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
-            ip_str_2 = f' ({socket.gethostbyname_ex(socket.gethostname())[2][0]})'
+            ip_str_2 = f' ({get_ip()})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2
@@ -361,7 +365,6 @@ class Controller:
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
-        self.main_window.script_list.itemDoubleClicked.connect(self._clicked)
         self.main_window.close_server.pressed.connect(self._stop_server)
 
     def _stop_server(self):
@@ -381,91 +384,128 @@ class Controller:
         else:
             self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
 
-    def _clicked(self):
-        """ Launches the script that has been double-clicked
+    def _device_clicked(self, index):
+        """ Configures behavior for device double click
 
-        Opens a new commandline subprocess using subprocess.Popen(bash_cmd) which runs the
-        relevant python script, passing all relevant LogClient information via the commandline
+        :param index: (QModelIndex) index of file clicked on
         """
 
-        script_to_run = list(self.script_list.keys())[list(self.script_list.values()).index(
-            self.main_window.script_list.currentItem()
-        )]
-        launch_time = time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-        print('Launching {} at {}'.format(script_to_run, launch_time))  # TODO MAKE A LOG STATEMENT
+        filepath = self.main_window.devices.model().filePath(index)
 
-        # Read debug state and set flag value accordingly.
+        # Check if it is an actual config file
+        if not os.path.isdir(filepath):
 
-        # Initial configurations: All flags down.
-        debug_flag, server_debug_flag, gui_debug_flag = '0', '0', '0'
+            # Find the name of the server and device config file
+            device_server = os.path.basename(os.path.dirname(filepath))
+            device_config = os.path.basename(filepath)[:-5]
 
-        # Raise flags if selected in combobox
-        if self.debug:
-            if self.debug_level == "launcher":
-                debug_flag = '1'
-            elif self.debug_level == "pylabnet_server":
+            self.gui_logger.info(f'Launching device {device_server} '
+                                         f'with configuration {device_config}')
+
+            # Initial configurations: All flags down.
+            server_debug_flag = '0'
+
+            # Raise flags if selected in combobox
+            if self.debug and self.debug_level == "pylabnet_server":
                 server_debug_flag = '1'
-            elif self.debug_level == "pylabnet_gui":
-                gui_debug_flag = '1'
 
-        # Build the bash command to input all active servers and relevant port numbers to script
-        # bash_cmd = 'start /min "{}, {}" /wait "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
-        #     script_to_run,
-        #     launch_time,
-        #     sys.executable,
-        #     os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
-        #     self.host,
-        #     self.log_port,
-        #     len(self.client_list),
-        #     debug_flag,
-        #     server_debug_flag,
-        #     gui_debug_flag
-        # )
-        bash_cmd = 'start "{}, {}" "{}" "{}" --logip {} --logport {} --numclients {} --debug {} --server_debug {} --gui_debug {}'.format(
-            script_to_run,
-            launch_time,
-            sys.executable,
-            os.path.join(os.path.dirname(os.path.realpath(__file__)), script_to_run),
-            self.host,
-            self.log_port,
-            len(self.client_list),
-            debug_flag,
-            server_debug_flag,
-            gui_debug_flag
-        )
-        client_index = 1
-        for client in self.client_list:
-            bash_cmd += ' --client{} {} --ip{} {}'.format(
-                client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
+            server_port = np.random.randint(1024, 49151)
+            launch_device_server(
+                server=device_server,
+                dev_config=device_config,
+                log_ip=self.host,
+                log_port=self.log_port,
+                server_port=server_port,
+                debug=server_debug_flag
             )
 
-            # Add port of client's server, if applicable
-            if 'port' in self.client_data[client]:
-                bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
+    def _script_clicked(self, index):
+        """ Configures behavior for script double click
 
-            # If this client has relevant .ui file, pass this info
-            if 'ui' in self.client_data[client]:
-                bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
+        :param index: (QModelIndex) index of file clicked on
+        """
 
-            client_index += 1
+        filepath = self.main_window.devices.model().filePath(index)
 
-        # Launch the new process
-        subprocess.Popen(bash_cmd, shell=True)
+        # Check if it is an actual config file
+        if not os.path.isdir(filepath):
+
+            # Find the name of the config file
+            script_name = os.path.basename(os.path.dirname(filepath))
+            script_config = os.path.basename(filepath)[:-5]
+
+            self.gui_logger.info(f'Launching device {script_name} '
+                                         f'with configuration {script_config}')
+
+            # Initial configurations: All flags down.
+            debug_flag, server_debug_flag = '0', '0'
+
+            # Raise flags if selected in combobox
+            if self.debug:
+                if self.debug_level == "launcher":
+                    debug_flag = '1'
+                elif self.debug_level == "pylabnet_server":
+                    server_debug_flag = '1'
+
+            # Build client list cmdline arg
+            client_index = 1
+            bash_cmd = ''
+            for client in self.client_list:
+                bash_cmd += ' --client{} {} --ip{} {}'.format(
+                    client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
+                )
+
+                # Add device ID of client's corresponding hardware, if applicable
+                if 'device_id' in self.client_data[client]:
+                    bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
+
+                # Add port of client's server, if applicable
+                if 'port' in self.client_data[client]:
+                    bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
+
+                # If this client has relevant .ui file, pass this info
+                if 'ui' in self.client_data[client]:
+                    bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
+
+                client_index += 1
+
+            launch_script(
+                script=script_name,
+                config=script_config,
+                log_ip=self.host,
+                log_port=self.log_port,
+                debug_flag=debug_flag,
+                server_debug_flag=server_debug_flag,
+                num_clients=len(self.client_list),
+                client_cmd=bash_cmd
+            )
 
     def _load_scripts(self):
-        """ Loads all relevant scripts from current working directory """
+        """ Loads all relevant scripts/devices from filesystem"""
 
-        # Get all relevant files
-        current_directory = os.path.dirname(os.path.realpath(__file__))
-        files = [file for file in os.listdir(current_directory) if (
-            os.path.isfile(os.path.join(
-                current_directory, file
-            )) and '.py' in file and '__init__.py' not in file and 'launch_control.py' not in file and 'launcher.py' not in file
-        )]
+        # Load scripts with configuraitons
+        script_dir = os.path.join(get_config_directory(), 'scripts')
+        if os.path.isdir(script_dir):
+            model = QtWidgets.QFileSystemModel()
+            model.setRootPath(script_dir)
+            self.main_window.scripts.setModel(model)
+            self.main_window.scripts.setRootIndex(model.index(script_dir))
+            self.main_window.scripts.hideColumn(1)
+            self.main_window.scripts.hideColumn(2)
+            self.main_window.scripts.hideColumn(3)
+        self.main_window.scripts.doubleClicked.connect(self._script_clicked)
 
-        for file in files:
-            self.script_list[file] = QtWidgets.QListWidgetItem(file.split('.')[0])
-            self.main_window.script_list.addItem(self.script_list[file])
+        # Load device config files
+        device_dir = os.path.join(get_config_directory(), 'devices')
+        if os.path.isdir(device_dir):
+            model = QtWidgets.QFileSystemModel()
+            model.setRootPath(device_dir)
+            self.main_window.devices.setModel(model)
+            self.main_window.devices.setRootIndex(model.index(device_dir))
+            self.main_window.devices.hideColumn(1)
+            self.main_window.devices.hideColumn(2)
+            self.main_window.devices.hideColumn(3)
+        self.main_window.devices.doubleClicked.connect(self._device_clicked)
 
     def _copy_master(self):
         """ Updates the GUI to copy the GUI of the master GUI server """
@@ -489,6 +529,8 @@ class Controller:
                 self.client_data[client]['ui'] = info.split('ui: ')[1].split('\n')[0]
             if 'port: ' in info:
                 self.client_data[client]['port'] = info.split('port: ')[1].split('\n')[0]
+            if 'device_id: ' in info:
+                self.client_data[client]['device_id'] = info.split('device_id: ')[1].split('\n')[0]
 
     def _pull_connections(self):
         """ Updates the proxy's client list """
@@ -518,6 +560,10 @@ class Controller:
                 self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
             if 'port: ' in clients[client]:
                 self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+            if 'device_id: ' in clients[client]:
+                self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
+
+
 
         # Remove clients
         for client in remove_clients:
@@ -536,6 +582,8 @@ class Controller:
                     self.client_data[client]['ui'] = clients[client].split('ui: ')[1].split('\n')[0]
                 if 'port: ' in clients[client]:
                     self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
+                if 'device_id: ' in clients[client]:
+                    self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
 
 
     # Defines what to do if debug radio button is clicked.

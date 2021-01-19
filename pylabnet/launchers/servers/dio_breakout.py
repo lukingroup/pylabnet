@@ -1,8 +1,8 @@
 from pyvisa import ResourceManager, VisaIOError
 import socket
 from pylabnet.hardware.awg.dio_breakout import Driver
-from pylabnet.utils.helper_methods import show_console, hide_console, load_config
-from pylabnet.network.client_server.dio_breakout import Service
+from pylabnet.utils.helper_methods import get_ip, show_console, hide_console, load_device_config
+from pylabnet.network.client_server.dio_breakout import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 
 
@@ -16,10 +16,7 @@ def launch(**kwargs):
     """
 
     # Try to load settings
-    if kwargs['config'] is None:
-        addr = load_config('dio_breakout', logger=kwargs['logger'])['address']
-    else:
-        addr = load_config(kwargs['config'], logger=kwargs['logger'])['address']
+    addr = load_device_config('dio_breakout', kwargs['config'], logger=kwargs['logger'])['device_id']
 
     # Try to connect
     try:
@@ -45,7 +42,7 @@ def launch(**kwargs):
     dio_service.assign_logger(logger=kwargs['logger'])
     dio_server = GenericServer(
         service=dio_service,
-        host=socket.gethostbyname_ex(socket.gethostname())[2][0],
+        host=get_ip(),
         port=kwargs['port']
     )
     dio_server.start()

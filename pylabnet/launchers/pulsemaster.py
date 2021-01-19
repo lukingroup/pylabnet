@@ -1,17 +1,18 @@
-""" Launches the staticline GUI test"""
+""" Launches the wavemeter monitor/control application """
 
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.scripts.staticlines import staticline_gui_generic
+from pylabnet.scripts.pulsemaster import pulsemaster
 
 
 def main():
 
     launcher = Launcher(
-        script=[staticline_gui_generic],
+        script=[pulsemaster],
         server_req=[None],
         gui_req=[None],
         params=[None],
-        config='test_config_sl'
+        config='pulsemaster',
+        script_server=True
     )
     launcher.launch()
 

@@ -48,6 +48,10 @@ class Sweep1D:
         self.y_label = None
         self.autosave = False
 
+        # Setup stylesheet.
+        #self.gui.apply_stylesheet()
+
+
     def set_parameters(self, **kwargs):
         """ Configures all parameters
 
@@ -119,7 +123,7 @@ class Sweep1D:
 
         if autosave is not None:
             self.autosave = autosave
-        
+
         sweep_points = self._generate_x_axis()
         if self.sweep_type != 'sawtooth':
             bw_sweep_points = self._generate_x_axis(backward=True)

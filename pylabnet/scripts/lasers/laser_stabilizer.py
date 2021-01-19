@@ -2,8 +2,8 @@ from pylabnet.scripts.pid import PID
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend)
+from pylabnet.utils.helper_methods import (get_ip, unpack_launcher, create_server,
+    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
@@ -39,7 +39,7 @@ class LaserStabilizer:
         #Now initialize control/output voltage to 0, and set up label
         self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
         self.widgets['p_outputVoltage'].valueChanged.connect(self._set_output_voltage_from_label)
-        self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
+        # self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
         #Update the input power label
         self._last_power_text_update = 0
@@ -187,7 +187,7 @@ class LaserStabilizer:
             #access that member variable. Not a huge deal will slightly speed it up I guess and is a bit cleaner.
             power = self.gain*np.array(self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage))
             self.widgets['label_power'].setText(str(power[-1]))
-            self._last_power = power[-1]/self.gain;
+            self._last_power = power[-1]/self.gain
             self._last_power_text_update = currTime
 
     #TODO: Can potentially use some getters/setters to clean up the below two functions make them a little more cllean for the user.
@@ -378,8 +378,9 @@ def launch(**kwargs):
     logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
     config = load_config(kwargs['config'], logger=logger)
 
-    ao_client = clients['nidaqmx']
-    ai_client = clients['nidaqmx_ai']
+
+    ao_client = find_client(logger, clients, 'nidaqmx')
+    ai_client = find_client(logger, clients, 'nidaqmx_ai')
 
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(
@@ -391,7 +392,7 @@ def launch(**kwargs):
     update_service = Service()
     update_service.assign_module(module=laser_stabilizer)
     update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
+    update_server, update_port = create_server(update_service, logger, host=get_ip())
     logger.update_data(data={'port': update_port})
     laser_stabilizer.gui.set_network_info(port=update_port)
     update_server.start()

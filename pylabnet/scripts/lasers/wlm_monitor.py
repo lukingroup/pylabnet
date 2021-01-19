@@ -3,7 +3,8 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend)
+    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client,
+    load_script_config)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 
 import numpy as np
@@ -43,6 +44,11 @@ class WlmMonitor:
             host=socket.gethostbyname(socket.gethostname()),
             port=port,
         )
+
+        # Setup stylesheet.
+        self.gui.apply_stylesheet()
+
+
         self.widgets = get_gui_widgets(
             gui=self.gui,
             freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
@@ -98,7 +104,7 @@ class WlmMonitor:
 
         # Initialize each channel individually
         for channel_param_set in channel_params:
-            self.channels.append(Channel(channel_param_set, self.ao_clients))
+            self.channels.append(Channel(channel_param_set, self.ao_clients, log=self.log))
 
     def update_parameters(self, parameters):
         """ Updates only the parameters given. Can be used in the middle of the script operation via an update client.
@@ -394,6 +400,11 @@ class WlmMonitor:
             channel_list.append(channel.number)
         return channel_list
 
+    def get_wavelength(self, channel):
+        # Index of channel
+        physical_channel = self.channels[self._get_channels().index(channel)]
+        return self.wlm_client.get_wavelength(physical_channel.number)
+
 
 class Service(ServiceBase):
     """ A service to enable external updating of WlmMonitor parameters """
@@ -428,6 +439,9 @@ class Service(ServiceBase):
     def exposed_go_to(self, channel, value, step_size, hold_time):
         return self._module.go_to(channel, value, step_size, hold_time)
 
+    def exposed_get_wavelength(self, channel):
+        return self._module.get_wavelength(channel)
+
 
 class Client(ClientBase):
 
@@ -435,6 +449,9 @@ class Client(ClientBase):
 
         params_pickle = pickle.dumps(params)
         return self._service.exposed_update_parameters(params_pickle)
+
+    def get_wavelength(self, channel):
+        return self._service.exposed_get_wavelength(channel)
 
     def clear_channel(self, channel):
         return self._service.exposed_clear_channel(channel)
@@ -467,16 +484,18 @@ class Client(ClientBase):
 class Channel:
     """Object containing all information regarding a single wavemeter channel"""
 
-    def __init__(self, channel_params, ao_clients=None):
+    def __init__(self, channel_params, ao_clients=None, log: LogHandler = None):
         """
         Initializes all parameters given, sets others to default. Also sets up some defaults + placeholders for data
 
         :param channel_params: (dict) Dictionary of channel parameters (see WlmMonitor.set_parameters() for details)
         :param ao_clients: (dict, optional) Dictionary containing ao clients tying a keyname string to the actual client
+        :param log: (LogHandler) instance of LogHandler for logging metadata
         """
 
         # Set channel parameters to default values
         self.ao_clients = ao_clients
+        self.log = log
         self.ao = None  # Dict with client name and channel for ao to use
         self.voltage = None  # Array of voltage values for ao, used for plotting/monitoring voltage
         self.current_voltage = 0
@@ -552,6 +571,8 @@ class Channel:
         # Check if the GUI has changed, and if so, update the setpoint in the script to match
         if self.gui_setpoint != self.prev_gui_setpoint:
             self.setpoint = copy.deepcopy(self.gui_setpoint)
+            metadata = {f'{self.name}_laser_setpoint': self.setpoint}
+            self.log.update_metadata(**metadata)
 
             # Otherwise the GUI is static AND parameters haven't been updated so we don't change the setpoint at all
 
@@ -673,7 +694,10 @@ class Channel:
             # Convert ao from string to object using lookup
             try:
                 self.ao = {
-                    'client': self.ao_clients[channel_params['ao']['client']],
+                    'client': self.ao_clients[(
+                        channel_params['ao']['client'],
+                        channel_params['ao']['config']
+                    )],
                     'channel': channel_params['ao']['channel']
                 }
 
@@ -708,22 +732,37 @@ class Channel:
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    config = load_config(kwargs['config'], logger=logger)
+    logger = kwargs['logger']
+    config = load_script_config(
+        script='wlm_monitor',
+        config=kwargs['config'],
+        logger=logger
+    )
 
-    wavemeter_client = clients['high_finesse_ws7']
+    device_id = config['device_id']
+
+    wavemeter_client = find_client(
+        clients=kwargs['clients'],
+        settings=config,
+        client_type='high_finesse_ws7',
+        logger=logger
+    )
 
     # Get list of ao client names
     ao_clients = {}
     for channel in config['channels'].values():
         client_name = channel['ao']['client']
-        ao_clients[client_name] = clients[client_name]
+        device_config = channel['ao']['config']
+        ao_clients[(client_name, device_config)] = find_client(
+            kwargs['clients'],
+            config,
+            client_name,
+            client_config=device_config,
+            logger=logger
+        )
 
-    if params is None:
-        channel_params = [p for p in config['channels'].values()]
-        params = dict(channel_params=channel_params)
-
-    # gui_client = guis['wavemeter_monitor']
+    channel_params = [p for p in config['channels'].values()]
+    params = dict(channel_params=channel_params)
 
     # Instantiate Monitor script
     wlm_monitor = WlmMonitor(
@@ -733,13 +772,10 @@ def launch(**kwargs):
         params=params
     )
 
-    update_service = Service()
+    update_service = kwargs['service']
     update_service.assign_module(module=wlm_monitor)
-    update_service.assign_logger(logger=logger)
-    update_server, update_port = create_server(update_service, logger, host=socket.gethostbyname_ex(socket.gethostname())[2][0])
-    logger.update_data(data={'port': update_port})
-    wlm_monitor.gui.set_network_info(port=update_port)
-    update_server.start()
+    logger.update_data(data=dict(device_id=device_id))
+    wlm_monitor.gui.set_network_info(port=kwargs['server_port'])
 
     # Run continuously
     # Note that the actual operation inside run() can be paused using the update server

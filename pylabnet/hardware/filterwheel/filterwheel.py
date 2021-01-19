@@ -6,6 +6,8 @@ Is is essentially a wrapper for the class FW102C in fw102c.py writen by Gilles S
 """
 
 from pylabnet.hardware.filterwheel.fw102c import FW102C
+from pyvisa import VisaIOError, ResourceManager
+
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
@@ -24,6 +26,7 @@ class FW102CFilterWheel:
 
         # Instantiate log
         self.log = LogHandler(logger=logger)
+
 
         # Retrieve name and filter options
         self.device_name = device_name
@@ -46,7 +49,7 @@ class FW102CFilterWheel:
 
         return self.filter_wheel.query('pos?')
 
-    def change_filter(self, new_pos, protect_shutter_client):
+    def change_filter(self, new_pos, protect_shutter_client=None):
         """ Update filter wheel position
 
         :new_pos: Target filter wheel position 1-6 or 1-12
@@ -65,6 +68,8 @@ class FW102CFilterWheel:
         # Update Position
         self.filter_wheel.command('pos={}'.format(new_pos))
 
+        successful_changed = False
+
         # Check if update was successful
         if int(self.get_pos()) == int(new_pos):
             self.log.info(
@@ -74,6 +79,7 @@ class FW102CFilterWheel:
                     position=new_pos,
                     filter=self.filters.get('{}'.format(new_pos)))
             )
+            successful_changed=False
 
             # Open protection shutter if shutter was originally open
             if protect_shutter_client is not None and shutter_open:
@@ -84,35 +90,12 @@ class FW102CFilterWheel:
                 "".format(device_name=self.device_name)
             )
 
+        return successful_changed
+
+
+
     # returns filter dictionary
     def get_filter_dict(self):
         return self.filters
 
 
-class Service(ServiceBase):
-
-    def exposed_change_filter(self, new_pos, protect_shutter_client):
-        return self._module.change_filter(new_pos, protect_shutter_client)
-
-    def exposed_get_pos(self):
-        return self._module.get_pos()
-
-    def exposed_get_filter_dict(self):
-        return self._module.get_filter_dict()
-
-    def exposed_get_name(self):
-        return self._module.get_name()
-
-
-class Client(ClientBase):
-    def change_filter(self, new_pos, protect_shutter_client=None):
-        return self._service.exposed_change_filter(new_pos, protect_shutter_client)
-
-    def get_pos(self):
-        return self._service.exposed_get_pos()
-
-    def get_filter_dict(self):
-        return self._service.exposed_get_filter_dict()
-
-    def get_name(self):
-        return self._service.exposed_get_name()

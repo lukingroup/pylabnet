@@ -251,7 +251,7 @@ class DIOPulseBlockHandler():
         # Add setDIO(0); to end if selected.
         if self.end_low:
             # Add 0 waittime to sequence
-            sequence += wait_raw.replace("_w_", '0')
+            sequence += set_dio_raw.replace("_d_", '0')
 
         return sequence
 

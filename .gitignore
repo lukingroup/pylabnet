@@ -156,3 +156,7 @@ projects/
 configs/*
 configs
 secretkeys.env
+
+# Data folders
+pylabnet/utils/iq_upconversion/results/*
+

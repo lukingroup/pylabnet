@@ -180,25 +180,25 @@ class IQ_Calibration():
 def main():
 	mw_client = HMC_T2220.Client(
     	host='140.247.189.82',
-    	port=33509
+    	port=28368
 	)
 	sa = agilent_e4405B.Client(
     	host='140.247.189.82',
-   	 	port=19013
+   	 	port=47579
 	)
 
 	dev_id = 'dev8227'
 
 	logger = LogClient(
 		host='140.247.189.82',
-		port=29804,
+		port=21861,
 		module_tag=f'ZI HDAWG {dev_id}'
 	)
 	# Instantiate Hardware class
 	hd = zi_hdawg.Driver(dev_id, logger)
 
 	iq_calibration = IQ_Calibration()
-	iq_calibration.run_calibration("1_2_2021_cal.csv", mw_client, hd, sa, 9E9, 12.5E9, 36, 50E6, 500E6, 10, 25, 0.75)
+	iq_calibration.run_calibration("results\\1_8_2021_cal.csv", mw_client, hd, sa, 9E9, 12.9E9, 40, 150E6, 250E6, 6, 25, 0.6)
 	#iq_calibration.load_calibration("12_25_2020_cal.csv")
 	#iq_calibration.get_ampl_phase(150E6, 10E9)
 	#iq_calibration.set_optimal_hdawg_values(hd, 150E6, 10E9)

@@ -8,9 +8,13 @@ def launch(**kwargs):
     config_dict = load_device_config('agilent_83732b', kwargs['config'])
     logger = kwargs['logger']
     ag = Driver(config_dict['device_id'], logger)
-    setup_full_service(
-        service_class=Service,
-        module=ag,
-        logger=logger,
-        host=get_ip()
+
+    ag_service = Service()
+    ag_service.assign_module(module=ag)
+    ag_service.assign_logger(logger=kwargs['logger'])
+    ag_server = GenericServer(
+        service=ag_service,
+        host=get_ip(),
+        port=kwargs['port']
     )
+    ag_server.start()

@@ -13,7 +13,8 @@ SETDIO_OFFSET = 4
 
 class DIOPulseBlockHandler():
 
-    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, hd=None, end_low=True):
+    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, 
+                 hd=None, end_low=True, preserve_bits=False):
         """ Initializes the pulse block handler for DIO
 
         :hd: (object) And instance of the zi_hdawg.Driver()
@@ -34,18 +35,22 @@ class DIOPulseBlockHandler():
             provided, user is asked to provide all DIO bit values.
 
         :end_low: (bool) whether or not to force the sequence to end low
+        :preserve_bit: (bool) whether or not to avoid overwriting other DIO
+            bits that are not being used by the pulse. 
         """
 
         # Use the log client of the HDAWG.
         self.hd = hd
         self.log = hd.log
-        self.sr = samp_rate
 
         # Store arguments.
         self.pb = pb
 
         # Handle end low case
         self.end_low = end_low
+
+        self.sr = samp_rate
+        self.preserve_bits = preserve_bits        
 
         # Ask user for bit assignment if no dictionary provided.
         if assignment_dict is None:
@@ -234,18 +239,38 @@ class DIOPulseBlockHandler():
         waveform[0] = reduced_codewords[0]
 
         sequence = ""
-        set_dio_raw = "setDIO(_d_);"
-        wait_raw = "wait(_w_);"
+        set_dio_raw = "setDIO({});"
+        wait_raw = "wait({});"
+
+        if self.preserve_bits:
+            # Read current output state of the DIO
+            sequence += "var current_state = getDIO();" # TODO YQ: change to a correct way of reading current bits
+
+            # Mask is 1 in the position of each used DIO bit
+            mask  = sum(1 << bit for bit in self.sample_dict.keys())
+            # Display in binary for clarity
+            sequence += f"var mask = {bin(mask)};" 
+            # masked_state zeros out bits in the mask from the current_state
+            sequence += "var masked_state = ~mask & current_state;"
 
         for i, waittime in enumerate(waittimes):
             summed_waittime = np.sum(waittimes[0:i]) + 1
             waveform[summed_waittime:summed_waittime+waittime] = reduced_codewords[i]
 
             # Add setDIO command to sequence
-            sequence += set_dio_raw.replace("_d_", str(int(reduced_codewords[i])))
+            dio_codeword = int(reduced_codewords[i])
+            if self.preserve_bits:
+                # In theory this mask should have no effect, but we zero out any
+                # bits that fall outside the mask just in case.
+                masked_codeword = (mask & dio_codeword)
+                # Note this cannot be pre-computed in Python since it depends on
+                # the real-time current_state value.
+                sequence += set_dio_raw.format(f"masked_state | {masked_codeword}")
+            else:
+                sequence += set_dio_raw.format(dio_codeword)
 
-            # Add waittime to sequence
-            sequence += wait_raw.replace("_w_", str(int(max(waittime-wait_offset, 0))))
+            # Add waittime to sequence. Prevent negative waittimes.
+            sequence += wait_raw.format(int(max(waittime - wait_offset, 0)))
 
         # Sanity check if waveform is reproducible from reduced codewords and waittimes.
         if not (codewords == waveform).all():
@@ -253,8 +278,10 @@ class DIOPulseBlockHandler():
 
         # Add setDIO(0); to end if selected.
         if self.end_low:
-            # Add 0 waittime to sequence
-            sequence += set_dio_raw.replace("_d_", '0')
+            if self.preserve_bits:
+                sequence += set_dio_raw.format("masked_state")
+            else:
+                sequence += set_dio_raw.format("0")
 
         return sequence
 

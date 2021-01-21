@@ -230,18 +230,18 @@ class Driver():
         velocity = self._polarizationdll.MPC_SetVelocity(self.device, velocity)
 
 
-    def move(self, paddle_num, pos):
+    def move(self, paddle_num, pos, sleep_time):
         #posinitial = self._polarizationdll.MPC_GetPosition(self.device,  self.paddles[paddle_num])
         move_result = self._polarizationdll.MPC_MoveToPosition(self.device,  self.paddles[paddle_num], pos) 
-        time.sleep(abs(1*pos/170))
+        time.sleep(abs(sleep_time*pos/170))
         #posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
         return move_result #, posinitial, posfinal
 
-    def move_rel(self, paddle_num, step):
+    def move_rel(self, paddle_num, step, sleep_time):
         #posinitial = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
         move_result = self._polarizationdll.MPC_MoveRelative(self.device, self.paddles[paddle_num], step) 
-        time.sleep(abs(1*step/170))
+        time.sleep(abs(sleep_time*step/170))
         #posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
         return move_result #, posinitial, posfinal

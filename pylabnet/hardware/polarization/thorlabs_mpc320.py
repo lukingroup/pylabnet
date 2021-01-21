@@ -231,20 +231,20 @@ class Driver():
 
 
     def move(self, paddle_num, pos):
-        posinitial = self._polarizationdll.MPC_GetPosition(self.device,  self.paddles[paddle_num])
+        #posinitial = self._polarizationdll.MPC_GetPosition(self.device,  self.paddles[paddle_num])
         move_result = self._polarizationdll.MPC_MoveToPosition(self.device,  self.paddles[paddle_num], pos) 
-        time.sleep(5)
-        posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
+        time.sleep(abs(1*pos/170))
+        #posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
-        return move_result, posinitial, posfinal
+        return move_result #, posinitial, posfinal
 
     def move_rel(self, paddle_num, step):
-        posinitial = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
+        #posinitial = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
         move_result = self._polarizationdll.MPC_MoveRelative(self.device, self.paddles[paddle_num], step) 
-        time.sleep(2)
-        posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
+        time.sleep(abs(1*step/170))
+        #posfinal = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
-        return move_result, posinitial, posfinal
+        return move_result #, posinitial, posfinal
 
     def get_angle(self, paddle_num):
         currentpos = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])

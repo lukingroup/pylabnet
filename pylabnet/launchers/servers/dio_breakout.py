@@ -15,8 +15,13 @@ def launch(**kwargs):
         :config: (str) name of config file to us
     """
 
+    device_config = load_device_config('dio_breakout', kwargs['config'], logger=kwargs['logger'])
+
     # Try to load settings
-    addr = load_device_config('dio_breakout', kwargs['config'], logger=kwargs['logger'])['device_id']
+    if 'resource_name' in device_config:
+        addr = device_config['resource_name']
+    else:
+        addr = device_config['device_id']
 
     # Try to connect
     try:

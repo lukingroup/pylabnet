@@ -611,8 +611,8 @@ class IQOptimizer_GD(Optimizer):
 
 			grad = self.calc_slope_dc_offsets(vi, vq)
 
-			vi_new = phase - grad[0] * self.vi_step
-			vq_new = q - grad[1] * self.vq_step
+			vi_new = vi - grad[0] * self.vi_step
+			vq_new = vq - grad[1] * self.vq_step
 
 			self.set_phase_and_amp(vi_new, vq_new)
 			new_power = self._average_marker_power(self.carrier_marker)
@@ -682,16 +682,16 @@ class IQOptimizer_GD(Optimizer):
 		return total_sum/self._averages
 
 	def calc_slope_phase_and_amp(self, phase, q):
-		self.set_phase_and_amp(self, phase + self.phase_step, q)
+		self.set_phase_and_amp(phase + self.phase_step, q)
 		phase_p = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(self, phase - self.phase_step, q)
+		self.set_phase_and_amp(phase - self.phase_step, q)
 		phase_m = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(self, phase, q + self.q_step)
+		self.set_phase_and_amp(phase, q + self.q_step)
 		q_p = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(self, phase, q - self.q_step)
+		self.set_phase_and_amp(phase, q - self.q_step)
 		q_m = self._average_marker_power(self.lower_sb_marker)
 
 		return([(phase_p-phase_m)/2, (q_p-q_m)/2])

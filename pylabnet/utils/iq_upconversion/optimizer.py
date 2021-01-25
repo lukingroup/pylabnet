@@ -22,8 +22,8 @@ class IQOptimizer(Optimizer):
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -65, max_carrier_pow = -65, num_points = 25, cushion_param = 5,
 		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_window = 44, q_window = 0.34, dc_i_window = 0.0135,
-		dc_q_window = 0.0115, plot_traces = True, awg_delay_time = 0.0, averages=1, min_rounds=1, HDAWG_ports=[3,4]
-		):
+		dc_q_window = 0.0115, plot_traces = True, awg_delay_time = 0.0, averages=1, min_rounds=1, HDAWG_ports=[3,4],
+		oscillator=2):
 		""" Instantiate IQ optimizer
 		:param mw_source: instance of HMC_T2220 client
 		:param hd: instance of AWG client
@@ -51,7 +51,7 @@ class IQOptimizer(Optimizer):
 		#hd.seti('sines/1/oscselect', 1)
 
 		# Set carrier frequency
-		hd.setd('oscs/{}/freq'.format((np.mod(HDAWG_ports[0]-1,4))), signal_freq)
+		hd.setd('oscs/{}/freq'.format(oscillator-1), signal_freq)
 
 		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
 		hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
@@ -414,7 +414,7 @@ class IQOptimizer_GD(Optimizer):
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
 		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.001, vq_step = 0.001,
 		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4]
-		):
+		oscillator=2):
 		""" Instantiate IQ optimizer
 		:param mw_source: instance of HMC_T2220 client
 		:param hd: instance of AWG client
@@ -442,7 +442,7 @@ class IQOptimizer_GD(Optimizer):
 		#hd.seti('sines/1/oscselect', 1)
 
 		# Set carrier frequency
-		hd.setd('oscs/{}/freq'.format((np.mod(HDAWG_ports[0]-1,4))), signal_freq)
+		hd.setd('oscs/{}/freq'.format(oscillator-1), signal_freq)
 
 		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
 		hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))

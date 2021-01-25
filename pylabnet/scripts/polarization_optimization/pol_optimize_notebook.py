@@ -48,7 +48,6 @@ ang_paddles = []
 power_paddles = []
 sleep_time = 1 #defines time (in sec) that we allow paddle to move 170 degrees
 
-
 # %%
 #for an initial scan of all angles
 for paddle in paddles:

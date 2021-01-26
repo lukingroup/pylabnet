@@ -413,28 +413,29 @@ class IQOptimizer_GD(Optimizer):
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
 		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.001, vq_step = 0.001,
-		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4]
+		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4],
 		oscillator=2):
 		""" Instantiate IQ optimizer
-		:param mw_source: instance of HMC_T2220 client
+		:param mw_source: instance of microwave source client
 		:param hd: instance of AWG client
 		:param sa: instance of spectrum analyzer client
 		:param carrier: desired carrier frequency (in Hz)
 		:param signal_freq: desired signal frequency (in Hz)
-		:kwarg num_points: number of points for scan window
-		:kwarg plot_traces: user decides if displaying power vs. frequency plots is desired
+		:kwarg plot_traces: user decides if displaying power vs. iteration plots is desired
 		:kwarg max_iterations: maximum number of iterations to minimize carrier and lower sideband
-		:kwarg max_lower_sideband_pow: desired upper bound for lower sideband power (in dBm)
-		:kwarg max_carrier_pow: desired upper bound for carrier power (in dBm)
-		:kwarg cushion_param: positive real number positively correlated with speed of zooming in on minimum
+		:kwarg min_pow: noise floor
 		:kwarg param_guess: starting parameters for optimization:
 
 		([phase shift, q := (amp_i/amp_q) amplitude imbalance, a0 := (amp_i+amp_q)/2 average amplitude, dc_offset_i, dc_offset_q])
 
-		:kwarg phase_window: size of initial phase scan (in degrees)
-		:q_window: size of initial amplitude imbalance scan window (unitless)
-		:dc_i_window: size of initial dc i offset scan window (in V)
-		:dc_q_window: size of initial dc q offset scan window (in V)
+		:kwarg phase_step: step size for phase parameter in gradient descent
+		:kwarg q_step: step size for amplitude imbalance parameter in gradient descent
+		:kwarg vi_step: step size for dc I offset parameter in gradient descent
+		:kwarg vq_step: step size for dc Q parameter in gradient descent
+		:kwarg awg_delay_time: time to wait after setting awg parameters
+		:kwarg averages: number of measurement for single point power measurement
+		:kwarg HDAWG_ports: which wave ports to use on the HDAWG
+		:kwarg oscillator: which oscillator to use on the HDAWG
 		"""
 
 		# Configure hd settings
@@ -454,6 +455,10 @@ class IQOptimizer_GD(Optimizer):
 		# Enable sine waves
 		hd.seti('sines/{}/enables/0'.format(HDAWG_ports[0]-1), 1)
 		hd.seti('sines/{}/enables/1'.format(HDAWG_ports[1]-1), 1)
+
+		# set DC offsets
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), param_guess[3])
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), param_guess[4])
 
 
 		self.mw_source = mw_source
@@ -623,8 +628,321 @@ class IQOptimizer_GD(Optimizer):
 				vi = vi_new
 				vq = vq_new
 			else:
-				self.vi_step = self.vi_step/2
-				self.vq_step = self.vq_step/2
+				self.vi_step = self.vi_step/1.5
+				self.vq_step = self.vq_step/1.5
+
+			power_vec.append(curr_power)
+
+			num_iterations = num_iterations + 1
+
+		if num_iterations < self.max_iterations:
+			self.hd.log.info('Carrier optimization completed in ' + str(num_iterations) + ' iterations')
+		else:
+			self.hd.log.info('Carrier optimization failed to reach threshold in ' + str(num_iterations) +  ' iterations')
+
+		time.sleep(1)
+		self.hd.log.info('Carrier power is ' + str(self.carrier_marker.get_power()) + 'dBm')
+
+		self.dc_offset_i_opt = vi
+		self.dc_offset_q_opt =  vq
+		self.set_dc_offsets(self.dc_offset_i_opt, self.dc_offset_q_opt)
+
+		if self.plot_traces == True:
+			plt.plot(power_vec)
+			plt.xlabel('iteration #')
+			plt.ylabel('Carrier sideband power [dBm]')
+
+
+	def opt(self):
+
+		self.opt_lower_sideband()
+		self.opt_carrier()
+		time.sleep(1)
+
+		self.hd.log.info('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(self.a0) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
+		self.hd.log.info('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
+		self.hd.log.info('Carrier power is ' + str(self.carrier_marker.get_power()) + ' dBm')
+
+	def set_phase_and_amp(self, phase, q):
+		amp_i = 2 * q / (1 + q) * self.a0
+		amp_q = 2 * self.a0 / (1 + q)
+
+		# Set i and q amplitudes
+		self.hd.setd('sines/{}/amplitudes/0'.format(self.HDAWG_ports[0]-1), amp_i)
+		self.hd.setd('sines/{}/amplitudes/1'.format(self.HDAWG_ports[1]-1), amp_q)
+
+		# Set phaseshift
+		self.hd.setd('sines/{}/phaseshift'.format(self.HDAWG_ports[0]-1), phase)
+
+	def set_dc_offsets(self, v1, v2):
+		# Set I DC-offset
+		self.hd.setd('sigouts/{}/offset'.format(self.HDAWG_ports[0]-1), v1)
+
+		# Set Q DC-offset
+		self.hd.setd('sigouts/{}/offset'.format(self.HDAWG_ports[1]-1), v2)
+
+	def _average_marker_power(self, marker):
+		total_sum = 0
+		for i in range(self._averages):
+			total_sum = total_sum + marker.get_power()
+		return total_sum/self._averages
+
+	def calc_slope_phase_and_amp(self, phase, q):
+		self.set_phase_and_amp(phase + self.phase_step, q)
+		phase_p = self._average_marker_power(self.lower_sb_marker)
+
+		self.set_phase_and_amp(phase - self.phase_step, q)
+		phase_m = self._average_marker_power(self.lower_sb_marker)
+
+		self.set_phase_and_amp(phase, q + self.q_step)
+		q_p = self._average_marker_power(self.lower_sb_marker)
+
+		self.set_phase_and_amp(phase, q - self.q_step)
+		q_m = self._average_marker_power(self.lower_sb_marker)
+
+		return([(phase_p-phase_m)/2, (q_p-q_m)/2])
+
+	def calc_slope_dc_offsets(self, vi, vq):
+		self.set_dc_offsets(vi + self.vi_step, vq)
+		vi_p = self._average_marker_power(self.carrier_marker)
+
+		self.set_dc_offsets(vi - self.vi_step, vq)
+		vi_m = self._average_marker_power(self.carrier_marker)
+
+		self.set_dc_offsets(vi, vq + self.vq_step)
+		vq_p = self._average_marker_power(self.carrier_marker)
+
+		self.set_dc_offsets(vi, vq - self.vq_step)
+		vq_m = self._average_marker_power(self.carrier_marker)
+
+		return([(vi_p-vi_m)/2, (vq_p-vq_m)/2])
+
+
+
+class IQOptimizer_GD_multifreq(Optimizer):
+
+	def __init__(
+		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
+		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.001, vq_step = 0.001,
+		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4],
+		oscillator=[1,2]):
+
+		""" Instantiate IQ optimizer
+		:param mw_source: instance of microwave source client
+		:param hd: instance of AWG client
+		:param sa: instance of spectrum analyzer client
+		:param carrier: desired carrier frequency (in Hz)
+		:param signal_freq: desired signal frequencies
+		:kwarg plot_traces: user decides if displaying power vs. iteration plots is desired
+		:kwarg max_iterations: maximum number of iterations to minimize carrier and lower sideband
+		:kwarg min_pow: noise floor
+		:kwarg param_guess: starting parameters for optimization:
+
+		([phase shift, q := (amp_i/amp_q) amplitude imbalance, a0 := (amp_i+amp_q)/2 average amplitude, dc_offset_i, dc_offset_q])
+
+		:kwarg phase_step: step size for phase parameter in gradient descent
+		:kwarg q_step: step size for amplitude imbalance parameter in gradient descent
+		:kwarg vi_step: step size for dc I offset parameter in gradient descent
+		:kwarg vq_step: step size for dc Q parameter in gradient descent
+		:kwarg awg_delay_time: time to wait after setting awg parameters
+		:kwarg averages: number of measurement for single point power measurement
+		:kwarg HDAWG_ports: which wave ports to use on the HDAWG
+		:kwarg oscillator: which oscillator to use on the HDAWG
+		"""
+
+		# Configure hd settings
+		# Assign oscillator 1 to sine output 2
+		#hd.seti('sines/1/oscselect', 1)
+
+		# Set carrier frequency
+		hd.setd('oscs/{}/freq'.format(oscillator[0]-1), signal_freq[0])
+		hd.setd('oscs/{}/freq'.format(oscillator[1]-1), signal_freq[1])
+
+		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
+		hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
+		hd.setd('sines/{}/amplitudes/1'.format(HDAWG_ports[1]-1), 2*param_guess[2]*(1/(1+param_guess[1])))
+
+		# Set phase offset between I and Q
+		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), param_guess[0])
+
+		# Enable sine waves
+		hd.seti('sines/{}/enables/0'.format(HDAWG_ports[0]-1), 1)
+		hd.seti('sines/{}/enables/1'.format(HDAWG_ports[1]-1), 1)
+
+		# set DC offsets
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), param_guess[3])
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), param_guess[4])
+
+
+		self.mw_source = mw_source
+		self.hd = hd
+		self.sa = sa
+		self.carrier = carrier
+		self.signal_freq = signal_freq
+		self.max_iterations = max_iterations
+		self.plot_traces = plot_traces
+		self.min_power = min_power
+
+		self.HDAWG_ports = HDAWG_ports
+
+		#Set mw freq
+		self.mw_source.output_on()
+		self.mw_source.set_freq(self.carrier)
+
+		#Instantiate step sizes
+		self.phase_step = phase_step
+		self.q_step = q_step
+		self.vi_step = vi_step
+		self.vq_step = vq_step
+
+		#Instantiate initial guesses
+		self.phase_guess = param_guess[0]
+		self.q_guess = param_guess[1]
+		self.a0 = param_guess[2]
+
+		self.dc_i_guess = param_guess[3]
+		self.dc_q_guess = param_guess[4]
+
+		# Instantiate params we will optimize
+		self.opt_phase = None
+		self.opt_q = None
+		self.amp_q_opt = None
+		self.amp_i_opt = None
+		self.dc_offset_i_opt = None
+		self.dc_offset_q_opt = None
+
+		# Instantiate arrays and bounds
+		self.opt_lower_sideband_pow = float("inf")
+		self.opt_carrier_pow = float("inf")
+
+		# Instantiate and set markers
+		self.upp_sb_marker = None
+		self.lower_sb_marker = None
+		self.carrier_marker = None
+
+		self.set_markers()
+
+		self._AWG_DELAY_TIME = awg_delay_time
+		self._averages = averages
+
+
+	def set_markers(self):
+		# Configure hd to enable outputs
+		# self.hd.enable_output(0)
+		# self.hd.enable_output(1)
+
+		# Center frequency at carrier frequency
+		self.sa.set_center_frequency(self.carrier+self.signal_freq)
+		self.sa.set_frequency_span(6*self.signal_freq)
+		# Marker for upper sideband.
+		self.upp_sb_marker = sa_hardware.E4405BMarker(self.sa,'Upper Sideband',1)
+		self.lower_sb_marker = sa_hardware.E4405BMarker(self.sa,'Lower Sideband',2)
+		self.carrier_marker = sa_hardware.E4405BMarker(self.sa,'Carrier',3)
+
+
+		# define target frequencies
+		markers = [self.upp_sb_marker, self.lower_sb_marker, self.carrier_marker]
+		target_freqs = np.array([self.carrier + self.signal_freq, self.carrier - self.signal_freq, self.carrier])
+		max_deviation = 1e6
+
+		for marker, target_freq in zip(markers, target_freqs):
+			time.sleep(1)
+			marker.set_freq(target_freq)
+
+			#assert abs(marker_freq - target_freq) < max_deviation, f"{marker.name} has wrong frequecy: {marker_freq / 1e9} GHz"
+			self.hd.log.info(f"Marker '{marker.name}' parked at {target_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
+
+		#Set reference level to just above the height of our signal to minimize our noise floor
+		#self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
+
+		if self.plot_traces == True:
+			self.sa.plot_trace()
+
+
+	def opt_lower_sideband(self):
+
+		#gradient descent starting point
+		phase = self.phase_guess
+		q = self.q_guess
+
+		self.set_phase_and_amp(phase, q)
+		curr_power = self._average_marker_power(self.lower_sb_marker)
+
+		#store power values for every iteration
+		power_vec = [curr_power]
+
+		num_iterations = 0
+
+		while num_iterations < self.max_iterations and curr_power > self.min_power:
+
+			grad = self.calc_slope_phase_and_amp(phase, q)
+
+			phase_new = phase - grad[0] * self.phase_step
+			q_new = q - grad[1] * self.q_step
+
+			self.set_phase_and_amp(phase_new, q_new)
+			new_power = self._average_marker_power(self.lower_sb_marker)
+
+			if new_power < curr_power:
+				curr_power = new_power
+				phase = phase_new
+				q = q_new
+			else:
+				self.phase_step = self.phase_step/2
+				self.q_step = self.q_step/2
+
+			power_vec.append(curr_power)
+
+			num_iterations = num_iterations + 1
+
+		if num_iterations < self.max_iterations:
+			self.hd.log.info('Lower sideband optimization completed in ' + str(num_iterations + 1) + ' iterations')
+		else:
+			self.hd.log.info('Lower sideband optimization failed to reach threshold in ' + str(num_iterations + 1) +  ' iterations')
+
+		time.sleep(1)
+		self.hd.log.info('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
+
+		self.opt_phase = phase
+		self.opt_q = q
+		self.set_phase_and_amp(self.opt_phase, self.opt_q)
+
+		if self.plot_traces == True:
+			plt.plot(power_vec)
+			plt.xlabel('iteration #')
+			plt.ylabel('Lower sideband power [dBm]')
+
+	def opt_carrier(self):
+
+		#gradient descent starting point
+		vi = self.dc_i_guess
+		vq = self.dc_q_guess
+
+		self.set_dc_offsets(vi, vq)
+		curr_power = self._average_marker_power(self.carrier_marker)
+
+		#store power values for every iteration
+		power_vec = [curr_power]
+
+		num_iterations = 0
+
+		while num_iterations < self.max_iterations and curr_power > self.min_power:
+
+			grad = self.calc_slope_dc_offsets(vi, vq)
+
+			vi_new = vi - grad[0] * self.vi_step
+			vq_new = vq - grad[1] * self.vq_step
+
+			self.set_dc_offsets(vi_new, vq_new)
+			new_power = self._average_marker_power(self.carrier_marker)
+
+			if new_power < curr_power:
+				curr_power = new_power
+				vi = vi_new
+				vq = vq_new
+			else:
+				self.vi_step = self.vi_step/1.5
+				self.vq_step = self.vq_step/1.5
 
 			power_vec.append(curr_power)
 

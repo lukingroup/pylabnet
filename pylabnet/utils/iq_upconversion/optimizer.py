@@ -845,7 +845,7 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		# Enable signal
 		self.hd.seti('awgs/{}/enable'.format(int(np.floor((HDAWG_ports[1]-1)/2))), 1)
 
-		self.set_markers(0)
+		self.set_markers(1)
 
 		self._AWG_DELAY_TIME = awg_delay_time
 		self._averages = averages
@@ -974,8 +974,8 @@ class IQOptimizer_GD_multifreq(Optimizer):
 				vi = vi_new
 				vq = vq_new
 			else:
-				self.vi_step = self.vi_step/1.5
-				self.vq_step = self.vq_step/1.5
+				self.vi_step = self.vi_step/1.2
+				self.vq_step = self.vq_step/1.2
 
 			power_vec.append(curr_power)
 

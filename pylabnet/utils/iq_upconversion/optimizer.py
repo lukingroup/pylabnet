@@ -151,7 +151,7 @@ class IQOptimizer(Optimizer):
 			self.hd.log.info(f"Marker '{marker.name}' parked at {target_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
 
 		#Set reference level to just above the height of our signal to minimize our noise floor
-		#self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
+		self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
 
 		if self.plot_traces == True:
 			self.sa.plot_trace()
@@ -412,7 +412,7 @@ class IQOptimizer_GD(Optimizer):
 
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
-		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.001, vq_step = 0.001,
+		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.005, vq_step = 0.005,
 		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4],
 		oscillator=2):
 		""" Instantiate IQ optimizer
@@ -540,7 +540,7 @@ class IQOptimizer_GD(Optimizer):
 			self.hd.log.info(f"Marker '{marker.name}' parked at {target_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
 
 		#Set reference level to just above the height of our signal to minimize our noise floor
-		#self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
+		self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
 
 		if self.plot_traces == True:
 			self.sa.plot_trace()
@@ -723,7 +723,7 @@ class IQOptimizer_GD_multifreq(Optimizer):
 
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
-		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.001, vq_step = 0.001,
+		param_guess = ([85, 85, 0.9, 0.9, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.005, vq_step = 0.005,
 		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4],
 		oscillator=[1,2]):
 
@@ -738,7 +738,9 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		:kwarg min_pow: noise floor
 		:kwarg param_guess: starting parameters for optimization:
 
-		([phase shift, q := (amp_i/amp_q) amplitude imbalance, a0 := (amp_i+amp_q)/2 average amplitude, dc_offset_i, dc_offset_q])
+		([phase shift 1, phase shift 2,
+			q := (amp_i/amp_q) amplitude imbalance 1, amplitude imbalance 2
+			dc_offset_i, dc_offset_q])
 
 		:kwarg phase_step: step size for phase parameter in gradient descent
 		:kwarg q_step: step size for amplitude imbalance parameter in gradient descent
@@ -750,29 +752,45 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		:kwarg oscillator: which oscillator to use on the HDAWG
 		"""
 
-		# Configure hd settings
-		# Assign oscillator 1 to sine output 2
-		#hd.seti('sines/1/oscselect', 1)
-
 		# Set carrier frequency
 		hd.setd('oscs/{}/freq'.format(oscillator[0]-1), signal_freq[0])
 		hd.setd('oscs/{}/freq'.format(oscillator[1]-1), signal_freq[1])
 
-		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
-		hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
-		hd.setd('sines/{}/amplitudes/1'.format(HDAWG_ports[1]-1), 2*param_guess[2]*(1/(1+param_guess[1])))
-
-		# Set phase offset between I and Q
-		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), param_guess[0])
-
-		# Enable sine waves
-		hd.seti('sines/{}/enables/0'.format(HDAWG_ports[0]-1), 1)
-		hd.seti('sines/{}/enables/1'.format(HDAWG_ports[1]-1), 1)
-
-		# set DC offsets
-		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), param_guess[3])
-		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), param_guess[4])
-
+		# assign oscillators to correct outputs
+		# for first output
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/0/oscselect'.format(
+			int(np.floor((HDAWG_ports[0]-1)/2)),
+			np.mod(HDAWG_ports[0]-1,2)),
+			oscillator[0]-1)
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/1/oscselect'.format(
+			int(np.floor((HDAWG_ports[0]-1)/2)),
+			np.mod(HDAWG_ports[0]-1,2)),
+			oscillator[0]-1)
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/2/oscselect'.format(
+			int(np.floor((HDAWG_ports[0]-1)/2)),
+			np.mod(HDAWG_ports[0]-1,2)),
+			oscillator[1]-1)
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/3/oscselect'.format(
+			int(np.floor((HDAWG_ports[0]-1)/2)),
+			np.mod(HDAWG_ports[0]-1,2)),
+			oscillator[1]-1)
+			# for second output
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/0/oscselect'.format(
+			int(np.floor((HDAWG_ports[1]-1)/2)),
+			np.mod(HDAWG_ports[1]-1,2)),
+			oscillator[0]-1)
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/1/oscselect'.format(
+			int(np.floor((HDAWG_ports[1]-1)/2)),
+			np.mod(HDAWG_ports[1]-1,2)),
+			oscillator[0]-1)
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/2/oscselect'.format(
+			int(np.floor((HDAWG_ports[1]-1)/2)),
+			np.mod(HDAWG_ports[1]-1,2)),
+			oscillator[1]-1)
+		hd.seti('awgs/{}/outputs/{}/modulation/carriers/3/oscselect'.format(
+			int(np.floor((HDAWG_ports[1]-1)/2)),
+			np.mod(HDAWG_ports[1]-1,2)),
+			oscillator[1]-1)
 
 		self.mw_source = mw_source
 		self.hd = hd
@@ -796,16 +814,15 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		self.vq_step = vq_step
 
 		#Instantiate initial guesses
-		self.phase_guess = param_guess[0]
-		self.q_guess = param_guess[1]
-		self.a0 = param_guess[2]
+		self.phase_guess = [param_guess[0], param_guess[1]]
+		self.q_guess = [param_guess[2], param_guess[3]]
 
-		self.dc_i_guess = param_guess[3]
-		self.dc_q_guess = param_guess[4]
+		self.dc_i_guess = param_guess[4]
+		self.dc_q_guess = param_guess[5]
 
 		# Instantiate params we will optimize
-		self.opt_phase = None
-		self.opt_q = None
+		self.opt_phase = np.zeros(2)
+		self.opt_q = np.zeros(2)
 		self.amp_q_opt = None
 		self.amp_i_opt = None
 		self.dc_offset_i_opt = None
@@ -820,20 +837,26 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		self.lower_sb_marker = None
 		self.carrier_marker = None
 
-		self.set_markers()
+		# set initial guess parameters
+		self.set_phase_and_amp(self.phase_guess[0], self.q_guess[0], 0)
+		self.set_phase_and_amp(self.phase_guess[1], self.q_guess[1], 1)
+		self.set_dc_offsets(self.dc_i_guess, self.dc_q_guess)
+
+		# Enable signal
+		self.hd.seti('awgs/{}/enable'.format(int(np.floor((HDAWG_ports[1]-1)/2))), 1)
+
+		self.set_markers(0)
 
 		self._AWG_DELAY_TIME = awg_delay_time
 		self._averages = averages
 
 
-	def set_markers(self):
-		# Configure hd to enable outputs
-		# self.hd.enable_output(0)
-		# self.hd.enable_output(1)
+	def set_markers(self, signal):
+		# signal: 0 or 1, refers two first or second frequency
 
 		# Center frequency at carrier frequency
-		self.sa.set_center_frequency(self.carrier+self.signal_freq)
-		self.sa.set_frequency_span(6*self.signal_freq)
+		self.sa.set_center_frequency(self.carrier+self.signal_freq[signal])
+		self.sa.set_frequency_span(6*self.signal_freq[signal])
 		# Marker for upper sideband.
 		self.upp_sb_marker = sa_hardware.E4405BMarker(self.sa,'Upper Sideband',1)
 		self.lower_sb_marker = sa_hardware.E4405BMarker(self.sa,'Lower Sideband',2)
@@ -842,7 +865,7 @@ class IQOptimizer_GD_multifreq(Optimizer):
 
 		# define target frequencies
 		markers = [self.upp_sb_marker, self.lower_sb_marker, self.carrier_marker]
-		target_freqs = np.array([self.carrier + self.signal_freq, self.carrier - self.signal_freq, self.carrier])
+		target_freqs = np.array([self.carrier + self.signal_freq[signal], self.carrier - self.signal_freq[signal], self.carrier])
 		max_deviation = 1e6
 
 		for marker, target_freq in zip(markers, target_freqs):
@@ -853,34 +876,45 @@ class IQOptimizer_GD_multifreq(Optimizer):
 			self.hd.log.info(f"Marker '{marker.name}' parked at {target_freq / 1e9:.4f} GHz reads {marker.get_power():.2f} dbm.")
 
 		#Set reference level to just above the height of our signal to minimize our noise floor
-		#self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
+		self.sa.set_reference_level(self.upp_sb_marker.get_power() + 2)
 
 		if self.plot_traces == True:
 			self.sa.plot_trace()
 
 
-	def opt_lower_sideband(self):
+	def opt_lower_sideband(self, signal):
+
+		#set the markers for the sideband we are currently looking at
+		if self.plot_traces == True:
+			self.plot_traces = False
+			self.set_markers(signal)
+			self.plot_traces = True
+		else:
+			self.set_markers(signal)
 
 		#gradient descent starting point
-		phase = self.phase_guess
-		q = self.q_guess
+		phase = self.phase_guess[signal]
+		q = self.q_guess[signal]
 
-		self.set_phase_and_amp(phase, q)
+		self.set_phase_and_amp(phase, q, signal)
 		curr_power = self._average_marker_power(self.lower_sb_marker)
 
 		#store power values for every iteration
 		power_vec = [curr_power]
 
+		# initialize step sizes and iteration number
 		num_iterations = 0
+		phase_step = self.phase_step
+		q_step = self.q_step
 
 		while num_iterations < self.max_iterations and curr_power > self.min_power:
 
-			grad = self.calc_slope_phase_and_amp(phase, q)
+			grad = self.calc_slope_phase_and_amp(phase, q, signal, phase_step, q_step)
 
-			phase_new = phase - grad[0] * self.phase_step
-			q_new = q - grad[1] * self.q_step
+			phase_new = phase - grad[0] * phase_step
+			q_new = q - grad[1] * q_step
 
-			self.set_phase_and_amp(phase_new, q_new)
+			self.set_phase_and_amp(phase_new, q_new, signal)
 			new_power = self._average_marker_power(self.lower_sb_marker)
 
 			if new_power < curr_power:
@@ -888,8 +922,8 @@ class IQOptimizer_GD_multifreq(Optimizer):
 				phase = phase_new
 				q = q_new
 			else:
-				self.phase_step = self.phase_step/2
-				self.q_step = self.q_step/2
+				phase_step = phase_step/2
+				q_step = q_step/2
 
 			power_vec.append(curr_power)
 
@@ -903,14 +937,13 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		time.sleep(1)
 		self.hd.log.info('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
 
-		self.opt_phase = phase
-		self.opt_q = q
-		self.set_phase_and_amp(self.opt_phase, self.opt_q)
+		self.opt_phase[signal] = phase
+		self.opt_q[signal] = q
+		self.set_phase_and_amp(self.opt_phase[signal], self.opt_q[signal], signal)
 
 		if self.plot_traces == True:
-			plt.plot(power_vec)
-			plt.xlabel('iteration #')
-			plt.ylabel('Lower sideband power [dBm]')
+			plt.plot(power_vec, label='lower sideband for frequency {}'.format(signal))
+
 
 	def opt_carrier(self):
 
@@ -961,31 +994,48 @@ class IQOptimizer_GD_multifreq(Optimizer):
 		self.set_dc_offsets(self.dc_offset_i_opt, self.dc_offset_q_opt)
 
 		if self.plot_traces == True:
-			plt.plot(power_vec)
+			plt.plot(power_vec, label='carrier band')
 			plt.xlabel('iteration #')
-			plt.ylabel('Carrier sideband power [dBm]')
-
+			plt.ylabel('power [dBm]')
+			plt.legend()
 
 	def opt(self):
 
-		self.opt_lower_sideband()
+		self.opt_lower_sideband(0)
+		self.hd.log.info('Lower sideband power for 1st frequency is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
+		self.opt_lower_sideband(1)
+		self.hd.log.info('Lower sideband power for second frequency is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
 		self.opt_carrier()
 		time.sleep(1)
 
-		self.hd.log.info('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(self.a0) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
+		#self.hd.log.info('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(self.a0) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
 		self.hd.log.info('Lower sideband power is ' + str(self.lower_sb_marker.get_power()) + ' dBm')
 		self.hd.log.info('Carrier power is ' + str(self.carrier_marker.get_power()) + ' dBm')
 
-	def set_phase_and_amp(self, phase, q):
-		amp_i = 2 * q / (1 + q) * self.a0
-		amp_q = 2 * self.a0 / (1 + q)
+	def set_phase_and_amp(self, phase, q, signal):
+		amp_i = 2. * q / (1 + q)
+		amp_q = 2. * 1 / (1 + q)
+
+		dphase_i = np.arccos(amp_i/2) * 180 / np.pi
+		dphase_q = np.arccos(amp_q/2) * 180 /np.pi
 
 		# Set i and q amplitudes
-		self.hd.setd('sines/{}/amplitudes/0'.format(self.HDAWG_ports[0]-1), amp_i)
-		self.hd.setd('sines/{}/amplitudes/1'.format(self.HDAWG_ports[1]-1), amp_q)
-
-		# Set phaseshift
-		self.hd.setd('sines/{}/phaseshift'.format(self.HDAWG_ports[0]-1), phase)
+		self.hd.setd('awgs/{}/outputs/{}/modulation/carriers/{}/phaseshift'.format(
+			int(np.floor((self.HDAWG_ports[0]-1)/2)),
+			np.mod(self.HDAWG_ports[0]-1,2),
+			2*signal), phase+dphase_i)
+		self.hd.setd('awgs/{}/outputs/{}/modulation/carriers/{}/phaseshift'.format(
+			int(np.floor((self.HDAWG_ports[0]-1)/2)),
+			np.mod(self.HDAWG_ports[0]-1,2),
+			2*signal+1), phase-dphase_i)
+		self.hd.setd('awgs/{}/outputs/{}/modulation/carriers/{}/phaseshift'.format(
+			int(np.floor((self.HDAWG_ports[1]-1)/2)),
+			np.mod(self.HDAWG_ports[1]-1,2),
+			2*signal), dphase_q)
+		self.hd.setd('awgs/{}/outputs/{}/modulation/carriers/{}/phaseshift'.format(
+			int(np.floor((self.HDAWG_ports[1]-1)/2)),
+			np.mod(self.HDAWG_ports[1]-1,2),
+			2*signal+1), -dphase_q)
 
 	def set_dc_offsets(self, v1, v2):
 		# Set I DC-offset
@@ -1000,17 +1050,17 @@ class IQOptimizer_GD_multifreq(Optimizer):
 			total_sum = total_sum + marker.get_power()
 		return total_sum/self._averages
 
-	def calc_slope_phase_and_amp(self, phase, q):
-		self.set_phase_and_amp(phase + self.phase_step, q)
+	def calc_slope_phase_and_amp(self, phase, q, signal, phase_step, q_step):
+		self.set_phase_and_amp(phase + phase_step, q, signal)
 		phase_p = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(phase - self.phase_step, q)
+		self.set_phase_and_amp(phase - phase_step, q, signal)
 		phase_m = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(phase, q + self.q_step)
+		self.set_phase_and_amp(phase, q + q_step, signal)
 		q_p = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(phase, q - self.q_step)
+		self.set_phase_and_amp(phase, q - q_step, signal)
 		q_m = self._average_marker_power(self.lower_sb_marker)
 
 		return([(phase_p-phase_m)/2, (q_p-q_m)/2])

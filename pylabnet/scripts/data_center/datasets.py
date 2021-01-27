@@ -205,7 +205,7 @@ class Dataset:
             self.gui.dataset_layout.addLayout(hbox)
 
         self.gui.initialize_step_sizes()
-    
+
     def handle_new_window(self, graph, **kwargs):
         """ Handles visualizing and possibility of new popup windows """
 
@@ -387,7 +387,7 @@ class PreselectedHistogram(AveragedHistogram):
         super().update(**kwargs)
 
     def update_threshold(self, threshold: float):
-        """ Updates the threshold to a new value 
+        """ Updates the threshold to a new value
 
         :param threshold: (float) new value of threshold
         """
@@ -484,6 +484,177 @@ class InfiniteRollingLine(RollingLine):
             else:
                 super().update(**kwargs)
 
+
+
+class ManualOpenLoopScan(Dataset):
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.stop = False
+
+        kwargs['name'] = 'Raw Counts'
+
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        super().__init__(*self.args, **self.kwargs)
+
+        self.add_child(
+            name='Smooth counts',
+            mapping=self.smooth_data,
+            data_type=Dataset
+        )
+
+        self.add_child(
+            name='Wavelength',
+            data_type=InfiniteRollingLine,
+            data_length=1000
+        )
+
+        # Get scan parameters from config
+        if set(['integration', 'max_runs', 'bins_per_ghz', 'min_bins']).issubset(self.kwargs.keys()):
+            self.fill_params(self.kwargs)
+
+        else:
+            self.log.error('Please provide config file parameters "delay", "max_runs", "bins_per_ghz", and "min_bins.')
+
+    def fill_params(self, config):
+        """ Fills the min max and pts parameters """
+        self.integration, self.max_runs, self.bins_per_ghz, self.min_bins = config['integration'], config['max_runs'], config['bins_per_ghz'], config['min_bins']
+        # Questions: Why is this line necessary for the plot to appear.
+        self.kwargs.update(dict(
+                x=np.linspace(400, 500, 100),
+                name='Fwd trace'
+            ))
+
+
+    def visualize(self, graph, **kwargs):
+        self.handle_new_window(graph, **kwargs)
+
+        if 'color_index' in kwargs:
+            color_index = kwargs['color_index']
+        else:
+            color_index = self.gui.graph_layout.count()-1
+        self.curve = self.graph.plot(
+            pen=pg.mkPen(self.gui.COLOR_LIST[
+                color_index
+            ]),
+            symbol = 'o',
+            symbolPen = pg.mkPen(self.gui.COLOR_LIST[
+                color_index
+            ]),
+            symbolBrush = pg.mkBrush(self.gui.COLOR_LIST[color_index]),
+            downsample = 0.5,
+            downsampleMethod ='mean'
+        )
+        self.update(**kwargs)
+
+
+    def set_data(self, data=None, x=None, wavelength=None):
+        """ Sets the data for a new round of acquisition
+
+        :param data: histogram data from latest acquisition
+            note the histogram should have been cleared prior to acquisition
+        :param x: x axis for data
+        :param wavelength: (float) value of acquired wavelength
+        """
+
+        # Add wavelength to aux monitor.
+        self.children['Wavelength'].set_data(wavelength)
+
+
+
+        # Append new data.
+        if self.data is None:
+            self.data = np.array([data])
+
+        else:
+            self.data = np.append(self.data, data)
+
+        if self.x is None:
+            self.x = np.array([x])
+
+        else:
+            self.x = np.append(self.x, x)
+
+        # Re-order array
+        self.data = self.data[np.argsort(self.x)]
+        self.x = self.x[np.argsort(self.x)]
+
+
+        # Add data to parent dataset.
+        super().set_data(self.data, self.x)
+
+    def smooth_data(self, dataset, prev_dataset):
+
+        previous_x = dataset.x
+        previous_y = dataset.data
+
+        data_len = len(previous_y)
+        scan_span =  ((previous_x[-1] - previous_x[0])*1e3)
+        current_bins_per_ghz = data_len / scan_span
+
+        self.log.info(f'Scan span = {scan_span}')
+        self.log.info(f'current_bins_per_ghz = {current_bins_per_ghz}')
+        self.log.info(f'self.bins_per_ghz = {self.bins_per_ghz}')
+
+        new_num_bins = int(scan_span * self.bins_per_ghz)
+        self.log.info(f'new_num_bins = {new_num_bins}')
+
+
+
+        if current_bins_per_ghz < self.bins_per_ghz or scan_span < 0.001 or new_num_bins < self.min_bins:
+            prev_dataset.data = previous_y
+            prev_dataset.x = previous_x
+        else:
+
+            self.log.info(f'new_num_bins = {new_num_bins}')
+            self.log.info(f'data_len = {data_len}')
+
+
+            padded_x = np.pad(previous_x, (0, new_num_bins - data_len%new_num_bins), 'constant')
+            padded_y = np.pad(previous_y, (0, new_num_bins - data_len%new_num_bins), 'constant')
+
+            binlength = int(len(padded_x) / new_num_bins)
+
+            # Rebin arrays
+            rebinned_x = np.zeros(new_num_bins)
+            rebinned_y = np.zeros(new_num_bins)
+
+            # Tranform 0s to Nan so they don't change the mean values.
+            padded_x[padded_x == 0] = np.nan
+            padded_y[padded_y == 0] = np.nan
+
+            for i in range(new_num_bins):
+                # Sum counts
+                rebinned_y[i] = np.sum(padded_y[i*binlength:(i+1)*binlength])
+                # Average wavelength
+                rebinned_x[i] = np.average(padded_x[i*binlength:(i+1)*binlength])
+
+            # Remove nans.
+            nan_index = ~np.isnan(rebinned_x)
+            self.log.info(nan_index)
+
+            rebinned_x = rebinned_x[nan_index]
+            rebinned_y = rebinned_y[nan_index]
+
+            prev_dataset.data = rebinned_y[:-1]
+            prev_dataset.x = rebinned_x[:-1]
+
+
+
+class Scatterplot(Dataset):
+    def visualize(self, graph, **kwargs):
+        self.handle_new_window(graph, **kwargs)
+
+        self.curve = pg.ScatterPlotItem(x=[0], y=[0])
+        self.graph.addItem(self.curve)
+        self.update(**kwargs)
 
 class TriangleScan1D(Dataset):
     """ 1D Triangle sweep of a parameter """
@@ -768,17 +939,25 @@ class LockedCavityScan1D(TriangleScan1D):
                 data_length=10000,
                 window='lock_monitor',
                 color_index=4
+            ),
+            self.add_child(
+                name='Max count history',
+                data_type=InfiniteRollingLine,
+                data_length=10000,
+                window='lock_monitor',
+                color_index=5
             )
             # self.add_params_to_gui(
             #     voltage=0.0
             # )
 
-    def set_v(self, v):
-        """ Updates voltage """
+    def set_v_and_counts(self, v, counts):
+        """ Updates voltage and counts"""
 
         self.v = v
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
+        self.children['Max count history'].set_data(counts)
 
 
 class LockedCavityPreselectedHistogram(PreselectedHistogram):

@@ -56,6 +56,11 @@ class Driver():
         self.hardware_handler.down()
         self.log.info(f"Staticline {self.name} set to low.")
 
+    def set_dig_value(self, value):
+        '''Sets output level for adjustable digital values'''
+        self.hardware_handler.set_dig_value(value)
+        self.log.info(f"Staticline {self.name} adjustable output set to {value}.")
+
     def set_value(self, value):
         '''Set output to a specified value.'''
         self.hardware_handler.set_value(value)

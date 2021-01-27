@@ -14,7 +14,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import get_ip, load_config, generic_save, unpack_launcher, save_metadata
+from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata, load_script_config, find_client
 from pylabnet.scripts.data_center import datasets
 
 
@@ -22,7 +22,7 @@ REFRESH_RATE = 75   # refresh rate in ms, try increasing if GUI lags
 
 class DataTaker:
 
-    def __init__(self, logger=None, clients={}, config=None):
+    def __init__(self, logger=None, client_tuples=None, config=None, config_name=None):
 
         self.log = LogHandler(logger)
         self.dataset = None
@@ -34,8 +34,8 @@ class DataTaker:
         )
 
         # Configure list of experiments
-        self.gui.config.setText(config)
-        self.config = load_config(config, logger=self.log)
+        self.gui.config.setText(config_name)
+        self.config = config
         self.exp_path = self.config['exp_path']
         if self.exp_path is None:
             self.exp_path = os.getcwd()
@@ -43,7 +43,21 @@ class DataTaker:
         self.update_experiment_list()
 
         # Configure list of clients
-        self.clients = clients
+        self.clients = {}
+
+        # Retrieve Clients
+        for client_entry in self.config['servers']:
+            client_type = client_entry['type']
+            client_config = client_entry['config']
+            client = find_client(
+                clients=client_tuples,
+                settings=client_config,
+                client_type=client_type,
+                client_config = client_config,
+                logger=self.log
+            )
+            self.clients[f"{client_type}_{client_config}"] = client
+
         for client_name, client_obj in self.clients.items():
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setToolTip(str(client_obj))
@@ -208,9 +222,12 @@ class DataTaker:
     def reload_config(self):
         """ Loads a new config file """
 
-        self.config=load_config(
-            self.gui.config.text(), logger=self.log
+        self.config=load_script_config(
+            script='data_taker',
+            config=self.gui.config.text(),
+            logger=self.log
         )
+
 
 
 class ExperimentThread(QtCore.QThread):
@@ -279,11 +296,18 @@ def main():
 
 def launch(**kwargs):
 
+    config = load_script_config(
+        script='data_taker',
+        config=kwargs['config'],
+        logger=kwargs['logger']
+    )
+
     # Instantiate Monitor script
     control = DataTaker(
         logger=kwargs['logger'],
-        clients=kwargs['clients'],
-        config=kwargs['config'],
+        client_tuples=kwargs['clients'],
+        config=config,
+        config_name=kwargs['config']
     )
     control.gui.set_network_info(port=kwargs['server_port'])
 

@@ -1,9 +1,8 @@
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, find_client
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, find_client
 from pylabnet.gui.pyqt.external_gui import Window
 
-import socket
 import time
 import numpy as np
 
@@ -22,7 +21,7 @@ class TopticaFilterWheelController:
         # Setup GUI
         self.gui = Window(
             gui_template=gui,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=get_ip(),
             port=port
         )
 

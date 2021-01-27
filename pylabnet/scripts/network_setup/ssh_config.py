@@ -18,7 +18,7 @@ def launch(**kwargs):
     for host in hosts:
 
         # Initiate SSH connection
-        hostname = host['hostname']
+        hostname = f"\'{host['hostname']}\'"
         host_ip = host['ip']
 
         logger.info(f"Starting SSH connection to {hostname}@{host_ip}")

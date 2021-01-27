@@ -30,7 +30,7 @@ class DataTaker:
         # Instantiate GUI window
         self.gui = Window(
             gui_template='data_taker',
-            host=socket.gethostbyname(socket.gethostname())
+            host=get_ip()
         )
 
         # Configure list of experiments

@@ -1,62 +1,32 @@
-from pylabnet.network.core.service_base import ServiceBase
-from pylabnet.network.core.client_base import ClientBase
+import socket
+
+from pylabnet.network.client_server.HMC_T2220 import Service, Client
+from pylabnet.utils.helper_methods import load_device_config, get_ip
+import pylabnet.hardware.cw_mw.hittite.HMC_T2220 as ht
+from pylabnet.network.core.generic_server import GenericServer
 
 
-class Service(ServiceBase):
+def launch(**kwargs):
+    """ Connects to HWC T2220 (microwave source) and instantiates server
 
-    def exposed_reset(self):
-        return self._module.reset()
+    :param kwargs: (dict) containing relevant kwargs
+        :logger: instance of LogClient for logging purposes
+        :port: (int) port number for the Hittite server
+    """
+    config = kwargs['config']
+    config = load_device_config('HMC_T2220', config, logger=kwargs['logger'])
+    mw_source = ht.Driver(
+        logger=kwargs['logger'],
+        gpib_address=config['device_id']
+    )
 
-    def exposed_output_on(self):
-        return self._module.output_on()
-
-    def exposed_output_off(self):
-        return self._module.output_off()
-
-    def exposed_check_power_out_of_range(self):
-        return self._module.check_power_out_of_range()
-
-    def exposed_is_output_on(self):
-        return self._module.is_output_on()
-
-    def exposed_set_freq(self, freq):
-        return self._module.set_freq(freq)
-
-    def exposed_get_freq(self):
-        return self._module.get_freq()
-
-    def exposed_set_power(self, power):
-        return self._module.set_power(power)
-
-    def exposed_get_power(self):
-        return self._module.get_power()
-
-
-class Client(ClientBase):
-
-    def reset(self):
-        return self._service.exposed_reset()
-
-    def output_on(self):
-        return self._service.exposed_output_on()
-
-    def output_off(self):
-        return self._service.exposed_output_off()
-
-    def check_power_out_of_range(self):
-        return self._service.exposed_check_power_out_of_range()
-
-    def is_output_on(self):
-        return self._service.exposed_is_output_on()
-
-    def set_freq(self, freq):
-        return self._service.exposed_set_freq(freq)
-
-    def get_freq(self):
-        return self._service.exposed_get_freq()
-
-    def set_power(self, power):
-        return self._service.exposed_set_power(power)
-
-    def get_power(self):
-        return self._service.exposed_get_power()
+    # Instantiate Server
+    mw_service = Service()
+    mw_service.assign_module(module=mw_source)
+    mw_service.assign_logger(logger=kwargs['logger'])
+    mw_server = GenericServer(
+        service=mw_service,
+        host=get_ip(),
+        port=kwargs['port']
+    )
+    mw_server.start()

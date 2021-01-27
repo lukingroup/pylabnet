@@ -13,7 +13,6 @@ import numpy as np
 import time
 import copy
 import pickle
-import socket
 import pyqtgraph as pg
 
 class LaserStabilizer:
@@ -25,7 +24,7 @@ class LaserStabilizer:
         # Instantiate GUI
         self.gui = Window(
             gui_template='power_stabilizer',
-            host=socket.gethostbyname(socket.gethostname())
+            host=get_ip()
         )
         self.widgets = get_gui_widgets(self.gui, p_setpoint=1, p_outputVoltage=1, label_power=1, config=1,
             graph=2, legend=2, hardware_control=1, clear=1, start=1, stop=1)

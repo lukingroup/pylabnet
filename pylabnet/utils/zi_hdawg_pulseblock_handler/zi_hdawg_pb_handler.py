@@ -184,17 +184,20 @@ class DIOPulseBlockHandler():
             account for duration of setDIO() command.
         """
 
-        # Find out where the the codewords changes.
+        # Find out where the the codewords changes. The indices refer to the
+        # left edge of transition, e.g. [0 0 1] returns index 1.
         dio_change_index = np.where(dio_codewords[:-1] != dio_codewords[1:])[0]
 
         # Use difference of array to get waittimes,
         # prepend first sample, append the waittime to match sequence length.
+        # Add 1 for first wait time since we're measuring time between the left   
+        # edge of transitions, the first transition "takes place" at index -1. 
         num_samples = len(dio_codewords)
         waittimes = np.concatenate(
             [
-                [dio_change_index[0]],
+                [dio_change_index[0] + 1], 
                 np.diff(dio_change_index),
-                [num_samples - dio_change_index[-1]]
+                [(num_samples - 1) - dio_change_index[-1]]
             ]
         )
 

@@ -5,7 +5,7 @@ import copy
 
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, load_script_config, generate_widgets, find_client
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, load_script_config, generate_widgets, find_client
 from pylabnet.network.client_server import smaract_mcs2
 
 from PyQt5.QtGui import QKeySequence
@@ -39,7 +39,7 @@ class Controller:
         self.log = LogHandler(logger=log_client)
         self.gui = Window(
             gui_template=gui,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=get_ip(),
             port=port
         )
         self.gui.apply_stylesheet()

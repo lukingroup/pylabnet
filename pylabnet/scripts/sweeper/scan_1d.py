@@ -1,6 +1,5 @@
 """ Module for 1D scanning experiments with convenient GUI interface """
 
-import socket
 import os
 import sys
 from PyQt5 import QtWidgets, QtGui
@@ -13,7 +12,7 @@ from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
-    unpack_launcher, create_server, pyqtgraph_save)
+    unpack_launcher, create_server, pyqtgraph_save, get_ip)
 
 
 class Controller(MultiChSweep1D):
@@ -34,7 +33,7 @@ class Controller(MultiChSweep1D):
         # Instantiate GUI
         self.gui = Window(
             gui_template='scan_1d',
-            host=socket.gethostbyname(socket.gethostname())
+            host=get_ip()
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,

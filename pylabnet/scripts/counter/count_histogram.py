@@ -9,7 +9,6 @@ from pylabnet.network.client_server.count_histogram import Service
 
 import numpy as np
 import time
-import socket
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
 
@@ -182,7 +181,7 @@ class TimeTraceGui(TimeTrace):
         # Setup GUI
         self.gui = Window(
             gui_template='histogram',
-            host=socket.gethostbyname(socket.gethostname())
+            host=get_ip()
         )
 
         # Setup stylesheet.

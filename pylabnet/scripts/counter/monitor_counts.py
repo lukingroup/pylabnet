@@ -2,14 +2,13 @@
 
 import numpy as np
 import time
-import socket
 import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
+from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
 
 
 # Static methods
@@ -32,7 +31,7 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None):
+    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
@@ -51,7 +50,7 @@ class CountMonitor:
         # Instantiate GUI window
         self.gui = Window(
             gui_template=ui,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=get_ip(),
             port=server_port
         )
 
@@ -67,6 +66,18 @@ class CountMonitor:
             event_button=2,
             legend_widget=2
         )
+
+        # Load config
+        self.config = {}
+        if config is not None:
+            self.config = load_script_config(
+                script='monitor_counts',
+                config=config,
+                logger=self.logger_client
+            )
+
+        if not 'name' in self.config:
+            self.config.update({'name': f'monitor{np.random.randint(1000)}'})
 
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
@@ -105,7 +116,7 @@ class CountMonitor:
             self._is_running = True
 
             self._ctr.start_trace(
-                name='monitor',
+                name=self.config['name'],
                 ch_list=self._ch_list,
                 bin_width=self._bin_width,
                 n_bins=self._n_bins
@@ -135,7 +146,7 @@ class CountMonitor:
             self._is_running = True
 
             # Clear counter and resume plotting
-            self._ctr.clear_ctr(name='monitor')
+            self._ctr.clear_ctr(name=self.config['name'])
             while self._is_running:
                 self._update_output()
 
@@ -214,7 +225,7 @@ class CountMonitor:
                 np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
             )
 
-        self._ctr.clear_ctr(name='monitor')
+        self._ctr.clear_ctr(name=self.config['name'])
 
     def _update_output(self):
         """ Updates the output to all current values"""
@@ -222,7 +233,7 @@ class CountMonitor:
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
 
-        counts = self._ctr.get_counts(name='monitor')
+        counts = self._ctr.get_counts(name=self.config['name'])
         counts_per_sec = counts*(1e12/self._bin_width)
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0

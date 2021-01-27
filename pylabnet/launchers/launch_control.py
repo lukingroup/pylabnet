@@ -262,7 +262,7 @@ class Controller:
             try:
                 self.log_server = GenericServer(
                     service=self.log_service,
-                    host=socket.gethostname(socket.gethostname()),
+                    host=get_ip(),
                     port=self.LOG_PORT
                     )
             except ConnectionRefusedError:

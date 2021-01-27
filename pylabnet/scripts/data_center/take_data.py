@@ -14,7 +14,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata
+from pylabnet.utils.helper_methods import get_ip, load_config, generic_save, unpack_launcher, save_metadata
 from pylabnet.scripts.data_center import datasets
 
 
@@ -30,7 +30,7 @@ class DataTaker:
         # Instantiate GUI window
         self.gui = Window(
             gui_template='data_taker',
-            host=socket.gethostbyname(socket.gethostname())
+            host=get_ip()
         )
 
         # Configure list of experiments
@@ -262,7 +262,7 @@ class UpdateThread(QtCore.QThread):
         """
 
         self.save_time = interval
-    
+
     def run(self):
         last_save = time.time()
         while self.running:

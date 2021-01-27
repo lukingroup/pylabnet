@@ -817,3 +817,38 @@ def get_ip():
             return ip_list[0]
         else:
             return filtered_ip[0]
+
+def HDAWG_to_breakout_box(pin):
+    if pin < 8 or (pin < 24 and pin >= 16):
+        print("these pins are not mapped to the dio breakout box")
+        return None
+    else:
+        if int(np.floor(pin/4)) == 2:
+            board = 0
+        if int(np.floor(pin/4)) == 3:
+            board = 1
+        if int(np.floor(pin/4)) == 6:
+            board = 2
+        if int(np.floor(pin/4)) == 7:
+            board = 3
+        channel = np.mod(pin, 4)
+
+    return board, channel
+
+def breakout_box_to_HDAWG(board, channel):
+    if board > 4 or channel > 4:
+        print("non existing board or channel for dio breakout box")
+        return None
+    else:
+        if board == 0:
+            pin = 8
+        if board == 1:
+            pin = 12
+        if board == 2:
+            pin = 24
+        if board == 3:
+            pin = 28
+
+        pin = pin + channel
+
+    return pin

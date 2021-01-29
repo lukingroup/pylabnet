@@ -21,7 +21,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
+from pylabnet.utils.helper_methods import dict_to_str, load_config, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -66,24 +66,19 @@ class Controller:
     LOG_PORT = None
     GUI_PORT = None
 
-    def __init__(self, proxy=False):
+    def __init__(self, proxy=False, master=False, staticproxy=False):
         """ Initializes launch control GUI """
+        try:
+            if sys.argv[1] == '-m' or master:
+                self.master = True
+            else:
+                self.master = False
+        except IndexError:
+            if master:
+                self.master = True
+            else:
+                self.master = False
 
-        self.log_service = None
-        self.log_server = None
-        self.gui_client = None
-        self.gui_logger = None
-        self.gui_service = None
-        self.log_port = self.LOG_PORT
-        self.gui_port = self.GUI_PORT
-        self.gui_server = None
-        self.client_list = {}
-        self.port_list = {}
-        self.script_list = {}
-        self.client_data = {}
-        self.disconnection = False
-        self.debug = False
-        self.debug_level = None
         try:
             if sys.argv[1] == '-p' or proxy:
                 self.proxy = True
@@ -94,11 +89,33 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
+
+        try:
+            if sys.argv[1] == '-sp' or staticproxy:
+                self.staticproxy = True
+            else:
+                self.staticproxy = False
+        except IndexError:
+            if staticproxy:
+                self.staticproxy = True
+            else:
+                self.staticproxy = False
+
         self.host = get_ip()
         self.update_index = 0
 
-        # Find logger if applicable
-        if self.proxy:
+        # Retrieve static port info.
+        if self.master:
+            try:
+                static_proxy_dict = load_config('static_proxy')
+            except:
+                print('No config found named static_proxy.json')
+                time.sleep(10)
+                raise
+            self.log_port = static_proxy_dict['master_log_port']
+            self.gui_port = static_proxy_dict['master_gui_port']
+            hide_console()
+        elif self.proxy:
             try:
                 self.host = sys.argv[2]
             except IndexError:
@@ -108,6 +125,35 @@ class Controller:
             self.log_port = int(input('Please enter the master Logger Port:\n>> '))
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
             hide_console()
+        elif self.staticproxy:
+            try:
+                static_proxy_dict = load_config('static_proxy')
+            except:
+                print('No config found named static_proxy.json')
+                time.sleep(10)
+                raise
+            self.host = static_proxy_dict['master_ip']
+            self.log_port = static_proxy_dict['master_log_port']
+            self.gui_port = static_proxy_dict['master_gui_port']
+            self.proxy = True
+            hide_console()
+        else:
+            self.log_port = self.LOG_PORT
+            self.gui_port = self.GUI_PORT
+
+        self.log_service = None
+        self.log_server = None
+        self.gui_client = None
+        self.gui_logger = None
+        self.gui_service = None
+        self.gui_server = None
+        self.client_list = {}
+        self.port_list = {}
+        self.script_list = {}
+        self.client_data = {}
+        self.disconnection = False
+        self.debug = False
+        self.debug_level = None
 
         sys.stdout = StringIO()
 
@@ -126,12 +172,18 @@ class Controller:
         if self.proxy:
             module_str = '_proxy'
         # connect to the logger
-        self.gui_logger = LogClient(
-            host=self.host,
-            port=self.log_port,
-            module_tag=self.GUI_NAME+module_str,
-            ui=self.LOGGER_UI
-        )
+        try:
+            self.gui_logger = LogClient(
+                host=self.host,
+                port=self.log_port,
+                module_tag=self.GUI_NAME+module_str,
+                ui=self.LOGGER_UI
+            )
+        except ConnectionRefusedError:
+            self.main_window.terminal.setText('Failed to connect to master. Shutting down')
+            self.main_window.force_update()
+            time.sleep(10)
+            raise
 
         gui_str = ''
         if self.proxy:
@@ -167,7 +219,7 @@ class Controller:
                 try:
                     self.gui_server = GenericServer(
                         service=self.gui_service,
-                        host='localhost',
+                        host=get_ip(),
                         port=self.gui_port
                     )
                 except ConnectionRefusedError:
@@ -253,7 +305,7 @@ class Controller:
         """ Starts the log server """
 
         self.log_service = LogService()
-        if self.LOG_PORT is None:
+        if self.LOG_PORT is None and not self.master:
             self.log_server, self.log_port = create_server(
                 self.log_service,
                 host=get_ip()
@@ -263,7 +315,7 @@ class Controller:
                 self.log_server = GenericServer(
                     service=self.log_service,
                     host=get_ip(),
-                    port=self.LOG_PORT
+                    port=self.log_port
                     )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
@@ -278,8 +330,13 @@ class Controller:
         # self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
 
         ip_str, ip_str_2, log_str = '', '', ''
+        if self.master:
+            self.main_window.setWindowTitle('Launch Control (Master)')
         if self.proxy:
-            self.main_window.setWindowTitle('Launch Control (Proxy)')
+            if self.staticproxy:
+                self.main_window.setWindowTitle('Launch Control (Staticproxy)')
+            else:
+                self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
             ip_str_2 = f' ({get_ip()})'
             log_str = 'Master '
@@ -709,6 +766,18 @@ def main_proxy():
     """ Runs the launch controller overriding commandline arguments in proxy mode """
 
     log_controller = Controller(proxy=True)
+    run(log_controller)
+
+def main_master():
+    """ Runs the launch controller overriding commandline arguments in master mode """
+
+    log_controller = Controller(master=True)
+    run(log_controller)
+
+def main_staticproxy():
+    """ Runs the launch controller overriding commandline arguments in staticproxy mode """
+
+    log_controller = Controller(staticproxy=True)
     run(log_controller)
 
 def run(log_controller):

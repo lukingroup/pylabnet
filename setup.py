@@ -42,7 +42,9 @@ setup(
     entry_points={
         'console_scripts': [
             'pylabnet=pylabnet.launchers.launch_control:main',
-            'pylabnet_proxy=pylabnet.launchers.launch_control:main_proxy'
+            'pylabnet_proxy=pylabnet.launchers.launch_control:main_proxy',
+            'pylabnet_master=pylabnet.launchers.launch_control:main_master',
+            'pylabnet_staticproxy =pylabnet.launchers.launch_control:main_staticproxy'
             ]
         },
     classifiers=[

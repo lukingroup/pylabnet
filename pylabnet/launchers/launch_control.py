@@ -21,7 +21,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
+from pylabnet.utils.helper_methods import dict_to_str, load_config, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
 
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -66,7 +66,7 @@ class Controller:
     LOG_PORT = None
     GUI_PORT = None
 
-    def __init__(self, proxy=False):
+    def __init__(self, proxy=False, master=False, staticproxy=False):
         """ Initializes launch control GUI """
 
         self.log_service = None
@@ -94,6 +94,29 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
+
+        try:
+            if sys.argv[1] == '-m' or master:
+                self.master = True
+            else:
+                self.master = False
+        except IndexError:
+            if master:
+                self.master = True
+            else:
+                self.master = False
+
+        try:
+            if sys.argv[1] == '-sp' or staticproxy:
+                self.staticproxy = True
+            else:
+                self.staticproxy = False
+        except IndexError:
+            if staticproxy:
+                self.staticproxy = True
+            else:
+                self.staticproxy = False
+
         self.host = get_ip()
         self.update_index = 0
 
@@ -108,6 +131,14 @@ class Controller:
             self.log_port = int(input('Please enter the master Logger Port:\n>> '))
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
             hide_console()
+
+        # Look up static cennection parameters in file.
+        if self.staticproxy:
+            static_proxy_dict = load_config('static_proxy')
+            self.host = static_proxy_dict['master_ip']
+            self.log_port = static_proxy_dict['master_log_port']
+            self.gui_port = static_proxy_dict['master_gui_port']
+            self.proxy = True
 
         sys.stdout = StringIO()
 

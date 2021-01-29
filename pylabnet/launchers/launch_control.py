@@ -68,14 +68,31 @@ class Controller:
 
     def __init__(self, proxy=False, master=False, staticproxy=False):
         """ Initializes launch control GUI """
+        try:
+            if sys.argv[1] == '-m' or master:
+                self.master = True
+            else:
+                self.master = False
+        except IndexError:
+            if master:
+                self.master = True
+            else:
+                self.master = False
+
+        # Retrieve static port info.
+        if self.master:
+            static_proxy_dict = load_config('static_proxy')
+            self.log_port = static_proxy_dict['master_log_port']
+            self.gui_port = static_proxy_dict['master_gui_port']
+        else:
+            self.log_port = self.LOG_PORT
+            self.gui_port = self.GUI_PORT
 
         self.log_service = None
         self.log_server = None
         self.gui_client = None
         self.gui_logger = None
         self.gui_service = None
-        self.log_port = self.LOG_PORT
-        self.gui_port = self.GUI_PORT
         self.gui_server = None
         self.client_list = {}
         self.port_list = {}
@@ -94,17 +111,6 @@ class Controller:
                 self.proxy = True
             else:
                 self.proxy = False
-
-        try:
-            if sys.argv[1] == '-m' or master:
-                self.master = True
-            else:
-                self.master = False
-        except IndexError:
-            if master:
-                self.master = True
-            else:
-                self.master = False
 
         try:
             if sys.argv[1] == '-sp' or staticproxy:
@@ -802,4 +808,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_master()

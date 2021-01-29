@@ -810,4 +810,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main()

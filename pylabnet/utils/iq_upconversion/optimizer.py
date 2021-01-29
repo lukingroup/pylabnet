@@ -412,8 +412,8 @@ class IQOptimizer_GD(Optimizer):
 
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
-		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.005, vq_step = 0.005,
-		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4],
+		param_guess = ([70, 0.975, 0.65, 0.05, -0.02]), phase_step = 5, q_step = 0.05, vi_step = 0.005, vq_step = 0.005,
+		plot_traces = True, awg_delay_time = 0.1, averages=10, HDAWG_ports=[3,4],
 		oscillator=2):
 		""" Instantiate IQ optimizer
 		:param mw_source: instance of microwave source client
@@ -558,14 +558,17 @@ class IQOptimizer_GD(Optimizer):
 		#store power values for every iteration
 		power_vec = [curr_power]
 
+		#initialize step sizes and iteration number
+		phase_step = self.phase_step
+		q_step = self.q_step
 		num_iterations = 0
 
 		while num_iterations < self.max_iterations and curr_power > self.min_power:
 
-			grad = self.calc_slope_phase_and_amp(phase, q)
+			grad = self.calc_slope_phase_and_amp(phase, q, phase_step, q_step)
 
-			phase_new = phase - grad[0] * self.phase_step
-			q_new = q - grad[1] * self.q_step
+			phase_new = phase - grad[0] * phase_step
+			q_new = q - grad[1] * q_step
 
 			self.set_phase_and_amp(phase_new, q_new)
 			new_power = self._average_marker_power(self.lower_sb_marker)
@@ -575,8 +578,8 @@ class IQOptimizer_GD(Optimizer):
 				phase = phase_new
 				q = q_new
 			else:
-				self.phase_step = self.phase_step/2
-				self.q_step = self.q_step/2
+				phase_step = phase_step/2
+				q_step = q_step/2
 
 			power_vec.append(curr_power)
 
@@ -593,11 +596,10 @@ class IQOptimizer_GD(Optimizer):
 		self.opt_phase = phase
 		self.opt_q = q
 		self.set_phase_and_amp(self.opt_phase, self.opt_q)
+		self.lower_sideband_power = self.lower_sb_marker.get_power()
 
 		if self.plot_traces == True:
-			plt.plot(power_vec)
-			plt.xlabel('iteration #')
-			plt.ylabel('Lower sideband power [dBm]')
+			plt.plot(power_vec, label='lower band')
 
 	def opt_carrier(self):
 
@@ -611,14 +613,17 @@ class IQOptimizer_GD(Optimizer):
 		#store power values for every iteration
 		power_vec = [curr_power]
 
+		# initialize step sizes and iteration number
+		vi_step = self.vi_step
+		vq_step = self.vq_step
 		num_iterations = 0
 
 		while num_iterations < self.max_iterations and curr_power > self.min_power:
 
-			grad = self.calc_slope_dc_offsets(vi, vq)
+			grad = self.calc_slope_dc_offsets(vi, vq, vi_step, vq_step)
 
-			vi_new = vi - grad[0] * self.vi_step
-			vq_new = vq - grad[1] * self.vq_step
+			vi_new = vi - grad[0] * vi_step
+			vq_new = vq - grad[1] * vq_step
 
 			self.set_dc_offsets(vi_new, vq_new)
 			new_power = self._average_marker_power(self.carrier_marker)
@@ -628,8 +633,8 @@ class IQOptimizer_GD(Optimizer):
 				vi = vi_new
 				vq = vq_new
 			else:
-				self.vi_step = self.vi_step/1.5
-				self.vq_step = self.vq_step/1.5
+				vi_step = vi_step/1.2
+				vq_step = vq_step/1.2
 
 			power_vec.append(curr_power)
 
@@ -646,17 +651,32 @@ class IQOptimizer_GD(Optimizer):
 		self.dc_offset_i_opt = vi
 		self.dc_offset_q_opt =  vq
 		self.set_dc_offsets(self.dc_offset_i_opt, self.dc_offset_q_opt)
+		self.carrier_power = self.carrier_marker.get_power()
 
 		if self.plot_traces == True:
-			plt.plot(power_vec)
+			plt.plot(power_vec, label='carrier band')
 			plt.xlabel('iteration #')
-			plt.ylabel('Carrier sideband power [dBm]')
+			plt.ylabel('power [dBm]')
+			plt.legend()
 
 
 	def opt(self):
 
 		self.opt_lower_sideband()
+		while self.lower_sideband_power > self.min_power + 7.5:
+			self.opt_lower_sideband()
 		self.opt_carrier()
+		while self.carrier_power > self.min_power + 7.5:
+			self.dc_i_guess = self.dc_offset_i_opt
+			self.dc_q_guess = self.dc_offset_q_opt
+			self.opt_carrier()
+
+		#for i in range(10):
+		#	if self.carrier_power - 3.5 > self.lower_sideband_power:
+		#		self.dc_i_guess = self.dc_offset_i_opt
+		#		self.dc_q_guess = self.dc_offset_q_opt
+		#		self.opt_carrier()
+
 		time.sleep(1)
 
 		self.hd.log.info('Optimized param_guess is ([' + str(self.opt_phase) + ',' + str(self.opt_q) + ',' + str(self.a0) + ',' + str(self.dc_offset_i_opt) + ',' + str(self.dc_offset_q_opt) + '])')
@@ -687,32 +707,32 @@ class IQOptimizer_GD(Optimizer):
 			total_sum = total_sum + marker.get_power()
 		return total_sum/self._averages
 
-	def calc_slope_phase_and_amp(self, phase, q):
-		self.set_phase_and_amp(phase + self.phase_step, q)
+	def calc_slope_phase_and_amp(self, phase, q, phase_step, q_step):
+		self.set_phase_and_amp(phase + phase_step, q)
 		phase_p = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(phase - self.phase_step, q)
+		self.set_phase_and_amp(phase - phase_step, q)
 		phase_m = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(phase, q + self.q_step)
+		self.set_phase_and_amp(phase, q + q_step)
 		q_p = self._average_marker_power(self.lower_sb_marker)
 
-		self.set_phase_and_amp(phase, q - self.q_step)
+		self.set_phase_and_amp(phase, q - q_step)
 		q_m = self._average_marker_power(self.lower_sb_marker)
 
 		return([(phase_p-phase_m)/2, (q_p-q_m)/2])
 
-	def calc_slope_dc_offsets(self, vi, vq):
-		self.set_dc_offsets(vi + self.vi_step, vq)
+	def calc_slope_dc_offsets(self, vi, vq, vi_step, vq_step):
+		self.set_dc_offsets(vi + vi_step, vq)
 		vi_p = self._average_marker_power(self.carrier_marker)
 
-		self.set_dc_offsets(vi - self.vi_step, vq)
+		self.set_dc_offsets(vi - vi_step, vq)
 		vi_m = self._average_marker_power(self.carrier_marker)
 
-		self.set_dc_offsets(vi, vq + self.vq_step)
+		self.set_dc_offsets(vi, vq + vq_step)
 		vq_p = self._average_marker_power(self.carrier_marker)
 
-		self.set_dc_offsets(vi, vq - self.vq_step)
+		self.set_dc_offsets(vi, vq - vq_step)
 		vq_m = self._average_marker_power(self.carrier_marker)
 
 		return([(vi_p-vi_m)/2, (vq_p-vq_m)/2])
@@ -723,7 +743,7 @@ class IQOptimizer_GD_multifreq(Optimizer):
 
 	def __init__(
 		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 20, min_power = -65,
-		param_guess = ([85, 85, 0.9, 0.9, -0.002, 0.006]), phase_step = 5, q_step = 0.1, vi_step = 0.005, vq_step = 0.005,
+		param_guess = ([85, 85, 0.9, 0.9, 0.05, -0.02]), phase_step = 5, q_step = 0.1, vi_step = 0.005, vq_step = 0.005,
 		plot_traces = True, awg_delay_time = 0.1, averages=5, HDAWG_ports=[3,4],
 		oscillator=[1,2]):
 

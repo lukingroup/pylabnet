@@ -290,7 +290,7 @@ class Controller:
         """ Starts the log server """
 
         self.log_service = LogService()
-        if self.LOG_PORT is None:
+        if self.LOG_PORT is None and not self.master:
             self.log_server, self.log_port = create_server(
                 self.log_service,
                 host=get_ip()
@@ -300,7 +300,7 @@ class Controller:
                 self.log_server = GenericServer(
                     service=self.log_service,
                     host=get_ip(),
-                    port=self.LOG_PORT
+                    port=self.log_port
                     )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
@@ -808,4 +808,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_master()
+    main()

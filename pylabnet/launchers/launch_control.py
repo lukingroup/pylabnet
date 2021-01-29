@@ -106,9 +106,15 @@ class Controller:
 
         # Retrieve static port info.
         if self.master:
-            static_proxy_dict = load_config('static_proxy')
+            try:
+                static_proxy_dict = load_config('static_proxy')
+            except:
+                print('No config found named static_proxy.json')
+                time.sleep(10)
+                raise
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
+            hide_console()
         elif self.proxy:
             try:
                 self.host = sys.argv[2]
@@ -120,11 +126,17 @@ class Controller:
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
             hide_console()
         elif self.staticproxy:
-            static_proxy_dict = load_config('static_proxy')
+            try:
+                static_proxy_dict = load_config('static_proxy')
+            except:
+                print('No config found named static_proxy.json')
+                time.sleep(10)
+                raise
             self.host = static_proxy_dict['master_ip']
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
+            hide_console()
         else:
             self.log_port = self.LOG_PORT
             self.gui_port = self.GUI_PORT
@@ -160,12 +172,18 @@ class Controller:
         if self.proxy:
             module_str = '_proxy'
         # connect to the logger
-        self.gui_logger = LogClient(
-            host=self.host,
-            port=self.log_port,
-            module_tag=self.GUI_NAME+module_str,
-            ui=self.LOGGER_UI
-        )
+        try:
+            self.gui_logger = LogClient(
+                host=self.host,
+                port=self.log_port,
+                module_tag=self.GUI_NAME+module_str,
+                ui=self.LOGGER_UI
+            )
+        except ConnectionRefusedError:
+            self.main_window.terminal.setText('Failed to connect to master. Shutting down')
+            self.main_window.force_update()
+            time.sleep(10)
+            raise
 
         gui_str = ''
         if self.proxy:

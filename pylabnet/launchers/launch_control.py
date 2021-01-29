@@ -79,28 +79,6 @@ class Controller:
             else:
                 self.master = False
 
-        # Retrieve static port info.
-        if self.master:
-            static_proxy_dict = load_config('static_proxy')
-            self.log_port = static_proxy_dict['master_log_port']
-            self.gui_port = static_proxy_dict['master_gui_port']
-        else:
-            self.log_port = self.LOG_PORT
-            self.gui_port = self.GUI_PORT
-
-        self.log_service = None
-        self.log_server = None
-        self.gui_client = None
-        self.gui_logger = None
-        self.gui_service = None
-        self.gui_server = None
-        self.client_list = {}
-        self.port_list = {}
-        self.script_list = {}
-        self.client_data = {}
-        self.disconnection = False
-        self.debug = False
-        self.debug_level = None
         try:
             if sys.argv[1] == '-p' or proxy:
                 self.proxy = True
@@ -126,8 +104,12 @@ class Controller:
         self.host = get_ip()
         self.update_index = 0
 
-        # Find logger if applicable
-        if self.proxy:
+        # Retrieve static port info.
+        if self.master:
+            static_proxy_dict = load_config('static_proxy')
+            self.log_port = static_proxy_dict['master_log_port']
+            self.gui_port = static_proxy_dict['master_gui_port']
+        elif self.proxy:
             try:
                 self.host = sys.argv[2]
             except IndexError:
@@ -137,14 +119,29 @@ class Controller:
             self.log_port = int(input('Please enter the master Logger Port:\n>> '))
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
             hide_console()
-
-        # Look up static cennection parameters in file.
-        if self.staticproxy:
+        elif self.staticproxy:
             static_proxy_dict = load_config('static_proxy')
             self.host = static_proxy_dict['master_ip']
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
+        else:
+            self.log_port = self.LOG_PORT
+            self.gui_port = self.GUI_PORT
+
+        self.log_service = None
+        self.log_server = None
+        self.gui_client = None
+        self.gui_logger = None
+        self.gui_service = None
+        self.gui_server = None
+        self.client_list = {}
+        self.port_list = {}
+        self.script_list = {}
+        self.client_data = {}
+        self.disconnection = False
+        self.debug = False
+        self.debug_level = None
 
         sys.stdout = StringIO()
 
@@ -204,7 +201,7 @@ class Controller:
                 try:
                     self.gui_server = GenericServer(
                         service=self.gui_service,
-                        host='localhost',
+                        host=get_ip(),
                         port=self.gui_port
                     )
                 except ConnectionRefusedError:
@@ -808,4 +805,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_master()

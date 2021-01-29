@@ -742,6 +742,18 @@ def main_proxy():
     log_controller = Controller(proxy=True)
     run(log_controller)
 
+def main_master():
+    """ Runs the launch controller overriding commandline arguments in master mode """
+
+    log_controller = Controller(master=True)
+    run(log_controller)
+
+def main_staticproxy():
+    """ Runs the launch controller overriding commandline arguments in staticproxy mode """
+
+    log_controller = Controller(staticproxy=True)
+    run(log_controller)
+
 def run(log_controller):
     """ Runs the launch controller once a Controller is instantiated"""
 

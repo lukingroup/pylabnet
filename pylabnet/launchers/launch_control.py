@@ -315,8 +315,13 @@ class Controller:
         # self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
 
         ip_str, ip_str_2, log_str = '', '', ''
+        if self.master:
+            self.main_window.setWindowTitle('Launch Control (Master)')
         if self.proxy:
-            self.main_window.setWindowTitle('Launch Control (Proxy)')
+            if self.staticproxy:
+                self.main_window.setWindowTitle('Launch Control (Staticproxy)')
+            else:
+                self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
             ip_str_2 = f' ({get_ip()})'
             log_str = 'Master '
@@ -808,4 +813,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_staticproxy()

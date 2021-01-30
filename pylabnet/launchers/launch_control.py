@@ -728,9 +728,17 @@ class Controller:
             filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
 
             # Get logging file from json.
+            filepath = None
             if master_log:
-                config_dict = load_config('static_proxy')
-                filepath = config_dict['logger_path']
+                try:
+                    config_dict = load_config('static_proxy')
+                    filepath = config_dict['logger_path']
+                except:
+                    self.main_window.terminal.setText('Critical error: '
+                                                      'no logger_path found in static_proxy.json')
+                    self.main_window.force_update()
+                    time.sleep(10)
+                    raise
             # Or from filepath selector.
             else:
                 filepath = self.main_window.file_viewer.model().filePath(

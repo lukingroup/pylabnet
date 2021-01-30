@@ -649,7 +649,7 @@ class Controller:
 
     def _configure_logging(self):
         """ Defines what to do if the Start/Stop Logging button is clicked """
-        self.main_window.logfile_status_button.toggled.connect(self._start_stop_logging)
+        self.main_window.logfile_status_button.toggled.connect(self.start_stop_logging)
 
     def _configure_logfile(self):
         """ Defines what to do if the logfile radio button is clicked """
@@ -714,23 +714,46 @@ class Controller:
         # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
 
-    def _start_stop_logging(self):
-        """ Starts or stops logging to file depending on situation """
+    def start_stop_logging(self, master_log=False):
+        """ Starts or stops logging to file depending on situation
 
-        if self.main_window.logfile_status_button.isChecked():
+        :master_log: (bool) If True, this function is called as initial setup function of
+            filesaving for the master launch control. In this case a log path as specified
+            in the config file is chosen.
+        """
+
+        if self.main_window.logfile_status_button.isChecked() or master_log:
 
             # Actually start logging
             filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
-            try:
+
+            # Get logging file from json.
+            filepath = None
+            if master_log:
+                try:
+                    config_dict = load_config('static_proxy')
+                    filepath = config_dict['logger_path']
+                except:
+                    self.main_window.terminal.setText('Critical error: '
+                                                      'no logger_path found in static_proxy.json')
+                    self.main_window.force_update()
+                    time.sleep(10)
+                    raise
+            # Or from filepath selector.
+            else:
                 filepath = self.main_window.file_viewer.model().filePath(
                     self.main_window.file_viewer.selectionModel().currentIndex()
                 )
+
+            try:
                 self.log_service.add_logfile(
                     name=filename,
                     dir_path=filepath
                 )
             except Exception as error_msg:
                 print(f'Failed to start logging to file {os.path.join(filepath, filename)}.\n{error_msg}')
+
+            self.log_service.logger.info(f'Started logging to file {os.path.join(filepath, filename)}.')
 
             # Change button color and text
             self.main_window.logfile_status_button.setStyleSheet("background-color: red")
@@ -789,6 +812,10 @@ def run(log_controller):
     log_controller.initialize_gui()
     log_controller.start_gui_server()
 
+    # Start logging os in master mode
+    if log_controller.master:
+        log_controller.start_stop_logging(master_log=True)
+
     # Standard operation
     while not log_controller.main_window.stop_button.isChecked():
 
@@ -825,6 +852,7 @@ def run(log_controller):
         pass
     else:
         log_controller.kill_servers()
+
 
 
 if __name__ == '__main__':

@@ -5,6 +5,7 @@ import socket
 import os
 import time
 import subprocess
+import platform
 from io import StringIO
 import copy
 import ctypes
@@ -23,6 +24,10 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import dict_to_str, load_config, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
 
+
+class UnsupportedOSException(Exception):
+    """Raised when the operating system is not supported."""
+    pass
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -66,7 +71,7 @@ class Controller:
     LOG_PORT = None
     GUI_PORT = None
 
-    def __init__(self, proxy=False, master=False, staticproxy=False):
+    def __init__(self, operating_system='Windows', proxy=False, master=False, staticproxy=False):
         """ Initializes launch control GUI """
         try:
             if sys.argv[1] == '-m' or master:
@@ -158,7 +163,10 @@ class Controller:
         sys.stdout = StringIO()
 
         # Instantiate GUI application
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+
+
+        if os == 'Windows':
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         self.app = QtWidgets.QApplication(sys.argv)
         self.app.setWindowIcon(
             QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
@@ -778,11 +786,35 @@ class Controller:
             self.log_service.stop_latest_logfile()
 
 
+def get_os():
+    """Read out operating system"""
+
+    pf = platform.system()
+
+
+    if pf == 'Linux':
+        operating_system = 'Linux'
+    elif pf=='Windows':
+        operating_system = 'Windows'
+    elif pf=="Darwin":
+        operating_system = 'mac_os'
+    else:
+        operating_system = pf
+
+    return operating_system
+
+
+
 def main():
     """ Runs the launch controller """
 
-    hide_console()
-    log_controller = Controller()
+    operating_system = get_os()
+
+    if operating_system not in ['Linux', 'Windows']:
+        raise UnsupportedOSException
+
+    hide_console(operating_system)
+    log_controller = Controller(operating_system=operating_system)
     run(log_controller)
 
 def main_proxy():

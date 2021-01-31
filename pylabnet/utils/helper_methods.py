@@ -228,13 +228,16 @@ def show_console():
 
     ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
 
-def hide_console():
+def hide_console(operating_system='Windows'):
     """ Hides the active console.
 
     Useful for processes where console is not needed (isntead, there is a GUI to use)
+
+    :os: (string) Which operating system is used ('Windows' and 'Linux' supported)
     """
 
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+    if operating_system == 'Windows':
+        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
 def create_server(service, logger=None, host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers

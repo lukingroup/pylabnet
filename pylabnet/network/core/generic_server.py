@@ -2,7 +2,7 @@
 
 `GenericServer` creates an `rpyc.ThreadedServer` and assigns it a service (should be an instance
 of `ServiceBase` class), which exposes functionality to clients that connect to the server. The
-`GenericServer` can be identified and accessed via a `hostname` (IP address, or `'localhost'` if 
+`GenericServer` can be identified and accessed via a `hostname` (IP address, or `'localhost'` if
 local) and `port` number from 0 to 65535 (recommended to use ports 1024 to 49151). For a generic
 (insecure) connection without authentication, the `key` parameter can be set to `None`.
 
@@ -27,7 +27,7 @@ import time
 
 
 class GenericServer:
-    def __init__(self, service, host, port, key='pylabnet.pem'):
+    def __init__(self, service, host, port, operating_system='Windows', key='pylabnet.pem'):
         """ Instantiates a server
 
         :param service: ServiceBase instance to assign to server
@@ -39,7 +39,7 @@ class GenericServer:
         """
 
         if key is None:
-        
+
             # start a server without any authentication
             self._server = rpyc.ThreadedServer(
                 service=service,
@@ -57,7 +57,7 @@ class GenericServer:
             key = os.path.join(os.environ['WINDIR'], 'System32', key)
 
             if os.path.exists(key):
-            
+
                 # Add SSL authentication
                 self._server = rpyc.ThreadedServer(
                     service=service,

@@ -33,7 +33,7 @@ class GenericServer:
         :param service: ServiceBase instance to assign to server
         :param host: (str) name of host (can use 'localhost' for local connections)
         :param port: (int) port number to use - must be unique
-        :param key: (str, optional) name of key file stored in C:/Windows/System32/
+        :param key: (str, optional) name of key file stored in C:/Windows/System32/ (for windows, /etc/ssl/certs for linux)
             for authentication purposes. If None, a standard server (without secure
             authentication) will be used
         """
@@ -54,7 +54,10 @@ class GenericServer:
         else:
 
             # identify key
-            key = os.path.join(os.environ['WINDIR'], 'System32', key)
+            if operating_system == "Windows":
+                key = os.path.join(os.environ['WINDIR'], 'System32', key)
+            elif operating_system == "Linux":
+                key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
 
             if os.path.exists(key):
 

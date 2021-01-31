@@ -239,7 +239,7 @@ def hide_console(operating_system='Windows'):
     if operating_system == 'Windows':
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
-def create_server(service, logger=None, host='localhost'):
+def create_server(service, logger=None, operating_system='Windows', host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers
 
     :param service: service from which to launch a server
@@ -256,7 +256,8 @@ def create_server(service, logger=None, host='localhost'):
             server = GenericServer(
                 host=host,
                 port=port,
-                service=service
+                service=service,
+                operating_system = operating_system
             )
             timeout = 9999
         except ConnectionRefusedError:

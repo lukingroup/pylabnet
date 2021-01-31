@@ -159,6 +159,7 @@ class Controller:
         self.disconnection = False
         self.debug = False
         self.debug_level = None
+        self.operating_system = operating_system
 
         sys.stdout = StringIO()
 
@@ -185,7 +186,8 @@ class Controller:
                 host=self.host,
                 port=self.log_port,
                 module_tag=self.GUI_NAME+module_str,
-                ui=self.LOGGER_UI
+                ui=self.LOGGER_UI,
+                operating_system=self.operating_system
             )
         except ConnectionRefusedError:
             self.main_window.terminal.setText('Failed to connect to master. Shutting down')
@@ -221,14 +223,16 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=get_ip()
+                    host=get_ip(),
+                    operating_system=self.operating_system
                     )
             else:
                 try:
                     self.gui_server = GenericServer(
                         service=self.gui_service,
                         host=get_ip(),
-                        port=self.gui_port
+                        port=self.gui_port,
+                        operating_system = self.operating_system
                     )
                 except ConnectionRefusedError:
                     self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
@@ -316,14 +320,16 @@ class Controller:
         if self.LOG_PORT is None and not self.master:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=get_ip()
+                host=get_ip(),
+                operating_system = self.operating_system
                 )
         else:
             try:
                 self.log_server = GenericServer(
                     service=self.log_service,
                     host=get_ip(),
-                    port=self.log_port
+                    port=self.log_port,
+                    operating_system = self.operating_system
                     )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
@@ -657,7 +663,7 @@ class Controller:
 
     def _configure_logging(self):
         """ Defines what to do if the Start/Stop Logging button is clicked """
-        self.main_window.logfile_status_button.toggled.connect(self.start_stop_logging)
+        self.main_window.logfile_status_button.toggled.connect(lambda: self.start_stop_logging(master_log=False))
 
     def _configure_logfile(self):
         """ Defines what to do if the logfile radio button is clicked """

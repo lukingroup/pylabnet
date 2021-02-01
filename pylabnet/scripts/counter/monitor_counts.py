@@ -2,14 +2,13 @@
 
 import numpy as np
 import time
-import socket
 import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
+from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
 
 
 # Static methods
@@ -32,41 +31,67 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None):
+    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
         :param gui_client: (optional) instance of client of desired output GUI
         :param logger_client: (obj) instance of logger client.
         :param server_port: (int) port number of script server
+        :combined_channel: (bool) If true, show additional trace with summed counts.
         """
 
         self._ctr = ctr_client
+        self.log = logger_client
+        self.combined_channel = combined_channel
         self._bin_width = None
         self._n_bins = None
         self._ch_list = None
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
+        if self.combined_channel:
+            ui = 'count_monitor_combined'
+        else:
+            ui = 'count_monitor'
+
         # Instantiate GUI window
         self.gui = Window(
             gui_template=ui,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=get_ip(),
             port=server_port
         )
-
 
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
+
+        if self.combined_channel:
+            num_plots = 3
+        else:
+            num_plots = 2
+
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
             self.gui,
-            graph_widget=2,
+            graph_widget=num_plots,
             number_label=8,
-            event_button=2,
-            legend_widget=2
+            event_button=num_plots,
+            legend_widget=num_plots
         )
+
+
+        # Load config
+        self.config = {}
+        if config is not None:
+            self.config = load_script_config(
+                script='monitor_counts',
+                config=config,
+                logger=self.logger_client
+            )
+
+        if not 'name' in self.config:
+            self.config.update({'name': f'monitor{np.random.randint(1000)}'})
 
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
@@ -105,7 +130,7 @@ class CountMonitor:
             self._is_running = True
 
             self._ctr.start_trace(
-                name='monitor',
+                name=self.config['name'],
                 ch_list=self._ch_list,
                 bin_width=self._bin_width,
                 n_bins=self._n_bins
@@ -135,7 +160,7 @@ class CountMonitor:
             self._is_running = True
 
             # Clear counter and resume plotting
-            self._ctr.clear_ctr(name='monitor')
+            self._ctr.clear_ctr(name=self.config['name'])
             while self._is_running:
                 self._update_output()
 
@@ -197,8 +222,19 @@ class CountMonitor:
             # )
 
         # Handle button pressing
+        from functools import partial
+
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
-            clear_button.clicked.connect(lambda: self._clear_plot(plot_index))
+            clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
+
+        if self.combined_channel:
+            self.widgets['curve_combo'] = self.widgets['graph_widget'][index+1].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[color+1])
+            )
+            self.widgets['legend_widget'][index+1].addItem(
+                self.widgets['curve_combo'],
+                ' - '+'Combined Counts'
+            )
 
     def _clear_plot(self, plot_index):
         """ Clears the curves on a particular plot
@@ -206,15 +242,23 @@ class CountMonitor:
         :param plot_index: (int) index of plot to clear
         """
 
-        # Find all curves in this plot
-        for channel in self._plot_list[plot_index]:
-
+        # First, handle case where combined count channel is clears (very ugly).
+        if self.combined_channel and plot_index == len(self._plot_list):
+            channel = 'combo'
             # Set the curve to constant with last point for all entries
             self.widgets[f'curve_{channel}'].setData(
                 np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
             )
+        else:
+            # Find all curves in this plot
+            for channel in self._plot_list[plot_index]:
 
-        self._ctr.clear_ctr(name='monitor')
+                # Set the curve to constant with last point for all entries
+                self.widgets[f'curve_{channel}'].setData(
+                    np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
+                )
+
+        self._ctr.clear_ctr(name=self.config['name'])
 
     def _update_output(self):
         """ Updates the output to all current values"""
@@ -222,10 +266,12 @@ class CountMonitor:
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
 
-        counts = self._ctr.get_counts(name='monitor')
+        counts = self._ctr.get_counts(name=self.config['name'])
         counts_per_sec = counts*(1e12/self._bin_width)
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0
+
+        summed_counts = np.sum(counts_per_sec, axis=0)
 
         for index, count_array in enumerate(counts_per_sec):
 
@@ -253,6 +299,9 @@ class CountMonitor:
             self.widgets[f'curve_{channel}'].setData(count_array)
             self.widgets[f'number_label'][channel-1].setText(str(count_array[-1]))
 
+        if self.combined_channel:
+            self.widgets['curve_combo'].setData(summed_counts)
+
 
 def launch(**kwargs):
     """ Launches the count monitor script """
@@ -266,6 +315,11 @@ def launch(**kwargs):
         logger
     )
 
+
+    if config['combined_channel'] == 'True':
+        combined_channel = True
+    else:
+        combined_channel = False
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
@@ -277,7 +331,8 @@ def launch(**kwargs):
                 logger=logger
             ),
             logger_client=logger,
-            server_port=kwargs['server_port']
+            server_port=kwargs['server_port'],
+            combined_channel=combined_channel
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

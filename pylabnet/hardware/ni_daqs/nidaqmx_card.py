@@ -100,6 +100,18 @@ class Driver:
             return task.read(number_of_samples_per_channel = num_samples)
         return -1
 
+    def get_di_state(self, port, di_channel):
+        """Measures the state of a digital Input of a of NI DAQ mx card
+
+        :param port: (str) port name ['port0']
+        :param channel: (str) channel name ['line1']
+        """
+        channel = self._gen_di_ch_path(port, di_channel)
+        with nidaqmx.Task() as task:
+            task.di_channels.add_di_chan(channel, line_grouping=nidaqmx.constants.LineGrouping.CHAN_PER_LINE)
+            return task.read(number_of_samples_per_channel = 1)
+        return -1
+
     def create_timed_counter(
         self, counter_channel, physical_channel, duration=0.1, name=None
     ):
@@ -179,6 +191,16 @@ class Driver:
             device_name=self.dev,
             channel=channel
         )
+
+    def _gen_di_ch_path(self, port, di_channel):
+        """ Auxiliary method to build channel path string for digital inputs.
+
+        :param port: (str) port name ['port0']
+        :param channel: (str) channel name ['line0:1']
+        :return: (str) full channel name ['Dev1/port0/line0:1']
+        """
+
+        return f"{self.dev}/{port}/{di_channel}"
 
 
 class TimedCounter:
@@ -273,3 +295,10 @@ class TimedCounter:
         """
 
         return self._status
+
+
+if __name__ == '__main__':
+    port = 'port1'
+    channel = 'line5'
+    dev = Driver('Dev1')
+    dev.get_di_state(port=port, di_channel=channel)

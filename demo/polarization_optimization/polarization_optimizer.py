@@ -11,13 +11,13 @@ import matplotlib.pyplot as plt
 
 
 gpib_addres = 'USB0::0x1313::0x8022::M00579698::INSTR'
-#device = b'38154354'  #device serial number = b'38154354' #dummy pol setup
+# device = b'38154354'  #device serial number = b'38154354' #dummy pol setup
 device_num = 1 # pick number of device in list. Current pol paddles are device_num = 1 in list.
 
 # Instantiate
 logger = LogClient(
     host='139.180.129.96',
-    port=24949,
+    port=18891,
     module_tag='Polarization Optimizer'
 )
 power_meter = Driver(
@@ -60,7 +60,7 @@ pos = []
 iterationnum = 40
 stepnum = 20 #number of step angles within range Cannot go below 2 in full range to have enough time for paddle to repond (defined in move function in driver)
 ang_paddles = []
-power_paddles = []
+power_paddles = [] 
 
 for paddle in paddles:
     deviate = 170 #range of angle to scan
@@ -107,11 +107,11 @@ for paddle in paddles:
     itercount = 0
     
 PosF1 = pol_paddle.get_angle(paddles[0])
-print(f"paddle = {paddles[0].value} final_angle = {PosF1}")
+print(f"paddle = {paddles[0]} final_angle = {PosF1}")
 PosF2 = pol_paddle.get_angle(paddles[1])
-print(f"paddle = {paddles[1].value} final_angle = {PosF2}")
+print(f"paddle = {paddles[1]} final_angle = {PosF2}")
 PosF3 = pol_paddle.get_angle(paddles[2])
-print(f"paddle = {paddles[2].value} final_angle = {PosF3}")
+print(f"paddle = {paddles[2]} final_angle = {PosF3}")
 
 pol_paddle.close()
 

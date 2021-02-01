@@ -1,7 +1,7 @@
 from pylabnet.network.client_server import toptica_dl_pro, external_gui
 from pylabnet.scripts.lasers import wlm_monitor
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import unpack_launcher, get_gui_widgets, find_client, load_script_config
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, find_client, load_script_config
 from pylabnet.gui.pyqt.external_gui import Window
 
 import socket
@@ -27,7 +27,7 @@ class Controller:
         # Setup GUI
         self.gui = Window(
             gui_template=gui,
-            host=socket.gethostbyname(socket.gethostname()),
+            host=get_ip(),
             port=port
         )
         self.widgets = get_gui_widgets(

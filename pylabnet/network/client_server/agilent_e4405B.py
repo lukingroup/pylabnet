@@ -21,6 +21,9 @@ class Service(ServiceBase):
     def exposed_set_attenuation(self, db):
         return self._module.set_attenuation(db)
 
+    def exposed_set_reference_level(self, db):
+        return self._module.set_reference_level(db)
+
     def exposed_set_center_frequency(self, center_frequency):
         return self._module.set_center_frequency(center_frequency)
 
@@ -59,6 +62,9 @@ class Client(ClientBase):
 
     def set_attenuation(self, db):
         return self._service.exposed_set_attenuation(db)
+
+    def set_reference_level(self, db):
+        return self._service.exposed_set_reference_level(db)
 
     def set_center_frequency(self, center_frequency):
         return self._service.exposed_set_center_frequency(center_frequency)

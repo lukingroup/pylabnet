@@ -62,7 +62,7 @@ class PulseblockConstructor():
             elif pb_spec.pulsetype == "PSin":
 
                  pulse = po.PSin(
-                     ch=pb_spec.pulsetype,
+                     ch=pb_spec.channel,
                      dur=dur,
                      amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
                      freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
@@ -161,4 +161,3 @@ class PulseSpecifier():
         pulse_specifier_dict['name'] = self.pulsetype_name
 
         return pulse_specifier_dict
-

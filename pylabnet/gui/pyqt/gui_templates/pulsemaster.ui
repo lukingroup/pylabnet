@@ -410,20 +410,20 @@
          <property name="currentIndex">
           <number>0</number>
          </property>
-         <widget class="QWidget" name="dio_tab">
+         <widget class="QWidget" name="ch_tab">
           <attribute name="title">
-           <string>DIO setup</string>
+           <string>Channel setup</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QTableView" name="DIO_table">
+            <widget class="QTableView" name="ch_table">
              <property name="styleSheet">
               <string notr="true"/>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="update_DIO_button">
+            <widget class="QPushButton" name="update_ch_button">
              <property name="maximumSize">
               <size>
                <width>16777215</width>
@@ -437,7 +437,7 @@
               <string notr="true"/>
              </property>
              <property name="text">
-              <string>Update DIO Assignment</string>
+              <string>Update Channel Assignment</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -576,8 +576,8 @@ p, li { white-space: pre-wrap; }
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>510</width>
-                <height>466</height>
+                <width>98</width>
+                <height>89</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2">

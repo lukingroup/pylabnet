@@ -50,6 +50,7 @@ class PulseMaster:
 
         # Load dio configs.
         self.load_dio_assignment_from_dict()
+        self.load_ch_assignment_from_dict()
 
         # Instantiate GUI window
         self.gui = Window(
@@ -61,8 +62,8 @@ class PulseMaster:
         # Get Widgets
         self.widgets = get_gui_widgets(
             self.gui,
-            DIO_table=1,
-            update_DIO_button=1,
+            ch_table=1,
+            update_ch_button=1,
             add_pulse_layout=1,
             add_pulse_button=1,
             new_pulseblock_button=1,
@@ -85,7 +86,8 @@ class PulseMaster:
             awg_num_val=1,
             preview_seq_area=1,
             save_pulseblock=1,
-            load_pulseblock=1
+            load_pulseblock=1,
+            preserve_bits=1
         )
 
         # Initialize empty pulseblock dictionary.
@@ -115,8 +117,8 @@ class PulseMaster:
         # Initilize Pulse Selector Form
         self.setup_pulse_selector_form()
 
-         # Populate DIO table
-        self.populate_dio_table_from_dict()
+         # Populate channel table
+        self.populate_ch_table_from_dict()
 
         self.pulse_toolbox = QToolBox()
 
@@ -181,11 +183,14 @@ class PulseMaster:
         # Connect pulseblock selector object
         self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.pulseblock_dropdown_changed)
 
+        # Conect checkbox for DIO bit preservation option
+        self.widgets["preserve_bits"].stateChanged.connect(self.update_preserve_bits) #  TODO YQ Maybe no need for this
+
         # Connect Add variable button.
         self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
 
-        # Connect "Update DIO Assignment" Button
-        self.widgets['update_DIO_button'].clicked.connect(self.populate_dio_table_from_dict)
+        # Connect "Update Channel Assignment" Button
+        self.widgets['update_ch_button'].clicked.connect(self.populate_ch_table_from_dict)
 
         # Connect change of variable data to update variable dict function.
         self.variable_table_model.dataChanged.connect(self._update_variable_dict)
@@ -210,13 +215,21 @@ class PulseMaster:
         self.update_pulse_list_toolbox()
         self.plot_current_pulseblock()
 
+    def update_preserve_bits(self):
+        #  TODO YQ Maybe no need for this, instead just check in the upload_hdawg function
+        #  TODO YQ Find out how to pass the var_dict to the DIO handler
+        self.get_current_pb_constructor().var_dict["preserve_bits"] = self.widgets["preserve_bits"].isChecked()
+        
     def get_pb_specifier_from_dict(self, pulsedict):
-        """ Create PulseSpecifier object from dictioanry."""
+        """ Create PulseSpecifier object from dictionary."""
+
+        pulsetype_dict =  self._get_pulsetype_dict_by_pb_type(pulsedict['pulsetype'])
 
         pb_specifier = PulseSpecifier(
             channel = pulsedict['channel'],
             pulsetype = pulsedict['pulsetype'],
-            pulsetype_name = pulsedict['name']
+            pulsetype_name = pulsedict['name'],
+            is_analog = simple_eval(pulsetype_dict["is_analog"])
         )
 
         pb_specifier.set_timing_info(
@@ -290,7 +303,7 @@ class PulseMaster:
         # TODO find out how to update table without re-instanciation.
         # Update Variable table.
         self.variable_table_model = DictionaryTableModel(
-            self.vars,
+            self.vars, 
             header=["Variable", "Value"],
             editable=True
         )
@@ -352,7 +365,7 @@ class PulseMaster:
         self.pulsed_experiment = PulsedExperiment(
             pulseblocks=pulseblock,
             placeholder_dict=placeholder_dict,
-            assignment_dict=self.DIO_assignment_dict ,
+            assignment_dict=self.ch_assignment_dict,
             hd=self.hd,
             use_template=False,
             sequence_string=seq_template,
@@ -566,7 +579,7 @@ class PulseMaster:
             width=3
             )
             self.widgets["pulse_layout_widget"].addLegend()
-            self.widgets["pulse_layout_widget"].plot(x_ar, y_ar, pen=pen, name=ch)
+            self.widgets["pulse_layout_widget"].plot(x_ar, y_ar, pen=pen, name=ch.name)
 
     def compile_current_pulseblock(self, update_variables=True):
         """Compile the current pulseblock
@@ -855,7 +868,7 @@ class PulseMaster:
         return pb_constructor
 
     def get_current_pb_constructor(self):
-        """ Return PulseblockCOnstructor of currently selected Pulseblock."""
+        """ Return PulseblockConstructor of currently selected Pulseblock."""
         # Read current pulesblock name from Combobox.
         current_pb_name = self.widgets["pulseblock_combo"].currentText()
 
@@ -972,7 +985,7 @@ class PulseMaster:
 
         # Check if constructor with same name already exists
         if pb_constructor.name in [pb_constructor.name for pb_constructor in self.pulseblock_constructors]:
-            self.showerror(f"You have already initilized a pulsblock with the name '{pb_constructor.name}'.")
+            self.showerror(f"You have already initilized a pulseblock with the name '{pb_constructor.name}'.")
             self.add_pb_popup.close()
             return
 
@@ -1011,7 +1024,8 @@ class PulseMaster:
         pulse_specifier = PulseSpecifier(
             channel = pulse_data_dict["channel"],
             pulsetype = pulsetype_dict["pulseblock_type"],
-            pulsetype_name = pulsetype_dict["name"]
+            pulsetype_name = pulsetype_dict["name"],
+            is_analog = simple_eval(pulsetype_dict["is_analog"])
         )
 
         # Add timing info.
@@ -1056,11 +1070,13 @@ class PulseMaster:
             pulse_data_dict=puls_data_dict
         )
 
+
         # Add pulse to currently selected pulseblockconstructor.
         active_pb_constructor = self.get_current_pb_constructor()
 
-        # Append pb_constructor to pulsebloack and attempt compilation.
+        # Append pb_constructor to pulseblock and attempt compilation.
         if active_pb_constructor is not None:
+
             active_pb_constructor.pulse_specifiers.append(pulse_specifier)
         else:
             self.showerror("Please create a Pulseblock before adding pulses.")
@@ -1068,7 +1084,7 @@ class PulseMaster:
 
         compilation_successful = self.compile_current_pulseblock()
 
-        # If compilation failed, remove pb_specifiera and exit
+        # If compilation failed, remove pb_specifiers and exit
         if not compilation_successful:
             active_pb_constructor.pulse_specifiers.remove(pulse_specifier)
             return
@@ -1141,32 +1157,30 @@ class PulseMaster:
         """
 
         channel = self.pulse_selector_channelselection.text()
-        if channel not in self.DIO_assignment_dict.keys():
+        if channel not in self.ch_assignment_dict.keys():
             self.showerror("Please provide valid channel name.")
-            channel_validated = False
-        else:
-            channel_validated = True
+            return False, None
 
         # Get data from fields
-        if channel_validated:
-            pulsetype_dict = self._current_pulsetype_dict()
-            pulsedict_data = self.return_pulsedict(pulsetype_dict)
+        pulsetype_dict = self._current_pulsetype_dict()
+        pulsedict_data = self.return_pulsedict(pulsetype_dict)
 
-            # Validate data
-            data_validated, pulsedict = self.clean_and_validate_pulsedict(pulsedict_data)
+        # Validate data
+        data_validated, pulsedict = self.clean_and_validate_pulsedict(pulsedict_data)
+        if not data_validated:
+            return False, None
 
-            # Add channel to dict
-            pulsedict['channel'] = channel
-        else:
-            data_validated = False
-            pulsedict = None
+        # Add channel to dict
+        pulsedict['channel'] = channel
 
-        if  data_validated and channel_validated:
-            valid = True
-        else:
-            valid = False
+        # Check that the pulse type matches the channel type
+        channel_is_analog = (self.ch_assignment_dict[channel][0] == "analog")
+        if channel_is_analog != eval(pulsetype_dict["is_analog"]):
+            self.showerror(f"Type of pulse {pulsetype_dict['name']} " 
+                            f"does not match channel {channel}.")
+            return False, None
 
-        return valid, pulsedict
+        return True, pulsedict
 
     def showerror(self, error_message):
         """ Show error message."""
@@ -1250,7 +1264,7 @@ class PulseMaster:
         return pulsetype_dict
 
     def _current_pulsetype_dict(self):
-        """Get DIctionary of durrently selected pulsetype"""
+        """Get Dictionary of durrently selected pulsetype"""
         return self._get_pulsetype_dict_by_name_by_name(self._get_current_pulsetype())
 
     def _get_pulse_mod_field_name(self, field_dict, uid):
@@ -1325,32 +1339,32 @@ class PulseMaster:
             combobox.addItem(pulsetype['name'])
 
 
-    def set_dio_channel_completer(self):
+    def set_channel_completer(self):
         """Reset the autocomplete for the channel selection."""
-        completer = QCompleter(self.DIO_assignment_dict.keys())
+        completer = QCompleter(self.ch_assignment_dict.keys())
         self.pulse_selector_channelselection.setCompleter(completer)
 
-    def load_dio_assignment_from_dict(self):
-        """Read in DIO assignment dictionary and store as member variable."""
-        # Load DIO assignment.
-        self.DIO_assignment_dict = load_config(
-                config_filename=self.config_dict['DIO_dict'],
+    def load_ch_assignment_from_dict(self):
+        """Read in channel assignment dictionary and store as member variable."""
+        # Load channel assignment.
+        self.ch_assignment_dict = load_config(
+                config_filename=self.config_dict['ch_dict'],
                 logger=self.log
         )
 
-    def populate_dio_table_from_dict(self):
-        '''Populate DIO assignment table from DIO assignment dict.'''
+    def populate_ch_table_from_dict(self):
+        '''Populate channel assignment table from channel assignment dict.'''
 
-        # Update DIO assignments from dict
-        self.load_dio_assignment_from_dict()
+        # Update channel assignments from dict
+        self.load_ch_assignment_from_dict()
 
-        self.model = DictionaryTableModel(self.DIO_assignment_dict, header=["Channel Name", "DIO Bit"])
-        self.widgets['DIO_table'].setModel(self.model)
+        self.model = DictionaryTableModel(self.ch_assignment_dict, header=["Channel Name", "Type", "DIO Bit / Channel"])
+        self.widgets['ch_table'].setModel(self.model)
 
         # Update completer.
-        self.set_dio_channel_completer()
+        self.set_channel_completer()
 
-        self.log.info('DIO settings successfully loaded.')
+        self.log.info('Channel settings successfully loaded.')
 
 def launch(**kwargs):
     """ Launches the pulsemaster script """

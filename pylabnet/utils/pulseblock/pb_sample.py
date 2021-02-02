@@ -130,15 +130,20 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
 
     for ch in pb_obj.dflt_dict.keys():
 
+        # Skip the channel if it is not digital
+        if ch.is_analog: 
+            continue
+
+        ch_name = ch.name
+
         # Fill the array with default values
-        samp_dict[ch] = pb_obj.dflt_dict[ch].get_value(t_ar=t_ar)
+        samp_dict[ch_name] = pb_obj.dflt_dict[ch].get_value(t_ar=t_ar)
 
         # Iterate through each pulse item and calculate
         # non-default values for corresponding T-points
         if ch in pb_obj.p_dict.keys():
-
             for p_item in pb_obj.p_dict[ch]:
-
+            
                 # find indexes of pulse edges
                 indx_1 = int(p_item.t0 * samp_rate)
                 indx_2 = int((p_item.t0 + p_item.dur) * samp_rate)
@@ -149,7 +154,7 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
                 )
 
                 # set the values to sample array
-                samp_dict[ch][indx_1 : indx_2] = val_ar
+                samp_dict[ch_name][indx_1 : indx_2] = val_ar
 
     if debug:
         return samp_dict, n_pts, add_pts, t_ar

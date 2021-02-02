@@ -32,7 +32,6 @@ class DfltPulseBase:
             'by direct comparison operation.'
         )
 
-
 # Pulse classes ---------------------------------------------------------------
 
 class PTrue(PulseBase):
@@ -44,6 +43,7 @@ class PTrue(PulseBase):
 
         # Define an automatic default.
         self.auto_default = DFalse()
+        self.is_analog = False
 
 
     def __str__(self):
@@ -68,6 +68,7 @@ class PFalse(PulseBase):
 
         # Define an automatic default.
         self.auto_default = DTrue()
+        self.is_analog = False
 
     def __str__(self):
         return 'False'
@@ -102,6 +103,7 @@ class PSin(PulseBase):
         self._amp = amp
         self._freq = freq
         self._ph = ph
+        self.is_analog = True
 
         # Define an automatic default.
         self.auto_default = DConst(val=0.0)
@@ -140,6 +142,7 @@ class PConst(PulseBase):
 
         super().__init__(ch=ch, dur=dur, t0=t0)
         self._val = val
+        self.is_analog = True
 
         # Define an automatic default.
         self.auto_default = DConst(val=0.0)
@@ -247,6 +250,3 @@ class DConst(DfltPulseBase):
         ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
 
         return ret_ar
-
-
-

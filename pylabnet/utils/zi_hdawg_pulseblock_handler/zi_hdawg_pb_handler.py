@@ -1,4 +1,3 @@
-
 import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample
 from pylabnet.utils.pulseblock.pulse import PFalse
@@ -59,7 +58,7 @@ class DIOPulseBlockHandler():
             self.assignment_dict = {}
 
             # Ask user to assign all channels
-            self._aks_for_dio_assignment(self.pb.p_dict.keys())
+            self._ask_for_dio_assignment(self.pb.p_dict.keys())
 
         # Store assignment dict if provided.
         else:
@@ -73,7 +72,7 @@ class DIOPulseBlockHandler():
         # Store remapped samples, number of samples and number of traces.
         self.sample_dict, self.num_samples, self.num_traces = self._get_remapped_samples(samp_rate=samp_rate)
 
-    def _aks_for_dio_assignment(self, keys_to_assign):
+    def _ask_for_dio_assignment(self, keys_to_assign):
         """Ask user to provide DIO bit for trace
 
         :keys_to_assign: (np.array) Array of keys in pulseblock dictionary
@@ -97,20 +96,20 @@ class DIOPulseBlockHandler():
             if dio_bit in self.assignment_dict.values():
                 self.log.error(f"DIO bit is {dio_bit} already in use.")
 
-            self.assignment_dict[trace_name] = dio_bit
+            # assignment_dict items are in the form (analog/digital, channel)
+            self.assignment_dict[trace_name][1] = dio_bit
 
     def _check_key_assignments(self):
         """Check if key values in assignment dict coincide with keys in pulseblock"""
 
-        if not self.assignment_dict.keys() == self.pb.p_dict.keys():
-            for pb_key in self.pb.p_dict.keys():
-                if pb_key not in self.assignment_dict.keys():
-                    self.log.warn(
-                        f"Key '{pb_key}' in pulseblock instance not found in assignment dictionary, please specify."
-                    )
+        for pb_key in self.pb.p_dict.keys():
+            if pb_key.name not in self.assignment_dict.keys():
+                self.log.warn(
+                    f"Key '{pb_key.name}' in pulseblock instance not found in assignment dictionary, please specify."
+                )
 
-                    # Ask user to provide DIO bit for key.
-                    self._aks_for_dio_assignment([pb_key])
+                # Ask user to provide DIO bit for key.
+                self._ask_for_dio_assignment([pb_key])
 
     def _get_remapped_samples(self, samp_rate):
         """Transforms pulsblock object into dictionary of sample-wise defined digital waveforms.
@@ -134,7 +133,8 @@ class DIOPulseBlockHandler():
         sample_dict = {}
         for channel_name in traces.keys():
             sample_dict.update(
-                {self.assignment_dict[channel_name]: traces[channel_name]}
+                # assignment_dict items are in the form (analog/digital, channel)
+                {self.assignment_dict[channel_name][1]: traces[channel_name]}
             )
 
         return sample_dict, num_samples, num_traces
@@ -254,7 +254,7 @@ class DIOPulseBlockHandler():
             sequence += "var masked_state = ~mask & current_state;"
 
         for i, waittime in enumerate(waittimes):
-            summed_waittime = np.sum(waittimes[0:i]) + 1
+            summed_waittime = np.sum(waittimes[0:i]) 
             waveform[summed_waittime:summed_waittime+waittime] = reduced_codewords[i]
 
             # Add setDIO command to sequence

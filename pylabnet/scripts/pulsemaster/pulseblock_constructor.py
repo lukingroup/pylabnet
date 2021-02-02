@@ -123,11 +123,11 @@ class PulseblockConstructor():
 class PulseSpecifier():
     """Container storing info pully specifiying pulse within pulse sequence."""
 
-
-    def __init__(self, channel, pulsetype, pulsetype_name):
+    def __init__(self, channel, pulsetype, pulsetype_name, is_analog):
         self.channel = channel
         self.pulsetype = pulsetype
         self.pulsetype_name = pulsetype_name
+        self.is_analog = is_analog
 
         # Generate random unique identifier.
         self.uid = uuid.uuid1()
@@ -152,7 +152,7 @@ class PulseSpecifier():
         pulse_specifier_dict = {}
         pulse_specifier_dict['pulsetype'] = self.pulsetype
         pulse_specifier_dict['channel'] = self.channel
-
+        pulse_specifier_dict['is_analog'] = self.is_analog
 
         pulse_specifier_dict['dur'] = self.dur
         pulse_specifier_dict['offset'] = self.offset

@@ -310,7 +310,7 @@ class IQ_Calibration():
 		return if_f[ii], freq-if_f[ii]
 
 	def get_fidelity(self, hm1, h0, h1, h2, h3, iff):
-		return 0
+		return 1 - 10**((hm1-h1)/10)/(2*iff) - 10**((h0-h1)/10)/(iff) - 10**((h2-h1)/10)/(iff) - 10**((h3-h1)/10)/(2*iff)
 
 def main():
 	mw_client = Client(

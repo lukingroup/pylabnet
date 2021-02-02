@@ -46,10 +46,8 @@ class PulseMaster:
 
         # Instanciate HD
         dev_id = self.config_dict['HDAWG_dev_id']
-        self.hd = Driver(dev_id, logger=self.log)
+        self.hd = Driver(dev_id, logger=self.log)   
 
-        # Load channel configs.
-        self.load_ch_assignment_from_dict()
 
         # Instantiate GUI window
         self.gui = Window(
@@ -92,7 +90,6 @@ class PulseMaster:
         # Initialize empty pulseblock dictionary.
         self.pulseblocks = {}
 
-
         # Initialize empty dictionary containing the contruction
         # Instructions for the currently displayed pulseblock.
         self.pulseblock_constructors = []
@@ -124,7 +121,6 @@ class PulseMaster:
         # Make pulse toolbox invisible
         #self.widgets['pulse_toolbox'].hide()
         self.widgets['pulse_scrollarea'].setWidget(self.pulse_toolbox)
-
 
         # Initilize sequencer table
         self.seq_var_dict = {}
@@ -531,6 +527,10 @@ class PulseMaster:
                     t_ar = np.linspace(t1, t2, 5000)
                     x_ar.extend(t_ar)
                     y_ar.extend(p_item.get_value(t_ar))
+
+                # Final zero-point
+                x_ar.append(pb_obj.dur)
+                y_ar.append(0)
 
                 # Normalize the wave height and offset by channel index
                 y_ar /= (2.5 * np.max(y_ar))
@@ -1378,10 +1378,22 @@ class PulseMaster:
     def load_ch_assignment_from_dict(self):
         """Read in channel assignment dictionary and store as member variable."""
         # Load channel assignment.
-        self.ch_assignment_dict = load_config(
+        ch_assignment_dict = load_config(
                 config_filename=self.config_dict['ch_dict'],
                 logger=self.log
         )
+
+        # Check for duplciate channels
+        channels = []
+        for item in ch_assignment_dict.values():
+            if item[1] not in channels: 
+                channels.append(item[1])
+            else:
+                self.showerror(f"Channel number {item[1]} is duplicated in the "
+                    "chanel assignment dictionary. ")
+                return
+
+        self.ch_assignment_dict = ch_assignment_dict
 
     def populate_ch_table_from_dict(self):
         '''Populate channel assignment table from channel assignment dict.'''

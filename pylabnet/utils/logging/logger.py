@@ -176,15 +176,17 @@ class LogClient:
 
                     if self.operating_system == 'Windows':
                         key = os.path.join(os.environ['WINDIR'], 'System32', key)
+                        cert = key
                     elif self.operating_system == 'Linux':
                         key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
+                        cert = os.path.join('/etc/ssl/certs', 'pylabnet.cert')
 
                     self._connection = rpyc.ssl_connect(
                         host=self._host,
                         port=self._port,
                         config={'allow_public_attrs': True},
                         keyfile=key,
-                        certfile=key
+                        certfile=cert
                     )
                 self._service = self._connection.root
 

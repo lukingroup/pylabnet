@@ -106,7 +106,19 @@ class Controller:
             else:
                 self.staticproxy = False
 
-        self.host = get_ip()
+        self.network_interface = None
+        self.operating_system = operating_system
+
+        try:
+            self.network_interface = load_config('network_config')['network_interface']
+        except:
+            self.main_window.terminal.setText('Critical error: '
+                                        'no network_interface found in network_config.json')
+            self.main_window.force_update()
+            time.sleep(10)
+            raise
+
+        self.host = get_ip(operating_system=self.operating_system, network_interface=self.network_interface)
         self.update_index = 0
 
         # Retrieve static port info.
@@ -119,7 +131,7 @@ class Controller:
                 raise
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
-            hide_console()
+            hide_console(operating_system=self.operating_system)
         elif self.proxy:
             try:
                 self.host = sys.argv[2]
@@ -129,7 +141,7 @@ class Controller:
             show_console()
             self.log_port = int(input('Please enter the master Logger Port:\n>> '))
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
-            hide_console()
+            hide_console(operating_system=self.operating_system)
         elif self.staticproxy:
             try:
                 static_proxy_dict = load_config('static_proxy')
@@ -141,7 +153,7 @@ class Controller:
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
-            hide_console()
+            hide_console(operating_system=self.operating_system)
         else:
             self.log_port = self.LOG_PORT
             self.gui_port = self.GUI_PORT
@@ -223,14 +235,14 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=get_ip(),
+                    host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
                     operating_system=self.operating_system
                     )
             else:
                 try:
                     self.gui_server = GenericServer(
                         service=self.gui_service,
-                        host=get_ip(),
+                        host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
                         port=self.gui_port,
                         operating_system = self.operating_system
                     )
@@ -320,14 +332,14 @@ class Controller:
         if self.LOG_PORT is None and not self.master:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=get_ip(),
+                host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
                 operating_system = self.operating_system
                 )
         else:
             try:
                 self.log_server = GenericServer(
                     service=self.log_service,
-                    host=get_ip(),
+                    host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
                     port=self.log_port,
                     operating_system = self.operating_system
                     )
@@ -352,7 +364,7 @@ class Controller:
             else:
                 self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
-            ip_str_2 = f' ({get_ip()})'
+            ip_str_2 = f' ({get_ip(operating_system=self.operating_system, network_interface=self.network_interface)})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2
@@ -832,13 +844,23 @@ def main_proxy():
 def main_master():
     """ Runs the launch controller overriding commandline arguments in master mode """
 
-    log_controller = Controller(master=True)
+    operating_system = get_os()
+
+    if operating_system not in ['Linux', 'Windows']:
+        raise UnsupportedOSException
+
+    log_controller = Controller(operating_system=operating_system, master=True)
     run(log_controller)
 
 def main_staticproxy():
     """ Runs the launch controller overriding commandline arguments in staticproxy mode """
 
-    log_controller = Controller(staticproxy=True)
+    operating_system = get_os()
+
+    if operating_system not in ['Linux', 'Windows']:
+        raise UnsupportedOSException
+
+    log_controller = Controller(operating_system=operating_system, staticproxy=True)
     run(log_controller)
 
 def run(log_controller):
@@ -894,4 +916,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_master()

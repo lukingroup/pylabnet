@@ -15,6 +15,7 @@ from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
+import netifaces as ni
 
 
 def str_to_float(in_val):
@@ -809,18 +810,28 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
 
     subprocess.Popen(cmd, shell=True)
 
-def get_ip():
-    """ Returns a primary IP address """
+def get_ip(operating_system='Windows', network_interface='eth0'):
+    """ Returns a primary IP address 
+    
+    :network_interface: (str) Used for Linux compatibility. Network interface of target IP address.
+        Can be found out by running ifconfig.
+    """
 
-    ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
-    if len(ip_list) == 1:
-        return ip_list[0]
-    else:
-        filtered_ip = [ip for ip in ip_list if ip.startswith('140')]
-        if len(filtered_ip) == 0:
+    if operating_system == 'Windows':
+
+        ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
+        if len(ip_list) == 1:
             return ip_list[0]
         else:
-            return filtered_ip[0]
+            filtered_ip = [ip for ip in ip_list if ip.startswith('140')]
+            if len(filtered_ip) == 0:
+                return ip_list[0]
+            else:
+                return filtered_ip[0]
+
+    elif operating_system == 'Linux':
+        ip = ni.ifaddresses(network_interface)[ni.AF_INET][0]['addr']
+        return ip
 
 def HDAWG_to_breakout_box(pin):
     if pin < 8 or (pin < 24 and pin >= 16):

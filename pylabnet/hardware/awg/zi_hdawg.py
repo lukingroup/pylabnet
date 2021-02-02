@@ -567,6 +567,9 @@ class Sequence():
                 found_placeholders.remove(found_placeholder)
 
         return found_placeholders
+        
+    def preprend_sequence(self, string):
+        self.sequence = string + self.sequence
 
     def is_ready(self):
         """ Return True if all placeholders have been replaced"""
@@ -630,5 +633,3 @@ class Sequence():
 
             # Replace waveforms
             self.replace_waveforms(self.waveform_dict )
-
-

@@ -10,32 +10,30 @@ SEQ_SAMP_RATE = 300e6
 SETDIO_OFFSET = 4
 
 
-class DIOPulseBlockHandler():
+class AWGPulseBlockHandler():
 
-    def __init__(self, pb, assignment_dict=None, samp_rate=SEQ_SAMP_RATE, 
-                 hd=None, end_low=True, preserve_bits=False):
-        """ Initializes the pulse block handler for DIO
+    def __init__(self, pb, assignment_dict=None, exp_config_dict=None,
+                 samp_rate=SEQ_SAMP_RATE,  hd=None, end_low=True):
+        """ Initializes the pulse block handler for the ZI HDAWG.
 
         :hd: (object) And instance of the zi_hdawg.Driver()
         :pb: (object) An instance of a pb.PulseBlock()
         :samp_rate: (float) Sampling rate of HDAWG sequencer (300 MHz)
 
         :assignment_dict: (dictionary) Dictionary mapping the channel names in the
-            pulse block to DIO channels. e.g.
+            pulse block to DIO bits or analog channels. e.g.
             {
-                'mw_gate' : 1,
-                'ctr' : 2
+                "mw_gate" : ["dio", 0],
+                "ctr" : ["dio", 1],
+                "laser" : ["analog", 7],
             }
-            assigns the channel mw_gate to DIO bit 1, etc.
 
             The assignment dictionary can be incomplete,
             in which case the user will be asked to provide the
             missing values. If no assignment dictionary is
-            provided, user is asked to provide all DIO bit values.
-
+            provided, user is asked to provide all channel values.
+        :exp_config_dict: (dict) Dictionary of any experiment configurations.
         :end_low: (bool) whether or not to force the sequence to end low
-        :preserve_bit: (bool) whether or not to avoid overwriting other DIO
-            bits that are not being used by the pulse. 
         """
 
         # Use the log client of the HDAWG.
@@ -49,55 +47,70 @@ class DIOPulseBlockHandler():
         self.end_low = end_low
 
         self.sr = samp_rate
-        self.preserve_bits = preserve_bits        
+        self.exp_config_dict = exp_config_dict        
 
         # Ask user for bit assignment if no dictionary provided.
         if assignment_dict is None:
-
             # Initiate empty dictionary
             self.assignment_dict = {}
-
             # Ask user to assign all channels
-            self._ask_for_dio_assignment(self.pb.p_dict.keys())
+            self._ask_for_ch_assignment(self.pb.p_dict.keys())
 
         # Store assignment dict if provided.
         else:
             self.assignment_dict = assignment_dict
-
             # Check key value integrity of assignment dict.
             self._check_key_assignments()
 
-        self.DIO_bits = self.assignment_dict.values()
+        self.DIO_bits = [value[1] for value in self.assignment_dict.values() if value[0] == "dio"]
+        self.analog_chs = [value[1] for value in self.assignment_dict.values() if value[0] == "analog"]
 
-        # Store remapped samples, number of samples and number of traces.
-        self.sample_dict, self.num_samples, self.num_traces = self._get_remapped_samples(samp_rate=samp_rate)
+        # Store remapped samples, number of samples and number of traces for the
+        # digital channels.
+        self.digital_sample_dict, self.num_digital_samples, self.num_digital_traces = self._get_remapped_digital_samples(samp_rate=samp_rate)
 
-    def _ask_for_dio_assignment(self, keys_to_assign):
-        """Ask user to provide DIO bit for trace
+    def _ask_for_ch_assignment(self, keys_to_assign):
+        """Ask user to provide bit/channel number for trace
 
         :keys_to_assign: (np.array) Array of keys in pulseblock dictionary
             (trace names).
         """
 
         for trace_name in keys_to_assign:
-            dio_bit = input(f"Please assign a DIO bit (0-31) to pulse trace '{trace_name}':")
 
-            # Check if user has entered a int.
-            wrong_int_msg = "Please enter an integer from 0-31."
-            try:
-                dio_bit = int(dio_bit)
-            except ValueError:
-                self.log.error(wrong_int_msg)
+            if trace_name.is_analog:
+                ch_num = input(f"Please assign an analog channel (0-7) to pulse trace '{trace_name.name}':")
 
-            if dio_bit not in range(32):
-                self.log.error(wrong_int_msg)
+                # Check if user has entered a int.
+                wrong_int_msg = "Please enter an integer from 0-7."
+                try:
+                    ch_num = int(ch_num)
+                except ValueError:
+                    self.log.error(wrong_int_msg)
 
-            # Check if DIO bit is already assigned
-            if dio_bit in self.assignment_dict.values():
-                self.log.error(f"DIO bit is {dio_bit} already in use.")
+                if ch_num not in range(8):
+                    self.log.error(wrong_int_msg)
+
+            else:
+                ch_num = input(f"Please assign a DIO bit (0-31) to pulse trace '{trace_name.name}':")
+
+                # Check if user has entered a int.
+                wrong_int_msg = "Please enter an integer from 0-31."
+                try:
+                    ch_num = int(ch_num)
+                except ValueError:
+                    self.log.error(wrong_int_msg)
+
+                if ch_num not in range(32):
+                    self.log.error(wrong_int_msg)
+
+            # Check if channel is already assigned
+            if ch_num in self.assignment_dict.values():
+                self.log.error(f"DIO bit / Channel {ch_num} already in use.")
 
             # assignment_dict items are in the form (analog/digital, channel)
-            self.assignment_dict[trace_name][1] = dio_bit
+            self.assignment_dict[trace_name][0] = "analog" if trace_name.is_analog else "dio"
+            self.assignment_dict[trace_name][1] = ch_num
 
     def _check_key_assignments(self):
         """Check if key values in assignment dict coincide with keys in pulseblock"""
@@ -108,11 +121,11 @@ class DIOPulseBlockHandler():
                     f"Key '{pb_key.name}' in pulseblock instance not found in assignment dictionary, please specify."
                 )
 
-                # Ask user to provide DIO bit for key.
-                self._ask_for_dio_assignment([pb_key])
+                # Ask user to provide channel number for key.
+                self._ask_for_ch_assignment([pb_key])
 
-    def _get_remapped_samples(self, samp_rate):
-        """Transforms pulsblock object into dictionary of sample-wise defined digital waveforms.
+    def _get_remapped_digital_samples(self, samp_rate):
+        """Transforms pulseblock object into dictionary of sample-wise defined digital waveforms.
 
         :samp_rate: (float) Sampling rate of HDAWG sequencer
         Returns dictionary with keys corresponding to DIO bit numbers and
@@ -120,45 +133,45 @@ class DIOPulseBlockHandler():
         """
 
         # Turn pulse block into sample dictionary
-        sampled_pb = pb_sample(self.pb, samp_rate=samp_rate)
+        sampled_digital_pb = pb_sample(self.pb, samp_rate=samp_rate)
 
         # Number of samples per pulse
-        num_samples = sampled_pb[-2]
-        traces = sampled_pb[0]
+        num_digital_samples = sampled_digital_pb[-2]
+        traces = sampled_digital_pb[0]
 
         # Number of different traces
-        num_traces = len(traces)
+        num_digital_traces = len(traces)
 
-        # Create dictionary with channel names replaces by DIO bit
-        sample_dict = {}
+        # Create dictionary with channel names replaced by DIO bit
+        digital_sample_dict = {}
         for channel_name in traces.keys():
-            sample_dict.update(
+            digital_sample_dict.update(
                 # assignment_dict items are in the form (analog/digital, channel)
                 {self.assignment_dict[channel_name][1]: traces[channel_name]}
             )
 
-        return sample_dict, num_samples, num_traces
+        return digital_sample_dict, num_digital_samples, num_digital_traces
 
-    def gen_codewords(self):
+    def gen_digital_codewords(self):
         """Generate array of DIO codewords.
 
         Given the remapped sample array, translate it into an
         array of DIO codewords, sample by sample.
         """
 
-        dio_bits = self.sample_dict.keys()
+        dio_bits = self.digital_sample_dict.keys()
 
         # Array storing one codeword per sample.
-        dio_codewords = np.zeros(self.num_samples, dtype='int64')
+        dio_codewords = np.zeros(self.num_digital_samples, dtype='int64')
 
-        for sample_num in range(self.num_samples):
+        for sample_num in range(self.num_digital_samples):
 
             # Initial codeword: 00000 ... 0000
             codeword = 0b0
 
             for dio_bit in dio_bits:
 
-                sample_val = self.sample_dict[dio_bit][sample_num]
+                sample_val = self.digital_sample_dict[dio_bit][sample_num]
 
                 # If value is True, add 1 at dio_bit-th position
                 if sample_val:
@@ -177,13 +190,33 @@ class DIOPulseBlockHandler():
             dio_codewords[sample_num] = codeword
 
         return dio_codewords
+    
+    def gen_analog_codewords(self):
+        """Generate the codewords for the analog channels and the timestep in
+        sample number that the codewords should be executed at.
 
-    def zip_dio_commands(self, dio_codewords):
+        :return: analog_setup (str): AWG commands used for setup of the pulse
+            sequence and will only need to be run once even if the sequence is 
+            run multiple times.
+        :return: analog_codewords (list of str tuples): List of analog codewords 
+            to be placed inside the loop and run every iteration. The codewords  
+            in each tuple should be run at the "same" timstep (up to the time 
+            taken to run each command).
+        :return: analog_times (list of int): List of time steps at which each 
+            codeword tuple should be run.
+        """
+        # TODO YQ
+        analog_setup, analog_codewords, analog_times = "", [], []
+        
+
+        return analog_setup, analog_codewords, analog_times
+
+    def zip_digital_commands(self, dio_codewords): 
         """Generate zipped version of DIO commands.
 
-        This will reduce the digital waveform to
-        specify the times, when the DIO output changes, and
-        corresponsing waittimes in between.
+        This will reduce the digital waveform to specify the times, when the DIO 
+        output changes, and corresponsing waittimes in between. Does not 
+        account for the time taken for the wait() command.
 
         :wait_offest: (int) Number of samples to adjust the waittime in order to
             account for duration of setDIO() command.
@@ -219,18 +252,39 @@ class DIOPulseBlockHandler():
 
         return reduced_codewords, waittimes
 
-    def construct_dio_sequence(self, codewords, reduced_codewords, waittimes, wait_offset=SETDIO_OFFSET):
-        """Construct .seqc sequence representing digital waveform
+    def combine_command_timings(self, reduced_digital_codewords, digital_waittimes, 
+                                analog_codewords, analog_times):
 
-        This function also checks if the initial waveform can be reconstructed by the
-        reduced codewords and the waittimes.
+        """ Combine the commands and timings from the analog and digital commands
+        to give a combined list of codewords and wait time intervals. 
 
-        :codewords: (np.array) The full, sample-by-sample array of DIO codewords
-            representing the waveform.
-        :reduced_codewords: (np.array) Array of unique codewords
-            (without repetitions) played back, in sequential order.
-        :waittimes: (np.array) Array of waittimes between setDIO() commands,
-            in sequential order.
+        :reduced_digital_codewords: (list of str) Array of unique digital 
+            codewords in time order.
+        :digital_waittimes: (list of int) Array of wait times between each 
+            digital command.            
+        :analog_codewords: (list of str tuples) Array of digital commands in 
+            time order. Each entry is a tuple as there could be multiple comands 
+            that need to be run at a given timestep.
+        :analog_times: (list of int) Array of wait times between each analog 
+            command.            
+        """
+
+        # TODO YQ
+        combined_codewords, combined_waittimes  = reduced_digital_codewords, digital_waittimes
+
+        return combined_codewords, combined_waittimes 
+
+    # TODO YQ: THis will need to incorporate both the digital and analog reduced
+    # TODO YQ: codewords and interleaved waittimes.
+    def construct_awg_sequence(self, reduced_codewords, waittimes, wait_offset=SETDIO_OFFSET):
+        """Construct .seqc sequence representing the AWG instructions to output
+        a set of pulses over multiple channels
+
+        :reduced_codewords: (list) Array of unique codewords
+            (without repetitions) played back, in sequential order, from both
+            digital and analog channels.
+        :waittimes: (np.array) Array of waittimes between commands, in 
+            sequential order.
         :wait_offset: (int) Number of samples to adjust the waittime in order to
             account for duration of setDIO() command.
         """
@@ -242,29 +296,28 @@ class DIOPulseBlockHandler():
         set_dio_raw = "setDIO({});"
         wait_raw = "wait({});"
 
-        if self.preserve_bits:
+        if self.exp_config_dict["preserve_bits"]:
             # Read current output state of the DIO
             sequence += "var current_state = getDIO();" # TODO YQ: change to a correct way of reading current bits
 
             # Mask is 1 in the position of each used DIO bit
-            mask  = sum(1 << bit for bit in self.sample_dict.keys())
-            # Display in binary for clarity
+            mask  = sum(1 << bit for bit in self.digital_sample_dict.keys())
             sequence += f"var mask = {bin(mask)};" 
+
             # masked_state zeros out bits in the mask from the current_state
             sequence += "var masked_state = ~mask & current_state;"
 
         for i, waittime in enumerate(waittimes):
-            summed_waittime = np.sum(waittimes[0:i]) 
-            waveform[summed_waittime:summed_waittime+waittime] = reduced_codewords[i]
+
+            # TODO: was used for previous redundant error checking. 
+            # TODO: see if we can do something similar with the combined digital & analog codeword seqs
+            # summed_waittime = np.sum(waittimes[0:i]) 
+            # waveform[summed_waittime:summed_waittime+waittime] = reduced_codewords[i]
 
             # Add setDIO command to sequence
             dio_codeword = int(reduced_codewords[i])
-            if self.preserve_bits:
-                # In theory this mask should have no effect, but we zero out any
-                # bits that fall outside the mask just in case.
-                masked_codeword = (mask & dio_codeword)
-                # Note this cannot be pre-computed in Python since it depends on
-                # the real-time current_state value.
+            if self.exp_config_dict["preserve_bits"]:
+                masked_codeword = (mask & dio_codeword) # Zero out any bits that fall outside the mask
                 sequence += set_dio_raw.format(f"masked_state | {masked_codeword}")
             else:
                 sequence += set_dio_raw.format(dio_codeword)
@@ -272,41 +325,58 @@ class DIOPulseBlockHandler():
             # Add waittime to sequence. Prevent negative waittimes.
             sequence += wait_raw.format(int(max(waittime - wait_offset, 0)))
 
+        # TODO: was used for previous redundant error checking. 
         # Sanity check if waveform is reproducible from reduced codewords and waittimes.
-        if not (codewords == waveform).all():
-            self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
+        # if not (codewords == waveform).all():
+        #     self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
 
         # Add setDIO(0); to end if selected.
         if self.end_low:
-            if self.preserve_bits:
+            if self.exp_config_dict["preserve_bits"]:
                 sequence += set_dio_raw.format("masked_state")
             else:
                 sequence += set_dio_raw.format("0")
 
         return sequence
 
-    def get_dio_sequence(self):
-        """Generate a set of .seqc instructions for digital waveform
+    def get_awg_sequence(self):
+        """Generate a set of .seqc instructions for the AWG to output a set of 
+        pulses over multiple channels
 
         Returns a string containing a series of setDIO() and wait() .seqc
         commands which will reproduce the waveform defined
         by the pulseblock object.
+
+        :return: setup_seq (str): AWG commands used for setup of the pulse
+            sequence and will only need to be run once even if the sequence is 
+            run multiple times.
+        :return: sequence (str): AWG commands (e.g. setDIO() and wait()) that
+            will generate the pulses described by the pulseblock.
+
         """
 
-        # Get sample-wise sets of codewords.
-        codewords = self.gen_codewords()
+        # Get sample-wise sets of codewords for the digital channels.
+        digital_codewords = self.gen_digital_codewords()
 
         # Reduce this array to a set of codewords + waittimes.
-        reduced_codewords, waittimes = self.zip_dio_commands(codewords)
+        reduced_digital_codewords, digital_waittimes = self.zip_digital_commands(digital_codewords)
+
+        # Get codewords for the analog channels
+        setup_seq, analog_codewords, analog_times = self.gen_analog_codewords()
+
+        combined_codewords, combined_waittimes = self.combine_command_timings(
+                                        reduced_digital_codewords, 
+                                        digital_waittimes, 
+                                        analog_codewords, 
+                                        analog_times)
 
         # Reconstruct set of .seqc instructions representing the digital waveform.
-        sequence = self.construct_dio_sequence(
-            codewords=codewords,
-            reduced_codewords=reduced_codewords,
-            waittimes=waittimes
+        sequence = self.construct_awg_sequence(
+            reduced_codewords=combined_codewords,
+            waittimes=combined_waittimes,
         )
 
-        return sequence
+        return setup_seq, sequence
 
     def setup_hd(self):
         """Enable driving of DIO buses of relevant DIO bits."""

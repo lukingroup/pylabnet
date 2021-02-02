@@ -514,7 +514,6 @@ class PulseMaster:
                 t2 = 0
                 
                 for p_item in pulse_items:
-                    self.log.error(p_item)
 
                     # Edges of the current pulse
                     new_t1 = p_item.t0
@@ -528,7 +527,6 @@ class PulseMaster:
 
                     t1, t2 = new_t1, new_t2
 
-                    self.log.error((t1, t2))
                     # Draw the current pulse at high grid density
                     t_ar = np.linspace(t1, t2, 5000)
                     x_ar.extend(t_ar)

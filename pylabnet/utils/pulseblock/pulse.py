@@ -34,6 +34,8 @@ class DfltPulseBase:
 
 # Pulse classes ---------------------------------------------------------------
 
+# Digital Pulse classes --------------------------------------------------------
+
 class PTrue(PulseBase):
     """ Pulse: Boolean True
     """
@@ -82,6 +84,7 @@ class PFalse(PulseBase):
 
         return np.full(len(t_ar), False)
 
+# Analog Pulse classes ---------------------------------------------------------
 
 class PSin(PulseBase):
     """ Pulse: Sine
@@ -126,6 +129,54 @@ class PSin(PulseBase):
         )
         return ret_ar
 
+class PSinGaussian(PulseBase):
+    """ Pulse: Sine with Gaussian modulation
+    """
+
+    def __init__(self, ch, dur, t0=0, amp=0, freq=0, ph=0, stdev=1):
+        """ Construct Sin Pulse object
+
+        :param ch: (str) channel name
+        :param dur: (numeric) duration of the pulse
+        :param t0: (opt, numeric) position of the pulse beginning
+        :param amp: (opt, np.float32) amplitude (zero-to-peak)
+        :param freq: (opt, np.float32) frequency (linear, without 2*pi)
+        :param ph: (opt, np.float32) phase (in degrees)
+        :param stdev: (opt, np.float32) standard deviation of the gaussian
+        """
+
+        super().__init__(ch=ch, dur=dur, t0=t0)
+
+        self._amp = amp
+        self._freq = freq
+        self._ph = ph
+        self._stdev = stdev
+        self.is_analog = True
+
+        # Define an automatic default.
+        self.auto_default = DConst(val=0.0)
+
+    def __str__(self):
+        ret_str = f'SinGaussian(amp={self._amp:.2e}, freq={self._freq:.2e}, ' \
+                  f'ph={self._ph:.2f}, stdev={self._stdev:.2f})'
+
+        return ret_str
+
+    def get_value(self, t_ar):
+        """ Returns array of samples
+
+        :param t_ar: (numpy.array) array of time points
+        :return: (numpy.array(dtype=np.float32)) array of samples
+        """
+
+        t_ar = np.array(t_ar, dtype=np.float32)
+        ret_ar = self._amp * np.sin(
+            2*np.pi*self._freq*t_ar + np.pi*self._ph/180
+        )
+        # Add Gaussian modulation about the pulse center
+        t_mid = self.t0 + self.dur / 2
+        ret_ar *= np.exp(-0.5 * ((t_ar - t_mid) / self._stdev) ** 2)
+        return ret_ar
 
 class PConst(PulseBase):
     """ Pulse: Constant

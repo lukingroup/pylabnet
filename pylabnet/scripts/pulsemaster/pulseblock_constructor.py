@@ -53,21 +53,33 @@ class PulseblockConstructor():
 
             # Construct single pulse.
             if pb_spec.pulsetype == "PTrue":
-
                 pulse = po.PTrue(
                     ch=pb_spec.channel,
                     dur=dur
                 )
 
             elif pb_spec.pulsetype == "PSin":
-
-                 pulse = po.PSin(
+                pulse = po.PSin(
                      ch=pb_spec.channel,
                      dur=dur,
                      amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
                      freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
                      ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
                 )
+            
+            elif pb_spec.pulsetype == "PSinGauss":
+                pulse = po.PSinGaussian(
+                     ch=pb_spec.channel,
+                     dur=dur,
+                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
+                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
+                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph']),
+                     stdev=1e-6 * self.resolve_value(pb_spec.pulsevar_dict['stdev'])
+                )
+            
+            else:
+                self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")
+
 
             # Insert pulse to correct position in pulseblock.
             if pb_spec.tref == "Absolute":

@@ -44,6 +44,9 @@ class PulseMaster:
             logger=self.log
         )
 
+        # Initialize experiment config dict to be passed to PulsedExperiment
+        self.exp_config_dict = dict()
+
         # Instanciate HD
         dev_id = self.config_dict['HDAWG_dev_id']
         self.hd = Driver(dev_id, logger=self.log)   
@@ -110,7 +113,7 @@ class PulseMaster:
         # Store completers
         self.var_completer  = QCompleter(self.vars.keys())
 
-        # Initilize Pulse Selector Form
+        # Initialize Pulse Selector Form
         self.setup_pulse_selector_form()
 
          # Populate channel table
@@ -138,6 +141,9 @@ class PulseMaster:
 
         self.add_pb_popup = None
 
+        # Initialize preserve_bits checkbox state in dictionary
+        self.update_preserve_bits()
+
          # Apply CSS stylesheet
         self.gui.apply_stylesheet()
 
@@ -152,7 +158,7 @@ class PulseMaster:
     def apply_custom_styles(self):
         """Apply all style changes which are not specified in the .css file."""
 
-        # Set background of custom PoltWidgets
+        # Set background of custom PlotWidgets
         self.widgets["pulse_layout_widget"].getViewBox().setBackgroundColor('#19232D')
         self.widgets["pulse_layout_widget"].setBackground('#19232D')
 
@@ -179,7 +185,7 @@ class PulseMaster:
         self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.pulseblock_dropdown_changed)
 
         # Conect checkbox for DIO bit preservation option
-        self.widgets["preserve_bits"].stateChanged.connect(self.update_preserve_bits) #  TODO YQ Maybe no need for this
+        self.widgets["preserve_bits"].stateChanged.connect(self.update_preserve_bits) 
 
         # Connect Add variable button.
         self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
@@ -211,9 +217,7 @@ class PulseMaster:
         self.plot_current_pulseblock()
 
     def update_preserve_bits(self):
-        #  TODO YQ Maybe no need for this, instead just check in the upload_hdawg function
-        #  TODO YQ Find out how to pass the var_dict to the DIO handler
-        self.get_current_pb_constructor().var_dict["preserve_bits"] = self.widgets["preserve_bits"].isChecked()
+        self.exp_config_dict["preserve_bits"] = self.widgets["preserve_bits"].isChecked()
         
     def get_pb_specifier_from_dict(self, pulsedict):
         """ Create PulseSpecifier object from dictionary."""
@@ -359,9 +363,10 @@ class PulseMaster:
 
         self.pulsed_experiment = PulsedExperiment(
             pulseblocks=pulseblock,
-            placeholder_dict=placeholder_dict,
             assignment_dict=self.ch_assignment_dict,
             hd=self.hd,
+            placeholder_dict=placeholder_dict,
+            exp_config_dict=self.exp_config_dict,
             use_template=False,
             sequence_string=seq_template,
             iplot=False

@@ -48,8 +48,7 @@ class PulseMaster:
         dev_id = self.config_dict['HDAWG_dev_id']
         self.hd = Driver(dev_id, logger=self.log)
 
-        # Load dio configs.
-        self.load_dio_assignment_from_dict()
+        # Load channel configs.
         self.load_ch_assignment_from_dict()
 
         # Instantiate GUI window
@@ -490,87 +489,121 @@ class PulseMaster:
         # Iterate through p_dict.keys() and dflt_dict.keys()
         # and create a trace for each channel
         #  - create sorted list of channels
+
         d_ch_set = set(pb_obj.dflt_dict.keys())
         p_ch_set = set(pb_obj.p_dict.keys())
         ch_list = list(d_ch_set | p_ch_set)
         ch_list.sort()
 
-        # - iterate trough ch_list
-        trace_list = []
+        # - iterate through ch_list
         for ch_index, ch in enumerate(ch_list):
 
-            #
-            # Build x_ar, y_ar, text_ar
-            #
+            ## Build x_ar, y_ar, text_ar
 
-            # initial zero-point - default pulse object printout
-            x_ar = [0]
-            y_ar = [ch_index]
-            if ch in pb_obj.dflt_dict.keys():
-                text_ar = [
-                    '{}'.format(
-                        str(pb_obj.dflt_dict[ch])
-                    )
-                ]
+            ## Analog channel
+            if ch.is_analog: # TODO YQ
+                pulse_items = pb_obj.p_dict[ch]
+                default_item = pb_obj.dflt_dict[ch]
+
+                x_ar = []
+                y_ar = []
+
+                # Create a fictional "zeroth pulse" to end at t=0 so that we 
+                # draw the default pulse value from 0 until the start of the
+                # first pulse.
+                t2 = 0
+                
+                for p_item in pulse_items:
+                    self.log.error(p_item)
+
+                    # Edges of the current pulse
+                    new_t1 = p_item.t0
+                    new_t2 = p_item.t0 + p_item.dur
+
+                    # Draw the default function from the previous to current pulse
+                    # Low density spacing since it's usually a constant
+                    t_ar = np.linspace(t2, new_t1, 10)
+                    x_ar.extend(t_ar)
+                    y_ar.extend(default_item.get_value(t_ar))
+
+                    t1, t2 = new_t1, new_t2
+
+                    self.log.error((t1, t2))
+                    # Draw the current pulse at high grid density
+                    t_ar = np.linspace(t1, t2, 5000)
+                    x_ar.extend(t_ar)
+                    y_ar.extend(p_item.get_value(t_ar))
+
+                # Normalize the wave height and offset by channel index
+                y_ar /= (2.5 * np.max(y_ar))
+                y_ar += (ch_index + 0.4)
+        
+            ## Digital channel
             else:
-                text_ar = ['']
+                # initial zero-point - default pulse object printout
+                x_ar = [0]
+                y_ar = [ch_index]
+                
+                # TODO YQ: Figure out if the text_ar is useful?
+                if ch in pb_obj.dflt_dict.keys():
+                    text_ar = [str(pb_obj.dflt_dict[ch])]
+                else:
+                    text_ar = ['']
 
-            # Iterate through pulse list and create a rectangular
-            # arc for each pulse. The mid-point on the upper segment
-            # contains printout of the pulse object
-            if ch in pb_obj.p_dict.keys():
-                for p_item in pb_obj.p_dict[ch]:
-                    # edges of the pulse
-                    t1 = p_item.t0
-                    t2 = p_item.t0 + p_item.dur
+                # Iterate through pulse list and create a rectangular
+                # arc for each pulse. The mid-point on the upper segment
+                # contains printout of the pulse object
+                if ch in pb_obj.p_dict.keys():
+                    for p_item in pb_obj.p_dict[ch]:
 
-                    # left vertical line
-                    if t1 == 0:
-                        # If pulse starts at the origin,
-                        # do not overwrite (x=0, y=ch_index) point
-                        # which contains dflt_dict[ch] printout
-                        x_ar.append(t1)
+                        # edges of the pulse
+                        t1 = p_item.t0
+                        t2 = p_item.t0 + p_item.dur
+
+                        # left vertical line
+                        if t1 == 0:
+                            # If pulse starts at the origin,
+                            # do not overwrite (x=0, y=ch_index) point
+                            # which contains dflt_dict[ch] printout
+                            x_ar.append(t1)
+                            y_ar.append(ch_index + 0.8)
+                        else:
+                            x_ar.extend([t1, t1])
+                            y_ar.extend([ch_index, ch_index + 0.8])
+
+                        # mid-point, which will contain printout
+                        x_ar.append((t1 + t2) / 2)
                         y_ar.append(ch_index + 0.8)
-                    else:
-                        x_ar.extend([t1, t1])
-                        y_ar.extend([ch_index, ch_index + 0.8])
 
-                    # mid-point, which will contain printout
-                    x_ar.append((t1 + t2) / 2)
-                    y_ar.append(ch_index + 0.8)
+                        # right vertical line
+                        x_ar.extend([t2, t2])
+                        y_ar.extend([ch_index + 0.8, ch_index])
 
-                    # right vertical line
-                    x_ar.extend([t2, t2])
-                    y_ar.extend([ch_index + 0.8, ch_index])
+                        # set mid-point text to object printout
+                        if t1 == 0:
+                            # If pulse starts at the origin,
+                            # do not overwrite (x=0, y=ch_index) point
+                            # which contains dflt_dict[ch] printout
+                            text_ar.extend( 
+                                [
+                                    f'{t1:.2e}', 
+                                    str(p_item),
+                                    f'{t2:.2e}', f'{t2:.2e}'
+                                ]
+                            )
+                        else:
+                            text_ar.extend(
+                                [
+                                    f'{t1:.2e}', f'{t1:.2e}',
+                                    str(p_item),
+                                    f'{t2:.2e}', f'{t2:.2e}'
+                                ]
+                            )
 
-                    # set mid-point text to object printout
-                    if t1 == 0:
-                        # If pulse starts at the origin,
-                        # do not overwrite (x=0, y=ch_index) point
-                        # which contains dflt_dict[ch] printout
-                        text_ar.extend(
-                            [
-                                '{:.2e}'.format(t1),
-                                '{}'.format(str(p_item)),
-                                '{:.2e}'.format(t2),
-                                '{:.2e}'.format(t2)
-                            ]
-                        )
-                    else:
-                        text_ar.extend(
-                            [
-                                '{:.2e}'.format(t1),
-                                '{:.2e}'.format(t1),
-                                '{}'.format(str(p_item)),
-                                '{:.2e}'.format(t2),
-                                '{:.2e}'.format(t2)
-                            ]
-                        )
-
-            # final zero-point
-            x_ar.append(pb_obj.dur)
-            y_ar.append(ch_index)
-            text_ar.append('{:.2e}'.format(pb_obj.dur))
+                # final zero-point
+                x_ar.append(pb_obj.dur)
+                y_ar.append(ch_index)
+                text_ar.append(f'{pb_obj.dur:.2e}')
 
             pen=pg.mkPen(
                color=self.gui.COLOR_LIST[

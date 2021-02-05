@@ -24,10 +24,11 @@ import rpyc
 import threading
 import os
 import time
+import platform
 
 
 class GenericServer:
-    def __init__(self, service, host, port, operating_system='Windows', key='pylabnet.pem'):
+    def __init__(self, service, host, port, key='pylabnet.pem'):
         """ Instantiates a server
 
         :param service: ServiceBase instance to assign to server
@@ -38,6 +39,7 @@ class GenericServer:
             authentication) will be used
         """
 
+        self.operating_system = get_os()
         if key is None:
 
             # start a server without any authentication
@@ -54,9 +56,9 @@ class GenericServer:
         else:
 
             # identify key
-            if operating_system == "Windows":
+            if self.operating_system == "Windows":
                 key = os.path.join(os.environ['WINDIR'], 'System32', key)
-            elif operating_system == "Linux":
+            elif self.operating_system == "Linux":
                 key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
 
             if os.path.exists(key):
@@ -95,3 +97,21 @@ class GenericServer:
     @staticmethod
     def _start_server(server_obj):
         server_obj.start()
+
+
+def get_os():
+    """Read out operating system"""
+
+    pf = platform.system()
+
+
+    if pf == 'Linux':
+        operating_system = 'Linux'
+    elif pf=='Windows':
+        operating_system = 'Windows'
+    elif pf=="Darwin":
+        operating_system = 'mac_os'
+    else:
+        operating_system = pf
+
+    return operating_system

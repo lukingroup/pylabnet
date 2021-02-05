@@ -10,6 +10,7 @@ import numpy as np
 import socket
 import subprocess
 import paramiko
+import platform
 import decouple
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
@@ -226,9 +227,11 @@ def show_console():
     Useful for processes where console is typically hidden but user input is suddenly required
     """
 
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
 
-def hide_console(operating_system='Windows'):
+def hide_console():
     """ Hides the active console.
 
     Useful for processes where console is not needed (isntead, there is a GUI to use)
@@ -236,10 +239,11 @@ def hide_console(operating_system='Windows'):
     :os: (string) Which operating system is used ('Windows' and 'Linux' supported)
     """
 
+    operating_system = get_os()
     if operating_system == 'Windows':
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
-def create_server(service, logger=None, operating_system='Windows', host='localhost'):
+def create_server(service, logger=None, host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers
 
     :param service: service from which to launch a server
@@ -256,8 +260,7 @@ def create_server(service, logger=None, operating_system='Windows', host='localh
             server = GenericServer(
                 host=host,
                 port=port,
-                service=service,
-                operating_system = operating_system
+                service=service
             )
             timeout = 9999
         except ConnectionRefusedError:
@@ -856,3 +859,24 @@ def breakout_box_to_HDAWG(board, channel):
         pin = pin + channel
 
     return pin
+
+def get_os():
+    """Read out operating system"""
+
+    pf = platform.system()
+
+
+    if pf == 'Linux':
+        operating_system = 'Linux'
+    elif pf=='Windows':
+        operating_system = 'Windows'
+    elif pf=="Darwin":
+        operating_system = 'mac_os'
+    else:
+        operating_system = pf
+
+    return operating_system
+
+class UnsupportedOSException(Exception):
+    """Raised when the operating system is not supported."""
+    pass

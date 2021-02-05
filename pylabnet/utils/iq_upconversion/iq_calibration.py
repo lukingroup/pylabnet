@@ -58,7 +58,6 @@ class IQ_Calibration():
 
 		#Also loading the harmoincs like that
 
-
 	def run_calibration(self, filename,  mw_source, hd, sa, lo_low, lo_high, lo_num_points, if_low, if_high, if_num_points, lo_power, if_volts,
 		max_iterations = 3, phase_window = 50, q_window = 0.34, dc_i_window = 0.2, dc_q_window = 0.2, plot_traces=False,
 		awg_delay_time = 0.01, averages=4, min_rounds=1):
@@ -155,9 +154,9 @@ class IQ_Calibration():
 
 				t1 = time.time()
 				opt = IQOptimizer_GD(mw_source, hd, sa, lo_freq, if_freq,
-					param_guess = ([85,1, 0.6, 0.01, 0.01]),
+					param_guess = ([85, 1, 0.6, 0.05, -0.02]),
 					awg_delay_time=0.01, averages=10, HDAWG_ports=[1,2], oscillator=1,
-					min_power=-65, vi_step=0.005, vq_step=0.005,
+					min_power=-65, vi_step=0.005, vq_step=0.005, max_iterations = 30,
 					plot_traces=False)
 				opt.opt()
 
@@ -192,7 +191,6 @@ class IQ_Calibration():
 
 		return q_ret, phase_ret
 
-
 	def get_dc_offsets(self, if_freq, lo_freq):
 		if (not self.initialized):
 			raise Exception("No calibration loaded!")
@@ -210,8 +208,42 @@ class IQ_Calibration():
 
 		return dc_i_ret, dc_q_ret
 
+	def get_harmonic_powers(self, if_freq, lo_freq):
 
-	def set_optimal_hdawg_values(self, hd, if_freq, lo_freq):
+		if (not self.initialized):
+			raise Exception("No calibration loaded!")
+
+		Hm1 = self.harms.iloc[:, 0].unstack()
+		LO = np.array(H1.index)
+		IF = np.array(H1.columns.get_level_values(0))
+
+		h_m1 = H1.values
+		f = interpolate.interp2d(IF, LO, h_m1)
+		h_m1_val = f(if_freq, lo_freq)
+
+		H0 = self.harms.iloc[:, 1].unstack()
+		h_0 = H1.values
+		f = interpolate.interp2d(IF, LO, h_0)
+		h_0_val = f(if_freq, lo_freq)
+
+		H1 = self.harms.iloc[:, 2].unstack()
+		h_1 = H1.values
+		f = interpolate.interp2d(IF, LO, h_1)
+		h_1_val = f(if_freq, lo_freq)
+
+		H2 = self.harms.iloc[:, 3].unstack()
+		h_2 = H1.values
+		f = interpolate.interp2d(IF, LO, h_2)
+		h_2_val = f(if_freq, lo_freq)
+
+		H3 = self.harms.iloc[:, 4].unstack()
+		h_3 = H1.values
+		f = interpolate.interp2d(IF, LO, h_3)
+		h_3_val = f(if_freq, lo_freq)
+
+		return h_m1_val, h_0_val, h_1_val, h_2_val, h_3_val
+
+	def set_optimal_hdawg_values(self, hd, if_freq, lo_freq, HDAWG_ports=[3,4], oscillator=2):
 		'''Sets the optimal sine output values on the hdawg for the given IF
 		and LO frequencies. Will also set the HDAWG's sine frequency to that
 		given by if_freq'''
@@ -220,7 +252,7 @@ class IQ_Calibration():
 		#Todo: remove same code in the iq_optimizer script and make it a general utility function
 
 		#First setting the desired IF frequency on the HDAWG
-		hd.setd('oscs/1/freq', if_freq)
+		hd.setd('oscs/{}/freq'.format(oscillator-1), if_freq)
 
 		#Computing the optimal I and Q amplitudes
 		q_opt, phase_opt = self.get_ampl_phase(if_freq, lo_freq)
@@ -228,25 +260,66 @@ class IQ_Calibration():
 		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
 
 		# Set optimal I and Q amplitudes
-		hd.setd('sines/2/amplitudes/0', amp_i_opt)
-		hd.setd('sines/3/amplitudes/1', amp_q_opt)
+		hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), amp_i_opt)
+		hd.setd('sines/{}/amplitudes/1'.format(HDAWG_ports[1]-1), amp_q_opt)
 
 		# Set optimal phaseshift
-		hd.setd('sines/2/phaseshift', phase_opt)
+		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), phase_opt)
 
-		#Set optimal DC offsets
+		# Turn on signals
+		hd.seti('sines/{}/enables/0'.format(HDAWG_ports[0]-1), 1)
+		hd.seti('sines/{}/enables/1'.format(HDAWG_ports[1]-1), 1)
+
+		# set optimal DC offsets
 		dc_i_opt, dc_q_opt = self.get_dc_offsets(if_freq, lo_freq)
-		hd.setd('sigouts/2/offset', dc_i_opt)
-		hd.setd('sigouts/3/offset', dc_q_opt)
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), dc_i_opt)
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), dc_q_opt)
+
+	def set_optimal_hdawg_and_LO_values(self, hd, mw_source, freq):
+
+		if (not self.initialized):
+			raise Exception("No calibration loaded!")
+
+		LO = np.array(self.phase.index)
+		IF = np.array(self.phase.columns.get_level_values(1))
+
+		if freq < LO[0] + IF[0]:
+			raise Exception("Chosen frequency too low!")
+
+		if freq > LO[-1] + IF[-1]:
+			raise Exception("Chosen frequency too high!")
+
+		if_f = np.linspace(LO[0], LO[-1], 100)
+
+		fidelity = []
+
+		for iff in if_f:
+			lof = freq-iff
+			if lof > LO[0] and lof < LO[-1]:
+				hm1, h0, h1, h2, h3 = self.get_harmonic_powers(iff, lof)
+				fidelity.append(self.get_fidelity(hm1, h0, h1, h2, h3, iff))
+			else:
+				fidelity.append(0)
+
+		ii = np.argmax(fidelity)
+
+		mw_client.set_freq(freq-if_f[ii])
+
+		self.set_optimal_hdawg_values(hd, if_f[ii], freq-if_f[ii])
+
+		return if_f[ii], freq-if_f[ii]
+
+	def get_fidelity(self, hm1, h0, h1, h2, h3, iff):
+		return 1 - 10**((hm1-h1)/10)/(2*iff) - 10**((h0-h1)/10)/(iff) - 10**((h2-h1)/10)/(iff) - 10**((h3-h1)/10)/(2*iff)
 
 def main():
 	mw_client = Client(
     	host='140.247.189.50',
-    	port=31864
+    	port=32302
 	)
 	sa = agilent_e4405B.Client(
     	host='140.247.189.24',
-    	port=41581
+    	port=23892
 	)
 
 	dev_id = 'dev8354'
@@ -260,7 +333,7 @@ def main():
 	hd = zi_hdawg.Driver(dev_id, None)
 
 	iq_calibration = IQ_Calibration()
-	iq_calibration.run_calibration_GD("results\\011_25_2021_cal_w_GD.csv", mw_client, hd, sa, 9E9, 12.7E9, 38, 100E6, 500E6, 21, 15, 0.6)
+	iq_calibration.run_calibration_GD("results\\01_28_2021_cal_w_GD.csv", mw_client, hd, sa, 9E9, 12.7E9, 38, 100E6, 500E6, 21, 15, 0.6)
 
 if __name__ == '__main__':
     main()

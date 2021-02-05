@@ -119,7 +119,7 @@ class Controller:
                 raise
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
-            hide_console()
+            hide_console(operating_system=operating_system)
         elif self.proxy:
             try:
                 self.host = sys.argv[2]
@@ -129,7 +129,7 @@ class Controller:
             show_console()
             self.log_port = int(input('Please enter the master Logger Port:\n>> '))
             self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
-            hide_console()
+            hide_console(operating_system=operating_system)
         elif self.staticproxy:
             try:
                 static_proxy_dict = load_config('static_proxy')
@@ -141,7 +141,7 @@ class Controller:
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
-            hide_console()
+            hide_console(operating_system=operating_system)
         else:
             self.log_port = self.LOG_PORT
             self.gui_port = self.GUI_PORT
@@ -832,7 +832,14 @@ def main_proxy():
 def main_master():
     """ Runs the launch controller overriding commandline arguments in master mode """
 
-    log_controller = Controller(master=True)
+    operating_system = get_os()
+
+    if operating_system not in ['Linux', 'Windows']:
+        raise UnsupportedOSException
+    log_controller = Controller(
+        master=True, 
+        operating_system=operating_system
+    )
     run(log_controller)
 
 def main_staticproxy():
@@ -894,4 +901,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_master()

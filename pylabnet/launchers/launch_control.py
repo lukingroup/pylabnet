@@ -23,7 +23,7 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import dict_to_str, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
 
-
+#
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 

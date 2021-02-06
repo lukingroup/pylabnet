@@ -758,7 +758,14 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
         server_port = np.random.randint(1024, 49151)
 
     # Build command()
-    cmd = f'{start}"{python_path}" "{launch_path}" '
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        cmd = f'{start}"{python_path}" "{launch_path}" '
+    elif operating_system == 'Linux':
+        cmd = f'{python_path} {launch_path} '
+    else:
+        raise UnsupportedOSException
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
     cmd += f'--device_id "{config_dict["device_id"]}" '
@@ -801,9 +808,16 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     )
 
     # Build command
-    cmd = f'start "{script}_server, '
-    cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-    cmd += f'" "{sys.executable}" "{launch_path}" '
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        cmd = f'start "{script}_server, '
+        cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+        cmd += f'" "{sys.executable}" "{launch_path}" '
+    elif operating_system == 'Linux':
+        cmd = f'{sys.executable} {launch_path} '
+    else:
+        raise UnsupportedOSException
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--script {script} --num_clients {num_clients} '
     cmd += f'--config {config} --debug {debug_flag} '

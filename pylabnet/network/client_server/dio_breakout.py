@@ -39,10 +39,7 @@ class Service(ServiceBase):
 
         self._module.close()
         
-        pid = os.getpid()
-        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
-        ctypes.windll.kernel32.TerminateProcess(handle, -1)
-        ctypes.windll.kernel32.CloseHandle(handle)
+        super().close_server()
 
 
 class Client(ClientBase):

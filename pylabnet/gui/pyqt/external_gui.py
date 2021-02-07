@@ -78,7 +78,8 @@ class Window(QtWidgets.QMainWindow):
         self.app = app  # Application instance onto which to load the GUI.
 
         if self.app is None:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+            if get_os() == 'Windows':
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
                 QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))

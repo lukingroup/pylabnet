@@ -743,6 +743,9 @@ class ParameterPopup(QtWidgets.QWidget):
                 self.params[param_name].setDecimals(6)
             elif param_type is str:
                 self.params[param_name] = QtWidgets.QLineEdit()
+            elif type(param_type) is list:
+                self.params[param_name] = QtWidgets.QComboBox()
+                self.params[param_name].addItems(param_type)
             else:
                 self.params[param_name] = QtWidgets.QLabel('None')
             layout.addWidget(self.params[param_name])
@@ -763,7 +766,10 @@ class ParameterPopup(QtWidgets.QWidget):
             try:
                 ret[param_name] = widget.value()
             except AttributeError:
-                ret[param_name] = widget.text()
+                try:
+                    ret[param_name] = widget.currentText()
+                except AttributeError:
+                    ret[param_name] = widget.text()
         self.parameters.emit(ret)
         self.close()
 

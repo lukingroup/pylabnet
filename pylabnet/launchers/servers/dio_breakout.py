@@ -1,7 +1,7 @@
 from pyvisa import ResourceManager, VisaIOError
 import socket
 from pylabnet.hardware.awg.dio_breakout import Driver
-from pylabnet.utils.helper_methods import get_ip, show_console, hide_console, load_device_config
+from pylabnet.utils.helper_methods import get_ip, load_device_config
 from pylabnet.network.client_server.dio_breakout import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 
@@ -29,17 +29,8 @@ def launch(**kwargs):
 
     # If it fails, prompt the user to enter GPIB address from resource list
     except VisaIOError:
-        rm = ResourceManager()
-        rs = rm.list_resources()
-        rs_list = '------------------------\nAvailable resources:\n'
-        for index, resource in enumerate(rs):
-            rs_list += f'{index}: {resource}\n'
-        rs_list+='------------------------\n'
-        show_console()
-        print(rs_list)
-        address_index = int(input('Enter the index of the desired resource: '))
-        hide_console()
-        dio = Driver(address=rs[address_index], logger=kwargs['logger'])
+        kwargs['logger'].error(f'Failed to connect to device at address {addr}')
+        raise
 
     # Instantiate Service and server
     dio_service = Service()

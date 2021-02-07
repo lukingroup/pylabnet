@@ -40,7 +40,7 @@ import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.helper_methods import load_script_config, get_config_filepath
+from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -1206,3 +1206,23 @@ class Container:
         """
 
         self.widget.setCurrentIndex(index)
+
+
+def fresh_popup(**params):
+    """ Creates a fresh ParameterPopup without a base GUI 
+
+    :param params: kwargs of parameters as keywords and data types
+        as values
+    :return: ParameterPopup
+    """
+
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    operating_system = get_os()
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
+    if operating_system == 'Windows':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+    
+    return app, ParameterPopup(**params)

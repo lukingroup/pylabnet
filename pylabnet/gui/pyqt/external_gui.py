@@ -1226,3 +1226,26 @@ def fresh_popup(**params):
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
     
     return app, ParameterPopup(**params)
+
+def warning_popup(message):
+    """ Creates a warning popup without a base GUI
+
+    :param message: (str) message to display
+    """
+
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    operating_system = get_os()
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
+    if operating_system == 'Windows':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+    
+    QtWidgets.QMessageBox.critical(
+        None,
+        "Error",
+        message,
+        QtWidgets.QMessageBox.Ok,
+        QtWidgets.QMessageBox.NoButton
+    )

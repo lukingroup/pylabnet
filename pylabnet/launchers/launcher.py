@@ -53,7 +53,7 @@ from pylabnet.utils.helper_methods import get_ip, parse_args, show_console, hide
 from pylabnet.network.client_server import external_gui
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.gui.pyqt.external_gui import ParameterPopup, fresh_popup
+from pylabnet.gui.pyqt.external_gui import ParameterPopup, fresh_popup, warning_popup
 
 
 class Launcher:
@@ -470,6 +470,4 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        show_console()
-        print(e)
-        time.sleep(10)
+        warning_popup(str(e))

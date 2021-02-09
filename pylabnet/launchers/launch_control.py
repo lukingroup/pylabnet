@@ -22,8 +22,8 @@ from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config, 
-    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath, 
+from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
+    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
     get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -116,17 +116,6 @@ class Controller:
             else:
                 self.staticproxy = False
 
-        self.network_interface = None
-
-        try:
-            self.network_interface = load_config('network_config')['network_interface']
-        except:
-            self.main_window.terminal.setText('Critical error: '
-                                        'no network_interface found in network_config.json')
-            self.main_window.force_update()
-            time.sleep(10)
-            raise
-
         self.host = get_ip()
         self.update_index = 0
 
@@ -190,7 +179,7 @@ class Controller:
         self.log_port = params['log_port']
         self.gui_port = params['gui_port']
         self.waiting_flag = False
-    
+
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
 
@@ -813,7 +802,7 @@ def main():
 
 def main_proxy():
     """ Runs the launch controller overriding commandline arguments in proxy mode """
-    
+
     log_controller = Controller(proxy=True)
     run(log_controller)
 
@@ -830,7 +819,7 @@ def main_master():
 
 def main_staticproxy():
     """ Runs the launch controller overriding commandline arguments in staticproxy mode """
-    
+
     log_controller = Controller(staticproxy=True)
     run(log_controller)
 

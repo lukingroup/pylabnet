@@ -60,7 +60,6 @@ class GenericServer:
                 key = os.path.join(os.environ['WINDIR'], 'System32', key)
             elif self.operating_system == "Linux":
                 key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
-                cert = os.path.join('/etc/ssl/certs', 'pylabnet.cert')
 
             if os.path.exists(key):
 
@@ -74,7 +73,7 @@ class GenericServer:
                         'sync_request_timeout': 300
                     },
                     authenticator=rpyc.utils.authenticators.SSLAuthenticator(
-                        key, cert
+                        key, key
                     )
                 )
 

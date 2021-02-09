@@ -9,7 +9,7 @@ import pylabnet.hardware.staticline.staticline as staticline
 from pylabnet.gui.pyqt.gui_windowbuilder import GUIWindowFromConfig
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_script_config, find_client
+from pylabnet.utils.helper_methods import get_os, get_ip, unpack_launcher, load_script_config, find_client
 
 
 class StaticLineGUIGeneric():
@@ -158,7 +158,8 @@ class StaticLineGUIGeneric():
         """Starts up the staticline GUI and initializes the buttons. """
 
         # Starts up an application for the window
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+        if get_os() == 'Windows':
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         self.app = QtWidgets.QApplication(sys.argv)
         self.app.setWindowIcon(
             QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))

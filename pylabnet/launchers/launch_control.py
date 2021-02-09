@@ -18,16 +18,14 @@ import numpy as np
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.utils.helper_methods import dict_to_str, load_config, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
+from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config, 
+    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath, 
+    get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
-
-class UnsupportedOSException(Exception):
-    """Raised when the operating system is not supported."""
-    pass
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -71,8 +69,21 @@ class Controller:
     LOG_PORT = None
     GUI_PORT = None
 
-    def __init__(self, operating_system='Windows', proxy=False, master=False, staticproxy=False):
+    def __init__(self, proxy=False, master=False, staticproxy=False):
         """ Initializes launch control GUI """
+
+        self.operating_system = get_os()
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.app.setWindowIcon(
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        )
+        # Instantiate GUI application
+        if self.operating_system == 'Windows':
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+
+        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
+        if self.operating_system not in ['Linux', 'Windows']:
+            raise UnsupportedOSException
         try:
             if sys.argv[1] == '-m' or master:
                 self.master = True
@@ -133,15 +144,15 @@ class Controller:
             self.gui_port = static_proxy_dict['master_gui_port']
             hide_console(operating_system=self.operating_system)
         elif self.proxy:
-            try:
-                self.host = sys.argv[2]
-            except IndexError:
-                show_console()
-                self.host = input('Please enter the master Launch Control IP address:\n>> ')
-            show_console()
-            self.log_port = int(input('Please enter the master Logger Port:\n>> '))
-            self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
-            hide_console(operating_system=self.operating_system)
+            popup = ParameterPopup(
+                host=str,
+                log_port=str,
+                gui_port=str
+            )
+            self.waiting_flag = True
+            popup.parameters.connect(self.fill_parameters)
+            while self.waiting_flag:
+                self.app.processEvents()
         elif self.staticproxy:
             try:
                 static_proxy_dict = load_config('static_proxy')
@@ -171,21 +182,17 @@ class Controller:
         self.disconnection = False
         self.debug = False
         self.debug_level = None
-        self.operating_system = operating_system
 
         sys.stdout = StringIO()
 
-        # Instantiate GUI application
+    def fill_parameters(self, params):
+        """ Called when parameters have been entered into a popup """
 
-
-        if os == 'Windows':
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.app.setWindowIcon(
-            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
-        )
-        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
-
+        self.host = params['host']
+        self.log_port = params['log_port']
+        self.gui_port = params['gui_port']
+        self.waiting_flag = False
+    
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
 
@@ -198,8 +205,7 @@ class Controller:
                 host=self.host,
                 port=self.log_port,
                 module_tag=self.GUI_NAME+module_str,
-                ui=self.LOGGER_UI,
-                operating_system=self.operating_system
+                ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
             self.main_window.terminal.setText('Failed to connect to master. Shutting down')
@@ -235,16 +241,14 @@ class Controller:
                 self.gui_server, self.gui_port = create_server(
                     self.gui_service,
                     logger=self.gui_logger,
-                    host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
-                    operating_system=self.operating_system
+                    host=get_ip()
                     )
             else:
                 try:
                     self.gui_server = GenericServer(
                         service=self.gui_service,
-                        host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
-                        port=self.gui_port,
-                        operating_system = self.operating_system
+                        host=get_ip(),
+                        port=self.gui_port
                     )
                 except ConnectionRefusedError:
                     self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
@@ -332,16 +336,14 @@ class Controller:
         if self.LOG_PORT is None and not self.master:
             self.log_server, self.log_port = create_server(
                 self.log_service,
-                host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
-                operating_system = self.operating_system
+                host=get_ip()
                 )
         else:
             try:
                 self.log_server = GenericServer(
                     service=self.log_service,
-                    host=get_ip(operating_system=self.operating_system, network_interface=self.network_interface),
-                    port=self.log_port,
-                    operating_system = self.operating_system
+                    host=get_ip(),
+                    port=self.log_port
                     )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
@@ -804,40 +806,16 @@ class Controller:
             self.log_service.stop_latest_logfile()
 
 
-def get_os():
-    """Read out operating system"""
-
-    pf = platform.system()
-
-
-    if pf == 'Linux':
-        operating_system = 'Linux'
-    elif pf=='Windows':
-        operating_system = 'Windows'
-    elif pf=="Darwin":
-        operating_system = 'mac_os'
-    else:
-        operating_system = pf
-
-    return operating_system
-
-
-
 def main():
     """ Runs the launch controller """
 
-    operating_system = get_os()
-
-    if operating_system not in ['Linux', 'Windows']:
-        raise UnsupportedOSException
-
-    hide_console(operating_system)
-    log_controller = Controller(operating_system=operating_system)
+    hide_console()
+    log_controller = Controller()
     run(log_controller)
 
 def main_proxy():
     """ Runs the launch controller overriding commandline arguments in proxy mode """
-
+    
     log_controller = Controller(proxy=True)
     run(log_controller)
 
@@ -854,13 +832,8 @@ def main_master():
 
 def main_staticproxy():
     """ Runs the launch controller overriding commandline arguments in staticproxy mode """
-
-    operating_system = get_os()
-
-    if operating_system not in ['Linux', 'Windows']:
-        raise UnsupportedOSException
-
-    log_controller = Controller(operating_system=operating_system, staticproxy=True)
+    
+    log_controller = Controller(staticproxy=True)
     run(log_controller)
 
 def run(log_controller):

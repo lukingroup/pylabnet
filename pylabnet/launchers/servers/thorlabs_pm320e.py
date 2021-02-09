@@ -5,7 +5,7 @@ import pyvisa
 from pylabnet.hardware.power_meter.thorlabs_pm320e import Driver
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.thorlabs_pm320e import Service, Client
-from pylabnet.utils.helper_methods import get_ip, show_console, hide_console, load_device_config
+from pylabnet.utils.helper_methods import get_ip, hide_console, load_device_config
 
 def launch(**kwargs):
     """ Connects to PM320E and instantiates server
@@ -36,21 +36,7 @@ def launch(**kwargs):
     # TLDR: if you want to use launch-control, please fill in GPIB variable with
     # the correct resource string
     except:
-        rm = pyvisa.ResourceManager()
-        resources = rm.list_resources()
-        show_console()
-        print('Current resources:')
-        for index, resource in enumerate(resources):
-            print(f'{index}: {resource}')
-        address = int(input('\nSelect the index of the target resource: '))
-        try:
-            pm = Driver(
-                logger=kwargs['logger'],
-                gpib_address=resources[address]
-            )
-        except:
-            kwargs['logger'].error(f'Failed to connect to {resources[address]} properly.')
-        hide_console()
+        kwargs['logger'].error('Please check GPIB address, could not connect')
 
     pm_service = Service()
     pm_service.assign_module(module=pm)

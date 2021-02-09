@@ -6,9 +6,10 @@ import logging
 import sys
 import os
 import ctypes
+import signal
 import re
 import pickle
-from pylabnet.utils.helper_methods import get_dated_subdirectory_filepath, get_ip
+from pylabnet.utils.helper_methods import get_os, get_dated_subdirectory_filepath, get_ip
 
 
 class LogHandler:
@@ -113,7 +114,7 @@ class LogClient:
         DEBUG=10
     )
 
-    def __init__(self, host, port, operating_system='Windows', key='pylabnet.pem', module_tag='', server_port=None, ui=None):
+    def __init__(self, host, port, key='pylabnet.pem', module_tag='', server_port=None, ui=None):
 
         # Declare all internal vars
         self._host = ''
@@ -125,7 +126,7 @@ class LogClient:
         self._module_tag = ''
         self._server_port = server_port  # Identifies a server running in client's thread
         self._ui = ui  # Identifies a relevant .ui file for the client
-        self.operating_system = operating_system
+        self.operating_system = get_os()
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
@@ -462,9 +463,13 @@ class LogService(rpyc.Service):
         """ Closes the server for which the service is running """
 
         pid = os.getpid()
-        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
-        ctypes.windll.kernel32.TerminateProcess(handle, -1)
-        ctypes.windll.kernel32.CloseHandle(handle)
+        operating_system = get_os()
+        if operating_system == 'Windows':
+            handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+            ctypes.windll.kernel32.TerminateProcess(handle, -1)
+            ctypes.windll.kernel32.CloseHandle(handle)
+        elif operating_system == 'Linux':
+            os.kill(pid, signal.SIGTERM)
 
     def add_logfile(self, name, dir_path, file_level=logging.DEBUG, form_string=None):
         """ Adds a log-file for all future logging

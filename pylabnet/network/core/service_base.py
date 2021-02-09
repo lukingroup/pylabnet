@@ -1,7 +1,9 @@
 import rpyc
 import os
 import ctypes
+import signal
 from pylabnet.utils.logging.logger import LogHandler
+from pylabnet.utils.helper_methods import get_os
 
 
 class ServiceBase(rpyc.Service):
@@ -29,6 +31,10 @@ class ServiceBase(rpyc.Service):
         """ Closes the server for which the service is running """
 
         pid = os.getpid()
-        handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
-        ctypes.windll.kernel32.TerminateProcess(handle, -1)
-        ctypes.windll.kernel32.CloseHandle(handle)
+        operating_system = get_os()
+        if operating_system == 'Windows':
+            handle = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+            ctypes.windll.kernel32.TerminateProcess(handle, -1)
+            ctypes.windll.kernel32.CloseHandle(handle)
+        elif operating_system == 'Linux':
+            os.kill(pid, signal.SIGTERM)

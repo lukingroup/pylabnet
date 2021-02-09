@@ -753,8 +753,10 @@ class PulseMaster:
         # Get value from changed field.
         if field_var == 'tref':
             value = pulse_specifier_field.currentText()
-        else:
+        elif type(pulse_specifier_field) is QLineEdit:
             value = pulse_specifier_field.text()
+        elif type(pulse_specifier_field) is QCheckBox:
+            value = pulse_specifier_field.isChecked()
 
         # Update pulse specifier.
         if field_var == 'dur':
@@ -826,14 +828,19 @@ class PulseMaster:
 
             qform_layout.addRow(field_label, field_input)
 
-            # Update Combobox.
+            # Update the value of the fields being displayed, andd connect them
+            # to the correct update function.
             if field['var'] == 'tref':
                 field_input.setCurrentIndex(field_input.findText(value))
                 field_input.currentIndexChanged.connect(pulse_mod_function)
-            # Update QLineedit.
-            else:
+
+            elif type(field_input) is QLineEdit:
                 field_input.setText(str(value))
                 field_input.textEdited.connect(pulse_mod_function)
+
+            elif type(field_input) is QCheckBox:
+                field_input.setChecked(bool(value))
+                field_input.stateChanged.connect(pulse_mod_function)
 
         delete_button = QPushButton("Delete Pulse")
         delete_button.setStyleSheet("background-color : #6a040f")

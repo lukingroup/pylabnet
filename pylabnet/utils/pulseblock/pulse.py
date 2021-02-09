@@ -129,36 +129,39 @@ class PSin(PulseBase):
         )
         return ret_ar
 
-class PSinGaussian(PulseBase):
-    """ Pulse: Sine with Gaussian modulation
+class PGaussian(PulseBase):
+    """ Pulse: Guassian pulse with optional Sin modulation
     """
 
-    def __init__(self, ch, dur, t0=0, amp=0, freq=0, ph=0, stdev=1):
-        """ Construct Sin Pulse object
+    def __init__(self, ch, dur, t0=0, amp=0, stdev=1, mod=False, mod_freq=0, mod_ph=0):
+        """ Construct Gaussian Pulse object
 
         :param ch: (str) channel name
         :param dur: (numeric) duration of the pulse
         :param t0: (opt, numeric) position of the pulse beginning
         :param amp: (opt, np.float32) amplitude (zero-to-peak)
-        :param freq: (opt, np.float32) frequency (linear, without 2*pi)
-        :param ph: (opt, np.float32) phase (in degrees)
+        :param mod_freq: (opt, np.float32) modulation frequency (linear, without 2*pi)
+        :param mod_ph: (opt, np.float32) modulation phase (in degrees)
         :param stdev: (opt, np.float32) standard deviation of the gaussian
+        :param modL: (opt, bool) flag to set sinusoidal modulation
         """
 
         super().__init__(ch=ch, dur=dur, t0=t0)
 
         self._amp = amp
-        self._freq = freq
-        self._ph = ph
+        self._mod_freq = mod_freq
+        self._mod_ph = mod_ph
         self._stdev = stdev
+        self._mod = mod
         self.is_analog = True
 
         # Define an automatic default.
         self.auto_default = DConst(val=0.0)
 
     def __str__(self):
-        ret_str = f'SinGaussian(amp={self._amp:.2e}, freq={self._freq:.2e}, ' \
-                  f'ph={self._ph:.2f}, stdev={self._stdev:.2f})'
+        ret_str = f'SinGaussian(amp={self._amp:.2e}, stdev={self._stdev:.2f}, ' \
+                  f'mod={self._mod}, mod_freq={self._mod_freq:.2e}, ' \
+                  f'mod_ph={self._mod_ph:.2f})'
 
         return ret_str
 
@@ -170,12 +173,15 @@ class PSinGaussian(PulseBase):
         """
 
         t_ar = np.array(t_ar, dtype=np.float32)
-        ret_ar = self._amp * np.sin(
-            2*np.pi*self._freq*t_ar + np.pi*self._ph/180
-        )
-        # Add Gaussian modulation about the pulse center
+
+        # Gaussian modulation about the pulse center
         t_mid = self.t0 + self.dur / 2
-        ret_ar *= np.exp(-0.5 * ((t_ar - t_mid) / self._stdev) ** 2)
+        ret_ar = self._amp * np.exp(-0.5 * ((t_ar - t_mid) / self._stdev) ** 2)
+        
+        # Add sin modulation
+        if self._mod:
+            ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
+
         return ret_ar
 
 class PConst(PulseBase):

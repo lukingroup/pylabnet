@@ -118,7 +118,6 @@ class Controller:
                 self.staticproxy = False
 
         self.network_interface = None
-        self.operating_system = operating_system
 
         try:
             self.network_interface = load_config('network_config')['network_interface']
@@ -129,7 +128,7 @@ class Controller:
             time.sleep(10)
             raise
 
-        self.host = get_ip(operating_system=self.operating_system, network_interface=self.network_interface)
+        self.host = get_ip()
         self.update_index = 0
 
         # Retrieve static port info.
@@ -366,7 +365,7 @@ class Controller:
             else:
                 self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
-            ip_str_2 = f' ({get_ip(operating_system=self.operating_system, network_interface=self.network_interface)})'
+            ip_str_2 = f' ({get_ip()})'
             log_str = 'Master '
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2
@@ -827,7 +826,7 @@ def main_master():
     if operating_system not in ['Linux', 'Windows']:
         raise UnsupportedOSException
 
-    log_controller = Controller(operating_system=operating_system, master=True)
+    log_controller = Controller(master=True)
     run(log_controller)
 
 def main_staticproxy():

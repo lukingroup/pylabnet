@@ -827,13 +827,15 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
 
     subprocess.Popen(cmd, shell=True)
 
-def get_ip(operating_system='Windows', network_interface='eth0'):
+def get_ip():
     """ Returns a primary IP address 
     
     :network_interface: (str) Used for Linux compatibility. Network interface of target IP address.
         Can be found out by running ifconfig.
     """
 
+    operating_system = get_os()
+    
     if operating_system == 'Windows':
 
         ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
@@ -847,6 +849,10 @@ def get_ip(operating_system='Windows', network_interface='eth0'):
                 return filtered_ip[0]
 
     elif operating_system == 'Linux':
+         try:
+            network_interface = load_config('network_config')['network_interface']
+        except AttributeError:
+            network_interface = 'eth0'
         ip = ni.ifaddresses(network_interface)[ni.AF_INET][0]['addr']
         return ip
 

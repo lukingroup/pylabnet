@@ -141,7 +141,7 @@ class Controller:
                 raise
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
-            hide_console(operating_system=self.operating_system)
+            hide_console()
         elif self.proxy:
             popup = ParameterPopup(
                 host=str,
@@ -163,7 +163,7 @@ class Controller:
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
-            hide_console(operating_system=self.operating_system)
+            hide_console()
         else:
             self.log_port = self.LOG_PORT
             self.gui_port = self.GUI_PORT

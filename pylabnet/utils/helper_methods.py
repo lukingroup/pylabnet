@@ -833,23 +833,23 @@ def get_ip():
     :network_interface: (str) Used for Linux compatibility. Network interface of target IP address.
         Can be found out by running ifconfig.
     """
-
+ 
     operating_system = get_os()
-    
+
     if operating_system == 'Windows':
 
         ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
-        if len(ip_list) == 1:
+        if len(ip_list) == 1:  
             return ip_list[0]
         else:
             filtered_ip = [ip for ip in ip_list if ip.startswith('140')]
             if len(filtered_ip) == 0:
-                return ip_list[0]
+                return ip_list[0] 
             else:
                 return filtered_ip[0]
-
+  
     elif operating_system == 'Linux':
-         try:
+        try:
             network_interface = load_config('network_config')['network_interface']
         except AttributeError:
             network_interface = 'eth0'

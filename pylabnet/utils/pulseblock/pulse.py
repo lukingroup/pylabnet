@@ -140,28 +140,30 @@ class PGaussian(PulseBase):
         :param dur: (numeric) duration of the pulse
         :param t0: (opt, numeric) position of the pulse beginning
         :param amp: (opt, np.float32) amplitude (zero-to-peak)
+        :param stdev: (opt, np.float32) standard deviation of the gaussian
+        :param mod: (opt, bool) flag to set sinusoidal modulation
         :param mod_freq: (opt, np.float32) modulation frequency (linear, without 2*pi)
         :param mod_ph: (opt, np.float32) modulation phase (in degrees)
-        :param stdev: (opt, np.float32) standard deviation of the gaussian
-        :param modL: (opt, bool) flag to set sinusoidal modulation
         """
 
         super().__init__(ch=ch, dur=dur, t0=t0)
 
         self._amp = amp
-        self._mod_freq = mod_freq
-        self._mod_ph = mod_ph
         self._stdev = stdev
         self._mod = mod
+        self._mod_freq = mod_freq
+        self._mod_ph = mod_ph
         self.is_analog = True
 
         # Define an automatic default.
         self.auto_default = DConst(val=0.0)
 
     def __str__(self):
-        ret_str = f'SinGaussian(amp={self._amp:.2e}, stdev={self._stdev:.2f}, ' \
-                  f'mod={self._mod}, mod_freq={self._mod_freq:.2e}, ' \
-                  f'mod_ph={self._mod_ph:.2f})'
+        ret_str = f'SinGaussian(amp={self._amp:.2e}, ' \
+                  f'stdev={self._stdev:.2f}, mod={self._mod}'
+
+        ret_str = ret_str +  f', mod_freq={self._mod_freq:.2e}, ' \
+                             f'mod_ph={self._mod_ph:.2f})' if self._mod else ')'
 
         return ret_str
 
@@ -185,27 +187,38 @@ class PGaussian(PulseBase):
         return ret_ar
 
 class PConst(PulseBase):
-    """ Pulse: Constant
+    """ Pulse: Constant value with optional Sin modulation
     """
 
-    def __init__(self, ch, dur, t0=0, val=0.0):
+    def __init__(self, ch, dur, t0=0, val=0.0, mod=False, mod_freq=0, mod_ph=0):
         """ Construct Constant Pulse
 
         :param ch: (str) channel name
         :param dur: (numeric) duration of the pulse
         :param t0: (opt, numeric) position of the pulse beginning
         :param val: (opt, np.float32) constant value
+        :param mod: (opt, bool) flag to set sinusoidal modulation
+        :param mod_freq: (opt, np.float32) modulation frequency (linear, without 2*pi)
+        :param mod_ph: (opt, np.float32) modulation phase (in degrees)
         """
 
         super().__init__(ch=ch, dur=dur, t0=t0)
         self._val = val
+        self._mod = mod
+        self._mod_freq = mod_freq
+        self._mod_ph = mod_ph
         self.is_analog = True
 
         # Define an automatic default.
         self.auto_default = DConst(val=0.0)
 
     def __str__(self):
-        return 'Const(val={})'.format(self._val)
+        ret_str = f'Const(val={self._val}'
+
+        ret_str =  ret_str + f', mod_freq={self._mod_freq:.2e}, ' \
+                             f'mod_ph={self._mod_ph:.2f})' if self._mod else ')'
+        
+        return ret_str
 
     def get_value(self, t_ar):
         """ Returns array of samples
@@ -216,6 +229,10 @@ class PConst(PulseBase):
 
         t_ar_len = len(t_ar)
         ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
+
+        # Add sin modulation
+        if self._mod:
+            ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
 
         return ret_ar
 

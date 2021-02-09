@@ -77,6 +77,16 @@ class PulseblockConstructor():
                      mod_freq=self.resolve_value(pb_spec.pulsevar_dict['mod_freq']),
                      mod_ph=self.resolve_value(pb_spec.pulsevar_dict['mod_ph'])
                 )
+
+            elif pb_spec.pulsetype == "PConst":
+                pulse = po.PConst(
+                     ch=pb_spec.channel,
+                     dur=dur,
+                     val=self.resolve_value(pb_spec.pulsevar_dict['val']),
+                     mod=self.resolve_value(pb_spec.pulsevar_dict['modulation']),
+                     mod_freq=self.resolve_value(pb_spec.pulsevar_dict['mod_freq']),
+                     mod_ph=self.resolve_value(pb_spec.pulsevar_dict['mod_ph'])
+                )
             
             else:
                 self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")

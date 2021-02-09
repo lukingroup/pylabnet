@@ -2,7 +2,7 @@
 
 `GenericServer` creates an `rpyc.ThreadedServer` and assigns it a service (should be an instance
 of `ServiceBase` class), which exposes functionality to clients that connect to the server. The
-`GenericServer` can be identified and accessed via a `hostname` (IP address, or `'localhost'` if 
+`GenericServer` can be identified and accessed via a `hostname` (IP address, or `'localhost'` if
 local) and `port` number from 0 to 65535 (recommended to use ports 1024 to 49151). For a generic
 (insecure) connection without authentication, the `key` parameter can be set to `None`.
 
@@ -24,6 +24,7 @@ import rpyc
 import threading
 import os
 import time
+import platform
 
 
 class GenericServer:
@@ -33,13 +34,14 @@ class GenericServer:
         :param service: ServiceBase instance to assign to server
         :param host: (str) name of host (can use 'localhost' for local connections)
         :param port: (int) port number to use - must be unique
-        :param key: (str, optional) name of key file stored in C:/Windows/System32/
+        :param key: (str, optional) name of key file stored in C:/Windows/System32/ (for windows, /etc/ssl/certs for linux)
             for authentication purposes. If None, a standard server (without secure
             authentication) will be used
         """
 
+        self.operating_system = get_os()
         if key is None:
-        
+
             # start a server without any authentication
             self._server = rpyc.ThreadedServer(
                 service=service,
@@ -54,10 +56,14 @@ class GenericServer:
         else:
 
             # identify key
-            key = os.path.join(os.environ['WINDIR'], 'System32', key)
+            if self.operating_system == "Windows":
+                key = os.path.join(os.environ['WINDIR'], 'System32', key)
+            elif self.operating_system == "Linux":
+                key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
+                cert = os.path.join('/etc/ssl/certs', 'pylabnet.cert')
 
             if os.path.exists(key):
-            
+
                 # Add SSL authentication
                 self._server = rpyc.ThreadedServer(
                     service=service,
@@ -68,7 +74,7 @@ class GenericServer:
                         'sync_request_timeout': 300
                     },
                     authenticator=rpyc.utils.authenticators.SSLAuthenticator(
-                        key, key
+                        key, cert
                     )
                 )
 
@@ -92,3 +98,21 @@ class GenericServer:
     @staticmethod
     def _start_server(server_obj):
         server_obj.start()
+
+
+def get_os():
+    """Read out operating system"""
+
+    pf = platform.system()
+
+
+    if pf == 'Linux':
+        operating_system = 'Linux'
+    elif pf=='Windows':
+        operating_system = 'Windows'
+    elif pf=="Darwin":
+        operating_system = 'mac_os'
+    else:
+        operating_system = pf
+
+    return operating_system

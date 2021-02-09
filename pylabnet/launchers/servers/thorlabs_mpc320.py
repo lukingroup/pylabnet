@@ -5,7 +5,7 @@ import pyvisa
 from pylabnet.hardware.polarization.thorlabs_mpc320 import Driver
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server.thorlabs_mpc320 import Service, Client
-from pylabnet.utils.helper_methods import load_device_config, get_ip, show_console, hide_console, load_config
+from pylabnet.utils.helper_methods import load_device_config, get_ip, hide_console, load_config
 
 def launch(**kwargs):
     """ Connects to MPC320 instantiates server

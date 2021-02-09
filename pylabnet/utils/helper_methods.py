@@ -10,11 +10,13 @@ import numpy as np
 import socket
 import subprocess
 import paramiko
+import platform
 import decouple
 from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
+import netifaces as ni
 
 
 def str_to_float(in_val):
@@ -226,15 +228,21 @@ def show_console():
     Useful for processes where console is typically hidden but user input is suddenly required
     """
 
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
 
 def hide_console():
     """ Hides the active console.
 
     Useful for processes where console is not needed (isntead, there is a GUI to use)
+
+    :os: (string) Which operating system is used ('Windows' and 'Linux' supported)
     """
 
-    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
 
 def create_server(service, logger=None, host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers
@@ -751,7 +759,14 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
         server_port = np.random.randint(1024, 49151)
 
     # Build command()
-    cmd = f'{start}"{python_path}" "{launch_path}" '
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        cmd = f'{start}"{python_path}" "{launch_path}" '
+    elif operating_system == 'Linux':
+        cmd = f'{python_path} {launch_path} '
+    else:
+        raise UnsupportedOSException
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
     cmd += f'--device_id "{config_dict["device_id"]}" '
@@ -794,9 +809,16 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     )
 
     # Build command
-    cmd = f'start "{script}_server, '
-    cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
-    cmd += f'" "{sys.executable}" "{launch_path}" '
+    operating_system = get_os()
+    if operating_system == 'Windows':
+        cmd = f'start "{script}_server, '
+        cmd += time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())
+        cmd += f'" "{sys.executable}" "{launch_path}" '
+    elif operating_system == 'Linux':
+        cmd = f'{sys.executable} {launch_path} '
+    else:
+        raise UnsupportedOSException
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--script {script} --num_clients {num_clients} '
     cmd += f'--config {config} --debug {debug_flag} '
@@ -806,22 +828,39 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     subprocess.Popen(cmd, shell=True)
 
 def get_ip():
-    """ Returns a primary IP address """
+    """ Returns a primary IP address 
+    
+    :network_interface: (str) Used for Linux compatibility. Network interface of target IP address.
+        Can be found out by running ifconfig.
+    """
+ 
+    operating_system = get_os()
 
-    try:
-        subnet = load_config('network_configuration')['subnet']
-    except:
-        subnet = '140'
+    if operating_system == 'Windows':
+                             
+        # Retrieve subnet from config dict                      
+        try:
+            subnet = load_config('network_configuration')['subnet']
+        except:
+            subnet = '140'
+        ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
+        if len(ip_list) == 1:  
 
-    ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
-    if len(ip_list) == 1:
-        return ip_list[0]
-    else:
-        filtered_ip = [ip for ip in ip_list if ip.startswith(subnet)]
-        if len(filtered_ip) == 0:
             return ip_list[0]
         else:
-            return filtered_ip[0]
+            filtered_ip = [ip for ip in ip_list if ip.startswith(subnet)]
+            if len(filtered_ip) == 0:
+                return ip_list[0] 
+            else:
+                return filtered_ip[0]
+  
+    elif operating_system == 'Linux':
+        try:
+            network_interface = load_config('network_config')['network_interface']
+        except AttributeError:
+            network_interface = 'eth0'
+        ip = ni.ifaddresses(network_interface)[ni.AF_INET][0]['addr']
+        return ip
 
 def HDAWG_to_breakout_box(pin):
     if pin < 8 or (pin < 24 and pin >= 16):
@@ -857,3 +896,24 @@ def breakout_box_to_HDAWG(board, channel):
         pin = pin + channel
 
     return pin
+
+def get_os():
+    """Read out operating system"""
+
+    pf = platform.system()
+
+
+    if pf == 'Linux':
+        operating_system = 'Linux'
+    elif pf=='Windows':
+        operating_system = 'Windows'
+    elif pf=="Darwin":
+        operating_system = 'mac_os'
+    else:
+        operating_system = pf
+
+    return operating_system
+
+class UnsupportedOSException(Exception):
+    """Raised when the operating system is not supported."""
+    pass

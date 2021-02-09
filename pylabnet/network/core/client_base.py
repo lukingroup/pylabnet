@@ -2,6 +2,7 @@ import rpyc
 import os
 from socket import timeout
 from ssl import SSLError
+from pylabnet.utils.helper_methods import get_os, UnsupportedOSException
 
 
 class ClientBase:
@@ -14,6 +15,7 @@ class ClientBase:
         """
 
         # Internal vars to store server info
+        self.operating_system = get_os()
         self._host = ''
         self._port = 0
 
@@ -60,14 +62,16 @@ class ClientBase:
                     }
                 )
             else:
-                key = os.path.join(os.environ['WINDIR'], 'System32', key)
+                if self.operating_system == 'Windows':
+                    key = os.path.join(os.environ['WINDIR'], 'System32', key)
+                elif self.operating_system == 'Linux':
+                    key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
+                else:
+                    raise UnsupportedOSException()
                 self._connection = rpyc.ssl_connect(
                     host=self._host,
                     port=self._port,
-                    config={
-                        'allow_public_attrs': True,
-                        'sync_request_timeout': 300
-                    },
+                    config={'allow_public_attrs': True},
                     keyfile=key,
                     certfile=key
                 )

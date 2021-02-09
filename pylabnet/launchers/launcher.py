@@ -49,10 +49,11 @@ import os
 import socket
 import importlib.util
 from pylabnet.utils.logging import logger
-from pylabnet.utils.helper_methods import get_ip, parse_args, show_console, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
+from pylabnet.utils.helper_methods import get_ip, parse_args, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
 from pylabnet.network.client_server import external_gui
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.gui.pyqt.external_gui import ParameterPopup, fresh_popup, warning_popup
 
 
 class Launcher:
@@ -292,25 +293,28 @@ class Launcher:
 
         # If there are multiple matches, force the user to choose in the launched console
         else:
-            show_console()
             msg_str = 'Found relevant server(s) already running.\n'
             self.logger.info(msg_str)
-            print(msg_str)
             for index, match in enumerate(matches):
                 msg_str = ('------------------------------------------\n'
                         + '                    ({})                   \n'.format(index + 1)
                         + match.summarize())
-                print(msg_str)
                 self.logger.info(msg_str)
-            print('------------------------------------------\n\n'
-                'Which server would you like to connect to?\n'
-                'Please enter a choice from {} to {}.'.format(1, len(matches)))
-            use_index = int(input('Entering any other value will launch a new server.\n\n>> '))
-            self.logger.info(f'User chose ({use_index})')
+            self.logger.info('------------------------------------------\n\n'
+                             'Which server would you like to connect to?\n'
+                             'Please enter a choice from {} to {}.'.format(1, len(matches)))
+            app, popup = fresh_popup(index=int)
+            self.waiting_flag = True
+            popup.parameters.connect(self.find_index)
+            while self.waiting_flag:
+                app.processEvents()
+            self.logger.info(f'User chose ({self.use_index})')
 
             # If the user's choice falls within a relevant GUI, attempt to connect.
             try:
-                host, port = matches[use_index - 1].ip, matches[use_index - 1].port
+                if self.use_index - 1 < 0:
+                    raise IndexError
+                host, port = matches[self.use_index - 1].ip, matches[self.use_index - 1].port
                 self._connect_to_server(module, host, port, device_id)
 
             # If the user's choice did not exist, just launch a new GUI
@@ -338,6 +342,13 @@ class Launcher:
                     self.logger.error(f'Failed to connect to {module}')
             hide_console()
 
+    def find_index(self, params):
+        """ Loads the index of device to use """
+
+        self.use_index = params['index']
+        self.waiting_flag = False
+
+    
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """
 
@@ -459,6 +470,4 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        show_console()
-        print(e)
-        time.sleep(10)
+        warning_popup(str(e))

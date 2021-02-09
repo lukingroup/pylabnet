@@ -7,7 +7,9 @@ import json
 import socket
 import functools
 
-from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QComboBox, QWidget, QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QLabel, QLineEdit
+from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, \
+                            QFormLayout, QComboBox, QWidget, QTableWidgetItem, QVBoxLayout, \
+                            QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
@@ -502,7 +504,7 @@ class PulseMaster:
             ## Build x_ar, y_ar, text_ar
 
             ## Analog channel
-            if ch.is_analog: # TODO YQ
+            if ch.is_analog:
                 pulse_items = pb_obj.p_dict[ch]
                 default_item = pb_obj.dflt_dict[ch]
 
@@ -547,7 +549,6 @@ class PulseMaster:
                 x_ar = [0]
                 y_ar = [ch_index]
                 
-                # TODO YQ: Figure out if the text_ar is useful?
                 if ch in pb_obj.dflt_dict.keys():
                     text_ar = [str(pb_obj.dflt_dict[ch])]
                 else:
@@ -1074,6 +1075,8 @@ class PulseMaster:
         # Add pulse var info.
         pulsevar_dict = {}
 
+        # For each field specified in JSON, extract data from input fields
+        # Skip over the timing fields that were handled earlier
         for pulsedict_field in pulsetype_dict["fields"]:
             if not pulsedict_field['var'] in ['dur', 'tref', 'offset']:
                 pulse_param_name = pulsedict_field['var']
@@ -1095,7 +1098,7 @@ class PulseMaster:
         # Get pulsetype dict
         pulsetype_dict = self._current_pulsetype_dict()
 
-        valid, puls_data_dict = self.read_pulse_params_from_form()
+        valid, pulse_data_dict = self.read_pulse_params_from_form()
 
         if not valid:
             return
@@ -1103,7 +1106,7 @@ class PulseMaster:
         # Generate dictionary fully specifying the pulse.
         pulse_specifier = self.gen_pulse_specifier(
             pulsetype_dict=pulsetype_dict,
-            pulse_data_dict=puls_data_dict
+            pulse_data_dict=pulse_data_dict
         )
 
 
@@ -1137,26 +1140,33 @@ class PulseMaster:
 
     def return_pulsedict(self, pulsetype_dict):
         """ Return values of pulse fields."""
+        
+        # Keys = String from config specifying the field type
+        # Values = (QObject for the field, Function to extract the field's value)
+        input_field_handlers = {
+            "QLineEdit" : (QLineEdit, lambda obj: obj.text()),
+            "QComboBox" : (QComboBox, lambda obj: obj.currentText()),
+            "QCheckBox" : (QCheckBox, lambda obj: obj.isChecked())
+        }
+        
+        # Get the name and field type from config file
+        field_names = [(self._get_form_field_widget_name(field), field['input_type']) for field in pulsetype_dict['fields'] if field['input_type'] in input_field_handlers]
 
-        # Retreive values
-        qline__field_names =   [self._get_form_field_widget_name(field) for field in pulsetype_dict['fields'] if field['input_type'] == "QLineEdit"]
-        combobox_field_names = [self._get_form_field_widget_name(field) for field in pulsetype_dict['fields'] if field['input_type'] == "QComboBox"]
+        # Get the variable name that this field should be stored as
+        field_vars = [field['var'] for field in pulsetype_dict['fields'] if field['input_type'] in input_field_handlers]
+        field_values = []
 
-        qline__field_vars =   [field['var'] for field in pulsetype_dict['fields'] if field['input_type'] == "QLineEdit"]
-        combobox_field_vars = [field['var'] for field in pulsetype_dict['fields'] if field['input_type'] == "QComboBox"]
+        # Create the specified QObject and apply the function to get the relevant 
+        # data in the pulse input fields.
+        for (field_name, field_type) in field_names:
+            field_type_obj, field_type_fn = input_field_handlers[field_type]
 
-        qlineedits = [self.pulse_selector_form_variable.findChild(QLineEdit, field_name).text() for field_name in qline__field_names ]
-        comboboxs =  [self.pulse_selector_form_variable.findChild(QComboBox, field_name).currentText() for field_name in combobox_field_names]
+            field_value = self.pulse_selector_form_variable.findChild(field_type_obj, field_name)
+            field_value = field_type_fn(field_value)
 
+            field_values.append(field_value)
 
-        # Construc data
-        pulsedict_data = {}
-        for field_name, field_val in zip(qline__field_vars, qlineedits):
-            pulsedict_data[field_name] = field_val
-
-        for field_name, field_val in zip(combobox_field_vars, comboboxs):
-            pulsedict_data[field_name] = field_val
-
+        pulsedict_data = dict(zip(field_vars, field_values))
         return pulsedict_data
 
     def clean_and_validate_pulsedict(self, pulsedict):
@@ -1330,13 +1340,19 @@ class PulseMaster:
 
 
     def _get_pulse_fieldtype(self, field_dict):
-        """Determie input field type."""
+        """Determine input field type."""
         # Build field.
         field_type = field_dict['input_type']
         if field_type == 'QLineEdit':
             field_input = QLineEdit()
         elif field_type == 'QComboBox':
             field_input = QComboBox()
+        elif field_type == 'QCheckBox':
+            field_input = QCheckBox()
+        else:
+            self.log.warn(f"Unknown field type {field_type} found.")
+            return
+
         return field_input
 
     def build_pulse_input_fields(self):

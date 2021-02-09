@@ -22,16 +22,16 @@ class PulseblockConstructor():
         self.pulseblock = None
 
     def resolve_value(self, input_val):
-        """ Return float value of input_val.
+        """ Return value of input_val.
 
-        Inpuinput_valt is either already float, in which case it will be returned.
+        If input_val is either already not a string, in which case it will be returned.
         Alternatively, the input value could be a variable, as defined in the keys
-        in the var_dict. In this case the value associeted with this variable will be
+        in the var_dict. In this case the value associated with this variable will be
         returned.
-        :input: (str of float) Float value or variabel string.
+        :input: (str / float / bool etc) Variable value or variable string.
         """
 
-        if type(input_val) is float:
+        if type(input_val) is not str:
             return input_val
         else:
             try:
@@ -67,14 +67,15 @@ class PulseblockConstructor():
                      ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
                 )
             
-            elif pb_spec.pulsetype == "PSinGauss":
-                pulse = po.PSinGaussian(
+            elif pb_spec.pulsetype == "PGaussian":
+                pulse = po.PGaussian(
                      ch=pb_spec.channel,
                      dur=dur,
                      amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
-                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
-                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph']),
-                     stdev=1e-6 * self.resolve_value(pb_spec.pulsevar_dict['stdev'])
+                     stdev=1e-6 * self.resolve_value(pb_spec.pulsevar_dict['stdev']),
+                     mod=self.resolve_value(pb_spec.pulsevar_dict['modulation']),
+                     mod_freq=self.resolve_value(pb_spec.pulsevar_dict['mod_freq']),
+                     mod_ph=self.resolve_value(pb_spec.pulsevar_dict['mod_ph'])
                 )
             
             else:

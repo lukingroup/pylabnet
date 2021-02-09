@@ -26,7 +26,6 @@ from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_
     remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath, 
     get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
-
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 

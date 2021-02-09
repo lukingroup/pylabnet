@@ -837,12 +837,18 @@ def get_ip():
     operating_system = get_os()
 
     if operating_system == 'Windows':
-
+                             
+        # Retrieve subnet from config dict                      
+        try:
+            subnet = load_config('network_configuration')['subnet']
+        except:
+            subnet = '140'
         ip_list = socket.gethostbyname_ex(socket.gethostname())[2]
         if len(ip_list) == 1:  
+
             return ip_list[0]
         else:
-            filtered_ip = [ip for ip in ip_list if ip.startswith('140')]
+            filtered_ip = [ip for ip in ip_list if ip.startswith(subnet)]
             if len(filtered_ip) == 0:
                 return ip_list[0] 
             else:

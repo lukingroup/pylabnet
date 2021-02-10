@@ -214,15 +214,15 @@ class IQ_Calibration():
 			raise Exception("No calibration loaded!")
 
 		Hm1 = self.harms.iloc[:, 0].unstack()
-		LO = np.array(H1.index)
-		IF = np.array(H1.columns.get_level_values(0))
+		LO = np.array(Hm1.index)
+		IF = np.array(Hm1.columns.get_level_values(0))
 
-		h_m1 = H1.values
+		h_m1 = Hm1.values
 		f = interpolate.interp2d(IF, LO, h_m1)
 		h_m1_val = f(if_freq, lo_freq)
 
 		H0 = self.harms.iloc[:, 1].unstack()
-		h_0 = H1.values
+		h_0 = H0.values
 		f = interpolate.interp2d(IF, LO, h_0)
 		h_0_val = f(if_freq, lo_freq)
 
@@ -232,12 +232,12 @@ class IQ_Calibration():
 		h_1_val = f(if_freq, lo_freq)
 
 		H2 = self.harms.iloc[:, 3].unstack()
-		h_2 = H1.values
+		h_2 = H2.values
 		f = interpolate.interp2d(IF, LO, h_2)
 		h_2_val = f(if_freq, lo_freq)
 
 		H3 = self.harms.iloc[:, 4].unstack()
-		h_3 = H1.values
+		h_3 = H3.values
 		f = interpolate.interp2d(IF, LO, h_3)
 		h_3_val = f(if_freq, lo_freq)
 
@@ -323,7 +323,7 @@ class IQ_Calibration():
 
 		mw_client.set_freq(freq-if_f[ii])
 
-		self.set_optimal_hdawg_values(hd, if_f[ii], freq-if_f[ii],, HDAWG_ports=HDAWG_ports, oscillator=oscillator)
+		self.set_optimal_hdawg_values(hd, if_f[ii], freq-if_f[ii], HDAWG_ports=HDAWG_ports, oscillator=oscillator)
 
 		return if_f[ii], freq-if_f[ii]
 
@@ -343,7 +343,7 @@ class IQ_Calibration():
 		if freq > LO[-1] + IF[-1]:
 			raise Exception("Chosen frequency too high!")
 
-		if_f = np.linspace(LO[0], LO[-1], 100)
+		if_f = np.linspace(IF[0], IF[-1], 100)
 
 		fidelity = []
 

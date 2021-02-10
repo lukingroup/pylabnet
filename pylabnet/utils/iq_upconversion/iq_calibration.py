@@ -275,8 +275,26 @@ class IQ_Calibration():
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), dc_i_opt)
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), dc_q_opt)
 
-	def set_optimal_hdawg_and_LO_values(self, hd, mw_source, freq):
+	def get_optimal_hdawg_values(self, if_freq, lo_freq):
+		'''Gets the optimal sine output values on the hdawg for the given IF
+		and LO frequencies.'''
+		if (not self.initialized):
+			raise Exception("No calibration loaded!")
 
+		#Computing the optimal I and Q amplitudes
+		q_opt, phase_opt = self.get_ampl_phase(if_freq, lo_freq)
+		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
+		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
+
+		dc_i_opt, dc_q_opt = self.get_dc_offsets(if_freq, lo_freq)
+
+		return phase_opt, amp_i_opt, amp_q_opt, dc_i_opt, dc_q_opt
+
+	def set_optimal_hdawg_and_LO_values(self, hd, mw_source, freq, HDAWG_ports=[3,4], oscillator=2):
+		'''Finds optimnal IF and LO frequencies for given output frequency.
+		Sets the optimal sine output values on the hdawg for the found IF
+		and LO frequencies. Will also set the HDAWG's sine frequency and LO
+		frequency to the correct value.'''
 		if (not self.initialized):
 			raise Exception("No calibration loaded!")
 
@@ -305,9 +323,43 @@ class IQ_Calibration():
 
 		mw_client.set_freq(freq-if_f[ii])
 
-		self.set_optimal_hdawg_values(hd, if_f[ii], freq-if_f[ii])
+		self.set_optimal_hdawg_values(hd, if_f[ii], freq-if_f[ii],, HDAWG_ports=HDAWG_ports, oscillator=oscillator)
 
 		return if_f[ii], freq-if_f[ii]
+
+	def get_optimal_hdawg_and_LO_values(self, freq):
+		'''Finds optimnal IF and LO frequencies for given output frequency.
+		Gets the optimal sine output values on the hdawg for the found IF
+		and LO frequencies.'''
+		if (not self.initialized):
+			raise Exception("No calibration loaded!")
+
+		LO = np.array(self.phase.index)
+		IF = np.array(self.phase.columns.get_level_values(1))
+
+		if freq < LO[0] + IF[0]:
+			raise Exception("Chosen frequency too low!")
+
+		if freq > LO[-1] + IF[-1]:
+			raise Exception("Chosen frequency too high!")
+
+		if_f = np.linspace(LO[0], LO[-1], 100)
+
+		fidelity = []
+
+		for iff in if_f:
+			lof = freq-iff
+			if lof > LO[0] and lof < LO[-1]:
+				hm1, h0, h1, h2, h3 = self.get_harmonic_powers(iff, lof)
+				fidelity.append(self.get_fidelity(hm1, h0, h1, h2, h3, iff))
+			else:
+				fidelity.append(0)
+
+		ii = np.argmax(fidelity)
+
+		phase_opt, amp_i_opt, amp_q_opt, dc_i_opt, dc_q_opt = self.get_optimal_hdawg_values(if_f[ii], freq-if_f[ii])
+
+		return if_f[ii], freq-if_f[ii], phase_opt, amp_i_opt, amp_q_opt, dc_i_opt, dc_q_opt
 
 	def get_fidelity(self, hm1, h0, h1, h2, h3, iff):
 		return 1 - 10**((hm1-h1)/10)/(2*iff) - 10**((h0-h1)/10)/(iff) - 10**((h2-h1)/10)/(iff) - 10**((h3-h1)/10)/(2*iff)

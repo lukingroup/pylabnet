@@ -65,7 +65,7 @@ class ClientBase:
                 if self.operating_system == 'Windows':
                     key = os.path.join(os.environ['WINDIR'], 'System32', key)
                 elif self.operating_system == 'Linux':
-                    key = os.path.join('/etc/ssl/certs', 'pylabnet.pem')
+                    key = os.path.join('/etc/ssl/certs', key)
                 else:
                     raise UnsupportedOSException()
                 self._connection = rpyc.ssl_connect(

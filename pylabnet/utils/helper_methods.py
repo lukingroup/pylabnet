@@ -858,7 +858,7 @@ def get_ip():
         try:
             network_interface = load_config('network_config')['network_interface']
         except AttributeError:
-            network_interface = 'eth0'
+            return socket.gethostbyname(socket.gethostname())
         ip = ni.ifaddresses(network_interface)[ni.AF_INET][0]['addr']
         return ip
 

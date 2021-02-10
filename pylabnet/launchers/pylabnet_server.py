@@ -25,7 +25,7 @@ import traceback
 import ptvsd
 import time
 
-from pylabnet.utils.helper_methods import parse_args, show_console, hide_console
+from pylabnet.utils.helper_methods import parse_args, hide_console
 from pylabnet.utils.logging.logger import LogClient
 
 
@@ -46,23 +46,8 @@ def main():
     if 'server' in args:
         server = args['server']
     else:
-        # Get all relevant files
-        server_directory = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            'servers'
-        )
-        files = [file for file in os.listdir(server_directory) if (
-            os.path.isfile(os.path.join(
-                server_directory, file
-            )) and '.py' in file and '__init__.py' not in file
-        )]
-        show_console()
-        print('Available servers to launch:\n')
-        for index, file in enumerate(files):
-            print(f'{index}: {file[:-3]}')
-        server_index = int(input('\nPlease enter a server module index: '))
-        server = files[server_index][:-3]
-        hide_console()
+        raise IndexError('Please provide command line arguments in the form\n"'
+                         'python launch_gui.py --logport 1234 --serverport 5678 --server servername')
     if 'logip' in args:
         log_ip = args['logip']
     else:

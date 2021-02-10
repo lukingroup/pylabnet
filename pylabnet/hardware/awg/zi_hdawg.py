@@ -552,23 +552,21 @@ class Sequence():
         # Define regex
         regex = f'\{self.marker_string}([^$]+)\{self.marker_string}'
 
-        found_placeholders = []
-        for match in re.finditer(regex, self.raw_sequence):
-            found_placeholders.append(match.group(1))
+        found_placeholders = [match.group(1) for match in re.finditer(regex, self.raw_sequence)]
 
         # Check for duplicates
         for  found_placeholder in found_placeholders:
             if found_placeholders.count(found_placeholder) != 1:
 
-                error_msg = f"Placeholder {found_placeholder} found multiple time in sequence."
+                error_msg = f"Placeholder {found_placeholder} found multiple times in sequence."
                 self.hd.log.info(error_msg)
 
-                # Remove one occurence from dictionary.
-                found_placeholders.remove(found_placeholder)
+        # Remove duplicates from list
+        found_placeholders = list(set(found_placeholders))
 
         return found_placeholders
         
-    def preprend_sequence(self, string):
+    def prepend_sequence(self, string):
         self.sequence = string + self.sequence
 
     def is_ready(self):
@@ -632,4 +630,4 @@ class Sequence():
                     hdawg_driver.log.error(error_msg)
 
             # Replace waveforms
-            self.replace_waveforms(self.waveform_dict )
+            self.replace_waveforms(self.waveform_dict)

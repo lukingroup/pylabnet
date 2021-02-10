@@ -30,12 +30,10 @@ class PulsedExperiment():
         self.seq.replace_placeholders(self.placeholder_dict)
         self.hd.log.info("Replaced placeholders.")
 
-    def replace_awg_commands(self, pulseblock, command_number):
+    def replace_awg_commands(self, pulseblock):
         """Replace all waveform placeholders with actual AWG waveform commands.
 
         :pulseblock: Pulseblock object
-        :command_number: (int) Index designating which waveform placeholder
-        needs to be replaced.
         """
 
         if self.iplot:
@@ -50,17 +48,12 @@ class PulsedExperiment():
             hd=self.hd
         )
 
-        # Generate .seqc instruction set which represents pulse sequence.
+        # Generate instruction set which represents pulse sequence.
         prologue_sequence, pulse_sequence = pb_handler.get_awg_sequence()
 
-        # Construct replacement dict
-        seq_replacement_dict = {
-            f"{self.seq_identifier}{command_number}": pulse_sequence
-        }
-
-        # Replace waveform placeholder.
-        self.seq.replace_placeholders(seq_replacement_dict)
-        self.seq.preprend_sequence(prologue_sequence)
+        # Replace the pulseblock name placeholder with the generated instructions
+        self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
+        self.seq.prepend_sequence(prologue_sequence)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
@@ -72,8 +65,8 @@ class PulsedExperiment():
             self.replace_placeholders()
 
         # Then replace the waveform commands:
-        for i, pulseblock in enumerate(self.pulseblocks):
-            self.replace_awg_commands(pulseblock, i)
+        for pulseblock in self.pulseblocks:
+            self.replace_awg_commands(pulseblock)
 
     def prepare_awg(self, awg_number):
         """ Create AWG instance, uploads sequence and configures DIO output bits
@@ -121,14 +114,14 @@ class PulsedExperiment():
                 use_template=True, 
                 template_name='base_dig_pulse', 
                 sequence_string=None,
-                seq_identifier='dig_sequence', 
+                marker_string='$',
                 template_directory="sequence_templates", 
                 iplot=True):
         """ Initilizes pulseblock experiment
 
+        :pulseblocks: Single Pulseblock object or list of Pulseblock objects.
         :assignment_dict: Assigning channel numbers to channel names. 
             Format: {channel_name : [ "analog"/"dio", channel_number ]}
-        :pulseblocks: Single Pulseblock object or list of Pulseblock objects.
         :hd: Instance of ZI AWG Driver
         :placeholder_dict: Dictionary containing placeholder names and values for the .seqct file.
         :exp_config_dict: Dictionary containing any additional configs.
@@ -136,7 +129,7 @@ class PulsedExperiment():
             sequence_string .
         :template_name: (str) Name of the .seqct template file (must be stored in sequence_template_folders)
         :sequence_string: (str) .seqc sequence if no template sequence is used.
-        :seq_identifier: (str) Placeholder within .seqct files to be replaced with AWG command sequences.
+        :marker_string: (str) String used to wrap placeholders to indicate them for replacement.
         :template_directory: Folder where to look for .seqct templates.
         :iplot: If True, sequences will be plotted.
         """
@@ -151,9 +144,9 @@ class PulsedExperiment():
         self.hd = hd
         self.template_name = template_name
         self.sequence_string = sequence_string
+        self.marker_string = marker_string
         self.placeholder_dict = placeholder_dict
         self.exp_config_dict = exp_config_dict
-        self.seq_identifier = seq_identifier
         self.iplot = iplot
 
         # Check if template is available, and store it.
@@ -180,4 +173,5 @@ class PulsedExperiment():
         self.seq = Sequence(
             hdawg_driver = hd,
             sequence = sequence_string,
+            marker_string = marker_string
         )

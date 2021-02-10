@@ -1,4 +1,4 @@
-
+import re
 import copy
 import numpy as np
 import time
@@ -345,18 +345,32 @@ class PulseMaster:
         if self.awg_running:
             self.stop_hdawg()
 
-        #Compile pulseblock.
-        self.compile_current_pulseblock()
-
-        # Retrieve compiled pulseblock.
-        pulseblock = self.get_current_pb_constructor().pulseblock
-
         # Get sequence template from textbox.
         seq_template = self.widgets['seqt_textedit'].toPlainText()
         if seq_template == "":
             self.showerror('No sequence template defined.')
             return
 
+        # Find placeholders for pulseblocks in the template
+        # Define regex: anything enclosed between the marker strings, the string
+        # in the middle cannot include the marker itself
+        marker = "$"
+        regex = f'\{marker}([^{marker}]+)\{marker}'
+        found_placeholders = [match.group(1) for match in re.finditer(regex, seq_template)]
+
+        # Remove duplicates since they will be replaced together in one step
+        found_placeholders = set(found_placeholders)
+
+        # Compile and get the pulseblock for each pulseblock that appears in the 
+        # sequence template string
+        required_pulseblocks = []
+        for name in found_placeholders:
+            pb_constructor = self.get_pb_contructor_by_name(name)
+            if pb_constructor is None:
+                continue
+            self.compile_pulseblock(pb_constructor)
+            required_pulseblocks.append(pb_constructor.pulseblock)
+            
         # Retrieve AWG number from settings.
         awg_num = self.widgets['awg_num_val'].value()
 
@@ -364,13 +378,14 @@ class PulseMaster:
         placeholder_dict = self.get_seq_var_dict()
 
         self.pulsed_experiment = PulsedExperiment(
-            pulseblocks=pulseblock,
+            pulseblocks=required_pulseblocks,
             assignment_dict=self.ch_assignment_dict,
             hd=self.hd,
             placeholder_dict=placeholder_dict,
             exp_config_dict=self.exp_config_dict,
             use_template=False,
             sequence_string=seq_template,
+            marker_string=marker,
             iplot=False
         )
 
@@ -618,17 +633,14 @@ class PulseMaster:
             self.widgets["pulse_layout_widget"].addLegend()
             self.widgets["pulse_layout_widget"].plot(x_ar, y_ar, pen=pen, name=ch.name)
 
-    def compile_current_pulseblock(self, update_variables=True):
-        """Compile the current pulseblock
+    def compile_pulseblock(self, pulseblock_constructor, update_variables=True):
+        """ Compile a specified pulseblock
 
         :update_variables: If True, update variables.
         """
 
-        # Retrieve current pulseblcok contructor.
-        pb_constructor = self.get_current_pb_constructor()
-
         # Do nothing if no constructor found.
-        if pb_constructor == None:
+        if pulseblock_constructor == None:
             return
 
         # Update variables.
@@ -636,18 +648,30 @@ class PulseMaster:
             self._update_variable_dict()
 
         # Update variable dict
-        pb_constructor.var_dict = self.vars
+        pulseblock_constructor.var_dict = self.vars
 
-        # try to compile the pulseblock
+        # Try to compile the pulseblock
         try:
-            pb_constructor.compile_pulseblock()
-            compliation_successful= True
-            self.log.info(f"Succesfully compiled pulseblock {pb_constructor.name}.")
+            pulseblock_constructor.compile_pulseblock()
+            compilation_successful= True
+            self.log.info(f"Successfully compiled pulseblock {pulseblock_constructor.name}.")
         except ValueError as e:
             self.showerror(str(e))
-            compliation_successful = False
+            compilation_successful = False
 
-        return compliation_successful
+        return compilation_successful
+
+    def compile_current_pulseblock(self, update_variables=True):
+        """Compile the current pulseblock
+
+        :update_variables: If True, update variables.
+        """
+
+        # Retrieve current pulseblock contructor and compile it
+        pb_constructor = self.get_current_pb_constructor()
+        compilation_successful = self.compile_pulseblock(pb_constructor, update_variables)
+
+        return compilation_successful
 
     def plot_current_pulseblock(self, update_variables=True):
 
@@ -904,7 +928,7 @@ class PulseMaster:
             pb_constructor = None
             self.log.warn(f"More than one Pulseblock contructors associated with curren pulseblock {name} found.")
         elif len(matching_constructors) == 0:
-            self.log.warn('No matching pulseblock found.')
+            self.log.warn(f'No pulseblock matching name {name} found.')
             pb_constructor = None
         else:
             pb_constructor = matching_constructors[0]

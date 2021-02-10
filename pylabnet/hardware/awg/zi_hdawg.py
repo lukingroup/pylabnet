@@ -11,6 +11,8 @@ import time
 import textwrap
 import copy
 import re
+import os
+import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -193,6 +195,16 @@ class Driver():
         """
 
         return self.daq.getInt(f'/{self.device_id}/{node}')
+
+    @log_standard_output
+    @dummy_wrap
+    def gets(self, path):
+        """
+        Wrapper for daq.getString commands. 
+        Get a string value from the specified node.
+|       :path: Path string of the node.
+        """
+        return self.daq.getString(path)
 
     @dummy_wrap
     def set_channel_grouping(self, index):
@@ -497,6 +509,32 @@ class AWGModule():
         self.hd.setv(
             f'awgs/{awg_index}/waveform/waves/{index}', waveform_native
         )
+
+    def save_waveform_csv(self, waveform, csv_filename):
+        """ Saves a numpy array in CSV format into the HDAWG folder
+
+        :waveform: np.array containing waveform
+        :csv_filename: str of the CSV file to be named (should end in .csv)
+        """
+
+        # Get the modules data directory
+        data_dir = self.hd.gets("directory")
+
+        # All CSV files within the waves directory are automatically recognized by the AWG module
+        wave_dir = os.path.join(data_dir, "awg", "waves")
+
+        # The data directory is created by the AWG module and should always exist. If this exception is raised,
+        # something might be wrong with the file system.
+        if not os.path.isdir(wave_dir):
+            raise Exception(f"AWG module wave directory {wave_dir} does not exist or is not a directory")
+        
+        if not csv_filename.endswith(".csv"):
+            self.hd.log.warn(f"CSV filename {csv_filename} did not end in .csv, appending it to filename.")
+            csv_filename += ".csv"
+
+        # Save waveform data to CSV
+        csv_file = os.path.join(wave_dir, csv_filename)
+        np.savetxt(csv_file, waveform)
 
     def set_user_register(self, index, value):
         """ Sets a user register to a desired value

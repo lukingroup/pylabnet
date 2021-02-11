@@ -5,6 +5,7 @@ import socket
 import os
 import time
 import subprocess
+import platform
 from io import StringIO
 import copy
 import ctypes
@@ -17,12 +18,13 @@ import numpy as np
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
-from pylabnet.utils.helper_methods import dict_to_str, load_config, remove_spaces, create_server, show_console, hide_console, get_dated_subdirectory_filepath, get_config_directory, load_device_config, launch_device_server, launch_script, get_ip
-
+from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
+    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
+    get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -68,6 +70,19 @@ class Controller:
 
     def __init__(self, proxy=False, master=False, staticproxy=False):
         """ Initializes launch control GUI """
+
+        self.operating_system = get_os()
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.app.setWindowIcon(
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        )
+        # Instantiate GUI application
+        if self.operating_system == 'Windows':
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+
+        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
+        if self.operating_system not in ['Linux', 'Windows']:
+            raise UnsupportedOSException
         try:
             if sys.argv[1] == '-m' or master:
                 self.master = True
@@ -116,15 +131,15 @@ class Controller:
             self.gui_port = static_proxy_dict['master_gui_port']
             hide_console()
         elif self.proxy:
-            try:
-                self.host = sys.argv[2]
-            except IndexError:
-                show_console()
-                self.host = input('Please enter the master Launch Control IP address:\n>> ')
-            show_console()
-            self.log_port = int(input('Please enter the master Logger Port:\n>> '))
-            self.gui_port = int(input('Please enter the master GUI Port:\n>> '))
-            hide_console()
+            popup = ParameterPopup(
+                host=str,
+                log_port=str,
+                gui_port=str
+            )
+            self.waiting_flag = True
+            popup.parameters.connect(self.fill_parameters)
+            while self.waiting_flag:
+                self.app.processEvents()
         elif self.staticproxy:
             try:
                 static_proxy_dict = load_config('static_proxy')
@@ -157,13 +172,13 @@ class Controller:
 
         sys.stdout = StringIO()
 
-        # Instantiate GUI application
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.app.setWindowIcon(
-            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
-        )
-        self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
+    def fill_parameters(self, params):
+        """ Called when parameters have been entered into a popup """
+
+        self.host = params['host']
+        self.log_port = params['log_port']
+        self.gui_port = params['gui_port']
+        self.waiting_flag = False
 
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
@@ -649,7 +664,7 @@ class Controller:
 
     def _configure_logging(self):
         """ Defines what to do if the Start/Stop Logging button is clicked """
-        self.main_window.logfile_status_button.toggled.connect(self.start_stop_logging)
+        self.main_window.logfile_status_button.toggled.connect(lambda: self.start_stop_logging(master_log=False))
 
     def _configure_logfile(self):
         """ Defines what to do if the logfile radio button is clicked """
@@ -793,6 +808,11 @@ def main_proxy():
 
 def main_master():
     """ Runs the launch controller overriding commandline arguments in master mode """
+
+    operating_system = get_os()
+
+    if operating_system not in ['Linux', 'Windows']:
+        raise UnsupportedOSException
 
     log_controller = Controller(master=True)
     run(log_controller)

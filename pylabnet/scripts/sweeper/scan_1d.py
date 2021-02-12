@@ -12,7 +12,7 @@ from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
-    unpack_launcher, create_server, pyqtgraph_save, get_ip)
+    unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background)
 
 
 class Controller(MultiChSweep1D):
@@ -33,12 +33,14 @@ class Controller(MultiChSweep1D):
         # Instantiate GUI
         self.gui = Window(
             gui_template='scan_1d',
-            host=get_ip()
+            host=get_ip(),
+            max=True
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
             autosave=1, save_name=1, save=1, reps=1, rep_tracker=1, avg=2)
-
+    
+        
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
         self.max = self.widgets['p_max'].value()
@@ -108,7 +110,7 @@ class Controller(MultiChSweep1D):
             hmap.view.setAspectLocked(False)
             hmap.view.invertY(False)
             self.widgets['hmap'].append(hmap)
-
+        
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
@@ -124,7 +126,7 @@ class Controller(MultiChSweep1D):
         self.widgets['exp_preview'].setText(exp_content)
         self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
                                                   'color: rgb(255, 255, 255); '
-                                                  'background-color: rgb(0, 0, 0);')
+                                                  'background-color: #19232D;')
 
     def configure_experiment(self):
         """ Configures experiment to be the currently selected item """

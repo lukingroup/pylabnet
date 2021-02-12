@@ -914,6 +914,25 @@ def get_os():
 
     return operating_system
 
+def set_graph_background(widget):
+    """ Sets the background color for pyqtgraph related widgets to pylabnet style
+
+    :param widget: base graph or legend widget
+    """
+
+    try:
+        widget.getViewBox().setBackgroundColor('#19232D')
+
+    # In case this widget does ont have a parent viewBox
+    except AttributeError:
+        pass
+
+    try:
+        widget.setBackground('#19232D')
+    # In case this widget does ont have a parent viewBox
+    except AttributeError:
+        pass
+
 class UnsupportedOSException(Exception):
     """Raised when the operating system is not supported."""
     pass

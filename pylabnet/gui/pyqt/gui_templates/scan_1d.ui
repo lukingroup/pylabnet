@@ -678,7 +678,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            </widget>
           </item>
           <item>
-           <widget class="QListWidget" name="exp">
+           <widget class="QTreeView" name="exp">
             <property name="styleSheet">
              <string notr="true">color: rgb(85, 170, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>

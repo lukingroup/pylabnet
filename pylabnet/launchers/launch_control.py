@@ -497,7 +497,7 @@ class Controller:
         :param index: (QModelIndex) index of file clicked on
         """
 
-        filepath = self.main_window.devices.model().filePath(index)
+        filepath = self.main_window.scripts.model().filePath(index)
 
         # Check if it is an actual config file
         if not os.path.isdir(filepath):

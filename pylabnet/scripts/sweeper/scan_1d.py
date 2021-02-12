@@ -60,13 +60,17 @@ class Controller(MultiChSweep1D):
         self.config = load_script_config('scan1d', config, logger=self.log)
 
         self.exp_path = self.config['exp_path']
-        if self.exp_path is None:
-            self.exp_path = os.getcwd()
-        sys.path.insert(1, self.exp_path)
-        for filename in os.listdir(self.exp_path):
-            if filename.endswith('.py'):
-                self.widgets['exp'].addItem(filename[:-3])
-        self.widgets['exp'].itemClicked.connect(self.display_experiment)
+        model = QtWidgets.QFileSystemModel()
+        model.setRootPath(self.exp_path)
+        model.setNameFilterDisables(False)
+        model.setNameFilters(['*.py'])
+        
+        self.widgets['exp'].setModel(model)
+        self.widgets['exp'].setRootIndex(model.index(self.exp_path))
+        self.widgets['exp'].hideColumn(1)
+        self.widgets['exp'].hideColumn(2)
+        self.widgets['exp'].hideColumn(3)
+        self.widgets['exp'].clicked.connect(self.display_experiment)
 
         # Configure list of clients
         self.clients = clients
@@ -114,30 +118,31 @@ class Controller(MultiChSweep1D):
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-    def display_experiment(self, item):
+    def display_experiment(self, index):
         """ Displays the currently clicked experiment in the text browser
 
-        :param item: (QlistWidgetItem) with label of name of experiment to display
+        :param index: (QModelIndex) index of QTreeView for selected file
         """
 
-        with open(os.path.join(self.exp_path, f'{item.text()}.py'), 'r') as exp_file:
-            exp_content = exp_file.read()
+        filepath = self.widgets['exp'].model().filePath(index)
+        if not os.path.isdir(filepath):
+            with open(filepath, 'r') as exp_file:
+                exp_content = exp_file.read()
 
-        self.widgets['exp_preview'].setText(exp_content)
-        self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
-                                                  'color: rgb(255, 255, 255); '
-                                                  'background-color: #19232D;')
+            self.widgets['exp_preview'].setText(exp_content)
+            self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
+                                                    'color: rgb(255, 255, 255); '
+                                                    'background-color: #19232D;')
+            self.cur_path = self.widgets['exp'].model().filePath(self.widgets['exp'].currentIndex())
+            self.exp_name = os.path.split(os.path.basename(self.cur_path))[0]
 
+    
     def configure_experiment(self):
         """ Configures experiment to be the currently selected item """
-
-        # Set all experiments to normal state and highlight configured expt
-        for item_no in range(self.widgets['exp'].count()):
-            self.widgets['exp'].item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
-        self.widgets['exp'].currentItem().setBackground(QtGui.QBrush(QtGui.QColor('darkRed')))
-        exp_name = self.widgets['exp'].currentItem().text()
-        self.module = importlib.import_module(exp_name)
-        self.module = importlib.reload(self.module)
+        
+        spec = importlib.util.spec_from_file_location(self.exp_name, self.cur_path)
+        self.module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.module)
 
         self.experiment = self.module.experiment
         self.min = self.widgets['p_min'].value()
@@ -153,7 +158,7 @@ class Controller(MultiChSweep1D):
         except AttributeError:
             pass
 
-        self.log.info(f'Experiment {exp_name} configured')
+        self.log.info(f'Experiment {self.exp_name} configured')
         self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
                                                   'color: rgb(255, 255, 255); '
                                                   'background-color: rgb(50, 50, 50);')

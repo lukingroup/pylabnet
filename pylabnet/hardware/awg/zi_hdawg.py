@@ -520,11 +520,12 @@ class AWGModule():
         # Get the modules data directory
         data_dir = self.hd.gets("directory")
 
-        # All CSV files within the waves directory are automatically recognized by the AWG module
+        # All CSV files within the waves directory are automatically recognized 
+        # by the AWG module
         wave_dir = os.path.join(data_dir, "awg", "waves")
 
-        # The data directory is created by the AWG module and should always exist. If this exception is raised,
-        # something might be wrong with the file system.
+        # The data directory is created by the AWG module and should always exist. 
+        # If this exception is raised, something might be wrong with the file system.
         if not os.path.isdir(wave_dir):
             raise Exception(f"AWG module wave directory {wave_dir} does not exist or is not a directory")
         
@@ -656,7 +657,7 @@ class Sequence():
                         be found in the sequence."
                         hdawg_driver.log.error(error_msg)
 
-            # Replace placeholdes.
+            # Replace placeholders.
             self.replace_placeholders(self.placeholder_dict)
 
         if waveform_dict is not None:

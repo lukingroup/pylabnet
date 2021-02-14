@@ -49,24 +49,30 @@ class PulsedExperiment():
         )
 
         # Generate instruction set which represents pulse sequence.
-        prologue_sequence, pulse_sequence = pb_handler.get_awg_sequence()
+        prologue_sequence, pulse_sequence, export_waveforms = pb_handler.get_awg_sequence()
 
         # Replace the pulseblock name placeholder with the generated instructions
         self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
         self.seq.prepend_sequence(prologue_sequence)
+        
+        # Save the list of waveforms to be exported as CSV
+        self.export_waveforms.extend(export_waveforms)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
+
+        return pb_handler
 
     def prepare_sequence(self):
         """Prepares sequence by replacing all variable placeholders and waveform-placeholders."""
 
-        # First replace the standard placeholder.
+        # First replace the standard placeholders
         if self.placeholder_dict is not None:
             self.replace_placeholders()
 
-        # Then replace the waveform commands:
+        # Then replace the waveform commands
         for pulseblock in self.pulseblocks:
-            self.replace_awg_commands(pulseblock)
+            pb_handler = self.replace_awg_commands(pulseblock)
+            self.pulseblock_handlers.append(pb_handler)
 
     def prepare_awg(self, awg_number):
         """ Create AWG instance, uploads sequence and configures DIO output bits
@@ -76,23 +82,27 @@ class PulsedExperiment():
 
         # Create an instance of the AWG Module.
         awg = AWGModule(self.hd, awg_number)
-        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
 
+        if awg is None:
+            return
+
+        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
         self.hd.log.info("Preparing to upload sequence.")
 
-        # Upload sequence.
-        if awg is not None:
-            awg.compile_upload_sequence(self.seq)
+        # Upload sequence
+        awg.compile_upload_sequence(self.seq)
+        
+        # Upload CSV waveforms
+        for csv_filename, waveform in self.export_waveforms:
+            awg.save_waveform_csv(waveform, csv_filename)
 
-        for pulseblock in self.pulseblocks:
-            # Instanciate pulseblock handler.
-            pb_handler = AWGPulseBlockHandler(
-                pb = pulseblock,
-                assignment_dict=self.assignment_dict,
-                exp_config_dict=self.exp_config_dict,
-                hd=self.hd
-            )
-            pb_handler.setup_hd()
+        
+
+        # Setup analog channel settings for each pulseblock
+        # Setup DIO drive bits for each pulseblock
+        for pb_handler in self.pulseblock_handlers:
+            pb_handler.setup_dio()
+            # TODO YQ: set up stuff like awgs/n/, oscs/n/, sigouts/n/
 
         return awg
 
@@ -103,7 +113,7 @@ class PulsedExperiment():
         pulseblocks, upload it to the AWG and configure the DIO output bits.
         """
         self.prepare_sequence()
-        return self.prepare_awg(awg_number)
+        # return self.prepare_awg(awg_number) # TODO YQ
 
     def __init__(self, 
                 pulseblocks, 
@@ -140,6 +150,9 @@ class PulsedExperiment():
         else:
             self.pulseblocks = pulseblocks
 
+        # List of pulseblock handlers
+        self.pulseblock_handlers = []
+
         self.assignment_dict = assignment_dict
         self.hd = hd
         self.template_name = template_name
@@ -148,6 +161,9 @@ class PulsedExperiment():
         self.placeholder_dict = placeholder_dict
         self.exp_config_dict = exp_config_dict
         self.iplot = iplot
+
+        # List of waveforms to be exported
+        self.export_waveforms = []
 
         # Check if template is available, and store it.
         if use_template:

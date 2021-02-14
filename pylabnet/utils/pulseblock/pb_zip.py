@@ -1,4 +1,4 @@
-import pulseblock.pulse_block as pb
+import pylabnet.utils.pulseblock.pulse_block as pb
 import numpy as np
 import copy
 
@@ -51,7 +51,7 @@ def pb_zip(pb_obj, dur_quant):
 
     # Step usage dictionary ---------------------------------------------------
 
-    # Now one knows all the wait periods witch can be collapsed
+    # Now one knows all the wait periods which can be collapsed
     # (full duration of pb_obj minus all pulse intervals)
     #
     # But both the wait waveform and non-trivial pulse waveforms have to

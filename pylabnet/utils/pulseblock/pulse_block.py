@@ -233,7 +233,7 @@ class PulseBlock:
             key=lambda p_item: p_item.t0
         )
 
-        # Autimatically assign default pulse
+        # Automatically assign default pulse
         if use_auto_dflt:
             self.dflt_dict[ch] = p_obj.auto_default
 

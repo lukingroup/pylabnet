@@ -56,7 +56,7 @@ class PulsedExperiment():
         self.seq.prepend_sequence(prologue_sequence)
         
         # Save the list of waveforms to be exported as CSV
-        self.export_waveforms.extend(export_waveforms)
+        self.export_waveforms.update(export_waveforms)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
@@ -86,23 +86,28 @@ class PulsedExperiment():
         if awg is None:
             return
 
-        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
+        # awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
         self.hd.log.info("Preparing to upload sequence.")
 
         # Upload sequence
         awg.compile_upload_sequence(self.seq)
         
         # Upload CSV waveforms
-        for csv_filename, waveform in self.export_waveforms:
-            awg.save_waveform_csv(waveform, csv_filename)
+        for csv_filename, waveform_tuple in self.export_waveforms.items():
+            awg.save_waveform_csv(waveform_tuple[-1], csv_filename)
 
-        
 
         # Setup analog channel settings for each pulseblock
         # Setup DIO drive bits for each pulseblock
         for pb_handler in self.pulseblock_handlers:
-            pb_handler.setup_dio()
+            awg.setup_dio(pb_handler.DIO_bits)
+            
+            awg.setup_analog(pb_handler.setup_config_dict, self.assignment_dict)
             # TODO YQ: set up stuff like awgs/n/, oscs/n/, sigouts/n/
+            # TODO YQ: need to do it here now that we have the awg object
+            # pb_handler.setup_config_dict[ch.name] = {  "mod": mod, 
+            #                                 "mod_freq": mod_freq, 
+            #                                 "mod_ph": mod_ph}
 
         return awg
 
@@ -162,8 +167,9 @@ class PulsedExperiment():
         self.exp_config_dict = exp_config_dict
         self.iplot = iplot
 
-        # List of waveforms to be exported
-        self.export_waveforms = []
+        # Dict of waveforms to be exported. Key = waveform CSV name, value = 
+        # tuple(ch_name, start_time, end_time, np.array waveform)
+        self.export_waveforms = {}
 
         # Check if template is available, and store it.
         if use_template:

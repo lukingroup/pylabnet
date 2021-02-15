@@ -208,15 +208,16 @@ class AWGPulseBlockHandler():
         return dio_codewords
     
     def gen_analog_instructions(self):
-        """Generate the instructions for the analog channels and the timestep in
-        sample number that the codewords should be executed at.
+        """Generate the setup instructions for the analog channels and the CSV
+        waveforms to be transferred to the AWG.  
 
-        :return: TODO YQ
+        :return: waveforms: (dict) with key waveform CSV name and value a tuple(ch_name, 
+        start_time, end_time, np.array waveform)
+        :return: setup_instr (str) representing the AWG instructions used to 
+            set up the analog pulses.
         """
 
-        # Dictionary of waveform csv name: (ch_name, start_time, end_time, np.array waveform)
         waveforms = {}
-        # String representing the instructions used for setup
         setup_instr = ""
 
         if len(self.pb.p_dict.keys()) > 2: 
@@ -224,13 +225,13 @@ class AWGPulseBlockHandler():
             return
 
         analog_pulse_dict = {ch:pulse_list for (ch, pulse_list) in 
-                        self.pb.p_dict.items().items() if ch.is_analog}
+                        self.pb.p_dict.items() if ch.is_analog}
         
         #### 1. Merge all nearby pulses within each single channel ####
 
         # p_dict: Keys - Channel object
         # Values - list of Pulse objects (e.g. PGaussian) 
-        for ch, pulse_list in analog_pulse_dict:
+        for ch, pulse_list in analog_pulse_dict.items():
 
             # Default pulse function for that channel
             dflt_pulse = self.pb.dflt_dict[ch]
@@ -268,7 +269,7 @@ class AWGPulseBlockHandler():
 
         #### 2. Digitize all pulses within a single channel ####
 
-        for ch, pulse_list in analog_pulse_dict:
+        for ch, pulse_list in analog_pulse_dict.items():
             dflt_pulse = self.pb.dflt_dict[ch]
             
             for pulse in pulse_list:
@@ -284,6 +285,7 @@ class AWGPulseBlockHandler():
 
                  # Filename for the digitized array to be exported as CSV 
                 wave_csv_name = f"{self.pb.name}_{ch.name}_{pulse.t0}"
+                wave_csv_name = wave_csv_name.replace("-", "") # remove illegal char '-'
 
                 if wave_csv_name in waveforms:
                     self.log.error("Found two pulses at the same time in the same channel.")
@@ -309,20 +311,19 @@ class AWGPulseBlockHandler():
             pulse = pulse_list[0]
             mod, mod_freq, mod_ph = pulse._mod, pulse._mod_freq, pulse._mod_ph
 
-            self.setup_config_dict[ch] = {  "mod": mod, 
-                                            "mod_freq": mod_freq, 
-                                            "mod_ph": mod_ph}
-            
-
+            self.setup_config_dict[ch.name] = { "mod": mod, 
+                                                "mod_freq": mod_freq, 
+                                                "mod_ph": mod_ph}
+                
         #### 3. Handle synchronization of pulses across channel ####
         # Forces pulses that overlap across channels to have the same start and 
         # end time by padding with zeros; they will be played at the same time 
         # in the AWG.
 
         # Iterate over all pairs of pulses across all channels 
-        # for ch1, pulse_list1 in analog_pulse_dict:            
+        # for ch1, pulse_list1 in analog_pulse_dict.items():            
         #     for pulse1 in pulse_list1:
-        #         for ch2, pulse_list2 in analog_pulse_dict:
+        #         for ch2, pulse_list2 in analog_pulse_dict.items():
         #             if ch1 == ch2: continue # Only compare across different channels
         #             for pulse2 in pulse_list2:
                         
@@ -367,12 +368,8 @@ class AWGPulseBlockHandler():
         #                     else:
         #                         break
                                 
-                            
-
         # setDouble('oscs/3/freq', 5e7);
         # playWave(g);
-                
-
         return waveforms, setup_instr
 
     def zip_digital_commands(self, dio_codewords): 
@@ -416,33 +413,26 @@ class AWGPulseBlockHandler():
                 dio_codewords[dio_change_index+1]
             ]
         )
-
+    
         return reduced_codewords, waittimes
 
-    def combine_command_timings(self, reduced_digital_codewords, digital_waittimes, 
-                                waveforms):
+    def combine_command_timings(self, digital_codewords, digital_times, waveforms):
 
         """ Combine the commands and timings from the analog and digital commands
         to give a combined list of codewords and wait time intervals. 
 
-        :reduced_digital_codewords: (list of str) Array of unique digital 
-            codewords in time order.
-        :digital_waittimes: (list of int) Array of wait times between each 
-            digital command.            
-        :analog_codewords: (list of str tuples) Array of digital commands in 
-            time order. Each entry is a tuple as there could be multiple comands 
-            that need to be run at a given timestep.
-        :analog_times: (list of int) Array of wait times between each analog 
-            command.            
+        :digital_codewords: (list) of DIO codewords to be output
+        :digital_times: (list) of times in AWG timesteps to output the DIO codewords
+        :waveforms: (dict) with key waveform CSV name and value a tuple(ch_name, 
+        start_time, end_time, np.array waveform) - times in seconds
+
+        # TODO YQ  return values
         """
 
-        # TODO YQ
-        combined_codewords, combined_waittimes  = reduced_digital_codewords, digital_waittimes
+        combined_codewords, combined_waittimes  = digital_codewords, digital_times
 
         return combined_codewords, combined_waittimes 
 
-    # TODO YQ: This will need to incorporate both the digital and analog reduced
-    # TODO YQ: codewords and interleaved waittimes.
     def construct_awg_sequence(self, reduced_codewords, waittimes, wait_offset=SETDIO_OFFSET):
         """Construct .seqc sequence representing the AWG instructions to output
         a set of pulses over multiple channels
@@ -524,17 +514,19 @@ class AWGPulseBlockHandler():
         """
 
         # Get sample-wise sets of codewords for the digital channels.
-        digital_codewords = self.gen_digital_codewords()
+        digital_codewords_samples = self.gen_digital_codewords()
 
         # Reduce this array to a set of codewords + waittimes.
-        reduced_digital_codewords, digital_waittimes = self.zip_digital_commands(digital_codewords)
+        digital_codewords, digital_times = self.zip_digital_commands(digital_codewords_samples)
 
         # Get instructions for the analog channels
+        # Dictionary of waveform csv name: (ch_name, start_time, end_time, np.array waveform)
+        # analog_setup is a string to be prepended to the compiled code
         waveforms, analog_setup = self.gen_analog_instructions()
 
         combined_codewords, combined_waittimes = self.combine_command_timings(
-                                                    reduced_digital_codewords, 
-                                                    digital_waittimes, 
+                                                    digital_codewords, 
+                                                    digital_times, 
                                                     waveforms)
 
         # Reconstruct set of .seqc instructions representing the digital waveform.
@@ -544,33 +536,3 @@ class AWGPulseBlockHandler():
         )
 
         return analog_setup, sequence, waveforms
-
-    def setup_dio(self):
-        """Enable driving of DIO buses of relevant DIO bits."""
-
-        # Set DIO mode to AWG sequencer
-        self.hd.seti('dios/0/mode', 1)
-
-        # Read in current configuration of DIO-bus.
-        current_config = self.hd.geti('dios/0/drive')
-
-        for DIO_bit in self.DIO_bits:
-            if DIO_bit in range(8):
-                toggle_bit = 1  # 1000
-            elif DIO_bit in range(8, 16):
-                toggle_bit = 2  # 0100
-            elif DIO_bit in range(16, 24):
-                toggle_bit = 4  # 0010
-            elif DIO_bit in range(24, 32):
-                toggle_bit = 8  # 0001
-            else:
-                self.log.error(
-                    f"DIO_bit {DIO_bit} invalid, must be in range 0-31."
-                )
-
-            # Set new configuration by using the bitwise OR.
-            new_config = current_config | toggle_bit
-            self.hd.seti('dios/0/drive', new_config)
-
-            # Update current configuration
-            current_config = new_config

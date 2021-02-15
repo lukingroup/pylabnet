@@ -427,6 +427,49 @@ class AWGModule():
         self.module.set('awg/enable', 0)
         self.hd.log.info(f"AWG {self.index}: Stopped.")
 
+    def setup_dio(self, DIO_bits):
+        """Enable driving of DIO buses of relevant DIO bits."""
+
+        # Set DIO mode to AWG sequencer
+        self.hd.seti('dios/0/mode', 1)
+
+        # Read in current configuration of DIO-bus.
+        current_config = self.hd.geti('dios/0/drive')
+
+        for DIO_bit in DIO_bits:
+            if DIO_bit in range(8):
+                toggle_bit = 1  # 1000
+            elif DIO_bit in range(8, 16):
+                toggle_bit = 2  # 0100
+            elif DIO_bit in range(16, 24):
+                toggle_bit = 4  # 0010
+            elif DIO_bit in range(24, 32):
+                toggle_bit = 8  # 0001
+            else:
+                self.hd.log.error(
+                    f"DIO_bit {DIO_bit} invalid, must be in range 0-31."
+                )
+
+            # Set new configuration by using the bitwise OR.
+            new_config = current_config | toggle_bit
+            self.hd.seti('dios/0/drive', new_config)
+
+            # Update current configuration
+            current_config = new_config
+        
+    def setup_analog(eslf, setup_configs, assignment_dict):
+        """ TODO YQ
+
+        :setup_configs: (dict) keys are channel names, values are a dict of 
+            parameters to be set up for that channel. E.g.
+                {  "mod": mod,  "mod_freq": mod_freq, "mod_ph": mod_ph}
+            representing modulation settings for the channel.
+        :assignment_dict: (dict) keys are channel names, values are a list 
+            ["analog" / "dio", channel_number].
+        """
+
+        pass
+
     def compile_upload_sequence(self, sequence):
         """ Compile and upload AWG sequence to AWG Module.
 

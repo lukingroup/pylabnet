@@ -56,7 +56,7 @@ class PulsedExperiment():
         self.seq.prepend_sequence(prologue_sequence)
         
         # Save the list of waveforms to be exported as CSV
-        self.export_waveforms.update(export_waveforms)
+        self.export_waveforms.extend(export_waveforms)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
@@ -93,9 +93,10 @@ class PulsedExperiment():
         awg.compile_upload_sequence(self.seq)
         
         # Upload CSV waveforms
-        for csv_filename, waveform_tuple in self.export_waveforms.items():
-            awg.save_waveform_csv(waveform_tuple[-1], csv_filename)
-
+        for waveform_tuple in self.export_waveforms:
+            csv_filename = waveform_tuple[0]
+            waveform_np_array = waveform_tuple[-1]
+            awg.save_waveform_csv(waveform_np_array, csv_filename)
 
         # Setup analog channel settings for each pulseblock
         # Setup DIO drive bits for each pulseblock
@@ -103,11 +104,6 @@ class PulsedExperiment():
             awg.setup_dio(pb_handler.DIO_bits)
             
             awg.setup_analog(pb_handler.setup_config_dict, self.assignment_dict)
-            # TODO YQ: set up stuff like awgs/n/, oscs/n/, sigouts/n/
-            # TODO YQ: need to do it here now that we have the awg object
-            # pb_handler.setup_config_dict[ch.name] = {  "mod": mod, 
-            #                                 "mod_freq": mod_freq, 
-            #                                 "mod_ph": mod_ph}
 
         return awg
 
@@ -167,9 +163,9 @@ class PulsedExperiment():
         self.exp_config_dict = exp_config_dict
         self.iplot = iplot
 
-        # Dict of waveforms to be exported. Key = waveform CSV name, value = 
-        # tuple(ch_name, start_time, end_time, np.array waveform)
-        self.export_waveforms = {}
+        # List of waveforms to be exported. Items are of the form:
+        # tuple(waveform CSV name, ch_name, start_step, end_step, np.array waveform)
+        self.export_waveforms = []
 
         # Check if template is available, and store it.
         if use_template:

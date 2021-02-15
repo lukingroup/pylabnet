@@ -41,6 +41,23 @@ SAMPLING_RATE_DICT = {
 
 class Driver():
 
+    def __init__(self, device_id, logger, dummy=False, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
+        """ Instantiate AWG
+
+        :logger: instance of LogClient class
+        :device_id: Device id of connceted ZI HDAWG, for example 'dev8060'
+        :api_level: API level of zhins API
+        """
+
+        # Instantiate log
+        self.log = LogHandler(logger=logger)
+
+        # Store dummy flag
+        self.dummy = dummy
+
+        # Setup HDAWG
+        self._setup_hdawg(device_id, logger, api_level, reset_dio, disable_everything)
+
     @dummy_wrap
     def reset_DIO_outputs(self):
         """Sets all DIO outputs to low"""
@@ -104,24 +121,6 @@ class Driver():
         self.num_outputs = int(
             re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1)
         )
-
-    def __init__(self, device_id, logger, dummy=False, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
-        """ Instantiate AWG
-
-        :logger: instance of LogClient class
-        :device_id: Device id of connceted ZI HDAWG, for example 'dev8060'
-        :api_level: API level of zhins API
-        """
-
-        # Instantiate log
-        self.log = LogHandler(logger=logger)
-
-        # Store dummy flag
-        self.dummy = dummy
-
-        # Setup HDAWG
-        self._setup_hdawg(device_id, logger, api_level, reset_dio, disable_everything)
-
 
     @log_standard_output
     @dummy_wrap
@@ -312,24 +311,24 @@ class Driver():
                 f"This device has only {self.num_outputs} channels, channel index {output_index} is invalid."
             )
 
-    def set_direct_user_register(self, awg_num, index, value):
+    def set_direct_user_register(self, awg_num, reg_index, value):
         """ Sets a user register to a desired value
 
         :param awg_num: (int) index of awg module
-        :param index: (int) index of user register (from 0-15)
+        :param reg_index: (int) index of user register (from 0-15)
         :param value: (int) value to set user register to
         """
 
-        self.setd(f'awgs/{awg_num}/userregs/{index}', int(value))
+        self.setd(f'awgs/{awg_num}/userregs/{reg_index}', int(value))
 
-    def get_direct_user_register(self, awg_num, index):
+    def get_direct_user_register(self, awg_num, reg_index):
         """ Gets a user register to a desired value
 
         :param awg_num: (int) index of awg module
-        :param index: (int) index of user register (from 0-15)
+        :param reg_index: (int) index of user register (from 0-15)
         """
 
-        return int(self.getd(f'awgs/{awg_num}/userregs/{index}'))
+        return int(self.getd(f'awgs/{awg_num}/userregs/{reg_index}'))
 
 
 class AWGModule():
@@ -352,6 +351,7 @@ class AWGModule():
         # Check if chosen index is allowed for current channel grouping.
         channel_grouping = hdawg_driver.geti('system/awg/channelgrouping')
 
+
         if channel_grouping == 0:
             num_awgs = 4
         elif channel_grouping == 1:
@@ -360,6 +360,10 @@ class AWGModule():
             num_awgs = 1
 
         allowed_indices = range(num_awgs)
+
+        self.channel_grouping = channel_grouping
+        self.num_awgs = num_awgs
+        self.channels_per_awg = 8 // num_awgs
 
         if index not in allowed_indices:
             self.hd.log.error(
@@ -457,7 +461,7 @@ class AWGModule():
             # Update current configuration
             current_config = new_config
         
-    def setup_analog(eslf, setup_configs, assignment_dict):
+    def setup_analog(self, setup_configs, assignment_dict):
         """ TODO YQ
 
         :setup_configs: (dict) keys are channel names, values are a dict of 
@@ -468,7 +472,36 @@ class AWGModule():
             ["analog" / "dio", channel_number].
         """
 
-        pass
+        for ch, config_dict in setup_configs.items():
+            ch_type, ch_num = assignment_dict[ch]
+            
+            # ch_num is specified relative to this AWG core, ch_num_index counts
+            # from 0 across all channels.
+            ch_num_index = self.index * self.channels_per_awg + ch_num
+
+            if ch_type != "analog":
+                self.hd.log.warn(f"Attempted to setup a digital channel {ch} with analog functions.")
+            
+            for config_type, config_val in config_dict.items():
+
+                if config_type == "mod":
+                    if config_val == True:
+                        # 0 = mod off, 1 = sin11, 2 = sin22
+                        # We want channel 0 to have sin11 and channel 1 to have sin22
+                        mod = (ch_num + 1) % 2
+                    else:
+                        mod = 0
+                        
+                    self.hd.setd(f'awgs/{self.index}/outputs/{ch_num}/modulation/mode', mod)
+                    self.hd.seti(f'/sines/{ch_num_index}/oscselect', 2*ch_num_index)
+
+                elif config_type == "mod_freq":
+                    self.hd.setd(f'oscs/{2*ch_num_index}/freq', config_val)
+
+                elif config_type == "mod_ph":
+                    self.hd.setd(f'sines/{ch_num_index}/phaseshift', config_val)
+                else:
+                    self.hd.log.warn(f"Unsupported analog channel config {config_type}.")
 
     def compile_upload_sequence(self, sequence):
         """ Compile and upload AWG sequence to AWG Module.
@@ -519,11 +552,11 @@ class AWGModule():
         if self.module.getInt('elf/status') == 1:
             self.hd.log.warn("Upload to the instrument failed.")
 
-    def dyn_waveform_upload(self, index, waveform1, waveform2=None):
+    def dyn_waveform_upload(self, wave_index, waveform1, waveform2=None):
         """ Dynamically upload a numpy array into HDAWG Memory
 
         This will overwrite the allocated waveform memory of a waveform
-        defined in the sequence. The index designates which waveform to
+        defined in the sequence. The wave_index designates which waveform to
         overwrite:
         Let N be the total number of waveforms and M>0 be the number of
         waveforms defined from CSV files. Then the index
@@ -540,7 +573,7 @@ class AWGModule():
         :waveform2: np.array containing waveform of second waveform is dynamic
             waveform upload is used for playback of two waveforms at two channels,
             as represented in the .seqc command `playWave(waveform1, waveform2)
-        :index: Index of waveform to be overwritten as defined above
+        :wave_index: Index of waveform to be overwritten as defined above
         """
 
         waveform_native = zhinst.utils.convert_awg_waveform(
@@ -550,7 +583,7 @@ class AWGModule():
 
         awg_index = self.module.get('index')['index'][0]
         self.hd.setv(
-            f'awgs/{awg_index}/waveform/waves/{index}', waveform_native
+            f'awgs/{awg_index}/waveform/waves/{wave_index}', waveform_native
         )
 
     def save_waveform_csv(self, waveform, csv_filename):
@@ -580,14 +613,14 @@ class AWGModule():
         csv_file = os.path.join(wave_dir, csv_filename)
         np.savetxt(csv_file, waveform)
 
-    def set_user_register(self, index, value):
+    def set_user_register(self, reg_index, value):
         """ Sets a user register to a desired value
 
-        :param index: (int) index of user register (from 0-15)
+        :param reg_index: (int) index of user register (from 0-15)
         :param value: (int) value to set user register to
         """
 
-        self.hd.setd(f'awgs/{self.index}/userregs/{index}', int(value))
+        self.hd.setd(f'awgs/{self.index}/userregs/{reg_index}', int(value))
 
 
 class Sequence():

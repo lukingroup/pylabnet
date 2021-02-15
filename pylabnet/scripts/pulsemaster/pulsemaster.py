@@ -1438,10 +1438,10 @@ class PulseMaster:
         # Check for duplciate channels
         channels = []
         for item in ch_assignment_dict.values():
-            if item[1] not in channels: 
-                channels.append(item[1])
+            if item not in channels: 
+                channels.append(item)
             else:
-                self.showerror(f"Channel number {item[1]} is duplicated in the "
+                self.showerror(f"Channel number {item} is duplicated in the "
                     "chanel assignment dictionary. ")
                 return
 

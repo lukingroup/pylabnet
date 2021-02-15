@@ -228,6 +228,30 @@ class AbstractDevice(StaticLineHardwareHandler):
         self.down = lambda: self.hardware_client.down_function(self.config["ch"])
         self.set_value = lambda value: self.hardware_client.set_value_function(value, self.config["ch"])
 
+class agilent_83732b(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.is_on = False
+        self.pow = 15
+        self.freq = 10e9
+
+    def on(self):
+        self.hardware_client.output_on()
+        self.is_on = True
+
+    def off(self):
+        self.hardware_client.output_off()
+        self.is_on = False
+
+    def set_pow(self, value):
+        self.hardware_client.set_power(self.pow)
+
+    def set_freq(self):
+        self.hardware_client.set_freq(self.freq)
+
 ################################################################################
 
 registered_staticline_modules = {
@@ -238,5 +262,6 @@ registered_staticline_modules = {
     'dio_breakout': DioBreakout,
     'toptica': Toptica,
     'abstract': AbstractDevice,
-    'abstract2': AbstractDevice
+    'abstract2': AbstractDevice,
+    'agilent_83732b': agilent_83732b
 }

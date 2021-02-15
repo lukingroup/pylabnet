@@ -163,7 +163,7 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
         return samp_dict, n_pts, add_pts
 
 def pulse_length_samples(pulse, samp_rate):
-    """ Nubmer of samples a given pulse is expected to occupy
+    """ Number of samples a given pulse is expected to occupy
     """
 
     t_step = 1 / samp_rate

@@ -40,7 +40,7 @@ import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.helper_methods import load_script_config, get_config_filepath
+from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -78,7 +78,8 @@ class Window(QtWidgets.QMainWindow):
         self.app = app  # Application instance onto which to load the GUI.
 
         if self.app is None:
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+            if get_os() == 'Windows':
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
                 QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
@@ -741,8 +742,13 @@ class ParameterPopup(QtWidgets.QWidget):
                 self.params[param_name] = QtWidgets.QDoubleSpinBox()
                 self.params[param_name].setMaximum(100000000)
                 self.params[param_name].setDecimals(6)
+            elif param_type is str:
+                self.params[param_name] = QtWidgets.QLineEdit()
+            elif type(param_type) is list:
+                self.params[param_name] = QtWidgets.QComboBox()
+                self.params[param_name].addItems(param_type)
             else:
-                self.params[param_name] = QtWidgets.QLabel()
+                self.params[param_name] = QtWidgets.QLabel('None')
             layout.addWidget(self.params[param_name])
             self.base_layout.addLayout(layout)
 
@@ -761,7 +767,10 @@ class ParameterPopup(QtWidgets.QWidget):
             try:
                 ret[param_name] = widget.value()
             except AttributeError:
-                ret[param_name] = widget.text()
+                try:
+                    ret[param_name] = widget.currentText()
+                except AttributeError:
+                    ret[param_name] = widget.text()
         self.parameters.emit(ret)
         self.close()
 
@@ -1204,3 +1213,46 @@ class Container:
         """
 
         self.widget.setCurrentIndex(index)
+
+
+def fresh_popup(**params):
+    """ Creates a fresh ParameterPopup without a base GUI 
+
+    :param params: kwargs of parameters as keywords and data types
+        as values
+    :return: ParameterPopup
+    """
+
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    operating_system = get_os()
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
+    if operating_system == 'Windows':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+    
+    return app, ParameterPopup(**params)
+
+def warning_popup(message):
+    """ Creates a warning popup without a base GUI
+
+    :param message: (str) message to display
+    """
+
+    app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    operating_system = get_os()
+    app.setWindowIcon(
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+    )
+    if operating_system == 'Windows':
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+    
+    QtWidgets.QMessageBox.critical(
+        None,
+        "Error",
+        message,
+        QtWidgets.QMessageBox.Ok,
+        QtWidgets.QMessageBox.NoButton
+    )

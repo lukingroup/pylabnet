@@ -245,22 +245,27 @@ class AWGPulseBlockHandler():
 
                 # Iterate through all pulses but the last one
                 for idx, pulse in enumerate(pulse_list[:-1]):
+
+                    p1 = pulse_list[idx]
+                    p2 = pulse_list[idx+1]
                     
-                    if (pulse_list[idx].t0 + pulse_list[idx].dur) > pulse_list[idx+1].t0:
+                    if (p1.t0 + p1.dur) > p2.t0:
                         self.log.error("Found overlapping pulses!")
                         return
                     # Merge pulses that are 16 AWG timesteps apart
                     # Pulses must be multiple of 16 samples = 2 timesteps
                     # wait(0) takes 3 timesteps which is the min AWG seq wait time
                     # Min separation is thus 3+2+2 = 7, we ~double it to get 16.
-                    elif (pulse_list[idx+1].t0 - 
-                            (pulse_list[idx].t0 + pulse_list[idx].dur)) <= 16 / DIG_SAMP_RATE:
+                    elif (p2.t0 - (p1.t0 + p1.dur)) <= 16 / DIG_SAMP_RATE:
                         
                         # Merge and delete the constituents
-                        pulse_list.append(PCombined([
-                                        pulse_list[idx], 
-                                        pulse_list[idx+1]], 
-                                        dflt_pulse))
+                        if type(p1) == PCombined:
+                            pulse_list.append(p1.merge(p2))
+                        elif type(p2) == PCombined:
+                            pulse_list.append(p2.merge(p1))
+                        else:
+                            pulse_list.append(PCombined([p1, p2], dflt_pulse))
+
                         del pulse_list[idx:idx+2] 
                         # Go back to the start of the for loop to avoid looping
                         # over a modified list.
@@ -285,7 +290,10 @@ class AWGPulseBlockHandler():
 
                  # Filename for the digitized array to be exported as CSV 
                 wave_csv_name = f"{self.pb.name}_{ch.name}_{pulse.t0}"
-                wave_csv_name = wave_csv_name.replace("-", "") # remove illegal char '-'
+
+                # Remove illegal chars
+                wave_csv_name = wave_csv_name.replace("-", "") 
+                wave_csv_name = wave_csv_name.replace(".", "_") 
 
                 if wave_csv_name in [wave[0] for wave in waveforms]:
                     self.log.error("Found two pulses at the same time in the same channel.")

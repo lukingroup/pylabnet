@@ -125,10 +125,11 @@ class PSin(PulseBase):
                              f'mod_ph={self._mod_ph:.2f})' if self._mod else ')'
         return ret_str
 
-    def get_value(self, t_ar):
+    def get_value(self, t_ar, mod=None):
         """ Returns array of samples
 
         :param t_ar: (numpy.array) array of time points
+        :param mod: (bool) whether to apply sinusoidal modulation
         :return: (numpy.array(dtype=np.float32)) array of samples
         """
 
@@ -137,8 +138,12 @@ class PSin(PulseBase):
             2*np.pi*self._freq*t_ar + np.pi*self._ph/180
         )
 
+        # Use own value of mod parameter if not provided
+        if mod is None:
+            mod = self._mod
+
         # Add sin modulation
-        if self._mod:
+        if mod:
             ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
 
         return ret_ar
@@ -181,10 +186,11 @@ class PGaussian(PulseBase):
 
         return ret_str
 
-    def get_value(self, t_ar):
+    def get_value(self, t_ar, mod=None):
         """ Returns array of samples
 
         :param t_ar: (numpy.array) array of time points
+        :param mod: (bool) whether to apply sinusoidal modulation
         :return: (numpy.array(dtype=np.float32)) array of samples
         """
 
@@ -193,9 +199,13 @@ class PGaussian(PulseBase):
         # Gaussian modulation about the pulse center
         t_mid = self.t0 + self.dur / 2
         ret_ar = self._amp * np.exp(-0.5 * ((t_ar - t_mid) / self._stdev) ** 2)
+
+        # Use own value of mod parameter if not provided
+        if mod is None:
+            mod = self._mod
         
         # Add sin modulation
-        if self._mod:
+        if mod:
             ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
 
         return ret_ar
@@ -243,7 +253,7 @@ class PCombined(PulseBase):
             raise ValueError("More than 1 setting for modulation phase detected. Following the first pulse.")
 
         # TODO YQ: Support mixed frequency/phase?
-        # Assume that the first item in the list represents 
+        # Assume that the first item in the list represents the entire combined pulse
         self._mod = pulselist[0]._mod
         self._mod_freq = pulselist[0]._mod_freq
         self._mod_ph = pulselist[0]._mod_ph
@@ -261,25 +271,28 @@ class PCombined(PulseBase):
 
         :param t_ar: (numpy.array) array of time points
         :return: (numpy.array(dtype=np.float32)) array of samples
-        """
+        """ 
 
         ret_ar = np.zeros_like(t_ar)
 
         curr_pulse_idx = 0
         curr_pulse = self.pulselist[curr_pulse_idx]
 
+        # TODO: Improve on this method to avoid getting value for each individual timestep, but 
+        # TODO: instead process it in ranges based on each pulse's start and end times.
         # Get the value from each constituent pulse depending on the time value
         for idx, t in enumerate(t_ar):
             while True:
                 # We have exhausted all our pulses, just always output default.
                 if curr_pulse_idx == len(self.pulselist):
-                    value = self.auto_default.get_value(t)
+                    value = self.auto_default.get_value([t])
                     break
                 elif t < curr_pulse.t0:
-                    value = self.auto_default.get_value(t)
+                    value = self.auto_default.get_value([t])
                     break
                 elif curr_pulse.t0 <= t < (curr_pulse.t0 + curr_pulse.dur):
-                    value = curr_pulse.get_value(t)
+                    # Temporarily overwrite the constituent pulses' modaulation state
+                    value = curr_pulse.get_value([t], self._mod)
                     break
                 #t >= (curr_pulse.t0 + curr_pulse.dur)
                 else: 
@@ -293,14 +306,18 @@ class PCombined(PulseBase):
         return ret_ar
 
     def merge(self, other):
-        """ Merge two PCombined pulses and returns a new object. 
+        """ Merge with a PCombined pulse or a normal pulse and returns a new object. 
 
         The pulselists of both objects are combined and pulse parameters are 
         recomputed by the __init__ function.
         """
 
         # We follow the default pulse of the self object 
-        return PCombined(self.pulselist + other.pulselist, self.auto_default)
+        if type(other) == PCombined:
+            return PCombined(self.pulselist + other.pulselist, self.auto_default)
+        else:
+            return PCombined(self.pulselist + [other], self.auto_default)
+
 
 class PConst(PulseBase):
     """ Pulse: Constant value with optional Sin modulation
@@ -336,22 +353,26 @@ class PConst(PulseBase):
         
         return ret_str
 
-    def get_value(self, t_ar):
+    def get_value(self, t_ar, mod=None):
         """ Returns array of samples
 
         :param t_ar: (numpy.array) array of time points
+        :param mod: (bool) whether to apply sinusoidal modulation
         :return: (numpy.array(dtype=np.float32)) array of samples
         """
 
         t_ar_len = len(t_ar)
         ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
 
+        # Use own value of mod parameter if not provided
+        if mod is None:
+            mod = self._mod
+
         # Add sin modulation
-        if self._mod:
+        if mod:
             ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
 
         return ret_ar
-
 
 # Default Pulse classes -------------------------------------------------------
 

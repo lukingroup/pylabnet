@@ -157,8 +157,8 @@ class AWGPulseBlockHandler():
         # Create dictionary with channel names replaced by DIO bit
         digital_sample_dict = {}
         for channel_name in traces.keys():
-            if self.assignment_dict[channel_name][0] != "analog":
-                self.log.error("Attempted to map an analog channel using the functions for digital signals.")
+            if self.assignment_dict[channel_name][0] == "analog":
+                self.log.warn(f"Attempted to map an analog channel {channel_name} using the functions for digital signals.")
                 continue
 
             digital_sample_dict.update(
@@ -211,13 +211,13 @@ class AWGPulseBlockHandler():
         """Generate the setup instructions for the analog channels and the CSV
         waveforms to be transferred to the AWG.  
 
-        :return: waveforms: (dict) with key waveform CSV name and value a tuple(ch_name, 
-        start_time, end_time, np.array waveform)
+        :return: waveforms: (list) of tuples(waveform CSV name, ch_name, 
+        start_step, end_step, np.array waveform). Start/end are in AWG time steps.
         :return: setup_instr (str) representing the AWG instructions used to 
             set up the analog pulses.
         """
 
-        waveforms = {}
+        waveforms = []
         setup_instr = ""
 
         if len(self.pb.p_dict.keys()) > 2: 
@@ -287,16 +287,18 @@ class AWGPulseBlockHandler():
                 wave_csv_name = f"{self.pb.name}_{ch.name}_{pulse.t0}"
                 wave_csv_name = wave_csv_name.replace("-", "") # remove illegal char '-'
 
-                if wave_csv_name in waveforms:
+                if wave_csv_name in [wave[0] for wave in waveforms]:
                     self.log.error("Found two pulses at the same time in the same channel.")
                     return
 
                 # Save the pulse start/end time and name, which we will use for 
-                # arranging by their times  
-                waveforms[wave_csv_name] = (ch.name, 
-                                            pulse.t0, 
-                                            pulse.t0 + pulse.dur, 
-                                            samp_arr)
+                # arranging by their times. Times are multipled by the DIO 
+                # rate to convert into AWG time steps.
+                waveforms.append([wave_csv_name,
+                                  ch.name, 
+                                  int(pulse.t0 * self.digital_sr), 
+                                  int((pulse.t0 + pulse.dur) * self.digital_sr), 
+                                  samp_arr])
                 
                 # Declare the waveform in the AWG code
                 setup_instr += f'wave {wave_csv_name} = "{wave_csv_name}";'
@@ -367,9 +369,7 @@ class AWGPulseBlockHandler():
         #                     # Pulses not intersecting
         #                     else:
         #                         break
-                                
-        # setDouble('oscs/3/freq', 5e7);
-        # playWave(g);
+
         return waveforms, setup_instr
 
     def zip_digital_commands(self, codewords_array): 
@@ -387,6 +387,10 @@ class AWGPulseBlockHandler():
             DIO codewords
         """
 
+        # Force final output to be zero 
+        if self.end_low:
+            codewords_array[-1] = 0
+
         # Find out where the the codewords changes. The indices refer to the
         # left edge of transition, e.g. [0 0 1] returns index 1.
         dio_change_index = np.where(codewords_array[:-1] != codewords_array[1:])[0]
@@ -394,7 +398,7 @@ class AWGPulseBlockHandler():
         if len(dio_change_index) == 0:
             return [], []
 
-        # Add 1 to shift from the left to right edge of transition, then add 0
+        # Add 1 to shift from the left to right edge of transition. Add 0
         # for the initial DIO value.
         codeword_times = [0] + list(dio_change_index + 1)
 
@@ -428,41 +432,107 @@ class AWGPulseBlockHandler():
 
         :digital_codewords: (list) of DIO codewords to be output
         :digital_times: (list) of times in AWG timesteps to output the DIO codewords
-        :waveforms: (dict) with key waveform CSV name and value a tuple(ch_name, 
-        start_time, end_time, np.array waveform) - times in seconds
+        :waveforms: (list) of tuples(waveform CSV name, ch_name, 
+        start_time, end_time, np.array waveform) - times in AWG timesteps
 
         # TODO YQ  return values
         """
 
-        combined_codewords, combined_waittimes  = digital_codewords, digital_times
+        combined_commands, combined_times = [], []
 
-        return combined_codewords, combined_waittimes 
+        # Sort by start time
+        waveforms.sort(key=lambda pulse: pulse[2])
 
-    def construct_awg_sequence(self, reduced_codewords, waittimes, wait_offset=SETDIO_OFFSET):
+        dio_index = 0
+        ana_index = 0
+
+        # Iterate as long as at least 1 list is still non-empty
+        while dio_index < len(digital_times) or ana_index < len(waveforms):
+            
+            # DIO list is empty, take from the analog list
+            if dio_index == len(digital_times):
+                take = "analog"
+
+            # Analog list is empty, take from the digital list
+            elif ana_index == len(waveforms):
+                take = "dio"
+                
+            # Both still have elements, compare their start times
+            else:
+                if digital_times[dio_index] < waveforms[ana_index][2]:
+                    take = "dio"
+                else:
+                    take = "analog"
+
+            if take == "dio":
+                # Store DIO codeword
+                combined_commands.append(("dio", digital_codewords[dio_index]))
+                combined_times.append(digital_times[dio_index])
+                dio_index += 1
+            else:
+                # Store waveform CSV name and channel name
+                combined_commands.append(("analog", waveforms[ana_index][0], waveforms[ana_index][1]))
+                combined_times.append(waveforms[ana_index][2])
+                ana_index += 1
+
+        # Waittimes are just the differences between the command times
+        combined_waittimes = np.diff(combined_times)
+
+        return combined_commands, combined_waittimes 
+
+    def awg_seq_command(self, command, mask):
+        """ TODO YQ
+        """
+
+        set_dio_cmd = "setDIO({});"
+        playwave_cmd = "playWave({}, {});"
+
+        if command[0] == "dio":
+                # Add setDIO command to sequence
+                dio_codeword = int(command[1])
+                if self.exp_config_dict["preserve_bits"]:
+                    masked_codeword = (mask & dio_codeword) # Zero out any bits that fall outside the mask
+                    return set_dio_cmd.format(f"masked_state | {masked_codeword}")
+                else:
+                    return set_dio_cmd.format(dio_codeword)
+            
+        elif command[0] == "analog":
+            waveform_csv_name, ch_name = command[1], command[2]
+            ch_type, ch_num = self.assignment_dict[ch_name]
+
+            if ch_type != "analog":
+                self.log.warn(f"Channel {ch_name} was expected to get analog, got {ch_type}.")
+
+            # Add 1 to ch_num since we specified in 0-indexed but playwave 
+            # channels are 1-indexed. 
+            return playwave_cmd.format(ch_num + 1, waveform_csv_name)
+
+        else:
+            self.log.warn(f"Unknown command type {command[0]} found.")
+
+
+    def construct_awg_sequence(self, commands, waittimes, wait_offset=SETDIO_OFFSET):
         """Construct .seqc sequence representing the AWG instructions to output
         a set of pulses over multiple channels
 
-        :reduced_codewords: (list) Array of unique codewords
-            (without repetitions) played back, in sequential order, from both
-            digital and analog channels.
+        :commands: (list) List of unique command tuples in sequential order 
+            from both digital and analog channels.  Tuples are of the form
+            ("dio", dio_codeword) or ("analog", waveform_csv_name, ch_name)
         :waittimes: (np.array) Array of waittimes between commands, in 
             sequential order.
         :wait_offset: (int) Number of samples to adjust the waittime in order to
             account for duration of setDIO() command.
         """
 
-        # TODO: was used for previous error checking. 
-        # TODO: see if we can do something similar with the combined digital & analog codeword seqs
-        # waveform = np.zeros(np.sum(waittimes), dtype='int64')
-        # waveform[0] = reduced_codewords[0]
-
+        mask = None
         sequence = ""
-        set_dio_raw = "setDIO({});"
-        wait_raw = "wait({});"
+        wait_cmd = "wait({});"
 
         if self.exp_config_dict["preserve_bits"]:
+
             # Read current output state of the DIO
-            sequence += "var current_state = getDIO();" # TODO YQ: change to a correct way of reading current bits
+            # TODO YQ: change to a correct way of reading current bits using breakout?
+            sequence += "var current_state = getDIO();" 
 
             # Mask is 1 in the position of each used DIO bit
             mask  = sum(1 << bit for bit in self.digital_sample_dict.keys())
@@ -471,34 +541,20 @@ class AWGPulseBlockHandler():
             # masked_state zeros out bits in the mask from the current_state
             sequence += "var masked_state = ~mask & current_state;"
 
+        # Play the first command
+        sequence += self.awg_seq_command(commands[0], mask)
+
+        # Waits are interspersed between each command, so there will be 1 less
+        # wait command compared to the number of commands.
         for i, waittime in enumerate(waittimes):
 
-            # TODO: was used for previous error checking. 
-            # summed_waittime = np.sum(waittimes[0:i]) 
-            # waveform[summed_waittime:summed_waittime+waittime] = reduced_codewords[i]
+            # Add waittime to sequence but subtract the wait offset
+            if waittime > wait_offset:
+                sequence += wait_cmd.format(int(waittime - wait_offset))
 
-            # Add setDIO command to sequence
-            dio_codeword = int(reduced_codewords[i])
-            if self.exp_config_dict["preserve_bits"]:
-                masked_codeword = (mask & dio_codeword) # Zero out any bits that fall outside the mask
-                sequence += set_dio_raw.format(f"masked_state | {masked_codeword}")
-            else:
-                sequence += set_dio_raw.format(dio_codeword)
-
-            # Add waittime to sequence. Prevent negative waittimes.
-            sequence += wait_raw.format(int(max(waittime - wait_offset, 0)))
-
-        # TODO: was used for previous error checking. 
-        # Sanity check if waveform is reproducible from reduced codewords and waittimes.
-        # if not (codewords == waveform).all():
-        #     self.log.error("Cannot reconstruct digital waveform from codewords and waittimes.")
-
-        # Add setDIO(0); to end if selected.
-        if self.end_low:
-            if self.exp_config_dict["preserve_bits"]:
-                sequence += set_dio_raw.format("masked_state")
-            else:
-                sequence += set_dio_raw.format("0")
+            # i+1 since we already played the first command on top
+            # 1st command (outside loop) > 1st wait > 2nd command
+            sequence += self.awg_seq_command(commands[i+1], mask)
 
         return sequence
 
@@ -525,19 +581,17 @@ class AWGPulseBlockHandler():
         digital_codewords, digital_times = self.zip_digital_commands(digital_codewords_samples)
 
         # Get instructions for the analog channels
-        # Dictionary of waveform csv name: (ch_name, start_time, end_time, np.array waveform)
+        # List of tuples (waveform csv name, ch_name, start_step, end_step, np.array waveform)
         # analog_setup is a string to be prepended to the compiled code
         waveforms, analog_setup = self.gen_analog_instructions()
 
-        combined_codewords, combined_waittimes = self.combine_command_timings(
+        combined_commands, combined_waittimes = self.combine_command_timings(
                                                     digital_codewords, 
                                                     digital_times, 
                                                     waveforms)
 
         # Reconstruct set of .seqc instructions representing the digital waveform.
-        sequence = self.construct_awg_sequence(
-            reduced_codewords=combined_codewords,
-            waittimes=combined_waittimes,
-        )
+        sequence = self.construct_awg_sequence(combined_commands,
+                                               combined_waittimes)
 
         return analog_setup, sequence, waveforms

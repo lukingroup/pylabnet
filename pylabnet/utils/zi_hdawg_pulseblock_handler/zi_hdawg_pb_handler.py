@@ -372,49 +372,54 @@ class AWGPulseBlockHandler():
         # playWave(g);
         return waveforms, setup_instr
 
-    def zip_digital_commands(self, dio_codewords): 
+    def zip_digital_commands(self, codewords_array): 
         """Generate zipped version of DIO commands.
 
         This will reduce the digital waveform to specify the times, when the DIO 
-        output changes, and corresponsing waittimes in between. Does not 
-        account for the time taken for the wait() command.
+        output changes, and corresponsing timesteps where the output change.
+        Does not account for the time taken for the wait() command.
 
-        :wait_offest: (int) Number of samples to adjust the waittime in order to
-            account for duration of setDIO() command.
+        :codewords_array: (np.array) of DIO codewords as sampled at each AWG 
+            time step.
+
+        :return: codewords: (np.array) of unique DIO codewords ordered in time
+        :return: codeword_times: (list) of times in AWG timesteps to output the 
+            DIO codewords
         """
 
         # Find out where the the codewords changes. The indices refer to the
         # left edge of transition, e.g. [0 0 1] returns index 1.
-        dio_change_index = np.where(dio_codewords[:-1] != dio_codewords[1:])[0]
+        dio_change_index = np.where(codewords_array[:-1] != codewords_array[1:])[0]
 
         if len(dio_change_index) == 0:
             return [], []
 
-        # Use difference of array to get waittimes,
-        # prepend first sample, append the waittime to match sequence length.
+        # Add 1 to shift from the left to right edge of transition, then add 0
+        # for the initial DIO value.
+        codeword_times = [0] + list(dio_change_index + 1)
+
+        # Get the unique DIO codewords in order.
+        codewords = codewords_array[codeword_times]
+        
+        # e.g. [0,0,1,1,1,1,0,0] returns [2,4,2]
+        # Use difference of array to get waittimes, prepend first sample, 
+        # append the waittime to match sequence length.
         # Add 1 for first wait time since we're measuring time between the left   
         # edge of transitions, the first transition "takes place" at index -1. 
-        num_samples = len(dio_codewords)
-        waittimes = np.concatenate(
-            [
-                [dio_change_index[0] + 1], 
-                np.diff(dio_change_index),
-                [(num_samples - 1) - dio_change_index[-1]]
-            ]
-        )
+        # num_samples = len(codewords_array)
+        # waittimes = np.concatenate(
+        #     [
+        #         [dio_change_index[0] + 1], 
+        #         np.diff(dio_change_index),
+        #         [(num_samples - 1) - dio_change_index[-1]]
+        #     ]
+        # )
 
-        if not sum(waittimes) == num_samples:
-            self.log.error("Mismatch between sum of waittimes and waveform length.")
+        # if not sum(waittimes) == num_samples:
+        #     self.log.error("Mismatch between sum of waittimes and waveform length.")
 
-        # Store DIO values occuring after state change, prepend first codeword.
-        reduced_codewords = np.concatenate(
-            [
-                [dio_codewords[0]],
-                dio_codewords[dio_change_index+1]
-            ]
-        )
     
-        return reduced_codewords, waittimes
+        return codewords, codeword_times
 
     def combine_command_timings(self, digital_codewords, digital_times, waveforms):
 

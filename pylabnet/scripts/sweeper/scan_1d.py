@@ -457,11 +457,7 @@ def launch(**kwargs):
     update_port = kwargs['server_port']
     control.gui.set_network_info(port=update_port)
 
-    # Run continuously
-    # Note that the actual operation inside run() can be paused using the update server
-    while True:
-
-        control.gui.force_update()
+    control.gui.app.exec_()
 
 
 if __name__ == '__main__':

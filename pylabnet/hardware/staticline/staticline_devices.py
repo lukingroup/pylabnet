@@ -242,10 +242,6 @@ class agilent_83732b(StaticLineHardwareHandler):
 
         self.setting = self.config['setting']
 
-        #if self.setting == "IO":
-        #    self.up = self.hardware_client.output_on()
-        #    self.down = self.hardware_client.output_off()
-
     def up(self):
         self.hardware_client.output_on()
 

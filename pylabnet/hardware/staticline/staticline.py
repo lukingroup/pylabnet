@@ -180,12 +180,6 @@ class StaticLineHardwareHandler():
         self.down = lambda: self.hardware_module.turn_off()
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
 
- #   def _setup_agilent_83732b(self, **kwargs):
-
- #       self.up = lambda: self.hardware_module.on()
- #       self.down = lambda: self.hardware_module.off()
- #       self.log.info(f'agilent 83732b successfully assigned to staticline {self.name}')
-
     def __init__(self, hardware_module, loghandler, name, **kwargs):
         '''Handler connecting hardware class to StaticLine instance
 
@@ -212,8 +206,7 @@ class StaticLineHardwareHandler():
             'zi_hdawg':  self._setup_HDWAGDriver,
             'nidaqmx_card': self._setup_NiDaqMxDriver,
             'toptica': self._setup_toptica,
-            'hdawg': self._setup_HDWAGDriver#,
-            #'agilent_83732b': self._setup_agilent_83732b# For hdawg client usage
+            'hdawg': self._setup_HDWAGDriver # For hdawg client usage
         }
 
         # Check if hardware module is registered.

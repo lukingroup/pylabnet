@@ -235,22 +235,28 @@ class agilent_83732b(StaticLineHardwareHandler):
         device client function calls.
         '''
         self.is_on = False
-        self.pow = 15
+        self.pow = 14
         self.freq = 10e9
-
-    def on(self):
-        self.hardware_client.output_on()
-        self.is_on = True
-
-    def off(self):
-        self.hardware_client.output_off()
-        self.is_on = False
-
-    def set_pow(self, value):
         self.hardware_client.set_power(self.pow)
-
-    def set_freq(self):
         self.hardware_client.set_freq(self.freq)
+
+        self.setting = self.config['setting']
+
+        #if self.setting == "IO":
+        #    self.up = self.hardware_client.output_on()
+        #    self.down = self.hardware_client.output_off()
+
+    def up(self):
+        self.hardware_client.output_on()
+
+    def down(self):
+        self.hardware_client.output_off()
+
+    def set_value(self, value):
+        if self.setting == "power":
+            self.hardware_client.set_power(float(value))
+        if self.setting == "frequency":
+            self.hardware_client.set_freq(float(value))
 
 ################################################################################
 

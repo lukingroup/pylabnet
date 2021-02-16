@@ -714,6 +714,25 @@ class Window(QtWidgets.QMainWindow):
         )
 
 
+class Popup(QtWidgets.QWidget):
+    """ Widget class for generic popup """
+
+    def __init__(self, ui):
+        """ Instantiates window
+
+        :param ui: .ui to use as a template
+        """
+
+        QtWidgets.QWidget.__init__(self)
+        ui = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'gui_templates',
+            f'{ui}.ui'
+        )
+        uic.loadUi(ui, self)
+        self.show()
+
+
 class ParameterPopup(QtWidgets.QWidget):
     """ Widget class of to add parameter prompting popup"""
     parameters = QtCore.pyqtSignal(dict)

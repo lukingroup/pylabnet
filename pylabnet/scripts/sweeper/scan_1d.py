@@ -9,7 +9,7 @@ import numpy as np
 
 from pylabnet.scripts.sweeper.sweeper import MultiChSweep1D
 from pylabnet.network.client_server.sweeper import Service
-from pylabnet.gui.pyqt.external_gui import Window
+from pylabnet.gui.pyqt.external_gui import Window, Popup
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
     unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background)
@@ -94,6 +94,7 @@ class Controller(MultiChSweep1D):
         self.widgets['reps'].valueChanged.connect(self.set_reps)
         self.widgets['avg'][0].clicked.connect(lambda: self._clear_show_trace(0))
         self.widgets['avg'][1].clicked.connect(lambda: self._clear_show_trace(1))
+        self.gui.fit.clicked.connect(self.fit_config)
 
         # Create legends
         self.widgets['curve'] = []
@@ -265,6 +266,15 @@ class Controller(MultiChSweep1D):
                 date_dir=date_dir
             )
 
+    def fit_config(self, status:bool):
+        """ Configures fitting add-on
+
+        :param status: (bool) whether or not fit button is checked
+        """
+
+        if status:
+            self.fit_popup = Popup(ui='fit_popup')
+    
     def _configure_plots(self, plot=True):
         """ Configures the plots """
 

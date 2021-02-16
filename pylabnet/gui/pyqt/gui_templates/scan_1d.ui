@@ -103,6 +103,13 @@
     <item row="1" column="0" colspan="2">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
+       <widget class="QCheckBox" name="fit">
+        <property name="text">
+         <string>Fit</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="param_2">
         <property name="maximumSize">
          <size>

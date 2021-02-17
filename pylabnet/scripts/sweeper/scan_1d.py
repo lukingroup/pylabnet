@@ -272,8 +272,13 @@ class Controller(MultiChSweep1D):
         :param status: (bool) whether or not fit button is checked
         """
 
+        # If box is newly checked, instantiate popup
         if status:
             self.fit_popup = Popup(ui='fit_popup')
+
+        # If box isn't checked, remove popup
+        else:
+            self.fit_popup = None
     
     def _configure_plots(self, plot=True):
         """ Configures the plots """

@@ -89,15 +89,15 @@ class PulsedExperiment():
         # awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
         self.hd.log.info("Preparing to upload sequence.")
 
-        # Upload sequence
-        awg.compile_upload_sequence(self.seq)
-        
         # Upload CSV waveforms
         for waveform_tuple in self.export_waveforms:
             csv_filename = waveform_tuple[0]
             waveform_np_array = waveform_tuple[-1]
             awg.save_waveform_csv(waveform_np_array, csv_filename)
 
+        # Upload sequence
+        awg.compile_upload_sequence(self.seq)
+        
         # Setup analog channel settings for each pulseblock
         # Setup DIO drive bits for each pulseblock
         for pb_handler in self.pulseblock_handlers:
@@ -114,7 +114,7 @@ class PulsedExperiment():
         pulseblocks, upload it to the AWG and configure the DIO output bits.
         """
         self.prepare_sequence()
-        # return self.prepare_awg(awg_number) # TODO YQ
+        return self.prepare_awg(awg_number) # TODO YQ
 
     def __init__(self, 
                 pulseblocks, 

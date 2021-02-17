@@ -493,7 +493,7 @@ class AWGModule():
                         mod = 0
                         
                     self.hd.setd(f'awgs/{self.index}/outputs/{ch_num}/modulation/mode', mod)
-                    self.hd.seti(f'/sines/{ch_num_index}/oscselect', 2*ch_num_index)
+                    self.hd.seti(f'sines/{ch_num_index}/oscselect', 2*ch_num_index)
 
                 elif config_type == "mod_freq":
                     self.hd.setd(f'oscs/{2*ch_num_index}/freq', config_val)
@@ -524,6 +524,7 @@ class AWGModule():
         if self.module.getInt('compiler/status') == 1:
             # compilation failed, raise an exception
             self.hd.log.warn(self.module.getString('compiler/statusstring'))
+            return
 
         if self.module.getInt('compiler/status') == 0:
             self.hd.log.info(
@@ -594,7 +595,7 @@ class AWGModule():
         """
 
         # Get the modules data directory
-        data_dir = self.hd.gets("directory")
+        data_dir = self.module.getString("directory")
 
         # All CSV files within the waves directory are automatically recognized 
         # by the AWG module

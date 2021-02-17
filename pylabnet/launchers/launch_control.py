@@ -13,6 +13,7 @@ import re
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
+from queue import Queue
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogService
@@ -81,6 +82,7 @@ class Controller:
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
 
         self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
+        self.main_window.stop_button.clicked.connect(self._kill)
         if self.operating_system not in ['Linux', 'Windows']:
             raise UnsupportedOSException
         try:
@@ -170,7 +172,7 @@ class Controller:
         self.debug = False
         self.debug_level = None
 
-        sys.stdout = StringIO()
+        #sys.stdout = StringIO()
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -251,10 +253,11 @@ class Controller:
 
         self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, self.gui_port))
 
-    def update_terminal(self):
+    def update_terminal(self, text):
         """ Updates terminal output on GUI """
 
-        to_append = sys.stdout.getvalue()
+        #to_append = sys.stdout.getvalue()
+        to_append = text
         self.main_window.terminal.append(to_append)
         self.main_window.buffer_terminal.append(to_append)
         try:
@@ -269,10 +272,10 @@ class Controller:
         self.main_window.buffer_terminal.append(buffer_str)
         self.update_index += 1
 
-    def check_disconnection(self):
+    def check_disconnection(self, text):
         """ Checks if a client has disconnected and raises a flag if so"""
 
-        if 'Client disconnected' in sys.stdout.getvalue() or self.disconnection:
+        if 'Client disconnected' in text or self.disconnection:
             self.disconnection = True
 
     def disconnect(self):
@@ -434,6 +437,18 @@ class Controller:
         self.gui_server.stop()
         self.log_server.stop()
 
+    def update(self, text):
+        """ Runs an update when new text comes through """
+
+        #Check for disconnection events
+        self.check_disconnection(text)
+
+        # Handle new connections
+        self.update_connection()
+
+        # Update terminal
+        self.update_terminal(text)
+    
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
@@ -729,6 +744,14 @@ class Controller:
         # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
 
+    def _kill(self):
+        """ Kills launch control and all child servers if master """
+
+        if not self.proxy:
+            self.kill_servers()
+
+        self.main_window.close()
+    
     def start_stop_logging(self, master_log=False):
         """ Starts or stops logging to file depending on situation
 
@@ -793,6 +816,27 @@ class Controller:
             self.log_service.stop_latest_logfile()
 
 
+class WriteStream:
+    def __init__(self,queue):
+        self.queue = queue
+
+    def write(self, text):
+        self.queue.put(text)
+
+class UpdateReceiver(QtCore.QObject):
+    update_signal = QtCore.pyqtSignal(str)
+
+    def __init__(self, queue, *args, **kwargs):
+        QtCore.QObject.__init__(self, *args, **kwargs)
+        self.queue = queue
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        while True:
+            text = self.queue.get()
+            self.update_signal.emit(text)
+
+
 def main():
     """ Runs the launch controller """
 
@@ -826,6 +870,10 @@ def main_staticproxy():
 def run(log_controller):
     """ Runs the launch controller once a Controller is instantiated"""
 
+    # Redirect sys.stdout to queue
+    queue = Queue()
+    sys.stdout = WriteStream(queue)
+    
     # Instantiate GUI
     if not log_controller.proxy:
         log_controller.start_logger()
@@ -836,43 +884,45 @@ def run(log_controller):
     if log_controller.master:
         log_controller.start_stop_logging(master_log=True)
 
-    # Standard operation
-    while not log_controller.main_window.stop_button.isChecked():
+    # Start thread to listen for updates
+    update_thread = QtCore.QThread()
+    updater = UpdateReceiver(queue)
+    updater.update_signal.connect(log_controller.update)
+    updater.moveToThread(update_thread)
+    update_thread.started.connect(updater.run)
+    update_thread.start()
+    log_controller.app.exec_()
+    
+    # # Standard operation
+    # while not log_controller.main_window.stop_button.isChecked():
 
-        # For proxy launch controller, just check main GUI for updates
-        if log_controller.proxy:
-            log_controller.update_proxy()
-        else:
+    #     # For proxy launch controller, just check main GUI for updates
+    #     if log_controller.proxy:
+    #         log_controller.update_proxy()
+    #     else:
 
-            # Handle external configuration via GUI server
-            log_controller.main_window.configure_widgets()
-            log_controller.main_window.update_widgets()
+    #         # Handle external configuration via GUI server
+    #         log_controller.main_window.configure_widgets()
+    #         log_controller.main_window.update_widgets()
 
-            # New terminal input
-            if sys.stdout.getvalue() != '':
+    #         # New terminal input
+    #         if sys.stdout.getvalue() != '':
 
-                # Check for disconnection events
-                log_controller.check_disconnection()
+    #             # Check for disconnection events
+    #             log_controller.check_disconnection()
 
-                # Handle new connections
-                log_controller.update_connection()
+    #             # Handle new connections
+    #             log_controller.update_connection()
 
-                # Update terminal
-                log_controller.update_terminal()
+    #             # Update terminal
+    #             log_controller.update_terminal()
 
-            # Handle disconnection events
-            if log_controller.disconnection:
-                log_controller.disconnect()
+    #         # Handle disconnection events
+    #         if log_controller.disconnection:
+    #             log_controller.disconnect()
 
-        # Update display
-        log_controller.main_window.force_update()
-
-    # Exit, close servers if necessary
-    if log_controller.proxy:
-        pass
-    else:
-        log_controller.kill_servers()
-
+        # # Update display
+        # log_controller.main_window.force_update()
 
 
 if __name__ == '__main__':

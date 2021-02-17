@@ -4,22 +4,22 @@ from pylabnet.network.core.client_base import ClientBase
 
 class Service(ServiceBase):
 
-    def exposed_turn_on(self):
-        return self._module.turn_on()
+    def exposed_turn_on(self, device_id):
+        return self._module.turn_on(device_id)
 
-    def exposed_turn_off(self):
-        return self._module.turn_off()
+    def exposed_turn_off(self, device_id):
+        return self._module.turn_off(device_id)
 
-    def exposed_is_on(self):
-        return self._module.is_on()
+    def exposed_is_on(self, device_id):
+        return self._module.is_on(device_id)
 
 class Client(ClientBase):
 
-    def turn_on(self):
-        return self._service.exposed_turn_on()
+    def turn_on(self, device_id):
+        return self._service.exposed_turn_on(device_id)
 
-    def turn_off(self):
-        return self._service.exposed_turn_off()
+    def turn_off(self, device_id):
+        return self._service.exposed_turn_off(device_id)
 
-    def is_on(self):
-        return self._service.exposed_is_on()
+    def is_on(self, device_id):
+        return self._service.exposed_is_on(device_id)

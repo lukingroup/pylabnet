@@ -13,14 +13,8 @@ def launch(**kwargs):
         :logger: instance of LogClient for logging purposes
         :device_id: (int) Location of Smart plug (e.g. Powermeter Front Smart Plug)
     """
-    settings = load_device_config('tp_link_hs103',
-            kwargs['config'],
-            logger=kwargs['logger']
-        )
-
 
     smart_plug = Driver(
-        device_id = settings['device_id'],
         logger=kwargs['logger']
     )
 

@@ -7,7 +7,7 @@ from kasa import Discover
 class Driver():
 
     def __init__(self, logger=None):
-        """ Initializes connection to a TP Link HS103 Kasa Smart Plug.
+        """ Initializes connection to all TP Kasa smart plugs in the network.
 
         :device_id: Location of smart plug as defined in smart plug config dict (e.g. "Powermeter Front Smart Plug").
         """
@@ -17,17 +17,22 @@ class Driver():
 
         self.plug_config = load_config('smart_plug_config')
 
-        # Discover Smart Plugs.
+        # Discover smart plugs.
         self.found_devices = asyncio.run(Discover.discover())
 
-        for device in self.found_devices.values():
-            asyncio.run(device.update())
-
+        # Store aliases of found devices.
         self.found_device_aliases = [dev.alias for dev in self.found_devices.values()]
+
         self.log.info(f"Discovered {len(self.found_device_aliases)} smart plugs.")
 
-
     def retrieve_device(self, device_id):
+        """ Returns kasa.SmartPlug object corresponding to a specific plug.
+
+        The plugs are identified with device_ids, which usually correspond to human readable names of the plug location,
+            e.g. "Lights Kitchen". The config file smart_plug_config.json then matches the device_ids to the plug aliases,
+            as they have been defined using the Kasa app.
+        :device_id: (str) Human readable device ID.
+        """
         _, alias = self.get_device_info(device_id)
 
         if not alias in self.found_device_aliases:
@@ -43,26 +48,38 @@ class Driver():
         return device
 
     def turn_on(self, device_id):
-        """Turn switch on."""
+        """Turn plug on.
+
+        :device_id: (str) Human readable device ID.
+        """
 
         device = self.retrieve_device(device_id)
         asyncio.run(device.turn_on())
         self.log.info(f"Smart Plug at location '{device_id}' turned on.")
 
     def turn_off(self, device_id):
-        """Turn switch off."""
+        """Turn plug off.
+
+        :device_id: (str) Human readable device ID.
+        """
 
         device = self.retrieve_device(device_id)
         asyncio.run(device.turn_off())
         self.log.info(f"Smart Plug at location  '{device_id}' turned off.")
 
     def is_on(self, device_id):
-        """ Returns True is plug is on."""
+        """ Returns True is plug is on.
+
+        :device_id: (str) Human readable device ID.
+        """
         device = self.retrieve_device(device_id)
         return device.is_on
 
     def get_device_info(self, device_id):
-        """ Read config dict and find device_id matching to plug_location."""
+        """ Read config dict and find alias matching to device_id.
+
+        :device_id: (str) Human readable device ID.
+        """
 
         alias, current_plug_type = None, None
 
@@ -78,34 +95,3 @@ class Driver():
             return current_plug_type, alias
         else:
             self.log.error(f"Could not find plug location {device_id} in smart_plug_config.json.")
-
-
-
-def main():
-
-    from pylabnet.utils.logging.logger import LogClient
-
-
-    # # Instantiate LogClient.
-    # logger = LogClient(
-    #     host='192.168.50.100',
-    #     port=1167,
-    #     module_tag='Smart_plug'
-    # )
-
-    # sp = Driver(
-    #     logger=logger
-    # )
-
-
-    # sp.turn_on('Powermeter Rear Smart Plug')
-
-    from pylabnet.network.client_server.tp_link_hs103 import Service, Client
-    sp = Client(
-        host='192.168.50.100',
-        port=12541
-    )
-    sp.turn_on('Powermeter Rear Smart Plug')
-
-if __name__ == "__main__":
-    main()

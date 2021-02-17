@@ -86,7 +86,7 @@ class PulsedExperiment():
         if awg is None:
             return
 
-        # awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
+        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
         self.hd.log.info("Preparing to upload sequence.")
 
         # Upload CSV waveforms

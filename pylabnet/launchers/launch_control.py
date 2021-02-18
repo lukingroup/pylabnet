@@ -851,6 +851,7 @@ class ProxyUpdater(QtCore.QObject):
     @QtCore.pyqtSlot()
     def run(self):
         while True:
+            time.sleep(0.1)
             # Check clients and update
             self.controller._pull_connections()
 

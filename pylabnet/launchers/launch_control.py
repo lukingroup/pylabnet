@@ -386,28 +386,6 @@ class Controller:
     def update_proxy(self, new_msg):
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
-        # # Check clients and update
-        # self._pull_connections()
-
-        # # Get buffer terminal
-        # buffer_terminal = self.gui_client.get_text('buffer')
-
-        # # Parse buffer terminal to get part of the message that is new
-        # new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.update_index+1}~!'):-1]
-
-        # # Check if this failed
-        # if new_msg == '':
-
-        #     # Check if the buffer is ahead of our last update
-        #     up_str = re.findall(r'!~\d+~!', new_msg)
-        #     if len(up_str) > 0:
-        #         up_in = int(re.findall(r'\d+', up_str[0]))
-        #         if up_in > self.update_index:
-        #             new_msg = buffer_terminal
-
-        # # If we have a new message to add, add it
-        # if new_msg != '':
-
         self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
         try:
             self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -875,8 +853,6 @@ class ProxyUpdater(QtCore.QObject):
             if new_msg != '':
                 self.update_signal.emit(new_msg)
 
-                # self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
-
 
 def main():
     """ Runs the launch controller """
@@ -918,14 +894,7 @@ def run(log_controller):
         # Set up update thread
         updater = ProxyUpdater(log_controller)
         updater.update_signal.connect(log_controller.update_proxy)
-        updater.moveToThread(update_thread)
-        update_thread.started.connect(updater.run)
-        update_thread.start()
-        log_controller.app.exec_()
-        # while not log_controller.main_window.stop_button.isChecked():
-        #     log_controller.update_proxy()
-        #     log_controller.main_window.force_update()
-        #     time.sleep(0.1)
+
     else:
         # Redirect sys.stdout to queue
         queue = Queue()
@@ -943,11 +912,12 @@ def run(log_controller):
         # Start thread to listen for updates
         updater = UpdateReceiver(queue)
         updater.update_signal.connect(log_controller.update)
-        updater.moveToThread(update_thread)
-        update_thread.started.connect(updater.run)
-        update_thread.start()
-        log_controller.app.exec_()
+
+    updater.moveToThread(update_thread)
+    update_thread.started.connect(updater.run)
+    update_thread.start()
+    log_controller.app.exec_()
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main()

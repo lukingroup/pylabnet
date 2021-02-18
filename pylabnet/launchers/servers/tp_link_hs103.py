@@ -4,6 +4,7 @@ from pylabnet.network.client_server.tp_link_hs103 import Service, Client
 from pylabnet.utils.helper_methods import load_device_config, get_ip
 from pylabnet.hardware.smart_lab.smart_plug.tp_link_hs103 import Driver
 from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.utils.helper_methods import load_device_config
 
 
 def launch(**kwargs):
@@ -14,8 +15,11 @@ def launch(**kwargs):
         :device_id: (int) Location of Smart plug (e.g. Powermeter Front Smart Plug)
     """
 
+    logger=kwargs['logger']
+    config = load_device_config('tp_link_hs103', kwargs['config'])
     smart_plug = Driver(
-        logger=kwargs['logger']
+        logger=kwargs['logger'],
+        channels=config['channels']
     )
 
     # Instantiate Server

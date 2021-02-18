@@ -172,8 +172,6 @@ class Controller:
         self.debug = False
         self.debug_level = None
 
-        #sys.stdout = StringIO()
-
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
 
@@ -219,7 +217,10 @@ class Controller:
 
             # Get the latest update index
             buffer = self.gui_client.get_text('buffer')
-            self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', buffer)[-1])[0])
+            try:
+                self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', buffer)[-1])[0])
+            except IndexError:
+                self.update_index = 0
 
         else:
             # Instantiate GUI server and update GUI with port details
@@ -256,19 +257,13 @@ class Controller:
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
 
-        #to_append = sys.stdout.getvalue()
-        to_append = text
-        self.main_window.terminal.append(to_append)
-        self.main_window.buffer_terminal.append(to_append)
+        self.main_window.terminal.append(text)
         try:
             self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
         except TypeError:
             pass
-        sys.stdout.truncate(0)
-        sys.stdout.seek(0)
-
         # Update buffer terminal
-        buffer_str = f'!~{self.update_index}~!{to_append}'
+        buffer_str = f'!~{self.update_index}~!{text}'
         self.main_window.buffer_terminal.append(buffer_str)
         self.update_index += 1
 
@@ -343,10 +338,6 @@ class Controller:
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
-        # sys.stdout = StringIO()
-        # self.app = QtWidgets.QApplication(sys.argv)
-        # self.main_window = Window(self.app, gui_template=self.LOGGER_UI)
-
         ip_str, ip_str_2, log_str = '', '', ''
         if self.master:
             self.main_window.setWindowTitle('Launch Control (Master)')
@@ -392,37 +383,37 @@ class Controller:
 
         self.main_window.force_update()
 
-    def update_proxy(self):
-        """ Updates the proxy with new content using the buffer terminal"""
+    def update_proxy(self, new_msg):
+        """ Updates the proxy with new content using the buffer terminal continuously"""
 
-        # Check clients and update
-        self._pull_connections()
+        # # Check clients and update
+        # self._pull_connections()
 
-        # Get buffer terminal
-        buffer_terminal = self.gui_client.get_text('buffer')
+        # # Get buffer terminal
+        # buffer_terminal = self.gui_client.get_text('buffer')
 
-        # Parse buffer terminal to get part of the message that is new
-        new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.update_index+1}~!'):-1]
+        # # Parse buffer terminal to get part of the message that is new
+        # new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.update_index+1}~!'):-1]
 
-        # Check if this failed
-        if new_msg == '':
+        # # Check if this failed
+        # if new_msg == '':
 
-            # Check if the buffer is ahead of our last update
-            up_str = re.findall(r'!~\d+~!', new_msg)
-            if len(up_str) > 0:
-                up_in = int(re.findall(r'\d+', up_str[0]))
-                if up_in > self.update_index:
-                    new_msg = buffer_terminal
+        #     # Check if the buffer is ahead of our last update
+        #     up_str = re.findall(r'!~\d+~!', new_msg)
+        #     if len(up_str) > 0:
+        #         up_in = int(re.findall(r'\d+', up_str[0]))
+        #         if up_in > self.update_index:
+        #             new_msg = buffer_terminal
 
-        # If we have a new message to add, add it
-        if new_msg != '':
+        # # If we have a new message to add, add it
+        # if new_msg != '':
 
-            self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
-            try:
-                self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
-            except TypeError:
-                pass
-            self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
+        self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
+        try:
+            self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+        except TypeError:
+            pass
+        self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
     def kill_servers(self):
         """ Kills all servers connected to the logger, including the Log GUI and Log Server"""
@@ -440,6 +431,9 @@ class Controller:
     def update(self, text):
         """ Runs an update when new text comes through """
 
+        self.main_window.configure_widgets()
+        self.main_window.update_widgets()
+        
         #Check for disconnection events
         self.check_disconnection(text)
 
@@ -448,6 +442,9 @@ class Controller:
 
         # Update terminal
         self.update_terminal(text)
+
+        if self.disconnection:
+            self.disconnect()
     
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
@@ -817,13 +814,18 @@ class Controller:
 
 
 class WriteStream:
+    """ Wrapper for sys.stdout to pipe to gui """
+
     def __init__(self,queue):
         self.queue = queue
 
     def write(self, text):
         self.queue.put(text)
 
+
 class UpdateReceiver(QtCore.QObject):
+    """ Process to run in separate thread to monitor for logger updates"""
+
     update_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, queue, *args, **kwargs):
@@ -835,6 +837,44 @@ class UpdateReceiver(QtCore.QObject):
         while True:
             text = self.queue.get()
             self.update_signal.emit(text)
+
+
+class ProxyUpdater(QtCore.QObject):
+    """ Process to run in separate thread to synchronize proxy GUI """
+
+    update_signal = QtCore.pyqtSignal(str)
+
+    def __init__(self, controller, *args, **kwargs):
+        QtCore.QObject.__init__(self, *args, **kwargs)
+        self.controller = controller
+
+    @QtCore.pyqtSlot()
+    def run(self):
+        while True:
+            # Check clients and update
+            self.controller._pull_connections()
+
+            # Get buffer terminal
+            buffer_terminal = self.controller.gui_client.get_text('buffer')
+
+            # Parse buffer terminal to get part of the message that is new
+            new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.controller.update_index+1}~!'):-1]
+
+            # Check if this failed
+            if new_msg == '':
+
+                # Check if the buffer is ahead of our last update
+                up_str = re.findall(r'!~\d+~!', new_msg)
+                if len(up_str) > 0:
+                    up_in = int(re.findall(r'\d+', up_str[0]))
+                    if up_in > self.controller.update_index:
+                        new_msg = buffer_terminal
+
+            # If we have a new message to add, add it
+            if new_msg != '':
+                self.update_signal.emit(new_msg)
+
+                # self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
 
 def main():
@@ -853,11 +893,6 @@ def main_proxy():
 def main_master():
     """ Runs the launch controller overriding commandline arguments in master mode """
 
-    operating_system = get_os()
-
-    if operating_system not in ['Linux', 'Windows']:
-        raise UnsupportedOSException
-
     log_controller = Controller(master=True)
     run(log_controller)
 
@@ -870,60 +905,48 @@ def main_staticproxy():
 def run(log_controller):
     """ Runs the launch controller once a Controller is instantiated"""
 
-    # Redirect sys.stdout to queue
-    queue = Queue()
-    sys.stdout = WriteStream(queue)
-    
-    # Instantiate GUI
-    if not log_controller.proxy:
-        log_controller.start_logger()
-    log_controller.initialize_gui()
-    log_controller.start_gui_server()
-
-    # Start logging os in master mode
-    if log_controller.master:
-        log_controller.start_stop_logging(master_log=True)
-
-    # Start thread to listen for updates
+    # Refresh thread
     update_thread = QtCore.QThread()
-    updater = UpdateReceiver(queue)
-    updater.update_signal.connect(log_controller.update)
-    updater.moveToThread(update_thread)
-    update_thread.started.connect(updater.run)
-    update_thread.start()
-    log_controller.app.exec_()
     
-    # # Standard operation
-    # while not log_controller.main_window.stop_button.isChecked():
+    if log_controller.proxy:
 
-    #     # For proxy launch controller, just check main GUI for updates
-    #     if log_controller.proxy:
-    #         log_controller.update_proxy()
-    #     else:
+        # Set up GUI
+        log_controller.initialize_gui()
+        log_controller.start_gui_server()
 
-    #         # Handle external configuration via GUI server
-    #         log_controller.main_window.configure_widgets()
-    #         log_controller.main_window.update_widgets()
+        # Set up update thread
+        updater = ProxyUpdater(log_controller)
+        updater.update_signal.connect(log_controller.update_proxy)
+        updater.moveToThread(update_thread)
+        update_thread.started.connect(updater.run)
+        update_thread.start()
+        log_controller.app.exec_()
+        # while not log_controller.main_window.stop_button.isChecked():
+        #     log_controller.update_proxy()
+        #     log_controller.main_window.force_update()
+        #     time.sleep(0.1)
+    else:
+        # Redirect sys.stdout to queue
+        queue = Queue()
+        sys.stdout = WriteStream(queue)
+        
+        # Instantiate GUI
+        log_controller.start_logger()
+        log_controller.initialize_gui()
+        log_controller.start_gui_server()
 
-    #         # New terminal input
-    #         if sys.stdout.getvalue() != '':
+        # Start logging os in master mode
+        if log_controller.master:
+            log_controller.start_stop_logging(master_log=True)
 
-    #             # Check for disconnection events
-    #             log_controller.check_disconnection()
-
-    #             # Handle new connections
-    #             log_controller.update_connection()
-
-    #             # Update terminal
-    #             log_controller.update_terminal()
-
-    #         # Handle disconnection events
-    #         if log_controller.disconnection:
-    #             log_controller.disconnect()
-
-        # # Update display
-        # log_controller.main_window.force_update()
+        # Start thread to listen for updates
+        updater = UpdateReceiver(queue)
+        updater.update_signal.connect(log_controller.update)
+        updater.moveToThread(update_thread)
+        update_thread.started.connect(updater.run)
+        update_thread.start()
+        log_controller.app.exec_()
 
 
 if __name__ == '__main__':
-    main()
+    main_staticproxy()

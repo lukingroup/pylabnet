@@ -200,10 +200,41 @@ class Controller:
             time.sleep(10)
             raise
 
-        gui_str = ''
+        # Instantiate GUI server and update GUI with port details
+        self.gui_service = Service()
+        self.gui_service.assign_module(module=self.main_window)
+        self.gui_service.assign_logger(logger=self.gui_logger)
+        if self.gui_port is None:
+            self.gui_server, self.gui_port = create_server(
+                self.gui_service,
+                logger=self.gui_logger,
+                host=get_ip()
+            )
+            my_port = self.gui_port
+        elif self.proxy:
+            self.gui_server, my_port = create_server(
+                self.gui_service,
+                logger=self.gui_logger,
+                host=get_ip()
+            )
+            self.main_window.gui_label.setText(
+                f'Master (Local) GUI Port: {self.gui_port} ({my_port})'
+            )
+        else:
+            try:
+                self.gui_server = GenericServer(
+                    service=self.gui_service,
+                    host=get_ip(),
+                    port=self.gui_port
+                )
+                my_port = self.gui_port
+            except ConnectionRefusedError:
+                self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
+                raise
+        self.gui_server.start()
+        self.gui_logger.update_data(data=dict(port=my_port))
+        
         if self.proxy:
-            gui_str = 'Master '
-
             # Connect to the GUI server
             try:
                 self.gui_client = Client(host=self.host, port=self.gui_port)
@@ -222,37 +253,18 @@ class Controller:
             except IndexError:
                 self.update_index = 0
 
-        else:
-            # Instantiate GUI server and update GUI with port details
             self.gui_service = Service()
             self.gui_service.assign_module(module=self.main_window)
             self.gui_service.assign_logger(logger=self.gui_logger)
-            if self.gui_port is None:
-                self.gui_server, self.gui_port = create_server(
-                    self.gui_service,
-                    logger=self.gui_logger,
-                    host=get_ip()
-                    )
-            else:
-                try:
-                    self.gui_server = GenericServer(
-                        service=self.gui_service,
-                        host=get_ip(),
-                        port=self.gui_port
-                    )
-                except ConnectionRefusedError:
-                    self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
-                    raise
-            self.gui_server.start()
-            self.gui_logger.update_data(data=dict(port=self.gui_port))
+
+        else:
+
             # Update internal attributes and add to list of log clients
             self.client_list[self.GUI_NAME] = QtWidgets.QListWidgetItem(self.GUI_NAME)
             self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
             self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
             self.client_data[self.GUI_NAME+module_str] = self.log_service.client_data[self.GUI_NAME]
-
-        self.main_window.gui_label.setText('{} GUI Port: {}'.format(gui_str, self.gui_port))
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
@@ -348,7 +360,7 @@ class Controller:
                 self.main_window.setWindowTitle('Launch Control (Proxy)')
             ip_str = 'Master (Local) '
             ip_str_2 = f' ({get_ip()})'
-            log_str = 'Master '
+            log_str = 'Master'
         self.main_window.ip_label.setText(
             f'{ip_str}IP Address: {self.host}'+ip_str_2
             )
@@ -920,4 +932,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_staticproxy()

@@ -348,7 +348,7 @@ class Launcher:
         self.use_index = params['index']
         self.waiting_flag = False
 
-    
+
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """
 
@@ -470,4 +470,5 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        warning_popup(str(e))
+        warning_popup(traceback.format_exc())
+

@@ -69,6 +69,7 @@ setup(
         'pyqtgraph>=0.10.0',
         'pyserial>=3.4',
         'python-decouple>=3.3',
+        'python-kasa>=0.4.0.dev2',
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
         'qdarkstyle>=2.8.1',

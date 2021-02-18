@@ -217,6 +217,18 @@ class HMCT2220(StaticLineHardwareHandler):
         self.hardware_client.set_power(float(value))
 
 
+class TPLinkHS103(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.up = lambda: self.hardware_client.turn_on(channel_id = self.config['plug_name'])
+        self.down = lambda: self.hardware_client.turn_off(channel_id = self.config['plug_name'])
+        self.log.info(f'Smart Plug successfully assigned to staticline {self.name}')
+
+
 class AbstractDevice(StaticLineHardwareHandler):
 
     def setup(self):
@@ -262,6 +274,7 @@ registered_staticline_modules = {
     'nidaqmx_green': NiDaqMx,
     'nidaqmx': NiDaqMx,
     'dio_breakout': DioBreakout,
+    'tp_link_hs103': TPLinkHS103,
     'toptica': Toptica,
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice,

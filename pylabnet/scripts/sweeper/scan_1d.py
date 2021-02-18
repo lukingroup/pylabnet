@@ -13,6 +13,7 @@ from pylabnet.gui.pyqt.external_gui import Window, Popup
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
     unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background)
+from pylabnet.scripts.sweeper.scan_fit import FitPopup
 
 
 class Controller(MultiChSweep1D):
@@ -274,7 +275,8 @@ class Controller(MultiChSweep1D):
 
         # If box is newly checked, instantiate popup
         if status:
-            self.fit_popup = Popup(ui='fit_popup')
+            self.fit_popup = FitPopup(ui='fit_popup')
+            self.fit_popup.model_type.activated.connect(self.fit_popup.doSomething)
 
         # If box isn't checked, remove popup
         else:

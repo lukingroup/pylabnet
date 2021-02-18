@@ -732,6 +732,21 @@ class Popup(QtWidgets.QWidget):
         uic.loadUi(ui, self)
         self.show()
 
+class InternalPopup(Popup):
+    """ Widget class for popup that appends to existing window """
+
+    def __init__(self, ui):
+        """
+        :param ui: .ui to use as a template
+        """
+
+        QtWidgets.QWidget.__init__(self)
+        ui = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'gui_templates',
+            f'{ui}.ui'
+        )
+        uic.loadUi(ui, self)
 
 class ParameterPopup(QtWidgets.QWidget):
     """ Widget class of to add parameter prompting popup"""

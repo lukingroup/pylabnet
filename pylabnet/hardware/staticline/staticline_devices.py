@@ -224,8 +224,8 @@ class TPLinkHS103(StaticLineHardwareHandler):
         device client function calls.
         '''
 
-        self.up = lambda: self.hardware_client.turn_on(device_id = self.config['plug_name'])
-        self.down = lambda: self.hardware_client.turn_off(device_id = self.config['plug_name'])
+        self.up = lambda: self.hardware_client.turn_on(channel_id = self.config['plug_name'])
+        self.down = lambda: self.hardware_client.turn_off(channel_id = self.config['plug_name'])
         self.log.info(f'Smart Plug successfully assigned to staticline {self.name}')
 
 

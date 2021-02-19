@@ -275,7 +275,7 @@ class Controller(MultiChSweep1D):
 
         # If box is newly checked, instantiate popup
         if status:
-            self.fit_popup = FitPopup(ui='fit_popup')
+            self.fit_popup = FitPopup(ui='fit_popup', log=self.log)
             self.fit_popup.model_type.activated.connect(self.fit_popup.doSomething)
 
         # If box isn't checked, remove popup
@@ -452,9 +452,13 @@ class Controller(MultiChSweep1D):
 
 
 def main():
-    control=Controller(config='laser_scan')
-    while True:
-        control.gui.force_update()
+    
+    # Name of config file
+    # NOTE: needs to be changed based on the exact config file you are
+    # using within configs/scripts/scan1d
+    config_name = 'fake_tutorial_exp'
+    control=Controller(config=config_name)
+    control.gui.app.exec_()
 
 def launch(**kwargs):
     """ Launches the sweeper GUI """

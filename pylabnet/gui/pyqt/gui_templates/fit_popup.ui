@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1232</width>
-    <height>578</height>
+    <width>998</width>
+    <height>101</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Fit Parameters</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+   <item row="1" column="0">
     <widget class="QComboBox" name="model_type">
      <item>
       <property name="text">
@@ -27,9 +27,6 @@
       </property>
      </item>
     </widget>
-   </item>
-   <item row="1" column="0">
-    <layout class="QVBoxLayout" name="model_parameters"/>
    </item>
   </layout>
  </widget>

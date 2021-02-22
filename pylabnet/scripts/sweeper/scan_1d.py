@@ -276,7 +276,7 @@ class Controller(MultiChSweep1D):
         # If box is newly checked, instantiate popup
         if status:
             self.fit_popup = FitPopup(ui='fit_popup', log=self.log)
-            self.fit_popup.model_type.activated.connect(self.fit_popup.doSomething)
+            self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
 
         # If box isn't checked, remove popup
         else:
@@ -456,7 +456,7 @@ def main():
     # Name of config file
     # NOTE: needs to be changed based on the exact config file you are
     # using within configs/scripts/scan1d
-    config_name = 'fake_tutorial_exp'
+    config_name = 'fake_expt'
     control=Controller(config=config_name)
     control.gui.app.exec_()
 

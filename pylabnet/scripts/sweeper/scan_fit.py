@@ -8,13 +8,27 @@ class FitPopup(Popup):
         
     def load_lor(self):
     
-        self.lor_pop = InternalPopup(ui = 'lor_fit_params')
-        self.model_parameters.addLayout(self.lor_pop.main)
-        
-        # This line was wrong, and I don't think it's necessary
-        # self.setLayout(model_parameters)
-        
-        self.show()
+        self.lor_pop = Popup(ui = 'lor_fit_params')
+
+        #the below crashes the program for some reason....
+        #self.lor_pop.main.setParent(None)
+        #self.model_parameters.addLayout(self.lor_pop.main)
+        #self.show()
+
+        self.lor_pop.confirm.clicked.connect(self.fit_lor)
+    
+    def fit_lor(self):
+        self.lor_params = {"center": float(self.lor_pop.center.text()), \
+                            "fwhm": float(self.lor_pop.fwhm.text()), \
+                            "amp": float(self.lor_pop.amp.text())}
+        print(str(self.lor_params["center"]))
+
+    def fit_selection(self, index):
+        #print(str(index))
+        if index == 0:
+            self.load_lor()
+            self.close()
+    
     def doSomething(self):
 
         # If you're running in the console (e.g. in the vscode debugger)

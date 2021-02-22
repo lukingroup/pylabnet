@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1194</width>
-    <height>323</height>
+    <width>983</width>
+    <height>341</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,14 +18,11 @@
     <rect>
      <x>20</x>
      <y>30</y>
-     <width>1141</width>
-     <height>231</height>
+     <width>941</width>
+     <height>284</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="main">
-    <item row="2" column="1">
-     <widget class="QLineEdit" name="center"/>
-    </item>
     <item row="2" column="0">
      <widget class="QLabel" name="center_lab">
       <property name="text">
@@ -33,18 +30,8 @@
       </property>
      </widget>
     </item>
-    <item row="0" column="0" colspan="2">
-     <widget class="QLabel" name="title">
-      <property name="text">
-       <string>Fit Parameters: Initial Guesses</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QLineEdit" name="fwhm"/>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="center"/>
     </item>
     <item row="3" column="0">
      <widget class="QLabel" name="fwhm_lab">
@@ -53,13 +40,33 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
-     <widget class="QLineEdit" name="amp"/>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="fwhm"/>
     </item>
     <item row="4" column="0">
      <widget class="QLabel" name="amp_lab">
       <property name="text">
        <string>Amplitude:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="amp"/>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="title">
+      <property name="text">
+       <string>Lorentzian Fit Parameters: Initial Guesses</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QPushButton" name="confirm">
+      <property name="text">
+       <string>OK</string>
       </property>
      </widget>
     </item>

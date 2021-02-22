@@ -16,8 +16,6 @@ from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
-import netifaces as ni
-
 
 def str_to_float(in_val):
     """Convert human-readable exponential form to float.
@@ -859,6 +857,7 @@ def get_ip():
             network_interface = load_config('network_config')['network_interface']
         except AttributeError:
             return socket.gethostbyname(socket.gethostname())
+        import netifaces as ni
         ip = ni.ifaddresses(network_interface)[ni.AF_INET][0]['addr']
         return ip
 

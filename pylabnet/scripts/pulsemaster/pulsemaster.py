@@ -1192,7 +1192,7 @@ class PulseMaster:
         for (field_name, field_type) in field_names:
             field_type_obj, field_type_fn = input_field_handlers[field_type]
 
-            field_value = self.pulse_selector_form_variable.findChild(field_type_obj, field_name)
+            field_value = self.pulse_selector_form_variable.findChild(field_type_obj, field_name)            
             field_value = field_type_fn(field_value)
 
             field_values.append(field_value)
@@ -1395,13 +1395,15 @@ class PulseMaster:
         # Load pulsetype settings
         pulsetype_dict = self._current_pulsetype_dict()
 
+        widgets_dict = {}
+
         for field in pulsetype_dict['fields']:
+            # Create widget object from field type
+            field_input = self._get_pulse_fieldtype(field)
 
             # Add label.
             field_label = QLabel(field['label'])
-
-            # Get field type
-            field_input = self._get_pulse_fieldtype(field)
+            widgets_dict[field['label']] = field_input
 
             # Add choices to combobox.
             if type(field_input) is QComboBox:
@@ -1412,6 +1414,27 @@ class PulseMaster:
             field_input.setObjectName(input_widget_name)
 
             self.pulse_selector_form_layout_variable.addRow(field_label, field_input)
+
+        # Make the sinuoidal checkbox affect whether the freq/phase boxes are 
+        # enabled.
+        if "Sinusoidal Modulation" in widgets_dict:
+            mod_widget = widgets_dict["Sinusoidal Modulation"]
+            freq_widget = widgets_dict["Frequency"]
+            phase_widget = widgets_dict["Phase"]
+
+            # Start out disabled with text 0
+            freq_widget.setDisabled(True)
+            freq_widget.setText("0")
+            phase_widget.setDisabled(True)
+            phase_widget.setText("0")
+
+            # For subsequent times, the text fields are editable or not depending
+            # on the state of the modulation checkbox.
+            def modulation_fields_editable():
+                freq_widget.setEnabled(mod_widget.isChecked())
+                phase_widget.setEnabled(mod_widget.isChecked())
+
+            mod_widget.stateChanged.connect(modulation_fields_editable)
 
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()

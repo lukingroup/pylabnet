@@ -310,8 +310,8 @@ class AWGPulseBlockHandler():
                 # rate to convert into AWG time steps.
                 waveforms.append([wave_csv_name,
                                   ch.name, 
-                                  int(pulse.t0 * self.digital_sr), 
-                                  int((pulse.t0 + pulse.dur) * self.digital_sr), 
+                                  int(np.round(pulse.t0 * self.digital_sr)), 
+                                  int(np.round((pulse.t0 + pulse.dur) * self.digital_sr)), 
                                   samp_arr])
                 
                 # Declare the waveform in the AWG code
@@ -418,24 +418,6 @@ class AWGPulseBlockHandler():
 
         # Get the unique DIO codewords in order.
         codewords = codewords_array[codeword_times]
-        
-        # e.g. [0,0,1,1,1,1,0,0] returns [2,4,2]
-        # Use difference of array to get waittimes, prepend first sample, 
-        # append the waittime to match sequence length.
-        # Add 1 for first wait time since we're measuring time between the left   
-        # edge of transitions, the first transition "takes place" at index -1. 
-        # num_samples = len(codewords_array)
-        # waittimes = np.concatenate(
-        #     [
-        #         [dio_change_index[0] + 1], 
-        #         np.diff(dio_change_index),
-        #         [(num_samples - 1) - dio_change_index[-1]]
-        #     ]
-        # )
-
-        # if not sum(waittimes) == num_samples:
-        #     self.log.error("Mismatch between sum of waittimes and waveform length.")
-
     
         return codewords, codeword_times
 
@@ -484,10 +466,30 @@ class AWGPulseBlockHandler():
                 combined_times.append(digital_times[dio_index])
                 dio_index += 1
             else:
-                # Store waveform CSV name and channel name
-                combined_commands.append(("analog", waveforms[ana_index][0], waveforms[ana_index][1]))
+                # Initialize in cases where range(ana_index+1, len(waveforms)) is empty list
+                ana_index_search = ana_index + 1
+
+                # Check if subsequent waveforms start at the same time
+                # The case where they are somewhat close but need to be padded
+                # will be handled earlier in the pulse parser
+                for ana_index_search in range(ana_index+1, len(waveforms)+1):
+                    # Stop when reach end of list or a pulse with a different time
+                    if (ana_index_search == len(waveforms) or 
+                        waveforms[ana_index][2] != waveforms[ana_index_search][2]):
+                        break
+                
+                self.log.error((ana_index, ana_index_search))
+                
+                # Store waveform CSV name and channel name for the waveforms
+                # that start at the same time.
+                combined_commands.append((
+                    "analog", 
+                    [waveforms[index][0] for index in range(ana_index, ana_index_search)], 
+                    [waveforms[index][1] for index in range(ana_index, ana_index_search)])
+                )
+
                 combined_times.append(waveforms[ana_index][2])
-                ana_index += 1
+                ana_index = ana_index_search # Increment to the next unused waveform
 
         # Waittimes are just the differences between the command times
         combined_waittimes = np.diff(combined_times)
@@ -499,7 +501,8 @@ class AWGPulseBlockHandler():
         """
 
         set_dio_cmd = "setDIO({});"
-        playwave_cmd = "playWave({}, {});"
+        playwave_cmd = "playWave({});"
+        wave_str = ""
 
         if command[0] == "dio":
                 # Add setDIO command to sequence
@@ -511,15 +514,19 @@ class AWGPulseBlockHandler():
                     return set_dio_cmd.format(dio_codeword)
             
         elif command[0] == "analog":
-            waveform_csv_name, ch_name = command[1], command[2]
-            ch_type, ch_num = self.assignment_dict[ch_name]
+            waveform_csv_names, ch_names = command[1], command[2]
+            ch_types, ch_nums = zip(*[self.assignment_dict[ch_name] for ch_name in ch_names])
 
-            if ch_type != "analog":
-                self.log.warn(f"Channel {ch_name} was expected to get analog, got {ch_type}.")
+            if not all(ch_type == "analog" for ch_type in ch_types):
+                self.log.warn(f"Channel expected to get analog but got an unexpected type.")
 
             # Add 1 to ch_num since we specified in 0-indexed but playwave 
-            # channels are 1-indexed. 
-            return playwave_cmd.format(ch_num + 1, waveform_csv_name)
+            # channels are 1-indexed. Sort by ch number.
+            for ch_num, waveform_csv_name in sorted(zip(ch_nums, waveform_csv_names)):
+                if wave_str != "": wave_str += ", " 
+                wave_str += f"{ch_num + 1}, {waveform_csv_name}"
+           
+            return playwave_cmd.format(wave_str)
 
         else:
             self.log.warn(f"Unknown command type {command[0]} found.")

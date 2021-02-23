@@ -275,9 +275,15 @@ class Controller(MultiChSweep1D):
 
         # If box is newly checked, instantiate popup
         if status:
-            self.fit_popup = FitPopup(ui='fit_popup', log=self.log)
+            self.fit_popup = FitPopup(ui='fit_popup', data = self.avg_fwd, log=self.log)
             self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
-
+            '''
+            if len(self.avg_fwd) != 0:
+                    self.fit_popup = FitPopup(ui='fit_popup', data = self.avg_fwd, log=self.log)
+                    self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
+            else:
+                self.fit_error = Popup(ui = 'fit_error')
+            '''    
         # If box isn't checked, remove popup
         else:
             self.fit_popup = None

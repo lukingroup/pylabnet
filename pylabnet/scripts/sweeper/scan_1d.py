@@ -433,6 +433,13 @@ class Controller(MultiChSweep1D):
         """ Update repetition counter """
 
         self.widgets['rep_tracker'].setValue(reps_done + 1)
+        self._update_fits()
+
+    def _update_fits(self):
+        """ Updates fits """
+
+        # TODO: Wenjie implements
+        pass
 
     def _update_autosave(self):
         """ Updates autosave status """

@@ -38,6 +38,29 @@ class PulseblockConstructor():
                 return simple_eval(input_val, names=self.var_dict)
             except KeyError:
                 self.log.error(f"Could not resolve variable '{input_val}'.")
+    
+    def append_value_to_dict(self, search_dict, key, append_dict, fn=None, new_key=None):
+        """ Append a searched value from a search dictionary to a separate 
+        dictionary, if the given key exists.
+
+        :search_dict: search_dict (dict) Dictionary to search the key for
+        :key: (str) Key to query the search dictionary using
+        :append_dict: (dict) Value of the found key will be appended into this
+            dictionary if it exists
+        :fn: (function, optional) Function to be applied to the found value 
+        :new_key: (str, optional) New key that the found value will be added 
+            to in the append_dict. If not provided, it will use the old key
+        """
+
+        if key in search_dict:
+            value = self.resolve_value(search_dict[key])
+
+            if fn is not None:
+                value = fn(value)
+            if new_key is None:
+                new_key = key
+
+            append_dict[new_key] = value
 
     def compile_pulseblock(self):
         """ Compiles the list of pulse_specifiers and var dists into valid
@@ -47,48 +70,36 @@ class PulseblockConstructor():
         pulseblock = pb.PulseBlock(name=self.name)
 
         for i, pb_spec in enumerate(self.pulse_specifiers):
+            
+            var_dict = pb_spec.pulsevar_dict
+            arg_dict = {}
 
-            dur = self.resolve_value(pb_spec.dur) * 1e-6
+            # Extract parameters from the pulsevar dict
             offset = self.resolve_value(pb_spec.offset)  * 1e-6
+            arg_dict["ch"] = pb_spec.channel
+            arg_dict["dur"] = self.resolve_value(pb_spec.dur) * 1e-6
+
+            self.append_value_to_dict(var_dict, "amp", arg_dict)
+            self.append_value_to_dict(var_dict, "freq", arg_dict)
+            self.append_value_to_dict(var_dict, "ph", arg_dict)
+            self.append_value_to_dict(var_dict, "stdev", arg_dict, fn=lambda x: 1e-6*x)
+            self.append_value_to_dict(var_dict, "modulation", arg_dict, new_key="mod")
+            self.append_value_to_dict(var_dict, "mod_freq", arg_dict)
+            self.append_value_to_dict(var_dict, "mod_ph", arg_dict)
+
+            supported_pulses = {
+                "PTrue" : po.PTrue,
+                "PSin" : po.PSin,
+                "PGaussian" : po.PGaussian,
+                "PConst" : po.PConst
+            }
 
             # Construct single pulse.
-            if pb_spec.pulsetype == "PTrue":
-                pulse = po.PTrue(
-                    ch=pb_spec.channel,
-                    dur=dur
-                )
-
-            elif pb_spec.pulsetype == "PSin":
-                pulse = po.PSin(
-                     ch=pb_spec.channel,
-                     dur=dur,
-                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
-                     freq=self.resolve_value(pb_spec.pulsevar_dict['freq']),
-                     ph=self.resolve_value(pb_spec.pulsevar_dict['ph'])
-                )
-            
-            elif pb_spec.pulsetype == "PGaussian":
-                pulse = po.PGaussian(
-                     ch=pb_spec.channel,
-                     dur=dur,
-                     amp=self.resolve_value(pb_spec.pulsevar_dict['amp']),
-                     stdev=1e-6 * self.resolve_value(pb_spec.pulsevar_dict['stdev']),
-                     mod=self.resolve_value(pb_spec.pulsevar_dict['modulation']),
-                     mod_freq=self.resolve_value(pb_spec.pulsevar_dict['mod_freq']),
-                     mod_ph=self.resolve_value(pb_spec.pulsevar_dict['mod_ph'])
-                )
-
-            elif pb_spec.pulsetype == "PConst":
-                pulse = po.PConst(
-                     ch=pb_spec.channel,
-                     dur=dur,
-                     val=self.resolve_value(pb_spec.pulsevar_dict['val']),
-                     mod=self.resolve_value(pb_spec.pulsevar_dict['modulation']),
-                     mod_freq=self.resolve_value(pb_spec.pulsevar_dict['mod_freq']),
-                     mod_ph=self.resolve_value(pb_spec.pulsevar_dict['mod_ph'])
-                )
+            if pb_spec.pulsetype in supported_pulses:
+                pulse = supported_pulses[pb_spec.pulsetype](**arg_dict)
             
             else:
+                pulse = None
                 self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")
 
 

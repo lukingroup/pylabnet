@@ -252,7 +252,6 @@ class PCombined(PulseBase):
         if len(set(pulse._mod_ph for pulse in pulselist)) > 1:
             raise ValueError("More than 1 setting for modulation phase detected. Following the first pulse.")
 
-        # TODO YQ: Support mixed frequency/phase?
         # Assume that the first item in the list represents the entire combined pulse
         self._mod = pulselist[0]._mod
         self._mod_freq = pulselist[0]._mod_freq

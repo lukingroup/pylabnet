@@ -91,16 +91,16 @@ class AWGPulseBlockHandler():
         for trace_name in keys_to_assign:
 
             if trace_name.is_analog:
-                ch_num = input(f"Please assign an analog channel (0-1) to pulse trace '{trace_name.name}':")
+                ch_num = input(f"Please assign an analog channel (0-7) to pulse trace '{trace_name.name}':")
 
                 # Check if user has entered a int.
-                wrong_int_msg = "Please enter an integer from 0-1."
+                wrong_int_msg = "Please enter an integer from 0-7."
                 try:
                     ch_num = int(ch_num)
                 except ValueError:
                     self.log.error(wrong_int_msg)
 
-                if ch_num not in range(2):
+                if ch_num not in range(8):
                     self.log.error(wrong_int_msg)
 
             else:
@@ -446,7 +446,7 @@ class AWGPulseBlockHandler():
         # TODO YQ  return values
         """
 
-        combined_commands, combined_times = [], []
+        combined_commands, combined_times = [], [0]
 
         # Sort by start time
         waveforms.sort(key=lambda pulse: pulse[2])
@@ -549,20 +549,15 @@ class AWGPulseBlockHandler():
             # masked_state zeros out bits in the mask from the current_state
             sequence += "var masked_state = ~mask & current_state;"
 
-        # Play the first command
-        sequence += self.awg_seq_command(commands[0], mask)
-
-        # Waits are interspersed between each command, so there will be 1 less
-        # wait command compared to the number of commands.
+        # Waits and commands are interspersed (wait-command-wait-command-...)
+        # If the first wait is 0, it is not displayed due to the wait_offset
         for i, waittime in enumerate(waittimes):
 
             # Add waittime to sequence but subtract the wait offset
             if waittime > wait_offset:
                 sequence += wait_cmd.format(int(waittime - wait_offset))
 
-            # i+1 since we already played the first command on top
-            # 1st command (outside loop) > 1st wait > 2nd command
-            sequence += self.awg_seq_command(commands[i+1], mask)
+            sequence += self.awg_seq_command(commands[i], mask)
 
         return sequence
 

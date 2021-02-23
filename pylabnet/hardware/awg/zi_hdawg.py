@@ -474,10 +474,6 @@ class AWGModule():
 
         for ch, config_dict in setup_configs.items():
             ch_type, ch_num = assignment_dict[ch]
-            
-            # ch_num is specified relative to this AWG core, ch_num_index counts
-            # from 0 across all channels.
-            ch_num_index = self.index * self.channels_per_awg + ch_num
 
             if ch_type != "analog":
                 self.hd.log.warn(f"Attempted to setup a digital channel {ch} with analog functions.")
@@ -485,21 +481,21 @@ class AWGModule():
             for config_type, config_val in config_dict.items():
 
                 if config_type == "mod":
-                    if config_val == True:
-                        # 0 = mod off, 1 = sin11, 2 = sin22
-                        # We want channel 0 to have sin11 and channel 1 to have sin22
-                        mod = (ch_num + 1) % 2
-                    else:
-                        mod = 0
-                        
-                    self.hd.setd(f'awgs/{self.index}/outputs/{ch_num}/modulation/mode', mod)
-                    self.hd.seti(f'sines/{ch_num_index}/oscselect', 2*ch_num_index)
+
+                    # 0 = mod off, 1 = sin11, 2 = sin22, 3 = sin12, 4 = sin21
+                    # Assume we want sin12 (i.e. AWG1 x Sin1 + AWG2 x Sin2)
+                    mod = 3 if config_val else 0
+                    # AWG number is always labeled in 4x2 mode regardless of sequencer settings
+                    self.hd.seti(f'awgs/{ch_num//2}/outputs/{ch_num%2}/modulation/mode', mod)
+
+                    # Oscillation oscillator index - set oscillator n to channel n
+                    self.hd.seti(f'sines/{ch_num}/oscselect', ch_num)
 
                 elif config_type == "mod_freq":
-                    self.hd.setd(f'oscs/{2*ch_num_index}/freq', config_val)
+                    self.hd.setd(f'oscs/{ch_num}/freq', config_val)
 
                 elif config_type == "mod_ph":
-                    self.hd.setd(f'sines/{ch_num_index}/phaseshift', config_val)
+                    self.hd.setd(f'sines/{ch_num}/phaseshift', config_val)
                 else:
                     self.hd.log.warn(f"Unsupported analog channel config {config_type}.")
 

@@ -258,6 +258,12 @@ class AWGPulseBlockHandler():
                     # Min separation is thus 3+2+2 = 7, we ~double it to get 16.
                     elif (p2.t0 - (p1.t0 + p1.dur)) <= 16 / DIG_SAMP_RATE:
                         
+                        # Don't merge if different settings
+                        if (p1._mod != p2._mod or 
+                            p1._mod_freq != p2._mod_freq or 
+                            p1._mod_ph != p2._mod_ph):
+                            continue
+
                         # Merge and delete the constituents
                         if type(p1) == PCombined:
                             pulse_list.append(p1.merge(p2))

@@ -500,6 +500,13 @@ class AWGModule():
 
                 elif config_type == "mod_ph":
                     self.hd.setd(f'sines/{ch_num}/phaseshift', config_val)
+
+                elif config_type == "amp_iq":
+                    self.hd.setd(f'sines/{ch_num}/amplitudes/{ch_num%2}', config_val)
+
+                elif config_type == "dc_iq":
+                    self.hd.setd(f'sigouts/{ch_num}/offset', config_val)
+
                 else:
                     self.hd.log.warn(f"Unsupported analog channel config {config_type}.")
 

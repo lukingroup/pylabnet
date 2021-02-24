@@ -122,12 +122,12 @@ class PulseblockConstructor():
                 arg_dict_q["mod_freq"] = if_freq
 
                 # Relative phase
-                arg_dict_i["mod_ph"] = arg_dict["mod_ph"] + phase_opt
+                arg_dict_i["mod_ph"] = arg_dict["mod_ph"] + phase_opt[0]
 
                 # The amplitude is the amplitude of the Sin genarator and is 
                 # indepenent of ["amp"], the signal amplitude.
-                arg_dict_i["iq_params"] = {"amp_iq": amp_i_opt, "dc_iq": dc_i_opt}
-                arg_dict_q["iq_params"] = {"amp_iq": amp_q_opt, "dc_iq": dc_q_opt}
+                arg_dict_i["iq_params"] = {"amp_iq": amp_i_opt[0], "dc_iq": dc_i_opt[0]}
+                arg_dict_q["iq_params"] = {"amp_iq": amp_q_opt[0], "dc_iq": dc_q_opt[0]}
 
                 arg_dict_list = [arg_dict_i, arg_dict_q]
 

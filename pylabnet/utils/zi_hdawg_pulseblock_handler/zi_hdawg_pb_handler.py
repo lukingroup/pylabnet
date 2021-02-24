@@ -220,9 +220,9 @@ class AWGPulseBlockHandler():
         waveforms = []
         setup_instr = ""
 
-        if len(self.pb.p_dict.keys()) > 2: 
-            self.log.error("Pulsemaster is currently only designed to handle 2 analog channels.")
-            return
+        # if len(self.pb.p_dict.keys()) > 2: 
+        #     self.log.error("Pulsemaster is currently only designed to handle 2 analog channels.")
+        #     return
 
         analog_pulse_dict = {ch:pulse_list for (ch, pulse_list) in 
                         self.pb.p_dict.items() if ch.is_analog}
@@ -325,12 +325,22 @@ class AWGPulseBlockHandler():
             # DC offset of output : for IQ mixing
 
             pulse = pulse_list[0]
-            mod, mod_freq, mod_ph = pulse._mod, pulse._mod_freq, pulse._mod_ph
+            self.setup_config_dict[ch.name] = {}
 
-            self.setup_config_dict[ch.name] = { "mod": mod, 
-                                                "mod_freq": mod_freq, 
-                                                "mod_ph": mod_ph}
+            if pulse._mod:
+                mod, mod_freq, mod_ph = pulse._mod, pulse._mod_freq, pulse._mod_ph
+
+                self.setup_config_dict[ch.name].update({ "mod": mod, 
+                                                    "mod_freq": mod_freq, 
+                                                    "mod_ph": mod_ph})
+
+            if pulse.iq:
+                amp_iq, dc_iq = pulse.iq_params["amp_iq"], pulse.iq_params["dc_iq"]
+
+                self.setup_config_dict[ch.name].update({ "amp_iq": amp_iq, 
+                                                    "dc_iq": dc_iq})
                 
+            self.log.error(self.setup_config_dict[ch.name])
         #### 3. Handle synchronization of pulses across channel ####
         # Forces pulses that overlap across channels to have the same start and 
         # end time by padding with zeros; they will be played at the same time 

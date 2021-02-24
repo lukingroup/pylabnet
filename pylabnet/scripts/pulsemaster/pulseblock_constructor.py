@@ -1,10 +1,11 @@
 from simpleeval import simple_eval, NameNotDefined
 from datetime import datetime
 import uuid
-
+import copy
 
 import pylabnet.utils.pulseblock.pulse as po
 import pylabnet.utils.pulseblock.pulse_block as pb
+from pylabnet.utils.iq_upconversion.iq_calibration import IQ_Calibration
 
 
 class PulseblockConstructor():
@@ -83,6 +84,7 @@ class PulseblockConstructor():
             self.append_value_to_dict(var_dict, "freq", arg_dict)
             self.append_value_to_dict(var_dict, "ph", arg_dict)
             self.append_value_to_dict(var_dict, "stdev", arg_dict, fn=lambda x: 1e-6*x)
+            self.append_value_to_dict(var_dict, "iq", arg_dict)
             self.append_value_to_dict(var_dict, "mod", arg_dict)
             self.append_value_to_dict(var_dict, "mod_freq", arg_dict)
             self.append_value_to_dict(var_dict, "mod_ph", arg_dict)
@@ -94,45 +96,83 @@ class PulseblockConstructor():
                 "PConst" : po.PConst
             }
 
-            # Construct single pulse.
-            if pb_spec.pulsetype in supported_pulses:
-                pulse = supported_pulses[pb_spec.pulsetype](**arg_dict)
-            
+            # Handle IQ mixing case
+            if "iq" in arg_dict and arg_dict["iq"]:
+                iq_calibration = IQ_Calibration()
+
+                # C:\\Users\\Yogi\\pylabnet\\pylabnet\\utils\\iq_upconversion\\Results\\01_28_2021_cal_w_GD.csv
+                iq_calibration.load_calibration("D:\\Qi\\Documents\\Research\\Codes\\pylabnet\\pylabnet\\utils\\iq_upconversion\\Results\\01_28_2021_cal_w_GD.csv")
+                # Set arbitrarily so that neither channel will overflow 1
+                iq_calibration.IF_volt = 0.8
+
+                (if_freq, lo_freq, phase_opt, 
+                amp_i_opt, amp_q_opt, 
+                dc_i_opt, dc_q_opt) = iq_calibration.get_optimal_hdawg_and_LO_values(arg_dict["mod_freq"])
+
+                # Store the optimal IQ parameters as 2 separate dictionaries
+                arg_dict_i = copy.deepcopy(arg_dict)
+                arg_dict_q = copy.deepcopy(arg_dict)
+
+                # Modify the channel names
+                arg_dict_i["ch"] = arg_dict["ch"] + "_i"
+                arg_dict_q["ch"] = arg_dict["ch"] + "_q"
+                
+                # Modulation frequency changed to IF
+                arg_dict_i["mod_freq"] = if_freq
+                arg_dict_q["mod_freq"] = if_freq
+
+                # Relative phase
+                arg_dict_i["mod_ph"] = arg_dict["mod_ph"] + phase_opt
+
+                # The amplitude is the amplitude of the Sin genarator and is 
+                # indepenent of ["amp"], the signal amplitude.
+                arg_dict_i["iq_params"] = {"amp_iq": amp_i_opt, "dc_iq": dc_i_opt}
+                arg_dict_q["iq_params"] = {"amp_iq": amp_q_opt, "dc_iq": dc_q_opt}
+
+                arg_dict_list = [arg_dict_i, arg_dict_q]
+
             else:
-                pulse = None
-                self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")
+                arg_dict_list = [arg_dict]
 
 
-            # Insert pulse to correct position in pulseblock.
-            if pb_spec.tref == "Absolute":
-                pb_dur = pulseblock.dur
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=-pb_dur+offset
-                )
+            # Construct a pulse and add it to the pulseblock
+            # The iteration over arg_dict takes care of the IQ mixing case
+            for arg_dict in arg_dict_list:
 
-            elif pb_spec.tref == "After Last Pulse":
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=offset
-                )
-
-            elif pb_spec.tref == "With Last Pulse":
-
-                # Retrieve previous pulseblock:
-                if i != 0:
-                    previous_pb_spec = self.pulse_specifiers[i-1]
+                # Construct single pulse.
+                if pb_spec.pulsetype in supported_pulses:
+                    pulse = supported_pulses[pb_spec.pulsetype](**arg_dict)
                 else:
-                    raise ValueError(
-                       "Cannot chose timing reference 'With Last Pulse' for first pulse in pulse-sequence."
-                    )
+                    pulse = None
+                    self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")
 
-                # Retrieve duration of previous pulseblock.
-                prev_dur = self.resolve_value(previous_pb_spec.dur) * 1e-6
-                pulseblock.append_po_as_pb(
-                    p_obj=pulse,
-                    offset=-prev_dur + offset
-                )
+                # Insert pulse to correct position in pulseblock.
+                if pb_spec.tref == "Absolute":
+                    pb_dur = pulseblock.dur
+                    pulseblock.append_po_as_pb(
+                        p_obj=pulse,
+                        offset=-pb_dur+offset
+                    )
+                elif pb_spec.tref == "After Last Pulse":
+                    pulseblock.append_po_as_pb(
+                        p_obj=pulse,
+                        offset=offset
+                    )
+                elif pb_spec.tref == "With Last Pulse":
+                    # Retrieve previous pulseblock:
+                    if i != 0:
+                        previous_pb_spec = self.pulse_specifiers[i-1]
+                    else:
+                        raise ValueError(
+                        "Cannot chose timing reference 'With Last Pulse' for first pulse in pulse-sequence."
+                        )
+
+                    # Retrieve duration of previous pulseblock.
+                    prev_dur = self.resolve_value(previous_pb_spec.dur) * 1e-6
+                    pulseblock.append_po_as_pb(
+                        p_obj=pulse,
+                        offset=-prev_dur + offset
+                    )
 
         self.pulseblock =  pulseblock
 

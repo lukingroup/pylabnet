@@ -546,7 +546,7 @@ class PulseMaster:
                     t1, t2 = new_t1, new_t2
 
                     # Draw the current pulse at high grid density
-                    t_ar = np.linspace(t1, t2, 5000)
+                    t_ar = np.linspace(t1, t2, 2000)
                     x_ar.extend(t_ar)
                     y_ar.extend(p_item.get_value(t_ar))
 
@@ -1241,6 +1241,12 @@ class PulseMaster:
         data_validated, pulsedict = self.clean_and_validate_pulsedict(pulsedict_data)
         if not data_validated:
             return False, None
+        
+        # IQ setting must be ticked with Modulation setting
+        if ("iq" in pulsedict and pulsedict["iq"] and 
+            "mod" in pulsedict and not pulsedict["mod"]):
+            self.showerror("IQ setting cannot be set without modulation!")
+            return False, None
 
         channel = self.pulse_selector_channelselection.text()
 
@@ -1255,6 +1261,17 @@ class PulseMaster:
         if not all(name in self.ch_assignment_dict.keys() for name in pulse_ch_list):
             self.showerror("Please provide valid channel name.")
             return False, None
+
+        # Check that the specified channels for IQ are not in the same core
+        if len(pulse_ch_list) > 1:
+            # Subtract 1 to make 0-indexed 
+            ch_num_list = [(self.ch_assignment_dict[ch][1] - 1) for ch in pulse_ch_list]
+            
+            # Divide by 2 to see if same core (e.g. channels 0, 1 // 2 = 0)
+            ch_num_list = [ch//2 for ch in ch_num_list]
+            if len(ch_num_list) != len(set(ch_num_list)):
+                self.showerror("Channels for the IQ mixing must be in different cores.")
+                return False, None
 
         # Add channel to dict
         pulsedict['channel'] = channel

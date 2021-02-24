@@ -1233,11 +1233,6 @@ class PulseMaster:
         integrity check and return a check flag as well as a dictioanry.
         """
 
-        channel = self.pulse_selector_channelselection.text()
-        if channel not in self.ch_assignment_dict.keys():
-            self.showerror("Please provide valid channel name.")
-            return False, None
-
         # Get data from fields
         pulsetype_dict = self._current_pulsetype_dict()
         pulsedict_data = self.return_pulsedict(pulsetype_dict)
@@ -1247,15 +1242,30 @@ class PulseMaster:
         if not data_validated:
             return False, None
 
+        channel = self.pulse_selector_channelselection.text()
+
+        # Create a list of channel names that this pulse uses
+        # Would be a 1-element list for a normal pulse and 2-element for IQ pulse
+        if "iq" in pulsedict and pulsedict["iq"]:
+            pulse_ch_list = [channel+"_i", channel+"_q"]
+        else:
+            pulse_ch_list = [channel]
+        
+        # Check if all channels that are required are specified 
+        if not all(name in self.ch_assignment_dict.keys() for name in pulse_ch_list):
+            self.showerror("Please provide valid channel name.")
+            return False, None
+
         # Add channel to dict
         pulsedict['channel'] = channel
 
-        # Check that the pulse type matches the channel type
-        channel_is_analog = (self.ch_assignment_dict[channel][0] == "analog")
-        if channel_is_analog != eval(pulsetype_dict["is_analog"]):
-            self.showerror(f"Type of pulse {pulsetype_dict['name']} " 
-                            f"does not match channel {channel}.")
-            return False, None
+        # Check that the pulse type matches the channel type        
+        for ch in pulse_ch_list:
+            channel_is_analog = (self.ch_assignment_dict[ch][0] == "analog")
+            if channel_is_analog != eval(pulsetype_dict["is_analog"]):
+                self.showerror(f"Type of pulse {pulsetype_dict['name']} " 
+                                f"does not match channel {ch}.")
+                return False, None
 
         return True, pulsedict
 

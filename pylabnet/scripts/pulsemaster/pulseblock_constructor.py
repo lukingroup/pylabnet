@@ -83,7 +83,7 @@ class PulseblockConstructor():
             self.append_value_to_dict(var_dict, "freq", arg_dict)
             self.append_value_to_dict(var_dict, "ph", arg_dict)
             self.append_value_to_dict(var_dict, "stdev", arg_dict, fn=lambda x: 1e-6*x)
-            self.append_value_to_dict(var_dict, "modulation", arg_dict, new_key="mod")
+            self.append_value_to_dict(var_dict, "mod", arg_dict)
             self.append_value_to_dict(var_dict, "mod_freq", arg_dict)
             self.append_value_to_dict(var_dict, "mod_ph", arg_dict)
 

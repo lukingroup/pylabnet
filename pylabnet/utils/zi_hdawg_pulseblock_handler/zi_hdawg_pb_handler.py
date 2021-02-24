@@ -91,16 +91,16 @@ class AWGPulseBlockHandler():
         for trace_name in keys_to_assign:
 
             if trace_name.is_analog:
-                ch_num = input(f"Please assign an analog channel (0-7) to pulse trace '{trace_name.name}':")
+                ch_num = input(f"Please assign an analog channel (1-8) to pulse trace '{trace_name.name}':")
 
                 # Check if user has entered a int.
-                wrong_int_msg = "Please enter an integer from 0-7."
+                wrong_int_msg = "Please enter an integer from 1-8."
                 try:
                     ch_num = int(ch_num)
                 except ValueError:
                     self.log.error(wrong_int_msg)
 
-                if ch_num not in range(8):
+                if ch_num not in range(1, 9):
                     self.log.error(wrong_int_msg)
 
             else:
@@ -478,8 +478,6 @@ class AWGPulseBlockHandler():
                         waveforms[ana_index][2] != waveforms[ana_index_search][2]):
                         break
                 
-                self.log.error((ana_index, ana_index_search))
-                
                 # Store waveform CSV name and channel name for the waveforms
                 # that start at the same time.
                 combined_commands.append((
@@ -520,11 +518,11 @@ class AWGPulseBlockHandler():
             if not all(ch_type == "analog" for ch_type in ch_types):
                 self.log.warn(f"Channel expected to get analog but got an unexpected type.")
 
-            # Add 1 to ch_num since we specified in 0-indexed but playwave 
-            # channels are 1-indexed. Sort by ch number.
+            # Put the waveforms from the earlier channels first.
+            # The self.log.hds are all 1-indexed here.
             for ch_num, waveform_csv_name in sorted(zip(ch_nums, waveform_csv_names)):
                 if wave_str != "": wave_str += ", " 
-                wave_str += f"{ch_num + 1}, {waveform_csv_name}"
+                wave_str += f"{ch_num}, {waveform_csv_name}"
            
             return playwave_cmd.format(wave_str)
 

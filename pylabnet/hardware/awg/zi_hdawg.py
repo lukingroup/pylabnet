@@ -462,7 +462,8 @@ class AWGModule():
             current_config = new_config
         
     def setup_analog(self, setup_configs, assignment_dict):
-        """ TODO YQ
+        """ Set up the AWG operation parameters that are required for the 
+        analog waveform playback.
 
         :setup_configs: (dict) keys are channel names, values are a dict of 
             parameters to be set up for that channel. E.g.
@@ -474,6 +475,9 @@ class AWGModule():
 
         for ch, config_dict in setup_configs.items():
             ch_type, ch_num = assignment_dict[ch]
+
+            # Convert from specified 1-indexed to 0-indexed in the AWG code
+            ch_num -= 1
 
             if ch_type != "analog":
                 self.hd.log.warn(f"Attempted to setup a digital channel {ch} with analog functions.")

@@ -4,6 +4,7 @@ import sys
 import socket
 import os
 import time
+from contextlib import closing
 import subprocess
 import platform
 from io import StringIO
@@ -462,8 +463,32 @@ class Controller:
                     f'on host: {server_data["ip"]}, port: {server_data["port"]}'
                 )
         else:
-            self.gui_logger.info(self.log_server._server.clients)
-            self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
+
+            # Cannot connect to the server and close, must remove. 
+            # WARNING: might result in dangling threads
+            if self.port_list[client_to_stop] in self.log_server._server.clients:
+                c = self.port_list[client_to_stop]
+                c.close()
+                closing(c)
+                self.log_server._server.clients.discard(c)
+                self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                del self.port_list[client_to_stop]
+                del self.client_list[client_to_stop]
+                del self.log_service.client_data[client_to_stop]
+                del self.client_data[client_to_stop]
+                self.gui_logger.info(f'Client disconnected: {client_to_stop}')
+            
+            # If we can't find the client connected to the server, just remove it 
+            else:
+                self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
+                try:
+                    self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                    del self.port_list[client_to_stop]
+                    del self.client_list[client_to_stop]
+                    del self.log_service.client_data[client_to_stop]
+                    del self.client_data[client_to_stop]
+                except:
+                    pass
 
     def _device_clicked(self, index):
         """ Configures behavior for device double click
@@ -939,4 +964,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main()

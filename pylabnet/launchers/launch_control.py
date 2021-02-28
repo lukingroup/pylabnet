@@ -211,6 +211,9 @@ class Controller:
                 host=get_ip()
             )
             my_port = self.gui_port
+            self.main_window.gui_label.setText(
+                f'GUI Port: {my_port}'
+            )
         elif self.proxy:
             self.gui_server, my_port = create_server(
                 self.gui_service,
@@ -228,6 +231,9 @@ class Controller:
                     port=self.gui_port
                 )
                 my_port = self.gui_port
+                self.main_window.gui_label.setText(
+                    f'GUI Port: {my_port}'
+                )
             except ConnectionRefusedError:
                 self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
                 raise
@@ -456,6 +462,7 @@ class Controller:
                     f'on host: {server_data["ip"]}, port: {server_data["port"]}'
                 )
         else:
+            self.gui_logger.info(self.log_server._server.clients)
             self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
 
     def _device_clicked(self, index):

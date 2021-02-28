@@ -52,6 +52,9 @@ class Controller(MultiChSweep1D):
         self.data_bwd = []
         self.avg_fwd = []
         self.avg_bwd = []
+        self.fit_popup = None
+        self.p0_fwd = None
+        self.p0_bwd = None
         self.x_fwd = self._generate_x_axis()
         self.x_bwd = self._generate_x_axis(backward=True)
         self.fast = fast
@@ -275,7 +278,14 @@ class Controller(MultiChSweep1D):
 
         # If box is newly checked, instantiate popup
         if status:
-            self.fit_popup = FitPopup(ui='fit_popup', data = self.avg_fwd, log=self.log)
+            self.fit_popup = FitPopup(ui='fit_popup',
+                                      x_fwd = self.x_fwd,
+                                      data_fwd = self.avg_fwd,
+                                      x_bwd = self.x_bwd,
+                                      data_bwd = self.avg_bwd,
+                                      p0_fwd = None,
+                                      p0_bwd = None,
+                                      log=self.log)
             self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
             '''
             if len(self.avg_fwd) != 0:
@@ -303,6 +313,8 @@ class Controller(MultiChSweep1D):
             self.widgets['legend'][1].clear()
             self.widgets['curve_avg'][0].clear()
             self.widgets['curve_avg'][1].clear()
+            self.widgets['fit_avg'][0].clear()
+            self.widgets['fit_avg'][1].clear()
             self.data_fwd = []
             self.data_bwd = []
             self.avg_fwd = []
@@ -312,6 +324,7 @@ class Controller(MultiChSweep1D):
 
         self.widgets['curve'] = []
         self.widgets['curve_avg'] = []
+        self.widgets['fit_avg'] = []
 
         for index, graph in enumerate(self.widgets['graph']):
 
@@ -331,6 +344,15 @@ class Controller(MultiChSweep1D):
                 self.widgets['legend'][index],
                 self.widgets['curve_avg'][index],
                 f'{"Fwd" if index==0 else "Bwd"} avg'
+            )
+
+            self.widgets['fit_avg'].append(graph.plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+            ))
+            add_to_legend(
+                self.widgets['legend'][index],
+                self.widgets['fit_avg'][index],
+                f'{"Fwd" if index==0 else "Bwd"} fit avg'
             )
 
         for hmap in self.widgets['hmap']:
@@ -437,9 +459,25 @@ class Controller(MultiChSweep1D):
 
     def _update_fits(self):
         """ Updates fits """
-
-        # TODO: Wenjie implements
-        pass
+        if len(self.avg_fwd) != 0 and self.fit_popup is not None:
+            self.fit_popup.data_fwd = self.avg_fwd
+            self.fit_popup.data_bwd = self.avg_bwd
+            if self.p0_fwd is not None and self.p0_bwd is not None:
+                self.fit_popup.p0_fwd = self.p0_fwd
+                self.fit_popup.p0_bwd = self.p0_bwd
+            method = getattr(self.fit_popup, self.fit_popup.fit_method)
+            self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = method()
+            self.widgets['fit_avg'][0].setData(
+                    self.x_fwd,
+                    self.fit_fwd
+                )
+            self.widgets['fit_avg'][1].setData(
+                    self.x_bwd,
+                    self.fit_bwd
+                )
+            #print(self.avg_fwd)
+        else:
+            pass
 
     def _update_autosave(self):
         """ Updates autosave status """

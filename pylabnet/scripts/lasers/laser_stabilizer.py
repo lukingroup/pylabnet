@@ -17,7 +17,7 @@ import pyqtgraph as pg
 
 class LaserStabilizer:
     """A class for stabilizing the laser power given a DAQ input, a power control output, and a setpoint"""
-    def __init__(self, config, ao_client=None, ai_client=None):
+    def __init__(self, config, ao_client=None, ai_client=None, hd=None, check_aom=False, logger=None):
         """Instantiates LaserStabilizer script object for stabilizing the laser
              :param config: (str) name of config file """
 
@@ -31,9 +31,12 @@ class LaserStabilizer:
 
         self._ao_client = ao_client
         self._ai_client = ai_client
+        self._hd = hd
+        self.log = logger
 
 
         self.config = config
+        self.check_aom = check_aom
         self._load_config_file()
 
         #Now initialize control/output voltage to 0, and set up label
@@ -89,6 +92,21 @@ class LaserStabilizer:
 
         self.numReadsPerCycle = self.config["reads_per_cycle"] #Number of the reads on the DAQ card that are averaged over for an update cycle.
 
+    def check_aom_up(self):
+        """Checks if a given HDAWG DIO bit attached to an AOM switch is high"""
+
+        dio_config = load_config('dio_assignment_global')
+        DIO_bit = dio_config[self.config["aom_staticline"]]
+        current_config = self._hd.geti('dios/0/output')
+        DIO_bit_bitshifted =  (0b1 << DIO_bit) # for bit 3: 000...0001000
+
+        DIO_bitup = current_config & DIO_bit_bitshifted
+
+        if DIO_bitup > 0:
+            return True
+        else:
+            return False
+
     def run(self):
         """Main function to update both teh feedback loop as well as the gui"""
 
@@ -96,8 +114,16 @@ class LaserStabilizer:
 
         if self._is_stabilizing:
             #If we are locking the power, then need to update teh feedback loop and change the output label
-            self._update_feedback()
-            self._update_output_voltage_label()
+
+            # Check if DIO bit is high
+            if self.check_aom:
+                aom_up = self.check_aom_up()
+                if aom_up:
+                    self._update_feedback()
+                    self._update_output_voltage_label()
+            else:
+                self._update_feedback()
+                self._update_output_voltage_label()
 
         #We always need to update the plots as well and power label
 
@@ -383,11 +409,29 @@ def launch(**kwargs):
 
     )
 
+    if config['check_aom'] == "True":
+        check_aom= True
+    else:
+        check_aom = False
+
+
+    hd = find_client(
+        clients=clients,
+        settings=config,
+        client_type='zi_hdawg',
+        client_config='g12_hdawg',
+        logger=logger
+
+    )
+
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(
         config=config,
         ao_client=ao_client,
-        ai_client=ai_client
+        ai_client=ai_client,
+        hd=hd,
+        check_aom = check_aom,
+        logger=logger
     )
 
     update_service = Service()

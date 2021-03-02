@@ -233,7 +233,7 @@ class Controller:
                 raise
         self.gui_server.start()
         self.gui_logger.update_data(data=dict(port=my_port))
-        
+
         if self.proxy:
             # Connect to the GUI server
             try:
@@ -423,7 +423,7 @@ class Controller:
 
         self.main_window.configure_widgets()
         self.main_window.update_widgets()
-        
+
         #Check for disconnection events
         self.check_disconnection(text)
 
@@ -435,7 +435,7 @@ class Controller:
 
         if self.disconnection:
             self.disconnect()
-    
+
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
@@ -738,7 +738,7 @@ class Controller:
             self.kill_servers()
 
         self.main_window.close()
-    
+
     def start_stop_logging(self, master_log=False):
         """ Starts or stops logging to file depending on situation
 
@@ -896,7 +896,7 @@ def run(log_controller):
 
     # Refresh thread
     update_thread = QtCore.QThread()
-    
+
     if log_controller.proxy:
 
         # Set up GUI
@@ -911,7 +911,7 @@ def run(log_controller):
         # Redirect sys.stdout to queue
         queue = Queue()
         sys.stdout = WriteStream(queue)
-        
+
         # Instantiate GUI
         log_controller.start_logger()
         log_controller.initialize_gui()

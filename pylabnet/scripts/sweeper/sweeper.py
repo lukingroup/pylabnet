@@ -577,3 +577,5 @@ class MultiChSweep1D(Sweep1D):
                             +self.iplot_bwd[index]._fig.data[0].y/reps_done),
                         ind=1
                     )
+
+

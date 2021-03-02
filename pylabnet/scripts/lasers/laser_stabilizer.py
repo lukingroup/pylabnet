@@ -3,7 +3,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_ip, unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
+    load_script_config, load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
@@ -17,7 +17,7 @@ import pyqtgraph as pg
 
 class LaserStabilizer:
     """A class for stabilizing the laser power given a DAQ input, a power control output, and a setpoint"""
-    def __init__(self, config='toptica_laser_stabilization', ao_client=None, ai_client=None):
+    def __init__(self, config, ao_client=None, ai_client=None):
         """Instantiates LaserStabilizer script object for stabilizing the laser
              :param config: (str) name of config file """
 
@@ -32,8 +32,9 @@ class LaserStabilizer:
         self._ao_client = ao_client
         self._ai_client = ai_client
 
-        self.widgets['config'].setText(config)
-        self._load_config_file(config)
+
+        self.config = config
+        self._load_config_file()
 
         #Now initialize control/output voltage to 0, and set up label
         self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
@@ -59,25 +60,8 @@ class LaserStabilizer:
         #Initially the program starts in the "unlocked" phase
         self._is_stabilizing = False
 
-    def _load_config_file(self, config):
-        """Loads the config file"""
-        #Now load the config file
-        self.config = load_config(config, logger=None)
-
-        #Instantiate links to power input (AI) and control output (AO) if the clients
-        #were not passed in directly. THis allows us to still run this off of main
-        #instead of a launcher if required.
-        if self._ai_client == None:
-            self._ai_client = nidaqmx_card_server.Client(
-                host=self.config["power_input_host"],
-                port=self.config["power_input_port"]
-            )
-        if self._ao_client == None:
-            self._ao_client = nidaqmx_card_server.Client(
-                host=self.config["ctrl_output_host"],
-                port=self.config["ctrl_output_port"]
-            )
-
+    def _load_config_file(self):
+        """Read values from config file."""
 
         self._ai_channel = self.config["power_input_channel"]
         self._hwc_ai_channel = self.config['hardware_ctrl_input_channel']
@@ -374,16 +358,34 @@ def main():
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    config = load_config(kwargs['config'], logger=logger)
 
+    logger = kwargs['logger']
+    clients = kwargs['clients']
 
-    ao_client = find_client(logger, clients, 'nidaqmx')
-    ai_client = find_client(logger, clients, 'nidaqmx_ai')
+    config = load_script_config(script='laser_stabilizer',
+                                config=kwargs['config'],
+                                logger=logger)
+
+    ao_client = find_client(
+        clients=clients,
+        settings=config,
+        client_type='nidaqmx',
+        client_config='daq_ao',
+        logger=logger
+    )
+
+    ai_client = find_client(
+        clients=clients,
+        settings=config,
+        client_type='nidaqmx',
+        client_config='daq_ai',
+        logger=logger
+
+    )
 
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(
-        config=kwargs['config'],
+        config=config,
         ao_client=ao_client,
         ai_client=ai_client
     )

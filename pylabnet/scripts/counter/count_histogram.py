@@ -67,6 +67,14 @@ class TimeTrace:
             )
 
         else:
+
+            self.click_ch = '7+8'
+
+            self.ctr.create_combined_channel(
+                channel_name=self.click_ch,
+                channel_list=[7,8]
+            )
+
             self.ctr.start_histogram(
                 name=self.hist,
                 start_ch=self.start_ch,

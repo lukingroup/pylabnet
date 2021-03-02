@@ -31,7 +31,7 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False):
+    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter

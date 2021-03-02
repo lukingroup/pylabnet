@@ -481,7 +481,7 @@ class AWGModule():
 
             if ch_type != "analog":
                 self.hd.log.warn(f"Attempted to setup a digital channel {ch} with analog functions.")
-            
+
             for config_type, config_val in config_dict.items():
 
                 if config_type == "mod":
@@ -509,6 +509,9 @@ class AWGModule():
 
                 else:
                     self.hd.log.warn(f"Unsupported analog channel config {config_type}.")
+
+            # Enable output
+            self.hd.enable_output(ch_num)
 
     def compile_upload_sequence(self, sequence):
         """ Compile and upload AWG sequence to AWG Module.

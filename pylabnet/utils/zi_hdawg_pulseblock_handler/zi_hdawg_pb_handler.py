@@ -340,7 +340,6 @@ class AWGPulseBlockHandler():
                 self.setup_config_dict[ch.name].update({ "amp_iq": amp_iq, 
                                                     "dc_iq": dc_iq})
                 
-            self.log.error(self.setup_config_dict[ch.name])
         #### 3. Handle synchronization of pulses across channel ####
         # Forces pulses that overlap across channels to have the same start and 
         # end time by padding with zeros; they will be played at the same time 

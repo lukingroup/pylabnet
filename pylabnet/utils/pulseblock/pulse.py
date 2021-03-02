@@ -329,6 +329,7 @@ class PCombined(PulseBase):
         self._mod = pulselist[0]._mod
         self._mod_freq = pulselist[0]._mod_freq
         self._mod_ph = pulselist[0]._mod_ph
+        self.iq = pulselist[0].iq
 
         # Define an automatic default.
         self.auto_default = dflt

@@ -80,6 +80,7 @@ class PulseblockConstructor():
             arg_dict["ch"] = pb_spec.channel
             arg_dict["dur"] = self.resolve_value(pb_spec.dur) * 1e-6
 
+            self.append_value_to_dict(var_dict, "val", arg_dict)
             self.append_value_to_dict(var_dict, "amp", arg_dict)
             self.append_value_to_dict(var_dict, "freq", arg_dict)
             self.append_value_to_dict(var_dict, "ph", arg_dict)

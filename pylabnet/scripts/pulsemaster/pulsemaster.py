@@ -790,6 +790,16 @@ class PulseMaster:
         elif field_var == 'tref':
             pulse_specifier.tref = value
         else:
+            # If we are modifying IQ to be on but mod is not on, then give an error
+            if field_var == 'iq' and value and not pulse_specifier.pulsevar_dict["mod"]:
+                pulse_specifier_field.setChecked(False)
+                self.showerror("IQ must be done with modulation on!")
+                return
+            # If we are turning off mod but IQ is on, then give an error
+            if field_var == 'mod' and not value and pulse_specifier.pulsevar_dict["iq"]:
+                pulse_specifier_field.setChecked(True)
+                self.showerror("IQ must be done with modulation on!")
+                return
             pulse_specifier.pulsevar_dict[field_var] = value
 
         self.plot_current_pulseblock()
@@ -852,7 +862,7 @@ class PulseMaster:
 
             qform_layout.addRow(field_label, field_input)
 
-            # Update the value of the fields being displayed, andd connect them
+            # Update the value of the fields being displayed, and connect them
             # to the correct update function.
             if field['var'] == 'tref':
                 field_input.setCurrentIndex(field_input.findText(value))
@@ -864,7 +874,7 @@ class PulseMaster:
 
             elif type(field_input) is QCheckBox:
                 field_input.setChecked(bool(value))
-                field_input.stateChanged.connect(pulse_mod_function)
+                field_input.clicked.connect(pulse_mod_function)
 
         delete_button = QPushButton("Delete Pulse")
         delete_button.setStyleSheet("background-color : #6a040f")

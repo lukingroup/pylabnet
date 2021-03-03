@@ -70,9 +70,12 @@ class Placeholder(float):
     def round_int(self):
         return Placeholder(self.name, int(np.round(self)))
     def int_str(self):
-        """ Reprensetation of the object that can be evaluated once the name has
+        """ Representation of the object that can be evaluated once the name has
         a specified value. """
         return f"{self.name} + {int(self)}"
+    def var_str(self):
+        """ Represetation of the object ignoring its value offset. """
+        return self.name
 
 
 # Pulse classes ---------------------------------------------------------------

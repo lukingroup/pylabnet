@@ -554,6 +554,32 @@ class AWGPulseBlockHandler():
 
         else:
             self.log.warn(f"Unknown command type {command[0]} found.")
+    
+    def setup_variable_settings(self, sequence):
+        """ Add commands to dynamically change the AWG settings for settings that
+        are set to be variables that are defined in the AWG code. """
+        
+        for ch, ch_config_dict in self.setup_config_dict.items():
+            ch_type, ch_num = self.assignment_dict[ch]
+            # Convert from specified 1-indexed to 0-indexed in the AWG code
+            ch_num -= 1
+
+            for config_type, config_val in ch_config_dict.items():
+                # Ignore non-placeholders as those were setup before.
+                if type(config_val) != Placeholder:
+                    continue
+                
+                # Convert to the string reprensenting the variable
+                config_val = config_val.var_str()
+            
+                if config_type == "mod_freq":
+                    sequence += f"setDouble('oscs/{ch_num}/freq', {config_val});\n"
+                elif config_type == "mod_ph":
+                    sequence += f"setDouble('sines/{ch_num}/phaseshift', {config_val});\n"
+                else:
+                    self.hd.log.warn(f"Unsupported analog channel config {config_type}.")
+
+        return sequence
 
 
     def construct_awg_sequence(self, commands, waittimes, wait_offset=SETDIO_OFFSET):
@@ -572,6 +598,8 @@ class AWGPulseBlockHandler():
         mask = None
         sequence = f"// Start of Pulseblock {self.pb.name}\n"
         wait_cmd = "wait({});\n"
+
+        sequence = self.setup_variable_settings(sequence)
 
         if self.exp_config_dict["preserve_bits"]:
 

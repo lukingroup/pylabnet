@@ -149,12 +149,12 @@ class PSin(PulseBase):
 
         super().__init__(ch=ch, dur=dur, t0=t0)
 
-        self._amp = amp
-        self._freq = freq
-        self._ph = ph
-        self._mod = mod
-        self._mod_freq = mod_freq
-        self._mod_ph = mod_ph
+        self.amp = amp
+        self.freq = freq
+        self.ph = ph
+        self.mod = mod
+        self.mod_freq = mod_freq
+        self.mod_ph = mod_ph
         self.is_analog = True
         self.iq = iq
         self.iq_params = iq_params
@@ -164,10 +164,10 @@ class PSin(PulseBase):
 
     def __str__(self):
         ret_str = 'Sin(amp={:.2e} freq={:.2e} ph={:.2f}' \
-                  ''.format(self._amp, self._freq, self._ph)
+                  ''.format(self.amp, self.freq, self.ph)
 
-        ret_str = ret_str +  f', mod_freq={self._mod_freq:.2e}, ' \
-                             f'mod_ph={self._mod_ph:.2f})' if self._mod else ')'
+        ret_str = ret_str +  f', mod_freq={self.mod_freq:.2e}, ' \
+                             f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
         return ret_str
 
     def get_value(self, t_ar, mod=None):
@@ -179,17 +179,17 @@ class PSin(PulseBase):
         """
 
         t_ar = np.array(t_ar, dtype=np.float32)
-        ret_ar = self._amp * np.sin(
-            2*np.pi*self._freq*t_ar + np.pi*self._ph/180
+        ret_ar = self.amp * np.sin(
+            2*np.pi*self.freq*t_ar + np.pi*self.ph/180
         )
 
         # Use own value of mod parameter if not provided
         if mod is None:
-            mod = self._mod
+            mod = self.mod
 
         # Add sin modulation
         if mod:
-            ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
+            ret_ar *= np.sin(2*np.pi*self.mod_freq*t_ar + np.pi*self.mod_ph/180)
 
         return ret_ar
 
@@ -216,11 +216,11 @@ class PGaussian(PulseBase):
 
         super().__init__(ch=ch, dur=dur, t0=t0)
 
-        self._amp = amp
-        self._stdev = stdev
-        self._mod = mod
-        self._mod_freq = mod_freq
-        self._mod_ph = mod_ph
+        self.amp = amp
+        self.stdev = stdev
+        self.mod = mod
+        self.mod_freq = mod_freq
+        self.mod_ph = mod_ph
         self.is_analog = True
         self.iq = iq
         self.iq_params = iq_params
@@ -229,11 +229,11 @@ class PGaussian(PulseBase):
         self.auto_default = DConst(val=0.0)
 
     def __str__(self):
-        ret_str = f'Gaussian(amp={self._amp:.2e}, ' \
-                  f'stdev={self._stdev:.2f}, mod={self._mod}'
+        ret_str = f'Gaussian(amp={self.amp:.2e}, ' \
+                  f'stdev={self.stdev:.2f}, mod={self.mod}'
 
-        ret_str = ret_str +  f', mod_freq={self._mod_freq:.2e}, ' \
-                             f'mod_ph={self._mod_ph:.2f})' if self._mod else ')'
+        ret_str = ret_str +  f', mod_freq={self.mod_freq:.2e}, ' \
+                             f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
 
         return ret_str
 
@@ -247,17 +247,24 @@ class PGaussian(PulseBase):
 
         t_ar = np.array(t_ar, dtype=np.float32)
 
+        _amp = 1 if type(self.amp) == Placeholder else self.amp
+        _stdev = 0.1e-6 if type(self.stdev) == Placeholder else self.stdev
+        _dur = 1e-6 if type(self.dur) == Placeholder else self.dur
+
         # Gaussian modulation about the pulse center
         t_mid = self.t0 + self.dur / 2
-        ret_ar = self._amp * np.exp(-0.5 * ((t_ar - t_mid) / self._stdev) ** 2)
+        ret_ar = _amp * np.exp(-0.5 * ((t_ar - t_mid) / _stdev) ** 2)
 
         # Use own value of mod parameter if not provided
         if mod is None:
-            mod = self._mod
+            mod = self.mod
         
         # Add sin modulation
         if mod:
-            ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
+            _mod_freq = 1e6 if type(self.mod_freq) == Placeholder else self.mod_freq
+            _mod_ph = 0 if type(self.mod_ph) == Placeholder else self.mod_ph
+
+            ret_ar *= np.sin(2*np.pi*_mod_freq*t_ar + np.pi*_mod_ph/180)
 
         return ret_ar
 
@@ -282,10 +289,10 @@ class PConst(PulseBase):
         """
 
         super().__init__(ch=ch, dur=dur, t0=t0)
-        self._val = val
-        self._mod = mod
-        self._mod_freq = mod_freq
-        self._mod_ph = mod_ph
+        self.val = val
+        self.mod = mod
+        self.mod_freq = mod_freq
+        self.mod_ph = mod_ph
         self.is_analog = True
         self.iq = iq
         self.iq_params = iq_params
@@ -294,10 +301,10 @@ class PConst(PulseBase):
         self.auto_default = DConst(val=0.0)
 
     def __str__(self):
-        ret_str = f'Const(val={self._val}'
+        ret_str = f'Const(val={self.val}'
 
-        ret_str =  ret_str + f', mod_freq={self._mod_freq:.2e}, ' \
-                             f'mod_ph={self._mod_ph:.2f})' if self._mod else ')'
+        ret_str =  ret_str + f', mod_freq={self.mod_freq:.2e}, ' \
+                             f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
         
         return ret_str
 
@@ -310,15 +317,20 @@ class PConst(PulseBase):
         """
 
         t_ar_len = len(t_ar)
-        ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
+        _val = 1 if type(self.val) == Placeholder else self.val
+
+        ret_ar = np.full(t_ar_len, _val, dtype=np.float32)
 
         # Use own value of mod parameter if not provided
         if mod is None:
-            mod = self._mod
+            mod = self.mod
 
         # Add sin modulation
         if mod:
-            ret_ar *= np.sin(2*np.pi*self._mod_freq*t_ar + np.pi*self._mod_ph/180)
+            _mod_freq = 1e6 if type(self.mod_freq) == Placeholder else self.mod_freq
+            _mod_ph = 0 if type(self.mod_ph) == Placeholder else self.mod_ph
+
+            ret_ar *= np.sin(2*np.pi*_mod_freq*t_ar + np.pi*_mod_ph/180)
 
         return ret_ar
 
@@ -357,17 +369,17 @@ class PCombined(PulseBase):
         self.pulselist = pulselist
         self.is_analog = True
 
-        if len(set(pulse._mod for pulse in pulselist)) > 1:
+        if len(set(pulse.mod for pulse in pulselist)) > 1:
             raise ValueError("More than 1 setting for modulation detected. Following the first pulse.")
-        if len(set(pulse._mod_freq for pulse in pulselist)) > 1:
+        if len(set(pulse.mod_freq for pulse in pulselist)) > 1:
             raise ValueError("More than 1 setting for modulation frequency detected. Following the first pulse.")
-        if len(set(pulse._mod_ph for pulse in pulselist)) > 1:
+        if len(set(pulse.mod_ph for pulse in pulselist)) > 1:
             raise ValueError("More than 1 setting for modulation phase detected. Following the first pulse.")
 
         # Assume that the first item in the list represents the entire combined pulse
-        self._mod = pulselist[0]._mod
-        self._mod_freq = pulselist[0]._mod_freq
-        self._mod_ph = pulselist[0]._mod_ph
+        self.mod = pulselist[0].mod
+        self.mod_freq = pulselist[0].mod_freq
+        self.mod_ph = pulselist[0].mod_ph
         self.iq = pulselist[0].iq
 
         # Define an automatic default.
@@ -404,7 +416,7 @@ class PCombined(PulseBase):
                     break
                 elif curr_pulse.t0 <= t < (curr_pulse.t0 + curr_pulse.dur):
                     # Temporarily overwrite the constituent pulses' modaulation state
-                    value = curr_pulse.get_value([t], self._mod)
+                    value = curr_pulse.get_value([t], self.mod)
                     break
                 #t >= (curr_pulse.t0 + curr_pulse.dur)
                 else: 
@@ -492,19 +504,19 @@ class DConst(DfltPulseBase):
         :param val: (numpy.float32) value of the constant
         """
 
-        self._val = val
+        self.val = val
 
     def __eq__(self, other):
         if not isinstance(other, DConst):
             return NotImplemented
 
-        if self._val == other._val:
+        if self.val == other.val:
             return True
         else:
             return False
 
     def __str__(self):
-        return 'Const(val={})'.format(self._val)
+        return 'Const(val={})'.format(self.val)
 
     def get_value(self, t_ar):
         """ Returns array of samples
@@ -514,6 +526,6 @@ class DConst(DfltPulseBase):
         """
 
         t_ar_len = len(t_ar)
-        ret_ar = np.full(t_ar_len, self._val, dtype=np.float32)
+        ret_ar = np.full(t_ar_len, self.val, dtype=np.float32)
 
         return ret_ar

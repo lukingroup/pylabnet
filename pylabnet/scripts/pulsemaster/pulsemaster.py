@@ -9,7 +9,7 @@ import functools
 
 from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, \
                             QFormLayout, QComboBox, QWidget, QTableWidgetItem, QVBoxLayout, \
-                            QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox
+                            QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox, QGridLayout
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
 from PyQt5.QtCore import QVariant
@@ -51,7 +51,7 @@ class PulseMaster:
 
         # Instanciate HD
         dev_id = self.config_dict['HDAWG_dev_id']
-        self.hd = Driver(dev_id, logger=self.log)   
+        self.hd = Driver(dev_id, logger=self.log, dummy=True) # TODO YQ # type("hd", (), {"log":self.log})     
 
 
         # Instantiate GUI window
@@ -450,9 +450,6 @@ class PulseMaster:
 
         # Get Data
         data = self.get_seq_var_dict()
-
-
-
         self.json_file_save(data)
 
     def get_seq_var_dict(self):
@@ -653,7 +650,7 @@ class PulseMaster:
         # Try to compile the pulseblock
         try:
             pulseblock_constructor.compile_pulseblock()
-            compilation_successful= True
+            compilation_successful = True
             self.log.info(f"Successfully compiled pulseblock {pulseblock_constructor.name}.")
         except ValueError as e:
             self.showerror(str(e))
@@ -724,7 +721,6 @@ class PulseMaster:
 
         return pb_constructor
 
-
     def update_pulse_list_toolbox(self):
         """Read in PulseblockContructor of currently selected Pulseblock
         and display it in the pulse-list toolbox."""
@@ -771,7 +767,7 @@ class PulseMaster:
         # Recompile pulseblock
         self.plot_current_pulseblock()
 
-    def update_pulse_form_field(self, pulse_specifier, pulse_specifier_field, field_var):
+    def update_pulse_form_field(self, pulse_specifier, pulse_specifier_field, field_var, widgets_dict):
         """ Update pulse specifier upon change of field, recompile and plot pb."""
 
         # Get value from changed field.
@@ -789,42 +785,64 @@ class PulseMaster:
             pulse_specifier.offset = value
         elif field_var == 'tref':
             pulse_specifier.tref = value
+
+        # If we are modifying IQ to be on but mod is not on, then give an error
+        elif field_var == 'iq' and value and not pulse_specifier.pulsevar_dict["mod"]:
+            pulse_specifier_field.setChecked(False)
+            self.showerror("IQ must be done with modulation on!")
+            return
+        # If we are turning off mod but IQ is on, then give an error
+        elif field_var == 'mod' and not value and pulse_specifier.pulsevar_dict["iq"]:
+            pulse_specifier_field.setChecked(True)
+            self.showerror("IQ must be done with modulation on!")
+            return        
+        # Update variables in the pulsevar_dict
         else:
-            # If we are modifying IQ to be on but mod is not on, then give an error
-            if field_var == 'iq' and value and not pulse_specifier.pulsevar_dict["mod"]:
-                pulse_specifier_field.setChecked(False)
-                self.showerror("IQ must be done with modulation on!")
-                return
-            # If we are turning off mod but IQ is on, then give an error
-            if field_var == 'mod' and not value and pulse_specifier.pulsevar_dict["iq"]:
-                pulse_specifier_field.setChecked(True)
-                self.showerror("IQ must be done with modulation on!")
-                return
             pulse_specifier.pulsevar_dict[field_var] = value
 
+        if field_var.endswith("_var"):
+            var_parent_field = widgets_dict[field_var[:-4]]
+            var_placeholder_name = field_var + "_" + self.widgets["pulseblock_combo"].currentText()
+
+            if value:
+                var_parent_field.setEnabled(False)
+                var_parent_field.setText(var_placeholder_name)
+            else:
+                var_parent_field.setEnabled(True)
+                var_parent_field.setText("")
+                
+            # Create a placeholder value 
+            if [var_placeholder_name, var_placeholder_name] not in self.variable_table_model.datadict:
+                self.variable_table_model.datadict.append([var_placeholder_name, var_placeholder_name])
+                self._add_row_to_var_table()
+
+            # Store the updated value in parent
+            self.update_pulse_form_field(pulse_specifier, var_parent_field, field_var[:-4], widgets_dict)
+            
         self.plot_current_pulseblock()
 
     def get_pulse_specifier_form(self, pulse_specifier, pb_constructor):
 
         """Change input fields if pulse selector dropdown has been changed."""
 
-        # Setup QForm.
-        form = QGroupBox()
-        qform_layout = QFormLayout()
-        form.setLayout(qform_layout)
+        # Setup widget box
+        widget_box = QGroupBox()
+        widget_layout = QGridLayout()
+        widget_box.setLayout(widget_layout)
 
         # Load pulsetype settings
         pulsetype_dict = self._get_pulsetype_dict_by_pb_type(pulse_specifier.pulsetype)
 
-        input_widget_names = []
+        widgets_dict = {}
 
-        for field in pulsetype_dict['fields']:
+        for row, field in enumerate(pulsetype_dict['fields']):
 
             # Add label.
             field_label = QLabel(field['label'])
 
             # Get field type
             field_input = self._get_pulse_fieldtype(field)
+            widgets_dict[field['var']] = field_input
 
             # Add choices to combobox.
             if type(field_input) is QComboBox:
@@ -845,7 +863,8 @@ class PulseMaster:
                 self.update_pulse_form_field,
                 pulse_specifier,
                 field_input,
-                field['var']
+                field['var'],
+                widgets_dict
             )
 
             # First look for the timing info:
@@ -860,7 +879,17 @@ class PulseMaster:
             else:
                 value = pulse_specifier.pulsevar_dict[field['var']]
 
-            qform_layout.addRow(field_label, field_input)
+            # Column is 0 (first column) unless specified. x 2 to account for space
+            # taken by the label. Widgets with column != 0 occupy the previous row.
+            if 'col' in field:
+                wid_col = 2 * field['col']
+                wid_row = row - 1
+            else:
+                wid_col = 0
+                wid_row = row
+
+            widget_layout.addWidget(field_label, wid_row, wid_col)
+            widget_layout.addWidget(field_input, wid_row, wid_col + 1)
 
             # Update the value of the fields being displayed, and connect them
             # to the correct update function.
@@ -885,9 +914,9 @@ class PulseMaster:
         )
 
         delete_button.clicked.connect(remove_pulse_function)
-        qform_layout.addRow("", delete_button)
+        widget_layout.addWidget(delete_button, row + 1, 0, 1, 4)
 
-        return form, qform_layout
+        return widget_box, widget_layout
 
     def setup_pulse_modification_form(self):
         """ Setup form displayed in every tab of "Defined-Pulse" Toolbox."""
@@ -914,7 +943,7 @@ class PulseMaster:
         self.pulse_selector_form_variable = QGroupBox()
         self.pulse_selector_form_variable.setObjectName("pulse_var_toolbox")
 
-        self.pulse_selector_form_layout_variable = QFormLayout()
+        self.pulse_selector_form_layout_variable = QGridLayout()
         self.pulse_selector_form_variable.setLayout(self.pulse_selector_form_layout_variable)
 
         # Add forms to Hbox layout
@@ -960,9 +989,10 @@ class PulseMaster:
         for row in table_data:
             varname = row[0]
             var_val = row[1:][0]
+
             if varname == "":
                 validated = False
-                self.log.warn(f'Variable name {varname} is valid.')
+                continue
 
             # Try typecast
             try:
@@ -1347,7 +1377,7 @@ class PulseMaster:
         self.pulse_selector_form_variable = QGroupBox()
         self.pulse_selector_form_variable.setObjectName("pulse_var_input")
 
-        self.pulse_selector_form_layout_variable = QFormLayout()
+        self.pulse_selector_form_layout_variable = QGridLayout() 
         self.pulse_selector_form_variable.setLayout(self.pulse_selector_form_layout_variable)
 
         # Add forms to Hbox layout
@@ -1359,9 +1389,11 @@ class PulseMaster:
 
     def _remove_variable_pulse_fields(self):
         """Remove all pulse-type specific fields from layout."""
-        num_rows =  self.pulse_selector_form_layout_variable.rowCount()
-        for _ in range(num_rows):
-            self.pulse_selector_form_layout_variable.removeRow(0)
+        # num_rows =  self.pulse_selector_form_layout_variable.rowCount()
+        # for _ in range(num_rows):
+        #     self.pulse_selector_form_layout_variable.removeRow(0)
+        for i in reversed(range(self.pulse_selector_form_layout_variable.count())): 
+            self.pulse_selector_form_layout_variable.itemAt(i).widget().setParent(None)
 
     def _get_current_pulsetype(self):
         """Get selected pulsetype from form."""
@@ -1423,6 +1455,15 @@ class PulseMaster:
 
         return field_input
 
+    def _disable_variable(self, widgets_dict, var_label, checkbox):
+        """ Disables the input field associated with a variable. """
+        if checkbox.isChecked():
+            widgets_dict[var_label].setEnabled(False)
+            widgets_dict[var_label].setText(var_label + "_pulseblockname")
+        else:
+            widgets_dict[var_label].setEnabled(True)
+            widgets_dict[var_label].setText("")
+
     def build_pulse_input_fields(self):
         """Change input fields if pulse selector dropdown has been changed."""
 
@@ -1434,13 +1475,13 @@ class PulseMaster:
 
         widgets_dict = {}
 
-        for field in pulsetype_dict['fields']:
+        for row, field in enumerate(pulsetype_dict['fields']):
             # Create widget object from field type
             field_input = self._get_pulse_fieldtype(field)
+            widgets_dict[field['var']] = field_input
 
             # Add label.
             field_label = QLabel(field['label'])
-            widgets_dict[field['label']] = field_input
 
             # Add choices to combobox.
             if type(field_input) is QComboBox:
@@ -1449,20 +1490,39 @@ class PulseMaster:
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(field)
             field_input.setObjectName(input_widget_name)
+            
+            # Column is 0 (first column) unless specified. x 2 to account for space
+            # taken by the label. Widgets with column != 0 occupy the previous row.
+            if 'col' in field:
+                wid_col = 2 * field['col']
+                wid_row = row - 1
+            else:
+                wid_col = 0
+                wid_row = row
 
-            self.pulse_selector_form_layout_variable.addRow(field_label, field_input)
+            self.pulse_selector_form_layout_variable.addWidget(field_label, wid_row, wid_col)
+            self.pulse_selector_form_layout_variable.addWidget(field_input, wid_row, wid_col + 1)
+
+            if field['var'].endswith("_var"):                
+                # Chop off the "_var" at the end of the variable-setting checkbox name
+                var_label = field['var'][:-4]
+                
+                field_input.stateChanged.connect(
+                    functools.partial(self._disable_variable, widgets_dict, var_label, field_input)
+                )
+            
 
         # Make the sinuoidal checkbox affect whether the freq/phase boxes are 
         # enabled.
-        if "Sinusoidal Modulation" in widgets_dict:
-            mod_widget = widgets_dict["Sinusoidal Modulation"]
-            freq_widget = widgets_dict["Frequency"]
-            phase_widget = widgets_dict["Phase"]
+        if "mod" in widgets_dict:
+            mod_widget = widgets_dict["mod"]
+            freq_widget = widgets_dict["mod_freq"]
+            phase_widget = widgets_dict["mod_ph"]
 
             # Start out disabled with text 0
-            freq_widget.setDisabled(True)
+            freq_widget.setEnabled(False)
             freq_widget.setText("0")
-            phase_widget.setDisabled(True)
+            phase_widget.setEnabled(False)
             phase_widget.setText("0")
 
             # For subsequent times, the text fields are editable or not depending

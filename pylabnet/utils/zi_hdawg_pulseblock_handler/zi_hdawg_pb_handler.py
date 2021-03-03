@@ -331,7 +331,7 @@ class AWGPulseBlockHandler():
                                 samp_arr])
                 
                 # Declare the waveform in the AWG code
-                setup_instr += f'wave {wave_csv_name} = "{wave_csv_name}";'
+                setup_instr += f'wave {wave_csv_name} = "{wave_csv_name}";\n'
 
         #### 3. Extract parameters for channel / output setup procedure  ####
 
@@ -524,8 +524,8 @@ class AWGPulseBlockHandler():
         """ TODO YQ
         """
 
-        set_dio_cmd = "setDIO({});"
-        playwave_cmd = "playWave({});"
+        set_dio_cmd = "setDIO({});\n"
+        playwave_cmd = "playWave({});\n"
         wave_str = ""
 
         if command[0] == "dio":
@@ -570,8 +570,8 @@ class AWGPulseBlockHandler():
         """
 
         mask = None
-        sequence = ""
-        wait_cmd = "wait({});"
+        sequence = f"// Start of Pulseblock {self.pb.name}\n"
+        wait_cmd = "wait({});\n"
 
         if self.exp_config_dict["preserve_bits"]:
 
@@ -598,6 +598,8 @@ class AWGPulseBlockHandler():
                     sequence += wait_cmd.format(waittime - wait_offset)
 
             sequence += self.awg_seq_command(commands[i], mask)
+        
+        sequence += f"// End of Pulseblock {self.pb.name}\n"
 
         return sequence
 

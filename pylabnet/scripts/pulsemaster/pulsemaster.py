@@ -24,6 +24,7 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, load_script_config, get_gui_widgets
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
+from pylabnet.utils.pulseblock.pulse import Placeholder
 from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
 from pylabnet.scripts.pulsemaster.pulsemaster_customwidget import DictionaryTableModel, AddPulseblockPopup
 
@@ -51,7 +52,7 @@ class PulseMaster:
 
         # Instanciate HD
         dev_id = self.config_dict['HDAWG_dev_id']
-        self.hd = Driver(dev_id, logger=self.log, dummy=True) # TODO YQ # type("hd", (), {"log":self.log})     
+        self.hd = Driver(dev_id, logger=self.log)
 
 
         # Instantiate GUI window

@@ -55,7 +55,7 @@ class Placeholder(float):
         return Placeholder(self.name, float(self) + other)
     def __radd__(self, other):
         return Placeholder(self.name, float(self) + other)
-    def __mul__(self, other):
+    def __mul__(self, other): 
         return Placeholder(self.name, float(self) * other)
     def __rmul__(self, other):
         return Placeholder(self.name, float(self) * other)
@@ -63,6 +63,10 @@ class Placeholder(float):
         return Placeholder(self.name, float(self) - other)
     def __rsub__(self, other):
         return Placeholder(self.name, other - float(self))
+    def __copy__(self):
+        return Placeholder(self.name, float(self))
+    def __deepcopy__(self, memo=None):
+        return Placeholder(self.name, float(self))
     def round_int(self):
         return Placeholder(self.name, int(np.round(self)))
     def int_str(self):
@@ -179,9 +183,9 @@ class PSin(PulseBase):
         """
 
         t_ar = np.array(t_ar, dtype=np.float32)
-        ret_ar = self.amp * np.sin(
+        ret_ar = np.sin(
             2*np.pi*self.freq*t_ar + np.pi*self.ph/180
-        )
+        ) * self.amp
 
         # Use own value of mod parameter if not provided
         if mod is None:
@@ -189,7 +193,7 @@ class PSin(PulseBase):
 
         # Add sin modulation
         if mod:
-            ret_ar *= np.sin(2*np.pi*self.mod_freq*t_ar + np.pi*self.mod_ph/180)
+            ret_ar *= np.sin(2*np.pi*t_ar*self.mod_freq + np.pi*self.mod_ph/180)
 
         return ret_ar
 
@@ -247,13 +251,9 @@ class PGaussian(PulseBase):
 
         t_ar = np.array(t_ar, dtype=np.float32)
 
-        _amp = 1 if type(self.amp) == Placeholder else self.amp
-        _stdev = 0.1e-6 if type(self.stdev) == Placeholder else self.stdev
-        _dur = 1e-6 if type(self.dur) == Placeholder else self.dur
-
         # Gaussian modulation about the pulse center
         t_mid = self.t0 + self.dur / 2
-        ret_ar = _amp * np.exp(-0.5 * ((t_ar - t_mid) / _stdev) ** 2)
+        ret_ar = np.exp(-0.5 * ((t_ar - t_mid) / self.stdev) ** 2) * self.amp
 
         # Use own value of mod parameter if not provided
         if mod is None:
@@ -261,10 +261,7 @@ class PGaussian(PulseBase):
         
         # Add sin modulation
         if mod:
-            _mod_freq = 1e6 if type(self.mod_freq) == Placeholder else self.mod_freq
-            _mod_ph = 0 if type(self.mod_ph) == Placeholder else self.mod_ph
-
-            ret_ar *= np.sin(2*np.pi*_mod_freq*t_ar + np.pi*_mod_ph/180)
+            ret_ar *= np.sin(2*np.pi*t_ar*self.mod_freq + np.pi*self.mod_ph/180)
 
         return ret_ar
 
@@ -317,9 +314,7 @@ class PConst(PulseBase):
         """
 
         t_ar_len = len(t_ar)
-        _val = 1 if type(self.val) == Placeholder else self.val
-
-        ret_ar = np.full(t_ar_len, _val, dtype=np.float32)
+        ret_ar = np.full(t_ar_len, self.val, dtype=np.float32)
 
         # Use own value of mod parameter if not provided
         if mod is None:
@@ -327,10 +322,8 @@ class PConst(PulseBase):
 
         # Add sin modulation
         if mod:
-            _mod_freq = 1e6 if type(self.mod_freq) == Placeholder else self.mod_freq
-            _mod_ph = 0 if type(self.mod_ph) == Placeholder else self.mod_ph
 
-            ret_ar *= np.sin(2*np.pi*_mod_freq*t_ar + np.pi*_mod_ph/180)
+            ret_ar *= np.sin(2*np.pi*t_ar*self.mod_freq + np.pi*self.mod_ph/180)
 
         return ret_ar
 

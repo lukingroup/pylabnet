@@ -6,6 +6,7 @@ import copy
 import pylabnet.utils.pulseblock.pulse as po
 import pylabnet.utils.pulseblock.pulse_block as pb
 from pylabnet.utils.iq_upconversion.iq_calibration import IQ_Calibration
+from pylabnet.utils.pulseblock.pulse import Placeholder
 
 
 class PulseblockConstructor():
@@ -37,8 +38,9 @@ class PulseblockConstructor():
         else:
             try:
                 return simple_eval(input_val, names=self.var_dict)
-            except KeyError:
-                self.log.error(f"Could not resolve variable '{input_val}'.")
+            except NameNotDefined:
+                self.log.warn(f"Could not resolve variable '{input_val}', treating as placeholder.")
+                return Placeholder(input_val)
     
     def append_value_to_dict(self, search_dict, key, append_dict, fn=None, new_key=None):
         """ Append a searched value from a search dictionary to a separate 
@@ -74,7 +76,7 @@ class PulseblockConstructor():
             
             var_dict = pb_spec.pulsevar_dict
             arg_dict = {}
-
+            
             # Extract parameters from the pulsevar dict
             offset = self.resolve_value(pb_spec.offset)  * 1e-6
             arg_dict["ch"] = pb_spec.channel
@@ -172,7 +174,7 @@ class PulseblockConstructor():
                     prev_dur = self.resolve_value(previous_pb_spec.dur) * 1e-6
                     pulseblock.append_po_as_pb(
                         p_obj=pulse,
-                        offset=-prev_dur + offset
+                        offset=-prev_dur+offset
                     )
 
         self.pulseblock =  pulseblock

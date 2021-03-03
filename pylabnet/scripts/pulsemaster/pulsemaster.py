@@ -744,7 +744,8 @@ class PulseMaster:
         for i, pulse_specifier in enumerate(current_pb_constructor.pulse_specifiers):
             pulse_form, pulse_layout = self.get_pulse_specifier_form(
                 pulse_specifier=pulse_specifier,
-                pb_constructor=current_pb_constructor
+                pb_constructor=current_pb_constructor,
+                pulse_index=i
             )
 
             self.pulse_toolbox.insertItem(
@@ -767,7 +768,7 @@ class PulseMaster:
         # Recompile pulseblock
         self.plot_current_pulseblock()
 
-    def update_pulse_form_field(self, pulse_specifier, pulse_specifier_field, field_var, widgets_dict):
+    def update_pulse_form_field(self, pulse_specifier, pulse_specifier_field, field_var, widgets_dict, pulse_index):
         """ Update pulse specifier upon change of field, recompile and plot pb."""
 
         # Get value from changed field.
@@ -800,9 +801,13 @@ class PulseMaster:
         else:
             pulse_specifier.pulsevar_dict[field_var] = value
 
+        # Handle changes to the form that need to take place when we var box is
+        # checked/unchecked.
         if field_var.endswith("_var"):
+
+            # Get the field of the parent var that the checkbox refers to
             var_parent_field = widgets_dict[field_var[:-4]]
-            var_placeholder_name = field_var + "_" + self.widgets["pulseblock_combo"].currentText()
+            var_placeholder_name = f"{field_var}_{self.widgets['pulseblock_combo'].currentText()}_{pulse_index}"
 
             if value:
                 var_parent_field.setEnabled(False)
@@ -810,18 +815,20 @@ class PulseMaster:
             else:
                 var_parent_field.setEnabled(True)
                 var_parent_field.setText("")
-                
-            # Create a placeholder value 
-            if [var_placeholder_name, var_placeholder_name] not in self.variable_table_model.datadict:
-                self.variable_table_model.datadict.append([var_placeholder_name, var_placeholder_name])
-                self._add_row_to_var_table()
+
+            # If the t0 term is variable, we must set to "after last pulse", 
+            # otherwise we have no idea when the pulse happens.
+            if field_var == "offset_var":
+                tref_field = widgets_dict["tref"]
+                tref_field.setCurrentIndex(tref_field.findText("After Last Pulse"))
+                self.update_pulse_form_field(pulse_specifier, tref_field, "tref", widgets_dict, pulse_index)
 
             # Store the updated value in parent
-            self.update_pulse_form_field(pulse_specifier, var_parent_field, field_var[:-4], widgets_dict)
+            self.update_pulse_form_field(pulse_specifier, var_parent_field, field_var[:-4], widgets_dict, pulse_index)
             
         self.plot_current_pulseblock()
 
-    def get_pulse_specifier_form(self, pulse_specifier, pb_constructor):
+    def get_pulse_specifier_form(self, pulse_specifier, pb_constructor, pulse_index):
 
         """Change input fields if pulse selector dropdown has been changed."""
 
@@ -864,7 +871,8 @@ class PulseMaster:
                 pulse_specifier,
                 field_input,
                 field['var'],
-                widgets_dict
+                widgets_dict,
+                pulse_index
             )
 
             # First look for the timing info:

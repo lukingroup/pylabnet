@@ -32,6 +32,45 @@ class DfltPulseBase:
             'by direct comparison operation.'
         )
 
+class Placeholder(float):
+    """ Used to hold a string placeholder for a variable that will be defined in
+    the AWG code instead of beforehand. Contains an additional float value that
+    acts as an offset and also a temp value for any comparisons or arithmetic
+    expressions that need to be done before the actual value is resolved. 
+    """
+
+    def __new__(self, name, val_offset=0):
+        """ Initializes the float portion of the object. Float is immutable and
+        thus we need to use __new__.  """
+        return float.__new__(self, val_offset)
+    def __init__(self, name, val_offset=0):
+        self.name = name
+    def __str__(self):
+        """ Reprensetation of the object that can be evaluated once the name has
+        a specified value. """
+        return f"{self.name} + {float(self)}"
+    def __format__(self, format_spec):
+        return f"{self.name} + {float(self).__format__(format_spec)}"
+    def __add__(self, other):
+        return Placeholder(self.name, float(self) + other)
+    def __radd__(self, other):
+        return Placeholder(self.name, float(self) + other)
+    def __mul__(self, other):
+        return Placeholder(self.name, float(self) * other)
+    def __rmul__(self, other):
+        return Placeholder(self.name, float(self) * other)
+    def __sub__(self, other):
+        return Placeholder(self.name, float(self) - other)
+    def __rsub__(self, other):
+        return Placeholder(self.name, other - float(self))
+    def round_int(self):
+        return Placeholder(self.name, int(np.round(self)))
+    def int_str(self):
+        """ Reprensetation of the object that can be evaluated once the name has
+        a specified value. """
+        return f"{self.name} + {int(self)}"
+
+
 # Pulse classes ---------------------------------------------------------------
 
 # Digital Pulse classes --------------------------------------------------------

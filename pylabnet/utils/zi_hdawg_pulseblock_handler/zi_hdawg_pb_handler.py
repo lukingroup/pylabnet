@@ -1,6 +1,6 @@
 import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample, pulse_sample
-from pylabnet.utils.pulseblock.pulse import PCombined
+from pylabnet.utils.pulseblock.pulse import PCombined, Placeholder
 
 
 # Sampling rate of HDWAG sequencer (300 MHz).
@@ -259,9 +259,13 @@ class AWGPulseBlockHandler():
                     elif (p2.t0 - (p1.t0 + p1.dur)) <= 16 / DIG_SAMP_RATE:
                         
                         # Don't merge if different settings
-                        if (p1._mod != p2._mod or 
-                            p1._mod_freq != p2._mod_freq or 
-                            p1._mod_ph != p2._mod_ph):
+                        if (p1.mod != p2.mod or 
+                            p1.mod_freq != p2.mod_freq or 
+                            p1.mod_ph != p2.mod_ph):
+                            continue
+
+                        # Don't merge if any of them have variable times
+                        if (type(p1.t0) == Placeholder or type(p2.t0) == Placeholder):
                             continue
 
                         # Merge and delete the constituents
@@ -288,18 +292,20 @@ class AWGPulseBlockHandler():
                 # Temporarily disable modulation to get the digitized envelope
                 # The digitization includes padding to reach a multiple of 16 
                 # and a minimum length of 32 samples.
-                temp = pulse._mod
-                pulse._mod = False
+                temp = pulse.mod
+                pulse.mod = False
                 samp_arr, n_pts, add_pts = pulse_sample(pulse, dflt_pulse, 
                                     self.analog_sr, len_min=32, len_step=16)
-                pulse._mod = temp
+                pulse.mod = temp
 
                  # Filename for the digitized array to be exported as CSV 
                 wave_csv_name = f"{self.pb.name}_{ch.name}_{pulse.t0}"
 
                 # Remove illegal chars
                 wave_csv_name = wave_csv_name.replace("-", "") 
+                wave_csv_name = wave_csv_name.replace(" ", "") 
                 wave_csv_name = wave_csv_name.replace(".", "_") 
+                wave_csv_name = wave_csv_name.replace("+", "_") 
 
                 if wave_csv_name in [wave[0] for wave in waveforms]:
                     self.log.error("Found two pulses at the same time in the same channel.")
@@ -308,11 +314,21 @@ class AWGPulseBlockHandler():
                 # Save the pulse start/end time and name, which we will use for 
                 # arranging by their times. Times are multipled by the DIO 
                 # rate to convert into AWG time steps.
+                if type(pulse.t0) == Placeholder:
+                    tstep_start = (pulse.t0 * self.digital_sr).round_int()
+                else:
+                    tstep_start = int(np.round(pulse.t0 * self.digital_sr))
+
+                if type(pulse.t0 + pulse.dur) == Placeholder:
+                    tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_int()
+                else:
+                    tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr)),
+
                 waveforms.append([wave_csv_name,
-                                  ch.name, 
-                                  int(np.round(pulse.t0 * self.digital_sr)), 
-                                  int(np.round((pulse.t0 + pulse.dur) * self.digital_sr)), 
-                                  samp_arr])
+                                ch.name, 
+                                tstep_start,
+                                tstep_end,
+                                samp_arr])
                 
                 # Declare the waveform in the AWG code
                 setup_instr += f'wave {wave_csv_name} = "{wave_csv_name}";'
@@ -327,8 +343,8 @@ class AWGPulseBlockHandler():
             pulse = pulse_list[0]
             self.setup_config_dict[ch.name] = {}
 
-            if pulse._mod:
-                mod, mod_freq, mod_ph = pulse._mod, pulse._mod_freq, pulse._mod_ph
+            if pulse.mod:
+                mod, mod_freq, mod_ph = pulse.mod, pulse.mod_freq, pulse.mod_ph
 
                 self.setup_config_dict[ch.name].update({ "mod": mod, 
                                                     "mod_freq": mod_freq, 
@@ -499,7 +515,8 @@ class AWGPulseBlockHandler():
                 ana_index = ana_index_search # Increment to the next unused waveform
 
         # Waittimes are just the differences between the command times
-        combined_waittimes = np.diff(combined_times)
+        # Don't use np.diff since that converts Placeholder to np float
+        combined_waittimes = [combined_times[i] - combined_times[i-1] for i in range(1, len(combined_times))]
 
         return combined_commands, combined_waittimes 
 
@@ -575,7 +592,10 @@ class AWGPulseBlockHandler():
 
             # Add waittime to sequence but subtract the wait offset
             if waittime > wait_offset:
-                sequence += wait_cmd.format(int(waittime - wait_offset))
+                if type(waittime) == Placeholder:
+                    sequence += wait_cmd.format((waittime - wait_offset).int_str())
+                else:
+                    sequence += wait_cmd.format(waittime - wait_offset)
 
             sequence += self.awg_seq_command(commands[i], mask)
 

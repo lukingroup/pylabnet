@@ -51,30 +51,65 @@ class Placeholder(float):
         return f"{self.name} + {float(self)}"
     def __format__(self, format_spec):
         return f"{self.name} + {float(self).__format__(format_spec)}"
+
     def __add__(self, other):
-        return Placeholder(self.name, float(self) + other)
+        """ Adding combines their placeholder names and their offset values. """
+        if isinstance(other, Placeholder):
+            return Placeholder(f"{self.name} + {other.name}", float(self) + float(other))
+        else:
+            return Placeholder(self.name, float(self) + other)
     def __radd__(self, other):
-        return Placeholder(self.name, float(self) + other)
-    def __mul__(self, other): 
-        return Placeholder(self.name, float(self) * other)
-    def __rmul__(self, other):
-        return Placeholder(self.name, float(self) * other)
+        if isinstance(other, Placeholder):
+            return Placeholder(f"{other.name} + {self.name}", float(self) + float(other))
+        else:
+            return Placeholder(self.name, float(self) + other)
+
     def __sub__(self, other):
-        return Placeholder(self.name, float(self) - other)
+        """ Adding combines their placeholder names and their offset values. 
+        If they have the same name, their difference is just a simple number! """
+        if isinstance(other, Placeholder):
+            if self.name == other.name:
+                return float(self) - float(other)
+            else:
+                return Placeholder(f"{self.name} - {other.name}", float(self) - float(other))
+        else:
+            return Placeholder(self.name, float(self) - other)
+        # return Placeholder(self.name, float(self) - other)
     def __rsub__(self, other):
-        return Placeholder(self.name, other - float(self))
+        if isinstance(other, Placeholder):
+            if self.name == other.name:
+                return float(other) - float(self)
+            else:
+                return Placeholder(f"{other.name} - {self.name}", float(other) - float(self))
+        else:
+            return Placeholder(self.name, other - float(self))
+        # return Placeholder(self.name, other - float(self))
+
+    def __mul__(self, other): 
+        """ Multiplication combines their placeholder names and their offset values. """
+        if isinstance(other, Placeholder):
+            return Placeholder(f"{self.name} * {other.name}", float(self) * float(other))
+        else:
+            return Placeholder(self.name, float(self) * other)
+    def __rmul__(self, other):
+        if isinstance(other, Placeholder):
+            return Placeholder(f"{other.name} * {self.name}", float(self) * float(other))
+        else:
+            return Placeholder(self.name, float(self) * other)
+
     def __copy__(self):
         return Placeholder(self.name, float(self))
     def __deepcopy__(self, memo=None):
         return Placeholder(self.name, float(self))
-    def round_int(self):
-        return Placeholder(self.name, int(np.round(self)))
+
     def int_str(self):
-        """ Representation of the object that can be evaluated once the name has
-        a specified value. """
-        return f"{self.name} + {int(self)}"
+        """ String of the object with its value converted to int. """
+        return f"{self.name} + {int(float(self))}"
+    def round_val(self):
+        """ Object with its value rounded. """
+        return Placeholder(self.name, np.round(float(self)))
     def var_str(self):
-        """ Represetation of the object ignoring its value offset. """
+        """ Name of the object ignoring its value offset. """
         return self.name
 
 

@@ -315,14 +315,13 @@ class AWGPulseBlockHandler():
                 # arranging by their times. Times are multipled by the DIO 
                 # rate to convert into AWG time steps.
                 if type(pulse.t0) == Placeholder:
-                    tstep_start = (pulse.t0 * self.digital_sr).round_int()
+                    tstep_start = (pulse.t0 * self.digital_sr).round_val()
                 else:
                     tstep_start = int(np.round(pulse.t0 * self.digital_sr))
-
                 if type(pulse.t0 + pulse.dur) == Placeholder:
-                    tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_int()
+                    tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_val()
                 else:
-                    tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr)),
+                    tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr))
 
                 waveforms.append([wave_csv_name,
                                 ch.name, 
@@ -623,7 +622,7 @@ class AWGPulseBlockHandler():
                 if type(waittime) == Placeholder:
                     sequence += wait_cmd.format((waittime - wait_offset).int_str())
                 else:
-                    sequence += wait_cmd.format(waittime - wait_offset)
+                    sequence += wait_cmd.format(int(waittime - wait_offset))
 
             sequence += self.awg_seq_command(commands[i], mask)
         

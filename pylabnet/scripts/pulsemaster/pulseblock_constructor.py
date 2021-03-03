@@ -23,6 +23,24 @@ class PulseblockConstructor():
         self.pulse_specifiers = []
         self.pulseblock = None
 
+    def default_placeholder_value(self, placeholder_name):
+        default_values = {
+            "t0_var" : 0,
+            "dur_var" : 1, # Will be multipled by 1e-6 later
+            "val_var" : 1,
+            "amp_var" : 1,
+            "stdev_var" : 0.1, # Will be multipled by 1e-6 later
+            "mod_freq_var": 1e7,
+            "mod_ph_var": 0
+        }
+
+        for key in default_values:
+            if placeholder_name.startswith(key):
+                return Placeholder(placeholder_name, default_values[key])
+        
+        self.log.warn(f"Placeholder name {placeholder_name} not found in defaults, using 0.")
+        return Placeholder(placeholder_name, 0.0)
+
     def resolve_value(self, input_val):
         """ Return value of input_val.
 
@@ -40,7 +58,7 @@ class PulseblockConstructor():
                 return simple_eval(input_val, names=self.var_dict)
             except NameNotDefined:
                 self.log.warn(f"Could not resolve variable '{input_val}', treating as placeholder.")
-                return Placeholder(input_val)
+                return self.default_placeholder_value(input_val)
     
     def append_value_to_dict(self, search_dict, key, append_dict, fn=None, new_key=None):
         """ Append a searched value from a search dictionary to a separate 

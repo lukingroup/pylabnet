@@ -7,10 +7,7 @@ from pylabnet.hardware.filterwheel.filterwheel import FW102CFilterWheel
 from pylabnet.network.client_server.filterwheel import Service, Client
 
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import load_config, get_ip
-
-
-FILTERWHEEL_NAME="Toptica Filterwheel 1"
+from pylabnet.utils.helper_methods import load_config, get_ip, load_device_config
 
 
 def launch(**kwargs):
@@ -24,16 +21,12 @@ def launch(**kwargs):
 
     # Instantiate driver
     logger = kwargs['logger']
-    config = load_config('nd_filter_toptica')
+    config = kwargs['config']
+    config = load_device_config('fw102c', config, logger=kwargs['logger'])
 
-    filterwheel_dicts = config['filterwheels']
-
-    filterwheel_dict = [filterwheel_dict for filterwheel_dict in filterwheel_dicts if filterwheel_dict['device_name'] == FILTERWHEEL_NAME][0]
-
-
-    device_name = filterwheel_dict['device_name']
-    port_name = filterwheel_dict['device_id']
-    filters = filterwheel_dict['filters']
+    device_name = config['device_name']
+    port_name = config['device_id']
+    filters = config['filters']
     filters = {  f'{i+1}' : f'{filters[i]} OD' for i in range(len(filters))}
     filterwheel = FW102CFilterWheel(port_name=port_name, device_name=device_name, filters=filters, logger=logger)
 

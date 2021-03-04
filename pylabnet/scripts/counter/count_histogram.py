@@ -68,13 +68,6 @@ class TimeTrace:
 
         else:
 
-            self.click_ch = '7+8'
-
-            self.ctr.create_combined_channel(
-                channel_name=self.click_ch,
-                channel_list=[7,8]
-            )
-
             self.ctr.start_histogram(
                 name=self.hist,
                 start_ch=self.start_ch,
@@ -214,7 +207,13 @@ class TimeTraceGui(TimeTrace):
             correlation=self.correlation
         )
 
-        # If we also want to plot gated trace(s)
+        if not type(self.config['click_ch']) == int:
+            combined_click_channel = f"{self.config['click_ch'][0]}+{self.config['click_ch'][1]}"
+            ctr.create_combined_channel(
+                channel_name=combined_click_channel,
+                channel_list=self.config['click_ch']
+            )
+            self.config['click_ch'] = [combined_click_channel]
 
         self.gates = {}
         if 'gate_ch' in self.config:

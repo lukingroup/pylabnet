@@ -26,9 +26,18 @@ class Controller(MultiChSweep1D):
         :param fast: (bool) whether to operate in fast mode
             fast mode only updates heat maps at the end of each scan (this speeds things up)
         """
+        self.config = load_script_config('scan1d', config, logger=logger)
 
-        super().__init__(logger, channels)
+        if 'sweep_type' in self.config.keys():
+            self.sweep_type = self.config['sweep_type']
+        else:
+            self.sweep_type = 'triangle'
+
+        super().__init__(logger, channels, sweep_type=self.sweep_type)
+
         self.module = None
+
+
 
         # Instantiate GUI
         self.gui = Window(
@@ -55,7 +64,7 @@ class Controller(MultiChSweep1D):
 
         # Configure list of experiments
         self.widgets['config'].setText(config)
-        self.config = load_script_config('scan1d', config, logger=self.log)
+
 
         self.exp_path = self.config['exp_path']
         if self.exp_path is None:
@@ -147,7 +156,7 @@ class Controller(MultiChSweep1D):
 
         # Run any pre-experiment configuration
         try:
-            self.module.configure(self.clients)
+            self.module.configure(self)
         except AttributeError:
             pass
 
@@ -316,7 +325,7 @@ class Controller(MultiChSweep1D):
         if backward:
 
             # Single trace
-            self.data_bwd[-1].append(self.experiment(x_value, self.clients, gui=self.gui))
+            self.data_bwd[-1].append(self.experiment(x_value, self, gui=self.gui))
             cur_ind = len(self.data_bwd[-1])
             self.widgets['curve'][1].setData(
                 self.x_bwd[:cur_ind],
@@ -349,7 +358,7 @@ class Controller(MultiChSweep1D):
                 )
         else:
 
-            self.data_fwd[-1].append(self.experiment(x_value, self.clients, gui=self.gui))
+            self.data_fwd[-1].append(self.experiment(x_value, self, gui=self.gui))
             cur_ind = len(self.data_fwd[-1])
             self.widgets['curve'][0].setData(
                 self.x_fwd[:cur_ind],
@@ -386,12 +395,13 @@ class Controller(MultiChSweep1D):
         """ Updates hmap if in fast mode """
 
         if self.fast:
-            self.widgets['hmap'][1].setImage(
-                img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
-                pos=(self.min, 0),
-                scale=((self.max-self.min)/self.pts,1),
-                autoRange=False
-            )
+            if self.sweep_type == 'triangle':
+                self.widgets['hmap'][1].setImage(
+                    img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
+                    pos=(self.min, 0),
+                    scale=((self.max-self.min)/self.pts,1),
+                    autoRange=False
+                )
             self.widgets['hmap'][0].setImage(
                 img=np.transpose(fill_2dlist(self.data_fwd)),
                 pos=(self.min, 0),

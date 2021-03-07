@@ -319,6 +319,10 @@ class Controller(MultiChSweep1D):
             self.data_bwd = []
             self.avg_fwd = []
             self.avg_bwd = []
+            self.fit_fwd = []
+            self.fit_bwd = []
+            self.p0_fwd = None
+            self.p0_bwd = None
             self.x_fwd = self._generate_x_axis()
             self.x_bwd = self._generate_x_axis(backward=True)
 
@@ -460,22 +464,24 @@ class Controller(MultiChSweep1D):
     def _update_fits(self):
         """ Updates fits """
         if len(self.avg_fwd) != 0 and self.fit_popup is not None:
-            self.fit_popup.data_fwd = self.avg_fwd
-            self.fit_popup.data_bwd = self.avg_bwd
-            if self.p0_fwd is not None and self.p0_bwd is not None:
-                self.fit_popup.p0_fwd = self.p0_fwd
-                self.fit_popup.p0_bwd = self.p0_bwd
-            method = getattr(self.fit_popup, self.fit_popup.fit_method)
-            self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = method()
-            self.widgets['fit_avg'][0].setData(
-                    self.x_fwd,
-                    self.fit_fwd
-                )
-            self.widgets['fit_avg'][1].setData(
-                    self.x_bwd,
-                    self.fit_bwd
-                )
-            #print(self.avg_fwd)
+            if self.fit_popup.fit_method is not None:
+                self.fit_popup.data_fwd = self.avg_fwd
+                self.fit_popup.data_bwd = self.avg_bwd
+                if self.p0_fwd is not None and self.p0_bwd is not None:
+                    self.fit_popup.p0_fwd = self.p0_fwd
+                    self.fit_popup.p0_bwd = self.p0_bwd
+                method = getattr(self.fit_popup, self.fit_popup.fit_method)
+                self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = method()
+                if self.fit_popup.fit_suc:
+                    self.widgets['fit_avg'][0].setData(
+                            self.x_fwd,
+                            self.fit_fwd
+                        )
+                    self.widgets['fit_avg'][1].setData(
+                            self.x_bwd,
+                            self.fit_bwd
+                        )
+                #print(self.avg_fwd)
         else:
             pass
 

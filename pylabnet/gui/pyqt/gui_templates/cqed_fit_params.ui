@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>979</width>
+    <height>880</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="formLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>941</width>
+     <height>851</height>
+    </rect>
+   </property>
+   <layout class="QFormLayout" name="main">
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="title">
+      <property name="text">
+       <string>cQED Fit Parameters: Initial Guesses</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="Delta_lab">
+      <property name="text">
+       <string>Delta_ac:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="Delta_ac"/>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="g_lab">
+      <property name="text">
+       <string>g:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="g"/>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="k_wg_lab">
+      <property name="text">
+       <string>k_wg:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="k_wg"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="k_lab">
+      <property name="text">
+       <string>k:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLineEdit" name="k"/>
+    </item>
+    <item row="6" column="0">
+     <widget class="QLabel" name="gamma_lab">
+      <property name="text">
+       <string>Gamma:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QLineEdit" name="gamma"/>
+    </item>
+    <item row="7" column="0">
+     <widget class="QLabel" name="amp_lab">
+      <property name="text">
+       <string>Amplitude:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <widget class="QLineEdit" name="amp"/>
+    </item>
+    <item row="8" column="0">
+     <widget class="QLabel" name="offset_lab">
+      <property name="text">
+       <string>Hor. Offset</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="1">
+     <widget class="QLineEdit" name="offset"/>
+    </item>
+    <item row="9" column="1">
+     <widget class="QPushButton" name="confirm">
+      <property name="text">
+       <string>OK</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1">
+     <layout class="QGridLayout" name="gridlayout">
+      <item row="5" column="1">
+       <widget class="QLabel" name="fit_ampl">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="fit_k">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="fit_g">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="fit_delta_ac">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="fit_k_wg">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="fk_lab">
+        <property name="text">
+         <string>Fwd Fitted k:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="fk_wg_lab">
+        <property name="text">
+         <string>Fwd Fitted k_wg:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="fg_lab">
+        <property name="text">
+         <string>Fwd Fitted g:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLabel" name="fit_gamma">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QLabel" name="fit_offs">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="fampl_lab">
+        <property name="text">
+         <string>Fwd Fitted Amplitude :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="fdel_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Delta_ac:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="fgamma_lab">
+        <property name="text">
+         <string>Fwd Fitted Gamma :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="foffs_lab">
+        <property name="text">
+         <string>Fwd Fitted Offset :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="fdel_lab">
+        <property name="text">
+         <string>Fwd Fitted Delta_ac:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="fit_delta_ac_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="fg_lab_2">
+        <property name="text">
+         <string>Bwd Fitted g:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLabel" name="fit_g_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="fk_wg_lab_2">
+        <property name="text">
+         <string>Bwd Fitted k_wg:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="fit_k_wg_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QLabel" name="fk_lab_2">
+        <property name="text">
+         <string>Bwd Fitted k:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="fit_k_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QLabel" name="fgamma_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Gamma :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QLabel" name="fit_gamma_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2">
+       <widget class="QLabel" name="fampl_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Amplitude :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="3">
+       <widget class="QLabel" name="fit_ampl_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="2">
+       <widget class="QLabel" name="foffs_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Offset :</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="3">
+       <widget class="QLabel" name="fit_offs_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

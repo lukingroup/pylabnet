@@ -4,6 +4,7 @@ import sys
 import socket
 import os
 import time
+from contextlib import closing
 import subprocess
 import platform
 from io import StringIO
@@ -211,6 +212,9 @@ class Controller:
                 host=get_ip()
             )
             my_port = self.gui_port
+            self.main_window.gui_label.setText(
+                f'GUI Port: {my_port}'
+            )
         elif self.proxy:
             self.gui_server, my_port = create_server(
                 self.gui_service,
@@ -228,6 +232,9 @@ class Controller:
                     port=self.gui_port
                 )
                 my_port = self.gui_port
+                self.main_window.gui_label.setText(
+                    f'GUI Port: {my_port}'
+                )
             except ConnectionRefusedError:
                 self.gui_logger.error(f'Failed to instantiate GUI Server at port {self.gui_port}')
                 raise
@@ -455,8 +462,39 @@ class Controller:
                     f'Failed to shutdown server {client_to_stop}'
                     f'on host: {server_data["ip"]}, port: {server_data["port"]}'
                 )
+                self.gui_logger.info('Attempting to remove from LogClients manually')
+                self._close_dangling(client_to_stop)
         else:
-            self.gui_logger.warn(f'No server to shutdown for client {client_to_stop}')
+            self._close_dangling(client_to_stop)
+ 
+    
+    def _close_dangling(self, client_to_stop):
+
+        # Cannot connect to the server and close, must remove. 
+        # WARNING: might result in dangling threads
+        if self.port_list[client_to_stop] in self.log_server._server.clients:
+            c = self.port_list[client_to_stop]
+            c.close()
+            closing(c)
+            self.log_server._server.clients.discard(c)
+            self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+            del self.port_list[client_to_stop]
+            del self.client_list[client_to_stop]
+            del self.log_service.client_data[client_to_stop]
+            del self.client_data[client_to_stop]
+            self.gui_logger.info(f'Client disconnected: {client_to_stop}')
+        
+        # If we can't find the client connected to the server, just remove it 
+        else:
+            self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
+            try:
+                self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                del self.port_list[client_to_stop]
+                del self.client_list[client_to_stop]
+                del self.log_service.client_data[client_to_stop]
+                del self.client_data[client_to_stop]
+            except:
+                pass
 
     def _device_clicked(self, index):
         """ Configures behavior for device double click
@@ -932,4 +970,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main()

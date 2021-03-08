@@ -24,19 +24,10 @@ class PulseblockConstructor():
         self.pulseblock = None
 
     def default_placeholder_value(self, placeholder_name):
-        default_values = {
-            "t0_var" : 0,
-            "dur_var" : 1, # Will be multipled by 1e-6 later
-            "val_var" : 1,
-            "amp_var" : 1,
-            "stdev_var" : 0.1, # Will be multipled by 1e-6 later
-            "mod_freq_var": 1e7,
-            "mod_ph_var": 0
-        }
-
-        for key in default_values:
+        
+        for key in Placeholder.default_values:
             if placeholder_name.startswith(key):
-                return Placeholder(placeholder_name, default_values[key])
+                return Placeholder(placeholder_name, Placeholder.default_values[key])
         
         self.log.warn(f"Placeholder name {placeholder_name} not found in defaults, using 0.")
         return Placeholder(placeholder_name, 0.0)

@@ -7,6 +7,16 @@ class Placeholder(float):
     acts as an offset and also a temp value for any comparisons or arithmetic
     expressions that need to be done before the actual value is resolved. 
     """
+
+    default_values = {
+            "offset_var" : 1.0/30, # Units of microseconds
+            "dur_var" : 1, # Will be multipled by 1e-6 later
+            "val_var" : 1,
+            "amp_var" : 1,
+            "stdev_var" : 0.1, # Will be multipled by 1e-6 later
+            "mod_freq_var": 1e7,
+            "mod_ph_var": 0
+    }
     
     ##  Initialization
     def __new__(cls, name, val_offset=0):

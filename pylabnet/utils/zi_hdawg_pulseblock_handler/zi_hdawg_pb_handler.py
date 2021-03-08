@@ -169,6 +169,31 @@ class AWGPulseBlockHandler():
 
         return digital_sample_dict, num_digital_samples, num_digital_traces
 
+    def gen_single_digital_codeword(self, sample_dict):
+        """ Generate a single DIO codeword. 
+        
+        :sample_dict: (dict) Keys: DIO bit numbers, values: bit indicating 
+        whether that DIO bit should be turned on.
+
+        :return: codeword: (int) Integer representing the DIO value with a 1
+        in each binary position where the DIO bit is on.
+        """
+        # Initial codeword: 00000 ... 0000
+        codeword = 0b0
+        dio_bits = sample_dict.keys()
+
+        for dio_bit in dio_bits:
+            sample_val = sample_dict[dio_bit] 
+
+            # If value is True, add 1 at dio_bit-th position
+            if sample_val:
+                # E.g., for DIO-bit 3: 0000 ... 0001000
+                bitshifted_dio_bit = (0b1 << int(dio_bit))
+                # Binary OR updates codeword.
+                codeword |= bitshifted_dio_bit
+        
+        return codeword
+
     def gen_digital_codewords(self):
         """Generate array of DIO codewords.
 
@@ -176,32 +201,16 @@ class AWGPulseBlockHandler():
         array of DIO codewords, sample by sample.
         """
 
-        dio_bits = self.digital_sample_dict.keys()
-
         # Array storing one codeword per sample.
         dio_codewords = np.zeros(self.num_digital_samples, dtype='int64')
 
         for sample_num in range(self.num_digital_samples):
+            
+            # Extract the sample at that time position for each channel
+            sample_dict = {dio_bit: ch_samples[sample_num] for 
+                        dio_bit, ch_samples in self.digital_sample_dict.items()}
 
-            # Initial codeword: 00000 ... 0000
-            codeword = 0b0
-
-            for dio_bit in dio_bits:
-
-                sample_val = self.digital_sample_dict[dio_bit][sample_num]
-
-                # If value is True, add 1 at dio_bit-th position
-                if sample_val:
-
-                    # E.g., for DIO-bit 3: 0000 ... 0001000
-                    bitshifted_dio_bit = (0b1 << int(dio_bit))
-
-                # If value is False, do nothing.
-                else:
-                    bitshifted_dio_bit = 0b0
-
-                # Binary OR updates codeword.
-                codeword = codeword | bitshifted_dio_bit
+            codeword = self.gen_single_digital_codeword(sample_dict)
 
             # Store codeword.
             dio_codewords[sample_num] = codeword
@@ -440,8 +449,7 @@ class AWGPulseBlockHandler():
             return [], []
 
         # Add 1 to shift from the left to right edge of transition. Add 0
-        # for the initial DIO value. This forces Placeholder values into their
-        # offset value since pb_sample created the codeword array in this way.
+        # for the initial DIO value.
         codeword_times_force_value = [0] + list(dio_change_index + 1)
         # Get the unique DIO codewords in order.
         codewords = codewords_array[codeword_times_force_value]
@@ -455,8 +463,10 @@ class AWGPulseBlockHandler():
                 indx_2 = indx_1 + p_item.dur * DIG_SAMP_RATE
                 codeword_times.extend([indx_1, indx_2])
 
-        codeword_times = list(set(codeword_times))
+        codeword_times = [0] + list(set(codeword_times))
         codeword_times.sort()
+
+
 
         # Sanity check that both methods should give the same length
         assert(len(codeword_times) == len(codeword_times_force_value))
@@ -638,6 +648,10 @@ class AWGPulseBlockHandler():
             # Add waittime to sequence but subtract the wait offset
             if waittime > wait_offset:
                 if type(waittime) == Placeholder:
+                    # Subtract the default offset from the Placeholder 
+                    # It is used to separate Placeholder pulses in time since
+                    # their initial separation is unknown. 
+                    waittime -= Placeholder.default_values["offset_var"] * 1e-6 * DIG_SAMP_RATE
                     sequence += wait_cmd.format((waittime - wait_offset).int_str())
                 else:
                     sequence += wait_cmd.format(int(waittime - wait_offset))

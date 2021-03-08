@@ -24,7 +24,6 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, load_script_config, get_gui_widgets
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
-from pylabnet.utils.pulseblock.pulse import Placeholder
 from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
 from pylabnet.scripts.pulsemaster.pulsemaster_customwidget import DictionaryTableModel, AddPulseblockPopup
 
@@ -830,11 +829,11 @@ class PulseMaster:
                 var_parent_field.setEnabled(True)
                 var_parent_field.setText("")
 
-            # If the t0 term is variable, we must set to "after last pulse on channel", 
+            # If the t0 term is variable, we must set to "after last pulse", 
             # otherwise we have no idea when the pulse happens.
             if field_var == "offset_var":
                 tref_field = widgets_dict["tref"]
-                tref_field.setCurrentIndex(tref_field.findText("After Last Pulse On Channel"))
+                tref_field.setCurrentIndex(tref_field.findText("After Last Pulse"))
                 self.update_pulse_form_field(pulse_specifier, tref_field, "tref", widgets_dict, pulse_index)
 
             # Store the updated value in parent

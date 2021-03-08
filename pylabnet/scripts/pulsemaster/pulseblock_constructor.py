@@ -6,7 +6,7 @@ import copy
 import pylabnet.utils.pulseblock.pulse as po
 import pylabnet.utils.pulseblock.pulse_block as pb
 from pylabnet.utils.iq_upconversion.iq_calibration import IQ_Calibration
-from pylabnet.utils.pulseblock.pulse import Placeholder
+from pylabnet.utils.pulseblock.placeholder import Placeholder
 
 
 class PulseblockConstructor():

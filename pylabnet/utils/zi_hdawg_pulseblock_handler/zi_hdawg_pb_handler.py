@@ -1,6 +1,7 @@
 import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample, pulse_sample
-from pylabnet.utils.pulseblock.pulse import PCombined, Placeholder
+from pylabnet.utils.pulseblock.placeholder import Placeholder
+from pylabnet.utils.pulseblock.pulse import PCombined
 
 
 # Sampling rate of HDWAG sequencer (300 MHz).

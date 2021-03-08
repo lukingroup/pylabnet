@@ -350,10 +350,12 @@ class AWGPulseBlockHandler():
                                                     "mod_ph": mod_ph})
 
             if pulse.iq:
-                amp_iq, dc_iq = pulse.iq_params["amp_iq"], pulse.iq_params["dc_iq"]
+                amp_iq, dc_iq, lo_freq = pulse.iq_params["amp_iq"], pulse.iq_params["dc_iq"], pulse.iq_params["lo_freq"]
 
-                self.setup_config_dict[ch.name].update({ "amp_iq": amp_iq, 
-                                                    "dc_iq": dc_iq})
+                self.setup_config_dict[ch.name].update({ 
+                                                    "amp_iq": amp_iq, 
+                                                    "dc_iq": dc_iq,
+                                                    "lo_freq": lo_freq})
                 
         #### 3. Handle synchronization of pulses across channel ####
         # Forces pulses that overlap across channels to have the same start and 

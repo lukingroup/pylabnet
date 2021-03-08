@@ -34,7 +34,7 @@ class PulseMaster:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, config, ui='pulsemaster', logger_client=None, server_port=None):
+    def __init__(self, config, ui='pulsemaster', logger_client=None, server_port=None, clients=None):
         """ TODO
         """
 
@@ -54,6 +54,13 @@ class PulseMaster:
         dev_id = self.config_dict['HDAWG_dev_id']
         self.hd = Driver(dev_id, logger=self.log)
 
+        # Get microwave client
+        self.clients = clients
+        self.mw_client = None
+        if clients is not None:
+            mw_clients = [client for device, client in clients.items() if device[0] == 'HMC_T2220']
+            if len(mw_clients) > 0:
+                self.mw_client = mw_clients[0]
 
         # Instantiate GUI window
         self.gui = Window(
@@ -382,6 +389,7 @@ class PulseMaster:
             pulseblocks=required_pulseblocks,
             assignment_dict=self.ch_assignment_dict,
             hd=self.hd,
+            mw_client=self.mw_client,
             placeholder_dict=placeholder_dict,
             exp_config_dict=self.exp_config_dict,
             use_template=False,
@@ -1604,7 +1612,8 @@ def launch(**kwargs):
     # Instantiate Pulsemaster
     try:
         pulsemaster = PulseMaster(
-            logger_client=logger, server_port=kwargs['server_port'], config=kwargs['config']
+            logger_client=logger, server_port=kwargs['server_port'], 
+            config=kwargs['config'], clients=kwargs['clients']
         )
 
         constructor = PulseblockConstructor(

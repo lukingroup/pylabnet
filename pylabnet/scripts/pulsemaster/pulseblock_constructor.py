@@ -147,8 +147,8 @@ class PulseblockConstructor():
 
                 # The amplitude is the amplitude of the Sin genarator and is 
                 # indepenent of ["amp"], the signal amplitude.
-                arg_dict_i["iq_params"] = {"amp_iq": amp_i_opt[0], "dc_iq": dc_i_opt[0]}
-                arg_dict_q["iq_params"] = {"amp_iq": amp_q_opt[0], "dc_iq": dc_q_opt[0]}
+                arg_dict_i["iq_params"] = {"amp_iq": amp_i_opt[0], "dc_iq": dc_i_opt[0], "lo_freq": lo_freq}
+                arg_dict_q["iq_params"] = {"amp_iq": amp_q_opt[0], "dc_iq": dc_q_opt[0], "lo_freq": lo_freq}
 
                 arg_dict_list = [arg_dict_i, arg_dict_q]
 

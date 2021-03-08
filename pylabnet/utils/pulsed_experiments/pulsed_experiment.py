@@ -102,10 +102,32 @@ class PulsedExperiment():
         # Setup DIO drive bits for each pulseblock
         for pb_handler in self.pulseblock_handlers:
             awg.setup_dio(pb_handler.DIO_bits)
-            
             awg.setup_analog(pb_handler.setup_config_dict, self.assignment_dict)
 
         return awg
+
+    def prepare_microwave(self):
+        """ Command the microwave generator to turn on output and set the 
+        oscillator frequency based on the IQ pulse requirements. """
+
+        if self.mw_client is None:
+            return
+
+        # Get all specified LO frequencies from the IQ pulses 
+        lo_freqs = set()
+        for pb_handler in self.pulseblock_handlers:
+            if "lo_freq" in pb_handler.setup_config_dict:
+                lo_freqs.add(pb_handler.setup_config_dict["lo_freq"])
+
+        if len(lo_freqs) == 0:
+            self.hd.log.info("MW client available but no pulses requiring MW oscillator.")
+            return
+        elif len(lo_freqs) > 1:
+            self.hd.log.warn("More than 1 MW frequencies specified, taking the first one.")
+
+        self.mw_client.set_freq(list(lo_freqs)[0])
+        # mw_client.set_power() # TODO: any default value for powers?
+        self.mw_client.output_on()
 
     def get_ready(self, awg_number):
         """Prepare AWG for sequence execution.
@@ -114,12 +136,14 @@ class PulsedExperiment():
         pulseblocks, upload it to the AWG and configure the DIO output bits.
         """
         self.prepare_sequence()
+        self.prepare_microwave()
         return self.prepare_awg(awg_number) # TODO YQ
 
     def __init__(self, 
                 pulseblocks, 
                 assignment_dict, 
                 hd, 
+                mw_client=None,
                 placeholder_dict=None,
                 exp_config_dict=None,
                 use_template=True, 
@@ -156,6 +180,7 @@ class PulsedExperiment():
 
         self.assignment_dict = assignment_dict
         self.hd = hd
+        self.mw_client = mw_client
         self.template_name = template_name
         self.sequence_string = sequence_string
         self.marker_string = marker_string

@@ -463,13 +463,20 @@ class AWGPulseBlockHandler():
                 indx_2 = indx_1 + p_item.dur * DIG_SAMP_RATE
                 codeword_times.extend([indx_1, indx_2])
 
-        codeword_times = [0] + list(set(codeword_times))
+        codeword_times = list(set(codeword_times))
         codeword_times.sort()
+
+        # If 0 is not already in the list of times (from a pulse being there),
+        # we need to add it in since otherwise we would have no initial value.
+        if codeword_times[0] != 0:
+            codeword_times = [0] + codeword_times
 
 
 
         # Sanity check that both methods should give the same length
         assert(len(codeword_times) == len(codeword_times_force_value))
+        # self.log.error(codeword_times)
+        # self.log.error(codeword_times_force_value)
     
         return codewords, codeword_times
 

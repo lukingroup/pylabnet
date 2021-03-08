@@ -440,11 +440,26 @@ class AWGPulseBlockHandler():
             return [], []
 
         # Add 1 to shift from the left to right edge of transition. Add 0
-        # for the initial DIO value.
-        codeword_times = [0] + list(dio_change_index + 1)
-
+        # for the initial DIO value. This forces Placeholder values into their
+        # offset value since pb_sample created the codeword array in this way.
+        codeword_times_force_value = [0] + list(dio_change_index + 1)
         # Get the unique DIO codewords in order.
-        codewords = codewords_array[codeword_times]
+        codewords = codewords_array[codeword_times_force_value]
+
+        # Codeword times that keeps the Placeholder value of timings
+        codeword_times = []
+        for ch in [ch for ch in self.pb.p_dict.keys() if not ch.is_analog]:
+            for p_item in self.pb.p_dict[ch]:
+                # Find indexes of pulse edges
+                indx_1 = p_item.t0 * DIG_SAMP_RATE
+                indx_2 = indx_1 + p_item.dur * DIG_SAMP_RATE
+                codeword_times.extend([indx_1, indx_2])
+
+        codeword_times = list(set(codeword_times))
+        codeword_times.sort()
+
+        # Sanity check that both methods should give the same length
+        assert(len(codeword_times) == len(codeword_times_force_value))
     
         return codewords, codeword_times
 
@@ -531,13 +546,13 @@ class AWGPulseBlockHandler():
         wave_str = ""
 
         if command[0] == "dio":
-                # Add setDIO command to sequence
-                dio_codeword = int(command[1])
-                if self.exp_config_dict["preserve_bits"]:
-                    masked_codeword = (mask & dio_codeword) # Zero out any bits that fall outside the mask
-                    return set_dio_cmd.format(f"masked_state | {masked_codeword}")
-                else:
-                    return set_dio_cmd.format(dio_codeword)
+            # Add setDIO command to sequence
+            dio_codeword = int(command[1])
+            if self.exp_config_dict["preserve_bits"]:
+                masked_codeword = (mask & dio_codeword) # Zero out any bits that fall outside the mask
+                return set_dio_cmd.format(f"masked_state | {masked_codeword}")
+            else:
+                return set_dio_cmd.format(dio_codeword)
             
         elif command[0] == "analog":
             waveform_csv_names, ch_names = command[1], command[2]

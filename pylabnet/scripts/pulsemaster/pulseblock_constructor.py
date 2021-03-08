@@ -149,7 +149,7 @@ class PulseblockConstructor():
 
             # Construct a pulse and add it to the pulseblock
             # The iteration over arg_dict takes care of the IQ mixing case
-            for arg_dict in arg_dict_list:
+            for idx, arg_dict in enumerate(arg_dict_list):
 
                 # Construct single pulse.
                 if pb_spec.pulsetype in supported_pulses:
@@ -158,22 +158,34 @@ class PulseblockConstructor():
                     pulse = None
                     self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")
 
+                # Store the duration of the first pulse (for IQ mixing) as the 
+                # pb duration is modified for the second pulse.
+                if idx == 0:
+                    first_dur = pulse.dur
+                pb_dur = pulseblock.dur
+
                 # Insert pulse to correct position in pulseblock.
                 if pb_spec.tref == "Absolute":
-                    pb_dur = pulseblock.dur
                     pulseblock.append_po_as_pb(
                         p_obj=pulse,
                         offset=offset-pb_dur
                     )
                 elif pb_spec.tref == "After Last Pulse":
-                    pulseblock.append_po_as_pb(
-                        p_obj=pulse,
-                        offset=offset
-                    )
+                    if idx == 0:
+                        pulseblock.append_po_as_pb(
+                            p_obj=pulse,
+                            offset=offset
+                        )
+                    # Force the 2nd pulse to start at same time as the first 
+                    # pulse in an IQ mix pulse. 
+                    else:
+                        pulseblock.append_po_as_pb(
+                            p_obj=pulse,
+                            offset=-first_dur
+                        )
                 elif pb_spec.tref == "After Last Pulse On Channel":
-                    pb_dur = pulseblock.dur
-                    ch = pb.Channel(name=arg_dict["ch"], is_analog=pulse.is_analog)
                     # Get the end time of the last pulse on the ch
+                    ch = pb.Channel(name=arg_dict["ch"], is_analog=pulse.is_analog)
                     if ch in pulseblock.p_dict.keys():
                         last_pulse = pulseblock.p_dict[ch][-1]
                         last_pulsetime = last_pulse.t0 + last_pulse.dur
@@ -191,12 +203,19 @@ class PulseblockConstructor():
                         raise ValueError(
                         "Cannot chose timing reference 'With Last Pulse' for first pulse in pulse-sequence."
                         )
-
                     # Retrieve duration of previous pulseblock.
                     prev_dur = self.resolve_value(previous_pb_spec.dur) * 1e-6
-                    pulseblock.append_po_as_pb(
+                    if idx == 0:
+                        pulseblock.append_po_as_pb(
+                            p_obj=pulse,
+                            offset=-prev_dur+offset
+                        )
+                    # Force the 2nd pulse to start at same time as the first 
+                    # pulse in an IQ mix pulse. 
+                    else:
+                        pulseblock.append_po_as_pb(
                         p_obj=pulse,
-                        offset=-prev_dur+offset
+                        offset=-first_dur
                     )
 
         self.pulseblock =  pulseblock

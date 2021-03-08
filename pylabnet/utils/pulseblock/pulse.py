@@ -1,5 +1,5 @@
 import numpy as np
-
+import copy, operator
 
 # Base classes ----------------------------------------------------------------
 
@@ -39,80 +39,94 @@ class Placeholder(float):
     expressions that need to be done before the actual value is resolved. 
     """
 
-    def __new__(self, name, val_offset=0):
+    def __new__(cls, name, val_offset=0):
         """ Initializes the float portion of the object. Float is immutable and
         thus we need to use __new__.  """
-        return float.__new__(self, val_offset)
-    def __init__(self, name, val_offset=0):
-        self.name = name
+
+        # If all variables have 0 multiple - convert to float
+        if type(name) == dict and (all(multiple == 0 for multiple in name.values()) 
+                                   or len(name) == 0):
+            return float(val_offset)
+        return float.__new__(cls, val_offset)
+    def __init__(self, name, val_offset=0): 
+        if type(name) == str:
+            self.name = {name: 1}
+        elif type(name) == dict:
+            self.name = name
+        else:
+            raise TypeError("Name should be str or dict.")
+        self.name_str = "+".join(f"{multiple}x{name}" for name, multiple in self.name.items())
     def __str__(self):
-        """ Reprensetation of the object that can be evaluated once the name has
+        """ Representation of the object that can be evaluated once the name has
         a specified value. """
-        return f"{self.name} + {float(self)}"
+        return f"{self.name_str} + {float(self)}"
     def __format__(self, format_spec):
-        return f"{self.name} + {float(self).__format__(format_spec)}"
+        return f"{self.name_str} + {float(self).__format__(format_spec)}"
     def __neg__(self):
-        raise NotImplementedError("Negation not implemented for Placeholder; use subtraction instead.")        
+        neg_name = {name: -multiple for name, multiple in self.name.items()}
+        return Placeholder(neg_name, -float(self))
 
     def __add__(self, other):
         """ Adding combines their placeholder names and their offset values. """
         if isinstance(other, Placeholder):
-            return Placeholder(f"{self.name} + {other.name}", float(self) + float(other))
+            return Placeholder(self.combine_names(other, operator.add), float(self) + float(other))
         else:
             return Placeholder(self.name, float(self) + other)
     def __radd__(self, other):
         if isinstance(other, Placeholder):
-            return Placeholder(f"{other.name} + {self.name}", float(self) + float(other))
+            return self.__add__(other)
         else:
             return Placeholder(self.name, float(self) + other)
 
     def __sub__(self, other):
-        """ Adding combines their placeholder names and their offset values. 
-        If they have the same name, their difference is just a simple number! """
-        if isinstance(other, Placeholder):
-            if self.name == other.name:
-                return float(self) - float(other)
-            else:
-                return Placeholder(f"{self.name} - {other.name}", float(self) - float(other))
-        else:
-            return Placeholder(self.name, float(self) - other)
-        # return Placeholder(self.name, float(self) - other)
+        """ Substraction utilizes addition and negation. """
+        return self + (-other)
     def __rsub__(self, other):
-        if isinstance(other, Placeholder):
-            if self.name == other.name:
-                return float(other) - float(self)
-            else:
-                return Placeholder(f"{other.name} - {self.name}", float(other) - float(self))
-        else:
-            return Placeholder(self.name, other - float(self))
-        # return Placeholder(self.name, other - float(self))
+        return other + (-self)
 
     def __mul__(self, other): 
         """ Multiplication combines their placeholder names and their offset values. """
         if isinstance(other, Placeholder):
-            return Placeholder(f"{self.name} * {other.name}", float(self) * float(other))
+            raise NotImplementedError
+            # return Placeholder(f"{self.name} * {other.name}", float(self) * float(other))
         else:
-            return Placeholder(self.name, float(self) * other)
+            mult_name = {name: other*multiple for name, multiple in self.name.items()}
+            return Placeholder(mult_name, float(self) * other)
     def __rmul__(self, other):
         if isinstance(other, Placeholder):
-            return Placeholder(f"{other.name} * {self.name}", float(self) * float(other))
+            raise NotImplementedError
+            # return Placeholder(f"{other.name} * {self.name}", float(self) * float(other))
         else:
-            return Placeholder(self.name, float(self) * other)
+            mult_name = {name: other*multiple for name, multiple in self.name.items()}
+            return Placeholder(mult_name, float(self) * other)
 
     def __copy__(self):
-        return Placeholder(self.name, float(self))
+        return Placeholder(copy.copy(self.name), float(self))
     def __deepcopy__(self, memo=None):
-        return Placeholder(self.name, float(self))
+        return Placeholder(copy.deepcopy(self.name), float(self))
 
+    def combine_names(self, other, op):
+        """ Combine two Placeholders' names using an operator. Returns the new
+        names dict. """
+        new_name = copy.deepcopy(self.name)
+        for other_name in other.name:
+            if other_name in self.name:
+                new_name[other_name] = op(new_name[other_name], other.name[other_name])
+                # Delete entry if multiple is now 0.
+                if new_name[other_name] == 0: 
+                    del new_name[other_name]
+            else:
+                new_name[other_name] = op(0, other.name[other_name])
+        return new_name
     def int_str(self):
         """ String of the object with its value converted to int. """
-        return f"{self.name} + {int(float(self))}"
+        return f"{self.name_str} + {int(float(self))}"
     def round_val(self):
         """ Object with its value rounded. """
         return Placeholder(self.name, np.round(float(self)))
     def var_str(self):
         """ Name of the object ignoring its value offset. """
-        return self.name
+        return self.name_str
 
 
 # Pulse classes ---------------------------------------------------------------

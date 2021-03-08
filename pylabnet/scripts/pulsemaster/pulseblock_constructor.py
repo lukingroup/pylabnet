@@ -181,7 +181,8 @@ class PulseblockConstructor():
                     )
                 elif pb_spec.tref == "After Last Pulse On Channel":
                     pb_dur = pulseblock.dur
-                    ch = pb.Channel(name=pb_spec.channel, is_analog=pulse.is_analog)
+                    ch = pb.Channel(name=arg_dict["ch"], is_analog=pulse.is_analog)
+                    # Get the end time of the last pulse on the ch
                     if ch in pulseblock.p_dict.keys():
                         last_pulse = pulseblock.p_dict[ch][-1]
                         last_pulsetime = last_pulse.t0 + last_pulse.dur

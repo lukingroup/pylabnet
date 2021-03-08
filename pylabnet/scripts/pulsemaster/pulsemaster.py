@@ -1201,7 +1201,6 @@ class PulseMaster:
             pulse_data_dict=pulse_data_dict
         )
 
-
         # Add pulse to currently selected pulseblockconstructor.
         active_pb_constructor = self.get_current_pb_constructor()
 
@@ -1275,7 +1274,7 @@ class PulseMaster:
                 if key != "tref":
                     try:
                         # Try to resolve arithmetic expression containing variables.
-                        simple_eval(val, names=self.vars)
+                        pulsedict[key] = simple_eval(val, names=self.vars)
                     except NameNotDefined:
                         typecast_error.append(key)
                         validated = False
@@ -1410,9 +1409,6 @@ class PulseMaster:
 
     def _remove_variable_pulse_fields(self):
         """Remove all pulse-type specific fields from layout."""
-        # num_rows =  self.pulse_selector_form_layout_variable.rowCount()
-        # for _ in range(num_rows):
-        #     self.pulse_selector_form_layout_variable.removeRow(0)
         for i in reversed(range(self.pulse_selector_form_layout_variable.count())): 
             self.pulse_selector_form_layout_variable.itemAt(i).widget().setParent(None)
 
@@ -1476,15 +1472,6 @@ class PulseMaster:
 
         return field_input
 
-    def _disable_variable(self, widgets_dict, var_label, checkbox):
-        """ Disables the input field associated with a variable. """
-        if checkbox.isChecked():
-            widgets_dict[var_label].setEnabled(False)
-            widgets_dict[var_label].setText(var_label + "_pulseblockname")
-        else:
-            widgets_dict[var_label].setEnabled(True)
-            widgets_dict[var_label].setText("")
-
     def build_pulse_input_fields(self):
         """Change input fields if pulse selector dropdown has been changed."""
 
@@ -1524,14 +1511,10 @@ class PulseMaster:
             self.pulse_selector_form_layout_variable.addWidget(field_label, wid_row, wid_col)
             self.pulse_selector_form_layout_variable.addWidget(field_input, wid_row, wid_col + 1)
 
+            # Disable var checkboxes; this will only be allowed in the pulse 
+            # selector dropdown.
             if field['var'].endswith("_var"):                
-                # Chop off the "_var" at the end of the variable-setting checkbox name
-                var_label = field['var'][:-4]
-                
-                field_input.stateChanged.connect(
-                    functools.partial(self._disable_variable, widgets_dict, var_label, field_input)
-                )
-            
+                field_input.setEnabled(False) 
 
         # Make the sinuoidal checkbox affect whether the freq/phase boxes are 
         # enabled.

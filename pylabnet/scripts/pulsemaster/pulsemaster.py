@@ -548,7 +548,12 @@ class PulseMaster:
                     x_ar.extend(t_ar)
                     y_ar.extend(p_item.get_value(t_ar))
 
-                # Final zero-point
+                # Put zero-point after the last pulse
+                x_ar.append(new_t2)
+                y_ar.append(0)
+
+                # Put zero-point at the end of pulseblock (different from previous
+                # since the channel could end before other channels)
                 x_ar.append(pb_obj.dur)
                 y_ar.append(0)
 

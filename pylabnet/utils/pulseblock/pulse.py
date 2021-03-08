@@ -51,6 +51,8 @@ class Placeholder(float):
         return f"{self.name} + {float(self)}"
     def __format__(self, format_spec):
         return f"{self.name} + {float(self).__format__(format_spec)}"
+    def __neg__(self):
+        raise NotImplementedError("Negation not implemented for Placeholder; use subtraction instead.")        
 
     def __add__(self, other):
         """ Adding combines their placeholder names and their offset values. """

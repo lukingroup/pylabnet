@@ -817,11 +817,11 @@ class PulseMaster:
                 var_parent_field.setEnabled(True)
                 var_parent_field.setText("")
 
-            # If the t0 term is variable, we must set to "after last pulse", 
+            # If the t0 term is variable, we must set to "after last pulse on channel", 
             # otherwise we have no idea when the pulse happens.
             if field_var == "offset_var":
                 tref_field = widgets_dict["tref"]
-                tref_field.setCurrentIndex(tref_field.findText("After Last Pulse"))
+                tref_field.setCurrentIndex(tref_field.findText("After Last Pulse On Channel"))
                 self.update_pulse_form_field(pulse_specifier, tref_field, "tref", widgets_dict, pulse_index)
 
             # Store the updated value in parent

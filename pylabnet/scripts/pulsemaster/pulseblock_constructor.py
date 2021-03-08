@@ -172,12 +172,24 @@ class PulseblockConstructor():
                     pb_dur = pulseblock.dur
                     pulseblock.append_po_as_pb(
                         p_obj=pulse,
-                        offset=-pb_dur+offset
+                        offset=offset-pb_dur
                     )
                 elif pb_spec.tref == "After Last Pulse":
                     pulseblock.append_po_as_pb(
                         p_obj=pulse,
                         offset=offset
+                    )
+                elif pb_spec.tref == "After Last Pulse On Channel":
+                    pb_dur = pulseblock.dur
+                    ch = pb.Channel(name=pb_spec.channel, is_analog=pulse.is_analog)
+                    if ch in pulseblock.p_dict.keys():
+                        last_pulse = pulseblock.p_dict[ch][-1]
+                        last_pulsetime = last_pulse.t0 + last_pulse.dur
+                    else:
+                        last_pulsetime = 0
+                    pulseblock.append_po_as_pb(
+                        p_obj=pulse,
+                        offset=last_pulsetime+offset-pb_dur
                     )
                 elif pb_spec.tref == "With Last Pulse":
                     # Retrieve previous pulseblock:

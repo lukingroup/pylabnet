@@ -17,8 +17,8 @@ def reflection(Delta, Delta_ac, g, gamma, kwg, k):
     return (1j*Delta + (g**2/(1j*(Delta-Delta_ac) + gamma/2)) \
         - kwg + k/2)/(1j*Delta + (g**2/(1j*(Delta-Delta_ac) + gamma/2)) + k/2)
 
-def ref_int(Delta, Delta_ac, g, gamma, kwg, k, a, offset):
-    return a*np.abs(reflection(Delta-offset, Delta_ac, g, gamma, kwg, k))**2
+def ref_int(Delta, Delta_ac, g, kwg, k, a, offset):
+    return a*np.abs(reflection(Delta, Delta_ac, g, 0.1, kwg, k))**2 + offset
 
 class FitPopup(Popup):
     def __init__(self, ui, x_fwd, data_fwd, x_bwd, 
@@ -64,9 +64,9 @@ class FitPopup(Popup):
                             "g": float(self.cqed_pop.g.text()), \
                             "k_wg": float(self.cqed_pop.k_wg.text()), \
                             "k": float(self.cqed_pop.k.text()), \
-                            "gamma": float(self.cqed_pop.gamma.text()), 
                             "amp": float(self.cqed_pop.amp.text()),
                             "offset": float(self.cqed_pop.offset.text())}
+                            #"gamma": float(self.cqed_pop.gamma.text()),
         self.fit_method = 'fit_cqed'
         self.p0_updated = True
     
@@ -115,9 +115,10 @@ class FitPopup(Popup):
     def fit_cqed(self):
         if self.cqed_params is not None:
             p0 = [self.cqed_params["Delta_ac"], self.cqed_params["g"],
-                 self.cqed_params["gamma"], self.cqed_params["k_wg"],
+                 self.cqed_params["k_wg"],
                  self.cqed_params["k"], self.cqed_params["amp"],
                  self.cqed_params["offset"]]
+                 # self.cqed_params["gamma"],
             if self.p0_fwd is None or self.p0_updated:
                 p0_fwd = p0
                 p0_bwd = p0
@@ -129,8 +130,8 @@ class FitPopup(Popup):
             # fit fwd and bwd
             #print(p0_fwd)
             try:
-                popt1, pcov1 = curve_fit(ref_int, self.x_fwd, self.data_fwd, p0 = p0_fwd)
-                popt2, pcov2 = curve_fit(ref_int, self.x_bwd, self.data_bwd, p0 = p0_bwd)
+                popt1, pcov1 = curve_fit(ref_int, self.x_fwd, self.data_fwd, p0 = p0_fwd) #, diff_step = 0.1)
+                popt2, pcov2 = curve_fit(ref_int, self.x_bwd, self.data_bwd, p0 = p0_bwd) #, diff_step = 0.1)
                 p0_fwd = popt1
                 p0_bwd = popt2
                 #print(pcov1)
@@ -144,19 +145,19 @@ class FitPopup(Popup):
             # display fit parameters
             self.cqed_pop.fit_delta_ac.setText(str(popt1[0]))
             self.cqed_pop.fit_g.setText(str(popt1[1]))
-            self.cqed_pop.fit_gamma.setText(str(popt1[2]))
-            self.cqed_pop.fit_k.setText(str(popt1[3]))
-            self.cqed_pop.fit_k_wg.setText(str(popt1[4]))
-            self.cqed_pop.fit_ampl.setText(str(popt1[5]))
-            self.cqed_pop.fit_offs.setText(str(popt1[6]))
+            #self.cqed_pop.fit_gamma.setText(str(popt1[2]))
+            self.cqed_pop.fit_k.setText(str(popt1[2]))
+            self.cqed_pop.fit_k_wg.setText(str(popt1[3]))
+            self.cqed_pop.fit_ampl.setText(str(popt1[4]))
+            self.cqed_pop.fit_offs.setText(str(popt1[5]))
 
             self.cqed_pop.fit_delta_ac_2.setText(str(popt2[0]))
             self.cqed_pop.fit_g_2.setText(str(popt2[1]))
-            self.cqed_pop.fit_gamma_2.setText(str(popt1[2]))
-            self.cqed_pop.fit_k_2.setText(str(popt2[3]))
-            self.cqed_pop.fit_k_wg_2.setText(str(popt2[4]))
-            self.cqed_pop.fit_ampl_2.setText(str(popt2[5]))
-            self.cqed_pop.fit_offs_2.setText(str(popt2[6]))
+            #self.cqed_pop.fit_gamma_2.setText(str(popt1[2]))
+            self.cqed_pop.fit_k_2.setText(str(popt2[2]))
+            self.cqed_pop.fit_k_wg_2.setText(str(popt2[3]))
+            self.cqed_pop.fit_ampl_2.setText(str(popt2[4]))
+            self.cqed_pop.fit_offs_2.setText(str(popt2[5]))
 
             return ref_int(self.x_fwd, *popt1), ref_int(self.x_bwd, *popt2),\
                    p0_fwd, p0_bwd

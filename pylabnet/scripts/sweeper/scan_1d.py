@@ -465,8 +465,8 @@ class Controller(MultiChSweep1D):
         """ Updates fits """
         if len(self.avg_fwd) != 0 and self.fit_popup is not None:
             if self.fit_popup.fit_method is not None:
-                self.fit_popup.data_fwd = self.avg_fwd
-                self.fit_popup.data_bwd = self.avg_bwd
+                self.fit_popup.data_fwd = np.array(self.avg_fwd)
+                self.fit_popup.data_bwd = np.array(self.avg_bwd)
                 if self.p0_fwd is not None and self.p0_bwd is not None:
                     self.fit_popup.p0_fwd = self.p0_fwd
                     self.fit_popup.p0_bwd = self.p0_bwd
@@ -484,6 +484,7 @@ class Controller(MultiChSweep1D):
                 #print(self.avg_fwd)
         else:
             pass
+        #print(self.config)
 
     def _update_autosave(self):
         """ Updates autosave status """

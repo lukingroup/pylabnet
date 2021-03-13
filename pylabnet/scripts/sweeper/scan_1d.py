@@ -285,6 +285,7 @@ class Controller(MultiChSweep1D):
                                       data_bwd = self.avg_bwd,
                                       p0_fwd = None,
                                       p0_bwd = None,
+                                      config = self.config,
                                       log=self.log)
             self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
             '''

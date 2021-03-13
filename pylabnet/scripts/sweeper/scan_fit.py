@@ -22,7 +22,7 @@ def ref_int(Delta, Delta_ac, g, kwg, k, a, offset):
 
 class FitPopup(Popup):
     def __init__(self, ui, x_fwd, data_fwd, x_bwd, 
-                 data_bwd, p0_fwd, p0_bwd, log):
+                 data_bwd, p0_fwd, p0_bwd, config, log):
         super().__init__(ui)
         self.log = log
         self.data_fwd = np.array(data_bwd)
@@ -34,6 +34,7 @@ class FitPopup(Popup):
         self.p0_updated = False
         self.fit_suc = True
         self.fit_method = None
+        self.config = config
 
     def load_lor(self):
     
@@ -48,6 +49,14 @@ class FitPopup(Popup):
     
     def load_cqed(self):
         self.cqed_pop = Popup(ui = 'cqed_fit_params')
+        try:
+            self.cqed_pop.Delta_ac.setText(str(self.config["cQED params"]["Delta_ac"]))
+            self.cqed_pop.g.setText(str(self.config["cQED params"]["g"]))
+            self.cqed_pop.k_wg.setText(str(self.config["cQED params"]["k_wg"]))
+            self.cqed_pop.k.setText(str(self.config["cQED params"]["k"]))
+            self.cqed_pop.confirm.clicked.connect(str(self.set_cqed))
+        except:
+            pass
         self.cqed_pop.confirm.clicked.connect(self.set_cqed)
     
     def set_lor(self):

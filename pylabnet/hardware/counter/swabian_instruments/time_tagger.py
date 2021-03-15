@@ -298,6 +298,21 @@ class Wrap:
         self.log.info(f'Created gated channel {channel_name}, '
                       f'click channel: {click_ch}, gate channel: {gate_ch}')
 
+    def create_delayed_channel(self, channel_name, click_ch, delay):
+        """ Creates a delayed virtual channel allowing for a user to input a delay
+        :param channel_name: (str) name, identifier of the channel
+        :param click_ch: (int) index of  channel
+        :param delay: (optional, int) amount to delay by
+        """"
+        self._channels[channel_name] = TT.DelayedChannel(
+            tagger=self._tagger,
+            input_channel=click_ch,
+            delay=int(delay)
+        )
+        self.log.info(f'Created delayed channel {channel_name}, '
+                      f'click channel: {click_ch}, delay: {delay}')
+
+
     def create_combined_channel(self, channel_name, channel_list):
         """ Creates a combined virtual channel which includes events from multiple cahnnels
 

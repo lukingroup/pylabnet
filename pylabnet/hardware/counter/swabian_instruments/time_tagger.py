@@ -303,7 +303,7 @@ class Wrap:
         :param channel_name: (str) name, identifier of the channel
         :param click_ch: (int) index of  channel
         :param delay: (optional, int) amount to delay by
-        """"
+        """
         self._channels[channel_name] = TT.DelayedChannel(
             tagger=self._tagger,
             input_channel=click_ch,

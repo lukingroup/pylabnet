@@ -61,6 +61,9 @@ class Service(ServiceBase):
     def exposed_create_gated_channel(self, channel_name, click_ch, gate_ch, delay):
         return self._module.create_gated_channel(channel_name, click_ch, gate_ch, delay)
 
+    def exposed_create_delayed_channel(self, channel_name, click_ch, delay):
+        return self._module.create_delayed_channel(channel_name, click_ch, delay)
+
     def exposed_update_delay(self, channel_name, delay):
         return self._module.update_delay(channel_name, delay)
 
@@ -246,6 +249,9 @@ class Client(ClientBase):
         return self._service.exposed_create_gated_channel(
             channel_name, click_ch, gate_ch, delay
         )
+
+    def create_delayed_channel(self, channel_name, click_ch, delay):
+        return self._service.exposed_create_delayed_channel(channel_name, click_ch, delay)
 
     def create_combined_channel(self, channel_name, channel_list):
         """ Creates a combined virtual channel which includes events from multiple cahnnels 

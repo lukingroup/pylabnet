@@ -275,7 +275,7 @@ class Wrap:
         if delay is not None:
             self._channels[f'{channel_name}_delayed'] = TT.DelayedChannel(
                 tagger=self._tagger,
-                input_channel=gate_ch,
+                input_channel= gate_ch,
                 delay=int(delay)
             )
             self._channels[f'{channel_name}_delayed_falling'] = TT.DelayedChannel(
@@ -306,7 +306,7 @@ class Wrap:
         """
         self._channels[channel_name] = TT.DelayedChannel(
             tagger=self._tagger,
-            input_channel=click_ch,
+            input_channel=self._get_channel(click_ch),
             delay=int(delay)
         )
         self.log.info(f'Created delayed channel {channel_name}, '

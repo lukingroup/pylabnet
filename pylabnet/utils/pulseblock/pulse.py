@@ -248,5 +248,3 @@ class DConst(DfltPulseBase):
 
         return ret_ar
 
-
-

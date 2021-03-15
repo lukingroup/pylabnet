@@ -244,11 +244,13 @@ class ExperimentThread(QtCore.QThread):
         self.start()
 
     def run(self):
+        self.params['iter_num'] = 0
         while self.running:
             self.experiment(
                 thread = self,
                 status_flag=self.status_flag,
                 **self.params)
+            self.params['iter_num'] += 1
 
 
 class UpdateThread(QtCore.QThread):

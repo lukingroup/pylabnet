@@ -466,13 +466,20 @@ class Controller:
                 self._close_dangling(client_to_stop)
         else:
             self._close_dangling(client_to_stop)
- 
-    
+
+
     def _close_dangling(self, client_to_stop):
 
-        # Cannot connect to the server and close, must remove. 
+        # Cannot connect to the server and close, must remove.
         # WARNING: might result in dangling threads
-        if self.port_list[client_to_stop] in self.log_server._server.clients:
+
+        try:
+            client_port_to_stop = self.port_list[client_to_stop]
+            port_found = True
+        except KeyError:
+            port_found = False
+
+        if port_found and client_port_to_stop in self.log_server._server.clients:
             c = self.port_list[client_to_stop]
             c.close()
             closing(c)
@@ -483,8 +490,8 @@ class Controller:
             del self.log_service.client_data[client_to_stop]
             del self.client_data[client_to_stop]
             self.gui_logger.info(f'Client disconnected: {client_to_stop}')
-        
-        # If we can't find the client connected to the server, just remove it 
+
+        # If we can't find the client connected to the server, just remove it
         else:
             self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
             try:
@@ -970,4 +977,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_staticproxy()

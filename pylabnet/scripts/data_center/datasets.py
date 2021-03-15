@@ -989,7 +989,14 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
             data_length=10000,
             window='lock_monitor',
             color_index=4
-        )
+        ),
+        self.add_child(
+            name='Max count history',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            window='lock_monitor',
+            color_index=5
+        ),
         self.add_child(
             name='Single photons',
             data_type=AveragedHistogram,
@@ -997,12 +1004,16 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
             window_title='Single-photon data'
         )
 
-    def set_v(self, v):
-        """ Updates voltage """
+
+    def set_v_and_counts(self, v, counts):
+        """ Updates voltage and counts"""
 
         self.v = v
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
+        self.children['Max count history'].set_data(counts)
+
+
 
 
 class ErrorBarGraph(Dataset):
@@ -1112,6 +1123,7 @@ class ErrorBarPlot(Dataset):
 
 class PhotonErrorBarPlot(ErrorBarGraph):
     un_normalized = np.array([])
+    normalized = np.array([])
     total_events = 0
     reps=0
 

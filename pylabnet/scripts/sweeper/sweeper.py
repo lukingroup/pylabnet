@@ -109,6 +109,17 @@ class Sweep1D:
             param_value,
             **self.fixed_params
         )
+
+        if not result:
+            self.widgets['rep_tracker'].setValue(0)
+            self.widgets['reps'].setValue(0)
+            for button in self.widgets['avg']:
+                button.setText('Avg only')
+            self.widgets['run'].setStyleSheet('background-color: green')
+            self.widgets['run'].setText('Run')
+            self.stop()
+            self.log.info('Sweep experiment auto-aborted')
+
         return result
 
     def run(self, plot=False, autosave=None, filename=None, directory=None, date_dir=True):

@@ -239,7 +239,7 @@ class PulseblockConstructor():
 
 
 class PulseSpecifier():
-    """Container storing info pully specifiying pulse within pulse sequence."""
+    """Container storing info fully specifiying pulse within pulse sequence."""
 
     def __init__(self, channel, pulsetype, pulsetype_name, is_analog):
         self.channel = channel

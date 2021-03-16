@@ -766,7 +766,7 @@ class PulseMaster:
                 pulse_form,
                 f"{str(i)}: {pulse_specifier.get_printable_name()}"
             )
-
+            
             # Select last item and set minimum heigt.
             self.pulse_toolbox.setCurrentWidget(pulse_form)
             pulse_form.parent().parent().setMinimumHeight(100)
@@ -784,6 +784,9 @@ class PulseMaster:
     def update_pulse_form_field(self, pulse_specifier, pulse_specifier_field, field_var, widgets_dict, pulse_index):
         """ Update pulse specifier upon change of field, recompile and plot pb."""
 
+        # Load pulsetype settings
+        pulsetype_dict = self._get_pulsetype_dict_by_pb_type(pulse_specifier.pulsetype)
+
         # Get value from changed field.
         if field_var == 'tref':
             value = pulse_specifier_field.currentText()
@@ -799,6 +802,14 @@ class PulseMaster:
             pulse_specifier.offset = value
         elif field_var == 'tref':
             pulse_specifier.tref = value
+        elif field_var == 'ch':
+            # Check channel type matches
+            channel_is_analog = (self.ch_assignment_dict[value][0] == "analog")
+            if channel_is_analog != eval(pulsetype_dict["is_analog"]):
+                self.showerror(f"Type of pulse {pulsetype_dict['name']} " 
+                                f"does not match channel {value}.")
+                return
+            pulse_specifier.channel = value
 
         # If we are modifying IQ to be on but mod is not on, then give an error
         elif field_var == 'iq' and value and not pulse_specifier.pulsevar_dict["mod"]:
@@ -855,7 +866,11 @@ class PulseMaster:
 
         widgets_dict = {}
 
-        for row, field in enumerate(pulsetype_dict['fields']):
+        # Add channel as an extra field since it is not in the pulse fields
+        pulse_fields = [{'label': 'Channel', 'input_type': 'QLineEdit', 'var': 'ch'}] \
+                        + pulsetype_dict['fields'] 
+
+        for row, field in enumerate(pulse_fields):
 
             # Add label.
             field_label = QLabel(field['label'])
@@ -895,6 +910,9 @@ class PulseMaster:
                 value = pulse_specifier.offset
             elif field['var'] == 'tref':
                 value = pulse_specifier.tref
+            # Next look at the channel info
+            elif field['var'] == 'ch':
+                value = pulse_specifier.channel
             # If file does not contain timing info, look
             # at pulse parameter dictionary.
             else:
@@ -1275,7 +1293,7 @@ class PulseMaster:
                     try:
                         # Try to resolve arithmetic expression containing variables.
                         pulsedict[key] = simple_eval(val, names=self.vars)
-                    except NameNotDefined:
+                    except NameNotDefined:           
                         typecast_error.append(key)
                         validated = False
 
@@ -1515,7 +1533,7 @@ class PulseMaster:
             # selector dropdown.
             if field['var'].endswith("_var"):                
                 field_input.setEnabled(False) 
-
+            
         # Make the sinuoidal checkbox affect whether the freq/phase boxes are 
         # enabled.
         if "mod" in widgets_dict:

@@ -781,6 +781,35 @@ class PulseMaster:
         # Recompile pulseblock
         self.plot_current_pulseblock()
 
+    def shift_pulse_specifier(self, pulse_specifier, pb_constructor, direction):
+        """ Move a pulse specifier by a certain number of slots forward/backward
+            in a PB constructor. 
+        """
+
+        index = pb_constructor.pulse_specifiers.index(pulse_specifier)
+        new_index = index + direction
+
+        if new_index < 0 or new_index >= len(pb_constructor.pulse_specifiers):
+            self.showerror(f"Moving pulse type {pulse_specifier.pulsetype_name}"
+                f"by {direction} would move it out of bounds.")
+            return
+
+        # Create a copy of the original 
+        pulse_specifiers_orig = copy.copy(pb_constructor.pulse_specifiers)
+        
+        # Shift pulse_spec position
+        pb_constructor.pulse_specifiers.remove(pulse_specifier)
+        pb_constructor.pulse_specifiers.insert(new_index, pulse_specifier)
+
+        # Revert back to original order if compile failed
+        if not self.compile_pulseblock(pb_constructor):
+            pb_constructor.pulse_specifiers = pulse_specifiers_orig
+
+        # Redraw toolbox
+        self.update_pulse_list_toolbox()
+        # Recompile pulseblock
+        self.plot_current_pulseblock()
+
     def update_pulse_form_field(self, pulse_specifier, pulse_specifier_field, field_var, widgets_dict, pulse_index):
         """ Update pulse specifier upon change of field, recompile and plot pb."""
 
@@ -870,6 +899,7 @@ class PulseMaster:
         pulse_fields = [{'label': 'Channel', 'input_type': 'QLineEdit', 'var': 'ch'}] \
                         + pulsetype_dict['fields'] 
 
+        # Add the labels and fields for each variable
         for row, field in enumerate(pulse_fields):
 
             # Add label.
@@ -918,17 +948,22 @@ class PulseMaster:
             else:
                 value = pulse_specifier.pulsevar_dict[field['var']]
 
-            # Column is 0 (first column) unless specified. x 2 to account for space
-            # taken by the label. Widgets with column != 0 occupy the previous row.
+            # Column is 0 (first column) unless it is specified.
+            # Column 0 fields occupy 3 columns, other column fields occupy 1.
+            # Multiply col number by 4 to account for space taken by the 
+            # previous col (1 for label, 3 for field).
+            # Widgets with column != 0 occupy the previous row.
             if 'col' in field:
-                wid_col = 2 * field['col']
+                wid_col = 4 * field['col']
                 wid_row = row - 1
+                col_width = 1
             else:
                 wid_col = 0
                 wid_row = row
+                col_width = 3
 
-            widget_layout.addWidget(field_label, wid_row, wid_col)
-            widget_layout.addWidget(field_input, wid_row, wid_col + 1)
+            widget_layout.addWidget(field_label, wid_row, wid_col, 1, 1) # Label
+            widget_layout.addWidget(field_input, wid_row, wid_col + 1, 1, col_width) # Field
 
             # Update the value of the fields being displayed, and connect them
             # to the correct update function.
@@ -944,6 +979,25 @@ class PulseMaster:
                 field_input.setChecked(bool(value))
                 field_input.clicked.connect(pulse_mod_function)
 
+        # Add buttons to move pulse up/down
+        pulse_up_function = lambda: self.shift_pulse_specifier(
+            pulse_specifier, pb_constructor, -1)
+        pulse_down_function = lambda: self.shift_pulse_specifier(
+            pulse_specifier, pb_constructor, +1)
+
+        up_button = QPushButton("Move Up")
+        up_button.setStyleSheet("background-color : #fc766aff")
+        up_button.clicked.connect(pulse_up_function)
+        widget_layout.addWidget(up_button, row + 1, 0, 1, 3)
+
+        down_button = QPushButton("Move Down")
+        down_button.setStyleSheet("background-color : #5b84b1ff")
+        down_button.clicked.connect(pulse_down_function)
+        widget_layout.addWidget(down_button, row + 1, 3, 1, 3)
+
+        row += 1 # Move the row index to the next row
+
+        # Add delete button
         delete_button = QPushButton("Delete Pulse")
         delete_button.setStyleSheet("background-color : #6a040f")
 
@@ -953,7 +1007,7 @@ class PulseMaster:
         )
 
         delete_button.clicked.connect(remove_pulse_function)
-        widget_layout.addWidget(delete_button, row + 1, 0, 1, 4)
+        widget_layout.addWidget(delete_button, row + 1, 0, 1, 6)
 
         return widget_box, widget_layout
 

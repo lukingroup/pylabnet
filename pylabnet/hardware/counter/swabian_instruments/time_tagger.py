@@ -359,7 +359,7 @@ class Wrap:
         :param voltage: (float) Trigger level in volts.
         """
 
-        self._tagger.setTriggerLevel(int(channel), float(trig_level))
+        self._tagger.setTriggerLevel(int(channel), float(voltage))
         new_trigger_val = self._tagger.getTriggerLevel(int(channel))
         self.log.info(f"Changed trigger level of channel {channel} to {new_trigger_val} V.")
 

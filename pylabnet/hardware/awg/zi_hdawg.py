@@ -12,6 +12,7 @@ import textwrap
 import copy
 import re
 import os
+import json
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
@@ -632,6 +633,47 @@ class AWGModule():
         """
 
         self.hd.setd(f'awgs/{self.index}/userregs/{reg_index}', int(value))
+
+    def upload_cmd_table(self, cmd_table_str, index=None):
+        """ Upload command table JSON string into a given AWG node. 
+        
+        :cmd_table_str: (str) JSON file containing the command table.
+        :index: (int, optional) AWG node number (0-3) to upload waveform to.
+        """
+
+        if index is None:
+            index = self.index
+
+        # Validate if string is a valid JSON
+        try:
+            json.loads(cmd_table_str)
+        except ValueError:
+            self.hd.log.error("Command table string is invalid JSON format.")
+            return False
+        
+        self.hd.setv(f"awgs/{index}/commandtable/data", cmd_table_str)
+        return True
+
+    def upload_cmd_table_waveform(self, index, wave1, wave2=None, marker=None, index=None):
+        """ Upload the numpy array(s) into a given index to be used for the 
+        command table.
+
+        :index: (int) index of waveform that can be accessed inside command table
+            Must be less than 16000.
+        :wave1: (numpy Array) waveform for Ouput 1
+        :wave2: (numpy Array, optional) waveform for Ouput 2
+        :marker: (numpy Array, optional) waveform for the market output
+        :index: (int, optional) AWG node number (0-3) to upload waveform to.
+        """
+
+        if index is None:
+            index = self.index
+
+        # Convert to HDAWG native format
+        waveform_native = zhinst.utils.convert_awg_waveform(wave1, wave2, marker)
+
+        # Upload waveform data to the desired index
+        self.hd.setv(f"awgs/{index}/waveform/waves/{index}", waveform_native)
 
 
 class Sequence():

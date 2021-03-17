@@ -1,4 +1,4 @@
-""" Implements connection and server launching of NI-daqMX card for wavemeter locking"""
+""" Implements connection and server launching to a Tektronix TDS2004C oscilloscope """
 
 import socket
 import os
@@ -6,10 +6,10 @@ import os
 from pylabnet.hardware.oscilloscopes import tektronix_tds2004C
 from pylabnet.network.client_server.tektronix_tds2004C import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import get_ip, hide_console, load_config
+from pylabnet.utils.helper_methods import get_ip
 
 def launch(**kwargs):
-    """ Connects to NI-daqMX card and launches server
+    """ Connects to Tektronix TDS2004C oscilloscope and launches server
 
     :param kwargs: (dict) containing relevant kwargs
         :logger: instance of LogClient for logging purposes

@@ -196,7 +196,7 @@ class Wrap:
         if start_delay is not None:
             self._channels[name] = TT.DelayedChannel(
                 tagger=self._tagger,
-                input_channel=start_ch,
+                input_channel=self._get_channel(start_ch),
                 delay=start_delay
             )
             start_ch = name
@@ -348,7 +348,7 @@ class Wrap:
 
         if isinstance(ch, str):
             return self._channels[ch].getChannel()
-        else: 
+        else:
             return ch
 
     def set_trigger_level(self, channel, voltage):

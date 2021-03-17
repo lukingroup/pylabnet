@@ -18,7 +18,7 @@ from pylabnet.utils.helper_methods import load_config, generic_save, unpack_laun
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 75   # refresh rate in ms, try increasing if GUI lags
+REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
 
 class DataTaker:
 

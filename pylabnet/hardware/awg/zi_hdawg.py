@@ -654,11 +654,11 @@ class AWGModule():
         self.hd.setv(f"awgs/{index}/commandtable/data", cmd_table_str)
         return True
 
-    def upload_cmd_table_waveform(self, index, wave1, wave2=None, marker=None, index=None):
+    def upload_cmd_table_waveform(self, wave_index, wave1, wave2=None, marker=None, index=None):
         """ Upload the numpy array(s) into a given index to be used for the 
         command table.
 
-        :index: (int) index of waveform that can be accessed inside command table
+        :wave_index: (int) index of waveform that can be accessed inside command table
             Must be less than 16000.
         :wave1: (numpy Array) waveform for Ouput 1
         :wave2: (numpy Array, optional) waveform for Ouput 2
@@ -673,7 +673,7 @@ class AWGModule():
         waveform_native = zhinst.utils.convert_awg_waveform(wave1, wave2, marker)
 
         # Upload waveform data to the desired index
-        self.hd.setv(f"awgs/{index}/waveform/waves/{index}", waveform_native)
+        self.hd.setv(f"awgs/{index}/waveform/waves/{wave_index}", waveform_native)
 
 
 class Sequence():

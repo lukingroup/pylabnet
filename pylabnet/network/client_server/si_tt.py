@@ -71,6 +71,9 @@ class Service(ServiceBase):
         channel_list = pickle.loads(channel_list)
         return self._module.create_combined_channel(channel_name, channel_list)
 
+    def exposed_set_trigger_level(self, channel, voltage):
+        return self._module.set_trigger_level(channel, voltage)
+
 class Client(ClientBase):
 
     def start_trace(self, name=None, ch_list=[1], bin_width=1000000000, n_bins=10000):
@@ -271,3 +274,6 @@ class Client(ClientBase):
         """
 
         return self._service.exposed_update_delay(channel_name, delay)
+
+    def set_trigger_level(self, channel, voltage):
+        return self._service.exposed_set_trigger_level(channel, voltage)

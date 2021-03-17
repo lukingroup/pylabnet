@@ -348,8 +348,21 @@ class Wrap:
 
         if isinstance(ch, str):
             return self._channels[ch].getChannel()
-        else:
+        else: 
             return ch
+
+    def set_trigger_level(self, channel, voltage):
+        """ Set the trigger level of physics channel
+
+        :param ch: (int) channel index of physical channel
+
+        :param voltage: (float) Trigger level in volts.
+        """
+
+        self._tagger.setTriggerLevel(int(channel), float(trig_level))
+        new_trigger_val = self._tagger.getTriggerLevel(int(channel))
+        self.log.info(f"Changed trigger level of channel {channel} to {new_trigger_val} V.")
+
 
     @staticmethod
     def handle_name(name):

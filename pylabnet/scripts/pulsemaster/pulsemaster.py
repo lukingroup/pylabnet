@@ -266,7 +266,8 @@ class PulseMaster:
             pb_constructor = PulseblockConstructor(
                 name=pb_dict['name'],
                 log=self.log,
-                var_dict=new_var_dict
+                var_dict=new_var_dict,
+                config=self.config_dict
             )
 
             for pulsedict in pb_dict['pulse_specifiers_dicts']:
@@ -695,7 +696,7 @@ class PulseMaster:
         """ Generate new instance of pulseblock constructor which is identical to reference instance,
         with the excpetion of the name.
 
-        :pb_constructor: PulseblockCOntructor object to be copied.
+        :pb_constructor: PulseblockConstructor object to be copied.
         :new_name: New name of copied instance.
         """
 
@@ -721,7 +722,8 @@ class PulseMaster:
             pb_constructor= PulseblockConstructor(
                 name=pb_name,
                 log=self.log,
-                var_dict = self.vars
+                var_dict = self.vars,
+                config=self.config_dict
             )
 
         # Otherwise copy and rename constructor.
@@ -1673,7 +1675,8 @@ def launch(**kwargs):
         constructor = PulseblockConstructor(
             name='test',
             log=logger,
-            var_dict = {}
+            var_dict = {},
+            config=pulsemaster.config_dict
         )
         pulsemaster.pulseblock_constructors.append(constructor)
         pulsemaster.update_pulseblock_dropdown()

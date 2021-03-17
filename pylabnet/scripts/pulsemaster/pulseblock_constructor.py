@@ -14,7 +14,7 @@ class PulseblockConstructor():
     while retaining the ability to change variables and easy save/load functionality.
     """
 
-    def __init__(self, name, log, var_dict):
+    def __init__(self, name, log, var_dict, config=None):
 
         self.name = name
         self.log = log
@@ -22,6 +22,7 @@ class PulseblockConstructor():
         self.var_dict = var_dict
         self.pulse_specifiers = []
         self.pulseblock = None
+        self.config = config
 
     def default_placeholder_value(self, placeholder_name):
         
@@ -110,10 +111,9 @@ class PulseblockConstructor():
 
             # Handle IQ mixing case
             if "iq" in arg_dict and arg_dict["iq"]:
+                
                 iq_calibration = IQ_Calibration()
-
-                # C:\\Users\\Yogi\\pylabnet\\pylabnet\\utils\\iq_upconversion\\Results\\01_28_2021_cal_w_GD.csv
-                iq_calibration.load_calibration("D:\\Qi\\Documents\\Research\\Codes\\pylabnet\\pylabnet\\utils\\iq_upconversion\\Results\\01_28_2021_cal_w_GD.csv")
+                iq_calibration.load_calibration(self.config["iq_cal_path"])
                 # Set arbitrarily so that neither channel will overflow 1
                 iq_calibration.IF_volt = 0.8
 

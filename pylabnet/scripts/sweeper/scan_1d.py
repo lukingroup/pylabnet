@@ -55,11 +55,16 @@ class Controller(MultiChSweep1D):
         self.reps = self.widgets['reps'].value()
 
         self.data_fwd = []
+        self.data_fwd_2nd_reading = [] ### ADDED
         self.data_bwd = []
         self.avg_fwd = []
+        self.avg_fwd_2nd_reading = [] ### ADDED
         self.avg_bwd = []
         self.x_fwd = self._generate_x_axis()
-        self.x_bwd = self._generate_x_axis(backward=True)
+        if self.sweep_type != 'sawtooth':
+            self.x_bwd = self._generate_x_axis(backward=True)
+        else:
+            self.x_bwd = self._generate_x_axis()
         self.fast = fast
 
         # Configure list of experiments
@@ -152,7 +157,10 @@ class Controller(MultiChSweep1D):
         self.pts = self.widgets['pts'].value()
 
         self.x_fwd = self._generate_x_axis()
-        self.x_bwd = self._generate_x_axis(backward=True)
+        if self.sweep_type != 'sawtooth':
+                self.x_bwd = self._generate_x_axis(backward=True)
+        else:
+            self.x_bwd = self._generate_x_axis()
 
         # Run any pre-experiment configuration
         try:
@@ -267,6 +275,35 @@ class Controller(MultiChSweep1D):
                 date_dir=date_dir
             )
 
+        else:
+            if self.data_bwd:
+                # Save heatmap
+                generic_save(
+                    data=fill_2dlist(self.data_bwd),
+                    filename=f'{filename}_bwd_scans',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+                pyqtgraph_save(
+                    widget=self.widgets['hmap'][1].getView(),
+                    filename=f'{filename}_bwd_scans',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+                # Save average
+                generic_save(
+                    data = np.vstack((self.x_bwd, np.array([self.avg_bwd]))),
+                    filename=f'{filename}_bwd_avg',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+                pyqtgraph_save(
+                    widget=self.widgets['graph'][1].getPlotItem(),
+                    filename=f'{filename}_bwd_avg',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+
     def _configure_plots(self, plot=True):
         """ Configures the plots """
 
@@ -287,30 +324,55 @@ class Controller(MultiChSweep1D):
             self.avg_fwd = []
             self.avg_bwd = []
             self.x_fwd = self._generate_x_axis()
-            self.x_bwd = self._generate_x_axis(backward=True)
+            if self.sweep_type != 'sawtooth':
+                self.x_bwd = self._generate_x_axis(backward=True)
+            else:
+                self.x_bwd = self._generate_x_axis()
 
         self.widgets['curve'] = []
         self.widgets['curve_avg'] = []
 
         for index, graph in enumerate(self.widgets['graph']):
 
-            self.widgets['curve'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[6])
-            ))
-            add_to_legend(
-                self.widgets['legend'][index],
-                self.widgets['curve'][index],
-                f'{"Fwd" if index==0 else "Bwd"} trace'
-            )
 
-            self.widgets['curve_avg'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
-            ))
-            add_to_legend(
-                self.widgets['legend'][index],
-                self.widgets['curve_avg'][index],
-                f'{"Fwd" if index==0 else "Bwd"} avg'
-            )
+
+            if self.sweep_type != 'sawtooth':
+                self.widgets['curve'].append(graph.plot(
+                    pen=pg.mkPen(color=self.gui.COLOR_LIST[6])
+                ))
+                add_to_legend(
+                    self.widgets['legend'][index],
+                    self.widgets['curve'][index],
+                    f'{"Fwd" if index==0 else "Bwd"} trace'
+                )
+
+                self.widgets['curve_avg'].append(graph.plot(
+                    pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
+                ))
+                add_to_legend(
+                    self.widgets['legend'][index],
+                    self.widgets['curve_avg'][index],
+                    f'{"Fwd" if index==0 else "Bwd"} avg'
+                )
+            else:
+                self.widgets['curve'].append(graph.plot(
+                    pen=pg.mkPen(color=self.gui.COLOR_LIST[6])
+                ))
+                add_to_legend(
+                    self.widgets['legend'][index],
+                    self.widgets['curve'][index],
+                    f'{"1st" if index==0 else "2nd"} trace'
+                )
+
+                self.widgets['curve_avg'].append(graph.plot(
+                    pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
+                ))
+                add_to_legend(
+                    self.widgets['legend'][index],
+                    self.widgets['curve_avg'][index],
+                    f'{"1st" if index==0 else "2nd"} avg'
+                )
+
 
         for hmap in self.widgets['hmap']:
             hmap.view.setLimits(xMin=self.min, xMax=self.max)
@@ -321,74 +383,175 @@ class Controller(MultiChSweep1D):
         self.data_fwd.append([])
 
     def _run_and_plot(self, x_value, backward=False):
+        if self.sweep_type != 'sawtooth':
+            if backward:
 
-        if backward:
-
-            # Single trace
-            self.data_bwd[-1].append(self.experiment(x_value, self, gui=self.gui))
-            cur_ind = len(self.data_bwd[-1])
-            self.widgets['curve'][1].setData(
-                self.x_bwd[:cur_ind],
-                self.data_bwd[-1]
-            )
-
-            # Update average and plot
-            try:
-                cur_rep = len(self.data_bwd)
-                self.avg_bwd[cur_ind-1] = (
-                    (cur_rep-1) * self.avg_bwd[cur_ind-1]
-                    + self.data_bwd[-1][-1]
-                )/cur_rep
-                self.widgets['curve_avg'][1].setData(
-                    self.x_bwd,
-                    self.avg_bwd
+                # Single trace
+                self.data_bwd[-1].append(self.experiment(x_value, self, gui=self.gui))
+                cur_ind = len(self.data_bwd[-1])
+                self.widgets['curve'][1].setData(
+                    self.x_bwd[:cur_ind],
+                    self.data_bwd[-1]
                 )
 
-            # If it is the first run, just add the data
-            except IndexError:
-                self.avg_bwd.append(self.data_bwd[-1][-1])
+                # Update average and plot
+                try:
+                    cur_rep = len(self.data_bwd)
+                    self.avg_bwd[cur_ind-1] = (
+                        (cur_rep-1) * self.avg_bwd[cur_ind-1]
+                        + self.data_bwd[-1][-1]
+                    )/cur_rep
+                    self.widgets['curve_avg'][1].setData(
+                        self.x_bwd,
+                        self.avg_bwd
+                    )
 
-            # Heat map
-            if not self.fast:
-                self.widgets['hmap'][1].setImage(
-                    img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
-                    pos=(self.min, 0),
-                    scale=((self.max-self.min)/self.pts,1),
-                    autoRange=False
+                # If it is the first run, just add the data
+                except IndexError:
+                    self.avg_bwd.append(self.data_bwd[-1][-1])
+
+                # Heat map
+                if not self.fast:
+                    self.widgets['hmap'][1].setImage(
+                        img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
+            else:
+
+                self.data_fwd[-1].append(self.experiment(x_value, self, gui=self.gui))
+                cur_ind = len(self.data_fwd[-1])
+                self.widgets['curve'][0].setData(
+                    self.x_fwd[:cur_ind],
+                    self.data_fwd[-1]
                 )
+
+                # Update average and plot
+                try:
+                    cur_rep = len(self.data_fwd)
+                    self.avg_fwd[cur_ind-1] = (
+                        (cur_rep-1) * self.avg_fwd[cur_ind-1]
+                        + self.data_fwd[-1][-1]
+                    )/cur_rep
+                    self.widgets['curve_avg'][0].setData(
+                        self.x_fwd,
+                        self.avg_fwd
+                    )
+
+                # If it is the first run, just add the data
+                except IndexError:
+                    self.avg_fwd.append(self.data_fwd[-1][-1])
+
+                # Heat map
+                if not self.fast:
+                    self.widgets['hmap'][0].setImage(
+                        img=np.transpose(fill_2dlist(self.data_fwd)),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
+
         else:
-
-            self.data_fwd[-1].append(self.experiment(x_value, self, gui=self.gui))
-            cur_ind = len(self.data_fwd[-1])
-            self.widgets['curve'][0].setData(
-                self.x_fwd[:cur_ind],
-                self.data_fwd[-1]
-            )
-
-            # Update average and plot
+            reading = self.experiment(x_value, self, gui=self.gui)
             try:
-                cur_rep = len(self.data_fwd)
-                self.avg_fwd[cur_ind-1] = (
-                    (cur_rep-1) * self.avg_fwd[cur_ind-1]
-                    + self.data_fwd[-1][-1]
-                )/cur_rep
-                self.widgets['curve_avg'][0].setData(
-                    self.x_fwd,
-                    self.avg_fwd
+                n_readings = len(reading)
+                self.data_fwd[-1].append(reading[0])
+                cur_ind = len(self.data_fwd[-1])
+                self.widgets['curve'][0].setData(
+                    self.x_fwd[:cur_ind],
+                    self.data_fwd[-1]
                 )
 
-            # If it is the first run, just add the data
-            except IndexError:
-                self.avg_fwd.append(self.data_fwd[-1][-1])
+                # Update average and plot
+                try:
+                    cur_rep = len(self.data_fwd)
+                    self.avg_fwd[cur_ind-1] = (
+                        (cur_rep-1) * self.avg_fwd[cur_ind-1]
+                        + self.data_fwd[-1][-1]
+                    )/cur_rep
+                    self.widgets['curve_avg'][0].setData(
+                        self.x_fwd,
+                        self.avg_fwd
+                    )
 
-            # Heat map
-            if not self.fast:
-                self.widgets['hmap'][0].setImage(
-                    img=np.transpose(fill_2dlist(self.data_fwd)),
-                    pos=(self.min, 0),
-                    scale=((self.max-self.min)/self.pts,1),
-                    autoRange=False
+                # If it is the first run, just add the data
+                except IndexError:
+                    self.avg_fwd.append(self.data_fwd[-1][-1])
+
+                # Heat map
+                if not self.fast:
+                    self.widgets['hmap'][0].setImage(
+                        img=np.transpose(fill_2dlist(self.data_fwd)),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
+
+                self.data_bwd[-1].append(reading[1])
+                cur_ind = len(self.data_bwd[-1])
+                self.widgets['curve'][1].setData(
+                    self.x_bwd[:cur_ind],
+                    self.data_bwd[-1]
                 )
+
+                # Update average and plot
+                try:
+                    cur_rep = len(self.data_bwd)
+                    self.avg_bwd[cur_ind-1] = (
+                        (cur_rep-1) * self.avg_bwd[cur_ind-1]
+                        + self.data_bwd[-1][-1]
+                    )/cur_rep
+                    self.widgets['curve_avg'][1].setData(
+                        self.x_bwd,
+                        self.avg_bwd
+                    )
+
+                # If it is the first run, just add the data
+                except IndexError:
+                    self.avg_bwd.append(self.data_bwd[-1][-1])
+
+                # Heat map
+                if not self.fast:
+                    self.widgets['hmap'][1].setImage(
+                        img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
+            except TypeError:
+                self.data_fwd[-1].append(reading)
+                cur_ind = len(self.data_fwd[-1])
+                self.widgets['curve'][0].setData(
+                    self.x_fwd[:cur_ind],
+                    self.data_fwd[-1]
+                )
+
+                # Update average and plot
+                try:
+                    cur_rep = len(self.data_fwd)
+                    self.avg_fwd[cur_ind-1] = (
+                        (cur_rep-1) * self.avg_fwd[cur_ind-1]
+                        + self.data_fwd[-1][-1]
+                    )/cur_rep
+                    self.widgets['curve_avg'][0].setData(
+                        self.x_fwd,
+                        self.avg_fwd
+                    )
+
+                # If it is the first run, just add the data
+                except IndexError:
+                    self.avg_fwd.append(self.data_fwd[-1][-1])
+
+                # Heat map
+                if not self.fast:
+                    self.widgets['hmap'][0].setImage(
+                        img=np.transpose(fill_2dlist(self.data_fwd)),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
+
         self.gui.force_update()
 
     def _update_hmaps(self, reps_done):

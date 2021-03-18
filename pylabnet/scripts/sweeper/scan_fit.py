@@ -2,6 +2,10 @@
 from pylabnet.gui.pyqt.external_gui import Popup, InternalPopup
 from scipy.optimize import curve_fit # is not automatically installed?
 import numpy as np
+from PyQt5 import (QtCore, QtGui, QtWidgets)
+from PyQt5.QtWidgets import  (
+    QApplication, QDialog, QMainWindow, QMessageBox)
+from scan_fit_n import FitModel
 
 def lorentzian(x, *params):
     """
@@ -37,14 +41,9 @@ class FitPopup(Popup):
         self.config = config
 
     def load_lor(self):
-    
-        self.lor_pop = Popup(ui = 'lor_fit_params')
-
-        #the below crashes the program for some reason....
-        #self.lor_pop.main.setParent(None)
-        #self.model_parameters.addLayout(self.lor_pop.main)
-        #self.show()
-
+        lor = FitModel("Lorentzian",lorentzian, "Center","FWHM","Amp","Offset", "Bab")
+        self.lor_pop = QMainWindow()
+        lor.init_ui(self.lor_pop)
         self.lor_pop.confirm.clicked.connect(self.set_lor)
     
     def load_cqed(self):

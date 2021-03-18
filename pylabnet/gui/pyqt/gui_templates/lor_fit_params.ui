@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>983</width>
+    <height>570</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="formLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>30</y>
+     <width>941</width>
+     <height>532</height>
+    </rect>
+   </property>
+   <layout class="QFormLayout" name="main">
+    <item row="2" column="0">
+     <widget class="QLabel" name="center_lab">
+      <property name="text">
+       <string>Center: </string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="center"/>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="fwhm_lab">
+      <property name="text">
+       <string>FWHM:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="fwhm"/>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="amp_lab">
+      <property name="text">
+       <string>Amplitude:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="amp"/>
+    </item>
+    <item row="0" column="0" colspan="2">
+     <widget class="QLabel" name="title">
+      <property name="text">
+       <string>Lorentzian Fit Parameters: Initial Guesses</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QPushButton" name="confirm">
+      <property name="text">
+       <string>OK</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLineEdit" name="offset"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="offset_lab">
+      <property name="text">
+       <string>Offset:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="0">
+       <widget class="QLabel" name="famp_lab">
+        <property name="text">
+         <string>Fwd Fitted Amplitude:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="foff_lab">
+        <property name="text">
+         <string>Fwd Fitted Offset:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="fit_off">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLabel" name="fit_amp">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="fit_fwhm">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="ffwhm_lab">
+        <property name="text">
+         <string>Fwd Fitted FWHM:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="fcen_lab">
+        <property name="text">
+         <string>Fwd Fitted Center:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="fcen_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Center:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="fit_cen">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="fit_cen_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="ffwhm_lab_2">
+        <property name="text">
+         <string>Bwd Fitted FWHM:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLabel" name="fit_fwhm_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="famp_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Amplitude:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLabel" name="fit_amp_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
+       <widget class="QLabel" name="foff_lab_2">
+        <property name="text">
+         <string>Bwd Fitted Offset:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="fit_off_2">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

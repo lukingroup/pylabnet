@@ -18,7 +18,7 @@ def reflection(Delta, Delta_ac, g, gamma, kwg, k):
         - kwg + k/2)/(1j*Delta + (g**2/(1j*(Delta-Delta_ac) + gamma/2)) + k/2)
 
 def ref_int(Delta, Delta_ac, g, kwg, k, a, offset):
-    return a*np.abs(reflection(Delta, Delta_ac, g, 0.1, kwg, k))**2 + offset
+    return a*np.abs(reflection((Delta-406.64)*1000, Delta_ac, g, 0.1, kwg, k))**2 + offset
 
 class FitPopup(Popup):
     def __init__(self, ui, x_fwd, data_fwd, x_bwd, 

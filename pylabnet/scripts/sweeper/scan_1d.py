@@ -13,7 +13,7 @@ from pylabnet.gui.pyqt.external_gui import Window, Popup
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
     unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background)
-from pylabnet.scripts.sweeper.scan_fit import FitPopup
+from pylabnet.scripts.sweeper.scan_fit_n import FitPopup
 
 
 class Controller(MultiChSweep1D):
@@ -465,14 +465,15 @@ class Controller(MultiChSweep1D):
     def _update_fits(self):
         """ Updates fits """
         if len(self.avg_fwd) != 0 and self.fit_popup is not None:
-            if self.fit_popup.fit_method is not None:
+            if self.fit_popup.mod is not None and\
+            self.fit_popup.mod.init_params is not None:
                 self.fit_popup.data_fwd = np.array(self.avg_fwd)
                 self.fit_popup.data_bwd = np.array(self.avg_bwd)
                 if self.p0_fwd is not None and self.p0_bwd is not None:
                     self.fit_popup.p0_fwd = self.p0_fwd
                     self.fit_popup.p0_bwd = self.p0_bwd
-                method = getattr(self.fit_popup, self.fit_popup.fit_method)
-                self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = method()
+                #method = getattr(self.fit_popup, self.fit_popup.fit_method)
+                self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = self.fit_popup.fit_mod()
                 if self.fit_popup.fit_suc:
                     self.widgets['fit_avg'][0].setData(
                             self.x_fwd,

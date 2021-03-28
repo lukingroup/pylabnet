@@ -308,8 +308,8 @@ class AWGPulseBlockHandler():
                                     self.analog_sr, len_min=32, len_step=16)
                 pulse.mod = temp
 
-                 # Filename for the digitized array to be exported as CSV 
-                wave_csv_name = f"{self.pb.name}_{ch.name}_{pulse.t0}"
+                 # Variable for the waveform in the code
+                wave_var_name = f"{self.pb.name}_{ch.name}_{pulse.t0:.2}"
 
                 # Remove illegal chars
                 wave_csv_name = wave_csv_name.replace("-", "") 

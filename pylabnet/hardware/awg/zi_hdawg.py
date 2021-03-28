@@ -564,39 +564,33 @@ class AWGModule():
         if self.module.getInt('elf/status') == 1:
             self.hd.log.warn("Upload to the instrument failed.")
 
-    def dyn_waveform_upload(self, wave_index, waveform1, waveform2=None):
+    def dyn_waveform_upload(self, wave_index, wave1, wave2=None, marker=None, index=None):
         """ Dynamically upload a numpy array into HDAWG Memory
 
-        This will overwrite the allocated waveform memory of a waveform
-        defined in the sequence. The wave_index designates which waveform to
-        overwrite:
-        Let N be the total number of waveforms and M>0 be the number of
-        waveforms defined from CSV files. Then the index
-        of the waveform to be replaced is defined as following:
-        - 0,...,M-1 for all waveforms defined from CSV file
-            alphabetically ordered by filename,
-        - M,...,N-1 in the order that the waveforms are
-            defined in the sequencer program.
-        For the case of M=0, the index is defined as:
-        - 0,...,N-1 in the order that the waveforms are
-            defined in the sequencer program.
-
-        :waveform1: np.array containing waveform
-        :waveform2: np.array containing waveform of second waveform is dynamic
-            waveform upload is used for playback of two waveforms at two channels,
-            as represented in the .seqc command `playWave(waveform1, waveform2)
-        :wave_index: Index of waveform to be overwritten as defined above
+        :wave_index: (int) index of waveform that can be accessed inside command table
+            Must be < 16000. All waves in the sequencer program are automatically 
+            assigned a wave index or can be assigned with assignWaveIndex().
+            Let N be the total # of waveforms and M>0 be the # of CSV-defined
+            waveforms. Then the automatically-assigned waveform indices are:
+            - 0,...,M-1 for waveforms defined from CSV files alphabetically 
+                ordered by filename,
+            - M,...,N-1 in the order that the waveforms are defined in the 
+                sequencer program.
+        :wave1: (numpy Array) waveform for Ouput 1
+        :wave2: (numpy Array, optional) waveform for Ouput 2, similar to commands
+            of the form playWave(wave1, wave2)
+        :marker: (numpy Array, optional) waveform for the market output
+        :index: (int, optional) AWG node number (0-3) to upload waveform to.
         """
 
-        waveform_native = zhinst.utils.convert_awg_waveform(
-            waveform1,
-            waveform2
-        )
+        if index is None:
+            index = self.index
 
-        awg_index = self.module.get('index')['index'][0]
-        self.hd.setv(
-            f'awgs/{awg_index}/waveform/waves/{wave_index}', waveform_native
-        )
+        # Convert to HDAWG native format
+        waveform_native = zhinst.utils.convert_awg_waveform(wave1, wave2, marker)
+
+        # Upload waveform data to the desired index
+        self.hd.setv(f"awgs/{index}/waveform/waves/{wave_index}", waveform_native)
 
     def save_waveform_csv(self, waveform, csv_filename):
         """ Saves a numpy array in CSV format into the HDAWG folder
@@ -654,26 +648,7 @@ class AWGModule():
         self.hd.setv(f"awgs/{index}/commandtable/data", cmd_table_str)
         return True
 
-    def upload_cmd_table_waveform(self, wave_index, wave1, wave2=None, marker=None, index=None):
-        """ Upload the numpy array(s) into a given index to be used for the 
-        command table.
-
-        :wave_index: (int) index of waveform that can be accessed inside command table
-            Must be less than 16000.
-        :wave1: (numpy Array) waveform for Ouput 1
-        :wave2: (numpy Array, optional) waveform for Ouput 2
-        :marker: (numpy Array, optional) waveform for the market output
-        :index: (int, optional) AWG node number (0-3) to upload waveform to.
-        """
-
-        if index is None:
-            index = self.index
-
-        # Convert to HDAWG native format
-        waveform_native = zhinst.utils.convert_awg_waveform(wave1, wave2, marker)
-
-        # Upload waveform data to the desired index
-        self.hd.setv(f"awgs/{index}/waveform/waves/{wave_index}", waveform_native)
+    
 
 
 class Sequence():

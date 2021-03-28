@@ -217,11 +217,13 @@ class AWGPulseBlockHandler():
 
         return dio_codewords
     
-    def gen_analog_instructions(self):
-        """Generate the setup instructions for the analog channels and the CSV
+    def gen_analog_instructions(self, waveform_idx):
+        """Generate the setup instructions for the analog channels and the
         waveforms to be transferred to the AWG.  
 
-        :return: waveforms: (list) of tuples(waveform CSV name, ch_name, 
+        :param: waveform_idx (int): Indices assigned to waveforms from this
+            pulseblock will start counting incrementing from this value.
+        :return: waveforms: (list) of tuples(waveform var name, ch_name, 
         start_step, end_step, np.array waveform). Start/end are in AWG time steps.
         :return: setup_instr (str) representing the AWG instructions used to 
             set up the analog pulses.
@@ -312,12 +314,12 @@ class AWGPulseBlockHandler():
                 wave_var_name = f"{self.pb.name}_{ch.name}_{pulse.t0:.2}"
 
                 # Remove illegal chars
-                wave_csv_name = wave_csv_name.replace("-", "") 
-                wave_csv_name = wave_csv_name.replace(" ", "") 
-                wave_csv_name = wave_csv_name.replace(".", "_") 
-                wave_csv_name = wave_csv_name.replace("+", "_") 
+                wave_var_name = wave_var_name.replace("-", "") 
+                wave_var_name = wave_var_name.replace(" ", "") 
+                wave_var_name = wave_var_name.replace(".", "_") 
+                wave_var_name = wave_var_name.replace("+", "_") 
 
-                if wave_csv_name in [wave[0] for wave in waveforms]:
+                if wave_var_name in [wave[0] for wave in waveforms]:
                     self.log.error("Found two pulses at the same time in the same channel.")
                     return
 
@@ -333,14 +335,17 @@ class AWGPulseBlockHandler():
                 else:
                     tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr))
 
-                waveforms.append([wave_csv_name,
+                waveforms.append([wave_var_name,
                                 ch.name, 
                                 tstep_start,
                                 tstep_end,
                                 samp_arr])
                 
-                # Declare the waveform in the AWG code
-                setup_instr += f'wave {wave_csv_name} = "{wave_csv_name}";\n'
+                # Declare the waveform in the AWG code with a placeholder
+                setup_instr += f'wave {wave_var_name} = placeholder({len(samp_arr)});\n'
+                # Assign wave index
+                setup_instr += f'assignWaveIndex({wave_var_name}, {waveform_idx});\n'
+                waveform_idx += 1
 
         #### 3. Extract parameters for channel / output setup procedure  ####
 
@@ -487,10 +492,15 @@ class AWGPulseBlockHandler():
 
         :digital_codewords: (list) of DIO codewords to be output
         :digital_times: (list) of times in AWG timesteps to output the DIO codewords
-        :waveforms: (list) of tuples(waveform CSV name, ch_name, 
+        :waveforms: (list) of tuples(waveform var name, ch_name, 
         start_time, end_time, np.array waveform) - times in AWG timesteps
 
-        # TODO YQ  return values
+        :return: combined_commands: (list) of commands represented as tuples.  
+            Digital: ("digital", dio_codeword)
+            Analog: ("analog", list of var names, list of ch names)
+            Analog has a list since we can have >1 wave at the same time
+        :return: combined_waittimes: (list) of wait times between all commands,
+            including digital and digital.
         """
 
         combined_commands, combined_times = [], [0]
@@ -537,7 +547,7 @@ class AWGPulseBlockHandler():
                         waveforms[ana_index][2] != waveforms[ana_index_search][2]):
                         break
                 
-                # Store waveform CSV name and channel name for the waveforms
+                # Store waveform var name and channel name for the waveforms
                 # that start at the same time.
                 combined_commands.append((
                     "analog", 
@@ -555,7 +565,14 @@ class AWGPulseBlockHandler():
         return combined_commands, combined_waittimes 
 
     def awg_seq_command(self, command, mask):
-        """ TODO YQ
+        """ Generate a line of AWG code for a given analog/digital command.
+
+        :command: (tuple) representing an analog or digital command
+            Digital: ("digital", dio_codeword)
+            Analog: ("analog", list of var names, list of ch names)
+        :mask: (int) Mask for DIO outputs to avoid overwriting existing output bits
+
+        :return: (str) AWG code representing the specified command 
         """
 
         set_dio_cmd = "setDIO({});\n"
@@ -572,17 +589,17 @@ class AWGPulseBlockHandler():
                 return set_dio_cmd.format(dio_codeword)
             
         elif command[0] == "analog":
-            waveform_csv_names, ch_names = command[1], command[2]
+            waveform_var_names, ch_names = command[1], command[2]
             ch_types, ch_nums = zip(*[self.assignment_dict[ch_name] for ch_name in ch_names])
 
             if not all(ch_type == "analog" for ch_type in ch_types):
                 self.log.warn(f"Channel expected to get analog but got an unexpected type.")
 
-            # Put the waveforms from the earlier channels first.
-            # The self.log.hds are all 1-indexed here.
-            for ch_num, waveform_csv_name in sorted(zip(ch_nums, waveform_csv_names)):
-                if wave_str != "": wave_str += ", " 
-                wave_str += f"{ch_num}, {waveform_csv_name}"
+            # For analog waveforms, the command is playWave(ch, wave, ch, wave, ...)
+            # Put the waveforms from the earlier channels first. 
+            for ch_num, waveform_var_name in sorted(zip(ch_nums, waveform_var_names)):
+                if wave_str != "": wave_str += ", "  # Separator btw channels
+                wave_str += f"{ch_num}, {waveform_var_name}"
            
             return playwave_cmd.format(wave_str)
 
@@ -622,7 +639,7 @@ class AWGPulseBlockHandler():
 
         :commands: (list) List of unique command tuples in sequential order 
             from both digital and analog channels.  Tuples are of the form
-            ("dio", dio_codeword) or ("analog", waveform_csv_name, ch_name)
+            ("dio", dio_codeword) or ("analog", waveform_var_name, ch_name)
         :waittimes: (np.array) Array of waittimes between commands, in 
             sequential order.
         :wait_offset: (int) Number of samples to adjust the waittime in order to
@@ -669,7 +686,7 @@ class AWGPulseBlockHandler():
 
         return sequence
 
-    def get_awg_sequence(self):
+    def get_awg_sequence(self, waveform_idx):
         """Generate a set of .seqc instructions for the AWG to output a set of 
         pulses over multiple channels
 
@@ -677,6 +694,9 @@ class AWGPulseBlockHandler():
         commands which will reproduce the waveform defined
         by the pulseblock object.
 
+        :param: waveform_idx (int): Indices assigned to waveforms from this
+            pulseblock will start counting incrementing from this value; needs
+            to be passed from the main program to sync the number with other PBs.
         :return: setup_seq (str): AWG commands used for setup of the pulse
             sequence and will only need to be run once even if the sequence is 
             run multiple times.
@@ -692,9 +712,9 @@ class AWGPulseBlockHandler():
         digital_codewords, digital_times = self.zip_digital_commands(digital_codewords_samples)
 
         # Get instructions for the analog channels
-        # List of tuples (waveform csv name, ch_name, start_step, end_step, np.array waveform)
+        # List of tuples (waveform var name, ch_name, start_step, end_step, np.array waveform)
         # analog_setup is a string to be prepended to the compiled code
-        waveforms, analog_setup = self.gen_analog_instructions()
+        waveforms, analog_setup = self.gen_analog_instructions(waveform_idx)
 
         combined_commands, combined_waittimes = self.combine_command_timings(
                                                     digital_codewords, 

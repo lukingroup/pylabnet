@@ -49,14 +49,14 @@ class PulsedExperiment():
         )
 
         # Generate instruction set which represents pulse sequence.
-        prologue_sequence, pulse_sequence, export_waveforms = pb_handler.get_awg_sequence()
+        prologue_sequence, pulse_sequence, upload_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
 
         # Replace the pulseblock name placeholder with the generated instructions
         self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
         self.seq.prepend_sequence(prologue_sequence)
         
-        # Save the list of waveforms to be exported as CSV
-        self.export_waveforms.extend(export_waveforms)
+        # Save the list of waveforms to be uploaded to AWG
+        self.upload_waveforms.extend(upload_waveforms)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
@@ -89,11 +89,10 @@ class PulsedExperiment():
         awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
         self.hd.log.info("Preparing to upload sequence.")
 
-        # Upload CSV waveforms
-        for waveform_tuple in self.export_waveforms:
-            csv_filename = waveform_tuple[0]
+        # Upload waveforms to AWG
+        for index, waveform_tuple in enumerate(self.upload_waveforms):
             waveform_np_array = waveform_tuple[-1]
-            awg.save_waveform_csv(waveform_np_array, csv_filename)
+            awg.dyn_waveform_upload(index, waveform_np_array)
 
         # Upload sequence
         awg.compile_upload_sequence(self.seq)
@@ -188,9 +187,9 @@ class PulsedExperiment():
         self.exp_config_dict = exp_config_dict
         self.iplot = iplot
 
-        # List of waveforms to be exported. Items are of the form:
-        # tuple(waveform CSV name, ch_name, start_step, end_step, np.array waveform)
-        self.export_waveforms = []
+        # List of waveforms to be uploaded. Items are of the form:
+        # tuple(waveform var name, ch_name, start_step, end_step, np.array waveform)
+        self.upload_waveforms = []
 
         # Check if template is available, and store it.
         if use_template:

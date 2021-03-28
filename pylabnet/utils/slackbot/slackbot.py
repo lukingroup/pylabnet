@@ -38,12 +38,27 @@ class PylabnetSlackBot():
         for channel in self.subscribed_channels:
             self.post_to_channel(channel, message)
 
+    def upload_file(self, channel, filepath):
+        """Upload file to channel"""
+        try:
+            response = self.client.files_upload(channels=channel, file=filepath)
+            assert response["file"]  # the uploaded file
+        except SlackApiError as e:
+            # You will get a SlackApiError if "ok" is False
+            assert e.response["ok"] is False
+            assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
+            print(f"Got an error: {e.response['error']}")
+
+    def upload_to_channels(self, filepath):
+        """Upload file to all subscribed channels"""
+        for channel in self.subscribed_channels:
+            self.upload_file(channel, filepath)
 
 def main():
     slackbot = PylabnetSlackBot()
     slackbot.subscribe_channel(['#pylabnet_slackbot'])
     slackbot.broadcast_to_channels('Lorem Ipsum')
-
+    slackbot.upload_to_channels('devices.ico')
 
 if __name__ == "__main__":
     main()

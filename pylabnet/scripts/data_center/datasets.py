@@ -599,12 +599,12 @@ class ManualOpenLoopScan(Dataset):
         scan_span =  ((previous_x[-1] - previous_x[0])*1e3)
         current_bins_per_ghz = data_len / scan_span
 
-        self.log.info(f'Scan span = {scan_span}')
-        self.log.info(f'current_bins_per_ghz = {current_bins_per_ghz}')
-        self.log.info(f'self.bins_per_ghz = {self.bins_per_ghz}')
+        # self.log.info(f'Scan span = {scan_span}')
+        # self.log.info(f'current_bins_per_ghz = {current_bins_per_ghz}')
+        # self.log.info(f'self.bins_per_ghz = {self.bins_per_ghz}')
 
         new_num_bins = int(scan_span * self.bins_per_ghz)
-        self.log.info(f'new_num_bins = {new_num_bins}')
+        #self.log.info(f'new_num_bins = {new_num_bins}')
 
 
 

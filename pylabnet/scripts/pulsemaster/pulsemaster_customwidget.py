@@ -43,7 +43,7 @@ class DictionaryTableModel(QAbstractTableModel):
 
         # Prepare data.
         data_ok, datadict = self.prepare_data(data)
-
+        
         assert data_ok, "Input dictionary invalid."
 
         self.datadict = datadict
@@ -90,11 +90,9 @@ class DictionaryTableModel(QAbstractTableModel):
 
         data_list = []
 
-        for i, (key, item) in enumerate(datadict.items()):
-            entry_list = []
-            entry_list.append(key)
-            for list_entry in item:
-                entry_list.append(list_entry)
+        for key, item in datadict.items():
+            entry_list = [key] + item
+            data_list.append(entry_list)
 
         return data_list
 

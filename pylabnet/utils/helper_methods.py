@@ -16,6 +16,8 @@ from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
+#import netifaces as ni
+
 
 def str_to_float(in_val):
     """Convert human-readable exponential form to float.
@@ -833,6 +835,9 @@ def get_ip():
     """
 
     operating_system = get_os()
+
+    if operating_system == 'Linux':
+        import netifaces as ni
 
     if operating_system == 'Windows':
 

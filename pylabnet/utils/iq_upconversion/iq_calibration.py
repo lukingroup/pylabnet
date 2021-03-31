@@ -176,7 +176,7 @@ class IQ_Calibration():
 
 	def get_ampl_phase(self, if_freq, lo_freq):
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 		q_vals = self.q.values
 		q_lo = np.array(self.q.index)
 		q_if = np.array(self.q.columns.get_level_values(1))
@@ -193,7 +193,7 @@ class IQ_Calibration():
 
 	def get_dc_offsets(self, if_freq, lo_freq):
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 		dc_i_vals = self.dc_i.values
 		dc_i_lo = np.array(self.dc_i.index)
 		dc_i_if = np.array(self.dc_i.columns.get_level_values(1))
@@ -211,7 +211,7 @@ class IQ_Calibration():
 	def get_harmonic_powers(self, if_freq, lo_freq):
 
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 
 		Hm1 = self.harms.iloc[:, 0].unstack()
 		LO = np.array(Hm1.index)
@@ -248,7 +248,7 @@ class IQ_Calibration():
 		and LO frequencies. Will also set the HDAWG's sine frequency to that
 		given by if_freq'''
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 		#Todo: remove same code in the iq_optimizer script and make it a general utility function
 
 		#First setting the desired IF frequency on the HDAWG
@@ -279,7 +279,7 @@ class IQ_Calibration():
 		'''Gets the optimal sine output values on the hdawg for the given IF
 		and LO frequencies.'''
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 
 		#Computing the optimal I and Q amplitudes
 		q_opt, phase_opt = self.get_ampl_phase(if_freq, lo_freq)
@@ -296,16 +296,16 @@ class IQ_Calibration():
 		and LO frequencies. Will also set the HDAWG's sine frequency and LO
 		frequency to the correct value.'''
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 
 		LO = np.array(self.phase.index)
 		IF = np.array(self.phase.columns.get_level_values(1))
 
 		if freq < LO[0] + IF[0]:
-			raise Exception("Chosen frequency too low!")
+			raise ValueError("Chosen frequency too low!")
 
 		if freq > LO[-1] + IF[-1]:
-			raise Exception("Chosen frequency too high!")
+			raise ValueError("Chosen frequency too high!")
 
 		if_f = np.linspace(LO[0], LO[-1], 100)
 
@@ -332,16 +332,16 @@ class IQ_Calibration():
 		Gets the optimal sine output values on the hdawg for the found IF
 		and LO frequencies.'''
 		if (not self.initialized):
-			raise Exception("No calibration loaded!")
+			raise ValueError("No calibration loaded!")
 
 		LO = np.array(self.phase.index)
 		IF = np.array(self.phase.columns.get_level_values(1))
 
 		if freq < LO[0] + IF[0]:
-			raise Exception("Chosen frequency too low!")
+			raise ValueError("Chosen frequency too low!")
 
 		if freq > LO[-1] + IF[-1]:
-			raise Exception("Chosen frequency too high!")
+			raise ValueError("Chosen frequency too high!")
 
 		if_f = np.linspace(IF[0], IF[-1], 100)
 

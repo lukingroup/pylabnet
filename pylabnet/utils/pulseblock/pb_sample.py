@@ -130,18 +130,23 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
 
     for ch in pb_obj.dflt_dict.keys():
 
+        # Skip the channel if it is not digital
+        if ch.is_analog: 
+            continue
+
+        ch_name = ch.name
+
         # Fill the array with default values
-        samp_dict[ch] = pb_obj.dflt_dict[ch].get_value(t_ar=t_ar)
+        samp_dict[ch_name] = pb_obj.dflt_dict[ch].get_value(t_ar=t_ar)
 
         # Iterate through each pulse item and calculate
         # non-default values for corresponding T-points
         if ch in pb_obj.p_dict.keys():
-
             for p_item in pb_obj.p_dict[ch]:
-
+            
                 # find indexes of pulse edges
                 indx_1 = int(p_item.t0 * samp_rate)
-                indx_2 = int((p_item.t0 + p_item.dur) * samp_rate)
+                indx_2 = indx_1 + int(p_item.dur * samp_rate)
 
                 # calculate new values
                 val_ar = p_item.get_value(
@@ -149,9 +154,91 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
                 )
 
                 # set the values to sample array
-                samp_dict[ch][indx_1 : indx_2] = val_ar
+                samp_dict[ch_name][indx_1 : indx_2] = val_ar
+
 
     if debug:
         return samp_dict, n_pts, add_pts, t_ar
     else:
         return samp_dict, n_pts, add_pts
+
+def pulse_length_samples(pulse, samp_rate):
+    """ Number of samples a given pulse is expected to occupy
+    """
+
+    t_step = 1 / samp_rate
+    # Number of samples
+    n_pts = int(
+        (pulse.dur - 0.5*t_step) // t_step + 1
+    )
+
+    return n_pts
+
+
+def pulse_sample(pulse, dflt_pulse, samp_rate, len_min=32, len_step=1, len_adj=True):
+    """ Generate sample array from a single pulse object
+    """
+
+    t_step = 1 / samp_rate
+
+    # Number of samples
+    n_pts_orig = pulse_length_samples(pulse, samp_rate)
+    n_pts = n_pts_orig
+    
+    # Number of points added to meet length constraints
+    add_pts = 0
+
+    # Sample array length fits hardware constraints: 
+    # - length step
+    if n_pts_orig % len_step != 0:
+        if len_adj:
+            n_pts = int(
+                (n_pts // len_step + 1) * len_step
+            )
+            add_pts = n_pts - n_pts_orig
+        else:
+            raise ValueError(
+                'Calculated number of points {} does not match hardware step {}. \n'
+                'To enable auto-appending of default values, set len_adj to True'
+                ''.format(n_pts, len_step))
+
+    # - min length
+    if not len_min <= n_pts:
+        if len_adj:
+            add_pts += (len_min - n_pts)
+            n_pts = len_min
+        else:
+            raise ValueError(
+                'Calculated number of points {} is below hardware minimum {}. \n'
+                'Try increasing sampling rate or pulse block duration'
+                ''.format(n_pts, len_min))
+
+    # Sample pulse block ------------------------------------------------------
+
+    # Generate arrays of T-points
+    t_ar = np.linspace(
+        start=pulse.t0,
+        stop=pulse.t0 + t_step * (n_pts - 1),
+        num=n_pts
+    )
+    # calculate new values
+    samp_arr = pulse.get_value(t_ar=t_ar[:n_pts_orig])
+    # buffer the end with default values
+    samp_arr = np.append(samp_arr, dflt_pulse.get_value(t_ar=t_ar[n_pts_orig:]))
+
+    return samp_arr, n_pts, add_pts
+
+# TODO YQ
+# def extend_pulse(pulse, pulse_list, dflt_pulse, t_start, t_end):
+#     """ Extends a pulse to a specified start and end time by padding with the 
+#     default Pulse value. """
+
+#     if t_start is not None:
+#         for search_pulse in pulse_list:
+#             if search_pulse == pulse: continue
+#             if search_pulse.t0 < t_start <= (search_pulse.t0 + search_pulse.dur):
+
+
+    
+
+#     return done, pulse

@@ -1,11 +1,10 @@
-""" Class for fitting popup for scan_1d.py """
 from pylabnet.gui.pyqt.external_gui import Popup, InternalPopup
-from scipy.optimize import curve_fit # is not automatically installed?
-import numpy as np
+import sys
 from PyQt5 import (QtCore, QtGui, QtWidgets)
 from PyQt5.QtWidgets import  (
     QApplication, QDialog, QMainWindow, QMessageBox)
-from scan_fit_n import FitModel
+from scipy.optimize import curve_fit # is not automatically installed?
+import numpy as np
 
 def lorentzian(x, *params):
     """
@@ -22,7 +21,7 @@ def reflection(Delta, Delta_ac, g, gamma, kwg, k):
         - kwg + k/2)/(1j*Delta + (g**2/(1j*(Delta-Delta_ac) + gamma/2)) + k/2)
 
 def ref_int(Delta, Delta_ac, g, kwg, k, a, offset):
-    return a*np.abs(reflection((Delta-406.65)*1000, Delta_ac, g, 0.1, kwg, k))**2 + offset
+    return a*np.abs(reflection(Delta, Delta_ac, g, 0.1, kwg, k))**2 + offset
 
 class FitPopup(Popup):
     def __init__(self, ui, x_fwd, data_fwd, x_bwd, 
@@ -35,159 +34,176 @@ class FitPopup(Popup):
         self.data_bwd = np.array(data_bwd)
         self.p0_fwd = p0_fwd
         self.p0_bwd = p0_bwd
-        self.p0_updated = False
-        self.fit_suc = True
-        self.fit_method = None
         self.config = config
-
-    def load_lor(self):
-        lor = FitModel("Lorentzian",lorentzian, "Center","FWHM","Amp","Offset", "Bab")
-        self.lor_pop = QMainWindow()
-        lor.init_ui(self.lor_pop)
-        self.lor_pop.confirm.clicked.connect(self.set_lor)
+        self.fit_suc = True
+        self.mod = None
     
-    def load_cqed(self):
-        self.cqed_pop = Popup(ui = 'cqed_fit_params')
+    def fit_selection(self, index):
+        if index == 0:
+            self.mod = FitModel("Lorentzian fit", lorentzian,
+            "Center", "FWHM", "Amp", "Ver. Offset")
+        elif index == 1:
+            self.mod = FitModel("cQED fit", ref_int,
+            "Delta_ac", "g", "kwg", "k", "Amp", "Ver. Offset")
+        self.mod.load_mod(config = self.config)
+        self.close()
+    
+    def fit_mod(self):
+        fit_fwd, fit_bwd, self.p0_fwd,\
+            self.p0_bwd, self.fit_suc = self.mod.fit_mod(
+                                        self.x_fwd,
+                                        self.data_fwd,
+                                        self.x_bwd,
+                                        self.data_bwd,
+                                        self.p0_fwd,
+                                        self.p0_bwd)
+        return fit_fwd, fit_bwd, self.p0_fwd, self.p0_bwd
+
+
+class FitModel():
+    def __init__(self, name, func, *fit_params):
+        self.func = func
+        self.name = name
+        self.fit_params = fit_params
+        self.p0_updated = False
+        self.init_params = None
+        self.pop = None
+
+    def load_mod(self, config = None):
+        self.pop = QMainWindow()
+        self.init_ui(self.pop)
         try:
-            self.cqed_pop.Delta_ac.setText(str(self.config["cQED params"]["Delta_ac"]))
-            self.cqed_pop.g.setText(str(self.config["cQED params"]["g"]))
-            self.cqed_pop.k_wg.setText(str(self.config["cQED params"]["k_wg"]))
-            self.cqed_pop.k.setText(str(self.config["cQED params"]["k"]))
-            self.cqed_pop.confirm.clicked.connect(str(self.set_cqed))
+            for param in self.fit_params:
+                self.pop.params[param].setText(str(config[self.name + "params"][param]))
         except:
             pass
-        self.cqed_pop.confirm.clicked.connect(self.set_cqed)
+        self.pop.confirm.clicked.connect(self.set_mod)
     
-    def set_lor(self):
-        self.lor_params = {"center": float(self.lor_pop.center.text()), \
-                            "fwhm": float(self.lor_pop.fwhm.text()), \
-                            "amp": float(self.lor_pop.amp.text()), \
-                            "offset": float(self.lor_pop.offset.text())}
-        self.fit_method = 'fit_lor'
-        self.p0_updated = True
-        #print(str(self.lor_params["center"]))
-    
-    def set_cqed(self):
-        self.cqed_params = {"Delta_ac": float(self.cqed_pop.Delta_ac.text()), \
-                            "g": float(self.cqed_pop.g.text()), \
-                            "k_wg": float(self.cqed_pop.k_wg.text()), \
-                            "k": float(self.cqed_pop.k.text()), \
-                            "amp": float(self.cqed_pop.amp.text()),
-                            "offset": float(self.cqed_pop.offset.text())}
-                            #"gamma": float(self.cqed_pop.gamma.text()),
-        self.fit_method = 'fit_cqed'
+    def set_mod(self):
+        self.init_params = dict()
+        for param in self.fit_params:
+            self.init_params[param] = float(self.pop.params[param].text())
         self.p0_updated = True
     
-    def fit_lor(self):
-        if self.lor_params is not None:
-            p0 = [self.lor_params["center"], self.lor_params["fwhm"],\
-                 self.lor_params["amp"], self.lor_params["offset"]]
-            if self.p0_fwd is None or self.p0_updated:
-                p0_fwd = p0
-                p0_bwd = p0
+    def fit_mod(self, x_fwd, data_fwd, x_bwd, 
+                data_bwd, p0_fwd = None, p0_bwd = None):
+        if self.init_params is not None:
+            p0 = list()
+            for param in self.fit_params:
+                p0.append(self.init_params[param])
+            if p0_fwd is None or self.p0_updated:
+                p0_fwd_f = p0
+                p0_bwd_f = p0
                 self.p0_updated = False
             else:
-                p0_fwd = self.p0_fwd
-                p0_bwd = self.p0_bwd
-            #print(p0)
-            # fit fwd and bwd
-            #print(p0_fwd)
+                p0_fwd_f = p0_fwd
+                p0_bwd_f = p0_bwd
             try:
-                popt1, pcov1 = curve_fit(lorentzian, self.x_fwd, self.data_fwd, p0 = p0_fwd)
-                popt2, pcov2 = curve_fit(lorentzian, self.x_bwd, self.data_bwd, p0 = p0_bwd)
-                p0_fwd = popt1
-                p0_bwd = popt2
+                popt1, pcov1 = curve_fit(self.func, x_fwd, data_fwd, p0 = p0_fwd_f)
+                popt2, pcov2 = curve_fit(self.func, x_bwd, data_bwd, p0 = p0_bwd_f)
+                p0_fwd_f = popt1
+                p0_bwd_f = popt2
                 #print(pcov1)
-                self.fit_suc = True
+                fit_suc = True
             except:
-                p0_fwd = p0
-                p0_bwd = p0
+                p0_fwd_f = p0
+                p0_bwd_f = p0
                 popt1 = np.zeros_like(p0)
                 popt2 = np.zeros_like(p0)
-                self.fit_suc = False
-            # display fit parameters
-            self.lor_pop.fit_cen.setText(str(popt1[0]))
-            self.lor_pop.fit_fwhm.setText(str(popt1[1]))
-            self.lor_pop.fit_amp.setText(str(popt1[2]))
-            self.lor_pop.fit_off.setText(str(popt1[3]))
-            self.lor_pop.fit_cen_2.setText(str(popt2[0]))
-            self.lor_pop.fit_fwhm_2.setText(str(popt2[1]))
-            self.lor_pop.fit_amp_2.setText(str(popt2[2]))
-            self.lor_pop.fit_off_2.setText(str(popt2[3]))
-            return lorentzian(self.x_fwd, *popt1), lorentzian(self.x_bwd, *popt2),\
-                   p0_fwd, p0_bwd
-        else:
-            self.fit_error = Popup(ui = 'fit_error')
-            self.fit_error.error.setText('ERROR: You have no initial guesses.')
-    
-    def fit_cqed(self):
-        if self.cqed_params is not None:
-            p0 = [self.cqed_params["Delta_ac"], self.cqed_params["g"],
-                 self.cqed_params["k_wg"],
-                 self.cqed_params["k"], self.cqed_params["amp"],
-                 self.cqed_params["offset"]]
-                 # self.cqed_params["gamma"],
-            if self.p0_fwd is None or self.p0_updated:
-                p0_fwd = p0
-                p0_bwd = p0
-                self.p0_updated = False
-            else:
-                p0_fwd = self.p0_fwd
-                p0_bwd = self.p0_bwd
-            #print(p0)
-            # fit fwd and bwd
-            #print(p0_fwd)
-            try:
-                popt1, pcov1 = curve_fit(ref_int, self.x_fwd, self.data_fwd, p0 = p0_fwd) #, diff_step = 0.1)
-                popt2, pcov2 = curve_fit(ref_int, self.x_bwd, self.data_bwd, p0 = p0_bwd) #, diff_step = 0.1)
-                p0_fwd = popt1
-                p0_bwd = popt2
-                #print(pcov1)
-                self.fit_suc = True
-            except:
-                p0_fwd = p0
-                p0_bwd = p0
-                popt1 = np.zeros_like(p0)
-                popt2 = np.zeros_like(p0)
-                self.fit_suc = False
-            # display fit parameters
-            self.cqed_pop.fit_delta_ac.setText(str(popt1[0]))
-            self.cqed_pop.fit_g.setText(str(popt1[1]))
-            #self.cqed_pop.fit_gamma.setText(str(popt1[2]))
-            self.cqed_pop.fit_k.setText(str(popt1[2]))
-            self.cqed_pop.fit_k_wg.setText(str(popt1[3]))
-            self.cqed_pop.fit_ampl.setText(str(popt1[4]))
-            self.cqed_pop.fit_offs.setText(str(popt1[5]))
+                fit_suc = False
+            for ind, param in enumerate(self.fit_params):
+                self.pop.fparams[param].setText(str(popt1[ind]))
+                self.pop.fparams2[param].setText(str(popt2[ind]))
+            return self.func(x_fwd, *popt1), self.func(x_bwd, *popt2),\
+                   p0_fwd, p0_bwd, fit_suc
 
-            self.cqed_pop.fit_delta_ac_2.setText(str(popt2[0]))
-            self.cqed_pop.fit_g_2.setText(str(popt2[1]))
-            #self.cqed_pop.fit_gamma_2.setText(str(popt1[2]))
-            self.cqed_pop.fit_k_2.setText(str(popt2[2]))
-            self.cqed_pop.fit_k_wg_2.setText(str(popt2[3]))
-            self.cqed_pop.fit_ampl_2.setText(str(popt2[4]))
-            self.cqed_pop.fit_offs_2.setText(str(popt2[5]))
+    def init_ui(self, obj):
+        obj.setObjectName("Form")
+        obj.resize(982, 793)
+        _translate = QtCore.QCoreApplication.translate
+        obj.setWindowTitle(_translate("Form", "Form"))
 
-            return ref_int(self.x_fwd, *popt1), ref_int(self.x_bwd, *popt2),\
-                   p0_fwd, p0_bwd
-        else:
-            self.fit_error = Popup(ui = 'fit_error')
-            self.fit_error.error.setText('ERROR: You have no initial guesses.')
+        obj.formLayoutWidget = QtWidgets.QWidget(obj)
+        obj.formLayoutWidget.setGeometry(QtCore.QRect(10, 10, 961, 781))
+        obj.formLayoutWidget.setObjectName("formLayoutWidget")
+        obj.main = QtWidgets.QFormLayout(obj.formLayoutWidget)
+        obj.main.setContentsMargins(0, 0, 0, 0)
+        obj.main.setObjectName("main")
+        obj.title = QtWidgets.QLabel(obj.formLayoutWidget)
+        obj.title.setAlignment(QtCore.Qt.AlignCenter)
+        obj.title.setObjectName("title")
+        obj.main.setWidget(0, QtWidgets.QFormLayout.SpanningRole, obj.title)
+        obj.title.setText(_translate("Form", self.name + " Fit Parameters: Initial Guesses"))
+        
+        obj.param_labs = dict()
+        obj.params = dict()
+        obj.fparams_lab = dict()
+        obj.fparams = dict()
+        obj.fparams_lab2 = dict()
+        obj.fparams2 = dict()
 
+        lab_ct = 2
+        for param in self.fit_params:
+            obj.param_labs[param] = QtWidgets.QLabel(obj.formLayoutWidget)
+            obj.param_labs[param].setObjectName(param + "_lab")
+            obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.LabelRole, 
+                                       obj.param_labs[param])
+            obj.param_labs[param].setText(_translate("Form", param + ":"))
 
-    def fit_selection(self, index):
-        #print(str(index))
-        if index == 0:
-            self.load_lor()
-            self.close()
-        elif index == 1:
-            self.load_cqed()
-            self.close()
-    
-    def doSomething(self):
+            obj.params[param] = QtWidgets.QLineEdit(obj.formLayoutWidget)
+            obj.params[param].setObjectName(param)
+            obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.FieldRole, 
+                                obj.params[param])
+            lab_ct = lab_ct + 1
+        
+        obj.confirm = QtWidgets.QPushButton(obj.formLayoutWidget)
+        obj.confirm.setObjectName("confirm")
+        obj.confirm.setText(_translate("Form", "OK"))
+        obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.FieldRole, obj.confirm)
+        obj.gridlayout = QtWidgets.QGridLayout()
+        obj.gridlayout.setObjectName("gridlayout")
 
-        # If you're running in the console (e.g. in the vscode debugger)
-        print("something")
+        row = 0
+        col = 0
+        for param in self.fit_params:
+            obj.fparams_lab[param] = QtWidgets.QLabel(obj.formLayoutWidget)
+            obj.fparams_lab[param].setObjectName("f" + param + "_lab")
+            obj.fparams_lab[param].setText(_translate("Form", "Fwd Fitted " + param + ":"))
+            obj.gridlayout.addWidget(obj.fparams_lab[param],
+                                            row, col, 1, 1)
 
-        # If you're running thru pylabnet
-        self.log.info("something")
+            obj.fparams[param] = QtWidgets.QLabel(obj.formLayoutWidget)
+            obj.fparams[param].setText("")
+            obj.fparams[param].setObjectName("fit_" + param)
+            obj.gridlayout.addWidget(obj.fparams[param], 
+                                            row, col + 1, 1, 1)
+            row = row + 1
+        
+        row = 0
+        col = 2
+
+        for param in self.fit_params:
+            obj.fparams_lab2[param] = QtWidgets.QLabel(obj.formLayoutWidget)
+            obj.fparams_lab2[param].setObjectName("f" + param + "_lab_2")
+            obj.fparams_lab2[param].setText(_translate("Form", "Bwd Fitted " + param + ":"))
+            obj.gridlayout.addWidget(obj.fparams_lab2[param],
+                                            row, col, 1, 1)
+
+            obj.fparams2[param] = QtWidgets.QLabel(obj.formLayoutWidget)
+            obj.fparams2[param].setText("")
+            obj.fparams2[param].setObjectName("fit_" + param + "_2")
+            obj.gridlayout.addWidget(obj.fparams2[param], 
+                                            row, col + 1, 1, 1)
+            row = row + 1
+        obj.main.setLayout(lab_ct + 1, QtWidgets.QFormLayout.FieldRole, obj.gridlayout)
+        QtCore.QMetaObject.connectSlotsByName(obj)
+        obj.show()
+
+if __name__ == "__main__":
+    lor = FitModel("Lorentzian",lorentzian, "Center","FWHM","Amp","Offset", "Bab")
+    app = QApplication(sys.argv)
+    lor.load_mod()
+    #lor.popup = QMainWindow()
+    #lor.init_ui(lor.popup)
+    app.exec_()
     

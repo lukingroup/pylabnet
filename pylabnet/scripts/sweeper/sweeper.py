@@ -23,7 +23,7 @@ from pylabnet.gui.igui.iplot import MultiTraceFig, HeatMapFig
 
 class Sweep1D:
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, sweep_type='triangle'):
         """ Instantiates sweeper
 
         :param logger: instance of LogClient
@@ -40,7 +40,7 @@ class Sweep1D:
         self.hplot_fwd = None
         self.iplot_bwd = None
         self.hplot_bwd = None
-        self.sweep_type = 'triangle'
+        self.sweep_type = sweep_type
         self.reps = 0
         self.stop_flag = False
         self.stop_end_flag = False
@@ -376,14 +376,14 @@ class Sweep1D:
 
 class MultiChSweep1D(Sweep1D):
 
-    def __init__(self, logger=None, channels=None):
+    def __init__(self, logger=None, channels=None, sweep_type='triangle'):
         """ Instantiates sweeper
 
         :param logger: instance of LogClient
         :param channels: (list) list of channel names
         """
 
-        super().__init__(logger)
+        super().__init__(logger, sweep_type=sweep_type)
         self.channels = channels
 
     def save(self, filename=None, directory=None, date_dir=False):

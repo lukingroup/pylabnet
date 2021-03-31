@@ -465,14 +465,15 @@ class Controller(MultiChSweep1D):
     def _update_fits(self):
         """ Updates fits """
         if len(self.avg_fwd) != 0 and self.fit_popup is not None:
-            if self.fit_popup.fit_method is not None:
+            if self.fit_popup.mod is not None and\
+            self.fit_popup.mod.init_params is not None:
                 self.fit_popup.data_fwd = np.array(self.avg_fwd)
                 self.fit_popup.data_bwd = np.array(self.avg_bwd)
                 if self.p0_fwd is not None and self.p0_bwd is not None:
                     self.fit_popup.p0_fwd = self.p0_fwd
                     self.fit_popup.p0_bwd = self.p0_bwd
-                method = getattr(self.fit_popup, self.fit_popup.fit_method)
-                self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = method()
+                #method = getattr(self.fit_popup, self.fit_popup.fit_method)
+                self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = self.fit_popup.fit_mod()
                 if self.fit_popup.fit_suc:
                     self.widgets['fit_avg'][0].setData(
                             self.x_fwd,

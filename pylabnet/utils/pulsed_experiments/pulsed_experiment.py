@@ -1,12 +1,12 @@
 
 import os
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
-from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import DIOPulseBlockHandler
+from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import AWGPulseBlockHandler
 
 class PulsedExperiment():
     """ Wrapper class for Pulsed experiments using the ZI HDAWG.
     This class conveniently allows for the generation and the AWG upload of
-    DIO pulse-sequences.
+    pulse-sequences.
     """
 
     def get_templates(self, template_directory="sequence_templates"):
@@ -30,12 +30,10 @@ class PulsedExperiment():
         self.seq.replace_placeholders(self.placeholder_dict)
         self.hd.log.info("Replaced placeholders.")
 
-    def replace_dio_commands(self, pulseblock, dio_command_number):
-        """Replace all DIO-waveform placeholders with DIO waveform commands.
+    def replace_awg_commands(self, pulseblock):
+        """Replace all waveform placeholders with actual AWG waveform commands.
 
         :pulseblock: Pulseblock object
-        :dio_command_number: (int) Index designating which DIO-waveform placeholder
-        needs to be replaced.
         """
 
         if self.iplot:
@@ -43,35 +41,38 @@ class PulsedExperiment():
             iplot(pulseblock)
 
         # Instanciate pulseblock handler.
-        pb_handler = DIOPulseBlockHandler(
+        pb_handler = AWGPulseBlockHandler(
             pb = pulseblock,
             assignment_dict=self.assignment_dict,
+            exp_config_dict=self.exp_config_dict,
             hd=self.hd
         )
 
-        # Generate .seqc instruction set which represents pulse sequence.
-        dig_pulse_sequence = pb_handler.get_dio_sequence()
+        # Generate instruction set which represents pulse sequence.
+        prologue_sequence, pulse_sequence, upload_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
 
-        # Construct replacement dict
-        dio_replacement_dict = {
-            f"{self.dio_seq_identifier}{dio_command_number}": dig_pulse_sequence
-        }
+        # Replace the pulseblock name placeholder with the generated instructions
+        self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
+        self.seq.prepend_sequence(prologue_sequence)
+        
+        # Save the list of waveforms to be uploaded to AWG
+        self.upload_waveforms.extend(upload_waveforms)
 
-        # Replace DIO waveform placeholder.
-        self.seq.replace_placeholders(dio_replacement_dict)
-        self.hd.log.info("Replaced DIO sequence(s).")
+        self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
+        return pb_handler
 
     def prepare_sequence(self):
-        """Prepares sequence by replacing all placeholders and DIO-placeholders."""
+        """Prepares sequence by replacing all variable placeholders and waveform-placeholders."""
 
-        # First replace the standard placeholder.
+        # First replace the standard placeholders
         if self.placeholder_dict is not None:
             self.replace_placeholders()
 
-        # Then replace the DIO commands:
-        for i, pulseblock in enumerate(self.pulseblocks):
-            self.replace_dio_commands(pulseblock, i)
+        # Then replace the waveform commands
+        for pulseblock in self.pulseblocks:
+            pb_handler = self.replace_awg_commands(pulseblock)
+            self.pulseblock_handlers.append(pb_handler)
 
     def prepare_awg(self, awg_number):
         """ Create AWG instance, uploads sequence and configures DIO output bits
@@ -81,24 +82,51 @@ class PulsedExperiment():
 
         # Create an instance of the AWG Module.
         awg = AWGModule(self.hd, awg_number)
-        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
 
+        if awg is None:
+            return
+
+        awg.set_sampling_rate('2.4 GHz') # Set 2.4 GHz sampling rate.
         self.hd.log.info("Preparing to upload sequence.")
 
-        # Upload sequence.
-        if awg is not None:
-            awg.compile_upload_sequence(self.seq)
+        # Upload sequence
+        awg.compile_upload_sequence(self.seq)
 
-        for pulseblock in self.pulseblocks:
-            # Instanciate pulseblock handler.
-            pb_handler = DIOPulseBlockHandler(
-                pb = pulseblock,
-                assignment_dict=self.assignment_dict,
-                hd=self.hd
-            )
-            pb_handler.setup_hd()
+        # Upload waveforms to AWG
+        for index, waveform_tuple in enumerate(self.upload_waveforms):
+            waveform_np_array = waveform_tuple[-1]
+            awg.dyn_waveform_upload(index, waveform_np_array)
+
+        # Setup analog channel settings for each pulseblock
+        # Setup DIO drive bits for each pulseblock
+        for pb_handler in self.pulseblock_handlers:
+            awg.setup_dio(pb_handler.DIO_bits)
+            awg.setup_analog(pb_handler.setup_config_dict, self.assignment_dict)
 
         return awg
+
+    def prepare_microwave(self):
+        """ Command the microwave generator to turn on output and set the 
+        oscillator frequency based on the IQ pulse requirements. """
+
+        if self.mw_client is None:
+            return
+
+        # Get all specified LO frequencies from the IQ pulses 
+        lo_freqs = set()
+        for pb_handler in self.pulseblock_handlers:
+            if "lo_freq" in pb_handler.setup_config_dict:
+                lo_freqs.add(pb_handler.setup_config_dict["lo_freq"])
+
+        if len(lo_freqs) == 0:
+            self.hd.log.info("MW client available but no pulses requiring MW oscillator.")
+            return
+        elif len(lo_freqs) > 1:
+            self.hd.log.warn("More than 1 MW frequencies specified, taking the first one.")
+
+        self.mw_client.set_freq(list(lo_freqs)[0])
+        # mw_client.set_power() # TODO: any default value for powers?
+        self.mw_client.output_on()
 
     def get_ready(self, awg_number):
         """Prepare AWG for sequence execution.
@@ -107,23 +135,35 @@ class PulsedExperiment():
         pulseblocks, upload it to the AWG and configure the DIO output bits.
         """
         self.prepare_sequence()
-        return self.prepare_awg(awg_number)
+        self.prepare_microwave()
+        return self.prepare_awg(awg_number) # TODO YQ
 
-    def __init__(self, pulseblocks, assignment_dict, hd, placeholder_dict=None,
-    use_template=True, template_name='base_dig_pulse', sequence_string=None,
-    dio_seq_identifier='dig_sequence', template_directory="sequence_templates", iplot=True):
+    def __init__(self, 
+                pulseblocks, 
+                assignment_dict, 
+                hd, 
+                mw_client=None,
+                placeholder_dict=None,
+                exp_config_dict=None,
+                use_template=True, 
+                template_name='base_dig_pulse', 
+                sequence_string=None,
+                marker_string='$',
+                template_directory="sequence_templates", 
+                iplot=True):
         """ Initilizes pulseblock experiment
 
+        :pulseblocks: Single Pulseblock object or list of Pulseblock objects.
+        :assignment_dict: Assigning channel numbers to channel names. 
+            Format: {channel_name : [ "analog"/"dio", channel_number ]}
         :hd: Instance of ZI AWG Driver
-        :pulseblock_objects: Single Pulseblock object or list of Pulseblock
-                    objects.
-        :assignment_dict: Assigning channels to DIO output bins.
         :placeholder_dict: Dictionary containing placeholder names and values for the .seqct file.
+        :exp_config_dict: Dictionary containing any additional configs.
         :use_template: (bool) If True, look for .seqc template, if false, use
             sequence_string .
         :template_name: (str) Name of the .seqct template file (must be stored in sequence_template_folders)
         :sequence_string: (str) .seqc sequence if no template sequence is used.
-        :dio_seq_identifier: (str) Placeholder within .seqct files to be replaced with DIO sequences.
+        :marker_string: (str) String used to wrap placeholders to indicate them for replacement.
         :template_directory: Folder where to look for .seqct templates.
         :iplot: If True, sequences will be plotted.
         """
@@ -134,13 +174,22 @@ class PulsedExperiment():
         else:
             self.pulseblocks = pulseblocks
 
+        # List of pulseblock handlers
+        self.pulseblock_handlers = []
+
         self.assignment_dict = assignment_dict
         self.hd = hd
+        self.mw_client = mw_client
         self.template_name = template_name
         self.sequence_string = sequence_string
+        self.marker_string = marker_string
         self.placeholder_dict = placeholder_dict
-        self.dio_seq_identifier = dio_seq_identifier
+        self.exp_config_dict = exp_config_dict
         self.iplot = iplot
+
+        # List of waveforms to be uploaded. Items are of the form:
+        # tuple(waveform var name, ch_name, start_step, end_step, np.array waveform)
+        self.upload_waveforms = []
 
         # Check if template is available, and store it.
         if use_template:
@@ -166,12 +215,5 @@ class PulsedExperiment():
         self.seq = Sequence(
             hdawg_driver = hd,
             sequence = sequence_string,
+            marker_string = marker_string
         )
-
-
-
-
-
-
-
-

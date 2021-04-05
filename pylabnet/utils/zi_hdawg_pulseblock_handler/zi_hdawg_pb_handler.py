@@ -1,3 +1,4 @@
+import re
 import numpy as np
 from pylabnet.utils.pulseblock.pb_sample import pb_sample, pulse_sample
 from pylabnet.utils.pulseblock.placeholder import Placeholder
@@ -314,10 +315,9 @@ class AWGPulseBlockHandler():
                 wave_var_name = f"{self.pb.name}_{ch.name}_{pulse.t0:.2}"
 
                 # Remove illegal chars
-                wave_var_name = wave_var_name.replace("-", "")
-                wave_var_name = wave_var_name.replace(" ", "")
-                wave_var_name = wave_var_name.replace(".", "_")
-                wave_var_name = wave_var_name.replace("+", "_")
+                wave_var_name = re.sub("[-* ]", "", wave_var_name)
+                wave_var_name = re.sub("[.+]", "_", wave_var_name)
+
 
                 if wave_var_name in [wave[0] for wave in waveforms]:
                     self.log.error("Found two pulses at the same time in the same channel.")

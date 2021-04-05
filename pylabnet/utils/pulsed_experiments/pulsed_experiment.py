@@ -82,21 +82,18 @@ class PulsedExperiment():
         """ Prepares setup code in the AWG sequence reuqired for preserving 
             existing DIO bits. """
 
+        # Stores bits used across all pulseblocks
         used_bits = set()
 
         for pb_handler in self.pulseblock_handlers:
             used_bits.update(pb_handler.used_dio_bits)
-            self.hd.log.error(pb_handler.pb.name)
-            self.hd.log.error(used_bits)
-
-        self.hd.log.error(used_bits)
 
         # Read current output state of the DIO
         # TODO YQ: change to a correct way of reading current bits using breakout?
         sequence = "var current_state = getDIO();\n"
 
         # Mask is 1 in the position of each used DIO bit
-        mask  = sum(1 << bit for bit in used_bits)
+        mask = sum(1 << bit for bit in used_bits)
         sequence += f"var mask = {bin(mask)};\n"
 
         # masked_state zeros out bits in the mask from the current_state

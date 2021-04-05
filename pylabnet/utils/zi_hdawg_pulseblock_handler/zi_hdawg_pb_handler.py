@@ -583,7 +583,11 @@ class AWGPulseBlockHandler():
             # Add setDIO command to sequence
             dio_codeword = int(command[1])
             if self.exp_config_dict["preserve_bits"]:
-                masked_codeword = (mask & dio_codeword) # Zero out any bits that fall outside the mask
+                # Zero out any bits that fall outside the mask to avoid modifying
+                # bits not involved in pulses. The codeword should usually 
+                # always lie within the mask bits and so this should do nothing, 
+                # but acts as a failsafe.
+                masked_codeword = (mask & dio_codeword) 
                 return set_dio_cmd.format(f"masked_state|{masked_codeword}")
             else:
                 return set_dio_cmd.format(dio_codeword)
@@ -647,6 +651,9 @@ class AWGPulseBlockHandler():
         """
 
         mask = None
+        if self.exp_config_dict["preserve_bits"]:
+            mask = sum(1 << bit for bit in self.used_dio_bits)
+
         sequence = f"// Start of Pulseblock {self.pb.name}\n"
         wait_cmd = "wait({});\n"
 

@@ -73,6 +73,36 @@ class PulsedExperiment():
         for pulseblock in self.pulseblocks:
             pb_handler = self.replace_awg_commands(pulseblock)
             self.pulseblock_handlers.append(pb_handler)
+        
+        # Add setup code required for preserving DIO bits
+        if self.exp_config_dict["preserve_bits"]:
+            self.prepare_preserve_dio_seq()
+        
+    def prepare_preserve_dio_seq(self):
+        """ Prepares setup code in the AWG sequence reuqired for preserving 
+            existing DIO bits. """
+
+        used_bits = set()
+
+        for pb_handler in self.pulseblock_handlers:
+            used_bits.update(pb_handler.used_dio_bits)
+            self.hd.log.error(pb_handler.pb.name)
+            self.hd.log.error(used_bits)
+
+        self.hd.log.error(used_bits)
+
+        # Read current output state of the DIO
+        # TODO YQ: change to a correct way of reading current bits using breakout?
+        sequence = "var current_state = getDIO();\n"
+
+        # Mask is 1 in the position of each used DIO bit
+        mask  = sum(1 << bit for bit in used_bits)
+        sequence += f"var mask = {bin(mask)};\n"
+
+        # masked_state zeros out bits in the mask from the current_state
+        sequence += "var masked_state = ~mask&current_state;\n"
+
+        self.seq.prepend_sequence(sequence)
 
     def prepare_awg(self, awg_number):
         """ Create AWG instance, uploads sequence and configures DIO output bits
@@ -100,7 +130,7 @@ class PulsedExperiment():
         # Setup analog channel settings for each pulseblock
         # Setup DIO drive bits for each pulseblock
         for pb_handler in self.pulseblock_handlers:
-            awg.setup_dio(pb_handler.DIO_bits)
+            awg.setup_dio(pb_handler.used_dio_bits)
             awg.setup_analog(pb_handler.setup_config_dict, self.assignment_dict)
 
         return awg

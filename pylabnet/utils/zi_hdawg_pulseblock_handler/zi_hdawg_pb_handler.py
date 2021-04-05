@@ -67,15 +67,15 @@ class AWGPulseBlockHandler():
             self.assignment_dict = assignment_dict
             # Check key value integrity of assignment dict.
             self._check_key_assignments()
-
-        self.DIO_bits = [value[1] for value in self.assignment_dict.values() if value[0] == "dio"]
-        self.analog_chs = [value[1] for value in self.assignment_dict.values() if value[0] == "analog"]
-
+        
         # Store remapped samples, number of samples and number of traces for the
         # digital channels.
         (self.digital_sample_dict,
          self.num_digital_samples,
          self.num_digital_traces) = self._get_remapped_digital_samples(samp_rate=dig_samp_rate)
+
+        # List of DIO bits that are used by pulses in this pulseblock     
+        self.used_dio_bits = list(self.digital_sample_dict.keys())
 
         # Stores a list of configs for each type of config (e.g. osc freq, DC offset)
         # Populated when we parse the Pulseblocks and then used when we setup the
@@ -652,19 +652,6 @@ class AWGPulseBlockHandler():
 
         sequence = self.setup_variable_settings(sequence)
 
-        if self.exp_config_dict["preserve_bits"]:
-
-            # Read current output state of the DIO
-            # TODO YQ: change to a correct way of reading current bits using breakout?
-            sequence += "var current_state = getDIO(); \n"
-
-            # Mask is 1 in the position of each used DIO bit
-            mask  = sum(1 << bit for bit in self.digital_sample_dict.keys())
-            sequence += f"var mask = {bin(mask)}; \n"
-
-            # masked_state zeros out bits in the mask from the current_state
-            sequence += "var masked_state = ~mask&current_state; \n"
-
         # Waits and commands are interspersed (wait-command-wait-command-...)
         # If the first wait is 0, it is not displayed due to the wait_offset
         for i, waittime in enumerate(waittimes):
@@ -702,7 +689,6 @@ class AWGPulseBlockHandler():
             run multiple times.
         :return: sequence (str): AWG commands (e.g. setDIO() and wait()) that
             will generate the pulses described by the pulseblock.
-
         """
 
         # Get sample-wise sets of codewords for the digital channels.
@@ -722,7 +708,6 @@ class AWGPulseBlockHandler():
                                                     waveforms)
 
         # Reconstruct set of .seqc instructions representing the digital waveform.
-        sequence = self.construct_awg_sequence(combined_commands,
-                                               combined_waittimes)
+        sequence = self.construct_awg_sequence(combined_commands, combined_waittimes)
 
         return analog_setup, sequence, waveforms

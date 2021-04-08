@@ -487,6 +487,12 @@ class Controller(MultiChSweep1D):
                         scale=((self.max-self.min)/self.pts,1),
                         autoRange=False
                     )
+                    self.widgets['hmap'][1].setImage(
+                        img=np.transpose(fill_2dlist(self.data_bwd)),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
 
                 self.data_bwd[-1].append(reading[1])
                 cur_ind = len(self.data_bwd[-1])

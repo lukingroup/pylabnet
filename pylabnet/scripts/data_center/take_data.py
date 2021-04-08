@@ -14,7 +14,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata, load_script_config, find_client
+from pylabnet.utils.helper_methods import get_ip, load_config, generic_save, unpack_launcher, save_metadata, load_script_config, find_client
 from pylabnet.scripts.data_center import datasets
 
 

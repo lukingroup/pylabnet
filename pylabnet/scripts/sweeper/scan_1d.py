@@ -431,6 +431,15 @@ class Controller(MultiChSweep1D):
                 f'{"Fwd" if index==0 else "Bwd"} fit avg'
             )
 
+            self.widgets['fit_avg'].append(graph.plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+            ))
+            add_to_legend(
+                self.widgets['legend'][index],
+                self.widgets['fit_avg'][index],
+                f'{"Fwd" if index==0 else "Bwd"} fit avg'
+            )
+
         for hmap in self.widgets['hmap']:
             hmap.view.setLimits(xMin=self.min, xMax=self.max)
 
@@ -440,6 +449,7 @@ class Controller(MultiChSweep1D):
         self.data_fwd.append([])
 
     def _run_and_plot(self, x_value, backward=False):
+
         if self.sweep_type != 'sawtooth':
             if backward:
 

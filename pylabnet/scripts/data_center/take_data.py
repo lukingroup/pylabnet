@@ -18,7 +18,7 @@ from pylabnet.utils.helper_methods import load_config, generic_save, unpack_laun
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 75   # refresh rate in ms, try increasing if GUI lags
+REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
 
 class DataTaker:
 
@@ -244,11 +244,13 @@ class ExperimentThread(QtCore.QThread):
         self.start()
 
     def run(self):
+        self.params['iter_num'] = 0
         while self.running:
             self.experiment(
                 thread = self,
                 status_flag=self.status_flag,
                 **self.params)
+            self.params['iter_num'] += 1
 
 
 class UpdateThread(QtCore.QThread):

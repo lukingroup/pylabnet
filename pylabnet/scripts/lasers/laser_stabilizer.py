@@ -3,7 +3,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_ip, unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
+    load_script_config, load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
@@ -17,7 +17,7 @@ import pyqtgraph as pg
 
 class LaserStabilizer:
     """A class for stabilizing the laser power given a DAQ input, a power control output, and a setpoint"""
-    def __init__(self, config='toptica_laser_stabilization', ao_client=None, ai_client=None):
+    def __init__(self, config, ao_client=None, ai_client=None, hd=None, check_aom=False, logger=None):
         """Instantiates LaserStabilizer script object for stabilizing the laser
              :param config: (str) name of config file """
 
@@ -31,9 +31,13 @@ class LaserStabilizer:
 
         self._ao_client = ao_client
         self._ai_client = ai_client
+        self._hd = hd
+        self.log = logger
 
-        self.widgets['config'].setText(config)
-        self._load_config_file(config)
+
+        self.config = config
+        self.check_aom = check_aom
+        self._load_config_file()
 
         #Now initialize control/output voltage to 0, and set up label
         self._curr_output_voltage = self.widgets['p_outputVoltage'].value() #Stores current output voltage that is outputted by the AO
@@ -59,25 +63,8 @@ class LaserStabilizer:
         #Initially the program starts in the "unlocked" phase
         self._is_stabilizing = False
 
-    def _load_config_file(self, config):
-        """Loads the config file"""
-        #Now load the config file
-        self.config = load_config(config, logger=None)
-
-        #Instantiate links to power input (AI) and control output (AO) if the clients
-        #were not passed in directly. THis allows us to still run this off of main
-        #instead of a launcher if required.
-        if self._ai_client == None:
-            self._ai_client = nidaqmx_card_server.Client(
-                host=self.config["power_input_host"],
-                port=self.config["power_input_port"]
-            )
-        if self._ao_client == None:
-            self._ao_client = nidaqmx_card_server.Client(
-                host=self.config["ctrl_output_host"],
-                port=self.config["ctrl_output_port"]
-            )
-
+    def _load_config_file(self):
+        """Read values from config file."""
 
         self._ai_channel = self.config["power_input_channel"]
         self._hwc_ai_channel = self.config['hardware_ctrl_input_channel']
@@ -105,6 +92,21 @@ class LaserStabilizer:
 
         self.numReadsPerCycle = self.config["reads_per_cycle"] #Number of the reads on the DAQ card that are averaged over for an update cycle.
 
+    def check_aom_up(self):
+        """Checks if a given HDAWG DIO bit attached to an AOM switch is high"""
+
+        dio_config = load_config('dio_assignment_global')
+        DIO_bit = dio_config[self.config["aom_staticline"]]
+        current_config = self._hd.geti('dios/0/output')
+        DIO_bit_bitshifted =  (0b1 << DIO_bit) # for bit 3: 000...0001000
+
+        DIO_bitup = current_config & DIO_bit_bitshifted
+
+        if DIO_bitup > 0:
+            return True
+        else:
+            return False
+
     def run(self):
         """Main function to update both teh feedback loop as well as the gui"""
 
@@ -112,8 +114,16 @@ class LaserStabilizer:
 
         if self._is_stabilizing:
             #If we are locking the power, then need to update teh feedback loop and change the output label
-            self._update_feedback()
-            self._update_output_voltage_label()
+
+            # Check if DIO bit is high
+            if self.check_aom:
+                aom_up = self.check_aom_up()
+                if aom_up:
+                    self._update_feedback()
+                    self._update_output_voltage_label()
+            else:
+                self._update_feedback()
+                self._update_output_voltage_label()
 
         #We always need to update the plots as well and power label
 
@@ -374,18 +384,54 @@ def main():
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
-    config = load_config(kwargs['config'], logger=logger)
+
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+
+    config = load_script_config(script='laser_stabilizer',
+                                config=kwargs['config'],
+                                logger=logger)
+
+    ao_client = find_client(
+        clients=clients,
+        settings=config,
+        client_type='nidaqmx',
+        client_config='daq_ao',
+        logger=logger
+    )
+
+    ai_client = find_client(
+        clients=clients,
+        settings=config,
+        client_type='nidaqmx',
+        client_config='daq_ai',
+        logger=logger
+
+    )
+
+    if config['check_aom'] == "True":
+        check_aom= True
+    else:
+        check_aom = False
 
 
-    ao_client = find_client(logger, clients, 'nidaqmx')
-    ai_client = find_client(logger, clients, 'nidaqmx_ai')
+    hd = find_client(
+        clients=clients,
+        settings=config,
+        client_type='zi_hdawg',
+        client_config='g12_hdawg',
+        logger=logger
+
+    )
 
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(
-        config=kwargs['config'],
+        config=config,
         ao_client=ao_client,
-        ai_client=ai_client
+        ai_client=ai_client,
+        hd=hd,
+        check_aom = check_aom,
+        logger=logger
     )
 
     update_service = Service()

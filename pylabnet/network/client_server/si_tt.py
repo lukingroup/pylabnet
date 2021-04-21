@@ -61,12 +61,18 @@ class Service(ServiceBase):
     def exposed_create_gated_channel(self, channel_name, click_ch, gate_ch, delay):
         return self._module.create_gated_channel(channel_name, click_ch, gate_ch, delay)
 
+    def exposed_create_delayed_channel(self, channel_name, click_ch, delay):
+        return self._module.create_delayed_channel(channel_name, click_ch, delay)
+
     def exposed_update_delay(self, channel_name, delay):
         return self._module.update_delay(channel_name, delay)
 
     def exposed_create_combined_channel(self, channel_name, channel_list):
         channel_list = pickle.loads(channel_list)
         return self._module.create_combined_channel(channel_name, channel_list)
+
+    def exposed_set_trigger_level(self, channel, voltage):
+        return self._module.set_trigger_level(channel, voltage)
 
 class Client(ClientBase):
 
@@ -247,6 +253,9 @@ class Client(ClientBase):
             channel_name, click_ch, gate_ch, delay
         )
 
+    def create_delayed_channel(self, channel_name, click_ch, delay):
+        return self._service.exposed_create_delayed_channel(channel_name, click_ch, delay)
+
     def create_combined_channel(self, channel_name, channel_list):
         """ Creates a combined virtual channel which includes events from multiple cahnnels 
         
@@ -265,3 +274,6 @@ class Client(ClientBase):
         """
 
         return self._service.exposed_update_delay(channel_name, delay)
+
+    def set_trigger_level(self, channel, voltage):
+        return self._service.exposed_set_trigger_level(channel, voltage)

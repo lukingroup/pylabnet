@@ -122,7 +122,7 @@ class Service(ServiceBase):
         return self._module.set_item_index(container_label, index)
 
     def exposed_remove_client_list_entry(self, client_to_stop):
-        return self._module.client_list.takeItem(client_to_stop)
+        return self._module.remove_client_list_entry(client_to_stop)
 
 
 class Client(ClientBase):
@@ -239,7 +239,7 @@ class Client(ClientBase):
         return self._service.exposed_set_button_text(event_label, text)
 
     def remove_client_list_entry(self, client_to_stop):
-        return self._service.exposed_client_list.takeItem(client_to_stop)
+        return self._service.exposed_remove_client_list_entry(client_to_stop)
 
     def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
         """ Saves the current GUI state into a config file as a dictionary

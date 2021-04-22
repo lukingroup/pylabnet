@@ -505,6 +505,7 @@ class Controller:
                     del self.client_data[client_to_stop]
                 else:
                     self.gui_client.remove_client_list_entry(client_to_stop)
+                self.gui_logger.info(f'Hard kill of {client_to_stop} successfull.')
 
             except:
                 pass

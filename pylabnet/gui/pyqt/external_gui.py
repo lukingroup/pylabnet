@@ -229,9 +229,17 @@ class Window(QtWidgets.QMainWindow):
 
     def remove_client_list_entry(self, client_to_stop):
         """ Removes item in QListWidge """
+
+        # First remove item from Active Server list
         item_to_remove = self.client_list.findItems(client_to_stop, QtCore.Qt.MatchExactly)
         remove_index = self.client_list.row(item_to_remove[0])
         self.client_list.takeItem(remove_index)
+
+        # Then remove it from all the internal lists
+        del self.controller.port_list[client_to_stop]
+        del self.controller.log_service.client_data[client_to_stop]
+        del self.controller.client_list[client_to_stop]
+        del self.controller.client_data[client_to_stop]
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue

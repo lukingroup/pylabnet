@@ -230,7 +230,7 @@ class Window(QtWidgets.QMainWindow):
     def remove_client_list_entry(self, client_to_stop):
         """ Removes item in QListWidge """
         item_to_remove = self.client_list.findItems(client_to_stop, QtCore.Qt.MatchExactly)
-        remove_index = self.client_list.row(item_to_remove)
+        remove_index = self.client_list.row(item_to_remove[0])
         self.client_list.takeItem(remove_index)
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):

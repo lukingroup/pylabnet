@@ -121,6 +121,9 @@ class Service(ServiceBase):
     def exposed_set_item_index(self, container_label, index):
         return self._module.set_item_index(container_label, index)
 
+    def exposed_remove_client_list_entry(self, client_to_stop):
+        return self._module.client_list.takeItem(client_to_stop)
+
 
 class Client(ClientBase):
 
@@ -235,6 +238,9 @@ class Client(ClientBase):
     def set_button_text(self, event_label, text):
         return self._service.exposed_set_button_text(event_label, text)
 
+    def remove_client_list_entry(self, client_to_stop):
+        return self._service.exposed_client_list.takeItem(client_to_stop)
+
     def save_gui(self, config_filename, folder_root=None, logger=None, scalars=[], labels=[]):
         """ Saves the current GUI state into a config file as a dictionary
 
@@ -286,3 +292,5 @@ class Client(ClientBase):
             for label, text in data['gui_labels'].items():
                 self.set_label(text, label)
         logger.info(f'Loaded GUI values from {get_config_filepath(config_filename, folder_root)}')
+
+

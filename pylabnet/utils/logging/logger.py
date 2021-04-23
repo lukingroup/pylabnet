@@ -246,7 +246,7 @@ class LogClient:
         slackbot = PylabnetSlackBot()
         slackbot.subscribe_channel([channel])
 
-        msg_str = f"`{msg}`"
+        msg_str = f"`{msg_str}`"
         slackbot.broadcast_to_channels(msg_str)
         msg_str = f"Posted the following on Slack channel {channel}: {msg_str}"
         self.info(msg_str)

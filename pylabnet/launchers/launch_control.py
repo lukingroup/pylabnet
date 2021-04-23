@@ -528,6 +528,9 @@ class Controller:
             self.gui_logger.info(f'Launching device {device_server} '
                                          f'with configuration {device_config}')
 
+            self.gui_logger.slack(f'Launching device {device_server} '
+                                         f'with configuration {device_config}')
+
 
 
             # Initial configurations: All flags down.

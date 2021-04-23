@@ -196,7 +196,7 @@ class Wrap:
         if start_delay is not None:
             self._channels[name] = TT.DelayedChannel(
                 tagger=self._tagger,
-                input_channel=start_ch,
+                input_channel=self._get_channel(start_ch),
                 delay=start_delay
             )
             start_ch = name
@@ -275,7 +275,7 @@ class Wrap:
         if delay is not None:
             self._channels[f'{channel_name}_delayed'] = TT.DelayedChannel(
                 tagger=self._tagger,
-                input_channel=gate_ch,
+                input_channel= gate_ch,
                 delay=int(delay)
             )
             self._channels[f'{channel_name}_delayed_falling'] = TT.DelayedChannel(
@@ -297,6 +297,21 @@ class Wrap:
         )
         self.log.info(f'Created gated channel {channel_name}, '
                       f'click channel: {click_ch}, gate channel: {gate_ch}')
+
+    def create_delayed_channel(self, channel_name, click_ch, delay):
+        """ Creates a delayed virtual channel allowing for a user to input a delay
+        :param channel_name: (str) name, identifier of the channel
+        :param click_ch: (int) index of  channel
+        :param delay: (optional, int) amount to delay by
+        """
+        self._channels[channel_name] = TT.DelayedChannel(
+            tagger=self._tagger,
+            input_channel=self._get_channel(click_ch),
+            delay=int(delay)
+        )
+        self.log.info(f'Created delayed channel {channel_name}, '
+                      f'click channel: {click_ch}, delay: {delay}')
+
 
     def create_combined_channel(self, channel_name, channel_list):
         """ Creates a combined virtual channel which includes events from multiple cahnnels
@@ -335,6 +350,19 @@ class Wrap:
             return self._channels[ch].getChannel()
         else:
             return ch
+
+    def set_trigger_level(self, channel, voltage):
+        """ Set the trigger level of physics channel
+
+        :param ch: (int) channel index of physical channel
+
+        :param voltage: (float) Trigger level in volts.
+        """
+
+        self._tagger.setTriggerLevel(int(channel), float(voltage))
+        new_trigger_val = self._tagger.getTriggerLevel(int(channel))
+        self.log.info(f"Changed trigger level of channel {channel} to {new_trigger_val} V.")
+
 
     @staticmethod
     def handle_name(name):

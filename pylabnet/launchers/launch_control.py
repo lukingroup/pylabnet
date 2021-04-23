@@ -240,7 +240,7 @@ class Controller:
                 raise
         self.gui_server.start()
         self.gui_logger.update_data(data=dict(port=my_port))
-        
+
         if self.proxy:
             # Connect to the GUI server
             try:
@@ -430,7 +430,7 @@ class Controller:
 
         self.main_window.configure_widgets()
         self.main_window.update_widgets()
-        
+
         #Check for disconnection events
         self.check_disconnection(text)
 
@@ -442,7 +442,7 @@ class Controller:
 
         if self.disconnection:
             self.disconnect()
-    
+
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
@@ -466,13 +466,20 @@ class Controller:
                 self._close_dangling(client_to_stop)
         else:
             self._close_dangling(client_to_stop)
- 
-    
+
+
     def _close_dangling(self, client_to_stop):
 
-        # Cannot connect to the server and close, must remove. 
+        # Cannot connect to the server and close, must remove.
         # WARNING: might result in dangling threads
-        if self.port_list[client_to_stop] in self.log_server._server.clients:
+
+        try:
+            client_port_to_stop = self.port_list[client_to_stop]
+            port_found = True
+        except KeyError:
+            port_found = False
+
+        if port_found and client_port_to_stop in self.log_server._server.clients:
             c = self.port_list[client_to_stop]
             c.close()
             closing(c)
@@ -483,16 +490,23 @@ class Controller:
             del self.log_service.client_data[client_to_stop]
             del self.client_data[client_to_stop]
             self.gui_logger.info(f'Client disconnected: {client_to_stop}')
-        
-        # If we can't find the client connected to the server, just remove it 
+
+        # If we can't find the client connected to the server, just remove it
         else:
             self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
             try:
-                self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
-                del self.port_list[client_to_stop]
-                del self.client_list[client_to_stop]
-                del self.log_service.client_data[client_to_stop]
-                del self.client_data[client_to_stop]
+
+                # The following two member variables don't exist for a proxy.
+                if not self.proxy:
+                    self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                    del self.port_list[client_to_stop]
+                    del self.log_service.client_data[client_to_stop]
+                    del self.client_list[client_to_stop]
+                    del self.client_data[client_to_stop]
+                else:
+                    self.gui_client.remove_client_list_entry(client_to_stop)
+                self.gui_logger.info(f'Hard kill of {client_to_stop} successfull.')
+
             except:
                 pass
 
@@ -537,7 +551,7 @@ class Controller:
         :param index: (QModelIndex) index of file clicked on
         """
 
-        filepath = self.main_window.devices.model().filePath(index)
+        filepath = self.main_window.scripts.model().filePath(index)
 
         # Check if it is an actual config file
         if not os.path.isdir(filepath):
@@ -776,7 +790,7 @@ class Controller:
             self.kill_servers()
 
         self.main_window.close()
-    
+
     def start_stop_logging(self, master_log=False):
         """ Starts or stops logging to file depending on situation
 
@@ -934,7 +948,7 @@ def run(log_controller):
 
     # Refresh thread
     update_thread = QtCore.QThread()
-    
+
     if log_controller.proxy:
 
         # Set up GUI
@@ -949,7 +963,7 @@ def run(log_controller):
         # Redirect sys.stdout to queue
         queue = Queue()
         sys.stdout = WriteStream(queue)
-        
+
         # Instantiate GUI
         log_controller.start_logger()
         log_controller.initialize_gui()
@@ -970,4 +984,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_staticproxy()

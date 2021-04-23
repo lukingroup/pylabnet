@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2565</width>
-    <height>1470</height>
+    <width>1948</width>
+    <height>896</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,7 +20,7 @@
    <string>1D Scanner</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 0, 0);</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -102,6 +102,13 @@
     </item>
     <item row="1" column="0" colspan="2">
      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QCheckBox" name="fit">
+        <property name="text">
+         <string>Fit</string>
+        </property>
+       </widget>
+      </item>
       <item>
        <widget class="QLabel" name="param_2">
         <property name="maximumSize">
@@ -489,7 +496,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           </property>
           <property name="minimumSize">
            <size>
-            <width>1500</width>
+            <width>1300</width>
             <height>200</height>
            </size>
           </property>
@@ -554,7 +561,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           </property>
           <property name="minimumSize">
            <size>
-            <width>1500</width>
+            <width>1300</width>
             <height>200</height>
            </size>
           </property>
@@ -678,7 +685,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            </widget>
           </item>
           <item>
-           <widget class="QListWidget" name="exp">
+           <widget class="QTreeView" name="exp">
             <property name="styleSheet">
              <string notr="true">color: rgb(85, 170, 255);
 font: 25 12pt &quot;Calibri Light&quot;;</string>
@@ -712,9 +719,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </size>
         </property>
         <property name="styleSheet">
-         <string notr="true">font: 12pt &quot;Consolas&quot;;
-color: rgb(255, 255, 255);
-background-color: rgb(0, 0, 0);</string>
+         <string notr="true">font: 12pt &quot;Consolas&quot;;</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::StyledPanel</enum>
@@ -813,8 +818,8 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2565</width>
-     <height>38</height>
+     <width>1948</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

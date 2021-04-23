@@ -16,6 +16,8 @@ from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
+#import netifaces as ni
+
 
 def str_to_float(in_val):
     """Convert human-readable exponential form to float.
@@ -834,6 +836,9 @@ def get_ip():
 
     operating_system = get_os()
 
+    if operating_system == 'Linux':
+        import netifaces as ni
+
     if operating_system == 'Windows':
 
         # Retrieve subnet from config dict
@@ -912,6 +917,25 @@ def get_os():
         operating_system = pf
 
     return operating_system
+
+def set_graph_background(widget):
+    """ Sets the background color for pyqtgraph related widgets to pylabnet style
+
+    :param widget: base graph or legend widget
+    """
+
+    try:
+        widget.getViewBox().setBackgroundColor('#19232D')
+
+    # In case this widget does ont have a parent viewBox
+    except AttributeError:
+        pass
+
+    try:
+        widget.setBackground('#19232D')
+    # In case this widget does ont have a parent viewBox
+    except AttributeError:
+        pass
 
 class UnsupportedOSException(Exception):
     """Raised when the operating system is not supported."""

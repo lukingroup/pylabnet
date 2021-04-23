@@ -31,6 +31,7 @@ from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import qdarkstyle
 
 import pyqtgraph as pg
+pg.setConfigOption('background', '#19232D')
 import numpy as np
 import os
 import pickle
@@ -65,7 +66,7 @@ class Window(QtWidgets.QMainWindow):
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 
-    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True):
+    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -73,6 +74,7 @@ class Window(QtWidgets.QMainWindow):
             the filename is required (no filepath or extension)
         :param run: (bool, optional) whether or not to run (display) the GUI upon instantiation. Can set to false in
             order to debug and access Window methods directly in an interactive session
+        :param max: (bool, optional) whether or not to show GUI maximized
         """
 
         self.app = app  # Application instance onto which to load the GUI.
@@ -118,7 +120,11 @@ class Window(QtWidgets.QMainWindow):
 
         # Load and run the GUI
         self._load_gui(gui_template=gui_template, run=run)
-        self.showNormal()
+
+        if max:
+            self.showMaximized()
+        else:
+            self.showNormal()
 
         self.host=None
         self.port=None
@@ -220,6 +226,20 @@ class Window(QtWidgets.QMainWindow):
                 pass
 
         self.stop_button.setChecked(True)
+
+    def remove_client_list_entry(self, client_to_stop):
+        """ Removes item in QListWidge """
+
+        # First remove item from Active Server list
+        item_to_remove = self.client_list.findItems(client_to_stop, QtCore.Qt.MatchExactly)
+        remove_index = self.client_list.row(item_to_remove[0])
+        self.client_list.takeItem(remove_index)
+
+        # Then remove it from all the internal lists
+        del self.controller.port_list[client_to_stop]
+        del self.controller.log_service.client_data[client_to_stop]
+        del self.controller.client_list[client_to_stop]
+        del self.controller.client_data[client_to_stop]
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
@@ -707,6 +727,40 @@ class Window(QtWidgets.QMainWindow):
             widget=container_widget
         )
 
+
+class Popup(QtWidgets.QWidget):
+    """ Widget class for generic popup """
+
+    def __init__(self, ui):
+        """ Instantiates window
+
+        :param ui: .ui to use as a template
+        """
+
+        QtWidgets.QWidget.__init__(self)
+        ui = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'gui_templates',
+            f'{ui}.ui'
+        )
+        uic.loadUi(ui, self)
+        self.show()
+
+class InternalPopup(Popup):
+    """ Widget class for popup that appends to existing window """
+
+    def __init__(self, ui):
+        """
+        :param ui: .ui to use as a template
+        """
+
+        QtWidgets.QWidget.__init__(self)
+        ui = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'gui_templates',
+            f'{ui}.ui'
+        )
+        uic.loadUi(ui, self)
 
 class ParameterPopup(QtWidgets.QWidget):
     """ Widget class of to add parameter prompting popup"""
@@ -1216,7 +1270,7 @@ class Container:
 
 
 def fresh_popup(**params):
-    """ Creates a fresh ParameterPopup without a base GUI 
+    """ Creates a fresh ParameterPopup without a base GUI
 
     :param params: kwargs of parameters as keywords and data types
         as values
@@ -1231,7 +1285,7 @@ def fresh_popup(**params):
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-    
+
     return app, ParameterPopup(**params)
 
 def warning_popup(message):
@@ -1248,7 +1302,7 @@ def warning_popup(message):
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-    
+
     QtWidgets.QMessageBox.critical(
         None,
         "Error",

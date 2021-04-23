@@ -599,12 +599,12 @@ class ManualOpenLoopScan(Dataset):
         scan_span =  ((previous_x[-1] - previous_x[0])*1e3)
         current_bins_per_ghz = data_len / scan_span
 
-        self.log.info(f'Scan span = {scan_span}')
-        self.log.info(f'current_bins_per_ghz = {current_bins_per_ghz}')
-        self.log.info(f'self.bins_per_ghz = {self.bins_per_ghz}')
+        # self.log.info(f'Scan span = {scan_span}')
+        # self.log.info(f'current_bins_per_ghz = {current_bins_per_ghz}')
+        # self.log.info(f'self.bins_per_ghz = {self.bins_per_ghz}')
 
         new_num_bins = int(scan_span * self.bins_per_ghz)
-        self.log.info(f'new_num_bins = {new_num_bins}')
+        #self.log.info(f'new_num_bins = {new_num_bins}')
 
 
 
@@ -989,7 +989,14 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
             data_length=10000,
             window='lock_monitor',
             color_index=4
-        )
+        ),
+        self.add_child(
+            name='Max count history',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            window='lock_monitor',
+            color_index=5
+        ),
         self.add_child(
             name='Single photons',
             data_type=AveragedHistogram,
@@ -997,12 +1004,16 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
             window_title='Single-photon data'
         )
 
-    def set_v(self, v):
-        """ Updates voltage """
+
+    def set_v_and_counts(self, v, counts):
+        """ Updates voltage and counts"""
 
         self.v = v
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
+        self.children['Max count history'].set_data(counts)
+
+
 
 
 class ErrorBarGraph(Dataset):
@@ -1112,6 +1123,7 @@ class ErrorBarPlot(Dataset):
 
 class PhotonErrorBarPlot(ErrorBarGraph):
     un_normalized = np.array([])
+    normalized = np.array([])
     total_events = 0
     reps=0
 

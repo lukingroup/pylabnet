@@ -495,11 +495,18 @@ class Controller:
         else:
             self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
             try:
-                self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
-                del self.port_list[client_to_stop]
-                del self.client_list[client_to_stop]
-                del self.log_service.client_data[client_to_stop]
-                del self.client_data[client_to_stop]
+
+                # The following two member variables don't exist for a proxy.
+                if not self.proxy:
+                    self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                    del self.port_list[client_to_stop]
+                    del self.log_service.client_data[client_to_stop]
+                    del self.client_list[client_to_stop]
+                    del self.client_data[client_to_stop]
+                else:
+                    self.gui_client.remove_client_list_entry(client_to_stop)
+                self.gui_logger.info(f'Hard kill of {client_to_stop} successfull.')
+
             except:
                 pass
 

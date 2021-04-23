@@ -76,7 +76,7 @@ class Window(QtWidgets.QMainWindow):
             order to debug and access Window methods directly in an interactive session
         :param max: (bool, optional) whether or not to show GUI maximized
         """
-        
+
         self.app = app  # Application instance onto which to load the GUI.
 
         if self.app is None:
@@ -226,6 +226,20 @@ class Window(QtWidgets.QMainWindow):
                 pass
 
         self.stop_button.setChecked(True)
+
+    def remove_client_list_entry(self, client_to_stop):
+        """ Removes item in QListWidge """
+
+        # First remove item from Active Server list
+        item_to_remove = self.client_list.findItems(client_to_stop, QtCore.Qt.MatchExactly)
+        remove_index = self.client_list.row(item_to_remove[0])
+        self.client_list.takeItem(remove_index)
+
+        # Then remove it from all the internal lists
+        del self.controller.port_list[client_to_stop]
+        del self.controller.log_service.client_data[client_to_stop]
+        del self.controller.client_list[client_to_stop]
+        del self.controller.client_data[client_to_stop]
 
     def assign_plot(self, plot_widget, plot_label, legend_widget):
         """ Adds plot assignment request to a queue
@@ -1256,7 +1270,7 @@ class Container:
 
 
 def fresh_popup(**params):
-    """ Creates a fresh ParameterPopup without a base GUI 
+    """ Creates a fresh ParameterPopup without a base GUI
 
     :param params: kwargs of parameters as keywords and data types
         as values
@@ -1271,7 +1285,7 @@ def fresh_popup(**params):
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-    
+
     return app, ParameterPopup(**params)
 
 def warning_popup(message):
@@ -1288,7 +1302,7 @@ def warning_popup(message):
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-    
+
     QtWidgets.QMessageBox.critical(
         None,
         "Error",

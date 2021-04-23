@@ -76,7 +76,7 @@ class Window(QtWidgets.QMainWindow):
             order to debug and access Window methods directly in an interactive session
         :param max: (bool, optional) whether or not to show GUI maximized
         """
-        
+
         self.app = app  # Application instance onto which to load the GUI.
 
         if self.app is None:
@@ -140,6 +140,7 @@ class Window(QtWidgets.QMainWindow):
                 self.port = port
         except:
             pass
+        self.apply_stylesheet()
 
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):
@@ -1256,7 +1257,7 @@ class Container:
 
 
 def fresh_popup(**params):
-    """ Creates a fresh ParameterPopup without a base GUI 
+    """ Creates a fresh ParameterPopup without a base GUI
 
     :param params: kwargs of parameters as keywords and data types
         as values
@@ -1271,7 +1272,7 @@ def fresh_popup(**params):
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-    
+
     return app, ParameterPopup(**params)
 
 def warning_popup(message):
@@ -1288,7 +1289,7 @@ def warning_popup(message):
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-    
+
     QtWidgets.QMessageBox.critical(
         None,
         "Error",

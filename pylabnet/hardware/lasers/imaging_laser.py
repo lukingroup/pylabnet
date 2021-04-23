@@ -6,7 +6,7 @@ import time
 
 
 class Driver():
-    """Driver class for GPIB controlled Agilent EE405 Spectrum analyser"""
+    """Driver class"""
 
     def reset(self):
         """ Create factory reset"""
@@ -38,24 +38,26 @@ class Driver():
         # reset to factory settings
         self.reset()
 
-    def display_off(self):
+    def turn_laser_off(self):
         """ Power off display """
-        self.device.write(':DISPlay:ENABle OFF')
-        self.log.info("Display off.")
+        self.device.write('OUTPut1:STATe 0') # temp control
+        self.device.write('OUTPut2:STATe 0') # diode
+        self.log.info("Laser off.")
 
-    def display_on(self):
+    def turn_laser_on(self):
         """ Power on display """
-        self.device.write(':DISPlay:ENABle ON')
-        self.log.info("Display on.")
+        self.device.write('OUTPut2:STATe 1') # temp control
+        self.device.write('OUTPut1:STATe 1') # diode
+        self.log.info("Laser on.")
 
     def set_current(self, amps):
-        """ Sets current setpoint
+        """ Sets current setpoint in mA
         :amps:
         """
 
         if not 0 <= amps <= 60:
             self.log.error(
-                f'Invalid current ({amps}A). Attenuation must be between 0A and 60A'
+                f'Invalid current ({amps}mA). Attenuation must be between 0A and 60mA'
             )
-        self.device.write(f'SOURce2:CURRent:LEVel:IMMediate:AMPlitude {int(amps)}')
-        self.log.info(f'Current setpoint set to {amps}A.')
+        self.device.write(f'SOURce1:CURRent:LEVel:AMPLitude {amps*1e-3}')
+        self.log.info(f'Current setpoint set to {amps}mA.')

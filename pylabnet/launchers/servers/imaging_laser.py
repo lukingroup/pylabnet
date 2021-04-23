@@ -3,7 +3,7 @@ import socket
 from pylabnet.utils.helper_methods import load_device_config
 import pylabnet.hardware.lasers.imaging_laser as laser
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.agilent_e4405B import Service
+from pylabnet.network.client_server.imaging_laser import Service
 
 
 def launch(**kwargs):

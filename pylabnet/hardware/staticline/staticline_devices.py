@@ -266,6 +266,23 @@ class agilent_83732b(StaticLineHardwareHandler):
         if self.setting == "frequency":
             self.hardware_client.set_freq(float(value))
 
+class imaging_laser(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        pass
+
+    def up(self):
+        self.hardware_client.turn_laser_on()
+
+    def down(self):
+        self.hardware_client.turn_laser_off()
+
+    def set_value(self, value):
+        self.hardware_client.set_current(float(value))
+
 ################################################################################
 
 registered_staticline_modules = {
@@ -278,5 +295,6 @@ registered_staticline_modules = {
     'toptica': Toptica,
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice,
-    'agilent_83732b': agilent_83732b
+    'agilent_83732b': agilent_83732b,
+    'imaging_laser': imaging_laser
 }

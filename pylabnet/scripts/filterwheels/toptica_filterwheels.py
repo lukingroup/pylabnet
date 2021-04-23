@@ -1,6 +1,6 @@
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, find_client
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, find_client, load_script_config
 from pylabnet.gui.pyqt.external_gui import Window
 
 import time
@@ -113,10 +113,14 @@ class TopticaFilterWheelController:
 
 def launch(**kwargs):
 
-    logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
+    logger = kwargs['logger']
+    clients = kwargs['clients']
+    config = load_script_config(script='filterwheel',
+                        config=kwargs['config'],
+                        logger=logger)
 
-    filterwheel1 = find_client(logger, clients, 'toptica_filterwheel1')
-    filterwheel2 = find_client(logger, clients,'toptica_filterwheel2')
+    filterwheel1 = find_client(logger=logger, settings=config, clients=clients, client_type="fw102c", client_config='toptica_filterwheel1')
+    filterwheel2 = find_client(logger=logger, settings=config, clients=clients, client_type="fw102c", client_config='toptica_filterwheel2')
 
     # Instantiate Monitor script
     toptica_controller = TopticaFilterWheelController(

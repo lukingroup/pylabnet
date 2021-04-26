@@ -9,8 +9,8 @@ import ctypes
 import signal
 import re
 import pickle
-from pylabnet.utils.helper_methods import get_os, get_dated_subdirectory_filepath, get_ip
-
+from pylabnet.utils.helper_methods import get_os, get_dated_subdirectory_filepath, get_ip, load_config
+from pylabnet.utils.slackbot.slackbot import PylabnetSlackBot
 
 class LogHandler:
     """Protection wrapper for logger instance.
@@ -97,6 +97,14 @@ class LogHandler:
             return self._logger.get_metadata()
         except:
             return -1
+
+    def slack(self, msg_str):
+
+        try:
+            return self._logger.slack(msg_str=msg_str)
+        except:
+            return -1
+
 
 
 class ILog:
@@ -232,6 +240,17 @@ class LogClient:
             msg_str=msg_str,
             level_str='ERROR'
         )
+
+    def slack(self, msg_str):
+        channel = load_config('slackbot')['logger_channel']
+        slackbot = PylabnetSlackBot()
+        slackbot.subscribe_channel([channel])
+
+
+        message = f"Log from `{self._module_tag}`: `{msg_str}`"
+
+        slackbot.broadcast_to_channels(message)
+
 
     def exception(self, msg_str):
         # Get traceback string from the last exception

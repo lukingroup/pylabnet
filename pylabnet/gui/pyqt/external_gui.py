@@ -140,6 +140,7 @@ class Window(QtWidgets.QMainWindow):
                 self.port = port
         except:
             pass
+        self.apply_stylesheet()
 
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):

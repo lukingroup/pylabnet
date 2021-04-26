@@ -126,7 +126,6 @@ class LaserStabilizer:
                 self._update_output_voltage_label()
 
         #We always need to update the plots as well and power label
-
         self._update_plots()
         self._update_power_label()
 
@@ -194,7 +193,15 @@ class LaserStabilizer:
             #If it updates, reads in the power and updates
             #TODO: Read the power in one function only and then all of the places that use it (updating feedback, updating power label, and plotting)
             #access that member variable. Not a huge deal will slightly speed it up I guess and is a bit cleaner.
-            power = self.gain*np.array(self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage))
+
+            power = None
+
+            while power is None:
+                try:
+                    power = self.gain*np.array(self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage))
+                except:
+                    time.sleep(0.01)
+
             self.widgets['label_power'].setText(str(power[-1]))
             self._last_power = power[-1]/self.gain
             self._last_power_text_update = currTime
@@ -248,8 +255,12 @@ class LaserStabilizer:
         #First read in the current voltage (power)
         #Read in numReadsPerCycle signals (arb) to average
         #TODO: allow user to select reads per signal
-        currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
-
+        currSignal = None
+        while currSignal is None:
+            try:
+                currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
+            except:
+                time.sleep(0.01)
         #Add new data to the pid
         self.pid.set_pv(np.atleast_1d(np.mean(currSignal)))
 
@@ -268,7 +279,7 @@ class LaserStabilizer:
         #This is to avoid the potential error if the voltage control is toggled low between the last call of _check_hardware_control
         #and update_feedback, whcih would mean that currSignal would be 0 (assuming a pulsed experiment), and causing a garbage
         #feedback which could be an issue in the next pulse.
-        if (~self._under_hardware_control or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
+        if (~self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
     def _clear_data_plots(self, display_pts = 5000):
@@ -337,7 +348,12 @@ class LaserStabilizer:
     def _update_plots(self):
         """Updates the plots, both by adding in the new data and then drawing the data on the graph"""
         #Adding in new data to plots
-        currSignal = self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage)
+        currSignal = None
+        while currSignal is None:
+            try:
+                currSignal = self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage)
+            except:
+                time.sleep(0.01)
         self.measured_powers = np.append(self.measured_powers[1:], np.mean(currSignal))
         self.out_voltages = np.append(self.out_voltages[1:], self._curr_output_voltage)
         self.errors = np.append(self.errors[1:], (currSignal[-1] - self.voltageSetpoint))
@@ -391,38 +407,40 @@ def launch(**kwargs):
     config = load_script_config(script='laser_stabilizer',
                                 config=kwargs['config'],
                                 logger=logger)
+    for server in config['servers']:
 
-    ao_client = find_client(
-        clients=clients,
-        settings=config,
-        client_type='nidaqmx',
-        client_config='daq_ao',
-        logger=logger
-    )
+        if 'name' in server:
+            if server['name'] == 'input':
+                ai_client = find_client(
+                    clients=clients,
+                    settings=config,
+                    client_type=server['type'],
+                    client_config=server['config'],
+                    logger=logger
+                )
+            if server['name'] == 'output':
+                ao_client = find_client(
+                    clients=clients,
+                    settings=config,
+                    client_type=server['type'],
+                    client_config=server['config'],
+                    logger=logger
+                )
 
-    ai_client = find_client(
-        clients=clients,
-        settings=config,
-        client_type='nidaqmx',
-        client_config='daq_ai',
-        logger=logger
-
-    )
+        if server['type'] == 'zi_hdawg':
+            hd = find_client(
+                clients=clients,
+                settings=config,
+                client_type='zi_hdawg',
+                client_config=server['config'],
+                logger=logger
+            )
 
     if config['check_aom'] == "True":
         check_aom= True
     else:
         check_aom = False
 
-
-    hd = find_client(
-        clients=clients,
-        settings=config,
-        client_type='zi_hdawg',
-        client_config='g12_hdawg',
-        logger=logger
-
-    )
 
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(

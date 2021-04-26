@@ -93,8 +93,10 @@ class Dataset:
 
         for name, child in self.children.items():
             # If we need to process the child data, do it
+
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
+
 
     def visualize(self, graph, **kwargs):
         """ Prepare data visualization on GUI
@@ -568,7 +570,6 @@ class ManualOpenLoopScan(Dataset):
         self.children['Wavelength'].set_data(wavelength)
 
 
-
         # Append new data.
         if self.data is None:
             self.data = np.array([data])
@@ -818,6 +819,123 @@ class TriangleScan1D(Dataset):
                     prev_dataset.data = np.fliplr(prev_dataset.data)
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
+class SawtoothScan1D(Dataset):
+    """ 1D Sawtooth sweep of a parameter """
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.all_data = None
+        self.update_hmap = False
+        self.stop = False
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        # Get scan parameters from config
+        if set(['min', 'max', 'pts']).issubset(self.kwargs.keys()):
+            self.fill_params(self.kwargs)
+
+        # Prompt user if not provided in config
+        else:
+            self.popup = ParameterPopup(min=float, max=float, pts=int)
+            self.popup.parameters.connect(self.fill_params)
+
+    def fill_params(self, config):
+        """ Fills the min max and pts parameters """
+
+        self.min, self.max, self.pts = config['min'], config['max'], config['pts']
+
+        self.kwargs.update(dict(
+            x=np.linspace(self.min, self.max, self.pts),
+            name=config['name'] + 'trace'
+        ))
+        super().__init__(*self.args, **self.kwargs)
+
+        pass_kwargs = dict()
+        if 'window' in config:
+            pass_kwargs['window'] = config['window']
+
+        # Add child for averaged plot
+        self.add_child(
+            name= config['name'] + 'avg',
+            mapping=self.avg,
+            data_type=Dataset,
+            new_plot=False,
+            x=self.x,
+            color_index=2
+        )
+
+        # Add child for HMAP
+        self.add_child(
+            name= config['name'] + 'scans',
+            mapping=self.hmap,
+            data_type=HeatMap,
+            min=self.min,
+            max=self.max,
+            pts=self.pts,
+            **pass_kwargs
+        )
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+
+        # If we have already integrated a full dataset, avg
+        if dataset.reps > 1:
+            current_index = len(dataset.data) - 1
+            prev_dataset.data[current_index] = (
+                prev_dataset.data[current_index]*(dataset.reps-1)
+                + dataset.data[-1]
+            )/(dataset.reps)
+        else:
+            prev_dataset.data = dataset.data
+
+    def set_data(self, value):
+
+        if self.data is None:
+            self.reps = 1
+            self.data = np.array([value])
+        else:
+            self.data = np.append(self.data, value)
+
+        if len(self.data) > self.pts:
+            self.update_hmap = True
+            self.reps += 1
+
+            try:
+                reps_to_do = self.widgets['reps'].value()
+                if reps_to_do > 0 and self.reps > reps_to_do:
+                    self.stop = True
+            except KeyError:
+                pass
+
+            if self.all_data is None:
+                self.all_data = self.data[:-1]
+            else:
+                self.all_data = np.vstack((self.all_data, self.data[:-1]))
+            self.data = np.array([self.data[-1]])
+
+        self.set_children_data()
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None and len(self.data) <= len(self.x):
+            self.curve.setData(self.x[:len(self.data)], self.data)
+
+        for child in self.children.values():
+            child.update(update_hmap=copy.deepcopy(self.update_hmap))
+
+        if self.update_hmap:
+            self.update_hmap = False
+
+    def hmap(self, dataset, prev_dataset):
+
+        if dataset.update_hmap:
+            prev_dataset.data = dataset.all_data
 
 
 class HeatMap(Dataset):
@@ -1020,7 +1138,6 @@ class ErrorBarGraph(Dataset):
 
     def visualize(self, graph, **kwargs):
         """ Prepare data visualization on GUI
-
         :param graph: (pg.PlotWidget) graph to use
         """
 

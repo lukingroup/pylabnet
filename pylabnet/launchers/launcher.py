@@ -300,18 +300,16 @@ class Launcher:
                         + '                    ({})                   \n'.format(index + 1)
                         + match.summarize())
                 self.logger.info(msg_str)
-            # self.logger.info('------------------------------------------\n\n'
-            #                  'Which server would you like to connect to?\n'
-            #                  'Please enter a choice from {} to {}.'.format(1, len(matches)))
-            # app, popup = fresh_popup(index=int)
-            # self.waiting_flag = True
-            # popup.parameters.connect(self.find_index)
-            # while self.waiting_flag:
-            #     app.processEvents()
-            # self.logger.info(f'User chose ({self.use_index})')
-            # Depreciated user choice
+            self.logger.info('------------------------------------------\n\n'
+                             'Which server would you like to connect to?\n'
+                             'Please enter a choice from {} to {}.'.format(1, len(matches)))
+            app, popup = fresh_popup(index=int)
+            self.waiting_flag = True
+            popup.parameters.connect(self.find_index)
+            while self.waiting_flag:
+                app.processEvents()
+            self.logger.info(f'User chose ({self.use_index})')
 
-            self.use_index = len(matches)
             # If the user's choice falls within a relevant GUI, attempt to connect.
             try:
                 if self.use_index - 1 < 0:

@@ -4,7 +4,10 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 
-SLACKBOT_ACCESS_TOKEN = config('SLACK_BOT_TOKEN')
+try:
+    SLACKBOT_ACCESS_TOKEN = config('SLACK_BOT_TOKEN')
+except:
+    SLACKBOT_ACCESS_TOKEN = None
 
 
 
@@ -21,7 +24,7 @@ class PylabnetSlackBot():
 
         for channel in channel_list:
             self.subscribed_channels.append(channel)
-    
+
     def post_to_channel(self, channel, message):
         """Post message to channel"""
         try:

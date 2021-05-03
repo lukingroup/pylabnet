@@ -45,8 +45,8 @@ class LaserStabilizer:
         # self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
         #Update the input power label
-        self._last_power_text_update = 0
-        self._update_power_label()
+        self._last_power_text_update = 2
+        self.read_power()
 
         self._initialize_graphs()
 
@@ -120,8 +120,11 @@ class LaserStabilizer:
                 if self.check_aom_up():
                     currSignal = self._update_feedback()
                     self._update_output_voltage_label()
+                else:
+                    #If we are not locking the power, just read the power
+                    currSignal =  self.read_power()
             else:
-                self._update_feedback()
+                currSignal = self._update_feedback()
                 self._update_output_voltage_label()
 
         else:
@@ -286,8 +289,6 @@ class LaserStabilizer:
         #Checks if > 1s has elapsed since the last change to the power reading label
         #I do this since otherwise the text label updates too quickly and it's annoying
         #to read.
-
-
         currTime = time.time()
         if currTime - self._last_power_text_update > 1:
             power = self.gain*currSignal

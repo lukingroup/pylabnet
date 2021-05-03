@@ -203,7 +203,7 @@ class LaserStabilizer:
 
             power = self.gain*currSignal
 
-            self.widgets['label_power'].setText(str(power[-1])[:5])
+            self.widgets['label_power'].setText(str(self.gain*power[-1])[:5])
             self._last_power = power[-1]/self.gain
             self._last_power_text_update = currTime
 
@@ -284,9 +284,7 @@ class LaserStabilizer:
         #and update_feedback, whcih would mean that currSignal would be 0 (assuming a pulsed experiment), and causing a garbage
         #feedback which could be an issue in the next pulse.
         if (not self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
-            start = time.time()
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
-            self.log.info(time.time() - start)
 
 
         #Checks if > 1s has elapsed since the last change to the power reading label
@@ -296,7 +294,7 @@ class LaserStabilizer:
         if currTime - self._last_power_text_update > 1:
             power = self.gain*currSignal
 
-            self.widgets['label_power'].setText(str(power[-1])[:5])
+            self.widgets['label_power'].setText(str(self.gain*power[-1])[:5])
             self._last_power = power[-1]/self.gain
             self._last_power_text_update = currTime
 

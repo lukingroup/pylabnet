@@ -58,7 +58,7 @@ class LaserStabilizer:
         #Finally hookup the final buttons
         self.widgets['start'].clicked.connect(lambda: self.start(update_st_gui=True))
         self.widgets['stop'].clicked.connect(self.stop)
-        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=5000))
+        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=1000))
 
         #Initially the program starts in the "unlocked" phase
         self._is_stabilizing = False
@@ -151,7 +151,7 @@ class LaserStabilizer:
         self._update_PID()
 
         #Reset the graphs
-        self._clear_data_plots(display_pts)
+        #self._clear_data_plots(display_pts)
 
         #Finally turn on the power stabilization
         self._is_stabilizing = True
@@ -192,7 +192,7 @@ class LaserStabilizer:
             try:
                 currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
             except:
-                time.sleep(0.01)
+                pass #time.sleep(0.005)
 
         #Checks if > 1s has elapsed since the last change to the power reading label
         #I do this since otherwise the text label updates too quickly and it's annoying
@@ -222,8 +222,8 @@ class LaserStabilizer:
         This method is automatically run when the user changes the value in the text box, allowing
         the user to control the output voltage  directly when the laser power is not "locked".
         """
-        if (~self._is_stabilizing): #Only updates value if we are not stabilizing, otherwise the PID loop will be driving the output voltage
-                                    #as opposed to the user.
+        if (not self._is_stabilizing): #Only updates value if we are not stabilizing, otherwise the PID loop will be driving the output voltage
+                                  #as opposed to the user.
             self._curr_output_voltage = self.widgets['p_outputVoltage'].value()
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
@@ -263,9 +263,10 @@ class LaserStabilizer:
             try:
                 currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
             except:
-                time.sleep(0.01)
+                pass #time.sleep(0.005)
         #Add new data to the pid
         self.pid.set_pv(np.atleast_1d(np.mean(currSignal)))
+        #self.pid.set_pv(np.mean(currSignal))
 
         #Now compute the new control value and update the AO
         self.pid.set_cv()
@@ -282,8 +283,10 @@ class LaserStabilizer:
         #This is to avoid the potential error if the voltage control is toggled low between the last call of _check_hardware_control
         #and update_feedback, whcih would mean that currSignal would be 0 (assuming a pulsed experiment), and causing a garbage
         #feedback which could be an issue in the next pulse.
-        if (~self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
+        if (not self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
+            start = time.time()
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
+            self.log.info(time.time() - start)
 
 
         #Checks if > 1s has elapsed since the last change to the power reading label
@@ -299,7 +302,7 @@ class LaserStabilizer:
 
         return currSignal
 
-    def _clear_data_plots(self, display_pts = 5000):
+    def _clear_data_plots(self, display_pts = 1000):
         """Initializes/clears the variables holding the data which is plotted"""
         #Initializing variables for plotting
         self.out_voltages = np.ones(display_pts) * self._curr_output_voltage
@@ -359,7 +362,7 @@ class LaserStabilizer:
             curve_name="Error"
         )
 
-        self._clear_data_plots(5000)
+        self._clear_data_plots(1000)
 
     def _update_plots(self, currSignal):
         """Updates the plots, both by adding in the new data and then drawing the data on the graph"""

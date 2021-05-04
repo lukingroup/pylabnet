@@ -1,11 +1,12 @@
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.gui.igui.iplot import SingleTraceFig
+from pylabnet.gui.igui.iplot import SingleTraceFig, MultiTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
     get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
     load_config, pyqtgraph_save, find_client, get_ip, load_script_config)
 from pylabnet.network.client_server.count_histogram import Service
+from pylabnet.scripts.counter.hist_fit import FitPopup
 
 import numpy as np
 import time
@@ -94,20 +95,19 @@ class TimeTrace:
 
     def init_plot(self):
         """ Instantiates a plot, assuming counter is live """
-
         self.plot = SingleTraceFig(title_str='Count Histogram')
         self.plot.set_data(
             x_ar=self.ctr.get_x_axis(self.hist)/1e12,
             y_ar=self.ctr.get_counts(self.hist)[0]
         )
+
         self.plot.show()
 
     def _update_data(self):
-        """ Updates to the current data """
-
         self.plot.set_data(
             y_ar=self.ctr.get_counts(self.hist)[0]
         )
+
 
     def go(self):
         """ Runs counter from scratch """
@@ -256,6 +256,10 @@ class TimeTraceGui(TimeTrace):
             directory=self.config['save_path']
         ))
         self.gui.run.clicked.connect(self.run)
+
+        #### CHANGED CHANGED CHANGED
+        self.gui.fit.clicked.connect(self.fit_config)
+
         self._configure_delay_updates()
 
         # Configure window length preview
@@ -284,6 +288,7 @@ class TimeTraceGui(TimeTrace):
             add_to_legend(self.legend, self.gate_curves[gate], gate)
 
         self.gui.apply_stylesheet()
+        self.fitting = False
 
     def clear_all(self):
         """ Clears all plots """
@@ -311,6 +316,34 @@ class TimeTraceGui(TimeTrace):
         self.set_parameters(binwidth, n_bins)
         for gate in self.gates.values():
             gate.set_parameters(binwidth, n_bins)
+
+    def fit_config(self, status:bool):
+        """ Configures fitting add-on
+
+        :param status: (bool) whether or not fit button is checked
+        """
+
+        # If box is newly checked, instantiate popup
+        if status:
+            self.fit_popup = FitPopup(ui='fit_popup_hist',
+                                      x=np.array(range(self.gui.n_bins.value()))*int(self._get_binwidth())/1e12, #dummy values, not actually used None, #self.ctr.get_x_axis(self.hist)/1e12,
+                                      data=np.zeros(self.gui.n_bins.value()), #dummy values, not actually used #None, #self.ctr.get_counts(self.hist)[0],
+                                      p0 = None,
+                                      config = self.config,
+                                      log=self.log)
+            self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
+            self.fit_curve = self.gui.graph.plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[5])
+            )
+            add_to_legend(self.legend, self.fit_curve, 'Histogram Fit')
+
+            self.fitting = True
+            self.p0 = None
+
+        # If box isn't checked, remove popup
+        else:
+            self.fit_popup = None
+            self.fitting = False
 
     def run(self):
         """ Handles run button click """
@@ -368,10 +401,19 @@ class TimeTraceGui(TimeTrace):
         # Clear existing data
         self.curve.clear()
 
+        y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
+
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
-            self.ctr.get_counts(self.hist)[0]
+            y #self.ctr.get_counts(self.hist)[0]
         )
+
+
+
+        if self.fitting:
+            self.fit_curve.clear()
+
+            self._update_fit()
 
         for gate_name, gate_curve in self.gate_curves.items():
             gate_curve.clear()
@@ -382,17 +424,36 @@ class TimeTraceGui(TimeTrace):
 
     def _update_data(self):
         """ Adds latest data to the plot """
+        y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
 
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
-            self.ctr.get_counts(self.hist)[0]
+            y #self.ctr.get_counts(self.hist)[0]
         )
+
+        if self.fitting:
+            self._update_fit()
 
         for gate_name, gate_curve in self.gate_curves.items():
             gate_curve.setData(
                 self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist)/1e12,
                 self.gates[gate_name].ctr.get_counts(self.gates[gate_name].hist)[0]
             )
+
+    def _update_fit(self):
+        """ Updates fits """
+        if self.fit_popup.mod is not None and self.fit_popup.mod.init_params is not None:
+            y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
+            #self.fit_popup.data = np.array(self.ctr.get_counts(self.hist)[0])
+            self.fit_popup.data = np.array(y)
+            if self.p0 is not None:
+                self.fit_popup.p0 = self.p0
+            self.fit, self.p0 = self.fit_popup.fit_mod()
+            if self.fit_popup.fit_suc:
+                self.fit_curve.setData(
+                        self.ctr.get_x_axis(self.hist)/1e12,
+                        self.fit
+                    )
 
     def _get_binwidth(self):
         """ Gets the binwidth using the unit combo box

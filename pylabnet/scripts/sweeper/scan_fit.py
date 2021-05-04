@@ -16,6 +16,25 @@ def lorentzian(x, *params):
     off = params[3]
     return off + amp*0.5*wid/((x - cen)**2 + (0.5*wid)**2)
 
+def doubleGaussian(x, a1, a2, c1, c2, w1, w2,o):
+    return a1*np.exp(-(x-c1)**2/(2*w1**2))+a2*np.exp(-(x-c2)**2/(2*w2**2))+o
+
+def gaussian(x, a1,  c1,  w1, o):
+    return a1*np.exp(-(x-c1)**2/(2*w1**2))+o
+
+def Rabi(x, a1, p1, w1, o):
+    return a1*np.sin(2*np.pi*(x/(2*w1))+ np.pi/180*p1)+o
+
+def dbl_lorentzian(x, *params):
+    """
+    :param params: parameters for lorentzian in the order center, width, amp
+    """
+    cen = params[0]
+    wid = params[1]
+    amp = params[2]
+    off = params[3]
+    return off + amp*0.5*wid/((x - cen)**2 + (0.5*wid)**2)
+
 def reflection(Delta, Delta_ac, g, gamma, kwg, k):
     return (1j*Delta + (g**2/(1j*(Delta-Delta_ac) + gamma/2)) \
         - kwg + k/2)/(1j*Delta + (g**2/(1j*(Delta-Delta_ac) + gamma/2)) + k/2)
@@ -25,7 +44,7 @@ def ref_int(Delta, Delta_ac, g, kwg, k, a, offset):
 
 
 class FitPopup(Popup):
-    def __init__(self, ui, x_fwd, data_fwd, x_bwd, 
+    def __init__(self, ui, x_fwd, data_fwd, x_bwd,
                  data_bwd, p0_fwd, p0_bwd, config, log):
         super().__init__(ui)
         self.log = log
@@ -38,17 +57,27 @@ class FitPopup(Popup):
         self.config = config
         self.fit_suc = True
         self.mod = None
-    
+
     def fit_selection(self, index):
         if index == 0:
             self.mod = FitModel("Lorentzian fit", lorentzian,
             "Center", "FWHM", "Amp", "Ver. Offset")
         elif index == 1:
+            self.mod = FitModel("Gaussian fit", gaussian,
+            "Amp", "Center", "Width", "Ver. Offset")
+        elif index == 2:
+            self.mod = FitModel("Double Gaussian fit", doubleGaussian,
+            "Amp 1", "Amp 2", "Center 1", "Center 2", "Width 1", "Width 2", "Ver. Offset")
+        elif index == 3:
+            self.mod = FitModel("Rabi fit", Rabi,
+            "Amp", "phase (deg)", "pi time", "Ver. Offset")
+        elif index == 4:
             self.mod = FitModel("cQED fit", ref_int,
             "Delta_ac", "g", "kwg", "k", "Amp", "Ver. Offset")
+
         self.mod.load_mod(config = self.config)
         self.close()
-    
+
     def fit_mod(self):
         fit_fwd, fit_bwd, self.p0_fwd,\
             self.p0_bwd, self.fit_suc = self.mod.fit_mod(
@@ -79,14 +108,14 @@ class FitModel():
         except:
             pass
         self.pop.confirm.clicked.connect(self.set_mod)
-    
+
     def set_mod(self):
         self.init_params = dict()
         for param in self.fit_params:
             self.init_params[param] = float(self.pop.params[param].text())
         self.p0_updated = True
-    
-    def fit_mod(self, x_fwd, data_fwd, x_bwd, 
+
+    def fit_mod(self, x_fwd, data_fwd, x_bwd,
                 data_bwd, p0_fwd = None, p0_bwd = None):
         if self.init_params is not None:
             p0 = list()
@@ -135,7 +164,7 @@ class FitModel():
         obj.title.setObjectName("title")
         obj.main.setWidget(0, QtWidgets.QFormLayout.SpanningRole, obj.title)
         obj.title.setText(_translate("Form", self.name + " Fit Parameters: Initial Guesses"))
-        
+
         obj.param_labs = dict()
         obj.params = dict()
         obj.fparams_lab = dict()
@@ -147,16 +176,16 @@ class FitModel():
         for param in self.fit_params:
             obj.param_labs[param] = QtWidgets.QLabel(obj.formLayoutWidget)
             obj.param_labs[param].setObjectName(param + "_lab")
-            obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.LabelRole, 
+            obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.LabelRole,
                                        obj.param_labs[param])
             obj.param_labs[param].setText(_translate("Form", param + ":"))
 
             obj.params[param] = QtWidgets.QLineEdit(obj.formLayoutWidget)
             obj.params[param].setObjectName(param)
-            obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.FieldRole, 
+            obj.main.setWidget(lab_ct, QtWidgets.QFormLayout.FieldRole,
                                 obj.params[param])
             lab_ct = lab_ct + 1
-        
+
         obj.confirm = QtWidgets.QPushButton(obj.formLayoutWidget)
         obj.confirm.setObjectName("confirm")
         obj.confirm.setText(_translate("Form", "OK"))
@@ -176,10 +205,10 @@ class FitModel():
             obj.fparams[param] = QtWidgets.QLabel(obj.formLayoutWidget)
             obj.fparams[param].setText("")
             obj.fparams[param].setObjectName("fit_" + param)
-            obj.gridlayout.addWidget(obj.fparams[param], 
+            obj.gridlayout.addWidget(obj.fparams[param],
                                             row, col + 1, 1, 1)
             row = row + 1
-        
+
         row = 0
         col = 2
 
@@ -193,7 +222,7 @@ class FitModel():
             obj.fparams2[param] = QtWidgets.QLabel(obj.formLayoutWidget)
             obj.fparams2[param].setText("")
             obj.fparams2[param].setObjectName("fit_" + param + "_2")
-            obj.gridlayout.addWidget(obj.fparams2[param], 
+            obj.gridlayout.addWidget(obj.fparams2[param],
                                             row, col + 1, 1, 1)
             row = row + 1
         obj.main.setLayout(lab_ct + 1, QtWidgets.QFormLayout.FieldRole, obj.gridlayout)
@@ -207,4 +236,3 @@ if __name__ == "__main__":
     #lor.popup = QMainWindow()
     #lor.init_ui(lor.popup)
     app.exec_()
-    

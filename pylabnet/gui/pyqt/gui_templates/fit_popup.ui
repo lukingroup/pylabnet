@@ -23,6 +23,21 @@
      </item>
      <item>
       <property name="text">
+       <string>Gaussian</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Double Gaussian</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Rabi Oscillation</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
        <string>CQED reflection</string>
       </property>
      </item>

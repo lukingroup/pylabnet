@@ -48,7 +48,7 @@ class FitPopup(Popup):
                  data_bwd, p0_fwd, p0_bwd, config, log):
         super().__init__(ui)
         self.log = log
-        self.data_fwd = np.array(data_bwd)
+        self.data_fwd = np.array(data_fwd)
         self.x_fwd = np.array(x_fwd)
         self.x_bwd = np.array(x_bwd)
         self.data_bwd = np.array(data_bwd)
@@ -145,7 +145,7 @@ class FitModel():
                 self.pop.fparams[param].setText(str(popt1[ind]))
                 self.pop.fparams2[param].setText(str(popt2[ind]))
             return self.func(x_fwd, *popt1), self.func(x_bwd, *popt2),\
-                   p0_fwd, p0_bwd, fit_suc
+                   p0_fwd_f, p0_bwd_f, fit_suc
 
     def init_ui(self, obj):
         obj.setObjectName("Form")

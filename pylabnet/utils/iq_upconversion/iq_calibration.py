@@ -14,7 +14,6 @@ import pylabnet.hardware.spectrum_analyzer.agilent_e4405B as sa_hardware
 
 import itertools as it
 import pandas as pd
-import seaborn as sns
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer

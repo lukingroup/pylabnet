@@ -24,37 +24,29 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QPushButton" name="stop_button">
-      <property name="enabled">
-       <bool>true</bool>
+    <item row="5" column="2">
+     <widget class="QLineEdit" name="client_search">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
-      <property name="maximumSize">
-       <size>
-        <width>100</width>
-        <height>35</height>
-       </size>
-      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" rowspan="4">
+     <widget class="QListWidget" name="client_list">
       <property name="font">
        <font>
         <family>Calibri Light</family>
-        <pointsize>14</pointsize>
+        <pointsize>12</pointsize>
        </font>
       </property>
-      <property name="mouseTracking">
-       <bool>false</bool>
+      <property name="toolTip">
+       <string/>
       </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(170, 170, 255);</string>
-      </property>
-      <property name="text">
-       <string>STOP</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>
@@ -113,22 +105,59 @@
       </item>
      </layout>
     </item>
-    <item row="0" column="2">
-     <widget class="QLabel" name="label">
+    <item row="7" column="0">
+     <widget class="QTextBrowser" name="buffer_terminal">
       <property name="maximumSize">
        <size>
-        <width>200</width>
-        <height>16777215</height>
+        <width>16777215</width>
+        <height>10</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="overwriteMode">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QPushButton" name="stop_button">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>100</width>
+        <height>35</height>
        </size>
       </property>
       <property name="font">
        <font>
         <family>Calibri Light</family>
-        <pointsize>12</pointsize>
+        <pointsize>14</pointsize>
        </font>
       </property>
+      <property name="mouseTracking">
+       <bool>false</bool>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(170, 170, 255);</string>
+      </property>
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Active servers:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>STOP</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
@@ -158,6 +187,25 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="2">
+     <widget class="QLabel" name="label">
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Calibri Light</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Active servers:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
     <item row="1" column="0">
      <widget class="QRadioButton" name="debug_radio_button">
       <property name="text">
@@ -168,38 +216,25 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="2" rowspan="4">
-     <widget class="QListWidget" name="client_list">
+    <item row="1" column="3" rowspan="6">
+     <widget class="QTreeView" name="scripts"/>
+    </item>
+    <item row="1" column="4" rowspan="6">
+     <widget class="QTreeView" name="devices"/>
+    </item>
+    <item row="1" column="1" rowspan="6">
+     <widget class="QTextBrowser" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="font">
        <font>
-        <family>Calibri Light</family>
+        <family>Courier New</family>
         <pointsize>12</pointsize>
        </font>
       </property>
-      <property name="toolTip">
-       <string/>
-      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="3" rowspan="5">
-     <widget class="QTreeView" name="scripts"/>
-    </item>
-    <item row="1" column="4" rowspan="5">
-     <widget class="QTreeView" name="devices"/>
-    </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="debug_label">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="visible">
-       <bool>true</bool>
-      </property>
-      <property name="text">
-       <string>Debug module:</string>
       </property>
      </widget>
     </item>
@@ -229,7 +264,31 @@
       </item>
      </widget>
     </item>
-    <item row="4" column="0" rowspan="2">
+    <item row="2" column="0">
+     <widget class="QLabel" name="debug_label">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="visible">
+       <bool>true</bool>
+      </property>
+      <property name="text">
+       <string>Debug module:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="2">
+     <widget class="QPushButton" name="close_server">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(170, 0, 0);
+color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Close server</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" rowspan="3">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QRadioButton" name="log_file_button">
@@ -308,55 +367,6 @@ background-color: green;</string>
       </item>
      </layout>
     </item>
-    <item row="5" column="2">
-     <widget class="QPushButton" name="close_server">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(170, 0, 0);
-color: rgb(255, 255, 255);</string>
-      </property>
-      <property name="text">
-       <string>Close server</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0">
-     <widget class="QTextBrowser" name="buffer_terminal">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>10</height>
-       </size>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="overwriteMode">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1" rowspan="5">
-     <widget class="QTextBrowser" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <family>Courier New</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -365,7 +375,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1625</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

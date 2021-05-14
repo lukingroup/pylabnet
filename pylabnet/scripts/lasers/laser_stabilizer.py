@@ -45,8 +45,8 @@ class LaserStabilizer:
         # self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
         #Update the input power label
-        self._last_power_text_update = 0
-        self._update_power_label()
+        self._last_power_text_update = 2
+        self.read_power()
 
         self._initialize_graphs()
 
@@ -58,7 +58,7 @@ class LaserStabilizer:
         #Finally hookup the final buttons
         self.widgets['start'].clicked.connect(lambda: self.start(update_st_gui=True))
         self.widgets['stop'].clicked.connect(self.stop)
-        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=5000))
+        self.widgets['clear'].clicked.connect(lambda: self._clear_data_plots(display_pts=1000))
 
         #Initially the program starts in the "unlocked" phase
         self._is_stabilizing = False
@@ -113,25 +113,30 @@ class LaserStabilizer:
         self._check_hardware_control()
 
         if self._is_stabilizing:
-            #If we are locking the power, then need to update teh feedback loop and change the output label
+            #If we are locking the power, then need to update the feedback loop and change the output label
 
             # Check if DIO bit is high
             if self.check_aom:
-                aom_up = self.check_aom_up()
-                if aom_up:
-                    self._update_feedback()
+                if self.check_aom_up():
+                    currSignal = self._update_feedback()
                     self._update_output_voltage_label()
+                else:
+                    #If we are not locking the power, just read the power
+                    currSignal =  self.read_power()
             else:
-                self._update_feedback()
+                currSignal = self._update_feedback()
                 self._update_output_voltage_label()
 
-        #We always need to update the plots as well and power label
-        self._update_plots()
-        self._update_power_label()
+        else:
+            #If we are not locking the power, just read the power
+            currSignal =  self.read_power()
 
+
+        #We always need to update the plots
+        self._update_plots(currSignal)
         self.gui.force_update()
 
-    def start(self, update_st_gui=True, display_pts = 5000):
+    def start(self, update_st_gui=True, display_pts = 1000):
         """This method turns on power stabilizationpdate_vs to False to not update the setpoint from the GUI
             :param update_vs_gui: (Boolean) whether the setpoint should be updated based on the value in the gui,
                                 Will always be true when start is run in the GUI, but should be false if
@@ -146,7 +151,7 @@ class LaserStabilizer:
         self._update_PID()
 
         #Reset the graphs
-        self._clear_data_plots(display_pts)
+        #self._clear_data_plots(display_pts)
 
         #Finally turn on the power stabilization
         self._is_stabilizing = True
@@ -172,7 +177,6 @@ class LaserStabilizer:
                 if v_input > self._hwc_thresh:
                     self.start()
 
-
     def set_hardware_control(self, value):
         """Allows external program to set hardware control to the value inputed
             :param value: (Boolean) whether hardware control should be turned off or no
@@ -180,31 +184,31 @@ class LaserStabilizer:
         self.widgets['hardware_control'].setChecked(value)
         self._under_hardware_control = value
 
+    def read_power(self):
+        """reads power and passes latest measurement"""
 
+        currSignal = None
+        while currSignal is None:
+            try:
+                currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
+            except:
+                pass #time.sleep(0.005)
 
-    def _update_power_label(self):
-        """Updates the power reading text on the GUI"""
-
-        #Checks if > 0.5s has elapsed since the last change to the power reading label
+        #Checks if > 1s has elapsed since the last change to the power reading label
         #I do this since otherwise the text label updates too quickly and it's annoying
         #to read.
+
         currTime = time.time()
-        if currTime - self._last_power_text_update > 0.5:
-            #If it updates, reads in the power and updates
-            #TODO: Read the power in one function only and then all of the places that use it (updating feedback, updating power label, and plotting)
-            #access that member variable. Not a huge deal will slightly speed it up I guess and is a bit cleaner.
+        if currTime - self._last_power_text_update > 1:
 
-            power = None
+            power = self.gain*currSignal
 
-            while power is None:
-                try:
-                    power = self.gain*np.array(self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage))
-                except:
-                    time.sleep(0.01)
-
-            self.widgets['label_power'].setText(str(power[-1]))
+            self.widgets['label_power'].setText(str(self.gain*power[-1])[:5])
             self._last_power = power[-1]/self.gain
             self._last_power_text_update = currTime
+
+        return currSignal
+
 
     #TODO: Can potentially use some getters/setters to clean up the below two functions make them a little more cllean for the user.
     def _update_output_voltage_label(self):
@@ -218,8 +222,8 @@ class LaserStabilizer:
         This method is automatically run when the user changes the value in the text box, allowing
         the user to control the output voltage  directly when the laser power is not "locked".
         """
-        if (~self._is_stabilizing): #Only updates value if we are not stabilizing, otherwise the PID loop will be driving the output voltage
-                                    #as opposed to the user.
+        if (not self._is_stabilizing): #Only updates value if we are not stabilizing, otherwise the PID loop will be driving the output voltage
+                                  #as opposed to the user.
             self._curr_output_voltage = self.widgets['p_outputVoltage'].value()
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
@@ -238,12 +242,11 @@ class LaserStabilizer:
         this one.
         :param value: (float) setpoint value to use in units of power (not voltage!)
         NOTE: Using the GUI this is not normally automatically called. Instead the user must
-        hit start agian to update the setpoint if they are in the middle of power stabilizing"""
+        hit start again to update the setpoint if they are in the middle of power stabilizing"""
         self.voltageSetpoint = value/self.gain
         self.widgets['p_setpoint'].setValue(value)
         #Need to reset the PID loop with this new setpoint value
         self._update_PID()
-
 
     def _update_PID(self):
         """Creates a new PID object based on the current PID member variables to be used for power
@@ -260,9 +263,10 @@ class LaserStabilizer:
             try:
                 currSignal = self._ai_client.get_ai_voltage(self._ai_channel, self.numReadsPerCycle, max_range=self.max_input_voltage)
             except:
-                time.sleep(0.01)
+                pass #time.sleep(0.005)
         #Add new data to the pid
         self.pid.set_pv(np.atleast_1d(np.mean(currSignal)))
+        #self.pid.set_pv(np.mean(currSignal))
 
         #Now compute the new control value and update the AO
         self.pid.set_cv()
@@ -279,10 +283,24 @@ class LaserStabilizer:
         #This is to avoid the potential error if the voltage control is toggled low between the last call of _check_hardware_control
         #and update_feedback, whcih would mean that currSignal would be 0 (assuming a pulsed experiment), and causing a garbage
         #feedback which could be an issue in the next pulse.
-        if (~self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
+        if (not self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
-    def _clear_data_plots(self, display_pts = 5000):
+
+        #Checks if > 1s has elapsed since the last change to the power reading label
+        #I do this since otherwise the text label updates too quickly and it's annoying
+        #to read.
+        currTime = time.time()
+        if currTime - self._last_power_text_update > 1:
+            power = self.gain*currSignal
+
+            self.widgets['label_power'].setText(str(self.gain*power[-1])[:5])
+            self._last_power = power[-1]/self.gain
+            self._last_power_text_update = currTime
+
+        return currSignal
+
+    def _clear_data_plots(self, display_pts = 1000):
         """Initializes/clears the variables holding the data which is plotted"""
         #Initializing variables for plotting
         self.out_voltages = np.ones(display_pts) * self._curr_output_voltage
@@ -342,29 +360,30 @@ class LaserStabilizer:
             curve_name="Error"
         )
 
-        self._clear_data_plots(5000)
+        self._clear_data_plots(1000)
 
-
-    def _update_plots(self):
+    def _update_plots(self, currSignal):
         """Updates the plots, both by adding in the new data and then drawing the data on the graph"""
         #Adding in new data to plots
-        currSignal = None
-        while currSignal is None:
-            try:
-                currSignal = self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage)
-            except:
-                time.sleep(0.01)
+        #currSignal = None
+        #while currSignal is None:
+        #    try:
+        #        currSignal = self._ai_client.get_ai_voltage(self._ai_channel, max_range=self.max_input_voltage)
+        #    except:
+        #        time.sleep(0.01)
+
         self.measured_powers = np.append(self.measured_powers[1:], np.mean(currSignal))
         self.out_voltages = np.append(self.out_voltages[1:], self._curr_output_voltage)
         self.errors = np.append(self.errors[1:], (currSignal[-1] - self.voltageSetpoint))
         self.sp_data = np.append(self.sp_data[1:], self.voltageSetpoint)
-        #Update power plots
-        self.widgets['curve'][0].setData(self.measured_powers*self.gain)
-        #Update setpoint plots
-        self.widgets['curve'][1].setData(self.sp_data*self.gain)
 
-        # Now update voltage polots
+        #Update power plot
+        self.widgets['curve'][0].setData(self.measured_powers*self.gain)
+        #Update setpoint plot
+        self.widgets['curve'][1].setData(self.sp_data*self.gain)
+        # Update voltage plot
         self.widgets['curve'][2].setData(self.out_voltages)
+        # Update error plot
         self.widgets['curve'][3].setData(self.errors*self.gain)
 
 class Service(ServiceBase):

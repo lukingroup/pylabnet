@@ -1,9 +1,9 @@
 import socket
 
 from pylabnet.utils.helper_methods import load_device_config
-import pylabnet.hardware.lasers.imaging_laser as laser
+import pylabnet.hardware.lasers.CLD101x as laser
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.imaging_laser import Service, Client
+from pylabnet.network.client_server.CLD101x import Service, Client
 
 
 def launch(**kwargs):
@@ -14,7 +14,7 @@ def launch(**kwargs):
         :port: (int) port number for the spectrum analyzer server
     """
     config = kwargs['config']
-    config = load_device_config('imaging_laser', config, logger=kwargs['logger'])
+    config = load_device_config('CLD101x', config, logger=kwargs['logger'])
     il = laser.Driver(
         gpib_address=config['device_id'],
         logger=kwargs['logger']

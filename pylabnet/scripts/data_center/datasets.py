@@ -44,6 +44,9 @@ class Dataset:
         self.gui = gui
         self.visualize(graph, **kwargs)
 
+        # Property which defines whether dataset is important, i.e. should it be saved in a separate dataset
+        self.is_important = False
+
     def add_child(self, name, mapping=None, data_type=None,
         new_plot=True, **kwargs):
         """ Adds a child dataset with a particular data mapping
@@ -168,6 +171,30 @@ class Dataset:
                 directory,
                 date_dir
             )
+
+        # if the dataset is important, save it again in the important dataset folder.
+        if self.is_important:
+            generic_save(
+                data=self.data,
+                filename=f'{filename}_{self.name}',
+                directory=directory + "\\important_data",
+                date_dir=date_dir
+            )
+            if self.x is not None:
+                generic_save(
+                    data=self.x,
+                    filename=f'{filename}_{self.name}_x',
+                    directory=directory + "\\important_data",
+                    date_dir=date_dir
+                )
+
+            if hasattr(self, 'graph'):
+                pyqtgraph_save(
+                    self.graph.getPlotItem(),
+                    f'{filename}_{self.name}',
+                    directory + "\\important_data",
+                    date_dir
+                )
 
         for child in self.children.values():
             child.save(filename, directory, date_dir)

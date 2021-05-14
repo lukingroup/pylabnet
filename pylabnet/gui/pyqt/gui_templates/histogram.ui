@@ -687,6 +687,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </item>
      </layout>
     </item>
+    <item row="0" column="3">
+     <widget class="QCheckBox" name="fit">
+      <property name="text">
+       <string>Fit</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

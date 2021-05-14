@@ -266,7 +266,7 @@ class agilent_83732b(StaticLineHardwareHandler):
         if self.setting == "frequency":
             self.hardware_client.set_freq(float(value))
 
-class imaging_laser(StaticLineHardwareHandler):
+class CLD101x(StaticLineHardwareHandler):
 
     def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the
@@ -296,5 +296,5 @@ registered_staticline_modules = {
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice,
     'agilent_83732b': agilent_83732b,
-    'imaging_laser': imaging_laser
+    'CLD101x': CLD101x
 }

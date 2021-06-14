@@ -150,29 +150,25 @@ class Controller:
         for paddle in self.paddles:
 
             # Mote buttons
-            self.widgets['move_to'][paddle].pressed.connect(
-                self._move(paddle, params) #get step and sleep_time 
-            )
+            self.widgets['move_to'][paddle].pressed.connect(lambda paddle=paddle: self._move(paddle, params)) #get step and sleep_time 
 
-            self.widgets['step_by'][paddle].pressed.connect(
-                self._move_rel(paddle, params) 
-             ) #get step and sleep_time # self.gui_step, self.gui_sleep_time
+            self.widgets['step_by'][paddle].pressed.connect(lambda paddle=paddle: self._move_rel(paddle, params)) #get step and sleep_time # self.gui_step, self.gui_sleep_time
             
 
-            self.widgets['home'][paddle].pressed.connect(self._home(paddle)) #get step and sleep_time
+            self.widgets['home'][paddle].pressed.connect(lambda paddle=paddle: self._home(paddle)) #get step and sleep_time
 
-            self.widgets['get_angle'][paddle].pressed.connect(self._show_pos(paddle))
+            self.widgets['get_angle'][paddle].pressed.connect(lambda paddle=paddle: self._show_pos(paddle))
 
             #add optimize around
 
-        self.widgets['optimize_all'].pressed.connect(self._optimize(params)
+        self.widgets['optimize_all'].pressed.connect(lambda: self._optimize(params)
         ) #get step and sleep_time
 
         #parameters that need to be updated in PM or pol paddles
-        self.widgets['wavelength'].valueChanged.connect(self._initialize_parameters(params))
-        self.widgets['comboBox'][2].currentIndexChanged.connect(self._initialize_parameters(params)) #why did we have two in poer_monitor
-        self.widgets['comboBox'][3].currentIndexChanged.connect(self._initialize_parameters(params)) #why did we have two in poer_monitor
-        self.widgets['velocity'].currentIndexChanged.connect(self._update_velocity)
+        self.widgets['wavelength'].valueChanged.connect(lambda: self._initialize_parameters(params))
+        self.widgets['comboBox'][2].currentIndexChanged.connect(lambda: self._initialize_parameters(params)) #why did we have two in poer_monitor
+        self.widgets['comboBox'][3].currentIndexChanged.connect(lambda: self._initialize_parameters(params)) #why did we have two in poer_monitor
+        self.widgets['velocity'].valueChanged.connect(lambda: self._update_velocity)
 
         # Technical methods
         """ Functions for devices actions in relation to widget paddle index (from 0)"""

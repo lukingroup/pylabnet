@@ -401,14 +401,10 @@ class TimeTraceGui(TimeTrace):
         # Clear existing data
         self.curve.clear()
 
-        y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
-
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
-            y #self.ctr.get_counts(self.hist)[0]
+            self.ctr.get_counts(self.hist)[0]
         )
-
-
 
         if self.fitting:
             self.fit_curve.clear()
@@ -424,11 +420,10 @@ class TimeTraceGui(TimeTrace):
 
     def _update_data(self):
         """ Adds latest data to the plot """
-        y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
 
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
-            y #self.ctr.get_counts(self.hist)[0]
+            self.ctr.get_counts(self.hist)[0]
         )
 
         if self.fitting:

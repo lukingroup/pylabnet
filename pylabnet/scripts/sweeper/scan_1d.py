@@ -49,8 +49,8 @@ class Controller(MultiChSweep1D):
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
             graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
             autosave=1, save_name=1, save=1, reps=1, rep_tracker=1, avg=2)
-    
-        
+
+
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
         self.max = self.widgets['p_max'].value()
@@ -82,7 +82,7 @@ class Controller(MultiChSweep1D):
         model.setRootPath(self.exp_path)
         model.setNameFilterDisables(False)
         model.setNameFilters(['*.py'])
-        
+
         self.widgets['exp'].setModel(model)
         self.widgets['exp'].setRootIndex(model.index(self.exp_path))
         self.widgets['exp'].hideColumn(1)
@@ -133,7 +133,7 @@ class Controller(MultiChSweep1D):
             hmap.view.setAspectLocked(False)
             hmap.view.invertY(False)
             self.widgets['hmap'].append(hmap)
-        
+
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
@@ -155,10 +155,10 @@ class Controller(MultiChSweep1D):
             self.cur_path = self.widgets['exp'].model().filePath(self.widgets['exp'].currentIndex())
             self.exp_name = os.path.split(os.path.basename(self.cur_path))[0]
 
-    
+
     def configure_experiment(self):
         """ Configures experiment to be the currently selected item """
-        
+
         spec = importlib.util.spec_from_file_location(self.exp_name, self.cur_path)
         self.module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.module)
@@ -340,11 +340,11 @@ class Controller(MultiChSweep1D):
                     self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
             else:
                 self.fit_error = Popup(ui = 'fit_error')
-            '''    
+            '''
         # If box isn't checked, remove popup
         else:
             self.fit_popup = None
-    
+
     def _configure_plots(self, plot=True):
         """ Configures the plots """
 
@@ -402,6 +402,15 @@ class Controller(MultiChSweep1D):
                     self.widgets['curve_avg'][index],
                     f'{"Fwd" if index==0 else "Bwd"} avg'
                 )
+
+                self.widgets['fit_avg'].append(graph.plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+                ))
+                add_to_legend(
+                    self.widgets['legend'][index],
+                    self.widgets['fit_avg'][index],
+                    f'{"Fwd" if index==0 else "Bwd"} fit avg'
+                )
             else:
                 self.widgets['curve'].append(graph.plot(
                     pen=pg.mkPen(color=self.gui.COLOR_LIST[6])
@@ -421,24 +430,14 @@ class Controller(MultiChSweep1D):
                     f'{"1st" if index==0 else "2nd"} avg'
                 )
 
-
-            self.widgets['fit_avg'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
-            ))
-            add_to_legend(
-                self.widgets['legend'][index],
-                self.widgets['fit_avg'][index],
-                f'{"Fwd" if index==0 else "Bwd"} fit avg'
-            )
-
-            self.widgets['fit_avg'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
-            ))
-            add_to_legend(
-                self.widgets['legend'][index],
-                self.widgets['fit_avg'][index],
-                f'{"Fwd" if index==0 else "Bwd"} fit avg'
-            )
+                self.widgets['fit_avg'].append(graph.plot(
+                    pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+                ))
+                add_to_legend(
+                    self.widgets['legend'][index],
+                    self.widgets['fit_avg'][index],
+                    f'{"1st" if index==0 else "2nd"} fit avg'
+                )
 
         for hmap in self.widgets['hmap']:
             hmap.view.setLimits(xMin=self.min, xMax=self.max)
@@ -550,6 +549,12 @@ class Controller(MultiChSweep1D):
                 if not self.fast:
                     self.widgets['hmap'][0].setImage(
                         img=np.transpose(fill_2dlist(self.data_fwd)),
+                        pos=(self.min, 0),
+                        scale=((self.max-self.min)/self.pts,1),
+                        autoRange=False
+                    )
+                    self.widgets['hmap'][1].setImage(
+                        img=np.transpose(fill_2dlist(self.data_bwd)),
                         pos=(self.min, 0),
                         scale=((self.max-self.min)/self.pts,1),
                         autoRange=False
@@ -695,7 +700,7 @@ class Controller(MultiChSweep1D):
 
 
 def main():
-    
+
     # Name of config file
     # NOTE: needs to be changed based on the exact config file you are
     # using within configs/scripts/scan1d

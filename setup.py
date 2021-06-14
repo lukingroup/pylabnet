@@ -76,5 +76,6 @@ setup(
         'rpyc>=4.1.2',
         'si_prefix>=1.2.2',
         'simpleeval>=0.9.10',
+        'slack-sdk>=3.5.0'
     ]
 )

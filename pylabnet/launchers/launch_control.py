@@ -395,6 +395,7 @@ class Controller:
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
+        self._configure_client_search()
         self._configure_debug()
         self._configure_debug_combo_select()
         self._configure_logfile()
@@ -443,10 +444,39 @@ class Controller:
         if self.disconnection:
             self.disconnect()
 
+    def _configure_client_search(self):
+        #self.gui_logger.info('client search configured')
+        self.main_window.client_search.textChanged.connect(self._search_clients)
+
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
         self.main_window.close_server.pressed.connect(self._stop_server)
+
+    def _search_clients(self):
+
+        search_str = self.main_window.client_search.text()
+
+        clients = self.gui_client.get_container_info('clients')
+
+        self.main_window.client_list.clear()
+        self.client_list.clear()
+
+        if search_str is not "":
+            for client, info in clients.items():
+                self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                if search_str in client:
+                    #self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                    #self.main_window.client_list.addItem(self.client_list[client])
+                    #self.client_list[client].setToolTip(info)
+                    self.main_window.client_list.addItem(self.client_list[client])
+                self.client_list[client].setToolTip(info)
+        else:
+            for client, info in clients.items():
+                self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                self.main_window.client_list.addItem(self.client_list[client])
+                self.client_list[client].setToolTip(info)
+
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
@@ -495,11 +525,18 @@ class Controller:
         else:
             self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
             try:
-                self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
-                del self.port_list[client_to_stop]
-                del self.client_list[client_to_stop]
-                del self.log_service.client_data[client_to_stop]
-                del self.client_data[client_to_stop]
+
+                # The following two member variables don't exist for a proxy.
+                if not self.proxy:
+                    self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                    del self.port_list[client_to_stop]
+                    del self.log_service.client_data[client_to_stop]
+                    del self.client_list[client_to_stop]
+                    del self.client_data[client_to_stop]
+                else:
+                    self.gui_client.remove_client_list_entry(client_to_stop)
+                self.gui_logger.info(f'Hard kill of {client_to_stop} successfull.')
+
             except:
                 pass
 
@@ -508,6 +545,10 @@ class Controller:
 
         :param index: (QModelIndex) index of file clicked on
         """
+
+        # clear the client search bar and display all clients
+        self.main_window.client_search.setText("")
+        #self._search_clients()
 
         filepath = self.main_window.devices.model().filePath(index)
 
@@ -543,6 +584,10 @@ class Controller:
 
         :param index: (QModelIndex) index of file clicked on
         """
+
+        # clear the client search bar and display all clients
+        self.main_window.client_search.setText("")
+        #self._search_clients()
 
         filepath = self.main_window.scripts.model().filePath(index)
 

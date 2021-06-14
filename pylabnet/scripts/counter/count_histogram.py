@@ -401,8 +401,6 @@ class TimeTraceGui(TimeTrace):
         # Clear existing data
         self.curve.clear()
 
-        #y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
-
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
             self.ctr.get_counts(self.hist)[0]
@@ -424,7 +422,6 @@ class TimeTraceGui(TimeTrace):
 
     def _update_data(self):
         """ Adds latest data to the plot """
-        #y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
 
         self.curve.setData(
             self.ctr.get_x_axis(self.hist)/1e12,
@@ -443,10 +440,8 @@ class TimeTraceGui(TimeTrace):
     def _update_fit(self):
         """ Updates fits """
         if self.fit_popup.mod is not None and self.fit_popup.mod.init_params is not None:
-            #y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
             self.fit_popup.data = np.array(self.ctr.get_counts(self.hist)[0])
             self.fit_popup.x = np.array(self.ctr.get_x_axis(self.hist)/1e12)
-            #self.fit_popup.data = np.array(y)
             if self.p0 is not None:
                 self.fit_popup.p0 = self.p0
             self.fit, self.p0 = self.fit_popup.fit_mod()

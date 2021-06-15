@@ -68,14 +68,14 @@ class AWGPulseBlockHandler():
             self.assignment_dict = assignment_dict
             # Check key value integrity of assignment dict.
             self._check_key_assignments()
-        
+
         # Store remapped samples, number of samples and number of traces for the
         # digital channels.
         (self.digital_sample_dict,
          self.num_digital_samples,
          self.num_digital_traces) = self._get_remapped_digital_samples(samp_rate=dig_samp_rate)
 
-        # List of DIO bits that are used by pulses in this pulseblock     
+        # List of DIO bits that are used by pulses in this pulseblock
         self.used_dio_bits = list(self.digital_sample_dict.keys())
 
         # Stores a list of configs for each type of config (e.g. osc freq, DC offset)
@@ -476,7 +476,7 @@ class AWGPulseBlockHandler():
         if codeword_times[0] != 0:
             codeword_times = [0] + codeword_times
 
-
+        print(codeword_times)
 
         # Sanity check that both methods should give the same length
         assert(len(codeword_times) == len(codeword_times_force_value))
@@ -584,10 +584,10 @@ class AWGPulseBlockHandler():
             dio_codeword = int(command[1])
             if self.exp_config_dict["preserve_bits"]:
                 # Zero out any bits that fall outside the mask to avoid modifying
-                # bits not involved in pulses. The codeword should usually 
-                # always lie within the mask bits and so this should do nothing, 
+                # bits not involved in pulses. The codeword should usually
+                # always lie within the mask bits and so this should do nothing,
                 # but acts as a failsafe.
-                masked_codeword = (mask & dio_codeword) 
+                masked_codeword = (mask & dio_codeword)
                 return set_dio_cmd.format(f"masked_state|{masked_codeword}")
             else:
                 return set_dio_cmd.format(dio_codeword)

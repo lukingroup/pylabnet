@@ -74,7 +74,8 @@ setup(
         'PyVISA>=1.10.1',
         'qdarkstyle>=2.8.1',
         'rpyc>=4.1.2',
+        'scipy>=1.6.1',
         'si_prefix>=1.2.2',
-        'simpleeval>=0.9.10',
+        'simpleeval>=0.9.10'
     ]
 )

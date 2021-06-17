@@ -21,7 +21,7 @@ import pylabnet.utils.pulseblock.pulse_block as pb
 from pylabnet.hardware.awg.zi_hdawg import Driver
 from pylabnet.utils.helper_methods import slugify
 from pylabnet.gui.pyqt.external_gui import Window
-from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, load_script_config, get_gui_widgets
+from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, load_script_config, get_gui_widgets, find_client
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
 from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
@@ -33,7 +33,7 @@ class PulseMaster:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, config, ui='pulsemaster', logger_client=None, server_port=None, clients=None):
+    def __init__(self, config, ui='pulsemaster', logger_client=None, server_port=None, mw_source_client=None):
         """ TODO
         """
 
@@ -54,12 +54,7 @@ class PulseMaster:
         self.hd = Driver(dev_id, logger=self.log)
 
         # Get microwave client
-        self.clients = clients
-        self.mw_client = None
-        if clients is not None:
-            mw_clients = [client for device, client in clients.items() if device[0] == 'HMC_T2220']
-            if len(mw_clients) > 0:
-                self.mw_client = mw_clients[0]
+        self.mw_client = mw_source_client
 
         # Instantiate GUI window
         self.gui = Window(
@@ -194,7 +189,7 @@ class PulseMaster:
         self.widgets["pulseblock_combo"].currentIndexChanged.connect(self.pulseblock_dropdown_changed)
 
         # Conect checkbox for DIO bit preservation option
-        self.widgets["preserve_bits"].stateChanged.connect(self.update_preserve_bits) 
+        self.widgets["preserve_bits"].stateChanged.connect(self.update_preserve_bits)
 
         # Connect Add variable button.
         self.widgets['add_variable_button'].clicked.connect(self._add_row_to_var_table)
@@ -227,7 +222,7 @@ class PulseMaster:
 
     def update_preserve_bits(self):
         self.exp_config_dict["preserve_bits"] = self.widgets["preserve_bits"].isChecked()
-        
+
     def get_pb_specifier_from_dict(self, pulsedict):
         """ Create PulseSpecifier object from dictionary."""
 
@@ -312,7 +307,7 @@ class PulseMaster:
         # TODO find out how to update table without re-instanciation.
         # Update Variable table.
         self.variable_table_model = DictionaryTableModel(
-            self.vars, 
+            self.vars,
             header=["Variable", "Value"],
             editable=True
         )
@@ -369,7 +364,7 @@ class PulseMaster:
         # Remove duplicates since they will be replaced together in one step
         found_placeholders = set(found_placeholders)
 
-        # Compile and get the pulseblock for each pulseblock that appears in the 
+        # Compile and get the pulseblock for each pulseblock that appears in the
         # sequence template string
         required_pulseblocks = []
         for name in found_placeholders:
@@ -378,7 +373,7 @@ class PulseMaster:
                 continue
             self.compile_pulseblock(pb_constructor)
             required_pulseblocks.append(pb_constructor.pulseblock)
-            
+
         # Retrieve AWG number from settings.
         awg_num = self.widgets['awg_num_val'].value()
 
@@ -532,11 +527,11 @@ class PulseMaster:
                 x_ar = []
                 y_ar = []
 
-                # Create a fictional "zeroth pulse" to end at t=0 so that we 
+                # Create a fictional "zeroth pulse" to end at t=0 so that we
                 # draw the default pulse value from 0 until the start of the
                 # first pulse.
                 t2 = 0
-                
+
                 for p_item in pulse_items:
 
                     # Edges of the current pulse
@@ -568,13 +563,13 @@ class PulseMaster:
                 # Normalize the wave height and offset by channel index
                 y_ar /= (2.5 * np.max(y_ar))
                 y_ar += (ch_index + 0.4)
-        
+
             ## Digital channel
             else:
                 # initial zero-point - default pulse object printout
                 x_ar = [0]
                 y_ar = [ch_index]
-                
+
                 if ch in pb_obj.dflt_dict.keys():
                     text_ar = [str(pb_obj.dflt_dict[ch])]
                 else:
@@ -614,9 +609,9 @@ class PulseMaster:
                             # If pulse starts at the origin,
                             # do not overwrite (x=0, y=ch_index) point
                             # which contains dflt_dict[ch] printout
-                            text_ar.extend( 
+                            text_ar.extend(
                                 [
-                                    f'{t1:.2e}', 
+                                    f'{t1:.2e}',
                                     str(p_item),
                                     f'{t2:.2e}', f'{t2:.2e}'
                                 ]
@@ -768,7 +763,7 @@ class PulseMaster:
                 pulse_form,
                 f"{str(i)}: {pulse_specifier.get_printable_name()}"
             )
-            
+
             # Select last item and set minimum heigt.
             self.pulse_toolbox.setCurrentWidget(pulse_form)
             pulse_form.parent().parent().setMinimumHeight(100)
@@ -785,7 +780,7 @@ class PulseMaster:
 
     def shift_pulse_specifier(self, pulse_specifier, pb_constructor, direction):
         """ Move a pulse specifier by a certain number of slots forward/backward
-            in a PB constructor. 
+            in a PB constructor.
         """
 
         index = pb_constructor.pulse_specifiers.index(pulse_specifier)
@@ -796,9 +791,9 @@ class PulseMaster:
                 f"by {direction} would move it out of bounds.")
             return
 
-        # Create a copy of the original 
+        # Create a copy of the original
         pulse_specifiers_orig = copy.copy(pb_constructor.pulse_specifiers)
-        
+
         # Shift pulse_spec position
         pb_constructor.pulse_specifiers.remove(pulse_specifier)
         pb_constructor.pulse_specifiers.insert(new_index, pulse_specifier)
@@ -837,7 +832,7 @@ class PulseMaster:
             # Check channel type matches
             channel_is_analog = (self.ch_assignment_dict[value][0] == "analog")
             if channel_is_analog != eval(pulsetype_dict["is_analog"]):
-                self.showerror(f"Type of pulse {pulsetype_dict['name']} " 
+                self.showerror(f"Type of pulse {pulsetype_dict['name']} "
                                 f"does not match channel {value}.")
                 return
             pulse_specifier.channel = value
@@ -851,7 +846,7 @@ class PulseMaster:
         elif field_var == 'mod' and not value and pulse_specifier.pulsevar_dict["iq"]:
             pulse_specifier_field.setChecked(True)
             self.showerror("IQ must be done with modulation on!")
-            return        
+            return
         # Update variables in the pulsevar_dict
         else:
             pulse_specifier.pulsevar_dict[field_var] = value
@@ -871,7 +866,7 @@ class PulseMaster:
                 var_parent_field.setEnabled(True)
                 var_parent_field.setText("")
 
-            # If the t0 term is variable, we must set to "after last pulse", 
+            # If the t0 term is variable, we must set to "after last pulse",
             # otherwise we have no idea when the pulse happens.
             if field_var == "offset_var":
                 tref_field = widgets_dict["tref"]
@@ -880,7 +875,7 @@ class PulseMaster:
 
             # Store the updated value in parent
             self.update_pulse_form_field(pulse_specifier, var_parent_field, field_var[:-4], widgets_dict, pulse_index)
-            
+
         self.plot_current_pulseblock()
 
     def get_pulse_specifier_form(self, pulse_specifier, pb_constructor, pulse_index):
@@ -899,7 +894,7 @@ class PulseMaster:
 
         # Add channel as an extra field since it is not in the pulse fields
         pulse_fields = [{'label': 'Channel', 'input_type': 'QLineEdit', 'var': 'ch'}] \
-                        + pulsetype_dict['fields'] 
+                        + pulsetype_dict['fields']
 
         # Add the labels and fields for each variable
         for row, field in enumerate(pulse_fields):
@@ -952,7 +947,7 @@ class PulseMaster:
 
             # Column is 0 (first column) unless it is specified.
             # Column 0 fields occupy 3 columns, other column fields occupy 1.
-            # Multiply col number by 4 to account for space taken by the 
+            # Multiply col number by 4 to account for space taken by the
             # previous col (1 for label, 3 for field).
             # Widgets with column != 0 occupy the previous row.
             if 'col' in field:
@@ -1220,7 +1215,7 @@ class PulseMaster:
         information of pulse (Pulsetype, channel_number, pulsetype, pulse_parameters,
         timing information)
 
-        :pulsetype_dict: Dictionary specifying pulsetype (read from config JSON)
+        :pulsetype_dict: Dictionary specifying pulsetype (read from config JSON
         :pulse_data_dict: Dictionary containing the pulse-specific cdata retreived from input fields.
         """
 
@@ -1305,7 +1300,7 @@ class PulseMaster:
 
     def return_pulsedict(self, pulsetype_dict):
         """ Return values of pulse fields."""
-        
+
         # Keys = String from config specifying the field type
         # Values = (QObject for the field, Function to extract the field's value)
         input_field_handlers = {
@@ -1313,7 +1308,7 @@ class PulseMaster:
             "QComboBox" : (QComboBox, lambda obj: obj.currentText()),
             "QCheckBox" : (QCheckBox, lambda obj: obj.isChecked())
         }
-        
+
         # Get the name and field type from config file
         field_names = [(self._get_form_field_widget_name(field), field['input_type']) for field in pulsetype_dict['fields'] if field['input_type'] in input_field_handlers]
 
@@ -1321,12 +1316,12 @@ class PulseMaster:
         field_vars = [field['var'] for field in pulsetype_dict['fields'] if field['input_type'] in input_field_handlers]
         field_values = []
 
-        # Create the specified QObject and apply the function to get the relevant 
+        # Create the specified QObject and apply the function to get the relevant
         # data in the pulse input fields.
         for (field_name, field_type) in field_names:
             field_type_obj, field_type_fn = input_field_handlers[field_type]
 
-            field_value = self.pulse_selector_form_variable.findChild(field_type_obj, field_name)            
+            field_value = self.pulse_selector_form_variable.findChild(field_type_obj, field_name)
             field_value = field_type_fn(field_value)
 
             field_values.append(field_value)
@@ -1349,7 +1344,7 @@ class PulseMaster:
                     try:
                         # Try to resolve arithmetic expression containing variables.
                         pulsedict[key] = simple_eval(val, names=self.vars)
-                    except NameNotDefined:           
+                    except NameNotDefined:
                         typecast_error.append(key)
                         validated = False
 
@@ -1375,9 +1370,9 @@ class PulseMaster:
         data_validated, pulsedict = self.clean_and_validate_pulsedict(pulsedict_data)
         if not data_validated:
             return False, None
-        
+
         # IQ setting must be ticked with Modulation setting
-        if ("iq" in pulsedict and pulsedict["iq"] and 
+        if ("iq" in pulsedict and pulsedict["iq"] and
             "mod" in pulsedict and not pulsedict["mod"]):
             self.showerror("IQ setting cannot be set without modulation!")
             return False, None
@@ -1390,31 +1385,31 @@ class PulseMaster:
             pulse_ch_list = [channel+"_i", channel+"_q"]
         else:
             pulse_ch_list = [channel]
-        
-        # Check if all channels that are required are specified 
+
+        # Check if all channels that are required are specified
         if not all(name in self.ch_assignment_dict.keys() for name in pulse_ch_list):
             self.showerror("Please provide valid channel name.")
             return False, None
 
         # Check that the specified channels for IQ are not in the same core
         if len(pulse_ch_list) > 1:
-            # Subtract 1 to make 0-indexed 
+            # Subtract 1 to make 0-indexed
             ch_num_list = [(self.ch_assignment_dict[ch][1] - 1) for ch in pulse_ch_list]
-            
+
             # Divide by 2 to see if same core (e.g. channels 0, 1 // 2 = 0)
-            ch_num_list = [ch//2 for ch in ch_num_list]
-            if len(ch_num_list) != len(set(ch_num_list)):
-                self.showerror("Channels for the IQ mixing must be in different cores.")
-                return False, None
+            # ch_num_list = [ch//2 for ch in ch_num_list]
+            # if len(ch_num_list) != len(set(ch_num_list)):
+            #     self.showerror("Channels for the IQ mixing must be in different cores.")
+            #     return False, None
 
         # Add channel to dict
         pulsedict['channel'] = channel
 
-        # Check that the pulse type matches the channel type        
+        # Check that the pulse type matches the channel type
         for ch in pulse_ch_list:
             channel_is_analog = (self.ch_assignment_dict[ch][0] == "analog")
             if channel_is_analog != eval(pulsetype_dict["is_analog"]):
-                self.showerror(f"Type of pulse {pulsetype_dict['name']} " 
+                self.showerror(f"Type of pulse {pulsetype_dict['name']} "
                                 f"does not match channel {ch}.")
                 return False, None
 
@@ -1471,7 +1466,7 @@ class PulseMaster:
         self.pulse_selector_form_variable = QGroupBox()
         self.pulse_selector_form_variable.setObjectName("pulse_var_input")
 
-        self.pulse_selector_form_layout_variable = QGridLayout() 
+        self.pulse_selector_form_layout_variable = QGridLayout()
         self.pulse_selector_form_variable.setLayout(self.pulse_selector_form_layout_variable)
 
         # Add forms to Hbox layout
@@ -1483,7 +1478,7 @@ class PulseMaster:
 
     def _remove_variable_pulse_fields(self):
         """Remove all pulse-type specific fields from layout."""
-        for i in reversed(range(self.pulse_selector_form_layout_variable.count())): 
+        for i in reversed(range(self.pulse_selector_form_layout_variable.count())):
             self.pulse_selector_form_layout_variable.itemAt(i).widget().setParent(None)
 
     def _get_current_pulsetype(self):
@@ -1572,7 +1567,7 @@ class PulseMaster:
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(field)
             field_input.setObjectName(input_widget_name)
-            
+
             # Column is 0 (first column) unless specified. x 2 to account for space
             # taken by the label. Widgets with column != 0 occupy the previous row.
             if 'col' in field:
@@ -1585,12 +1580,12 @@ class PulseMaster:
             self.pulse_selector_form_layout_variable.addWidget(field_label, wid_row, wid_col)
             self.pulse_selector_form_layout_variable.addWidget(field_input, wid_row, wid_col + 1)
 
-            # Disable var checkboxes; this will only be allowed in the pulse 
+            # Disable var checkboxes; this will only be allowed in the pulse
             # selector dropdown.
-            if field['var'].endswith("_var"):                
-                field_input.setEnabled(False) 
-            
-        # Make the sinuoidal checkbox affect whether the freq/phase boxes are 
+            if field['var'].endswith("_var"):
+                field_input.setEnabled(False)
+
+        # Make the sinuoidal checkbox affect whether the freq/phase boxes are
         # enabled.
         if "mod" in widgets_dict:
             mod_widget = widgets_dict["mod"]
@@ -1636,7 +1631,7 @@ class PulseMaster:
         # Check for duplciate channels
         channels = []
         for item in ch_assignment_dict.values():
-            if item not in channels: 
+            if item not in channels:
                 channels.append(item)
             else:
                 self.showerror(f"Channel number {item} is duplicated in the "
@@ -1665,11 +1660,20 @@ def launch(**kwargs):
     # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
     logger = kwargs['logger']
 
+    try:
+        mw_source_client = find_client(
+        clients=kwargs['clients'],
+        settings=kwargs['config'],
+        client_type='HMC_T2220',
+        logger=logger)
+    except:
+        mw_source_client = None
+
     # Instantiate Pulsemaster
     try:
         pulsemaster = PulseMaster(
-            logger_client=logger, server_port=kwargs['server_port'], 
-            config=kwargs['config'], clients=kwargs['clients']
+            logger_client=logger, server_port=kwargs['server_port'],
+            config=kwargs['config'], mw_source_client=mw_source_client
         )
 
         constructor = PulseblockConstructor(

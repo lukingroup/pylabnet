@@ -200,7 +200,7 @@ class Driver():
     @dummy_wrap
     def gets(self, path):
         """
-        Wrapper for daq.getString commands. 
+        Wrapper for daq.getString commands.
         Get a string value from the specified node.
 |       :path: Path string of the node.
         """
@@ -461,16 +461,16 @@ class AWGModule():
 
             # Update current configuration
             current_config = new_config
-        
+
     def setup_analog(self, setup_configs, assignment_dict):
-        """ Set up the AWG operation parameters that are required for the 
+        """ Set up the AWG operation parameters that are required for the
         analog waveform playback.
 
-        :setup_configs: (dict) keys are channel names, values are a dict of 
+        :setup_configs: (dict) keys are channel names, values are a dict of
             parameters to be set up for that channel. E.g.
                 {  "mod": mod,  "mod_freq": mod_freq, "mod_ph": mod_ph}
             representing modulation settings for the channel.
-        :assignment_dict: (dict) keys are channel names, values are a list 
+        :assignment_dict: (dict) keys are channel names, values are a list
             ["analog" / "dio", channel_number].
         """
 
@@ -568,13 +568,13 @@ class AWGModule():
         """ Dynamically upload a numpy array into HDAWG Memory
 
         :wave_index: (int) index of waveform that can be accessed inside command table
-            Must be < 16000. All waves in the sequencer program are automatically 
+            Must be < 16000. All waves in the sequencer program are automatically
             assigned a wave index or can be assigned with assignWaveIndex().
             Let N be the total # of waveforms and M>0 be the # of CSV-defined
             waveforms. Then the automatically-assigned waveform indices are:
-            - 0,...,M-1 for waveforms defined from CSV files alphabetically 
+            - 0,...,M-1 for waveforms defined from CSV files alphabetically
                 ordered by filename,
-            - M,...,N-1 in the order that the waveforms are defined in the 
+            - M,...,N-1 in the order that the waveforms are defined in the
                 sequencer program.
         :wave1: (numpy Array) waveform for Ouput 1
         :wave2: (numpy Array, optional) waveform for Ouput 2, similar to commands
@@ -602,15 +602,15 @@ class AWGModule():
         # Get the modules data directory
         data_dir = self.module.getString("directory")
 
-        # All CSV files within the waves directory are automatically recognized 
+        # All CSV files within the waves directory are automatically recognized
         # by the AWG module
         wave_dir = os.path.join(data_dir, "awg", "waves")
 
-        # The data directory is created by the AWG module and should always exist. 
+        # The data directory is created by the AWG module and should always exist.
         # If this exception is raised, something might be wrong with the file system.
         if not os.path.isdir(wave_dir):
             raise Exception(f"AWG module wave directory {wave_dir} does not exist or is not a directory")
-        
+
         if not csv_filename.endswith(".csv"):
             self.hd.log.warn(f"CSV filename {csv_filename} did not end in .csv, appending it to filename.")
             csv_filename += ".csv"
@@ -629,8 +629,8 @@ class AWGModule():
         self.hd.setd(f'awgs/{self.index}/userregs/{reg_index}', int(value))
 
     def upload_cmd_table(self, cmd_table_str, index=None):
-        """ Upload command table JSON string into a given AWG node. 
-        
+        """ Upload command table JSON string into a given AWG node.
+
         :cmd_table_str: (str) JSON file containing the command table.
         :index: (int, optional) AWG node number (0-3) to upload waveform to.
         """
@@ -644,11 +644,11 @@ class AWGModule():
         except ValueError:
             self.hd.log.error("Command table string is invalid JSON format.")
             return False
-        
+
         self.hd.setv(f"awgs/{index}/commandtable/data", cmd_table_str)
         return True
 
-    
+
 
 
 class Sequence():
@@ -708,7 +708,7 @@ class Sequence():
         found_placeholders = list(set(found_placeholders))
 
         return found_placeholders
-        
+
     def prepend_sequence(self, string):
         self.sequence = string + self.sequence
 

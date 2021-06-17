@@ -54,7 +54,7 @@ class PulsedExperiment():
         # Replace the pulseblock name placeholder with the generated instructions
         self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
         self.seq.prepend_sequence(prologue_sequence)
-        
+
         # Save the list of waveforms to be uploaded to AWG
         self.upload_waveforms.extend(upload_waveforms)
 
@@ -73,13 +73,13 @@ class PulsedExperiment():
         for pulseblock in self.pulseblocks:
             pb_handler = self.replace_awg_commands(pulseblock)
             self.pulseblock_handlers.append(pb_handler)
-        
+
         # Add setup code required for preserving DIO bits
         if self.exp_config_dict["preserve_bits"]:
             self.prepare_preserve_dio_seq()
-        
+
     def prepare_preserve_dio_seq(self):
-        """ Prepares setup code in the AWG sequence reuqired for preserving 
+        """ Prepares setup code in the AWG sequence reuqired for preserving
             existing DIO bits. """
 
         # Stores bits used across all pulseblocks
@@ -133,17 +133,20 @@ class PulsedExperiment():
         return awg
 
     def prepare_microwave(self):
-        """ Command the microwave generator to turn on output and set the 
+        """ Command the microwave generator to turn on output and set the
         oscillator frequency based on the IQ pulse requirements. """
 
         if self.mw_client is None:
             return
 
-        # Get all specified LO frequencies from the IQ pulses 
+        # Get all specified LO frequencies from the IQ pulses
         lo_freqs = set()
+
         for pb_handler in self.pulseblock_handlers:
-            if "lo_freq" in pb_handler.setup_config_dict:
-                lo_freqs.add(pb_handler.setup_config_dict["lo_freq"])
+            setup_dicts = [pb_handler.setup_config_dict[key] for key in pb_handler.setup_config_dict.keys()]
+            for setup_dict in setup_dicts:
+                if "lo_freq" in setup_dict:
+                    lo_freqs.add(setup_dict["lo_freq"])
 
         if len(lo_freqs) == 0:
             self.hd.log.info("MW client available but no pulses requiring MW oscillator.")
@@ -165,23 +168,23 @@ class PulsedExperiment():
         self.prepare_microwave()
         return self.prepare_awg(awg_number) # TODO YQ
 
-    def __init__(self, 
-                pulseblocks, 
-                assignment_dict, 
-                hd, 
+    def __init__(self,
+                pulseblocks,
+                assignment_dict,
+                hd,
                 mw_client=None,
                 placeholder_dict=None,
                 exp_config_dict=None,
-                use_template=True, 
-                template_name='base_dig_pulse', 
+                use_template=True,
+                template_name='base_dig_pulse',
                 sequence_string=None,
                 marker_string='$',
-                template_directory="sequence_templates", 
+                template_directory="sequence_templates",
                 iplot=True):
         """ Initilizes pulseblock experiment
 
         :pulseblocks: Single Pulseblock object or list of Pulseblock objects.
-        :assignment_dict: Assigning channel numbers to channel names. 
+        :assignment_dict: Assigning channel numbers to channel names.
             Format: {channel_name : [ "analog"/"dio", channel_number ]}
         :hd: Instance of ZI AWG Driver
         :placeholder_dict: Dictionary containing placeholder names and values for the .seqct file.

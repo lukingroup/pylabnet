@@ -154,7 +154,7 @@ class PulsedExperiment():
         elif len(lo_freqs) > 1:
             self.hd.log.warn("More than 1 MW frequencies specified, taking the first one.")
 
-        self.mw_client.set_freq(list(lo_freqs)[0])
+        self.mw_client.set_freq(int(list(lo_freqs)[0]))
         # mw_client.set_power() # TODO: any default value for powers?
         self.mw_client.output_on()
 

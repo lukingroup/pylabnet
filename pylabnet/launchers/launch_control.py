@@ -904,7 +904,7 @@ class Controller:
             except Exception as error_msg:
                 print(f'Failed to start logging to file {os.path.join(filepath, filename)}.\n{error_msg}')
 
-            self.log_service.logger.info(f'Started logging to file {os.path.join(filepath, filename)}.')
+            self.log_service.gui_logger.info(f'Started logging to file {os.path.join(filepath, filename)}.')
 
             # Change button color and text
             self.main_window.logfile_status_button.setStyleSheet("background-color: red")
@@ -913,7 +913,7 @@ class Controller:
 
             # Add previous text to logfile
             if self.main_window.log_previous.isChecked():
-                self.log_service.logger.info(
+                self.log_service.gui_logger.info(
                     f'Previous log terminal content: \n{self.main_window.terminal.toPlainText()}'
                     f'\n---------------------------'
                 )

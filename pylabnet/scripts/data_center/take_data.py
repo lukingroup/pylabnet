@@ -135,14 +135,7 @@ class DataTaker:
         self.gui.windows = {}
             # If we're not setting up a new measurement type, just clear the data
 
-
-        ## Nedd to redo this. 
-        # self.dataset = getattr(datasets, self.gui.dataset.currentText())(
-        #     gui=self.gui,
-        #     log=self.log,
-        #     config=self.config
-        # )
-
+        # We are reading in the required base-dataset by looking at the define_dataset() as defined in the experiment script.
         try:
             classname = self.module.define_dataset()
         except AttributeError:

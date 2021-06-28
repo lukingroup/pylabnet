@@ -1218,6 +1218,9 @@ class PulseMaster:
         # Close popup
         self.add_pb_popup.close()
 
+        # Update the plotting window (clears it)
+        self.plot_current_pulseblock()
+
     def gen_pulse_specifier(self, pulsetype_dict, pulse_data_dict):
         """ Generates instance of PulseSpecifier which contain full
         information of pulse (Pulsetype, channel_number, pulsetype, pulse_parameters,

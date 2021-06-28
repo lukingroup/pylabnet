@@ -776,7 +776,8 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
         if logger is not None:
             logger.error('Cmd too long! Server will not instantiate!')
     else:
-        logger.info("Cmd len: " + str(len(cmd)))
+        if logger is not None:
+            logger.info("Cmd len: " + str(len(cmd)))
 
 
     if ssh:
@@ -836,7 +837,8 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
         if logger is not None:
             logger.error('Cmd too long! Server will not instantiate!')
     else:
-        logger.info("Cmd len: " + str(len(cmd)))
+        if logger is not None:
+            logger.info("Cmd len: " + str(len(cmd)))
 
     subprocess.Popen(cmd, shell=True)
 

@@ -12,7 +12,7 @@ from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph
 class Dataset():
 
     def __init__(self, gui:Window, log:LogClient=None, data=None,
-        x=None, graph=None, name=None, **kwargs):
+        x=None, graph=None, name=None, dont_clear=False, **kwargs):
         """ Instantiates an empty generic dataset
 
         :param gui: (Window) GUI window for data graphing
@@ -40,6 +40,9 @@ class Dataset():
         self.mapping = {}
         self.widgets = {}
 
+        # Flag indicating whether data should be
+        self.dont_clear = dont_clear
+
         # Configure data visualization
         self.gui = gui
         self.visualize(graph, **kwargs)
@@ -48,7 +51,7 @@ class Dataset():
         self.is_important = False
 
     def add_child(self, name, mapping=None, data_type=None,
-        new_plot=True, **kwargs):
+        new_plot=True, dont_clear=False, **kwargs):
         """ Adds a child dataset with a particular data mapping
 
         :param name: (str) name of processed dataset
@@ -71,6 +74,7 @@ class Dataset():
             data=self.data,
             graph=graph,
             name=name,
+            dont_clear=dont_clear,
             **kwargs
         )
 
@@ -126,7 +130,10 @@ class Dataset():
         
     # Note: This could run into infinite iteration problem.
     def clear_all_data(self):
-        self.clear_data()
+
+        if not self.dont_clear:
+            self.clear_data()
+
         for child in self.children.values():
             child.clear_all_data()
             

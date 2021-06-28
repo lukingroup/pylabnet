@@ -49,14 +49,15 @@ class PulsedExperiment():
         )
 
         # Generate instruction set which represents pulse sequence.
-        prologue_sequence, pulse_sequence, upload_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
+        prologue_sequence, pulse_sequence, upload_waveforms, upload_iq_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
 
         # Replace the pulseblock name placeholder with the generated instructions
         self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
         self.seq.prepend_sequence(prologue_sequence)
-        
+
         # Save the list of waveforms to be uploaded to AWG
         self.upload_waveforms.extend(upload_waveforms)
+        self.upload_iq_waveforms.extend(upload_iq_waveforms)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
@@ -73,13 +74,13 @@ class PulsedExperiment():
         for pulseblock in self.pulseblocks:
             pb_handler = self.replace_awg_commands(pulseblock)
             self.pulseblock_handlers.append(pb_handler)
-        
+
         # Add setup code required for preserving DIO bits
         if self.exp_config_dict["preserve_bits"]:
             self.prepare_preserve_dio_seq()
-        
+
     def prepare_preserve_dio_seq(self):
-        """ Prepares setup code in the AWG sequence reuqired for preserving 
+        """ Prepares setup code in the AWG sequence reuqired for preserving
             existing DIO bits. """
 
         # Stores bits used across all pulseblocks
@@ -120,9 +121,16 @@ class PulsedExperiment():
         awg.compile_upload_sequence(self.seq)
 
         # Upload waveforms to AWG
-        for index, waveform_tuple in enumerate(self.upload_waveforms):
+        for waveform_tuple in self.upload_waveforms:
+            # Check for flag for whether to upload this wave
+            if not waveform_tuple[4]:
+                continue
+            wave_index = waveform_tuple[5]
             waveform_np_array = waveform_tuple[-1]
-            awg.dyn_waveform_upload(index, waveform_np_array)
+            awg.dyn_waveform_upload(wave_index, waveform_np_array)
+
+        for (waveform_idx, wave_i, wave_q) in self.upload_iq_waveforms:
+            awg.dyn_waveform_upload(waveform_idx, wave1=wave_i, wave2=wave_q)
 
         # Setup analog channel settings for each pulseblock
         # Setup DIO drive bits for each pulseblock
@@ -133,17 +141,20 @@ class PulsedExperiment():
         return awg
 
     def prepare_microwave(self):
-        """ Command the microwave generator to turn on output and set the 
+        """ Command the microwave generator to turn on output and set the
         oscillator frequency based on the IQ pulse requirements. """
 
         if self.mw_client is None:
             return
 
-        # Get all specified LO frequencies from the IQ pulses 
+        # Get all specified LO frequencies from the IQ pulses
         lo_freqs = set()
+
         for pb_handler in self.pulseblock_handlers:
-            if "lo_freq" in pb_handler.setup_config_dict:
-                lo_freqs.add(pb_handler.setup_config_dict["lo_freq"])
+            setup_dicts = [pb_handler.setup_config_dict[key] for key in pb_handler.setup_config_dict.keys()]
+            for setup_dict in setup_dicts:
+                if "lo_freq" in setup_dict:
+                    lo_freqs.add(setup_dict["lo_freq"])
 
         if len(lo_freqs) == 0:
             self.hd.log.info("MW client available but no pulses requiring MW oscillator.")
@@ -151,7 +162,7 @@ class PulsedExperiment():
         elif len(lo_freqs) > 1:
             self.hd.log.warn("More than 1 MW frequencies specified, taking the first one.")
 
-        self.mw_client.set_freq(list(lo_freqs)[0])
+        self.mw_client.set_freq(int(list(lo_freqs)[0]))
         # mw_client.set_power() # TODO: any default value for powers?
         self.mw_client.output_on()
 
@@ -165,23 +176,23 @@ class PulsedExperiment():
         self.prepare_microwave()
         return self.prepare_awg(awg_number) # TODO YQ
 
-    def __init__(self, 
-                pulseblocks, 
-                assignment_dict, 
-                hd, 
+    def __init__(self,
+                pulseblocks,
+                assignment_dict,
+                hd,
                 mw_client=None,
                 placeholder_dict=None,
                 exp_config_dict=None,
-                use_template=True, 
-                template_name='base_dig_pulse', 
+                use_template=True,
+                template_name='base_dig_pulse',
                 sequence_string=None,
                 marker_string='$',
-                template_directory="sequence_templates", 
+                template_directory="sequence_templates",
                 iplot=True):
         """ Initilizes pulseblock experiment
 
         :pulseblocks: Single Pulseblock object or list of Pulseblock objects.
-        :assignment_dict: Assigning channel numbers to channel names. 
+        :assignment_dict: Assigning channel numbers to channel names.
             Format: {channel_name : [ "analog"/"dio", channel_number ]}
         :hd: Instance of ZI AWG Driver
         :placeholder_dict: Dictionary containing placeholder names and values for the .seqct file.
@@ -217,6 +228,7 @@ class PulsedExperiment():
         # List of waveforms to be uploaded. Items are of the form:
         # tuple(waveform var name, ch_name, start_step, end_step, np.array waveform)
         self.upload_waveforms = []
+        self.upload_iq_waveforms = []
 
         # Check if template is available, and store it.
         if use_template:

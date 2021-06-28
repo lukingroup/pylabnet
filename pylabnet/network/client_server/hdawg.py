@@ -17,6 +17,9 @@ class Service(ServiceBase):
     def exposed_seti(self, node, new_int):
         return self._module.seti(node, new_int)
 
+    def exposed_setd(self, node, new_double):
+        return self._module.setd(node, new_double)
+
 
 
 class Client(ClientBase):
@@ -61,3 +64,9 @@ class Client(ClientBase):
         :new_int: New value for integer
         """
         return self._service.exposed_seti(node, new_int)
+
+    def setd(self, node, new_double):
+        """
+        Warapper for daq.setDouble commands.
+        """
+        return self._service.exposed_setd(node, new_double)

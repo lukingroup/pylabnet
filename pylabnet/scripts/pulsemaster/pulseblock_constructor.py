@@ -25,11 +25,11 @@ class PulseblockConstructor():
         self.config = config
 
     def default_placeholder_value(self, placeholder_name):
-        
+
         for key in Placeholder.default_values:
             if placeholder_name.startswith(key):
                 return Placeholder(placeholder_name, Placeholder.default_values[key])
-        
+
         self.log.warn(f"Placeholder name {placeholder_name} not found in defaults, using 0.")
         return Placeholder(placeholder_name, 0.0)
 
@@ -51,17 +51,17 @@ class PulseblockConstructor():
             except NameNotDefined:
                 self.log.warn(f"Could not resolve variable '{input_val}', treating as placeholder.")
                 return self.default_placeholder_value(input_val)
-    
+
     def append_value_to_dict(self, search_dict, key, append_dict, fn=None, new_key=None):
-        """ Append a searched value from a search dictionary to a separate 
+        """ Append a searched value from a search dictionary to a separate
         dictionary, if the given key exists.
 
         :search_dict: search_dict (dict) Dictionary to search the key for
         :key: (str) Key to query the search dictionary using
         :append_dict: (dict) Value of the found key will be appended into this
             dictionary if it exists
-        :fn: (function, optional) Function to be applied to the found value 
-        :new_key: (str, optional) New key that the found value will be added 
+        :fn: (function, optional) Function to be applied to the found value
+        :new_key: (str, optional) New key that the found value will be added
             to in the append_dict. If not provided, it will use the old key
         """
 
@@ -83,10 +83,10 @@ class PulseblockConstructor():
         pulseblock = pb.PulseBlock(name=self.name)
 
         for i, pb_spec in enumerate(self.pulse_specifiers):
-            
+
             var_dict = pb_spec.pulsevar_dict
             arg_dict = {}
-            
+
             # Extract parameters from the pulsevar dict
             offset = self.resolve_value(pb_spec.offset)  * 1e-6
             arg_dict["ch"] = pb_spec.channel
@@ -111,15 +111,15 @@ class PulseblockConstructor():
 
             # Handle IQ mixing case
             if "iq" in arg_dict and arg_dict["iq"]:
-                
+
                 iq_calibration = IQ_Calibration()
                 iq_calibration.load_calibration(self.config["iq_cal_path"])
-                # Set arbitrarily so that neither channel will overflow 1
-                iq_calibration.IF_volt = 0.8
 
-                (if_freq, lo_freq, phase_opt, 
-                amp_i_opt, amp_q_opt, 
+                (if_freq, lo_freq, phase_opt,
+                amp_i_opt, amp_q_opt,
                 dc_i_opt, dc_q_opt) = iq_calibration.get_optimal_hdawg_and_LO_values(arg_dict["mod_freq"])
+
+                self.log.info(f"if={if_freq}, lo={lo_freq}, phase={phase_opt}")
 
                 # Store the optimal IQ parameters as 2 separate dictionaries
                 arg_dict_i = copy.deepcopy(arg_dict)
@@ -128,7 +128,7 @@ class PulseblockConstructor():
                 # Modify the channel names
                 arg_dict_i["ch"] = arg_dict["ch"] + "_i"
                 arg_dict_q["ch"] = arg_dict["ch"] + "_q"
-                
+
                 # Modulation frequency changed to IF
                 arg_dict_i["mod_freq"] = if_freq
                 arg_dict_q["mod_freq"] = if_freq
@@ -136,7 +136,7 @@ class PulseblockConstructor():
                 # Relative phase
                 arg_dict_i["mod_ph"] = arg_dict["mod_ph"] + phase_opt[0]
 
-                # The amplitude is the amplitude of the Sin genarator and is 
+                # The amplitude is the amplitude of the Sin genarator and is
                 # indepenent of ["amp"], the signal amplitude.
                 arg_dict_i["iq_params"] = {"amp_iq": amp_i_opt[0], "dc_iq": dc_i_opt[0], "lo_freq": lo_freq}
                 arg_dict_q["iq_params"] = {"amp_iq": amp_q_opt[0], "dc_iq": dc_q_opt[0], "lo_freq": lo_freq}
@@ -158,7 +158,7 @@ class PulseblockConstructor():
                     pulse = None
                     self.log.warn(f"Found an unsupported pulse type {pb_spec.pulsetype}")
 
-                # Store the duration of the first pulse (for IQ mixing) as the 
+                # Store the duration of the first pulse (for IQ mixing) as the
                 # pb duration is modified for the second pulse.
                 if idx == 0:
                     first_dur = pulse.dur
@@ -176,8 +176,8 @@ class PulseblockConstructor():
                             p_obj=pulse,
                             offset=offset
                         )
-                    # Force the 2nd pulse to start at same time as the first 
-                    # pulse in an IQ mix pulse. 
+                    # Force the 2nd pulse to start at same time as the first
+                    # pulse in an IQ mix pulse.
                     else:
                         pulseblock.append_po_as_pb(
                             p_obj=pulse,
@@ -210,8 +210,8 @@ class PulseblockConstructor():
                             p_obj=pulse,
                             offset=-prev_dur+offset
                         )
-                    # Force the 2nd pulse to start at same time as the first 
-                    # pulse in an IQ mix pulse. 
+                    # Force the 2nd pulse to start at same time as the first
+                    # pulse in an IQ mix pulse.
                     else:
                         pulseblock.append_po_as_pb(
                         p_obj=pulse,

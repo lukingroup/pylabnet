@@ -172,6 +172,7 @@ class Controller:
         self.disconnection = False
         self.debug = False
         self.debug_level = None
+        self.autoscroll_off = False
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -277,10 +278,11 @@ class Controller:
         """ Updates terminal output on GUI """
 
         self.main_window.terminal.append(text)
-        try:
-            self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
-        except TypeError:
-            pass
+        if not self.autoscroll_off:
+            try:
+                self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+            except TypeError:
+                pass
         # Update buffer terminal
         buffer_str = f'!~{self.update_index}~!{text}'
         self.main_window.buffer_terminal.append(buffer_str)
@@ -400,6 +402,7 @@ class Controller:
         self._configure_debug_combo_select()
         self._configure_logfile()
         self._configure_logging()
+        self._configure_autoscroll_off()
 
         self.main_window.force_update()
 
@@ -407,10 +410,11 @@ class Controller:
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
         self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
-        try:
-            self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
-        except TypeError:
-            pass
+        if not self.autoscroll_off:
+            try:
+                self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+            except TypeError:
+                pass
         self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
     def kill_servers(self):
@@ -746,7 +750,8 @@ class Controller:
                 if 'device_id: ' in clients[client]:
                     self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
 
-
+    def _configure_autoscroll_off(self):
+        self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)
     # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):
         self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
@@ -817,6 +822,12 @@ class Controller:
         # Levels are:
         # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
+
+    def _update_autoscroll_setting(self):
+        if self.main_window.autoscroll_off_check.isChecked():
+            self.autoscroll_off = True
+        else:
+            self.autoscroll_off = False
 
     def _kill(self):
         """ Kills launch control and all child servers if master """

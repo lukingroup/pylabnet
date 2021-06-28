@@ -746,7 +746,7 @@ class LockMonitor(Dataset):
 
     def set_pd_demod_piezo_voltage(self, pd_voltage, demod_voltage, piezo_voltage):
         self.children['PD Transmission'].set_data(pd_voltage)
-        self.children['Demodulated PC Transmission'].set_data(demod_voltage)
+        self.children['Demodulated PD Transmission'].set_data(demod_voltage)
         self.children['Piezo Voltage'].set_data(piezo_voltage)
 
 

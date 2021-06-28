@@ -160,3 +160,6 @@ secretkeys.env
 # Data folders
 pylabnet/utils/iq_upconversion/results/*
 
+.qt_for_python/uic/histogram.py
+.qt_for_python/uic/fit_popup_hist.py
+.qt_for_python/uic/power_stabilizer.py

@@ -56,32 +56,41 @@ class StaticLineGUIGeneric():
             #Try to find if we have a matching device client in staticline_clients
             try:
                 hardware_client = find_client(staticline_clients, self.config_dict, hardware_type, hardware_config, logger_client)
+                if (hardware_client == None):
+                    logger_client.error('No staticline device found for device name: '  + device_name)
+                    hardware_client_found = False
+                else:
+                    hardware_client_found = True
             except NameError:
                 logger_client.error('No staticline device found for device name: '  + device_name)
+                hardware_client_found = False
 
 
             # Iterate over all staticlines for that device and create a
             # driver instance for each line.
-            for staticline_idx in range(len(device_params["staticline_names"])):
-                staticline_name = device_params["staticline_names"][staticline_idx]
+            if (hardware_client_found):
+                for staticline_idx in range(len(device_params["staticline_names"])):
+                    staticline_name = device_params["staticline_names"][staticline_idx]
+                    # Store the staticline driver under the specified device name
+                    self.staticlines[device_name][staticline_name] = staticline.Driver(
+                        name=device_name + "_" + staticline_name,
+                        logger=logger_client,
+                        hardware_client=hardware_client,
+                        hardware_type=hardware_type,
+                        config=device_params["staticline_configs"][staticline_idx]
+                    )
 
-                # Store the staticline driver under the specified device name
-                self.staticlines[device_name][staticline_name] = staticline.Driver(
-                    name=device_name + "_" + staticline_name,
-                    logger=logger_client,
-                    hardware_client=hardware_client,
-                    hardware_type=hardware_type,
-                    config=device_params["staticline_configs"][staticline_idx]
-                )
-
-                #If it has an initial default value, set that initially using set_value command
-                if "default" in device_params["staticline_configs"][staticline_idx]:
-                    defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
-                    sl_type = device_params["staticline_configs"][staticline_idx]['type']
-                    if (sl_type == 'analog'):
-                        self.staticlines[device_name][staticline_name].set_value(defaultValue)
-                    elif (sl_type == 'adjustable_digital'):
-                        self.staticlines[device_name][staticline_name].set_dig_value(defaultValue)
+                    #If it has an initial default value, set that initially using set_value command
+                    if "default" in device_params["staticline_configs"][staticline_idx]:
+                        defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
+                        sl_type = device_params["staticline_configs"][staticline_idx]['type']
+                        if (sl_type == 'analog'):
+                            self.staticlines[device_name][staticline_name].set_value(defaultValue)
+                        elif (sl_type == 'adjustable_digital'):
+                            self.staticlines[device_name][staticline_name].set_dig_value(defaultValue)
+            else: 
+                #Didn't find the hardware client, so will remove the entry from the staticline dictionary so that the GUI is not updated
+                self.staticlines.pop(device_name, None)
 
 
 
@@ -107,6 +116,11 @@ class StaticLineGUIGeneric():
         for device_name, device_params in self.config_dict['lines'].items():
             if type(device_params) != dict:
                 continue
+
+            if (not device_name in self.staticlines):
+                self.log.error('No button initialization for staticline device: '  + device_name)
+                continue
+
 
             for staticline_idx in range(len(device_params["staticline_names"])):
 
@@ -166,7 +180,7 @@ class StaticLineGUIGeneric():
         )
 
         # Create a GUI window with layout determined by the config file
-        self.gui = GUIWindowFromConfig(config=self.config, host=self.host, port=self.port)
+        self.gui = GUIWindowFromConfig(config=self.config, host=self.host, port=self.port, staticlines=self.staticlines)
         self.gui.show()
         self.widgets = self.gui.widgets
 

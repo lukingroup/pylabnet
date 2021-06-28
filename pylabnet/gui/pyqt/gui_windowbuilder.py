@@ -7,7 +7,7 @@ from pylabnet.network.core.client_base import ClientBase
 
 class GUIWindowFromConfig(QMainWindow):
 
-	def __init__(self, config=None, host=None, port=None):
+	def __init__(self, config=None, host=None, port=None, staticlines = None):
 
 		QMainWindow.__init__(self)
 
@@ -36,6 +36,7 @@ class GUIWindowFromConfig(QMainWindow):
 		self.port_label = QtWidgets.QLabel(f"Port: {port}")
 		self.blockgridLayout[0].addWidget(self.ip_label)
 		self.blockgridLayout[0].addWidget(self.port_label)
+		self.staticlines = staticlines
 
 		self.unpack_config_file()
 
@@ -58,6 +59,11 @@ class GUIWindowFromConfig(QMainWindow):
 
 			# Ignore non-device configs
 			if type(device) != dict:
+				continue
+
+			#Device wasn't found, so don't add to GUI
+			#Not a huge fan of this implementation, but its good enough for now
+			if (self.staticlines != None and not device_name in self.staticlines):
 				continue
 
 			# Label for the device name

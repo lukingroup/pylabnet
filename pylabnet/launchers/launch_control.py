@@ -359,6 +359,8 @@ class Controller:
                 raise
         self.log_server.start()
 
+        self.log_service.logger.info('log service succesfully started')
+
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
@@ -460,13 +462,8 @@ class Controller:
         if self.date_str is not None:
             # if date has changed, move to new log file with new date
             if self.date_str != datetime.now().strftime("%Y_%m_%d"):
+                self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
-
-            # TEST TEST TEST
-            # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-            if self.minute_str != datetime.now().strftime("%M"):
-                self.start_stop_logging()
-            # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
     def _configure_client_search(self):
@@ -870,13 +867,8 @@ class Controller:
             date_str = datetime.now().strftime("%Y_%m_%d")
             time_str = datetime.now().strftime("%H_%M_%S")
 
-            # TEST TEST TEST
-            # --------------------------------------------------------------------------------------------------------------------------------------------------------------
-            self.minute_str = datetime.now().strftime("%M")
-            # --------------------------------------------------------------------------------------------------------------------------------------------------------------
-
             # Actually start logging
-            filename = f'logfile_{date_str}_{time_str}'
+            filename = f'logfile_{time_str}'
 
             # Get logging file from json.
             filepath = None
@@ -904,7 +896,7 @@ class Controller:
             except Exception as error_msg:
                 print(f'Failed to start logging to file {os.path.join(filepath, filename)}.\n{error_msg}')
 
-            self.log_service.gui_logger.info(f'Started logging to file {os.path.join(filepath, filename)}.')
+            self.log_service.logger.info(f'Started logging to file {os.path.join(filepath, filename)}.')
 
             # Change button color and text
             self.main_window.logfile_status_button.setStyleSheet("background-color: red")
@@ -913,7 +905,7 @@ class Controller:
 
             # Add previous text to logfile
             if self.main_window.log_previous.isChecked():
-                self.log_service.gui_logger.info(
+                self.log_service.logger.info(
                     f'Previous log terminal content: \n{self.main_window.terminal.toPlainText()}'
                     f'\n---------------------------'
                 )
@@ -996,9 +988,6 @@ class ProxyUpdater(QtCore.QObject):
             # If we have a new message to add, add it
             if new_msg != '':
                 self.update_signal.emit(new_msg)
-
-            # Chop log file if date has changed (and if logging to file)
-            self.controller.chop_log_file()
 
 
 

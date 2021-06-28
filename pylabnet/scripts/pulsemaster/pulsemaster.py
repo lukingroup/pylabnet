@@ -11,8 +11,7 @@ from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPu
                             QFormLayout, QComboBox, QWidget, QTableWidgetItem, QVBoxLayout, \
                             QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox, QGridLayout
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QRect, Qt, QAbstractTableModel, QTimer, QVariant
 
 from simpleeval import simple_eval, NameNotDefined
 
@@ -144,6 +143,9 @@ class PulseMaster:
         self.seq_var_table.setModel(self.seq_variable_table_model)
 
         self.add_pb_popup = None
+
+        # Initialize timers for controlling when text boxes get updated
+        self.timers = []
 
         # Initialize preserve_bits checkbox state in dictionary
         self.update_preserve_bits()
@@ -971,7 +973,12 @@ class PulseMaster:
             elif type(field_input) is QLineEdit:
                 field_input.setText(str(value))
 
-                field_input.textEdited.connect(pulse_mod_function)
+                # Create a timer to prevent the pulse update function from being called immediately
+                self.timers.append(QTimer())
+                self.timers[-1].setSingleShot(True)
+                self.timers[-1].setInterval(300)
+                self.timers[-1].timeout.connect(pulse_mod_function)
+                field_input.textEdited.connect(self.timers[-1].start)
 
             elif type(field_input) is QCheckBox:
                 field_input.setChecked(bool(value))

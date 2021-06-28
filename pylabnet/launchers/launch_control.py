@@ -173,6 +173,9 @@ class Controller:
         self.debug = False
         self.debug_level = None
         self.autoscroll_off = False
+        # date string is None if not logging to file, and gives today's date if logging to file.
+        # For day-chopping purposes
+        self.date_str = None
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -752,6 +755,7 @@ class Controller:
 
     def _configure_autoscroll_off(self):
         self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)
+
     # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):
         self.main_window.debug_radio_button.toggled.connect(self._update_debug_settings)
@@ -847,8 +851,11 @@ class Controller:
 
         if self.main_window.logfile_status_button.isChecked() or master_log:
 
+            date_str = datetime.now().strftime("%Y_%m_%d")
+            time_str = datetime.now().strftime("%H_%M_%S")
+
             # Actually start logging
-            filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
+            filename = f'logfile_{date_str}_{time_str}'
 
             # Get logging file from json.
             filepath = None
@@ -890,6 +897,9 @@ class Controller:
                     f'\n---------------------------'
                 )
 
+            # Pass current date of logfile for day-chopping purposes
+            self.date_str = date_str
+
         else:
 
             # Change button color and text
@@ -899,6 +909,9 @@ class Controller:
 
             # Actually stop logging
             self.log_service.stop_latest_logfile()
+
+            # Set date string to None so that logfile does not get updated anymore
+            self.date_str = None
 
 
 class WriteStream:
@@ -962,6 +975,12 @@ class ProxyUpdater(QtCore.QObject):
             # If we have a new message to add, add it
             if new_msg != '':
                 self.update_signal.emit(new_msg)
+
+            # Check if logging to file
+            if self.date_str is not None:
+                # if date has changed, move to new log file with new date
+                if self.date_str != datetime.now().strftime("%Y_%m_%d"):
+                    self.start_stop_logging()
 
 
 def main():

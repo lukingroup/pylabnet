@@ -448,8 +448,26 @@ class Controller:
         # Update terminal
         self.update_terminal(text)
 
+        # Chop log file if date has changed
+        self.chop_log_file()
+
         if self.disconnection:
             self.disconnect()
+
+    def chop_log_file(self):
+        """ Checks if date has changed, and chops logfile accordingly"""
+
+        if self.date_str is not None:
+            # if date has changed, move to new log file with new date
+            if self.date_str != datetime.now().strftime("%Y_%m_%d"):
+                self.start_stop_logging(master_log=True)
+
+            # TEST TEST TEST
+            # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+            if self.minute_str != datetime.now().strftime("%M"):
+                self.start_stop_logging()
+            # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
     def _configure_client_search(self):
         self.main_window.client_search.textChanged.connect(self._search_clients)
@@ -481,7 +499,6 @@ class Controller:
                 self.main_window.client_list.addItem(self.client_list[client])
                 self.client_list[client].setToolTip(info)
 
-
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
 
@@ -500,7 +517,6 @@ class Controller:
                 self._close_dangling(client_to_stop)
         else:
             self._close_dangling(client_to_stop)
-
 
     def _close_dangling(self, client_to_stop):
 
@@ -944,12 +960,6 @@ class UpdateReceiver(QtCore.QObject):
             text = self.queue.get()
             self.update_signal.emit(text)
 
-            # Check if logging to file (should always be true for master logger)
-            if self.date_str is not None:
-                # if date has changed, move to new log file with new date
-                if self.date_str != datetime.now().strftime("%Y_%m_%d"):
-                    self.start_stop_logging(master_log=True)
-
 
 class ProxyUpdater(QtCore.QObject):
     """ Process to run in separate thread to synchronize proxy GUI """
@@ -987,17 +997,9 @@ class ProxyUpdater(QtCore.QObject):
             if new_msg != '':
                 self.update_signal.emit(new_msg)
 
-            # Check if logging to file
-            if self.date_str is not None:
-                # if date has changed, move to new log file with new date
-                if self.date_str != datetime.now().strftime("%Y_%m_%d"):
-                    self.start_stop_logging()
+            # Chop log file if date has changed (and if logging to file)
+            self.controller.chop_log_file()
 
-                # TEST TEST TEST
-                # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-                if self.minute_str != datetime.now().strftime("%M"):
-                    self.start_stop_logging()
-                # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 def main():

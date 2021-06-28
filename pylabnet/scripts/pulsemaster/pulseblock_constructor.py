@@ -25,7 +25,7 @@ class PulseblockConstructor():
         self.config = config
 
         if "iq_cal_path" in self.config:
-            self.iq_calibration = IQ_Calibration()
+            self.iq_calibration = IQ_Calibration(log=log)
             self.iq_calibration.load_calibration(self.config["iq_cal_path"])
 
     def default_placeholder_value(self, placeholder_name):

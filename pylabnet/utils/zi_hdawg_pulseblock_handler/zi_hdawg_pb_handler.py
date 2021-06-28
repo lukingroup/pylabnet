@@ -297,6 +297,8 @@ class AWGPulseBlockHandler():
 
         #### 2. Digitize all pulses within a single channel ####
 
+        iq_waveforms = {}
+
         for ch, pulse_list in analog_pulse_dict.items():
             dflt_pulse = self.pb.dflt_dict[ch]
 
@@ -335,17 +337,36 @@ class AWGPulseBlockHandler():
                 else:
                     tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr))
 
+                # Declare the waveform in the AWG code with a placeholder
+                setup_instr += f'wave {wave_var_name} = placeholder({len(samp_arr)});\n'
+
                 waveforms.append([wave_var_name,
                                 ch.name,
                                 tstep_start,
                                 tstep_end,
+                                True, # whether to dynamically upload this waveform,
+                                waveform_idx,
                                 samp_arr])
 
-                # Declare the waveform in the AWG code with a placeholder
-                setup_instr += f'wave {wave_var_name} = placeholder({len(samp_arr)});\n'
                 # Assign wave index
-                setup_instr += f'assignWaveIndex({wave_var_name}, {waveform_idx});\n'
-                waveform_idx += 1
+                if pulse.iq:
+                    waveforms[-1][4] = False # don't dynamically upload IQ waves in the main upload loop
+
+                    # IQ pulses must be assigned together as a pair
+                    # During _i portion we create an entry in the IQ waveforms dict and store the waveform index
+                    if "_i" in wave_var_name and "_q" not in wave_var_name:
+                        iq_waveforms[wave_var_name.replace("_i", "")] = [waveform_idx, samp_arr, None]
+                        waveform_idx += 1
+                    # During _q portion we use the index that _i reserved
+                    else:
+                        iq_waveform_idx = iq_waveforms[wave_var_name.replace("_q", "")][0]
+                        # Store the q waveform with the i waveform
+                        iq_waveforms[wave_var_name.replace("_q", "")][2] = samp_arr
+                        setup_instr += f'assignWaveIndex({wave_var_name.replace("_q", "_i")}, {wave_var_name}, {iq_waveform_idx});\n'
+                else:
+                    setup_instr += f'assignWaveIndex({wave_var_name}, {waveform_idx});\n'
+                    waveform_idx += 1
+
 
         #### 3. Extract parameters for channel / output setup procedure  ####
 
@@ -425,7 +446,7 @@ class AWGPulseBlockHandler():
         #                     else:
         #                         break
 
-        return waveforms, setup_instr
+        return waveforms, list(iq_waveforms.values()), setup_instr
 
     def zip_digital_commands(self, codewords_array):
         """Generate zipped version of DIO commands.
@@ -479,9 +500,11 @@ class AWGPulseBlockHandler():
         print(codeword_times)
 
         # Sanity check that both methods should give the same length
-        assert(len(codeword_times) == len(codeword_times_force_value))
-        # self.log.error(codeword_times)
-        # self.log.error(codeword_times_force_value)
+        if not len(codeword_times) == len(codeword_times_force_value):
+            self.log.error(codeword_times)
+            self.log.error(codeword_times_force_value)
+            self.log.error(codewords[265:275])
+            #assert(len(codeword_times) == len(codeword_times_force_value))
 
         return codewords, codeword_times
 
@@ -579,6 +602,14 @@ class AWGPulseBlockHandler():
         playwave_cmd = "playWave({});\n"
         wave_str = ""
 
+        channel_grouping = self.hd.geti('system/awg/channelgrouping')
+        if channel_grouping == 0: # 4x2
+            chs_per_core = 2
+        elif channel_grouping == 1: # 2x4
+            chs_per_core = 4
+        elif channel_grouping == 2: # 1x8
+            chs_per_core = 8
+
         if command[0] == "dio":
             # Add setDIO command to sequence
             dio_codeword = int(command[1])
@@ -603,7 +634,9 @@ class AWGPulseBlockHandler():
             # Put the waveforms from the earlier channels first.
             for ch_num, waveform_var_name in sorted(zip(ch_nums, waveform_var_names)):
                 if wave_str != "": wave_str += ", "  # Separator btw channels
-                wave_str += f"{ch_num}, {waveform_var_name}"
+                # Convert from overall ch number to ch number relative to each core
+                reduced_ch_num = ((ch_num - 1) % chs_per_core) + 1
+                wave_str += f"{reduced_ch_num}, {waveform_var_name}"
 
             return playwave_cmd.format(wave_str)
 
@@ -707,7 +740,7 @@ class AWGPulseBlockHandler():
         # Get instructions for the analog channels
         # List of tuples (waveform var name, ch_name, start_step, end_step, np.array waveform)
         # analog_setup is a string to be prepended to the compiled code
-        waveforms, analog_setup = self.gen_analog_instructions(waveform_idx)
+        waveforms, iq_waveforms, analog_setup = self.gen_analog_instructions(waveform_idx)
 
         combined_commands, combined_waittimes = self.combine_command_timings(
                                                     digital_codewords,
@@ -717,4 +750,4 @@ class AWGPulseBlockHandler():
         # Reconstruct set of .seqc instructions representing the digital waveform.
         sequence = self.construct_awg_sequence(combined_commands, combined_waittimes)
 
-        return analog_setup, sequence, waveforms
+        return analog_setup, sequence, waveforms, iq_waveforms

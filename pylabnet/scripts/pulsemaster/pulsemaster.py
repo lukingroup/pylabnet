@@ -970,6 +970,7 @@ class PulseMaster:
 
             elif type(field_input) is QLineEdit:
                 field_input.setText(str(value))
+
                 field_input.textEdited.connect(pulse_mod_function)
 
             elif type(field_input) is QCheckBox:

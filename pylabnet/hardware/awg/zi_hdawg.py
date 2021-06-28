@@ -494,19 +494,29 @@ class AWGModule():
                     self.hd.seti(f'awgs/{ch_num//2}/outputs/{ch_num%2}/modulation/mode', mod)
 
                     # Oscillation oscillator index - set oscillator n to channel n
+                    # Not applicable for non-MF mod.
                     self.hd.seti(f'sines/{ch_num}/oscselect', ch_num)
 
                 elif config_type == "mod_freq":
-                    self.hd.setd(f'oscs/{ch_num}/freq', config_val)
+                    # Assume that outputs 1-2 use osc 0, 3-4 use osc 1, etc.
+                    self.hd.setd(f'oscs/{ch_num//2}/freq', config_val)
+                    self.hd.log.info(f"Setting oscillator {ch_num//2} frequency to {config_val}.")
 
                 elif config_type == "mod_ph":
                     self.hd.setd(f'sines/{ch_num}/phaseshift', config_val)
+                    self.hd.log.info(f"Setting sine {ch_num} phase to {config_val}.")
 
                 elif config_type == "amp_iq":
-                    self.hd.setd(f'sines/{ch_num}/amplitudes/{ch_num%2}', config_val)
+                    #self.hd.setd(f'sines/{ch_num}/amplitudes/{ch_num%2}', config_val)
+                    self.hd.setd(f'awgs/{ch_num//2}/outputs/{ch_num%2}/gains/{ch_num%2}', config_val)
+                    self.hd.log.info(f"Setting sine {ch_num} amplitude {ch_num%2} to {config_val}.")
 
                 elif config_type == "dc_iq":
                     self.hd.setd(f'sigouts/{ch_num}/offset', config_val)
+                    self.hd.log.info(f"Setting output {ch_num} offset to {config_val}.")
+
+                elif config_type == "lo_freq":
+                    self.hd.log.info(f"LO frequency of {config_val} found, AWG ignoring...")
 
                 else:
                     self.hd.log.warn(f"Unsupported analog channel config {config_type}.")

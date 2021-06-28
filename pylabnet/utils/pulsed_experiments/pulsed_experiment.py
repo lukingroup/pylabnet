@@ -49,7 +49,7 @@ class PulsedExperiment():
         )
 
         # Generate instruction set which represents pulse sequence.
-        prologue_sequence, pulse_sequence, upload_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
+        prologue_sequence, pulse_sequence, upload_waveforms, upload_iq_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
 
         # Replace the pulseblock name placeholder with the generated instructions
         self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
@@ -57,6 +57,7 @@ class PulsedExperiment():
 
         # Save the list of waveforms to be uploaded to AWG
         self.upload_waveforms.extend(upload_waveforms)
+        self.upload_iq_waveforms.extend(upload_iq_waveforms)
 
         self.hd.log.info("Replaced waveform placeholder sequence(s).")
 
@@ -120,9 +121,16 @@ class PulsedExperiment():
         awg.compile_upload_sequence(self.seq)
 
         # Upload waveforms to AWG
-        for index, waveform_tuple in enumerate(self.upload_waveforms):
+        for waveform_tuple in self.upload_waveforms:
+            # Check for flag for whether to upload this wave
+            if not waveform_tuple[4]:
+                continue
+            wave_index = waveform_tuple[5]
             waveform_np_array = waveform_tuple[-1]
-            awg.dyn_waveform_upload(index, waveform_np_array)
+            awg.dyn_waveform_upload(wave_index, waveform_np_array)
+
+        for (waveform_idx, wave_i, wave_q) in self.upload_iq_waveforms:
+            awg.dyn_waveform_upload(waveform_idx, wave1=wave_i, wave2=wave_q)
 
         # Setup analog channel settings for each pulseblock
         # Setup DIO drive bits for each pulseblock
@@ -220,6 +228,7 @@ class PulsedExperiment():
         # List of waveforms to be uploaded. Items are of the form:
         # tuple(waveform var name, ch_name, start_step, end_step, np.array waveform)
         self.upload_waveforms = []
+        self.upload_iq_waveforms = []
 
         # Check if template is available, and store it.
         if use_template:

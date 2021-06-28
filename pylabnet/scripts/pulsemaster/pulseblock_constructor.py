@@ -114,8 +114,6 @@ class PulseblockConstructor():
 
                 iq_calibration = IQ_Calibration()
                 iq_calibration.load_calibration(self.config["iq_cal_path"])
-                # Set arbitrarily so that neither channel will overflow 1
-                iq_calibration.IF_volt = 0.8
 
                 (if_freq, lo_freq, phase_opt,
                 amp_i_opt, amp_q_opt,

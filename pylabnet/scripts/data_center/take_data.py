@@ -67,6 +67,7 @@ class DataTaker:
         self.gui.configure.clicked.connect(self.configure)
         self.gui.run.clicked.connect(self.run)
         self.gui.save.clicked.connect(self.save)
+        self.gui.clearData.clicked.connect(self.clear_data)
         self.gui.load_config.clicked.connect(self.reload_config)
         self.gui.showMaximized()
         self.gui.apply_stylesheet()
@@ -161,6 +162,12 @@ class DataTaker:
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
 
+    def clear_data(self):
+        """ Clears all data from curves"""
+        self.log.info("Clearing data")
+        self.dataset.clear_all_data()
+
+
     def run(self):
         """ Runs/stops the experiment """
 
@@ -179,6 +186,32 @@ class DataTaker:
             self.update_thread.save_flag.connect(self.save)
             self.gui.autosave.toggled.connect(self.update_thread.update_autosave)
             self.gui.autosave_interval.valueChanged.connect(self.update_thread.update_autosave_interval)
+
+            '''
+            # Step 2: Create a QThread object
+            self.thread = QThread()
+            # Step 3: Create a worker object
+            self.worker = Worker()
+            # Step 4: Move worker to the thread
+            self.worker.moveToThread(self.thread)
+            # Step 5: Connect signals and slots
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.progress.connect(self.reportProgress)
+            # Step 6: Start the thread
+            self.thread.start()
+
+            # Final resets
+            self.longRunningBtn.setEnabled(False)
+            self.thread.finished.connect(
+                lambda: self.longRunningBtn.setEnabled(True)
+            )
+            self.thread.finished.connect(
+                lambda: self.stepLabel.setText("Long-Running Step: 0")
+            )
+            '''
 
             self.experiment_thread = ExperimentThread(
                 self.experiment,

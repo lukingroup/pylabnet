@@ -24,6 +24,10 @@ class PulseblockConstructor():
         self.pulseblock = None
         self.config = config
 
+        if "iq_cal_path" in self.config:
+            self.iq_calibration = IQ_Calibration()
+            self.iq_calibration.load_calibration(self.config["iq_cal_path"])
+
     def default_placeholder_value(self, placeholder_name):
 
         for key in Placeholder.default_values:
@@ -112,12 +116,9 @@ class PulseblockConstructor():
             # Handle IQ mixing case
             if "iq" in arg_dict and arg_dict["iq"]:
 
-                iq_calibration = IQ_Calibration()
-                iq_calibration.load_calibration(self.config["iq_cal_path"])
-
                 (if_freq, lo_freq, phase_opt,
                 amp_i_opt, amp_q_opt,
-                dc_i_opt, dc_q_opt) = iq_calibration.get_optimal_hdawg_and_LO_values(arg_dict["mod_freq"])
+                dc_i_opt, dc_q_opt) = self.iq_calibration.get_optimal_hdawg_and_LO_values(arg_dict["mod_freq"])
 
                 self.log.info(f"if={if_freq}, lo={lo_freq}, phase={phase_opt}")
 

@@ -461,8 +461,6 @@ class Controller:
     def chop_log_file(self):
         """ Checks if date has changed, and chops logfile accordingly"""
 
-        self.log_service.logger.info('HELLO. IM JUST HERE TO CLOG THE LOG FILE.')
-
         if self.logfile_date_str is not None:
             # if date has changed, move to new log file with new date
             if self.logfile_date_str != datetime.now().strftime("%Y_%m_%d"):

@@ -120,18 +120,15 @@ class Dataset():
         )
         self.update(**kwargs)
 
-    def clear_all_data(self):
-        self.clear_data()
-        self.clear_children_data()
-
     def clear_data(self):
         self.data = None
         self.curve.setData([])
         
-
-    def clear_children_data(self):
+    # Note: This could run into infinite iteration problem.
+    def clear_all_data(self):
+        self.clear_data()
         for child in self.children.values():
-            child.clear_data()
+            child.clear_all_data()
             
 
     def update(self, **kwargs):
@@ -935,6 +932,11 @@ class TriangleScan1D(Dataset):
                     prev_dataset.data = np.fliplr(prev_dataset.data)
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
+    
+    def clear_data(self):
+        self.all_data = None
+        self.data = None
+
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """
 
@@ -1053,7 +1055,6 @@ class SawtoothScan1D(Dataset):
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
 
-
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
@@ -1144,6 +1145,22 @@ class HeatMap(Dataset):
             self.graph = pg.ImageView(view=pg.PlotItem())
             self.gui.graph_layout.addWidget(self.graph)
 
+    def clear_data(self):
+
+        # Check if data has been cleared by parent class.
+        if True:
+            self.graph.setImage(
+                img=np.transpose(np.zeros((10,10))),
+                autoRange=False
+            )
+        else:
+            self.graph.setImage(
+                img=np.transpose(np.zeros_like(self.data)),
+                autoRange=False
+            )
+
+        self.data = None
+
 
 class LockedCavityScan1D(TriangleScan1D):
 
@@ -1159,6 +1176,7 @@ class LockedCavityScan1D(TriangleScan1D):
     def fill_params(self, config):
 
         super().fill_params(config)
+
         if not self.backward:
             self.add_child(
                 name='Cavity lock',
@@ -1193,6 +1211,11 @@ class LockedCavityScan1D(TriangleScan1D):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
+    
+    def clear_data(self):
+        self.data = None
+        self.all_data = None
+      
 
 class LockedCavityPreselectedHistogram(PreselectedHistogram):
 

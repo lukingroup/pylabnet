@@ -549,7 +549,7 @@ class PulseMaster:
                     t1, t2 = new_t1, new_t2
 
                     # Draw the current pulse at high grid density
-                    t_ar = np.linspace(t1, t2, 2000)
+                    t_ar = np.linspace(t1, t2, 800)
                     x_ar.extend(t_ar)
                     y_ar.extend(p_item.get_value(t_ar))
 

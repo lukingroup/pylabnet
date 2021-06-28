@@ -259,8 +259,11 @@ class IQ_Calibration():
 		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
 
 		# Set optimal I and Q amplitudes
-		hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), amp_i_opt)
-		hd.setd('sines/{}/amplitudes/1'.format(HDAWG_ports[1]-1), amp_q_opt)
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), amp_i_opt)
+		#hd.setd('sines/{}/amplitudes/1'.format(HDAWG_ports[1]-1), amp_q_opt)
+
+		for port, amp in zip(HDAWG_ports, [amp_i_opt, amp_q_opt]):
+					hd.setd(f'awgs/{port//2}/outputs/{port%2}/gains/{port%2}', amp)
 
 		# Set optimal phaseshift
 		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), phase_opt)
@@ -320,7 +323,7 @@ class IQ_Calibration():
 
 		ii = np.argmax(fidelity)
 
-		mw_client.set_freq(freq-if_f[ii])
+		mw_source.set_freq(freq-if_f[ii])
 
 		self.set_optimal_hdawg_values(hd, if_f[ii], freq-if_f[ii], HDAWG_ports=HDAWG_ports, oscillator=oscillator)
 

@@ -696,22 +696,22 @@ class LockMonitor(Dataset):
          # Add child for PD current
         self.add_child(
                 name='Piezo Voltage',
-                data_type=RollingLine,
-                data_length=1000,
+                data_type=InfiniteRollingLine,
+                data_length=10000,
                 color_index=4
         )
 
          # Add child for PD current
         self.add_child(
                 name='PD Transmission',
-                data_type=RollingLine,
-                data_length=1000,
+                data_type=InfiniteRollingLine,
+                data_length=10000,
                 color_index=4
         )
         self.add_child(
                 name='Demodulated PD Transmission',
-                data_type=RollingLine,
-                data_length=1000,
+                data_type=InfiniteRollingLine,
+                data_length=10000,
                 color_index=4
         )
         self.add_child(
@@ -743,11 +743,10 @@ class LockMonitor(Dataset):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
-    def set_pd_demod_voltage(self, pd_voltage, demod_voltage, piezo_voltage):
+    def set_pd_demod_piezo_voltage(self, pd_voltage, demod_voltage, piezo_voltage):
         self.children['PD Transmission'].set_data(pd_voltage)
-        self.children['Demodulated PC Transmission'].set_data(demod_voltage)
+        self.children['Demodulated PD Transmission'].set_data(demod_voltage)
         self.children['Piezo Voltage'].set_data(piezo_voltage)
-
 
 
 class Scatterplot(Dataset):
@@ -1232,7 +1231,54 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
+class LockedCavityScan1D(TriangleScan1D):
 
+    def __init__(self, *args, **kwargs):
+
+        self.t0 = time.time()
+        self.v = None
+        self.sasha_aom = None
+        self.toptica_aom = None
+
+        super().__init__(*args, **kwargs)
+
+    def fill_params(self, config):
+
+        super().fill_params(config)
+        if not self.backward:
+            self.add_child(
+                name='Cavity lock',
+                data_type=Dataset,
+                window='lock_monitor',
+                window_title='Cavity lock monitor',
+                color_index=3
+            )
+            self.add_child(
+                name='Cavity history',
+                data_type=InfiniteRollingLine,
+                data_length=10000,
+                window='lock_monitor',
+                color_index=4
+            ),
+            self.add_child(
+                name='Max count history',
+                data_type=InfiniteRollingLine,
+                data_length=10000,
+                window='lock_monitor',
+                color_index=5
+            )
+            # self.add_params_to_gui(
+            #     voltage=0.0
+            # )
+
+
+    def set_v_and_counts(self, v, counts):
+        """ Updates voltage and counts"""
+
+        self.v = v
+        # self.widgets['voltage'].setValue(self.v)
+        self.children['Cavity history'].set_data(self.v)
+        self.children['Max count history'].set_data(counts)
 
 
 class ErrorBarGraph(Dataset):

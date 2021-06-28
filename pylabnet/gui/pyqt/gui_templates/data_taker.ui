@@ -332,44 +332,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          <enum>QLayout::SetMinimumSize</enum>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QLabel" name="param_9">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <family>Calibri Light</family>
-              <pointsize>12</pointsize>
-              <weight>50</weight>
-              <italic>false</italic>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);</string>
-            </property>
-            <property name="text">
-             <string>Data type:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="dataset">
-            <property name="styleSheet">
-             <string notr="true">color: rgb(255, 255, 255);
-font: 25 12pt &quot;Calibri Light&quot;;</string>
-            </property>
-            <property name="sizeAdjustPolicy">
-             <enum>QComboBox::AdjustToContents</enum>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <layout class="QHBoxLayout" name="horizontalLayout_3"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="preselection_layout">
@@ -658,7 +621,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2565</width>
-     <height>38</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

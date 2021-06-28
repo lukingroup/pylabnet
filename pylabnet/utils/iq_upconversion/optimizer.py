@@ -20,7 +20,7 @@ class Optimizer:
 class IQOptimizer(Optimizer):
 
 	def __init__(
-		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -65, max_carrier_pow = -65, num_points = 25, cushion_param = 5,
+		self, mw_source, hd, sa, carrier, signal_freq, max_iterations = 5, max_lower_sideband_pow = -58, max_carrier_pow = -58, num_points = 25, cushion_param = 5,
 		param_guess = ([60, 0.6, 0.65, -0.002, 0.006]), phase_window = 44, q_window = 0.34, dc_i_window = 0.0135,
 		dc_q_window = 0.0115, plot_traces = True, awg_delay_time = 0.0, averages=1, min_rounds=1, HDAWG_ports=[3,4],
 		oscillator=2):
@@ -54,15 +54,15 @@ class IQOptimizer(Optimizer):
 		hd.setd('oscs/{}/freq'.format(oscillator-1), signal_freq)
 
 		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
-		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0],2)-1), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
-		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1],2)-1), 2*param_guess[2]*(1/(1+param_guess[1])))
+		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0]-1,2)), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
+		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1]-1,2)), 2*param_guess[2]*(1/(1+param_guess[1])))
 
 		# Set phase offset between I and Q
 		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), param_guess[0])
 
 		# Enable sine waves
-		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0],2)-1), 1)
-		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1],2)-1), 1)
+		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0]-1,2)), 1)
+		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1]-1,2)), 1)
 
 
 		self.mw_source = mw_source
@@ -304,8 +304,8 @@ class IQOptimizer(Optimizer):
 			amp_q = 2 * self.a0 / (1 + q)
 
 			# Set i and q amplitudes
-			self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[0]-1, np.mod(self.HDAWG_ports[0],2)-1), amp_i)
-			self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[1]-1, np.mod(self.HDAWG_ports[1],2)-1), amp_q)
+			self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[0]-1, np.mod(self.HDAWG_ports[0]-1,2)), amp_i)
+			self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[1]-1, np.mod(self.HDAWG_ports[1]-1,2)), amp_q)
 
 			# Set phaseshift
 			self.hd.setd('sines/{}/phaseshift'.format(self.HDAWG_ports[0]-1), phase)
@@ -338,8 +338,8 @@ class IQOptimizer(Optimizer):
 		self.amp_q_opt = 2 * self.a0 / (1 + self.opt_q)
 
 		# Set optimal I and Q amplitudes
-		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[0]-1, np.mod(self.HDAWG_ports[0],2)-1), self.amp_i_opt)
-		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[1]-1, np.mod(self.HDAWG_ports[1],2)-1), self.amp_q_opt)
+		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[0]-1, np.mod(self.HDAWG_ports[0]-1,2)), self.amp_i_opt)
+		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[1]-1, np.mod(self.HDAWG_ports[1]-1,2)), self.amp_q_opt)
 
 		# Set optimal phaseshift
 		self.hd.setd('sines/{}/phaseshift'.format(self.HDAWG_ports[0]-1), self.opt_phase)
@@ -446,15 +446,15 @@ class IQOptimizer_GD(Optimizer):
 		hd.setd('oscs/{}/freq'.format(oscillator-1), signal_freq)
 
 		# Set I and Q amplitude, calculate from q and a0 in the param_guess array
-		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0],2)-1), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
-		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1],2)-1), 2*param_guess[2]*(1/(1+param_guess[1])))
+		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0]-1,2)), 2*param_guess[2]*(param_guess[1]/(1+param_guess[1])))
+		hd.setd('sines/{}/amplitudes/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1]-1,2)), 2*param_guess[2]*(1/(1+param_guess[1])))
 
 		# Set phase offset between I and Q
 		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), param_guess[0])
 
 		# Enable sine waves
-		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0],2)-1), 1)
-		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1],2)-1), 1)
+		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[0]-1, np.mod(HDAWG_ports[0]-1,2)), 1)
+		hd.seti('sines/{}/enables/{}'.format(HDAWG_ports[1]-1, np.mod(HDAWG_ports[1]-1,2)), 1)
 
 		# set DC offsets
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), param_guess[3])
@@ -688,8 +688,8 @@ class IQOptimizer_GD(Optimizer):
 		amp_q = 2 * self.a0 / (1 + q)
 
 		# Set i and q amplitudes
-		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[0]-1, np.mod(self.HDAWG_ports[0],2)-1), amp_i)
-		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[1]-1, np.mod(self.HDAWG_ports[1],2)-1), amp_q)
+		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[0]-1, np.mod(self.HDAWG_ports[0]-1,2)), amp_i)
+		self.hd.setd('sines/{}/amplitudes/{}'.format(self.HDAWG_ports[1]-1, np.mod(self.HDAWG_ports[1]-1,2)), amp_q)
 
 		# Set phaseshift
 		self.hd.setd('sines/{}/phaseshift'.format(self.HDAWG_ports[0]-1), phase)
@@ -709,30 +709,38 @@ class IQOptimizer_GD(Optimizer):
 
 	def calc_slope_phase_and_amp(self, phase, q, phase_step, q_step):
 		self.set_phase_and_amp(phase + phase_step, q)
+		time.sleep(self._AWG_DELAY_TIME)
 		phase_p = self._average_marker_power(self.lower_sb_marker)
 
 		self.set_phase_and_amp(phase - phase_step, q)
+		time.sleep(self._AWG_DELAY_TIME)
 		phase_m = self._average_marker_power(self.lower_sb_marker)
 
 		self.set_phase_and_amp(phase, q + q_step)
+		time.sleep(self._AWG_DELAY_TIME)
 		q_p = self._average_marker_power(self.lower_sb_marker)
 
 		self.set_phase_and_amp(phase, q - q_step)
+		time.sleep(self._AWG_DELAY_TIME)
 		q_m = self._average_marker_power(self.lower_sb_marker)
 
 		return([(phase_p-phase_m)/2, (q_p-q_m)/2])
 
 	def calc_slope_dc_offsets(self, vi, vq, vi_step, vq_step):
 		self.set_dc_offsets(vi + vi_step, vq)
+		time.sleep(self._AWG_DELAY_TIME)
 		vi_p = self._average_marker_power(self.carrier_marker)
 
 		self.set_dc_offsets(vi - vi_step, vq)
+		time.sleep(self._AWG_DELAY_TIME)
 		vi_m = self._average_marker_power(self.carrier_marker)
 
 		self.set_dc_offsets(vi, vq + vq_step)
+		time.sleep(self._AWG_DELAY_TIME)
 		vq_p = self._average_marker_power(self.carrier_marker)
 
 		self.set_dc_offsets(vi, vq - vq_step)
+		time.sleep(self._AWG_DELAY_TIME)
 		vq_m = self._average_marker_power(self.carrier_marker)
 
 		return([(vi_p-vi_m)/2, (vq_p-vq_m)/2])

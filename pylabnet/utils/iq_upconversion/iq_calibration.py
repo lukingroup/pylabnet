@@ -154,9 +154,9 @@ class IQ_Calibration():
 
 				t1 = time.time()
 				opt = IQOptimizer_GD(mw_source, hd, sa, lo_freq, if_freq,
-					param_guess = ([85, 1, 0.6, 0.05, -0.02]),
-					awg_delay_time=0.01, averages=10, HDAWG_ports=HDAWG_ports, oscillator=oscillator,
-					min_power=-55, vi_step=0.005, vq_step=0.005, max_iterations = 30,
+					param_guess = ([90, 1, 0.75, 0, 0]),
+					awg_delay_time=0.01, averages=10, HDAWG_ports=[3,4], oscillator=2,
+					min_power=-65, phase_step = 3, vi_step=0.01, vq_step=0.01, max_iterations = 30,
 					plot_traces=False)
 				opt.opt()
 
@@ -426,15 +426,15 @@ class IQ_Calibration():
 
 def main():
 	mw_client = Client(
-    	host='192.168.50.107',
-    	port=3864
+		host='192.168.50.104', 
+		port=25696
 	)
 	sa = agilent_e4405B.Client(
-    	host='192.168.50.108',
-    	port=23278
+    	host='localhost',
+    	port=12354
 	)
 
-	dev_id = 'dev8354'
+	dev_id = 'dev8227'
 
 	#logger = LogClient(
 	#	host='140.247.189.50',
@@ -445,7 +445,8 @@ def main():
 	hd = zi_hdawg.Driver(dev_id, None)
 
 	iq_calibration = IQ_Calibration()
-	iq_calibration.run_calibration_GD("results\\06_10_2021_IQ_cal_no_filters.csv", mw_client, hd, sa, 9E9, 12.7E9, 38, 100E6, 500E6, 21, 15, 0.6, HDAWG_ports=[1,3], oscillator=1)
+	iq_calibration.run_calibration("results//6_21_2021_cal.csv",  mw_client, hd, sa, 10.4E9,  11.4E9, 11, 100E6, 500E6, 21, 25, 0.75)
+	#iq_calibration.run_calibration_GD("results//6_16_2021_cal_w_GD.csv", mw_client, hd, sa, 11.3E9, 12.3E9, 30, 100E6, 500E6, 21, 25, 0.75)
 
 if __name__ == '__main__':
     main()

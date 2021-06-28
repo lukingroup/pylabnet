@@ -854,6 +854,11 @@ class Controller:
             date_str = datetime.now().strftime("%Y_%m_%d")
             time_str = datetime.now().strftime("%H_%M_%S")
 
+            # TEST TEST TEST
+            # --------------------------------------------------------------------------------------------------------------------------------------------------------------
+            self.minute_str = datetime.now().strftime("%M")
+            # --------------------------------------------------------------------------------------------------------------------------------------------------------------
+
             # Actually start logging
             filename = f'logfile_{date_str}_{time_str}'
 
@@ -987,6 +992,12 @@ class ProxyUpdater(QtCore.QObject):
                 # if date has changed, move to new log file with new date
                 if self.date_str != datetime.now().strftime("%Y_%m_%d"):
                     self.start_stop_logging()
+
+                # TEST TEST TEST
+                # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                if self.minute_str != datetime.now().strftime("%M"):
+                    self.start_stop_logging()
+                # --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 def main():

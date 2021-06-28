@@ -199,6 +199,7 @@ class Dataset:
         for child in self.children.values():
             child.save(filename, directory, date_dir)
 
+
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
 
@@ -743,7 +744,7 @@ class LockMonitor(Dataset):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
-    def set_pd_demod_voltage(self, pd_voltage, demod_voltage, piezo_voltage):
+    def set_pd_demod_piezo_voltage(self, pd_voltage, demod_voltage, piezo_voltage):
         self.children['PD Transmission'].set_data(pd_voltage)
         self.children['Demodulated PC Transmission'].set_data(demod_voltage)
         self.children['Piezo Voltage'].set_data(piezo_voltage)

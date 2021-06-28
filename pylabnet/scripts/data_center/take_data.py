@@ -134,12 +134,32 @@ class DataTaker:
                     pass
         self.gui.windows = {}
             # If we're not setting up a new measurement type, just clear the data
-        self.dataset = getattr(datasets, self.gui.dataset.currentText())(
-            gui=self.gui,
-            log=self.log,
-            config=self.config
-        )
 
+
+        ## Nedd to redo this. 
+        # self.dataset = getattr(datasets, self.gui.dataset.currentText())(
+        #     gui=self.gui,
+        #     log=self.log,
+        #     config=self.config
+        # )
+
+        try:
+            classname = self.module.define_dataset()
+        except AttributeError:
+            error_msg = "No 'define_dataset' method found in experiment script."
+            self.log.error("No 'define_dataset' method found in experiment script.")
+            return
+
+        try:
+            self.dataset = getattr(datasets, classname)(
+                gui=self.gui,
+                log=self.log,
+                config=self.config
+            )
+        except AttributeError:
+            error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
+            self.log.error(error_msg)
+            return
 
         # Run any pre-experiment configuration
         try:

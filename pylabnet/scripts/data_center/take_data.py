@@ -63,11 +63,6 @@ class DataTaker:
             client_item.setToolTip(str(client_obj))
             self.gui.clients.addItem(client_item)
 
-        # Configure dataset menu
-        for name, obj in inspect.getmembers(datasets):
-            if inspect.isclass(obj) and issubclass(obj, datasets.Dataset):
-                self.gui.dataset.addItem(name)
-
         # Configure button clicks
         self.gui.configure.clicked.connect(self.configure)
         self.gui.run.clicked.connect(self.run)

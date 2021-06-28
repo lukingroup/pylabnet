@@ -115,6 +115,7 @@ class IQ_Calibration():
 
 	def run_calibration_GD(self, filename,  mw_source, hd, sa,
 		lo_low, lo_high, lo_num_points, if_low, if_high, if_num_points, lo_power, if_volts,
+		HDAWG_ports=[1,2], oscillator=1,
 		max_iterations = 3, plot_traces=False,
 		awg_delay_time = 0.01, averages=10, min_rounds=1):
 		self.initialized = True
@@ -154,8 +155,8 @@ class IQ_Calibration():
 				t1 = time.time()
 				opt = IQOptimizer_GD(mw_source, hd, sa, lo_freq, if_freq,
 					param_guess = ([85, 1, 0.6, 0.05, -0.02]),
-					awg_delay_time=0.01, averages=10, HDAWG_ports=[1,2], oscillator=1,
-					min_power=-65, vi_step=0.005, vq_step=0.005, max_iterations = 30,
+					awg_delay_time=0.01, averages=10, HDAWG_ports=HDAWG_ports, oscillator=oscillator,
+					min_power=-55, vi_step=0.005, vq_step=0.005, max_iterations = 30,
 					plot_traces=False)
 				opt.opt()
 
@@ -274,6 +275,63 @@ class IQ_Calibration():
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), dc_i_opt)
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), dc_q_opt)
 
+	def set_optimal_CNOT_values(self, hd, lo_freq, if_freqs=[300e6, 360e6], HDAWG_ports=[3,4], oscillators=[1,2]):
+		'''Sets the optimal sine output values on the hdawg for the given IF
+		and LO frequencies. Will also set the HDAWG's sine frequency to that
+		given by if_freq'''
+		if (not self.initialized):
+			raise ValueError("No calibration loaded!")
+		#Todo: remove same code in the iq_optimizer script and make it a general utility function
+
+		#First CNOT oscillator
+		hd.setd('oscs/{}/freq'.format(oscillators[0]-1), if_freqs[0])
+
+		#Second CNOT oscillator
+		hd.setd('oscs/{}/freq'.format(oscillators[1]-1), if_freqs[1])
+
+		#Computing the optimal I and Q amplitudes for first CNOT
+		q_opt, phase_opt = self.get_ampl_phase(if_freqs[0], lo_freq)
+		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
+		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
+
+		# Set optimal I and Q amplitudes for first CNOT
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), amp_i_opt)
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[1]-1), amp_q_opt)
+
+		#hd.setd('awgs/0/outputs/0/gains/0'.format(HDAWG_ports[0]-1), amp_i_opt)
+		#hd.setd('awgs/1/outputs/0/gains/0'.format(HDAWG_ports[1]-1), amp_q_opt)
+
+		awg1 = int(np.ceil(HDAWG_ports[0]/2))-1
+		awg2 = int(np.ceil(HDAWG_ports[1]/2))-1
+		out1 = np.mod(HDAWG_ports[0]-1,2)
+		out2 = np.mod(HDAWG_ports[1]-1,2)
+
+		hd.setd('awgs/{}/outputs/0/gains/{}'.format(awg1, out1), amp_i_opt)
+		hd.setd('awgs/{}/outputs/0/gains/{}'.format(awg2, out2), amp_q_opt)
+
+		# Set optimal phaseshift for first CNOT
+		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), phase_opt)
+
+		#Computing the optimal I and Q amplitudes for second CNOT
+		q_opt, phase_opt = self.get_ampl_phase(if_freqs[1], lo_freq)
+		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
+		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
+
+		# Set optimal I and Q amplitudes for second CNOT
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]), amp_i_opt)
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[1]), amp_q_opt)
+
+		hd.setd('awgs/{}/outputs/1/gains/{}'.format(awg1, out1), amp_i_opt)
+		hd.setd('awgs/{}/outputs/1/gains/{}'.format(awg2, out2), amp_q_opt)
+
+		# Set optimal phaseshift for second CNOT
+		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]), phase_opt)
+
+		# set optimal DC offsets
+		dc_i_opt, dc_q_opt = self.get_dc_offsets(if_freqs[0], lo_freq) # DC offset mostly depends on lo_freq, not if_freq
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), dc_i_opt)
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), dc_q_opt)
+
 	def get_optimal_hdawg_values(self, if_freq, lo_freq):
 		'''Gets the optimal sine output values on the hdawg for the given IF
 		and LO frequencies.'''
@@ -365,12 +423,12 @@ class IQ_Calibration():
 
 def main():
 	mw_client = Client(
-    	host='140.247.189.50',
-    	port=32302
+    	host='192.168.50.107',
+    	port=3864
 	)
 	sa = agilent_e4405B.Client(
-    	host='140.247.189.24',
-    	port=23892
+    	host='192.168.50.108',
+    	port=23278
 	)
 
 	dev_id = 'dev8354'
@@ -384,7 +442,7 @@ def main():
 	hd = zi_hdawg.Driver(dev_id, None)
 
 	iq_calibration = IQ_Calibration()
-	iq_calibration.run_calibration_GD("results\\01_28_2021_cal_w_GD.csv", mw_client, hd, sa, 9E9, 12.7E9, 38, 100E6, 500E6, 21, 15, 0.6)
+	iq_calibration.run_calibration_GD("results\\06_10_2021_IQ_cal_no_filters.csv", mw_client, hd, sa, 9E9, 12.7E9, 38, 100E6, 500E6, 21, 15, 0.6, HDAWG_ports=[1,3], oscillator=1)
 
 if __name__ == '__main__':
     main()

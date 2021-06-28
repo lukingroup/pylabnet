@@ -576,7 +576,8 @@ class Controller:
                 log_ip=self.host,
                 log_port=self.log_port,
                 server_port=server_port,
-                debug=server_debug_flag
+                debug=server_debug_flag,
+                logger=self.gui_logger
             )
 
     def _script_clicked(self, index):
@@ -641,7 +642,8 @@ class Controller:
                 debug_flag=debug_flag,
                 server_debug_flag=server_debug_flag,
                 num_clients=len(self.client_list),
-                client_cmd=bash_cmd
+                client_cmd=bash_cmd,
+                logger=self.gui_logger
             )
 
     def _load_scripts(self):

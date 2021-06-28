@@ -406,8 +406,6 @@ class TimeTraceGui(TimeTrace):
             self.ctr.get_counts(self.hist)[0]
         )
 
-
-
         if self.fitting:
             self.fit_curve.clear()
 

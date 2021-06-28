@@ -12,6 +12,9 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import  QShortcut
 
 
+# If in this list, set DC voltage to 0 after taking a step.
+BROKEN_CHANNELS = [6]
+
 class Controller:
     """ A script class for controlling MCS2 positioners + interfacing with GUI"""
 
@@ -248,6 +251,11 @@ class Controller:
                 'background-color:black'
             )
 
+            # Ugly hack to set DC voltage of Front X to 0
+            self.log.info(f"Channel {channel}")
+            if channel in BROKEN_CHANNELS:
+                self._update_voltage(channel, 0)
+
             self._set_voltage_display(channel)
 
     def _step_right(self, channel: int):
@@ -278,6 +286,10 @@ class Controller:
             self.widgets['step_right'][channel].setStyleSheet(
                 'background-color:black'
             )
+
+            # Ugly hack to set DC voltage of Front X to 0
+            if channel in BROKEN_CHANNELS:
+                self._update_voltage(channel, 0)
 
             self._set_voltage_display(channel)
 

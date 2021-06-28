@@ -445,7 +445,6 @@ class Controller:
             self.disconnect()
 
     def _configure_client_search(self):
-        #self.gui_logger.info('client search configured')
         self.main_window.client_search.textChanged.connect(self._search_clients)
 
     def _configure_clicks(self):
@@ -465,10 +464,8 @@ class Controller:
         if search_str is not "":
             for client, info in clients.items():
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                # look for clients that have name or ip address containing search string
                 if search_str in client or search_str in self.client_data[client]['ip']:
-                    #self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    #self.main_window.client_list.addItem(self.client_list[client])
-                    #self.client_list[client].setToolTip(info)
                     self.main_window.client_list.addItem(self.client_list[client])
                 self.client_list[client].setToolTip(info)
         else:

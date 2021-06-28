@@ -1354,7 +1354,7 @@ class PulseMaster:
                 if key != "tref":
                     try:
                         # Try to resolve arithmetic expression containing variables.
-                        pulsedict[key] = simple_eval(val, names=self.vars)
+                        simple_eval(val, names=self.vars)
                     except NameNotDefined:
                         typecast_error.append(key)
                         validated = False
@@ -1403,9 +1403,9 @@ class PulseMaster:
             return False, None
 
         # Check that the specified channels for IQ are not in the same core
-        if len(pulse_ch_list) > 1:
-            # Subtract 1 to make 0-indexed
-            ch_num_list = [(self.ch_assignment_dict[ch][1] - 1) for ch in pulse_ch_list]
+        # if len(pulse_ch_list) > 1:
+        #     # Subtract 1 to make 0-indexed
+        #     ch_num_list = [(self.ch_assignment_dict[ch][1] - 1) for ch in pulse_ch_list]
 
             # Divide by 2 to see if same core (e.g. channels 0, 1 // 2 = 0)
             # ch_num_list = [ch//2 for ch in ch_num_list]

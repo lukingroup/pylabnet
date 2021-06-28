@@ -465,7 +465,7 @@ class Controller:
         if search_str is not "":
             for client, info in clients.items():
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                if search_str in client:
+                if search_str in client or search_str in self.client_data[client]['ip']:
                     #self.client_list[client] = QtWidgets.QListWidgetItem(client)
                     #self.main_window.client_list.addItem(self.client_list[client])
                     #self.client_list[client].setToolTip(info)

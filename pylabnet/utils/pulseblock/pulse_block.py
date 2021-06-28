@@ -2,8 +2,8 @@ import numpy as np
 import copy
 
 class Channel:
-    """ Class to represent a signal channel. 
-    """ 
+    """ Class to represent a signal channel.
+    """
     def __init__(self, name, is_analog):
         self.name = name
         self.is_analog = is_analog
@@ -102,6 +102,8 @@ class PulseBlock:
         self.p_dict = dict()
         self.dflt_dict = dict()
         self.use_auto_dflt = use_auto_dflt
+        self.latest_t0 = 0
+        self.latest_dur = 0
 
         if dflt_dict is not None:
             self.dflt_dict = copy.deepcopy(dflt_dict)
@@ -207,7 +209,7 @@ class PulseBlock:
                         )
                     )
 
-        
+
         # Check if the channel already exists with the samne name but a
         # different type
         for key in self.p_dict.keys():
@@ -237,7 +239,9 @@ class PulseBlock:
         if use_auto_dflt:
             self.dflt_dict[ch] = p_obj.auto_default
 
-
+        # Update the latest values that have been added to the PB
+        self.latest_t0 = p_obj.t0
+        self.latest_dur = p_obj.dur
 
     def insert(self, p_obj, cflct_er=True):
         """ Insert a new Pulse object into PulseBlock
@@ -433,6 +437,10 @@ class PulseBlock:
                 self.dflt_dict[ch] = copy.deepcopy(
                     pb_obj.dflt_dict[ch]
                 )
+
+        # Update the latest values that have been added to the PB
+        self.latest_t0 = t0
+        self.latest_dur = pb_obj.dur
 
     def join_pb(self, pb_obj, t0=0, cflct_er=True, name=''):
         """ Same as insert_pb(), but instead of modifying self,

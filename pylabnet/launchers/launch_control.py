@@ -459,6 +459,8 @@ class Controller:
     def chop_log_file(self):
         """ Checks if date has changed, and chops logfile accordingly"""
 
+        self.log_service.logger.info('HELLO. IM JUST HERE TO CLOG THE LOG FILE.')
+
         if self.date_str is not None:
             # if date has changed, move to new log file with new date
             if self.date_str != datetime.now().strftime("%Y_%m_%d"):
@@ -1057,4 +1059,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main_master()

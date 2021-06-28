@@ -438,9 +438,8 @@ class TimeTraceGui(TimeTrace):
     def _update_fit(self):
         """ Updates fits """
         if self.fit_popup.mod is not None and self.fit_popup.mod.init_params is not None:
-            y = 5 - 4*np.exp(-np.linspace(0,1,1000)/0.3) + np.random.rand(1000)
-            #self.fit_popup.data = np.array(self.ctr.get_counts(self.hist)[0])
-            self.fit_popup.data = np.array(y)
+            self.fit_popup.data = np.array(self.ctr.get_counts(self.hist)[0])
+            self.fit_popup.x = np.array(self.ctr.get_x_axis(self.hist)/1e12)
             if self.p0 is not None:
                 self.fit_popup.p0 = self.p0
             self.fit, self.p0 = self.fit_popup.fit_mod()

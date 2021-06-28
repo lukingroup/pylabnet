@@ -772,6 +772,15 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     cmd += f'--device_id "{config_dict["device_id"]}" '
     cmd += f'--config {dev_config} --debug {debug}'
 
+    if len(cmd) > 8191:
+        if logger is not None:
+            logger.error('Cmd too long! Server will not instantiate!')
+        return
+    else:
+        if logger is not None:
+            logger.info("Cmd len: " + str(len(cmd)))
+
+
     if ssh:
         msg_str = f'Executing command on {hostname}:\n{cmd}'
         if logger is None:
@@ -784,7 +793,7 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
 
     return host_ip, server_port
 
-def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd):
+def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd, logger=None):
     """ Launches a script
 
     :param script: (str) name of the script. Should be the directory in which the
@@ -824,6 +833,14 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     cmd += f'--config {config} --debug {debug_flag} '
     cmd += f'--server_debug {server_debug_flag}'
     cmd += client_cmd
+
+    if len(cmd) > 8191:
+        if logger is not None:
+            logger.error('Cmd too long! Server will not instantiate!')
+        return
+    else:
+        if logger is not None:
+            logger.info("Cmd len: " + str(len(cmd)))
 
     subprocess.Popen(cmd, shell=True)
 

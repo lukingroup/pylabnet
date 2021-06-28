@@ -115,6 +115,7 @@ class IQ_Calibration():
 
 	def run_calibration_GD(self, filename,  mw_source, hd, sa,
 		lo_low, lo_high, lo_num_points, if_low, if_high, if_num_points, lo_power, if_volts,
+		HDAWG_ports=[1,2], oscillator=1,
 		max_iterations = 3, plot_traces=False,
 		awg_delay_time = 0.01, averages=10, min_rounds=1):
 		self.initialized = True
@@ -274,6 +275,63 @@ class IQ_Calibration():
 
 		# set optimal DC offsets
 		dc_i_opt, dc_q_opt = self.get_dc_offsets(if_freq, lo_freq)
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), dc_i_opt)
+		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), dc_q_opt)
+
+	def set_optimal_CNOT_values(self, hd, lo_freq, if_freqs=[300e6, 360e6], HDAWG_ports=[3,4], oscillators=[1,2]):
+		'''Sets the optimal sine output values on the hdawg for the given IF
+		and LO frequencies. Will also set the HDAWG's sine frequency to that
+		given by if_freq'''
+		if (not self.initialized):
+			raise ValueError("No calibration loaded!")
+		#Todo: remove same code in the iq_optimizer script and make it a general utility function
+
+		#First CNOT oscillator
+		hd.setd('oscs/{}/freq'.format(oscillators[0]-1), if_freqs[0])
+
+		#Second CNOT oscillator
+		hd.setd('oscs/{}/freq'.format(oscillators[1]-1), if_freqs[1])
+
+		#Computing the optimal I and Q amplitudes for first CNOT
+		q_opt, phase_opt = self.get_ampl_phase(if_freqs[0], lo_freq)
+		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
+		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
+
+		# Set optimal I and Q amplitudes for first CNOT
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]-1), amp_i_opt)
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[1]-1), amp_q_opt)
+
+		#hd.setd('awgs/0/outputs/0/gains/0'.format(HDAWG_ports[0]-1), amp_i_opt)
+		#hd.setd('awgs/1/outputs/0/gains/0'.format(HDAWG_ports[1]-1), amp_q_opt)
+
+		awg1 = int(np.ceil(HDAWG_ports[0]/2))-1
+		awg2 = int(np.ceil(HDAWG_ports[1]/2))-1
+		out1 = np.mod(HDAWG_ports[0]-1,2)
+		out2 = np.mod(HDAWG_ports[1]-1,2)
+
+		hd.setd('awgs/{}/outputs/0/gains/{}'.format(awg1, out1), amp_i_opt)
+		hd.setd('awgs/{}/outputs/0/gains/{}'.format(awg2, out2), amp_q_opt)
+
+		# Set optimal phaseshift for first CNOT
+		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]-1), phase_opt)
+
+		#Computing the optimal I and Q amplitudes for second CNOT
+		q_opt, phase_opt = self.get_ampl_phase(if_freqs[1], lo_freq)
+		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
+		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
+
+		# Set optimal I and Q amplitudes for second CNOT
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[0]), amp_i_opt)
+		#hd.setd('sines/{}/amplitudes/0'.format(HDAWG_ports[1]), amp_q_opt)
+
+		hd.setd('awgs/{}/outputs/1/gains/{}'.format(awg1, out1), amp_i_opt)
+		hd.setd('awgs/{}/outputs/1/gains/{}'.format(awg2, out2), amp_q_opt)
+
+		# Set optimal phaseshift for second CNOT
+		hd.setd('sines/{}/phaseshift'.format(HDAWG_ports[0]), phase_opt)
+
+		# set optimal DC offsets
+		dc_i_opt, dc_q_opt = self.get_dc_offsets(if_freqs[0], lo_freq) # DC offset mostly depends on lo_freq, not if_freq
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[0]-1), dc_i_opt)
 		hd.setd('sigouts/{}/offset'.format(HDAWG_ports[1]-1), dc_q_opt)
 

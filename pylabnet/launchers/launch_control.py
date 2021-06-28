@@ -939,6 +939,12 @@ class UpdateReceiver(QtCore.QObject):
             text = self.queue.get()
             self.update_signal.emit(text)
 
+            # Check if logging to file (should always be true for master logger)
+            if self.date_str is not None:
+                # if date has changed, move to new log file with new date
+                if self.date_str != datetime.now().strftime("%Y_%m_%d"):
+                    self.start_stop_logging(master_log=True)
+
 
 class ProxyUpdater(QtCore.QObject):
     """ Process to run in separate thread to synchronize proxy GUI """

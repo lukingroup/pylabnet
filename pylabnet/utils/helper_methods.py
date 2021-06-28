@@ -775,6 +775,7 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     if len(cmd) > 8191:
         if logger is not None:
             logger.error('Cmd too long! Server will not instantiate!')
+        return
     else:
         if logger is not None:
             logger.info("Cmd len: " + str(len(cmd)))
@@ -836,6 +837,7 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     if len(cmd) > 8191:
         if logger is not None:
             logger.error('Cmd too long! Server will not instantiate!')
+        return
     else:
         if logger is not None:
             logger.info("Cmd len: " + str(len(cmd)))

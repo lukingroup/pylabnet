@@ -9,7 +9,7 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
 
 
-class Dataset:
+class Dataset():
 
     def __init__(self, gui:Window, log:LogClient=None, data=None,
         x=None, graph=None, name=None, **kwargs):
@@ -119,6 +119,20 @@ class Dataset:
             ])
         )
         self.update(**kwargs)
+
+    def clear_all_data(self):
+        self.clear_data()
+        self.clear_children_data()
+
+    def clear_data(self):
+        self.data = None
+        self.curve.setData([])
+        
+
+    def clear_children_data(self):
+        for child in self.children.values():
+            child.clear_data()
+            
 
     def update(self, **kwargs):
         """ Updates current data to plot"""

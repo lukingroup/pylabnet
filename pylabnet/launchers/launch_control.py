@@ -172,6 +172,12 @@ class Controller:
         self.disconnection = False
         self.debug = False
         self.debug_level = None
+        self.autoscroll_off = False
+        # date string is None if not logging to file, and gives today's date if logging to file.
+        # For day-chopping purposes
+        self.logfile_date_str = None
+        self.filenamepath = None
+        self.MAX_LOG_FILE_SIZE = 5000000 # 5MB
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -277,10 +283,11 @@ class Controller:
         """ Updates terminal output on GUI """
 
         self.main_window.terminal.append(text)
-        try:
-            self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
-        except TypeError:
-            pass
+        if not self.autoscroll_off:
+            try:
+                self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+            except TypeError:
+                pass
         # Update buffer terminal
         buffer_str = f'!~{self.update_index}~!{text}'
         self.main_window.buffer_terminal.append(buffer_str)
@@ -354,6 +361,8 @@ class Controller:
                 raise
         self.log_server.start()
 
+        self.log_service.logger.info('log service succesfully started')
+
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
@@ -400,6 +409,7 @@ class Controller:
         self._configure_debug_combo_select()
         self._configure_logfile()
         self._configure_logging()
+        self._configure_autoscroll_off()
 
         self.main_window.force_update()
 
@@ -407,10 +417,11 @@ class Controller:
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
         self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
-        try:
-            self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
-        except TypeError:
-            pass
+        if not self.autoscroll_off:
+            try:
+                self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
+            except TypeError:
+                pass
         self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
     def kill_servers(self):
@@ -441,11 +452,27 @@ class Controller:
         # Update terminal
         self.update_terminal(text)
 
+        # Chop log file if date has changed
+        self.chop_log_file()
+
         if self.disconnection:
             self.disconnect()
 
+    def chop_log_file(self):
+        """ Checks if date has changed, and chops logfile accordingly"""
+
+        if self.logfile_date_str is not None:
+            # if date has changed, move to new log file with new date
+            if self.logfile_date_str != datetime.now().strftime("%Y_%m_%d"):
+                self.log_service.logger.info('Starting new logging file!')
+                self.start_stop_logging(master_log=True)
+            if os.stat(self.filenamepath).st_size > self.MAX_LOG_FILE_SIZE:
+                self.log_service.logger.info('Starting new logging file!')
+                self.start_stop_logging(master_log=True)
+
+
+
     def _configure_client_search(self):
-        #self.gui_logger.info('client search configured')
         self.main_window.client_search.textChanged.connect(self._search_clients)
 
     def _configure_clicks(self):
@@ -465,10 +492,8 @@ class Controller:
         if search_str is not "":
             for client, info in clients.items():
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                if search_str in client:
-                    #self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    #self.main_window.client_list.addItem(self.client_list[client])
-                    #self.client_list[client].setToolTip(info)
+                # look for clients that have name or ip address containing search string
+                if search_str in client or search_str in self.client_data[client]['ip']:
                     self.main_window.client_list.addItem(self.client_list[client])
                 self.client_list[client].setToolTip(info)
         else:
@@ -476,7 +501,6 @@ class Controller:
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
                 self.main_window.client_list.addItem(self.client_list[client])
                 self.client_list[client].setToolTip(info)
-
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
@@ -496,7 +520,6 @@ class Controller:
                 self._close_dangling(client_to_stop)
         else:
             self._close_dangling(client_to_stop)
-
 
     def _close_dangling(self, client_to_stop):
 
@@ -749,6 +772,8 @@ class Controller:
                 if 'device_id: ' in clients[client]:
                     self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
 
+    def _configure_autoscroll_off(self):
+        self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)
 
     # Defines what to do if debug radio button is clicked.
     def _configure_debug(self):
@@ -821,6 +846,12 @@ class Controller:
         # pylabnet_server, pylabnet_gui, launcher
         self.debug_level = self.main_window.debug_comboBox.currentText()
 
+    def _update_autoscroll_setting(self):
+        if self.main_window.autoscroll_off_check.isChecked():
+            self.autoscroll_off = True
+        else:
+            self.autoscroll_off = False
+
     def _kill(self):
         """ Kills launch control and all child servers if master """
 
@@ -837,10 +868,18 @@ class Controller:
             in the config file is chosen.
         """
 
+        # check if there's already an open log file and close it
+        if self.logfile_date_str is not None:
+            self.log_service.stop_latest_logfile()
+
+
         if self.main_window.logfile_status_button.isChecked() or master_log:
 
+            date_str = datetime.now().strftime("%Y_%m_%d")
+            time_str = datetime.now().strftime("%H_%M_%S")
+
             # Actually start logging
-            filename = f'logfile_{datetime.now().strftime("%H_%M_%S")}'
+            filename = f'logfile_{time_str}'
 
             # Get logging file from json.
             filepath = None
@@ -882,6 +921,12 @@ class Controller:
                     f'\n---------------------------'
                 )
 
+            # Pass current date of logfile for day-chopping purposes
+            self.logfile_date_str = date_str
+
+            # pass log file name and path to access filesize for chopping purposes
+            self.filenamepath = config_dict['logger_path'] + '\\' + date_str[:4] + '\\' + date_str[5:7] + '\\' + date_str[8:] + '\\logfile_' + time_str
+
         else:
 
             # Change button color and text
@@ -891,6 +936,9 @@ class Controller:
 
             # Actually stop logging
             self.log_service.stop_latest_logfile()
+
+            # Set date string to None so that logfile does not get updated anymore
+            self.logfile_date_str = None
 
 
 class WriteStream:
@@ -954,6 +1002,7 @@ class ProxyUpdater(QtCore.QObject):
             # If we have a new message to add, add it
             if new_msg != '':
                 self.update_signal.emit(new_msg)
+
 
 
 def main():

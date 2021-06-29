@@ -128,11 +128,12 @@ class Dataset():
         self.data = None
         self.curve.setData([])
         
-    # Note: This could run into infinite iteration problem.
+    # Note: This recursive code could potentially run into infinite iteration problem.
     def clear_all_data(self):
 
         if not self.dont_clear:
             self.clear_data()
+            self.update()
 
         for child in self.children.values():
             child.clear_all_data()
@@ -940,10 +941,6 @@ class TriangleScan1D(Dataset):
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
     
-    def clear_data(self):
-        self.all_data = None
-        self.data = None
-
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """
 
@@ -1154,18 +1151,12 @@ class HeatMap(Dataset):
 
     def clear_data(self):
 
-        # Check if data has been cleared by parent class.
-        if True:
-            self.graph.setImage(
-                img=np.transpose(np.zeros((10,10))),
-                autoRange=False
-            )
-        else:
-            self.graph.setImage(
-                img=np.transpose(np.zeros_like(self.data)),
-                autoRange=False
-            )
-
+        # Reset Heatmap with zeros
+        self.graph.setImage(
+            img=np.transpose(np.zeros((10,10))),
+            autoRange=False
+        )
+        
         self.data = None
 
 
@@ -1220,7 +1211,12 @@ class LockedCavityScan1D(TriangleScan1D):
 
     
     def clear_data(self):
+
+        # Clear forward/backward scan line
+        self.curve.setData([])
         self.data = None
+
+        # Clear retasined data used in heatmaps
         self.all_data = None
       
 
@@ -1276,56 +1272,6 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
-
-class LockedCavityScan1D(TriangleScan1D):
-
-    def __init__(self, *args, **kwargs):
-
-        self.t0 = time.time()
-        self.v = None
-        self.sasha_aom = None
-        self.toptica_aom = None
-
-        super().__init__(*args, **kwargs)
-
-    def fill_params(self, config):
-
-        super().fill_params(config)
-        if not self.backward:
-            self.add_child(
-                name='Cavity lock',
-                data_type=Dataset,
-                window='lock_monitor',
-                window_title='Cavity lock monitor',
-                color_index=3
-            )
-            self.add_child(
-                name='Cavity history',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                window='lock_monitor',
-                color_index=4
-            ),
-            self.add_child(
-                name='Max count history',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                window='lock_monitor',
-                color_index=5
-            )
-            # self.add_params_to_gui(
-            #     voltage=0.0
-            # )
-
-
-    def set_v_and_counts(self, v, counts):
-        """ Updates voltage and counts"""
-
-        self.v = v
-        # self.widgets['voltage'].setValue(self.v)
-        self.children['Cavity history'].set_data(self.v)
-        self.children['Max count history'].set_data(counts)
-
 
 class ErrorBarGraph(Dataset):
 

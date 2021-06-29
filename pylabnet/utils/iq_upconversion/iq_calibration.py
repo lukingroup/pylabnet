@@ -27,8 +27,9 @@ from pylabnet.network.client_server.agilent_83732b import Client
 
 class IQ_Calibration():
 
-	def __init__(self):
+	def __init__(self, log=None):
 		self.initialized = False
+		self.log = log
 
 	def load_calibration(self, filename):
 		self.initialized = True
@@ -341,7 +342,7 @@ class IQ_Calibration():
 		if (not self.initialized):
 			raise ValueError("No calibration loaded!")
 
-		#Computing the optimal I and Q amplitudes
+		# Computing the optimal I and Q amplitudes
 		q_opt, phase_opt = self.get_ampl_phase(if_freq, lo_freq)
 		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
 		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
@@ -351,7 +352,7 @@ class IQ_Calibration():
 		return phase_opt, amp_i_opt, amp_q_opt, dc_i_opt, dc_q_opt
 
 	def set_optimal_hdawg_and_LO_values(self, hd, mw_source, freq, HDAWG_ports=[3,4], oscillator=2):
-		'''Finds optimnal IF and LO frequencies for given output frequency.
+		'''Finds optimal IF and LO frequencies for given output frequency.
 		Sets the optimal sine output values on the hdawg for the found IF
 		and LO frequencies. Will also set the HDAWG's sine frequency and LO
 		frequency to the correct value.'''
@@ -409,7 +410,7 @@ class IQ_Calibration():
 
 		for iff in if_f:
 			lof = freq-iff
-			if lof > LO[0] and lof < LO[-1]:
+			if LO[0] < lof < LO[-1]:
 				hm1, h0, h1, h2, h3 = self.get_harmonic_powers(iff, lof)
 				fidelity.append(self.get_fidelity(hm1, h0, h1, h2, h3, iff))
 			else:

@@ -11,8 +11,7 @@ from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPu
                             QFormLayout, QComboBox, QWidget, QTableWidgetItem, QVBoxLayout, \
                             QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox, QGridLayout
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QRect, Qt, QAbstractTableModel, QTimer, QVariant
 
 from simpleeval import simple_eval, NameNotDefined
 
@@ -145,6 +144,9 @@ class PulseMaster:
 
         self.add_pb_popup = None
 
+        # Initialize timers for controlling when text boxes get updated
+        self.timers = []
+
         # Initialize preserve_bits checkbox state in dictionary
         self.update_preserve_bits()
 
@@ -156,6 +158,12 @@ class PulseMaster:
 
         # Apply all custom styles
         self.apply_custom_styles()
+
+        # Set the number of plotting points for the pulse preview window
+        if "plot_points" in self.config_dict:
+            self.plot_points = self.config_dict["plot_points"]
+        else:
+            self.plot_points = 800 # Default value
 
         self.awg_running = False
 
@@ -547,7 +555,7 @@ class PulseMaster:
                     t1, t2 = new_t1, new_t2
 
                     # Draw the current pulse at high grid density
-                    t_ar = np.linspace(t1, t2, 2000)
+                    t_ar = np.linspace(t1, t2, self.plot_points)
                     x_ar.extend(t_ar)
                     y_ar.extend(p_item.get_value(t_ar))
 
@@ -866,11 +874,11 @@ class PulseMaster:
                 var_parent_field.setEnabled(True)
                 var_parent_field.setText("")
 
-            # If the t0 term is variable, we must set to "after last pulse",
+            # If the t0 term is variable, we must set to "At End of Sequence",
             # otherwise we have no idea when the pulse happens.
             if field_var == "offset_var":
                 tref_field = widgets_dict["tref"]
-                tref_field.setCurrentIndex(tref_field.findText("After Last Pulse"))
+                tref_field.setCurrentIndex(tref_field.findText("At End of Sequence"))
                 self.update_pulse_form_field(pulse_specifier, tref_field, "tref", widgets_dict, pulse_index)
 
             # Store the updated value in parent
@@ -971,7 +979,12 @@ class PulseMaster:
             elif type(field_input) is QLineEdit:
                 field_input.setText(str(value))
 
-                field_input.textEdited.connect(pulse_mod_function)
+                # Create a timer to prevent the pulse update function from being called immediately
+                self.timers.append(QTimer())
+                self.timers[-1].setSingleShot(True)
+                self.timers[-1].setInterval(300)
+                self.timers[-1].timeout.connect(pulse_mod_function)
+                field_input.textEdited.connect(self.timers[-1].start)
 
             elif type(field_input) is QCheckBox:
                 field_input.setChecked(bool(value))
@@ -1211,6 +1224,9 @@ class PulseMaster:
         # Close popup
         self.add_pb_popup.close()
 
+        # Update the plotting window (clears it)
+        self.plot_current_pulseblock()
+
     def gen_pulse_specifier(self, pulsetype_dict, pulse_data_dict):
         """ Generates instance of PulseSpecifier which contain full
         information of pulse (Pulsetype, channel_number, pulsetype, pulse_parameters,
@@ -1344,7 +1360,7 @@ class PulseMaster:
                 if key != "tref":
                     try:
                         # Try to resolve arithmetic expression containing variables.
-                        pulsedict[key] = simple_eval(val, names=self.vars)
+                        simple_eval(val, names=self.vars)
                     except NameNotDefined:
                         typecast_error.append(key)
                         validated = False
@@ -1393,9 +1409,9 @@ class PulseMaster:
             return False, None
 
         # Check that the specified channels for IQ are not in the same core
-        if len(pulse_ch_list) > 1:
-            # Subtract 1 to make 0-indexed
-            ch_num_list = [(self.ch_assignment_dict[ch][1] - 1) for ch in pulse_ch_list]
+        # if len(pulse_ch_list) > 1:
+        #     # Subtract 1 to make 0-indexed
+        #     ch_num_list = [(self.ch_assignment_dict[ch][1] - 1) for ch in pulse_ch_list]
 
             # Divide by 2 to see if same core (e.g. channels 0, 1 // 2 = 0)
             # ch_num_list = [ch//2 for ch in ch_num_list]

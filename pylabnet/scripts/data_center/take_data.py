@@ -70,6 +70,7 @@ class DataTaker:
             client_item.setToolTip(str(client_obj))
             self.gui.clients.addItem(client_item)
 
+
         for client_name, client_config in self.missing_clients.items():
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setForeground(Qt.gray)
@@ -85,6 +86,7 @@ class DataTaker:
         self.gui.configure.clicked.connect(self.configure)
         self.gui.run.clicked.connect(self.run)
         self.gui.save.clicked.connect(self.save)
+        self.gui.clearData.clicked.connect(self.clear_data)
         self.gui.load_config.clicked.connect(self.reload_config)
         self.gui.showMaximized()
         self.gui.apply_stylesheet()
@@ -147,12 +149,25 @@ class DataTaker:
                     pass
         self.gui.windows = {}
             # If we're not setting up a new measurement type, just clear the data
-        self.dataset = getattr(datasets, self.gui.dataset.currentText())(
-            gui=self.gui,
-            log=self.log,
-            config=self.config
-        )
 
+        # We are reading in the required base-dataset by looking at the define_dataset() as defined in the experiment script.
+        try:
+            classname = self.module.define_dataset()
+        except AttributeError:
+            error_msg = "No 'define_dataset' method found in experiment script."
+            self.log.error("No 'define_dataset' method found in experiment script.")
+            return
+
+        try:
+            self.dataset = getattr(datasets, classname)(
+                gui=self.gui,
+                log=self.log,
+                config=self.config
+            )
+        except AttributeError:
+            error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
+            self.log.error(error_msg)
+            return
 
         # Run any pre-experiment configuration
         try:
@@ -165,6 +180,12 @@ class DataTaker:
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
+
+    def clear_data(self):
+        """ Clears all data from curves"""
+        self.log.info("Clearing data")
+        self.dataset.clear_all_data()
+
 
     def run(self):
         """ Runs/stops the experiment """
@@ -184,6 +205,32 @@ class DataTaker:
             self.update_thread.save_flag.connect(self.save)
             self.gui.autosave.toggled.connect(self.update_thread.update_autosave)
             self.gui.autosave_interval.valueChanged.connect(self.update_thread.update_autosave_interval)
+
+            '''
+            # Step 2: Create a QThread object
+            self.thread = QThread()
+            # Step 3: Create a worker object
+            self.worker = Worker()
+            # Step 4: Move worker to the thread
+            self.worker.moveToThread(self.thread)
+            # Step 5: Connect signals and slots
+            self.thread.started.connect(self.worker.run)
+            self.worker.finished.connect(self.thread.quit)
+            self.worker.finished.connect(self.worker.deleteLater)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.worker.progress.connect(self.reportProgress)
+            # Step 6: Start the thread
+            self.thread.start()
+
+            # Final resets
+            self.longRunningBtn.setEnabled(False)
+            self.thread.finished.connect(
+                lambda: self.longRunningBtn.setEnabled(True)
+            )
+            self.thread.finished.connect(
+                lambda: self.stepLabel.setText("Long-Running Step: 0")
+            )
+            '''
 
             self.experiment_thread = ExperimentThread(
                 self.experiment,

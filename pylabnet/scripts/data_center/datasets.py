@@ -9,10 +9,10 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
 
 
-class Dataset:
+class Dataset():
 
     def __init__(self, gui:Window, log:LogClient=None, data=None,
-        x=None, graph=None, name=None, **kwargs):
+        x=None, graph=None, name=None, dont_clear=False, **kwargs):
         """ Instantiates an empty generic dataset
 
         :param gui: (Window) GUI window for data graphing
@@ -40,6 +40,9 @@ class Dataset:
         self.mapping = {}
         self.widgets = {}
 
+        # Flag indicating whether data should be
+        self.dont_clear = dont_clear
+
         # Configure data visualization
         self.gui = gui
         self.visualize(graph, **kwargs)
@@ -48,7 +51,7 @@ class Dataset:
         self.is_important = False
 
     def add_child(self, name, mapping=None, data_type=None,
-        new_plot=True, **kwargs):
+        new_plot=True, dont_clear=False, **kwargs):
         """ Adds a child dataset with a particular data mapping
 
         :param name: (str) name of processed dataset
@@ -71,6 +74,7 @@ class Dataset:
             data=self.data,
             graph=graph,
             name=name,
+            dont_clear=dont_clear,
             **kwargs
         )
 
@@ -119,6 +123,21 @@ class Dataset:
             ])
         )
         self.update(**kwargs)
+
+    def clear_data(self):
+        self.data = None
+        self.curve.setData([])
+        
+    # Note: This recursive code could potentially run into infinite iteration problem.
+    def clear_all_data(self):
+
+        if not self.dont_clear:
+            self.clear_data()
+            self.update()
+
+        for child in self.children.values():
+            child.clear_all_data()
+            
 
     def update(self, **kwargs):
         """ Updates current data to plot"""
@@ -198,6 +217,7 @@ class Dataset:
 
         for child in self.children.values():
             child.save(filename, directory, date_dir)
+
 
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
@@ -919,6 +939,7 @@ class TriangleScan1D(Dataset):
                     prev_dataset.data = np.fliplr(prev_dataset.data)
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
+    
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """
 
@@ -1037,7 +1058,6 @@ class SawtoothScan1D(Dataset):
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
 
-
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
@@ -1128,6 +1148,16 @@ class HeatMap(Dataset):
             self.graph = pg.ImageView(view=pg.PlotItem())
             self.gui.graph_layout.addWidget(self.graph)
 
+    def clear_data(self):
+
+        # Reset Heatmap with zeros
+        self.graph.setImage(
+            img=np.transpose(np.zeros((10,10))),
+            autoRange=False
+        )
+        
+        self.data = None
+
 
 class LockedCavityScan1D(TriangleScan1D):
 
@@ -1143,6 +1173,7 @@ class LockedCavityScan1D(TriangleScan1D):
     def fill_params(self, config):
 
         super().fill_params(config)
+
         if not self.backward:
             self.add_child(
                 name='Cavity lock',
@@ -1177,6 +1208,16 @@ class LockedCavityScan1D(TriangleScan1D):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
+    
+    def clear_data(self):
+
+        # Clear forward/backward scan line
+        self.curve.setData([])
+        self.data = None
+
+        # Clear retasined data used in heatmaps
+        self.all_data = None
+      
 
 class LockedCavityPreselectedHistogram(PreselectedHistogram):
 
@@ -1230,56 +1271,6 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
-
-class LockedCavityScan1D(TriangleScan1D):
-
-    def __init__(self, *args, **kwargs):
-
-        self.t0 = time.time()
-        self.v = None
-        self.sasha_aom = None
-        self.toptica_aom = None
-
-        super().__init__(*args, **kwargs)
-
-    def fill_params(self, config):
-
-        super().fill_params(config)
-        if not self.backward:
-            self.add_child(
-                name='Cavity lock',
-                data_type=Dataset,
-                window='lock_monitor',
-                window_title='Cavity lock monitor',
-                color_index=3
-            )
-            self.add_child(
-                name='Cavity history',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                window='lock_monitor',
-                color_index=4
-            ),
-            self.add_child(
-                name='Max count history',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                window='lock_monitor',
-                color_index=5
-            )
-            # self.add_params_to_gui(
-            #     voltage=0.0
-            # )
-
-
-    def set_v_and_counts(self, v, counts):
-        """ Updates voltage and counts"""
-
-        self.v = v
-        # self.widgets['voltage'].setValue(self.v)
-        self.children['Cavity history'].set_data(self.v)
-        self.children['Max count history'].set_data(counts)
-
 
 class ErrorBarGraph(Dataset):
 

@@ -11,6 +11,7 @@ import pickle
 from datetime import datetime
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtCore import Qt
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
@@ -45,6 +46,9 @@ class DataTaker:
         # Configure list of clients
         self.clients = {}
 
+        # Configure list of missing clients
+        self.missing_clients = {}
+
         # Retrieve Clients
         for client_entry in self.config['servers']:
             client_type = client_entry['type']
@@ -56,12 +60,21 @@ class DataTaker:
                 client_config = client_config,
                 logger=self.log
             )
-            self.clients[f"{client_type}_{client_config}"] = client
+            if (client == None):
+                self.missing_clients[f"{client_type}_{client_config}"] = [client_type, client_config]
+            else:
+                self.clients[f"{client_type}_{client_config}"] = client
 
         for client_name, client_obj in self.clients.items():
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setToolTip(str(client_obj))
             self.gui.clients.addItem(client_item)
+
+        for client_name, client_config in self.missing_clients.items():
+            client_item = QtWidgets.QListWidgetItem(client_name)
+            client_item.setForeground(Qt.gray)
+            self.gui.clients.addItem(client_item)
+            self.log.error("Datataker missing client: " + client_name)
 
         # Configure dataset menu
         for name, obj in inspect.getmembers(datasets):

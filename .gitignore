@@ -160,5 +160,3 @@ secretkeys.env
 # Data folders
 pylabnet/utils/iq_upconversion/results/*
 
-demo/NI_cDaq/daq_log_polarization.csv
-demo/NI_cDaq/daq_log_polarization.csv

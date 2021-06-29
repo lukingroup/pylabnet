@@ -27,8 +27,9 @@ from pylabnet.network.client_server.agilent_83732b import Client
 
 class IQ_Calibration():
 
-	def __init__(self):
+	def __init__(self, log=None):
 		self.initialized = False
+		self.log = log
 
 	def load_calibration(self, filename):
 		self.initialized = True
@@ -154,9 +155,9 @@ class IQ_Calibration():
 
 				t1 = time.time()
 				opt = IQOptimizer_GD(mw_source, hd, sa, lo_freq, if_freq,
-					param_guess = ([85, 1, 0.6, 0.05, -0.02]),
-					awg_delay_time=0.01, averages=10, HDAWG_ports=HDAWG_ports, oscillator=oscillator,
-					min_power=-55, vi_step=0.005, vq_step=0.005, max_iterations = 30,
+					param_guess = ([90, 1, 0.75, 0, 0]),
+					awg_delay_time=0.01, averages=10, HDAWG_ports=[3,4], oscillator=2,
+					min_power=-65, phase_step = 3, vi_step=0.01, vq_step=0.01, max_iterations = 30,
 					plot_traces=False)
 				opt.opt()
 
@@ -341,7 +342,7 @@ class IQ_Calibration():
 		if (not self.initialized):
 			raise ValueError("No calibration loaded!")
 
-		#Computing the optimal I and Q amplitudes
+		# Computing the optimal I and Q amplitudes
 		q_opt, phase_opt = self.get_ampl_phase(if_freq, lo_freq)
 		amp_i_opt = 2 * q_opt / (1 + q_opt) * self.IF_volt
 		amp_q_opt = 2 * self.IF_volt / (1 + q_opt)
@@ -351,7 +352,7 @@ class IQ_Calibration():
 		return phase_opt, amp_i_opt, amp_q_opt, dc_i_opt, dc_q_opt
 
 	def set_optimal_hdawg_and_LO_values(self, hd, mw_source, freq, HDAWG_ports=[3,4], oscillator=2):
-		'''Finds optimnal IF and LO frequencies for given output frequency.
+		'''Finds optimal IF and LO frequencies for given output frequency.
 		Sets the optimal sine output values on the hdawg for the found IF
 		and LO frequencies. Will also set the HDAWG's sine frequency and LO
 		frequency to the correct value.'''
@@ -409,7 +410,7 @@ class IQ_Calibration():
 
 		for iff in if_f:
 			lof = freq-iff
-			if lof > LO[0] and lof < LO[-1]:
+			if LO[0] < lof < LO[-1]:
 				hm1, h0, h1, h2, h3 = self.get_harmonic_powers(iff, lof)
 				fidelity.append(self.get_fidelity(hm1, h0, h1, h2, h3, iff))
 			else:
@@ -426,15 +427,15 @@ class IQ_Calibration():
 
 def main():
 	mw_client = Client(
-    	host='192.168.50.107',
-    	port=3864
+		host='192.168.50.104', 
+		port=25696
 	)
 	sa = agilent_e4405B.Client(
-    	host='192.168.50.108',
-    	port=23278
+    	host='localhost',
+    	port=12354
 	)
 
-	dev_id = 'dev8354'
+	dev_id = 'dev8227'
 
 	#logger = LogClient(
 	#	host='140.247.189.50',
@@ -445,7 +446,8 @@ def main():
 	hd = zi_hdawg.Driver(dev_id, None)
 
 	iq_calibration = IQ_Calibration()
-	iq_calibration.run_calibration_GD("results\\06_10_2021_IQ_cal_no_filters.csv", mw_client, hd, sa, 9E9, 12.7E9, 38, 100E6, 500E6, 21, 15, 0.6, HDAWG_ports=[1,3], oscillator=1)
+	iq_calibration.run_calibration("results//6_21_2021_cal.csv",  mw_client, hd, sa, 10.4E9,  11.4E9, 11, 100E6, 500E6, 21, 25, 0.75)
+	#iq_calibration.run_calibration_GD("results//6_16_2021_cal_w_GD.csv", mw_client, hd, sa, 11.3E9, 12.3E9, 30, 100E6, 500E6, 21, 25, 0.75)
 
 if __name__ == '__main__':
     main()

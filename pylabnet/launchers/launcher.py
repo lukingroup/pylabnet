@@ -233,9 +233,16 @@ class Launcher:
             else:
                 auto_connect = True
 
-            self._connect_matched_servers(matches, module_name, server['config'], server_config, auto_connect)
+            if "optional_clients" in self.config_dict:
+                optional_clients = (self.config_dict['optional_clients'] == 'True')
+                self.logger.info('Optional Clients enabled')
+            else:
+                optional_clients = False
+                self.logger.info('Optional Clients disabled')
 
-    def _connect_matched_servers(self, matches, module, config_name, config, auto_connect):
+            self._connect_matched_servers(matches, module_name, server['config'], server_config, auto_connect, optional_clients)
+
+    def _connect_matched_servers(self, matches, module, config_name, config, auto_connect, optional_clients):
         """ Connects to a list of servers that have been matched to a given device
         module.
 
@@ -244,6 +251,7 @@ class Launcher:
         :param config_name: (str) name of the config file for the device server
         :param config: (dict) actual config dict for the server
         :param auto_connect: (bool) whether or not to automatically connect to the device/server
+        :param optional_clients: (bool) whether the current script should still run if it cannot connect to a desired client server
         """
 
         device_id = config['device_id']
@@ -256,12 +264,19 @@ class Launcher:
         else:
             launch_stop = False
 
+        #specify the number of times we want to try to connect to a server
+        if 'num_connect_tries' in self.config_dict:
+            NUM_TRIES = self.config_dict['num_connect_tries']
+        else:
+            NUM_TRIES = 10
+
         # If there are no matches, launch and connect to the server manually
         if num_matches == 0:
             if launch_stop:
                 self.logger.info(f'No No active servers matching module {module_name}'
                                  'were found. Please instantiate manually.')
-                raise Exception('Server must be launched manually prior to script')
+                if (not optional_clients):
+                    raise Exception('Server must be launched manually prior to script')
             else:
                 self.logger.info(f'No active servers matching module {module_name}'
                                 ' were found. Instantiating a new server.')
@@ -276,14 +291,14 @@ class Launcher:
                 )
 
                 tries=0
-                while tries<10:
+                while tries<NUM_TRIES:
                     try:
                         self._connect_to_server(module, host, port, device_id)
-                        tries = 11
+                        tries = NUM_TRIES+1
                     except ConnectionRefusedError:
                         time.sleep(0.1)
                         tries += 1
-                if tries == 10:
+                if tries == NUM_TRIES:
                     self.logger.error(f'Failed to connect to {module}')
 
         # If there is exactly 1 match, try to connect automatically
@@ -331,14 +346,14 @@ class Launcher:
                 )
 
                 tries=0
-                while tries<10:
+                while tries<NUM_TRIES:
                     try:
                         self._connect_to_server(module, host, port, device_id)
-                        tries = 11
+                        tries = NUM_TRIES+1
                     except ConnectionRefusedError:
                         time.sleep(0.1)
                         tries += 1
-                if tries == 10:
+                if tries == NUM_TRIES:
                     self.logger.error(f'Failed to connect to {module}')
             hide_console()
 

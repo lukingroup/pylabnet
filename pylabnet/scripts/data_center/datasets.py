@@ -716,22 +716,22 @@ class LockMonitor(Dataset):
          # Add child for PD current
         self.add_child(
                 name='Piezo Voltage',
-                data_type=RollingLine,
-                data_length=1000,
+                data_type=InfiniteRollingLine,
+                data_length=10000,
                 color_index=4
         )
 
          # Add child for PD current
         self.add_child(
                 name='PD Transmission',
-                data_type=RollingLine,
-                data_length=1000,
+                data_type=InfiniteRollingLine,
+                data_length=10000,
                 color_index=4
         )
         self.add_child(
                 name='Demodulated PD Transmission',
-                data_type=RollingLine,
-                data_length=1000,
+                data_type=InfiniteRollingLine,
+                data_length=10000,
                 color_index=4
         )
         self.add_child(
@@ -767,7 +767,6 @@ class LockMonitor(Dataset):
         self.children['PD Transmission'].set_data(pd_voltage)
         self.children['Demodulated PD Transmission'].set_data(demod_voltage)
         self.children['Piezo Voltage'].set_data(piezo_voltage)
-
 
 
 class Scatterplot(Dataset):

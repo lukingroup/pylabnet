@@ -3,6 +3,7 @@
 import os
 import sys
 from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtCore import Qt
 import importlib
 import pyqtgraph as pg
 import numpy as np
@@ -12,7 +13,7 @@ from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window, Popup
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
     get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
-    unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background)
+    unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background, find_client)
 from pylabnet.scripts.sweeper.scan_fit import FitPopup
 
 
@@ -92,11 +93,32 @@ class Controller(MultiChSweep1D):
 
         # Configure list of clients
         self.clients = clients
-        for client_name, client_obj in self.clients.items():
-            client_name_concat = '-'.join(client_name)
-            client_item = QtWidgets.QListWidgetItem(client_name_concat)
-            client_item.setToolTip(str(client_obj))
-            self.widgets['clients'].addItem(client_item)
+        for client_entry in self.config['servers']:
+            client_type = client_entry['type']
+            client_config = client_entry['config']
+            client = find_client(
+                clients=self.clients,
+                settings=client_config,
+                client_type=client_type,
+                client_config = client_config,
+                logger=self.log
+            )
+            if (client == None):
+                client_name_concat = client_type
+                client_item = QtWidgets.QListWidgetItem(client_name_concat)
+                client_item.setForeground(Qt.gray)
+                client_item.setToolTip(str("Disconnected"))
+                self.widgets['clients'].addItem(client_item)
+
+            else:
+                self.log.info(client)
+                client_name_concat =  f"{client_type}_{client_config}"
+                client_item = QtWidgets.QListWidgetItem(client_name_concat)
+                client_item.setToolTip(str(client))
+                self.widgets['clients'].addItem(client_item)
+
+        #Checking for any missing clients, and adding them as greyed out on the list of clients
+
 
         # Manually add logger to client
         self.clients['logger'] = logger

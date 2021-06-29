@@ -77,11 +77,6 @@ class DataTaker:
             self.gui.clients.addItem(client_item)
             self.log.error("Datataker missing client: " + client_name)
 
-        # Configure dataset menu
-        for name, obj in inspect.getmembers(datasets):
-            if inspect.isclass(obj) and issubclass(obj, datasets.Dataset):
-                self.gui.dataset.addItem(name)
-
         # Configure button clicks
         self.gui.configure.clicked.connect(self.configure)
         self.gui.run.clicked.connect(self.run)

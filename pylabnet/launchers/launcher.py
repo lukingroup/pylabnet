@@ -87,13 +87,13 @@ class Launcher:
 
         # Halt execution and wait for debugger connection if debug flag is up.
         if self.debug == 1:
-            import ptvsd
-            import os 
+            import debugpy
+            import os
             # 5678 is the default attach port in the VS Code debug configurations
             self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
-            ptvsd.enable_attach(address=('localhost', 5678))
-            ptvsd.wait_for_attach()
-            breakpoint()
+            debugpy.listen(('localhost', 5678))
+            debugpy.wait_for_client()
+            debugpy.breakpoint()
 
         # Register new exception hook.
         def log_exceptions(exc_type, exc_value, exc_traceback):

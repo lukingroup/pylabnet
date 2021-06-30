@@ -56,6 +56,7 @@ setup(
         "Topic :: Scientific/Engineering :: Physics"
     ],
     install_requires=[
+        'debugpy>=1.3.0',
         'decorator>=4.4.0',
         'ipywidgets>=7.5.1',
         'matplotlib>=3.1.3',
@@ -64,7 +65,6 @@ setup(
         'numpy>=1.16.5',
         'paramiko>=2.7.2',
         'plotly>=4.7.1',
-        'ptvsd>=4.3.2',
         'PyQt5>=5.13.0',
         'pyqtgraph>=0.10.0',
         'pyserial>=3.4',

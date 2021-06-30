@@ -22,7 +22,6 @@ import numpy as np
 import os
 import sys
 import traceback
-import ptvsd
 import time
 
 from pylabnet.utils.helper_methods import parse_args, hide_console
@@ -78,11 +77,12 @@ def main():
 
     # Halt execution and wait for debugger connection if debug flag is up.
     if debug:
+        import debugpy
         # 5678 is the default attach port in the VS Code debug configurations
         server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
-        ptvsd.enable_attach(address=('localhost', 5678))
-        ptvsd.wait_for_attach()
-        breakpoint()
+        debugpy.listen(('localhost', 5678))
+        debugpy.wait_for_client()
+        debugpy.breakpoint()
 
     # Register new exception hook.
     def log_exceptions(exc_type, exc_value, exc_traceback):

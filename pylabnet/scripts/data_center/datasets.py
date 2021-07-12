@@ -4,6 +4,7 @@ import copy
 import time
 from PyQt5 import QtWidgets, QtCore
 
+from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
 from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
@@ -1391,6 +1392,123 @@ class PhotonErrorBarPlot(ErrorBarGraph):
             window=kwargs['window']
         )
         self.children['Photon probabilities, log scale'].graph.getPlotItem().setLogMode(False, True)
+
+
+class InterpolatedMap(Dataset):
+    """ Stores a dictionary of 2-tuple coordinates associated with a scalar
+    value (e.g. fidelity). When a new datapoint is added, the value at that
+    point is updated by averaging with the previous data at that location.
+    Plots an interpolated 2D map in a Matplotlib Widget of the acquired datapoints. """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['name'] = 'InterpolatedMap'
+        super().__init__(*args, **kwargs)
+
+        # Requires SciPy >=1.7.0
+        try:
+            from scipy.interpolate import RBFInterpolator
+        except ImportError as e:
+            self.log.warn("This import requires SciPy >=1.7.0.")
+            raise(e)
+
+    def set_data(self, data):
+        """ Updates data stored in the data dict.
+
+        Datapoints should be in the form ((x, y), z) where (x, y) are
+        the coordinate positions and z is the value to be plotted.
+        (x, y) are the keys and z is the value in the dict.
+        """
+        coords, fidelity = data
+
+        # Initialize the data dict
+        if self.data is None:
+            self.data = {}
+
+        # Place the data into the dictionary, updating the average if already present
+        if coords not in self.data:
+            self.data[coords] = (1, fidelity)
+        else:
+            old_N, old_avg = self.data[coords]
+            self.data[coords] = (old_N + 1, (old_N * old_avg + fidelity) / (old_N + 1))
+
+    def visualize(self, graph, **kwargs):
+        self.handle_new_window(graph, **kwargs)
+        self.update(**kwargs)
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        # Can't interpolate with too few points
+        if self.data is None or len(self.data) < 3:
+            return
+
+        # TODO: HELP - how to make this plot update less often??
+        import time
+        if (int(time.time()) % 5) != 0:
+            return
+
+        fig = self.graph.getFigure()
+        fig.clf() # Clear figure
+        ax = fig.gca()
+
+        # Ignore the first field (# of datapoints at that coord)
+        obs_dict = {key:val[1] for key, val in self.data.items()}
+        # Extract datapoints as arrays
+        coords, fidelities = zip(*obs_dict.items())
+        coords = np.array(coords)
+
+        # Compute plotting bounds
+        xlims = min(coords[:, 0]), max(coords[:, 0])
+        ylims = min(coords[:, 1]), max(coords[:, 1])
+        
+        # Create grid for plotting region, imaginary number is part of mgrid() syntax
+        n_points = 50
+        xgrid = np.mgrid[0.95*xlims[0]:1.05*xlims[1]:n_points*1j, 0.95*ylims[0]:1.05*ylims[1]:n_points*1j]
+
+        # Flatten grid, apply the interpolator to this flattened grid, reshape back to grid
+        xflat = xgrid.reshape(2, -1).T
+        yflat = RBFInterpolator(coords, fidelities)(xflat)
+        ygrid = yflat.reshape(n_points, n_points)
+
+        # Plot interpolated color mesh
+        ax.pcolormesh(*xgrid, ygrid, vmin=0.85, vmax=1.0)
+
+        # Plot scatter points
+        scatterplot = ax.scatter(*coords.T, c=fidelities, s=50, ec='k', vmin=0.85, vmax=1.0)
+        fig.colorbar(scatterplot)
+
+        self.graph.draw()
+
+    def handle_new_window(self, graph, **kwargs):
+        """ Handles visualizing and possibility of new popup windows.
+        Creates a Matplotlib widget instead of a Pyqtgraph widget. """
+
+        if graph is None:
+            # If we want to use a separate window
+            if 'window' in kwargs:
+                # Check whether this window exists
+                if not kwargs['window'] in self.gui.windows:
+                    if 'window_title' in kwargs:
+                        window_title = kwargs['window_title']
+                    else:
+                        window_title = 'Graph Holder'
+
+                    self.gui.windows[kwargs['window']] = GraphPopup(
+                        window_title=window_title, size=(700,300)
+                    )
+
+                self.graph = MatplotlibWidget()
+
+                self.gui.windows[kwargs['window']].graph_layout.addWidget(
+                    self.graph
+                )
+
+            # Otherwise, add a graph to the main layout
+            else:
+                self.graph = self.gui.add_graph()
+        # Reuse a PlotWidget if provided
+        else:
+            self.graph = graph
 
 
 

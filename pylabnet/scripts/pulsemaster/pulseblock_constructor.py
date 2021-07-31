@@ -2,12 +2,15 @@ from simpleeval import simple_eval, NameNotDefined
 from datetime import datetime
 import uuid
 import copy
+import numpy as np
 
 import pylabnet.utils.pulseblock.pulse as po
 import pylabnet.utils.pulseblock.pulse_block as pb
 from pylabnet.utils.iq_upconversion.iq_calibration import IQ_Calibration
 from pylabnet.utils.pulseblock.placeholder import Placeholder
 
+# Sampling rate of HDWAG sequencer (300 MHz).
+DIG_SAMP_RATE = 300e6
 
 class PulseblockConstructor():
     """Container Class which stores all necessary information to compile full Pulseblock,
@@ -92,9 +95,9 @@ class PulseblockConstructor():
             arg_dict = {}
 
             # Extract parameters from the pulsevar dict
-            offset = self.resolve_value(pb_spec.offset)  * 1e-6
+            offset = int(np.round(self.resolve_value(pb_spec.offset)  * 1e-6 * DIG_SAMP_RATE))
             arg_dict["ch"] = pb_spec.channel
-            arg_dict["dur"] = self.resolve_value(pb_spec.dur) * 1e-6
+            arg_dict["dur"] = int(np.round(self.resolve_value(pb_spec.dur) * 1e-6 * DIG_SAMP_RATE))
 
             self.append_value_to_dict(var_dict, "val", arg_dict)
             self.append_value_to_dict(var_dict, "amp", arg_dict)

@@ -23,8 +23,11 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import get_ip, unpack_launcher, load_config, load_script_config, get_gui_widgets, find_client
 from pylabnet.utils.pulsed_experiments.pulsed_experiment import PulsedExperiment
 
-from pylabnet.scripts.pulsemaster.pulseblock_constructor import PulseblockConstructor, PulseSpecifier
+from pylabnet.scripts.pulsemaster.pulseblock_constructor import DIG_SAMP_RATE, PulseblockConstructor, PulseSpecifier
 from pylabnet.scripts.pulsemaster.pulsemaster_customwidget import DictionaryTableModel, AddPulseblockPopup
+
+# Sampling rate of DIO digital pulses
+DIG_SAMP_RATE = 300E6
 
 
 class PulseMaster:
@@ -542,30 +545,35 @@ class PulseMaster:
 
                 for p_item in pulse_items:
 
+                    self.log.info((type(p_item), p_item.t0, p_item.dur, "HELLO"))
+
                     # Edges of the current pulse
                     new_t1 = p_item.t0
                     new_t2 = p_item.t0 + p_item.dur
 
                     # Draw the default function from the previous to current pulse
                     # Low density spacing since it's usually a constant
-                    t_ar = np.linspace(t2, new_t1, 10)
-                    x_ar.extend(t_ar)
+                    t_ar = np.linspace(t2 / DIG_SAMP_RATE, new_t1 / DIG_SAMP_RATE, 10)
+                    x_ar.extend(t_ar  * 1e6)
                     y_ar.extend(default_item.get_value(t_ar))
 
                     t1, t2 = new_t1, new_t2
 
                     # Draw the current pulse at high grid density
-                    t_ar = np.linspace(t1, t2, self.plot_points)
-                    x_ar.extend(t_ar)
+                    t_ar = np.linspace(t1 / DIG_SAMP_RATE, t2 / DIG_SAMP_RATE, self.plot_points)
+                    x_ar.extend(t_ar * 1e6)
                     y_ar.extend(p_item.get_value(t_ar))
 
+                    self.log.info(t_ar)
+                    self.log.info((p_item.mod, p_item.mod_freq, p_item.stdev, p_item.amp, p_item.mod_ph))
+
                 # Put zero-point after the last pulse
-                x_ar.append(new_t2)
+                x_ar.append(new_t2 / DIG_SAMP_RATE * 1e6)
                 y_ar.append(0)
 
                 # Put zero-point at the end of pulseblock (different from previous
                 # since the channel could end before other channels)
-                x_ar.append(pb_obj.dur)
+                x_ar.append(pb_obj.dur / DIG_SAMP_RATE * 1e6)
                 y_ar.append(0)
 
                 # Normalize the wave height and offset by channel index
@@ -590,8 +598,8 @@ class PulseMaster:
                     for p_item in pb_obj.p_dict[ch]:
 
                         # edges of the pulse
-                        t1 = p_item.t0
-                        t2 = p_item.t0 + p_item.dur
+                        t1 = (p_item.t0) / DIG_SAMP_RATE * 1e6
+                        t2 = (p_item.t0 + p_item.dur) / DIG_SAMP_RATE * 1e6
 
                         # left vertical line
                         if t1 == 0:
@@ -634,7 +642,7 @@ class PulseMaster:
                             )
 
                 # final zero-point
-                x_ar.append(pb_obj.dur)
+                x_ar.append(pb_obj.dur / DIG_SAMP_RATE * 1e6)
                 y_ar.append(ch_index)
                 text_ar.append(f'{pb_obj.dur:.2e}')
 

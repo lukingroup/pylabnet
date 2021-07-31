@@ -1,3 +1,4 @@
+from pylabnet.scripts.pulsemaster.pulseblock_constructor import DIG_SAMP_RATE
 import numpy as np
 
 
@@ -42,11 +43,11 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
     )
     """
 
-    t_step = 1 / samp_rate
+    # t_step = 1 / samp_rate
     # Number of samples
-    n_pts = int(
-        (pb_obj.dur - 0.5*t_step) // t_step + 1
-    )
+    n_pts = int(pb_obj.dur * samp_rate / DIG_SAMP_RATE) # int(
+    #     (pb_obj.dur - 0.5*t_step) // t_step + 1
+    # )
     # '- 0.5*t_step' is added to make actual duration of the waveform to be
     # as close to pb_obj.dur as possible.
     #
@@ -120,7 +121,7 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
     # Generate arrays of T-points
     t_ar = np.linspace(
         start=0,
-        stop=t_step * (n_pts - 1),
+        stop=(n_pts - 1), #t_step * (n_pts - 1),
         num=n_pts
     )
 
@@ -144,9 +145,9 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
         if ch in pb_obj.p_dict.keys():
             for p_item in pb_obj.p_dict[ch]:
             
-                # find indexes of pulse edges
-                indx_1 = int(p_item.t0 * samp_rate)
-                indx_2 = indx_1 + int(p_item.dur * samp_rate)
+                # find indices of pulse edges
+                indx_1 = p_item.t0
+                indx_2 = indx_1 + p_item.dur
 
                 # calculate new values
                 val_ar = p_item.get_value(
@@ -162,27 +163,27 @@ def pb_sample(pb_obj, samp_rate, len_min=0, len_max=float('inf'), len_step=1, le
     else:
         return samp_dict, n_pts, add_pts
 
-def pulse_length_samples(pulse, samp_rate):
-    """ Number of samples a given pulse is expected to occupy
-    """
+# def pulse_length_samples(pulse, samp_rate):
+#     """ Number of samples a given pulse is expected to occupy
+#     """
 
-    t_step = 1 / samp_rate
-    # Number of samples
-    n_pts = int(
-        (pulse.dur - 0.5*t_step) // t_step + 1
-    )
+#     t_step = 1 / samp_rate
+#     # Number of samples
+#     n_pts = int(
+#         (pulse.dur - 0.5*t_step) // t_step + 1
+#     )
 
-    return n_pts
+#     return n_pts
 
 
 def pulse_sample(pulse, dflt_pulse, samp_rate, len_min=32, len_step=1, len_adj=True):
     """ Generate sample array from a single pulse object
     """
 
-    t_step = 1 / samp_rate
+    # t_step = 1 / samp_rate
 
     # Number of samples
-    n_pts_orig = pulse_length_samples(pulse, samp_rate)
+    n_pts_orig = int(pulse.dur * samp_rate / DIG_SAMP_RATE) #pulse_length_samples(pulse, samp_rate)
     n_pts = n_pts_orig
     
     # Number of points added to meet length constraints
@@ -218,7 +219,7 @@ def pulse_sample(pulse, dflt_pulse, samp_rate, len_min=32, len_step=1, len_adj=T
     # Generate arrays of T-points
     t_ar = np.linspace(
         start=pulse.t0,
-        stop=pulse.t0 + t_step * (n_pts - 1),
+        stop=pulse.t0 + (n_pts - 1), #t_step * (n_pts - 1),
         num=n_pts
     )
     # calculate new values

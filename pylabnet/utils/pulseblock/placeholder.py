@@ -28,6 +28,7 @@ class Placeholder(float):
                                    or len(name) == 0):
             return float(val_offset)
         return float.__new__(cls, val_offset)
+        
     def __init__(self, name, val_offset=0): 
         if type(name) == str:
             self.name = {name: 1}
@@ -49,7 +50,7 @@ class Placeholder(float):
         return f"{self.name_str} + {int(float(self))}"
     def round_val(self):
         """ Object with its value rounded. """
-        return Placeholder(self.name, np.round(float(self)))
+        return Placeholder(self.name, int(np.round(float(self))))
     def var_str(self):
         """ Name of the object ignoring its value offset. """
         return self.name_str

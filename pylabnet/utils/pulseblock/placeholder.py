@@ -49,7 +49,7 @@ class Placeholder(float):
         return f"{self.name_str} + {int(float(self))}"
     def round_val(self):
         """ Object with its value rounded. """
-        return Placeholder(self.name, np.round(float(self)))
+        return Placeholder(self.name, round(float(self)))
     def var_str(self):
         """ Name of the object ignoring its value offset. """
         return self.name_str

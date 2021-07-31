@@ -331,11 +331,11 @@ class AWGPulseBlockHandler():
                 if type(pulse.t0) == Placeholder:
                     tstep_start = (pulse.t0 * self.digital_sr).round_val()
                 else:
-                    tstep_start = int(np.round(pulse.t0 * self.digital_sr))
+                    tstep_start = int(round(pulse.t0 * self.digital_sr))
                 if type(pulse.t0 + pulse.dur) == Placeholder:
                     tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_val()
                 else:
-                    tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr))
+                    tstep_end = int(round((pulse.t0 + pulse.dur) * self.digital_sr))
 
                 # Declare the waveform in the AWG code with a placeholder
                 setup_instr += f'wave {wave_var_name} = placeholder({len(samp_arr)});\n'
@@ -485,8 +485,8 @@ class AWGPulseBlockHandler():
         for ch in [ch for ch in self.pb.p_dict.keys() if not ch.is_analog]:
             for p_item in self.pb.p_dict[ch]:
                 # Find indexes of pulse edges
-                indx_1 = p_item.t0 * DIG_SAMP_RATE
-                indx_2 = indx_1 + p_item.dur * DIG_SAMP_RATE
+                indx_1 = int(round(p_item.t0 * DIG_SAMP_RATE))
+                indx_2 = int(round(indx_1 + p_item.dur * DIG_SAMP_RATE))
                 codeword_times.extend([indx_1, indx_2])
 
         codeword_times = list(set(codeword_times))
@@ -501,10 +501,9 @@ class AWGPulseBlockHandler():
 
         # Sanity check that both methods should give the same length
         if not len(codeword_times) == len(codeword_times_force_value):
-            self.log.error(codeword_times)
-            self.log.error(codeword_times_force_value)
-            self.log.error(codewords[265:275])
-            #assert(len(codeword_times) == len(codeword_times_force_value))
+        self.log.error(codeword_times)
+        self.log.error(codeword_times_force_value)
+            assert(len(codeword_times) == len(codeword_times_force_value))
 
         return codewords, codeword_times
 
@@ -609,6 +608,8 @@ class AWGPulseBlockHandler():
             chs_per_core = 4
         elif channel_grouping == 2: # 1x8
             chs_per_core = 8
+        else: # HDAWG not connected, default to 4x2
+            chs_per_core = 2
 
         if command[0] == "dio":
             # Add setDIO command to sequence

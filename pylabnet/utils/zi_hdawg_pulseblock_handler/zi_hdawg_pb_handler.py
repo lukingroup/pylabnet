@@ -269,7 +269,7 @@ class AWGPulseBlockHandler():
                     # Pulses must be multiple of 16 samples = 2 timesteps
                     # wait(0) takes 3 timesteps which is the min AWG seq wait time
                     # Min separation is thus 3+2+2 = 7, we ~double it to get 16.
-                    elif (p2.t0 - (p1.t0 + p1.dur)) <= 16 / DIG_SAMP_RATE:
+                    elif (p2.t0 - (p1.t0 + p1.dur)) <= 16 / self.digital_sr:
 
                         # Don't merge if different settings
                         if (p1.mod != p2.mod or
@@ -329,11 +329,11 @@ class AWGPulseBlockHandler():
                 # arranging by their times. Times are multipled by the DIO
                 # rate to convert into AWG time steps.
                 if type(pulse.t0) == Placeholder:
-                    tstep_start = (pulse.t0 * self.digital_sr).round_val()
+                    tstep_start = (pulse.t0 * self.digital_sr).round_val().int_val()
                 else:
                     tstep_start = int(round(pulse.t0 * self.digital_sr))
                 if type(pulse.t0 + pulse.dur) == Placeholder:
-                    tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_val()
+                    tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_val().int_val()
                 else:
                     tstep_end = int(round((pulse.t0 + pulse.dur) * self.digital_sr))
 
@@ -467,6 +467,13 @@ class AWGPulseBlockHandler():
         if self.end_low:
             codewords_array[-1] = 0
 
+        # self.log.warn(codewords_array)
+        for ch in [ch for ch in self.pb.p_dict.keys() if not ch.is_analog]:
+            for p_item in self.pb.p_dict[ch]:
+                indx_1 = int(round(p_item.t0 * self.digital_sr))
+                indx_2 = int(round(indx_1 + p_item.dur * self.digital_sr))
+                self.log.warn((type(p_item), p_item.t0, p_item.dur, indx_1, indx_2))
+
         # Find out where the the codewords changes. The indices refer to the
         # left edge of transition, e.g. [0 0 1] returns index 1.
         dio_change_index = np.where(codewords_array[:-1] != codewords_array[1:])[0]
@@ -485,8 +492,15 @@ class AWGPulseBlockHandler():
         for ch in [ch for ch in self.pb.p_dict.keys() if not ch.is_analog]:
             for p_item in self.pb.p_dict[ch]:
                 # Find indexes of pulse edges
-                indx_1 = int(round(p_item.t0 * DIG_SAMP_RATE))
-                indx_2 = int(round(indx_1 + p_item.dur * DIG_SAMP_RATE))
+                if type(p_item.t0) == Placeholder:
+                    indx_1 = (p_item.t0 * self.digital_sr).round_val().int_val()
+                else:
+                    indx_1 = int(round(p_item.t0 * self.digital_sr))
+                if type(p_item.t0 + p_item.dur) == Placeholder:
+                    indx_2 = indx_1 + (p_item.dur * self.digital_sr).round_val().int_val()
+                else:
+                    indx_2 = indx_1 + int(round(p_item.dur * self.digital_sr))
+
                 codeword_times.extend([indx_1, indx_2])
 
         codeword_times = list(set(codeword_times))
@@ -501,8 +515,8 @@ class AWGPulseBlockHandler():
 
         # Sanity check that both methods should give the same length
         if not len(codeword_times) == len(codeword_times_force_value):
-        self.log.error(codeword_times)
-        self.log.error(codeword_times_force_value)
+            self.log.error(codeword_times)
+            self.log.error(codeword_times_force_value)
             assert(len(codeword_times) == len(codeword_times_force_value))
 
         return codewords, codeword_times

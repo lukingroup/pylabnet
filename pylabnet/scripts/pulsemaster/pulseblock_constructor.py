@@ -231,8 +231,16 @@ class PulseblockConstructor():
 
         for ch in self.pulseblock.p_dict.keys():
             for p_item in self.pulseblock.p_dict[ch]:
-                p_item.t0 = round(p_item.t0, 10)
-                p_item.dur = round(p_item.dur, 10)
+                # Can't use normal round() for Placeholder as it would
+                # be cast to a plain float.
+                if type(p_item.t0) == Placeholder:
+                    p_item.t0.round_val(10)
+                else:
+                    p_item.t0 = round(p_item.t0, 10)
+                if type(p_item.dur) == Placeholder:
+                    p_item.dur.round_val(10)
+                else:
+                    p_item.dur = round(p_item.dur, 10)
 
     def get_dict(self):
         """Get dictionary representing the pulseblock."""

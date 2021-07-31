@@ -269,7 +269,7 @@ class AWGPulseBlockHandler():
                     # Pulses must be multiple of 16 samples = 2 timesteps
                     # wait(0) takes 3 timesteps which is the min AWG seq wait time
                     # Min separation is thus 3+2+2 = 7, we ~double it to get 16.
-                    elif (p2.t0 - (p1.t0 + p1.dur)) <= 16:
+                    elif (p2.t0 - (p1.t0 + p1.dur)) <= 16 / DIG_SAMP_RATE:
 
                         # Don't merge if different settings
                         if (p1.mod != p2.mod or
@@ -314,7 +314,7 @@ class AWGPulseBlockHandler():
                 pulse.mod = temp
 
                  # Variable for the waveform in the code
-                wave_var_name = f"{self.pb.name}_{ch.name}_{pulse.t0}"
+                wave_var_name = f"{self.pb.name}_{ch.name}_{pulse.t0:.2}"
 
                 # Remove illegal chars
                 wave_var_name = re.sub("[-* ]", "", wave_var_name)
@@ -329,13 +329,13 @@ class AWGPulseBlockHandler():
                 # arranging by their times. Times are multipled by the DIO
                 # rate to convert into AWG time steps.
                 if type(pulse.t0) == Placeholder:
-                    tstep_start = int(float(pulse.t0))
+                    tstep_start = (pulse.t0 * self.digital_sr).round_val()
                 else:
-                    tstep_start = pulse.t0
+                    tstep_start = int(np.round(pulse.t0 * self.digital_sr))
                 if type(pulse.t0 + pulse.dur) == Placeholder:
-                    tstep_end = int(float(pulse.t0 + pulse.dur))
+                    tstep_end = ((pulse.t0 + pulse.dur) * self.digital_sr).round_val()
                 else:
-                    tstep_end = pulse.t0 + pulse.dur
+                    tstep_end = int(np.round((pulse.t0 + pulse.dur) * self.digital_sr))
 
                 # Declare the waveform in the AWG code with a placeholder
                 setup_instr += f'wave {wave_var_name} = placeholder({len(samp_arr)});\n'
@@ -463,13 +463,6 @@ class AWGPulseBlockHandler():
             DIO codewords
         """
 
-        ## TODO YQ REMOVE
-        # self.log.error(codewords_array)
-        for ch in [ch for ch in self.pb.p_dict.keys() if not ch.is_analog]:
-            for p_item in self.pb.p_dict[ch]:
-                self.log.error([p_item.ch, p_item.t0, p_item.dur, type(p_item)])
-        ## TODO YQ REMOVE
-
         # Force final output to be zero
         if self.end_low:
             codewords_array[-1] = 0
@@ -492,8 +485,8 @@ class AWGPulseBlockHandler():
         for ch in [ch for ch in self.pb.p_dict.keys() if not ch.is_analog]:
             for p_item in self.pb.p_dict[ch]:
                 # Find indexes of pulse edges
-                indx_1 = p_item.t0
-                indx_2 = indx_1 + p_item.dur
+                indx_1 = p_item.t0 * DIG_SAMP_RATE
+                indx_2 = indx_1 + p_item.dur * DIG_SAMP_RATE
                 codeword_times.extend([indx_1, indx_2])
 
         codeword_times = list(set(codeword_times))
@@ -507,10 +500,11 @@ class AWGPulseBlockHandler():
         print(codeword_times)
 
         # Sanity check that both methods should give the same length
-        self.log.error(codeword_times)
-        self.log.error(codeword_times_force_value)
         if not len(codeword_times) == len(codeword_times_force_value):
-            assert(len(codeword_times) == len(codeword_times_force_value))
+            self.log.error(codeword_times)
+            self.log.error(codeword_times_force_value)
+            self.log.error(codewords[265:275])
+            #assert(len(codeword_times) == len(codeword_times_force_value))
 
         return codewords, codeword_times
 
@@ -615,8 +609,6 @@ class AWGPulseBlockHandler():
             chs_per_core = 4
         elif channel_grouping == 2: # 1x8
             chs_per_core = 8
-        else: # error
-            chs_per_core = 2
 
         if command[0] == "dio":
             # Add setDIO command to sequence
@@ -710,7 +702,7 @@ class AWGPulseBlockHandler():
                     # Subtract the default offset from the Placeholder
                     # It is used to separate Placeholder pulses in time since
                     # their initial separation is unknown.
-                    waittime -= Placeholder.default_values["offset_var"]
+                    waittime -= Placeholder.default_values["offset_var"] * 1e-6 * DIG_SAMP_RATE
                     sequence += wait_cmd.format((waittime - wait_offset).int_str())
                 else:
                     sequence += wait_cmd.format(int(waittime - wait_offset))

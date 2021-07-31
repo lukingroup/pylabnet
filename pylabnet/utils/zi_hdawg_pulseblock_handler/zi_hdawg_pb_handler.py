@@ -497,9 +497,9 @@ class AWGPulseBlockHandler():
                 else:
                     indx_1 = int(round(p_item.t0 * self.digital_sr))
                 if type(p_item.t0 + p_item.dur) == Placeholder:
-                    indx_2 = indx_1 + (p_item.dur * self.digital_sr).round_val().int_val()
+                    indx_2 = (indx_1 + p_item.dur * self.digital_sr).round_val().int_val()
                 else:
-                    indx_2 = indx_1 + int(round(p_item.dur * self.digital_sr))
+                    indx_2 = int(round(indx_1 + p_item.dur * self.digital_sr))
 
                 codeword_times.extend([indx_1, indx_2])
 
@@ -714,10 +714,9 @@ class AWGPulseBlockHandler():
             # Add waittime to sequence but subtract the wait offset
             if waittime > wait_offset:
                 if type(waittime) == Placeholder:
-                    # Subtract the default offset from the Placeholder
-                    # It is used to separate Placeholder pulses in time since
-                    # their initial separation is unknown.
-                    waittime -= Placeholder.default_values["offset_var"] * 1e-6 * DIG_SAMP_RATE
+                    # Subtract the default duration from the Placeholder which was used since
+                    # their initial length is unknown.
+                    waittime -= Placeholder.default_values["dur_var"] * 1e-6 * DIG_SAMP_RATE
                     sequence += wait_cmd.format((waittime - wait_offset).int_str())
                 else:
                     sequence += wait_cmd.format(int(waittime - wait_offset))

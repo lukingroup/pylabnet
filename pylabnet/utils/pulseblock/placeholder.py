@@ -9,7 +9,7 @@ class Placeholder(float):
     """
 
     default_values = {
-            "offset_var" : 1.0/30, # Units of microseconds
+            "offset_var" : 1, # Units of microseconds
             "dur_var" : 1, # Will be multipled by 1e-6 later
             "val_var" : 1,
             "amp_var" : 1,

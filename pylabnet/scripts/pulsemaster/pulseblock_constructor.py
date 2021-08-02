@@ -221,7 +221,26 @@ class PulseblockConstructor():
                         offset=-pb_dur+prev_t0
                     )
 
-        self.pulseblock =  pulseblock
+        self.pulseblock = pulseblock
+        self.clean_pulseblock_timings()
+
+    def clean_pulseblock_timings(self):
+        """ Round all timings to 10 decimal places (0.1 ns to avoid floating point problems. """
+        if self.pulseblock is None:
+            return
+
+        for ch in self.pulseblock.p_dict.keys():
+            for p_item in self.pulseblock.p_dict[ch]:
+                # Can't use normal round() for Placeholder as it would
+                # be cast to a plain float.
+                if type(p_item.t0) == Placeholder:
+                    p_item.t0.round_val(10)
+                else:
+                    p_item.t0 = round(p_item.t0, 10)
+                if type(p_item.dur) == Placeholder:
+                    p_item.dur.round_val(10)
+                else:
+                    p_item.dur = round(p_item.dur, 10)
 
     def get_dict(self):
         """Get dictionary representing the pulseblock."""

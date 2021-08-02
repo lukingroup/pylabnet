@@ -148,14 +148,17 @@ pylabnet/launchers/pylabnet.cmd
 
 projects/*
 projects/
+
 # SSL keys
 *.pem
-
 
 # Config files
 configs/*
 configs
 secretkeys.env
+
+# Generated UI files
+.qt_for_python
 
 # Data folders
 pylabnet/utils/iq_upconversion/results/*

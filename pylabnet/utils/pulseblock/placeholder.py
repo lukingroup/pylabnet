@@ -9,7 +9,7 @@ class Placeholder(float):
     """
 
     default_values = {
-            "offset_var" : 1.0/30, # Units of microseconds
+            "offset_var" : 1, # Units of microseconds
             "dur_var" : 1, # Will be multipled by 1e-6 later
             "val_var" : 1,
             "amp_var" : 1,
@@ -47,9 +47,12 @@ class Placeholder(float):
     def int_str(self):
         """ String of the object with its value converted to int. """
         return f"{self.name_str} + {int(float(self))}"
-    def round_val(self):
+    def round_val(self, num_dp=0):
         """ Object with its value rounded. """
-        return Placeholder(self.name, np.round(float(self)))
+        return Placeholder(self.name, round(float(self), num_dp))
+    def int_val(self):
+        """ Object with its value converted into int. """
+        return Placeholder(self.name, int(float(self)))
     def var_str(self):
         """ Name of the object ignoring its value offset. """
         return self.name_str

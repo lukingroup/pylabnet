@@ -3,7 +3,7 @@ from pylabnet.utils.helper_methods import load_config
 from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 
 # Maximal output for Hittite MW source
-MW_MAXVAL = 20
+MW_MAXVAL = 25
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
 
@@ -215,6 +215,9 @@ class HMCT2220(StaticLineHardwareHandler):
             value = self.maxval
 
         self.hardware_client.set_power(float(value))
+    def set_value(self, value):
+        #This will be used for setting the frequencies with an analog staticline
+        self.hardware_client.set_freq(float(value)*1E9)
 
 
 class TPLinkHS103(StaticLineHardwareHandler):

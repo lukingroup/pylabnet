@@ -257,6 +257,8 @@ class Controller:
                 self._update_voltage(channel, 0)
 
             self._set_voltage_display(channel)
+        else:
+            self.log.info("LOCKED")
 
     def _step_right(self, channel: int):
         """ Steps a particular channel if unlocked

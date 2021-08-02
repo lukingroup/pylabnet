@@ -309,8 +309,9 @@ class Controller(MultiChSweep1D):
                 date_dir=date_dir
             )
 
-        else:
-            if self.data_bwd:
+        '''else:
+
+            if len(self.data_bwd) > 0:
                 # Save heatmap
                 generic_save(
                     data=fill_2dlist(self.data_bwd),
@@ -336,7 +337,7 @@ class Controller(MultiChSweep1D):
                     filename=f'{filename}_bwd_avg',
                     directory=directory,
                     date_dir=date_dir
-                )
+                )'''
 
     def fit_config(self, status:bool):
         """ Configures fitting add-on

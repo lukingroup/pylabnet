@@ -49,6 +49,11 @@ class DataTaker:
         # Configure list of missing clients
         self.missing_clients = {}
 
+        # Setup Autosave
+        if self.config['auto_save']:
+            self.gui.autosave.setChecked(True)
+
+
         # Retrieve Clients
         for client_entry in self.config['servers']:
             client_type = client_entry['type']

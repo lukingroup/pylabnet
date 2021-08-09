@@ -362,11 +362,16 @@ class IQ_Calibration():
 		LO = np.array(self.phase.index)
 		IF = np.array(self.phase.columns.get_level_values(1))
 
+		default_if = 2e6
+		default_lo = 12e9
+
 		if freq < LO[0] + IF[0]:
-			raise ValueError("Chosen frequency too low!")
+			return default_if, default_lo
+			#raise ValueError("Chosen frequency too low!")
 
 		if freq > LO[-1] + IF[-1]:
-			raise ValueError("Chosen frequency too high!")
+			return default_if, default_lo
+			#raise ValueError("Chosen frequency too high!")
 
 		if_f = np.linspace(LO[0], LO[-1], 100)
 
@@ -398,11 +403,21 @@ class IQ_Calibration():
 		LO = np.array(self.phase.index)
 		IF = np.array(self.phase.columns.get_level_values(1))
 
+		default_if = 200e6
+		default_lo = 12e9
+		default_phase_opt = np.array([0])
+		default_amp_i_opt = np.array([1])
+		default_amp_q_opt = np.array([1])
+		default_dc_i_opt = np.array([0])
+		default_dc_q_opt = np.array([0])
+
 		if freq < LO[0] + IF[0]:
-			raise ValueError("Chosen frequency too low!")
+			return default_if, default_lo, default_phase_opt, default_amp_i_opt, default_amp_q_opt, default_dc_i_opt, default_dc_q_opt
+			#raise ValueError("Chosen frequency too low!")
 
 		if freq > LO[-1] + IF[-1]:
-			raise ValueError("Chosen frequency too high!")
+			return default_if, default_lo, default_phase_opt, default_amp_i_opt, default_amp_q_opt, default_dc_i_opt, default_dc_q_opt
+			#raise ValueError("Chosen frequency too high!")
 
 		if_f = np.linspace(IF[0], IF[-1], 100)
 
@@ -427,7 +442,7 @@ class IQ_Calibration():
 
 def main():
 	mw_client = Client(
-		host='192.168.50.104', 
+		host='192.168.50.104',
 		port=25696
 	)
 	sa = agilent_e4405B.Client(

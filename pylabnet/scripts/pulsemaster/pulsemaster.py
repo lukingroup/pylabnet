@@ -96,6 +96,9 @@ class PulseMaster:
         # Initialize empty pulseblock dictionary.
         self.pulseblocks = {}
 
+        # Store filepath to sequence vars
+        self.seq_var_filepath = None
+
         # Initialize empty dictionary containing the contruction
         # Instructions for the currently displayed pulseblock.
         self.pulseblock_constructors = []
@@ -286,7 +289,7 @@ class PulseMaster:
         """ Load PB constructor from file"""
 
         # Get filename from pop-up.
-        pb_dict = self.load_json_dict()
+        pb_dict, _ = self.load_json_dict()
 
         # Create pulseblock contructor.
         imported_contructor = self.get_pb_constructor_from_dict(pb_dict)
@@ -355,6 +358,9 @@ class PulseMaster:
         # Stop AWG if it's running.
         if self.awg_running:
             self.stop_hdawg()
+
+        # Update sequence var dict
+        self.get_seq_var_dict_from_previous()
 
         # Get sequence template from textbox.
         seq_template = self.widgets['seqt_textedit'].toPlainText()
@@ -469,11 +475,8 @@ class PulseMaster:
         """
         return dict(self.seq_variable_table_model.datadict)
 
-    def get_seq_var_dict_from_file(self):
-        """ Load assignment dictionary from file."""
-
-        # Get filepath from file-sepector popup.
-        seq_var_dict = self.load_json_dict()
+    def set_seq_var_dict(self, seq_var_dict):
+        """ Initialize Sequencer Variable table. """
 
         # Retrieve sub-dictionary
         seq_var_dict = seq_var_dict['sequence_vars']
@@ -491,6 +494,20 @@ class PulseMaster:
 
         self.seq_var_table.setModel(self.seq_variable_table_model)
 
+    def get_seq_var_dict_from_file(self):
+        """ Load assignment dictionary from file."""
+
+        # Get filepath from file-sepector popup.
+        seq_var_dict, filename = self.load_json_dict()
+        self.seq_var_filepath = filename
+        self.set_seq_var_dict(seq_var_dict)
+
+    def get_seq_var_dict_from_previous(self):
+        """ Read at stored sequence variable dict filepaths and loads it"""
+        if  self.seq_var_filepath is not None:
+            f = open(self.seq_var_filepath)
+            seq_var_dict = json.load(f)
+            self.set_seq_var_dict(seq_var_dict)
 
     def get_filename(self, filetype="JSON files (*.json)"):
         """Open file selector widget and get files."""
@@ -507,7 +524,7 @@ class PulseMaster:
         # a dictionary
         dictionary = json.load(f)
 
-        return dictionary
+        return dictionary, filename[0]
 
     def prep_plotdata(self, pb_obj):
 

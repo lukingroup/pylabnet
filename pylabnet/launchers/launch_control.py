@@ -179,6 +179,9 @@ class Controller:
         self.filenamepath = None
         self.MAX_LOG_FILE_SIZE = 5000000 # 5MB
 
+        # setting selection mode for server list to multi-select
+        self.main_window.client_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
 
@@ -505,21 +508,24 @@ class Controller:
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
 
-        client_to_stop = self.main_window.client_list.currentItem().text()
-        server_data = self.client_data[client_to_stop]
-        if 'port' in server_data:
-            try:
-                stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
-                stop_client.close_server()
-            except:
-                self.gui_logger.warn(
-                    f'Failed to shutdown server {client_to_stop}'
-                    f'on host: {server_data["ip"]}, port: {server_data["port"]}'
-                )
-                self.gui_logger.info('Attempting to remove from LogClients manually')
+        # Retrieve all selected servers.
+        clients_to_stop = [client.text() for client in self.main_window.client_list.selectedItems()]
+
+        for client_to_stop in clients_to_stop:
+            server_data = self.client_data[client_to_stop]
+            if 'port' in server_data:
+                try:
+                    stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
+                    stop_client.close_server()
+                except:
+                    self.gui_logger.warn(
+                        f'Failed to shutdown server {client_to_stop}'
+                        f'on host: {server_data["ip"]}, port: {server_data["port"]}'
+                    )
+                    self.gui_logger.info('Attempting to remove from LogClients manually')
+                    self._close_dangling(client_to_stop)
+            else:
                 self._close_dangling(client_to_stop)
-        else:
-            self._close_dangling(client_to_stop)
 
     def _close_dangling(self, client_to_stop):
 

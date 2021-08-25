@@ -128,7 +128,7 @@ class Dataset():
     def clear_data(self):
         self.data = None
         self.curve.setData([])
-        
+
     # Note: This recursive code could potentially run into infinite iteration problem.
     def clear_all_data(self):
 
@@ -138,7 +138,7 @@ class Dataset():
 
         for child in self.children.values():
             child.clear_all_data()
-            
+
 
     def update(self, **kwargs):
         """ Updates current data to plot"""
@@ -940,7 +940,7 @@ class TriangleScan1D(Dataset):
                     prev_dataset.data = np.fliplr(prev_dataset.data)
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
-    
+
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """
 
@@ -1156,7 +1156,7 @@ class HeatMap(Dataset):
             img=np.transpose(np.zeros((10,10))),
             autoRange=False
         )
-        
+
         self.data = None
 
 
@@ -1209,7 +1209,7 @@ class LockedCavityScan1D(TriangleScan1D):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
-    
+
     def clear_data(self):
 
         # Clear forward/backward scan line
@@ -1218,7 +1218,7 @@ class LockedCavityScan1D(TriangleScan1D):
 
         # Clear retasined data used in heatmaps
         self.all_data = None
-      
+
 
 class LockedCavityPreselectedHistogram(PreselectedHistogram):
 
@@ -1272,6 +1272,7 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
         # self.widgets['voltage'].setValue(self.v)
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
+
 
 class ErrorBarGraph(Dataset):
 

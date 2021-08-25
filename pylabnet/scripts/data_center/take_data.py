@@ -50,8 +50,10 @@ class DataTaker:
         self.missing_clients = {}
 
         # Setup Autosave
-        if self.config['auto_save']:
-            self.gui.autosave.setChecked(True)
+        # First check whether autosave is specified in config file
+        if 'auto_save' in self.config:
+            if self.config['auto_save']:
+                self.gui.autosave.setChecked(True)
 
 
         # Retrieve Clients

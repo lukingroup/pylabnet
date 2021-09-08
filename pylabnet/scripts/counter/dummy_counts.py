@@ -8,8 +8,10 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
-
+from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_gui_widgets_dummy, get_legend_from_graphics_view, find_client, load_script_config
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtCore import QTimer,QDateTime
 
 # Static methods
 
@@ -31,7 +33,7 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
+    def __init__(self, app, ctr_client: None, ui='dummy_count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
@@ -50,13 +52,14 @@ class CountMonitor:
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
-        if self.combined_channel:
-            ui = 'count_monitor_combined'
-        else:
-            ui = 'count_monitor'
+        # if self.combined_channel:
+        #     ui = 'count_monitor_combined'
+        # else:
+        #     ui = 'count_monitor'
 
         # Instantiate GUI window
         self.gui = Window(
+            app,
             gui_template=ui,
             host=get_ip(),
             port=server_port
@@ -69,23 +72,24 @@ class CountMonitor:
         if self.combined_channel:
             num_plots = 3
         else:
-            num_plots = 2
+            num_plots = 1
 
         # Get all GUI widgets
-        self.widgets = get_gui_widgets(
+        self.widgets = get_gui_widgets_dummy(
             self.gui,
             graph_widget=num_plots,
-            number_label=8,
+            number_label=2,
             event_button=num_plots,
             legend_widget=num_plots
         )
+
 
 
         # Load config
         self.config = {}
         if config is not None:
             self.config = load_script_config(
-                script='monitor_counts',
+                script='dummy_counts',
                 config=config,
                 logger=self.logger_client
             )
@@ -129,21 +133,34 @@ class CountMonitor:
             # time.sleep(0.05)
             self._is_running = True
 
-            self._ctr.start_trace(
-                name=self.config['name'],
-                ch_list=self._ch_list,
-                bin_width=self._bin_width,
-                n_bins=self._n_bins
-            )
+            # self._ctr.start_trace(
+            #     name=self.config['name'],
+            #     ch_list=self._ch_list,
+            #     bin_width=self._bin_width,
+            #     n_bins=self._n_bins
+            # )
 
             # Continuously update data until paused
+
+
             while self._is_running:
-                self._update_output()
-                self.gui.force_update()
+                timer = QTimer()
+                # timer.timeout.connect(lambda: self.log.info('1 sec'))
+                timer.timeout.connect(lambda: self.update())
+
+                timer.start(1000)
+                sys.exit(self.gui.app.exec_() )
+
+
 
         except Exception as exc_obj:
             self._is_running = False
-            raise exc_obj
+            raise exc_obj\
+
+    def update(self):
+        self._update_output()
+        self.gui.force_update()
+    
 
     def pause(self):
         """ Pauses the counter"""
@@ -252,13 +269,16 @@ class CountMonitor:
         else:
             # Find all curves in this plot
             for channel in self._plot_list[plot_index]:
-
                 # Set the curve to constant with last point for all entries
+                # self.widgets[f'curve_{channel}'].setData(
+                #     np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
+                # )
+
                 self.widgets[f'curve_{channel}'].setData(
-                    np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
+                    np.ones(200)*self.widgets[f'curve_{channel}'].yData[-1]
                 )
 
-        self._ctr.clear_ctr(name=self.config['name'])
+        # self._ctr.clear_ctr(name=self.config['name'])
 
     def _update_output(self):
         """ Updates the output to all current values"""
@@ -266,14 +286,15 @@ class CountMonitor:
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
 
-        counts = self._ctr.get_counts(name=self.config['name'])
-        counts_per_sec = counts*(1e12/self._bin_width)
+        # counts = self._ctr.get_counts(name=self.config['name'])
+        nw_counts = np.random.rand(len(self._ch_list),200)
+        nw_counts_per_sec = nw_counts*(1e12/self._bin_width)
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0
 
-        summed_counts = np.sum(counts_per_sec, axis=0)
+        summed_counts = np.sum(nw_counts_per_sec, axis=0)
 
-        for index, count_array in enumerate(counts_per_sec):
+        for index, nw_count_array in enumerate(nw_counts_per_sec):
 
             # Figure out which plot to assign to
             channel = self._ch_list[index]
@@ -295,17 +316,20 @@ class CountMonitor:
             #     text='{:.4e}'.format(count_array[-1]),
             #     label_label='Channel {}'.format(channel)
             # )
+            if(self.widgets[f'curve_{channel}'].yData is None):
+                self.widgets[f'curve_{channel}'].setData(   nw_count_array  )
+            else:
+                self.widgets[f'curve_{channel}'].setData( np.concatenate(  (self.widgets[f'curve_{channel}'].yData, nw_count_array ) ) )
 
-            self.widgets[f'curve_{channel}'].setData(count_array)
-            self.widgets[f'number_label'][channel-1].setText(str(count_array[-1]))
+            self.widgets[f'number_label'][channel-1].setText(str(nw_count_array[-1]))
 
-        if self.combined_channel:
-            self.widgets['curve_combo'].setData(summed_counts)
+
+        # if self.combined_channel:
+        #     self.widgets['curve_combo'].setData(summed_counts)
 
 
 def launch(**kwargs):
     """ Launches the count monitor script """
-
     # logger, loghost, logport, clients, guis, params = unpack_launcher(**kwargs)
     logger = kwargs['logger']
     clients = kwargs['clients']
@@ -315,24 +339,30 @@ def launch(**kwargs):
         logger
     )
 
-
-    if config['combined_channel'] == 'True':
-        combined_channel = True
-    else:
-        combined_channel = False
+    # if config['combined_channel'] == 'True':
+    #     combined_channel = True
+    # else:
+    #     combined_channel = False
     # Instantiate CountMonitor
+    
+    
+    app = QApplication(sys.argv)
+
+
     try:
         monitor = CountMonitor(
-            ctr_client=find_client(
-                clients,
-                config,
-                client_type='si_tt',
-                client_config='standard_ctr',
-                logger=logger
-            ),
+            # ctr_client=find_client(
+            #     clients,
+            #     config,
+            #     client_type='si_tt',
+            #     client_config='standard_ctr',
+            #     logger=logger
+            # ),
+            app,
+            ctr_client=None,
             logger_client=logger,
             server_port=kwargs['server_port'],
-            combined_channel=combined_channel
+            # combined_channel=combined_channel
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
@@ -377,3 +407,6 @@ def launch(**kwargs):
 
     # Run
     monitor.run()
+
+
+

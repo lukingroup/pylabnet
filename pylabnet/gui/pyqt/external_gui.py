@@ -78,7 +78,7 @@ class Window(QtWidgets.QMainWindow):
         """
 
         self.app = app  # Application instance onto which to load the GUI.
-
+        
         if self.app is None:
             if get_os() == 'Windows':
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')

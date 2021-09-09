@@ -1011,17 +1011,17 @@ def replace_html(base_html, replace_dict):
 def append_rendered_html(confluence, base_html, replace_dict, page_id, page_title, silent=True):
     '''
     Renders base_html according to replace_dict and appends it on existing page
-    
+
     '''
 
     append_html = replace_html(base_html, replace_dict)
 
     status = confluence.append_page(
         page_id=page_id,
-        title=page_title, 
+        title=page_title,
         append_body=append_html
     )
-    
+
     return status
 
 def upload_and_append_picture(confluence, USERKEY, fileAbsPath, filename, comment, settings, page_id, page_title):
@@ -1031,11 +1031,12 @@ def upload_and_append_picture(confluence, USERKEY, fileAbsPath, filename, commen
     '''
 
     confluence.attach_file(fileAbsPath, name=None, content_type=None, page_id=page_id, title=None, space=None, comment=None)
-    
-    templates_root = "C:\\Users\\User\\pylabnet\\pylabnet\\gui\\html_template"
-    html_template_filename = "html_template_0.html"
 
-    base_html = '{}/{}'.format(templates_root, html_template_filename)
+    confluence_config_dict = load_config('confluence_upload')
+    templates_root = confluence_config_dict['templates_root']
+    html_template_filename = confluence_config_dict['html_template_filename']
+
+    base_html = '{}\\{}'.format(templates_root, html_template_filename)
 
     timestamp =  datetime.datetime.now().strftime('%Y-%m-%d')
 
@@ -1048,7 +1049,7 @@ def upload_and_append_picture(confluence, USERKEY, fileAbsPath, filename, commen
     }
 
     status = append_rendered_html(confluence, base_html, replace_dict, page_id, page_title)
-    
+
     return status
 
 

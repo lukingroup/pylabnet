@@ -8,10 +8,15 @@ from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_gui_widgets_dummy, get_legend_from_graphics_view, find_client, load_script_config
+from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets,\
+     get_gui_widgets_dummy, get_legend_from_graphics_view, find_client, load_script_config, upload_and_append_picture
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtCore import QTimer,QDateTime
+from atlassian import Confluence
+import datetime
+import os
+from decouple import config
 
 # Static methods
 
@@ -69,10 +74,7 @@ class CountMonitor:
         self.gui.apply_stylesheet()
 
 
-        if self.combined_channel:
-            num_plots = 3
-        else:
-            num_plots = 1
+        num_plots = 1
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets_dummy(
@@ -80,6 +82,7 @@ class CountMonitor:
             graph_widget=num_plots,
             number_label=2,
             event_button=num_plots,
+            upload_button=num_plots,
             legend_widget=num_plots
         )
 
@@ -244,6 +247,9 @@ class CountMonitor:
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
 
+        for plot_index, upload_button in enumerate(self.widgets['upload_button']):
+            upload_button.clicked.connect(partial(lambda plot_index: self._upload_plot(plot_index), plot_index=plot_index))
+
         if self.combined_channel:
             self.widgets['curve_combo'] = self.widgets['graph_widget'][index+1].plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[color+1])
@@ -252,6 +258,74 @@ class CountMonitor:
                 self.widgets['curve_combo'],
                 ' - '+'Combined Counts'
             )
+
+    def _upload_plot(self, plot_index):
+
+
+        self.log.info(config('LOCALHOST_PW'))
+
+
+        self.log.info('upload the screenshot ...')
+
+        # load the env params
+        SCRNSHOT_ROOT = config('SCRNSHOT_ROOT')
+        URL = config('CONFLUENCE_URL')
+        USERNAME = config('CONFLUENCE_USERNAME')
+        PW = config('CONFLUENCE_PW')
+        USERKEY = config('CONFLUENCE_USERKEY')
+        DEV_root_id = config('CONFLUENCE_DEV_root_id')
+        
+        # screenshot and save
+        scrn_shot_root = SCRNSHOT_ROOT
+        scrn_shot_filename = "Screenshot.png"
+        scrn_shot_AbsPath = os.path.join(scrn_shot_root, scrn_shot_filename)
+        pix = self.gui.grab()
+        pix.save(scrn_shot_AbsPath)
+
+
+
+        # upload to the confluence page
+        upload_setting = "Settings" # Typically created by LabVIEW or successor.
+        upload_comment = "Upload successfully."
+
+        timestamp_date = datetime.datetime.now().strftime('%b %d %Y')
+        timestamp_day = datetime.datetime.now().strftime('%b %d %Y')
+        upload_page_title   =  "test-uploading graphs {}".format(timestamp_day)
+
+
+        confluence = Confluence(
+            url='{}/wiki'.format(URL), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
+            username=USERNAME,
+            password=PW)
+
+        if( confluence.page_exists('DEV', upload_page_title) ):
+            upload_page_id = confluence.get_page_id('DEV', upload_page_title)
+        else:
+            response = confluence.update_or_create(
+                parent_id=DEV_root_id, 
+                title=upload_page_title,
+                body='',
+                representation='storage')
+
+            upload_page_id = response['id']
+            web_url = response['_links']['base']+response['_links']['webui']
+            print(web_url)
+
+
+        upload_and_append_picture(
+            confluence=confluence,
+            USERKEY=USERKEY,
+            fileAbsPath=scrn_shot_AbsPath,
+            filename=scrn_shot_filename, 
+            comment=upload_comment, 
+            settings=upload_setting, 
+            page_id=upload_page_id, 
+            page_title=upload_page_title)
+            
+        self.log.info('uploaded')
+
+        return
+
 
     def _clear_plot(self, plot_index):
         """ Clears the curves on a particular plot

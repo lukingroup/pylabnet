@@ -16,6 +16,8 @@ from datetime import date, datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
+from atlassian import Confluence
+import datetime
 #import netifaces as ni
 
 
@@ -988,3 +990,71 @@ def set_graph_background(widget):
 class UnsupportedOSException(Exception):
     """Raised when the operating system is not supported."""
     pass
+
+
+
+
+# Helper Functions
+def replace_html(base_html, replace_dict):
+    '''
+    Reads in a HTML template and replaces occurences of the keys of replace_dict by the key values.
+    '''
+
+    with open(base_html, "r+") as f:
+        replaced_html = f.read()
+
+        for key in replace_dict:
+            replaced_html = replaced_html.replace(key, replace_dict[key])
+    return replaced_html
+
+
+def append_rendered_html(confluence, base_html, replace_dict, page_id, page_title, silent=True):
+    '''
+    Renders base_html according to replace_dict and appends it on existing page
+    
+    '''
+
+    append_html = replace_html(base_html, replace_dict)
+
+    status = confluence.append_page(
+        page_id=page_id,
+        title=page_title, 
+        append_body=append_html
+    )
+    
+    return status
+
+def upload_and_append_picture(confluence, USERKEY, fileAbsPath, filename, comment, settings, page_id, page_title):
+
+    ''' Upload a picture and embed it to page, alongside measurement setting informations and possible comments
+
+    '''
+
+    confluence.attach_file(fileAbsPath, name=None, content_type=None, page_id=page_id, title=None, space=None, comment=None)
+    
+    templates_root = "C:\\Users\\User\\pylabnet\\pylabnet\\gui\\html_template"
+    html_template_filename = "html_template_0.html"
+
+    base_html = '{}/{}'.format(templates_root, html_template_filename)
+
+    timestamp =  datetime.datetime.now().strftime('%Y-%m-%d')
+
+    replace_dict = {
+    'DATETIME' : timestamp,
+    'USERKEY'  : USERKEY,
+    'SETTING'  : settings,
+    'COMMENT'  : comment,
+    'FILENAME' : filename
+    }
+
+    status = append_rendered_html(confluence, base_html, replace_dict, page_id, page_title)
+    
+    return status
+
+
+
+
+
+
+
+

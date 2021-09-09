@@ -82,7 +82,6 @@ class CountMonitor:
             graph_widget=num_plots,
             number_label=2,
             event_button=num_plots,
-            upload_button=num_plots,
             legend_widget=num_plots
         )
 
@@ -247,8 +246,6 @@ class CountMonitor:
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
 
-        for plot_index, upload_button in enumerate(self.widgets['upload_button']):
-            upload_button.clicked.connect(partial(lambda plot_index: self._upload_plot(plot_index), plot_index=plot_index))
 
         if self.combined_channel:
             self.widgets['curve_combo'] = self.widgets['graph_widget'][index+1].plot(
@@ -260,11 +257,6 @@ class CountMonitor:
             )
 
     def _upload_plot(self, plot_index):
-
-
-        self.log.info(config('LOCALHOST_PW'))
-
-
         self.log.info('upload the screenshot ...')
 
         # load the env params
@@ -276,17 +268,17 @@ class CountMonitor:
         DEV_root_id = config('CONFLUENCE_DEV_root_id')
         
         # screenshot and save
-        scrn_shot_root = SCRNSHOT_ROOT
-        scrn_shot_filename = "Screenshot.png"
-        scrn_shot_AbsPath = os.path.join(scrn_shot_root, scrn_shot_filename)
+        timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
+        scrn_shot_filename = "Screenshot_{}".format(timestamp_datetime) + ".png"
+        scrn_shot_AbsPath = os.path.join(SCRNSHOT_ROOT, scrn_shot_filename)
         pix = self.gui.grab()
         pix.save(scrn_shot_AbsPath)
 
 
 
         # upload to the confluence page
-        upload_setting = "Settings" # Typically created by LabVIEW or successor.
-        upload_comment = "Upload successfully."
+        upload_setting = "Settings 1" # Typically created by LabVIEW or successor.
+        upload_comment = "Upload successfully. 1"
 
         timestamp_date = datetime.datetime.now().strftime('%b %d %Y')
         timestamp_day = datetime.datetime.now().strftime('%b %d %Y')
@@ -311,7 +303,6 @@ class CountMonitor:
             web_url = response['_links']['base']+response['_links']['webui']
             print(web_url)
 
-
         upload_and_append_picture(
             confluence=confluence,
             USERKEY=USERKEY,
@@ -321,6 +312,9 @@ class CountMonitor:
             settings=upload_setting, 
             page_id=upload_page_id, 
             page_title=upload_page_title)
+
+        # delete the temperary file
+        os.remove(scrn_shot_AbsPath)
             
         self.log.info('uploaded')
 

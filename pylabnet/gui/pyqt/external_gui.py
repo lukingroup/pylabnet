@@ -41,7 +41,11 @@ import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
+from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath, upload_and_append_picture
+from decouple import config
+import datetime
+from atlassian import Confluence
+
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -89,7 +93,6 @@ class Window(QtWidgets.QMainWindow):
 
         # Initialize parent class QWidgets.QMainWindow
         super(Window, self).__init__()
-
         self._ui = None  # .ui file to use as a template
 
         # Holds all widgets assigned to the GUI from an external script
@@ -140,7 +143,86 @@ class Window(QtWidgets.QMainWindow):
                 self.port = port
         except:
             pass
+
+   
+        extractAction = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+        extractAction.setShortcut("Ctrl+A")
+        extractAction.setStatusTip('Upload to the confluence page')
+        extractAction.triggered.connect(self.upload_pic)
+
+        mainMenu = self.menuBar()
+        fileMenu = mainMenu.addMenu('&File')
+        fileMenu.addAction(extractAction)
+
+
+
         self.apply_stylesheet()
+
+    def upload_pic(self):
+        # self.log.info('upload the screenshot ...')
+
+        # load the env params
+        SCRNSHOT_ROOT = config('SCRNSHOT_ROOT')
+        URL = config('CONFLUENCE_URL')
+        USERNAME = config('CONFLUENCE_USERNAME')
+        PW = config('CONFLUENCE_PW')
+        USERKEY = config('CONFLUENCE_USERKEY')
+        DEV_root_id = config('CONFLUENCE_DEV_root_id')
+        
+        # screenshot and save
+        timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
+        scrn_shot_filename = "Screenshot_{}".format(timestamp_datetime) +  ".png"
+        scrn_shot_AbsPath = os.path.join(SCRNSHOT_ROOT, scrn_shot_filename)
+        pix = self.grab()
+        pix.save(scrn_shot_AbsPath)
+
+
+
+        # upload to the confluence page
+        upload_setting = "Settings 1" # Typically created by LabVIEW or successor.
+        upload_comment = "Upload successfully. 1"
+
+        timestamp_date = datetime.datetime.now().strftime('%b %d %Y')
+        timestamp_day = datetime.datetime.now().strftime('%b %d %Y')
+        upload_page_title   =  "test-uploading graphs {}".format(timestamp_day)
+
+
+        confluence = Confluence(
+            url='{}/wiki'.format(URL), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
+            username=USERNAME,
+            password=PW)
+
+        if( confluence.page_exists('DEV', upload_page_title) ):
+            upload_page_id = confluence.get_page_id('DEV', upload_page_title)
+        else:
+            response = confluence.update_or_create(
+                parent_id=DEV_root_id, 
+                title=upload_page_title,
+                body='',
+                representation='storage')
+
+            upload_page_id = response['id']
+            web_url = response['_links']['base']+response['_links']['webui']
+            print(web_url)
+
+        upload_and_append_picture(
+            confluence=confluence,
+            USERKEY=USERKEY,
+            fileAbsPath=scrn_shot_AbsPath,
+            filename=scrn_shot_filename, 
+            comment=upload_comment, 
+            settings=upload_setting, 
+            page_id=upload_page_id, 
+            page_title=upload_page_title)
+
+        # delete the temperary file
+        os.remove(scrn_shot_AbsPath)
+            
+        # self.log.info('uploaded')
+
+        return
+
+
 
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):

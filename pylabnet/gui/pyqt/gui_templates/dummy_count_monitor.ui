@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Count Monitor</string>
+   <string>Dummy Count Monitor</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -44,31 +44,6 @@
      </widget>
     </item>
     <item row="0" column="1">
-     <widget class="QPushButton" name="upload_button_1">
-      <property name="maximumSize">
-       <size>
-        <width>210</width>
-        <height>30</height>
-       </size>
-      </property>
-      <property name="font">
-       <font>
-        <family>Calibri Light</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true"/>
-      </property>
-      <property name="text">
-       <string>SCREENSHOT + UPLOAD</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QLabel" name="ip_label">

@@ -322,6 +322,7 @@ class CountMonitor:
 
 
     def _clear_plot(self, plot_index):
+        self.log.info(  os.getcwd() )
         """ Clears the curves on a particular plot
 
         :param plot_index: (int) index of plot to clear

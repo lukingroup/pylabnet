@@ -159,8 +159,6 @@ class Window(QtWidgets.QMainWindow):
         self.apply_stylesheet()
 
     def upload_pic(self):
-        # self.log.info('upload the screenshot ...')
-
         # load the env params
         SCRNSHOT_ROOT = config('SCRNSHOT_ROOT')
         URL = config('CONFLUENCE_URL')

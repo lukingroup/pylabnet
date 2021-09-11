@@ -51,7 +51,6 @@ class Sweep1D:
         # Setup stylesheet.
         #self.gui.apply_stylesheet()
 
-
     def set_parameters(self, **kwargs):
         """ Configures all parameters
 
@@ -73,7 +72,7 @@ class Sweep1D:
             self.pts = kwargs['pts']
         if 'sweep_type' in kwargs:
             sweep_str = kwargs['sweep_type']
-            if sweep_str not in ['sawtooth',  'triangle']:
+            if sweep_str not in ['sawtooth', 'triangle']:
                 self.log.error(
                     'Sweep type must be either "sawtooth" or "triangle".'
                 )
@@ -212,9 +211,9 @@ class Sweep1D:
 
         # Save average
         generic_save(
-            data = np.array(
-                    [self.iplot_fwd._fig.data[1].x,
-                    self.iplot_fwd._fig.data[1].y]
+            data=np.array(
+                [self.iplot_fwd._fig.data[1].x,
+                 self.iplot_fwd._fig.data[1].y]
             ),
             filename=f'{filename}_fwd_avg',
             directory=directory,
@@ -232,9 +231,9 @@ class Sweep1D:
             )
             # Save average
             generic_save(
-                data = np.array(
-                        [self.iplot_fwd._fig.data[1].x,
-                        self.iplot_fwd._fig.data[1].y]
+                data=np.array(
+                    [self.iplot_fwd._fig.data[1].x,
+                     self.iplot_fwd._fig.data[1].y]
                 ),
                 filename=f'{filename}_bwd_avg',
                 directory=directory,
@@ -307,7 +306,6 @@ class Sweep1D:
             self.iplot_bwd.show()
             self.hplot_bwd.show()
 
-
     def _run_and_plot(self, x_value, backward=False):
         """ Runs the experiment for an x value and adds to plot
 
@@ -355,7 +353,7 @@ class Sweep1D:
         :param reps_done: (int) number of repetitions completed
         """
 
-        if reps_done==1:
+        if reps_done == 1:
             self.iplot_fwd.set_data(
                 x_ar=np.linspace(self.min, self.max, self.pts),
                 y_ar=self.iplot_fwd._fig.data[0].y,
@@ -371,16 +369,16 @@ class Sweep1D:
         else:
             self.iplot_fwd.set_data(
                 x_ar=np.linspace(self.min, self.max, self.pts),
-                y_ar=((self.iplot_fwd._fig.data[1].y*(reps_done-1)/reps_done)
-                      +self.iplot_fwd._fig.data[0].y/reps_done),
+                y_ar=((self.iplot_fwd._fig.data[1].y * (reps_done - 1) / reps_done)
+                      + self.iplot_fwd._fig.data[0].y / reps_done),
                 ind=1
             )
 
             if self.sweep_type != 'sawtooth':
                 self.iplot_bwd.set_data(
                     x_ar=np.linspace(self.max, self.min, self.pts),
-                    y_ar=((self.iplot_bwd._fig.data[1].y*(reps_done-1)/reps_done)
-                          +self.iplot_bwd._fig.data[0].y/reps_done),
+                    y_ar=((self.iplot_bwd._fig.data[1].y * (reps_done - 1) / reps_done)
+                          + self.iplot_bwd._fig.data[0].y / reps_done),
                     ind=1
                 )
 
@@ -560,7 +558,7 @@ class MultiChSweep1D(Sweep1D):
 
         for index, fwd_plot in enumerate(self.iplot_fwd):
 
-            if reps_done==1:
+            if reps_done == 1:
                 fwd_plot.set_data(
                     x_ar=np.linspace(self.min, self.max, self.pts),
                     y_ar=fwd_plot._fig.data[0].y,
@@ -576,17 +574,15 @@ class MultiChSweep1D(Sweep1D):
             else:
                 fwd_plot.set_data(
                     x_ar=np.linspace(self.min, self.max, self.pts),
-                    y_ar=((fwd_plot._fig.data[1].y*(reps_done-1)/reps_done)
-                        +fwd_plot._fig.data[0].y/reps_done),
+                    y_ar=((fwd_plot._fig.data[1].y * (reps_done - 1) / reps_done)
+                          + fwd_plot._fig.data[0].y / reps_done),
                     ind=1
                 )
 
                 if self.sweep_type != 'sawtooth':
                     self.iplot_bwd[index].set_data(
                         x_ar=np.linspace(self.max, self.min, self.pts),
-                        y_ar=((self.iplot_bwd[index]._fig.data[1].y*(reps_done-1)/reps_done)
-                            +self.iplot_bwd[index]._fig.data[0].y/reps_done),
+                        y_ar=((self.iplot_bwd[index]._fig.data[1].y * (reps_done - 1) / reps_done)
+                              + self.iplot_bwd[index]._fig.data[0].y / reps_done),
                         ind=1
                     )
-
-

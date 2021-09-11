@@ -27,21 +27,19 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
+from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
+from pylabnet.network.core.client_base import ClientBase
+import ctypes
+import sys
+import copy
+import os
+import numpy as np
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import qdarkstyle
 
 import pyqtgraph as pg
 pg.setConfigOption('background', '#19232D')
-import numpy as np
-import os
-import pickle
-import copy
-import sys
-import socket
-import ctypes
 
-from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -63,8 +61,8 @@ class Window(QtWidgets.QMainWindow):
     _gui_directory = "gui_templates"
     _default_template = "count_monitor"
     COLOR_LIST = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
-                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
-                   '#000075', '#808080']
+                  '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                  '#000075', '#808080']
 
     def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False):
         """ Instantiates main window object.
@@ -126,8 +124,8 @@ class Window(QtWidgets.QMainWindow):
         else:
             self.showNormal()
 
-        self.host=None
-        self.port=None
+        self.host = None
+        self.port = None
 
         # Confgiure stop button, host and port
         try:
@@ -141,7 +139,6 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
         self.apply_stylesheet()
-
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):
         """ Loads and applies GUI settings from a config file
@@ -185,11 +182,11 @@ class Window(QtWidgets.QMainWindow):
         """
 
         if host is not None:
-            self.host=host
+            self.host = host
             self.ip_label.setText(f'IP Adress: {host}')
 
         if port is not None:
-            self.port=port
+            self.port = port
             self.port_label.setText(f'Port: {port}')
 
     def add_graph(self, graph_layout=None, index=None):
@@ -747,6 +744,7 @@ class Popup(QtWidgets.QWidget):
         uic.loadUi(ui, self)
         self.show()
 
+
 class InternalPopup(Popup):
     """ Widget class for popup that appends to existing window """
 
@@ -762,6 +760,7 @@ class InternalPopup(Popup):
             f'{ui}.ui'
         )
         uic.loadUi(ui, self)
+
 
 class ParameterPopup(QtWidgets.QWidget):
     """ Widget class of to add parameter prompting popup"""
@@ -860,8 +859,8 @@ class Plot:
 
     # Semi-arbitrary list of colors to cycle through for plot data
     COLOR_LIST = ['#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
-                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
-                   '#000075', '#808080']
+                  '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                  '#000075', '#808080']
 
     def __init__(self, gui, plot_widget, legend_widget):
         """ Instantiates plot object for a plot inside of the GUI window
@@ -931,7 +930,7 @@ class Plot:
                 curve.error.setData(
                     x=np.arange(len(curve.data)),
                     y=curve.data,
-                    height=2*curve.error_data
+                    height=2 * curve.error_data
                 )
 
     # Technical methods
@@ -965,14 +964,14 @@ class Plot:
         """
 
         # Add some space to the legend to prevent overlapping
-        self.legend.addItem(self.curves[curve_label].widget, ' - '+curve_label)
+        self.legend.addItem(self.curves[curve_label].widget, ' - ' + curve_label)
 
     def _remove_from_legend(self, curve_label):
         """ Removes a curve from the legend
 
         :param curve_label: (str) label of curve to remove from legend
         """
-        self.legend.removeItem(' - '+curve_label)
+        self.legend.removeItem(' - ' + curve_label)
 
 
 class Curve:
@@ -1288,6 +1287,7 @@ def fresh_popup(**params):
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
 
     return app, ParameterPopup(**params)
+
 
 def warning_popup(message):
     """ Creates a warning popup without a base GUI

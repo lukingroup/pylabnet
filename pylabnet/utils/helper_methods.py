@@ -12,7 +12,7 @@ import subprocess
 import paramiko
 import platform
 import decouple
-from datetime import date, datetime
+from datetime import datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
@@ -218,7 +218,6 @@ def unpack_launcher(**kwargs):
     logport = kwargs['logport']
     params = kwargs['params']
 
-
     return logger, loghost, logport, clients, guis, params
 
 
@@ -232,6 +231,7 @@ def show_console():
     if operating_system == 'Windows':
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 9)
 
+
 def hide_console():
     """ Hides the active console.
 
@@ -243,6 +243,7 @@ def hide_console():
     operating_system = get_os()
     if operating_system == 'Windows':
         ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+
 
 def create_server(service, logger=None, host='localhost'):
     """ Attempts to create a server with randomly chosen port numbers
@@ -273,6 +274,7 @@ def create_server(service, logger=None, host='localhost'):
             timeout += 1
     return server, port
 
+
 def setup_full_service(service_class, module, logger=None, host='localhost'):
     """ Creates a Service and a server, adds info to logger and starts server
 
@@ -288,6 +290,7 @@ def setup_full_service(service_class, module, logger=None, host='localhost'):
     logger.update_data(data=dict(port=port))
     server.start()
 
+
 def value_to_bitval(value, bits=8, min=0, max=1):
     """ Converts a value to a bits-bit number for range min to max
 
@@ -300,9 +303,10 @@ def value_to_bitval(value, bits=8, min=0, max=1):
     """
 
     # Convert value to scale of 0 to 1
-    scaled_value = (value-min)/(max-min)
+    scaled_value = (value - min) / (max - min)
 
     return int(scaled_value * (2**bits - 1))
+
 
 def bitval_to_value(bitval, bits=8, min=0, max=1):
     """ Converts a bits-bit number into its physical value for range from min to max
@@ -316,9 +320,10 @@ def bitval_to_value(bitval, bits=8, min=0, max=1):
     """
 
     # Convert value to scale of 0 to 1
-    scaled_value = bitval/(2**bits - 1)
+    scaled_value = bitval / (2**bits - 1)
 
-    return scaled_value*(max-min) + min
+    return scaled_value * (max - min) + min
+
 
 def generate_widgets(widget_dict):
     """ Generates a list of widget names based on a supplied dictionary
@@ -355,6 +360,7 @@ def generate_filepath(filename=None, directory=None, date_dir=False):
         filepath = os.path.join(directory, filename)
 
     return filepath
+
 
 def generic_save(data, filename=None, directory=None, date_dir=False):
     """ Saves data as txt file
@@ -411,6 +417,7 @@ def plotly_figure_save(plotly_figure, filename=None, directory=None, date_dir=Fa
     filepath = generate_filepath(filename, directory, date_dir)
     plotly_figure.write_image(f'{filepath}.png')
 
+
 def pyqtgraph_save(widget, filename=None, directory=None, date_dir=False):
     """ Saves pyqtgraph figure to png
 
@@ -419,9 +426,10 @@ def pyqtgraph_save(widget, filename=None, directory=None, date_dir=False):
     :param date_dir: (bool) whether or not to use date sub-directory
     """
 
-    filepath = generate_filepath(filename, directory, date_dir)+'.png'
+    filepath = generate_filepath(filename, directory, date_dir) + '.png'
     exporter = pg.exporters.ImageExporter(widget)
     exporter.export(filepath)
+
 
 def load_config(config_filename, folder_root=None, logger=None):
     """ Load configuration data stored in JSON format
@@ -457,14 +465,16 @@ def load_config(config_filename, folder_root=None, logger=None):
 
     return data
 
+
 def get_config_directory():
     """ Returns the config directory """
 
     return os.path.abspath(os.path.join(
-        os.path.dirname( __file__ ),
+        os.path.dirname(__file__),
         '..',
         'configs'
     ))
+
 
 def load_device_config(device, config, logger=None):
     """ Returns the device config directory
@@ -494,6 +504,7 @@ def load_device_config(device, config, logger=None):
             raise
     return data
 
+
 def load_script_config(script, config, logger=None):
     """ Returns the script config directory
 
@@ -522,6 +533,7 @@ def load_script_config(script, config, logger=None):
             raise
     return data
 
+
 def get_config_filepath(config_filename, folder_root=None):
     """ Gets the config filepath
 
@@ -534,7 +546,7 @@ def get_config_filepath(config_filename, folder_root=None):
     if folder_root is None:
         filepath = os.path.abspath(
             os.path.join(
-                os.path.dirname( __file__ ),
+                os.path.dirname(__file__),
                 '..',
                 'configs',
                 f'{config_filename}.json'
@@ -544,6 +556,7 @@ def get_config_filepath(config_filename, folder_root=None):
         filepath = os.path.join(folder_root, f'{config_filename}.json')
 
     return filepath
+
 
 def get_gui_widgets(gui, **kwargs):
     """ Returns the GUI widget objects specified in kwargs
@@ -578,6 +591,7 @@ def get_gui_widgets(gui, **kwargs):
 
     return widgets
 
+
 def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
     """ Configures and returns a legend widget given a GraphicsView
 
@@ -593,6 +607,7 @@ def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
 
     return legend
 
+
 def add_to_legend(legend: pg.LegendItem, curve: pg.PlotItem, curve_name):
     """ Adds a curve to a legend
 
@@ -603,8 +618,9 @@ def add_to_legend(legend: pg.LegendItem, curve: pg.PlotItem, curve_name):
 
     legend.addItem(
         curve,
-        ' - '+curve_name
+        ' - ' + curve_name
     )
+
 
 def fill_2dlist(list_in):
     """ Turns a 2D list of irregular dimensions into a 2D numpy array
@@ -616,9 +632,10 @@ def fill_2dlist(list_in):
 
     list_manipulate = copy.deepcopy(list_in)
     if len(list_in) > 1:
-        list_manipulate[-1] += [list_manipulate[-1][0]]*(len(list_manipulate[0])-len(list_manipulate[-1]))
+        list_manipulate[-1] += [list_manipulate[-1][0]] * (len(list_manipulate[0]) - len(list_manipulate[-1]))
 
     return np.array(list_manipulate)
+
 
 def find_keys(input_dict, key_name):
     """Returns value of dictionary if key_name is either the key of the dict (normal dictionary lookup),
@@ -628,14 +645,15 @@ def find_keys(input_dict, key_name):
     :key_name: Key to lookup.
     """
 
-    found = [ ]
+    found = []
     for k, v in input_dict.items():
         if type(k) in [list, tuple, dict] and key_name in k:
             found.append(v)
         elif key_name == k:
-           found.append(v)
+            found.append(v)
 
     return found
+
 
 def find_client(clients, settings, client_type, client_config=None, logger=None):
     """ Finds a particular client from client dictionary passed from launcher
@@ -676,6 +694,7 @@ def find_client(clients, settings, client_type, client_config=None, logger=None)
     else:
         return found_clients[0]
 
+
 def launch_device_server(server, dev_config, log_ip, log_port, server_port, debug=False, logger=None):
     """ Launches a new device server
 
@@ -697,7 +716,7 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     if 'disabled' in config_dict and config_dict['disabled'] == 'True':
         msg_str = f'Device {server} launching is disabled'
         if logger is None:
-                print(msg_str)
+            print(msg_str)
         else:
             logger.error(msg_str)
         return
@@ -780,7 +799,6 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
         if logger is not None:
             logger.info("Cmd len: " + str(len(cmd)))
 
-
     if ssh:
         msg_str = f'Executing command on {hostname}:\n{cmd}'
         if logger is None:
@@ -792,6 +810,7 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
         subprocess.Popen(cmd, shell=True)
 
     return host_ip, server_port
+
 
 def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd, logger=None):
     """ Launches a script
@@ -844,6 +863,7 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
 
     subprocess.Popen(cmd, shell=True)
 
+
 def get_ip():
     """ Returns a primary IP address
 
@@ -883,22 +903,24 @@ def get_ip():
         ip = ni.ifaddresses(network_interface)[ni.AF_INET][0]['addr']
         return ip
 
+
 def HDAWG_to_breakout_box(pin):
     if pin < 8 or (pin < 24 and pin >= 16):
         print("these pins are not mapped to the dio breakout box")
         return None
     else:
-        if int(np.floor(pin/4)) == 2:
+        if int(np.floor(pin / 4)) == 2:
             board = 0
-        if int(np.floor(pin/4)) == 3:
+        if int(np.floor(pin / 4)) == 3:
             board = 1
-        if int(np.floor(pin/4)) == 6:
+        if int(np.floor(pin / 4)) == 6:
             board = 2
-        if int(np.floor(pin/4)) == 7:
+        if int(np.floor(pin / 4)) == 7:
             board = 3
         channel = np.mod(pin, 4)
 
     return board, channel
+
 
 def breakout_box_to_HDAWG(board, channel):
     if board > 4 or channel > 4:
@@ -918,22 +940,23 @@ def breakout_box_to_HDAWG(board, channel):
 
     return pin
 
+
 def get_os():
     """Read out operating system"""
 
     pf = platform.system()
 
-
     if pf == 'Linux':
         operating_system = 'Linux'
-    elif pf=='Windows':
+    elif pf == 'Windows':
         operating_system = 'Windows'
-    elif pf=="Darwin":
+    elif pf == "Darwin":
         operating_system = 'mac_os'
     else:
         operating_system = pf
 
     return operating_system
+
 
 def set_graph_background(widget):
     """ Sets the background color for pyqtgraph related widgets to pylabnet style
@@ -954,6 +977,6 @@ def set_graph_background(widget):
     except AttributeError:
         pass
 
+
 class UnsupportedOSException(Exception):
     """Raised when the operating system is not supported."""
-    pass

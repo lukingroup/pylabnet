@@ -403,7 +403,7 @@ class ODMR:
 
         # Update data arrays
         self.raw_ar[self._swp_idx][:] = cnt_rate_ar
-        self.avg_ar[:] = self.raw_ar[:self._swp_idx+1].mean(axis=0)
+        self.avg_ar[:] = self.raw_ar[:self._swp_idx + 1].mean(axis=0)
 
         self._p_gen.stop()
 

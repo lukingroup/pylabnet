@@ -22,14 +22,12 @@ import numpy as np
 import os
 import sys
 import traceback
-import time
 
 from pylabnet.utils.helper_methods import parse_args, hide_console
 from pylabnet.utils.logging.logger import LogClient
 
 
 def main():
-
 
     # parse command line arguments
     args = parse_args()
@@ -115,7 +113,6 @@ def main():
             tries += 1
             if tries == 10:
                 raise
-
 
     hide_console()
 

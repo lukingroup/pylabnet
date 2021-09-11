@@ -21,7 +21,6 @@ class Service(ServiceBase):
         return self._module.setd(node, new_double)
 
 
-
 class Client(ClientBase):
 
     def set_direct_user_register(self, awg_num, index, value):

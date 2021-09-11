@@ -1,6 +1,5 @@
 import numpy as np
 from si_prefix import split, prefix
-import socket
 import time
 
 from pylabnet.gui.pyqt.external_gui import Window
@@ -11,6 +10,7 @@ from pylabnet.network.client_server import thorlabs_pm320e
 
 # Time between power meter calls to prevent crashes
 BUFFER = 5e-3
+
 
 class Monitor:
     RANGE_LIST = [
@@ -28,9 +28,8 @@ class Monitor:
         :name: (str) Humand-readable name of the power meter.
         """
 
-
         self.log = LogHandler(logger)
-        self.gui =Window(
+        self.gui = Window(
             gui_template=gui,
             host=get_ip(),
             port=port
@@ -73,7 +72,6 @@ class Monitor:
         self.ir_index = 0
         self.rr_index = 0
 
-
         # Connect wavelength change action.
         self.widgets['number_widget'][-1].valueChanged.connect(self._update_wavelength)
 
@@ -101,7 +99,7 @@ class Monitor:
                 self.ir_index = range_index
                 self.pm.set_range(1, self.RANGE_LIST[self.ir_index])
         elif channel == 1:
-             if self.rr_index != range_index:
+            if self.rr_index != range_index:
                 self.rr_index = range_index
                 self.pm.set_range(2, self.RANGE_LIST[self.rr_index])
 
@@ -121,12 +119,12 @@ class Monitor:
         gui_ir = self.gui.get_item_index(f'ir_{channel}')
         if self.ir_index[channel] != gui_ir:
             self.ir_index[channel] = gui_ir
-            self.pm[channel].set_range(2*channel+1, self.RANGE_LIST[self.ir_index[channel]])
+            self.pm[channel].set_range(2 * channel + 1, self.RANGE_LIST[self.ir_index[channel]])
 
         gui_rr = self.gui.get_item_index(f'rr_{channel}')
         if self.rr_index[channel] != gui_rr:
             self.rr_index[channel] = gui_rr
-            self.pm[channel].set_range(2*channel+2, self.RANGE_LIST[self.rr_index[channel]])
+            self.pm[channel].set_range(2 * channel + 2, self.RANGE_LIST[self.rr_index[channel]])
 
     def run(self):
         # Continuously update data until paused
@@ -138,55 +136,55 @@ class Monitor:
             self.gui.force_update()
 
     def _update_output(self):
-            """ Runs the power monitor """
+        """ Runs the power monitor """
 
-            # Check for/implement changes to settings
-            #self.update_settings(0)
+        # Check for/implement changes to settings
+        #self.update_settings(0)
 
-            # Get all current values
-            try:
-                p_in = self.pm.get_power(1)
-                split_in = split(p_in)
+        # Get all current values
+        try:
+            p_in = self.pm.get_power(1)
+            split_in = split(p_in)
 
-            # Handle zero error
-            except OverflowError:
-                p_in = 0
-                split_in = (0, 0)
-            try:
-                p_ref = self.pm.get_power(2)
-                split_ref = split(p_ref)
-            except OverflowError:
-                p_ref = 0
-                split_ref = (0, 0)
-            try:
-                efficiency = np.sqrt(p_ref/(p_in*self.calibration[0]))
-            except ZeroDivisionError:
-                efficiency = 0
-            values = [p_in, p_ref, efficiency]
+        # Handle zero error
+        except OverflowError:
+            p_in = 0
+            split_in = (0, 0)
+        try:
+            p_ref = self.pm.get_power(2)
+            split_ref = split(p_ref)
+        except OverflowError:
+            p_ref = 0
+            split_ref = (0, 0)
+        try:
+            efficiency = np.sqrt(p_ref / (p_in * self.calibration[0]))
+        except ZeroDivisionError:
+            efficiency = 0
+        values = [p_in, p_ref, efficiency]
 
-            # For the two power readings, reformat.
-            # E.g., split(0.003) will return (3, -3)
-            # And prefix(-3) will return 'm'
-            formatted_values = [split_in[0], split_ref[0], efficiency]
-            value_prefixes =  [prefix(split_val[1]) for split_val in [split_in, split_ref]]
+        # For the two power readings, reformat.
+        # E.g., split(0.003) will return (3, -3)
+        # And prefix(-3) will return 'm'
+        formatted_values = [split_in[0], split_ref[0], efficiency]
+        value_prefixes = [prefix(split_val[1]) for split_val in [split_in, split_ref]]
 
-            # Update GUI
-            for plot_no in range(self.num_plots):
-                # Update Number
-                self.widgets['number_widget'][plot_no].setValue(formatted_values[plot_no])
+        # Update GUI
+        for plot_no in range(self.num_plots):
+            # Update Number
+            self.widgets['number_widget'][plot_no].setValue(formatted_values[plot_no])
 
-                # Update Curve
-                self.plotdata[plot_no] = np.append(self.plotdata[plot_no][1:], values[plot_no])
-                self.widgets[f'curve_{plot_no}'].setData(self.plotdata[plot_no])
+            # Update Curve
+            self.plotdata[plot_no] = np.append(self.plotdata[plot_no][1:], values[plot_no])
+            self.widgets[f'curve_{plot_no}'].setData(self.plotdata[plot_no])
 
-                if plot_no < 2:
-                    self.widgets["label_widget"][plot_no].setText(f'{value_prefixes[plot_no]}W')
+            if plot_no < 2:
+                self.widgets["label_widget"][plot_no].setText(f'{value_prefixes[plot_no]}W')
 
     def _initialize_gui(self):
         """ Instantiates GUI by assigning widgets """
 
         # Store plot data
-        self.plotdata =[np.zeros(1000) for i in range(self.num_plots)]
+        self.plotdata = [np.zeros(1000) for i in range(self.num_plots)]
 
         for plot_no in range(self.num_plots):
            # Create a curve and store the widget in our dictionary
@@ -204,7 +202,7 @@ class PMInterface:
     power (uW) = m*(x-z) + b
     """
 
-    def __init__(self, client, config:dict=None):
+    def __init__(self, client, config: dict = None):
 
         self.client = client
         self.config = config
@@ -237,8 +235,8 @@ class PMInterface:
             index = channel - 1
             return ((self.m[index]
                      * (self.client.get_ai_voltage(self.channels[index])[0]
-                        -self.z[index]))
-                    + self.b[index])*1e-6
+                        - self.z[index]))
+                    + self.b[index]) * 1e-6
 
     def get_wavelength(self, channel):
         if self.type == 'thorlabs_pm320e':
@@ -308,6 +306,5 @@ def launch(**kwargs):
 
     time.sleep(2)
     control.sync_settings()
-
 
     control.run()

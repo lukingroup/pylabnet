@@ -1,12 +1,11 @@
 """ Implements connection and server launching to a Tektronix TDS2004C oscilloscope """
 
-import socket
-import os
 
 from pylabnet.hardware.oscilloscopes import tektronix_tds2004C
 from pylabnet.network.client_server.tektronix_tds2004C import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.helper_methods import get_ip
+
 
 def launch(**kwargs):
     """ Connects to Tektronix TDS2004C oscilloscope and launches server
@@ -22,7 +21,6 @@ def launch(**kwargs):
         gpib_address=kwargs['device_id'],
         logger=tektronix_logger
     )
-    
 
     # Instantiate server
     tektronix_service = Service()

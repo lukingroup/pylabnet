@@ -2,6 +2,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.hardware.nanopositioners.smaract import MCS2
 
+
 class Service(ServiceBase):
 
     def exposed_close(self):
@@ -58,4 +59,3 @@ class Client(ClientBase):
 
     def is_moving(self, channel):
         return self._service.exposed_is_moving(channel)
-

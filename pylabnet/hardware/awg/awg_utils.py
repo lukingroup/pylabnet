@@ -2,7 +2,7 @@
 from pylabnet.utils.helper_methods import load_config
 
 
-def convert_awg_pin_to_dio_board(awgPinNumber, configFN = "awg_dio_pin_mapping"):
+def convert_awg_pin_to_dio_board(awgPinNumber, configFN="awg_dio_pin_mapping"):
     """Computes the corresponding board and channel number on the DIO breakout for the
         corresponding input awgPinNumber given the mapping specificed in the configuration
         file provided.
@@ -30,13 +30,14 @@ def convert_awg_pin_to_dio_board(awgPinNumber, configFN = "awg_dio_pin_mapping")
         raise Exception("Invalid pin number")
 
     #Finally figure out the channel number within the pair of boards
-    channel = awgPinNumber-currBase
+    channel = awgPinNumber - currBase
     if (channel >= 4):
         #If we are beyond channel 4, we are actually on the 2nd board in the pair so update accordingly
         channel = channel - 4
         board = board + 1
 
     return board, channel
+
 
 def main():
     board, channel = (convert_awg_pin_to_dio_board(24))
@@ -53,6 +54,7 @@ def main():
 
     board, channel = (convert_awg_pin_to_dio_board(31))
     print(board, channel)
+
 
 if __name__ == "__main__":
     main()

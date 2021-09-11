@@ -4,7 +4,6 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, find_client, load_script_config
 from pylabnet.gui.pyqt.external_gui import Window
 
-import socket
 import time
 import numpy as np
 
@@ -13,7 +12,7 @@ class Controller:
     """ Class for controlling Toptica scan and laser properties """
 
     def __init__(self, dlc: toptica_dl_pro.Client,
-        gui='toptica_control', logger=None, port=None):
+                 gui='toptica_control', logger=None, port=None):
         """ Initializes toptica specific parameters
 
         :param dlc: DLC client for the Toptica laser
@@ -52,7 +51,6 @@ class Controller:
         self.scan = [False, False]
         self.emission = [False, False]
 
-
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
@@ -73,20 +71,19 @@ class Controller:
         # self.gui.set_scalar(self.dlc.current_act(), 'current_actual')
         # self.gui.deactivate_scalar('current_actual')
 
-
         # Check for on/off updates
         for i in range(2):
             if self.widgets['on_off'][i].isChecked() != self.emission[i]:
 
                 # If laser was already on, turn off
                 if self.emission[i]:
-                    self.dlc.turn_off(i+1)
+                    self.dlc.turn_off(i + 1)
                     self.emission[i] = False
                     self.log.info(f'Toptica DL {i+1} turned off')
 
                 # Otherwise turn on
                 else:
-                    self.dlc.turn_on(i+1)
+                    self.dlc.turn_on(i + 1)
                     self.emission[i] = True
                     self.log.info(f'Toptica DL {i+1} turned on')
 
@@ -96,7 +93,7 @@ class Controller:
 
                 # If we were previously scanning, terminate the scan
                 if self.scan[i]:
-                    self.dlc.stop_scan(i+1)
+                    self.dlc.stop_scan(i + 1)
                     self.scan[i] = False
                     self.log.info(f'Toptica DL {i+1} scan stopped')
 
@@ -109,14 +106,14 @@ class Controller:
                         offset=offset,
                         amplitude=amplitude,
                         frequency=frequency,
-                        laser_num=i+1
+                        laser_num=i + 1
                     )
-                    self.dlc.start_scan(i+1)
+                    self.dlc.start_scan(i + 1)
                     self.scan[i] = True
                     self.log.info(f'Toptica DL Scan {i+1} initiated '
-                                f'with offset: {offset}, '
-                                f'amplitude: {amplitude}, '
-                              f'frequency: {frequency}')
+                                  f'with offset: {offset}, '
+                                  f'amplitude: {amplitude}, '
+                                  f'frequency: {frequency}')
 
         # Handle value checking
         if self.widgets['update_params'].isChecked():
@@ -152,8 +149,6 @@ class Controller:
                 self.widgets['temperature_actual'][i].setDisabled(True)
                 self.widgets['current_actual'][i].setDisabled(True)
 
-
-
         self.gui.force_update()
 
     def _setup_GUI(self):
@@ -162,12 +157,12 @@ class Controller:
         # Check if laser is on and update
 
         for i in range(2):
-            self.emission[i] = self.dlc.is_laser_on(i+1)
+            self.emission[i] = self.dlc.is_laser_on(i + 1)
             self.widgets['on_off'][i].setChecked(self.emission[i])
             time.sleep(0.1)
 
         # Get temperature setpoint and actual temperature
-        temp_sp_1=100
+        temp_sp_1 = 100
         while temp_sp_1 > 50:
             temp_sp_1 = self.dlc.temp_sp(1)
             temp_sp_2 = self.dlc.temp_sp(2)
@@ -176,7 +171,7 @@ class Controller:
         self.widgets['temperature'][0].setValue(temp_sp_1)
         self.widgets['temperature'][1].setValue(temp_sp_2)
 
-        temp_act_1=100
+        temp_act_1 = 100
         while temp_act_1 > 50:
             temp_act_1 = self.dlc.temp_act(1)
             temp_act_2 = self.dlc.temp_act(2)
@@ -194,7 +189,6 @@ class Controller:
         self.widgets['current_actual'][1].setValue(self.dlc.current_act(2))
         time.sleep(0.1)
 
-
         # Assign button pressing
         self.widgets['update_temp'][0].clicked.connect(lambda: self._set_temperature(1))
         self.widgets['update_temp'][1].clicked.connect(lambda: self._set_temperature(2))
@@ -204,14 +198,14 @@ class Controller:
     def _set_temperature(self, laser_num):
         """ Sets the temperature to the setpoint value in the GUI """
 
-        temperature = self.widgets['temperature'][laser_num-1].value()
+        temperature = self.widgets['temperature'][laser_num - 1].value()
         self.dlc.set_temp(temperature, laser_num)
         self.log.info(f'Set Toptica {laser_num} temperature setpoint to {temperature}')
 
     def _set_current(self, laser_num):
         """ Sets the current to the setpoint value in the GUI """
 
-        current = self.widgets['current'][laser_num-1].value()
+        current = self.widgets['current'][laser_num - 1].value()
         self.dlc.set_current(current, laser_num)
         self.log.info(f'Set Toptica {laser_num} current setpoint to {current}')
 
@@ -224,7 +218,6 @@ def launch(**kwargs):
                                 config=kwargs['config'],
                                 logger=logger)
 
-
     dlc_client = find_client(clients=clients, settings=config, client_type='toptica_dlc_pro')
 
     # Instantiate Monitor script
@@ -236,7 +229,7 @@ def launch(**kwargs):
     check_interval = 1
     while True:
 
-        if time.time()-start_time < check_interval:
+        if time.time() - start_time < check_interval:
             toptica_controller.run()
         else:
             toptica_controller.run(check_vals=True)

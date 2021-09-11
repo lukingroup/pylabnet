@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
+from qdarkstyle import style_rc
 from qtpy import QtCore, QtGui, QtWidgets
 
 
@@ -276,4 +277,3 @@ class Ui_DockWidget(object):
         self.comboBoxDis.setItemText(0, _translate("DockWidget", "ComboBoxNotEditable"))
         self.comboBoxDis.setItemText(1, _translate("DockWidget", "ComboBox B"))
         self.comboBoxDis.setItemText(2, _translate("DockWidget", "ComboBox C"))
-from qdarkstyle import style_rc

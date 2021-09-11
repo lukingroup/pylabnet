@@ -342,7 +342,7 @@ class Rabi:
         rabi_elem.insert(
             p_obj=po.PTrue(
                 ch='aom',
-                dur=2e-6 + 2*safety_window
+                dur=2e-6 + 2 * safety_window
             )
         )
 
@@ -364,7 +364,7 @@ class Rabi:
             )
         )
 
-        tmp_dur = rabi_elem.dur + 4*safety_window
+        tmp_dur = rabi_elem.dur + 4 * safety_window
 
         # Readout AOM pulse
         rabi_elem.insert(

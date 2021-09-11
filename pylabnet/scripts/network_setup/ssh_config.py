@@ -2,7 +2,6 @@ from pylabnet.utils.helper_methods import unpack_launcher
 from pylabnet.utils.helper_methods import hide_console, load_config
 import paramiko
 from decouple import config
-import time
 import numpy as np
 
 LOCALHOST_PW = config('LOCALHOST_PW')
@@ -35,7 +34,7 @@ def launch(**kwargs):
 
         python_path = host['python_path']
         script_path = host['script_path']
-        venv_path =  host['venv_path']
+        venv_path = host['venv_path']
         servers = host['servers']
 
         # I fappropriate flag is set, kill all python processes on host machine.
@@ -86,15 +85,15 @@ def launch(**kwargs):
             ssh.exec_command(venv_path)
 
             cmd = '"{}" "{}" --logip {} --logport {} --serverport {} --server {} --debug {} --config {}'.format(
-                        python_path,
-                        script_path,
-                        loghost,
-                        logport,
-                        server_port,
-                        servername,
-                        debug,
-                        config
-                    )
+                python_path,
+                script_path,
+                loghost,
+                logport,
+                server_port,
+                servername,
+                debug,
+                config
+            )
             # Look for device name and ID
             try:
                 cmd += f" --device_name {server['device_name']} --device_id {server['device_id']}"
@@ -105,6 +104,3 @@ def launch(**kwargs):
             ssh.exec_command(cmd)
 
         ssh.close()
-
-
-

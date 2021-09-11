@@ -23,20 +23,20 @@ from pylabnet.utils.decorators.dummy_wrapper import dummy_wrap
 
 # Storing the sampling rates and the corresponding target integers for the setInt command
 SAMPLING_RATE_DICT = {
-    '2.4 GHz':       0,
-    '1.2 GHz':       1,
-    '600 MHz':       2,
-    '300 MHz':       3,
-    '150 MHz':       4,
-    '75 MHz':        5,
-    '37.5 MHz':      6,
-    '18.75 MHz':     7,
-    '9.37 MHz':      8,
-    '4.68 MHz':      9,
-    '2.34 MHz':      10,
-    '1.17 MHz':      11,
-    '585.93 kHz':    12,
-    '292.96 kHz':    13,
+    '2.4 GHz': 0,
+    '1.2 GHz': 1,
+    '600 MHz': 2,
+    '300 MHz': 3,
+    '150 MHz': 4,
+    '75 MHz': 5,
+    '37.5 MHz': 6,
+    '18.75 MHz': 7,
+    '9.37 MHz': 8,
+    '4.68 MHz': 9,
+    '2.34 MHz': 10,
+    '1.17 MHz': 11,
+    '585.93 kHz': 12,
+    '292.96 kHz': 13,
 }
 
 
@@ -96,7 +96,7 @@ class Driver():
 
         err_msg = "This example can only be run on an HDAWG."
 
-          # Connect to device and log print output, not the lambda expression.
+        # Connect to device and log print output, not the lambda expression.
         (daq, device, props) = self.log_stdout(
             lambda: zhinst.utils.create_api_session(
                 device_id,
@@ -352,7 +352,6 @@ class AWGModule():
         # Check if chosen index is allowed for current channel grouping.
         channel_grouping = hdawg_driver.geti('system/awg/channelgrouping')
 
-
         if channel_grouping == 0:
             num_awgs = 4
         elif channel_grouping == 1:
@@ -421,7 +420,7 @@ class AWGModule():
         """ Start AWG"""
 
         if dio_mode_change:
-        # Set DIO mode to AWG sequencer
+            # Set DIO mode to AWG sequencer
             self.hd.seti('dios/0/mode', 1)
 
         self.module.set('awg/enable', 1)
@@ -659,8 +658,6 @@ class AWGModule():
         return True
 
 
-
-
 class Sequence():
     """ Helper class containing .seqc sequences and helper functions
 
@@ -698,7 +695,6 @@ class Sequence():
             self.sequence = self.sequence.replace(f"{waveform_wrapped}", str(waveform_vector))
             self.unresolved_placeholders.discard(waveform)
 
-
     def get_placeholders(self):
         """Parses sequence template and returns placeholder variables."""
 
@@ -708,7 +704,7 @@ class Sequence():
         found_placeholders = [match.group(1) for match in re.finditer(regex, self.raw_sequence)]
 
         # Check for duplicates
-        for  found_placeholder in found_placeholders:
+        for found_placeholder in found_placeholders:
             if found_placeholders.count(found_placeholder) != 1:
 
                 error_msg = f"Placeholder {found_placeholder} found multiple times in sequence."
@@ -726,7 +722,7 @@ class Sequence():
         """ Return True if all placeholders have been replaced"""
         return len(self.unresolved_placeholders) == 0
 
-    def __init__(self, hdawg_driver, sequence, placeholder_dict=None, waveform_dict=None, marker_string = "$"):
+    def __init__(self, hdawg_driver, sequence, placeholder_dict=None, waveform_dict=None, marker_string="$"):
         """ Initialize sequence with string
 
         :hdawg_driver: Instance of HDAWG_Driver
@@ -766,10 +762,10 @@ class Sequence():
         if placeholder_dict is not None:
             # Some sanity checks.
             for placeholder in placeholder_dict.keys():
-                    if placeholder not in self.placeholders:
-                        error_msg = f"The placeholder {placeholder} cannot \
+                if placeholder not in self.placeholders:
+                    error_msg = f"The placeholder {placeholder} cannot \
                         be found in the sequence."
-                        hdawg_driver.log.error(error_msg)
+                    hdawg_driver.log.error(error_msg)
 
             # Replace placeholders.
             self.replace_placeholders(self.placeholder_dict)

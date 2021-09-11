@@ -77,4 +77,3 @@ Currently broken, as the link from pylabnet Qudi has been severed
 #         """ Deinitialisation performed during deactivation of the module.
 #         """
 #         pass
-

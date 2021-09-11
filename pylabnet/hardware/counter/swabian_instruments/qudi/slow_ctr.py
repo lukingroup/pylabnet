@@ -56,7 +56,7 @@ class Wrap:
             clock_frequency = self._clock_frequency
 
         # Calculate final bin width
-        bin_width = int(1e12/clock_frequency)  # in picoseconds, for device
+        bin_width = int(1e12 / clock_frequency)  # in picoseconds, for device
         bin_width_sec = bin_width * 1e-12      # is seconds, for software timing
 
         # Set new values param to internal variables
@@ -109,7 +109,7 @@ class Wrap:
         else:
             buffer_size = self._buffer_size
         # sanity check:
-        if not isinstance(buffer_size, int) or buffer_size<=0:
+        if not isinstance(buffer_size, int) or buffer_size <= 0:
             # self.log.error('set_up_counter(): invalid parameter value counter_buffer = {}.'
             #                'This parameter must be a positive integer.'
             #                ''.format(buffer_size))

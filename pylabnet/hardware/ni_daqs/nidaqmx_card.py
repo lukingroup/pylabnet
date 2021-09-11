@@ -14,6 +14,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.utils.decorators.dummy_wrapper import dummy_wrap
 
+
 class Driver:
     """Driver for NI DAQmx card. Currently only implements setting AO voltage"""
     # TODO implement counter
@@ -70,7 +71,6 @@ class Driver:
 
         self.counters = {}
 
-
     @dummy_wrap
     def set_ao_voltage(self, ao_channel, voltages):
         """Set analog output of NI DAQ mx card to a series of voltages
@@ -86,7 +86,7 @@ class Driver:
             task.ao_channels.add_ao_voltage_chan(channel)
             task.write(voltages, auto_start=True)
 
-    def get_ai_voltage(self, ai_channel, num_samples = 1, max_range = 10.0):
+    def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10.0):
         """Measures the analog input voltage of NI DAQ mx card
 
         :param ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
@@ -97,7 +97,7 @@ class Driver:
         with nidaqmx.Task() as task:
             task.ai_channels.add_ai_voltage_chan(channel)
             task.ai_channels[0].ai_rng_high = max_range
-            return task.read(number_of_samples_per_channel = num_samples)
+            return task.read(number_of_samples_per_channel=num_samples)
         return -1
 
     def get_di_state(self, port, di_channel):
@@ -109,7 +109,7 @@ class Driver:
         channel = self._gen_di_ch_path(port, di_channel)
         with nidaqmx.Task() as task:
             task.di_channels.add_di_chan(channel, line_grouping=nidaqmx.constants.LineGrouping.CHAN_PER_LINE)
-            return task.read(number_of_samples_per_channel = 1)
+            return task.read(number_of_samples_per_channel=1)
         return -1
 
     def create_timed_counter(
@@ -137,7 +137,7 @@ class Driver:
         self.counters[name] = TimedCounter(
             logger=self.log,
             counter_channel=self._gen_ch_path(counter_channel),
-            physical_channel='/'+self._gen_ch_path(physical_channel)
+            physical_channel='/' + self._gen_ch_path(physical_channel)
         )
         self.counters[name].set_parameters(duration)
 

@@ -36,8 +36,6 @@ class SimplePGenInterface(abc.ABC):
                  Exception is produced in the case of error
         """
 
-        pass
-
 
 class PGenError(Exception):
     pass

@@ -1,6 +1,4 @@
 import sys
-import time
-import socket
 import ctypes
 import os
 from PyQt5 import QtWidgets, QtGui
@@ -29,8 +27,8 @@ class StaticLineGUIGeneric():
 
         self.log = LogHandler(logger=logger_client)
         self.config = config
-        self.host=host
-        self.port=port
+        self.host = host
+        self.port = port
         self.config_dict = load_script_config('staticline', config, logger=self.log)
         self.initialize_drivers(staticline_clients, logger_client)
 
@@ -39,32 +37,30 @@ class StaticLineGUIGeneric():
         # Dictionary storing {device name : dict of staticline Drivers}
         self.staticlines = {}
 
-
         for device_name, device_params in self.config_dict['lines'].items():
             # If the device name is duplicated, we ignore this hardware client.
             if device_name in self.staticlines:
                 self.log.error(f"Device name {device_name} has been matched to multiple hardware clients."
-                "Subsequent matched hardware clients are ignored.")
+                               "Subsequent matched hardware clients are ignored.")
                 continue
             # Create a dict to store the staticlines for this device
             else:
                 self.staticlines[device_name] = dict()
 
-            hardware_type=device_params['hardware_type']
-            hardware_config=device_params['config_name']
+            hardware_type = device_params['hardware_type']
+            hardware_config = device_params['config_name']
 
             #Try to find if we have a matching device client in staticline_clients
             try:
                 hardware_client = find_client(staticline_clients, self.config_dict, hardware_type, hardware_config, logger_client)
                 if (hardware_client == None):
-                    logger_client.error('No staticline device found for device name: '  + device_name)
+                    logger_client.error('No staticline device found for device name: ' + device_name)
                     hardware_client_found = False
                 else:
                     hardware_client_found = True
             except NameError:
-                logger_client.error('No staticline device found for device name: '  + device_name)
+                logger_client.error('No staticline device found for device name: ' + device_name)
                 hardware_client_found = False
-
 
             # Iterate over all staticlines for that device and create a
             # driver instance for each line.
@@ -88,11 +84,9 @@ class StaticLineGUIGeneric():
                             self.staticlines[device_name][staticline_name].set_value(defaultValue)
                         elif (sl_type == 'adjustable_digital'):
                             self.staticlines[device_name][staticline_name].set_dig_value(defaultValue)
-            else: 
+            else:
                 #Didn't find the hardware client, so will remove the entry from the staticline dictionary so that the GUI is not updated
                 self.staticlines.pop(device_name, None)
-
-
 
     def initialize_buttons(self):
         """Binds the function of each button of each device to the functions
@@ -118,9 +112,8 @@ class StaticLineGUIGeneric():
                 continue
 
             if (not device_name in self.staticlines):
-                self.log.error('No button initialization for staticline device: '  + device_name)
+                self.log.error('No button initialization for staticline device: ' + device_name)
                 continue
-
 
             for staticline_idx in range(len(device_params["staticline_names"])):
 
@@ -152,8 +145,8 @@ class StaticLineGUIGeneric():
                         self.gui.upd_cur_val(device_name=device_name, staticline_name=staticline_name)
                 # Have both types of buttons
                 elif staticline_type == 'adjustable_digital':
-                    analog_widget = self.widgets[device_name][staticline_name+"_analog"]
-                    digital_widget = self.widgets[device_name][staticline_name+"_digital"]
+                    analog_widget = self.widgets[device_name][staticline_name + "_analog"]
+                    digital_widget = self.widgets[device_name][staticline_name + "_digital"]
                     digital_widget['on'].clicked.connect(staticline_driver.up)
                     digital_widget['off'].clicked.connect(staticline_driver.down)
                     analog_widget['apply'].clicked.connect(
@@ -163,10 +156,10 @@ class StaticLineGUIGeneric():
                     if "default" in staticline_configs:
                         #set initial text to initial value specified in config file
                         analog_widget['AIN'].setText(str(staticline_configs["default"]))
-                        self.gui.upd_cur_val(device_name=device_name, staticline_name=staticline_name+"_analog")
+                        self.gui.upd_cur_val(device_name=device_name, staticline_name=staticline_name + "_analog")
                 else:
                     self.log.error(f'Invalid staticline type for device {device_name}. '
-                                    'Should be analog or digital.')
+                                   'Should be analog or digital.')
 
     def run(self):
         """Starts up the staticline GUI and initializes the buttons. """
@@ -209,6 +202,7 @@ def launch(**kwargs):
 
     staticline_gui.run()
 
+
 def main():
     """Main function for debugging. """
 
@@ -216,6 +210,7 @@ def main():
         config='staticline_config',
     )
     staticline_gui.run()
+
 
 if __name__ == '__main__':
     main()

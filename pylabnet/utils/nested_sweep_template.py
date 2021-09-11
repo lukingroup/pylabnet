@@ -5,9 +5,9 @@ n1 = 5
 n2 = 3
 n3 = 2
 
-ar1 = np.linspace(start=0, stop=n1-1, num=n1)
-ar2 = np.linspace(start=0, stop=n2-1, num=n2)
-ar3 = np.linspace(start=0, stop=n3-1, num=n3)
+ar1 = np.linspace(start=0, stop=n1 - 1, num=n1)
+ar2 = np.linspace(start=0, stop=n2 - 1, num=n2)
+ar3 = np.linspace(start=0, stop=n3 - 1, num=n3)
 
 idx1 = 0
 idx2 = 0

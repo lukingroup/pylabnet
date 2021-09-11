@@ -7,6 +7,7 @@ from pylabnet.utils.trace_compare.trace_compare import trace_compare
 
 import numpy as np
 
+
 class PbChecker():
 
     def _check_key_assignments(self):
@@ -71,10 +72,4 @@ class PbChecker():
                 reference_trace=reference_trace,
                 x_tol=self.x_tol,
                 y_tol=self.y_tol
-                )
-
-
-
-
-
-
+            )

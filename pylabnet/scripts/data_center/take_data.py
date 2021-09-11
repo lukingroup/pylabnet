@@ -1,13 +1,10 @@
 """ Module for taking data using arbitrary experiment scripts
     and Dataset objects """
 
-import socket
 import os
 import sys
-import inspect
 import importlib
 import time
-import pickle
 from datetime import datetime
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
@@ -20,6 +17,7 @@ from pylabnet.scripts.data_center import datasets
 
 
 REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
+
 
 class DataTaker:
 
@@ -55,7 +53,6 @@ class DataTaker:
             if self.config['auto_save']:
                 self.gui.autosave.setChecked(True)
 
-
         # Retrieve Clients
         for client_entry in self.config['servers']:
             client_type = client_entry['type']
@@ -64,7 +61,7 @@ class DataTaker:
                 clients=client_tuples,
                 settings=client_config,
                 client_type=client_type,
-                client_config = client_config,
+                client_config=client_config,
                 logger=self.log
             )
             if (client == None):
@@ -76,7 +73,6 @@ class DataTaker:
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setToolTip(str(client_obj))
             self.gui.clients.addItem(client_item)
-
 
         for client_name, client_config in self.missing_clients.items():
             client_item = QtWidgets.QListWidgetItem(client_name)
@@ -150,7 +146,7 @@ class DataTaker:
                 except AttributeError:
                     pass
         self.gui.windows = {}
-            # If we're not setting up a new measurement type, just clear the data
+        # If we're not setting up a new measurement type, just clear the data
 
         # We are reading in the required base-dataset by looking at the define_dataset() as defined in the experiment script.
         try:
@@ -187,7 +183,6 @@ class DataTaker:
         """ Clears all data from curves"""
         self.log.info("Clearing data")
         self.dataset.clear_all_data()
-
 
     def run(self):
         """ Runs/stops the experiment """
@@ -260,8 +255,8 @@ class DataTaker:
         self.update_thread.running = False
 
         self.log.update_metadata(
-                exp_stop_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
-            )
+            exp_stop_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
+        )
 
         # Autosave if relevant
         if self.gui.autosave.isChecked():
@@ -284,12 +279,11 @@ class DataTaker:
     def reload_config(self):
         """ Loads a new config file """
 
-        self.config=load_script_config(
+        self.config = load_script_config(
             script='data_taker',
             config=self.gui.config.text(),
             logger=self.log
         )
-
 
 
 class ExperimentThread(QtCore.QThread):
@@ -309,7 +303,7 @@ class ExperimentThread(QtCore.QThread):
         self.params['iter_num'] = 0
         while self.running:
             self.experiment(
-                thread = self,
+                thread=self,
                 status_flag=self.status_flag,
                 **self.params)
             self.params['iter_num'] += 1
@@ -358,6 +352,7 @@ def main():
     control = DataTaker(config='preselected_histogram')
     control.gui.app.exec_()
 
+
 def launch(**kwargs):
 
     config = load_script_config(
@@ -378,5 +373,6 @@ def launch(**kwargs):
     # Run continuously
     control.gui.app.exec_()
 
-if __name__== '__main__':
+
+if __name__ == '__main__':
     main()

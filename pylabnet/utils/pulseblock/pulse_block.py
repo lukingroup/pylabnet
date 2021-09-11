@@ -1,29 +1,38 @@
 import numpy as np
 import copy
 
+
 class Channel:
     """ Class to represent a signal channel.
     """
+
     def __init__(self, name, is_analog):
         self.name = name
         self.is_analog = is_analog
 
     def __repr__(self):
         return f"Channel({self.name}, {self.is_analog})"
+
     def __eq__(self, other):
         if not isinstance(other, Channel):
             return False
         return self.name == other.name
+
     def __lt__(self, other):
         return self.name < other.name
+
     def __le__(self, other):
         return self.name <= other.name
+
     def __gt__(self, other):
         return self.name >= other.name
+
     def __ge__(self, other):
         return self.name > other.name
+
     def __hash__(self):
         return hash(self.name)
+
 
 class PulseBlock:
     """ Class for construction of pulse sequences.
@@ -209,19 +218,18 @@ class PulseBlock:
                         )
                     )
 
-
         # Check if the channel already exists with the samne name but a
         # different type
         for key in self.p_dict.keys():
             if ch.name == key.name and ch.is_analog != key.is_analog:
                 raise ValueError('insert(): tried to insert pulse name {} '
-                        'with pulse type {} when the channel already had pulses '
-                        'of type {}'.format(
-                            ch.name,
-                            'analog' if ch.is_analog else 'digital',
-                            'analog' if key.is_analog else 'digital'
-                            )
-                        )
+                                 'with pulse type {} when the channel already had pulses '
+                                 'of type {}'.format(
+                                     ch.name,
+                                     'analog' if ch.is_analog else 'digital',
+                                     'analog' if key.is_analog else 'digital'
+                                 )
+                                 )
 
         # Create a new entry for 'ch' if it is not yet registered
         if ch not in self.p_dict.keys():

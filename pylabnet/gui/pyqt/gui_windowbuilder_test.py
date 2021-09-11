@@ -2,15 +2,15 @@ import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget
 #from PyQt5.QtCore import QSize
-from pylabnet.utils.helper_methods import load_config   
+from pylabnet.utils.helper_methods import load_config
+
 
 class GUIWindowFromConfig(QMainWindow):
 
-    
     def __init__(self, config=None):
-        
+
         QMainWindow.__init__(self)
-        
+
         self.config = load_config(config)
         self.N_staticlines = len(self.config) #N_staticlines
 
@@ -20,21 +20,21 @@ class GUIWindowFromConfig(QMainWindow):
 
         self.setStyleSheet("background-color: black;")
 
-        #self.setMinimumSize(QSize(640, 480))    
-        self.setWindowTitle("Staticline window") 
+        #self.setMinimumSize(QSize(640, 480))
+        self.setWindowTitle("Staticline window")
 
-        self.centralWidget = QWidget(self)          
-        self.setCentralWidget(self.centralWidget)   
+        self.centralWidget = QWidget(self)
+        self.setCentralWidget(self.centralWidget)
 
-        self.gridLayout = QGridLayout(self)     
-        self.centralWidget.setLayout(self.gridLayout)  
+        self.gridLayout = QGridLayout(self)
+        self.centralWidget.setLayout(self.gridLayout)
 
         self.unpack_config_file()
 
     def unpack_config_file(self):
         for ii in range(self.N_staticlines):
 
-            device_name = self.config["{}".format(ii+1)]["name"]
+            device_name = self.config["{}".format(ii + 1)]["name"]
 
             self.labels.append(QtWidgets.QLabel(device_name, self))
             self.labels[ii].setStyleSheet("color: white;")
@@ -42,9 +42,9 @@ class GUIWindowFromConfig(QMainWindow):
 
             self.all_widgets[device_name] = dict()
 
-            if self.config["{}".format(ii+1)]["type"] == "digital":
+            if self.config["{}".format(ii + 1)]["type"] == "digital":
                 self.make_digital_row(position=ii, device_name=device_name)
-            if self.config["{}".format(ii+1)]["type"] == "analog":
+            if self.config["{}".format(ii + 1)]["type"] == "analog":
                 self.make_analog_row(position=ii, device_name=device_name)
 
     def make_digital_row(self, position=0, device_name=''):
@@ -70,4 +70,4 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     mainWin = GUIWindowFromConfig(config='test_config_sl')
     mainWin.show()
-    sys.exit( app.exec_() )
+    sys.exit(app.exec_())

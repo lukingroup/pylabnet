@@ -1,8 +1,9 @@
 from pyvisa import VisaIOError, ResourceManager
-import re
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
+
+
 class Driver:
 
     def __init__(self, gpib_address=None, logger=None):

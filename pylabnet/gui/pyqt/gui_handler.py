@@ -1,7 +1,4 @@
 from pylabnet.utils.decorators.gui_decorators import handle_gui_errors
-import pickle
-import sys
-import traceback
 
 
 class GUIHandler():
@@ -19,7 +16,7 @@ class GUIHandler():
         decorator.
     """
 
-    def __init__(self,  gui_client=None, logger_client=None):
+    def __init__(self, gui_client=None, logger_client=None):
 
         self.is_running = False  # Flag which lets us know if WlmMonitor is running
         self.is_paused = False  # Flag which tells us we have simply paused WlmMonitor operation

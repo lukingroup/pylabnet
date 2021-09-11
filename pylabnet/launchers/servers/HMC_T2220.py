@@ -1,4 +1,3 @@
-import socket
 
 from pylabnet.network.client_server.HMC_T2220 import Service, Client
 from pylabnet.utils.helper_methods import load_device_config, get_ip

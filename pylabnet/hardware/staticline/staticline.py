@@ -1,9 +1,10 @@
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.hardware.staticline.staticline_devices import registered_staticline_modules
 
+
 class Driver():
 
-    def __init__(self, name, logger,  hardware_client, hardware_type, config):
+    def __init__(self, name, logger, hardware_client, hardware_type, config):
         '''High level staticline class.
 
         This class is used in conjunction with hardware modules to send out digital
@@ -68,6 +69,7 @@ class Driver():
 
     def get_name(self):
         return self.name
+
 
 class StaticLineHardwareHandler():
 
@@ -203,7 +205,7 @@ class StaticLineHardwareHandler():
         # Dictionary listing all hardware modules which can address
         # staticlines and their corresponding setup functions.
         registered_staticline_modules = {
-            'zi_hdawg':  self._setup_HDWAGDriver,
+            'zi_hdawg': self._setup_HDWAGDriver,
             'nidaqmx_card': self._setup_NiDaqMxDriver,
             'toptica': self._setup_toptica,
             'hdawg': self._setup_HDWAGDriver # For hdawg client usage

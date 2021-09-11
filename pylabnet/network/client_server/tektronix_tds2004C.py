@@ -197,9 +197,9 @@ class Client(ClientBase):
         for i, channel in enumerate(channel_list):
             for j in range(reps):
                 trace_dict = self.read_out_trace(
-                        channel,
-                        curve_res
-                    )
+                    channel,
+                    curve_res
+                )
                 results_array[i, j, 0, :] = trace_dict['ts']
                 results_array[i, j, 1, :] = trace_dict['trace']
                 ch_names.append(channel)
@@ -217,8 +217,8 @@ class Client(ClientBase):
                     )
 
             staggered_trace.set_lbls(
-                    x_str='Time since trigger [s]',
-                    y_str='Signal [V]'
+                x_str='Time since trigger [s]',
+                y_str='Signal [V]'
             )
             staggered_trace.show()
 

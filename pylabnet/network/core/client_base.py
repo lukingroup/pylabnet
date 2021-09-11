@@ -8,7 +8,7 @@ from pylabnet.utils.helper_methods import get_os, UnsupportedOSException
 class ClientBase:
     def __init__(self, host, port, key='pylabnet.pem'):
         """ Connects to server
-        
+
         :param host: (str) hostname
         :param port: (int) port number
         :param key: (str) name of keyfile
@@ -28,7 +28,7 @@ class ClientBase:
 
     def connect(self, host='place_holder', port=-1, key='pylabnet.pem'):
         """ Connects to server
-        
+
         :param host: (str) hostname
         :param port: (int) port number
         :param key: (str) name of keyfile
@@ -124,7 +124,7 @@ class ClientBase:
     def close_server(self):
         """ Closes the server to which the LogClient is connected"""
 
-        try: 
+        try:
             self._service.close_server()
         except EOFError:
             pass

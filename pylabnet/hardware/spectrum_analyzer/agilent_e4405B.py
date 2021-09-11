@@ -73,7 +73,7 @@ class Driver():
 
         :center_frequency: Frequency in Hz (from 0 to 13.3 GHz)
         """
-        if not 0 <= center_frequency <= 13.2*1e9:
+        if not 0 <= center_frequency <= 13.2 * 1e9:
             self.log.error(
                 f'Invalid center frequency ({center_frequency} Hz). Must be within 0 and 13.2 GHz'
             )
@@ -86,7 +86,7 @@ class Driver():
 
         :frequency_span: Frequency span in Hz (from 0 to 13.3 GHz)
         """
-        if not 0 <= frequency_span <= 13.2*1e9:
+        if not 0 <= frequency_span <= 13.2 * 1e9:
             self.log.error(
                 f'Invalid frequency span ({frequency_span} Hz). Must be within 0 and 13.2 GHz'
             )
@@ -222,10 +222,10 @@ class E4405BMarker():
         Note: Work only if _toggle_freq_count was called, outputs 9e15 if count state is off.
         """
         return float(self.client.query(f':CALCulate:MARKer{self.marker_num}:FCOunt:X?;*WAI'))
-    
+
     def set_freq(self, freq):
         """ Set frequency to freq
-        
+
         :freq (float): frequency to set the marker to
         """
         self.client.write(f':CALCulate:MARKer{self.marker_num}:X {freq};*WAI')

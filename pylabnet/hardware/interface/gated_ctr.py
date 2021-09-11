@@ -15,7 +15,6 @@ class GatedCtrInterface(abc.ABC):
         :param gate_type: 'RR' and 'RF'
         :return:
         """
-        pass
 
     @abc.abstractmethod
     def close_ctr(self):

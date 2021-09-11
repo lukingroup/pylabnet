@@ -3,6 +3,7 @@ import os
 from pylabnet.hardware.awg.zi_hdawg import Driver, Sequence, AWGModule
 from pylabnet.utils.zi_hdawg_pulseblock_handler.zi_hdawg_pb_handler import AWGPulseBlockHandler
 
+
 class PulsedExperiment():
     """ Wrapper class for Pulsed experiments using the ZI HDAWG.
     This class conveniently allows for the generation and the AWG upload of
@@ -18,8 +19,8 @@ class PulsedExperiment():
         template_directory = os.path.join(current_directory, template_directory)
 
         files = [file for file in os.listdir(template_directory)
-            if  '.seqct' in file and '__init__.py' not in file
-        ]
+                 if '.seqct' in file and '__init__.py' not in file
+                 ]
 
         files_trimmed = [filename.replace('.seqct', '') for filename in files]
 
@@ -42,7 +43,7 @@ class PulsedExperiment():
 
         # Instanciate pulseblock handler.
         pb_handler = AWGPulseBlockHandler(
-            pb = pulseblock,
+            pb=pulseblock,
             assignment_dict=self.assignment_dict,
             exp_config_dict=self.exp_config_dict,
             hd=self.hd
@@ -52,7 +53,7 @@ class PulsedExperiment():
         prologue_sequence, pulse_sequence, upload_waveforms, upload_iq_waveforms = pb_handler.get_awg_sequence(len(self.upload_waveforms))
 
         # Replace the pulseblock name placeholder with the generated instructions
-        self.seq.replace_placeholders({pulseblock.name : pulse_sequence})
+        self.seq.replace_placeholders({pulseblock.name: pulse_sequence})
         self.seq.prepend_sequence(prologue_sequence)
 
         # Save the list of waveforms to be uploaded to AWG
@@ -177,18 +178,18 @@ class PulsedExperiment():
         return self.prepare_awg(awg_number) # TODO YQ
 
     def __init__(self,
-                pulseblocks,
-                assignment_dict,
-                hd,
-                mw_client=None,
-                placeholder_dict=None,
-                exp_config_dict=None,
-                use_template=True,
-                template_name='base_dig_pulse',
-                sequence_string=None,
-                marker_string='$',
-                template_directory="sequence_templates",
-                iplot=True):
+                 pulseblocks,
+                 assignment_dict,
+                 hd,
+                 mw_client=None,
+                 placeholder_dict=None,
+                 exp_config_dict=None,
+                 use_template=True,
+                 template_name='base_dig_pulse',
+                 sequence_string=None,
+                 marker_string='$',
+                 template_directory="sequence_templates",
+                 iplot=True):
         """ Initilizes pulseblock experiment
 
         :pulseblocks: Single Pulseblock object or list of Pulseblock objects.
@@ -237,12 +238,12 @@ class PulsedExperiment():
                 error_msg = f"Template name {template_name} not found. Available templates are {templates}."
                 self.hd.log.error(error_msg)
 
-            template_filepath =  os.path.join(
+            template_filepath = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 template_directory,
                 f'{template_name}.seqct'
             )
-            sequence_string =  open(template_filepath, 'r').read()
+            sequence_string = open(template_filepath, 'r').read()
             self.hd.log.info(f"Using template {template_name}.seqc")
 
         # If no template given, use argument input.
@@ -252,7 +253,7 @@ class PulsedExperiment():
 
         # Initialize sequence object.
         self.seq = Sequence(
-            hdawg_driver = hd,
-            sequence = sequence_string,
-            marker_string = marker_string
+            hdawg_driver=hd,
+            sequence=sequence_string,
+            marker_string=marker_string
         )

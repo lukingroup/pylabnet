@@ -1,6 +1,5 @@
 ''' Configures a Staticline instance to use a NIDaqmx output'''
 
-import socket
 
 import pylabnet.hardware.awg.zi_hdawg as zi_hdawg
 from pylabnet.network.client_server.staticline import Service, Client
@@ -14,6 +13,7 @@ from pylabnet.network.core.generic_server import GenericServer
 # Parameters
 dev_id = 'dev8227'
 
+
 def launch(**kwargs):
     """ Connects to a NI DAQ as staticline
 
@@ -26,7 +26,6 @@ def launch(**kwargs):
 
     # Instantiate HDAWG driver.
     hd = zi_hdawg.Driver(dev_id, logger=staticline_logger)
-
 
     aom = staticline.Driver(
         name='AOM',

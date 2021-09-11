@@ -1,6 +1,6 @@
 
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel
-from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget,QTableWidgetItem,QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QToolBox, QFileDialog, QMessageBox, QPushButton, QGroupBox, QFormLayout, QErrorMessage, QComboBox, QMainWindow, QApplication, QWidget, QAction, QTableWidget, QTableWidgetItem, QVBoxLayout, QTableWidgetItem, QCompleter, QHBoxLayout, QLabel, QLineEdit
 
 from PyQt5.QtCore import QVariant
 import pyqtgraph as pg
@@ -30,6 +30,7 @@ class MyPlotWidget(pg.PlotWidget):
 
 class DictionaryTableModel(QAbstractTableModel):
     """ Table Model with data which can be access and set via a python dictionary."""
+
     def __init__(self, data, header, editable=False):
         """Instanciating  TableModel
 
@@ -43,7 +44,7 @@ class DictionaryTableModel(QAbstractTableModel):
 
         # Prepare data.
         data_ok, datadict = self.prepare_data(data)
-        
+
         assert data_ok, "Input dictionary invalid."
 
         self.datadict = datadict
@@ -109,9 +110,9 @@ class DictionaryTableModel(QAbstractTableModel):
         # Check if all values are one allowed datatype:
         allowed_datatypes = [str, int, float]
         if all([type(value) in allowed_datatypes for value in values]):
-                data_ok = True
-                datadict = self._prepare_single_string_dict(datadict)
-                return data_ok, datadict
+            data_ok = True
+            datadict = self._prepare_single_string_dict(datadict)
+            return data_ok, datadict
 
         # Check if values are all lists.
         if all(isinstance(value, list) for value in values):
@@ -133,12 +134,15 @@ class DictionaryTableModel(QAbstractTableModel):
 
     def data(self, index, role):
         """ From https://stackoverflow.com/questions/28186118/how-to-make-qtableview-to-enter-the-editing-mode-only-on-double-click"""
-        if not index.isValid(): return QVariant()
-        row=index.row()
-        column=index.column()
+        if not index.isValid():
+            return QVariant()
+        row = index.row()
+        column = index.column()
 
-        if row>len(self.datadict): return QVariant()
-        if column>len(self.datadict[row]): return QVariant()
+        if row > len(self.datadict):
+            return QVariant()
+        if column > len(self.datadict[row]):
+            return QVariant()
 
         if role == Qt.EditRole or role == Qt.DisplayRole:
             return QVariant(self.datadict[row][column])
@@ -150,11 +154,11 @@ class DictionaryTableModel(QAbstractTableModel):
         if index.isValid():
             if role == Qt.EditRole:
                 row = index.row()
-                column=index.column()
-                if row>len(self.datadict) or column>len(self.datadict[row]):
+                column = index.column()
+                if row > len(self.datadict) or column > len(self.datadict[row]):
                     return False
                 else:
-                    self.datadict[row][column]=value
+                    self.datadict[row][column] = value
                     self.dataChanged.emit(index, index)
                     return True
         return False
@@ -168,7 +172,6 @@ class DictionaryTableModel(QAbstractTableModel):
         # the length (only works if all rows are an equal length)
         return len(self.datadict[0])
 
-
     def add_dict(self, data_dict):
         """Populate table from dictionary.
 
@@ -177,12 +180,13 @@ class DictionaryTableModel(QAbstractTableModel):
         for i, (key, item) in enumerate(data_dict.items()):
             key = QTableWidgetItem(key)
             item = QTableWidgetItem(item)
-            self.setItem(i,0,key)
-            self.setItem(i,1,str(item))
+            self.setItem(i, 0, key)
+            self.setItem(i, 1, str(item))
 
 
 class AddPulseblockPopup(QWidget):
     """ Widget class of Add pulseblock popup"""
+
     def __init__(self):
         QWidget.__init__(self)
 

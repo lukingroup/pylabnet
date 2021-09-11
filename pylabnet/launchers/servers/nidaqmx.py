@@ -1,13 +1,10 @@
 """ Implements connection and server launching of NI-daqMX card for wavemeter locking"""
 
-import socket
-import os
 
 from pylabnet.hardware.ni_daqs import nidaqmx_card
 from pylabnet.network.client_server.nidaqmx_card import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.helper_methods import get_ip, hide_console, load_config
-
 
 
 def launch(**kwargs):
@@ -40,7 +37,7 @@ def launch(**kwargs):
             raise
         except KeyError:
             ni_daqmx_logger.error('No device name provided. '
-                                'Please make sure proper config file is provided')
+                                  'Please make sure proper config file is provided')
             raise
 
     # Instantiate server

@@ -1,6 +1,4 @@
 import numpy as np
-import time
-import socket
 import copy
 
 from pylabnet.gui.pyqt.external_gui import Window
@@ -9,11 +7,12 @@ from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widge
 from pylabnet.network.client_server import smaract_mcs2
 
 from PyQt5.QtGui import QKeySequence
-from PyQt5.QtWidgets import  QShortcut
+from PyQt5.QtWidgets import QShortcut
 
 
 # If in this list, set DC voltage to 0 after taking a step.
 BROKEN_CHANNELS = [6]
+
 
 class Controller:
     """ A script class for controlling MCS2 positioners + interfacing with GUI"""
@@ -23,12 +22,12 @@ class Controller:
         step_left=NUM_CHANNELS, step_right=NUM_CHANNELS, walk_left=NUM_CHANNELS,
         walk_right=NUM_CHANNELS, n_steps=NUM_CHANNELS, is_moving=NUM_CHANNELS,
         amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS,
-        lock_button=int(NUM_CHANNELS/3), keyboard_change_combo=1
+        lock_button=int(NUM_CHANNELS / 3), keyboard_change_combo=1
     )
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
 
-    def __init__(self, nanopos_client: smaract_mcs2.Client , gui='positioner_control', log_client=None, config=None, port=None):
+    def __init__(self, nanopos_client: smaract_mcs2.Client, gui='positioner_control', log_client=None, config=None, port=None):
         """ Instantiates the controller
 
         :param nanopos_client: (pylabnet.network.client_server.smaract_mcs2.Client)
@@ -52,22 +51,19 @@ class Controller:
             n_steps=self.NUM_CHANNELS, amplitude=self.NUM_CHANNELS, frequency=self.NUM_CHANNELS, velocity=self.NUM_CHANNELS
         ))
 
-
-
         # Additional attributes
-        self.prev_amplitude = [50]*self.NUM_CHANNELS
-        self.prev_frequency = [30]*self.NUM_CHANNELS
-        self.prev_velocity = [100]*self.NUM_CHANNELS
-        self.prev_voltage = [50]*self.NUM_CHANNELS
+        self.prev_amplitude = [50] * self.NUM_CHANNELS
+        self.prev_frequency = [30] * self.NUM_CHANNELS
+        self.prev_velocity = [100] * self.NUM_CHANNELS
+        self.prev_voltage = [50] * self.NUM_CHANNELS
         self.voltage_override = False
-        self.config=config
-        self.lock_status = [False]*int(self.NUM_CHANNELS/3)
-        self.released = [False]*self.NUM_CHANNELS
+        self.config = config
+        self.lock_status = [False] * int(self.NUM_CHANNELS / 3)
+        self.released = [False] * self.NUM_CHANNELS
         self.gui.config_label.setText(self.config)
 
         # Configure all button and parameter updates
         self._setup_gui()
-
 
         # Setup shortcut to use keyboard to step fiber
         self.press_right = QShortcut(QKeySequence('Right'), self.gui)
@@ -75,10 +71,9 @@ class Controller:
         self.press_up = QShortcut(QKeySequence('Up'), self.gui)
         self.press_down = QShortcut(QKeySequence('Down'), self.gui)
         self.press_up_z = QShortcut(QKeySequence('PgUp'), self.gui)
-        self.press_down_z= QShortcut(QKeySequence('PgDown'), self.gui)
+        self.press_down_z = QShortcut(QKeySequence('PgDown'), self.gui)
 
         self.widgets['keyboard_change_combo'].currentIndexChanged.connect(self._bind_arrow_keys)
-
 
     def _disconnect_arrow_keys(self):
         """ Unbinds the arrow, up/down keys from any actions."""
@@ -88,7 +83,6 @@ class Controller:
         self.press_down.activated.disconnect()
         self.press_up_z.activated.disconnect()
         self.press_down_z.activated.disconnect()
-
 
     def _bind_arrow_keys(self):
         """ Binds arroy keys on keyboard to step around front fiber."""
@@ -103,7 +97,7 @@ class Controller:
         front_names = ['step_left', 'step_right', 'step_left', 'step_right', 'step_right', 'step_left']
         front_index = [6, 6, 1, 1, 5, 5]
 
-        rear_names = ['step_right', 'step_left',  'step_right',  'step_left', 'step_right', 'step_left']
+        rear_names = ['step_right', 'step_left', 'step_right', 'step_left', 'step_right', 'step_left']
         rear_index = [8, 8, 0, 0, 2, 2]
 
         if binding_index == 0:
@@ -121,7 +115,6 @@ class Controller:
         self.press_down.activated.connect(lambda: self.widgets[names[3]][index[3]].animateClick())
         self.press_up_z.activated.connect(lambda: self.widgets[names[4]][index[4]].animateClick())
         self.press_down_z.activated.connect(lambda: self.widgets[names[5]][index[5]].animateClick())
-
 
     def initialize_parameters(self, channel, params):
         """ Initializes all parameters to values given by params, except for DC voltage
@@ -164,9 +157,9 @@ class Controller:
     def load_settings(self):
         """ Loads settings from configuration """
         self.gui.load_gui("mcs2_control",
-            self.gui.config_label.text(),
-            logger=self.log
-        )
+                          self.gui.config_label.text(),
+                          logger=self.log
+                          )
 
     # Technical methods
 
@@ -376,7 +369,7 @@ class Controller:
         self.gui.emergency_button.clicked.connect(self.stop_all)
 
         # Stack based items (common to 3 axes)
-        for stack in range(int(self.NUM_CHANNELS/3)):
+        for stack in range(int(self.NUM_CHANNELS / 3)):
 
             stack_no = copy.deepcopy(stack)
 
@@ -445,8 +438,8 @@ def launch(**kwargs):
     logger = kwargs['logger']
     clients = kwargs['clients']
     config = load_script_config(script='mcs2_control',
-                        config=kwargs['config'],
-                        logger=logger)
+                                config=kwargs['config'],
+                                logger=logger)
     nanopos_client = find_client(clients=clients, settings=config, client_type='mcs2')
     gui_client = 'positioner_control'
 

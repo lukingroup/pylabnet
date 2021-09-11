@@ -11,8 +11,6 @@ class CtrMonitorInterface(abc.ABC):
         :param n_values: Number of values of counter array
         """
 
-        pass
-
     @abc.abstractmethod
     def clear_counter(self):
         pass
@@ -30,8 +28,6 @@ class CtrMonitorInterface(abc.ABC):
         :param ch_list: List of channels to count
         """
 
-        pass
-
     @abc.abstractmethod
     def set_channels(self, ch_list=[1]):
         """
@@ -40,8 +36,6 @@ class CtrMonitorInterface(abc.ABC):
             rising edges and [-8,-1] for falling edges
         """
 
-        pass
-    
 
 class CtrError(Exception):
     pass

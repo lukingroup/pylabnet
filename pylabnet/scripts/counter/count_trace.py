@@ -239,7 +239,7 @@ class CountTrace:
         # Allocate empty arrays
         self.t_ar = np.linspace(
             start=-self._l_margin,
-            stop=self._laser_dur+self._r_margin,
+            stop=self._laser_dur + self._r_margin,
             num=self._n_pts
         )
         self.sum_ar = np.zeros(

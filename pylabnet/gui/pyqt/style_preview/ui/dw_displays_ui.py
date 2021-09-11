@@ -343,7 +343,7 @@ class Ui_DockWidget(object):
 
         self.retranslateUi(DockWidget)
         self.progressBar.valueChanged['int'].connect(self.progressBarDis.setValue)
-        self.calendarWidget.currentPageChanged['int','int'].connect(self.calendarWidgetDis.setCurrentPage)
+        self.calendarWidget.currentPageChanged['int', 'int'].connect(self.calendarWidgetDis.setCurrentPage)
         self.calendarWidget.clicked['QDate'].connect(self.calendarWidgetDis.setSelectedDate)
         QtCore.QMetaObject.connectSlotsByName(DockWidget)
 
@@ -354,11 +354,11 @@ class Ui_DockWidget(object):
         self.textBrowser.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.textBrowser.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
         self.textBrowser.setHtml(_translate("DockWidget", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\';\">Testing</span></p>\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'Cantarell\';\"><br /></p></body></html>"))
+                                            "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                            "p, li { white-space: pre-wrap; }\n"
+                                            "</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+                                            "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\';\">Testing</span></p>\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'Cantarell\';\"><br /></p></body></html>"))
         self.label_77.setText(_translate("DockWidget", "Enabled"))
         self.label_78.setText(_translate("DockWidget", "Disabled"))
         self.label_3.setToolTip(_translate("DockWidget", "This is a tool tip"))
@@ -371,10 +371,10 @@ class Ui_DockWidget(object):
         self.label_4.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
         self.label_4.setText(_translate("DockWidget", "TextBrowser"))
         self.textBrowserDis.setHtml(_translate("DockWidget", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\';\">Testing</span></p></body></html>"))
+                                               "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                               "p, li { white-space: pre-wrap; }\n"
+                                               "</style></head><body style=\" font-family:\'Ubuntu\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+                                               "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\';\">Testing</span></p></body></html>"))
         self.label_5.setToolTip(_translate("DockWidget", "This is a tool tip"))
         self.label_5.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.label_5.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))

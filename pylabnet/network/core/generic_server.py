@@ -104,12 +104,11 @@ def get_os():
 
     pf = platform.system()
 
-
     if pf == 'Linux':
         operating_system = 'Linux'
-    elif pf=='Windows':
+    elif pf == 'Windows':
         operating_system = 'Windows'
-    elif pf=="Darwin":
+    elif pf == "Darwin":
         operating_system = 'mac_os'
     else:
         operating_system = pf

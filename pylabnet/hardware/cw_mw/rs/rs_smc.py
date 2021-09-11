@@ -448,4 +448,3 @@ class Client(ClientBase, MWSrcInterface):
 
     def get_mode(self):
         return self._service.exposed_get_mode()
-

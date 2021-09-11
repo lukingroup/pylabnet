@@ -34,10 +34,10 @@ def trace_compare(trace_to_check, reference_trace, x_tol, y_tol, amplitude=3.3):
     ch_names = ["Reference", "Measured", "min", "max"]
     multi_trace = MultiTraceFig(ch_names=ch_names)
 
-    multi_trace.set_data(ref_time/1e-9, ref_signal, 0)
-    multi_trace.set_data(check_time/1e-9, check_signal, 1)
-    multi_trace.set_data(right_timeshift/1e-9, min_accept_signal, 2)
-    multi_trace.set_data(left_timeshift/1e-9, max_accept_signal, 3)
+    multi_trace.set_data(ref_time / 1e-9, ref_signal, 0)
+    multi_trace.set_data(check_time / 1e-9, check_signal, 1)
+    multi_trace.set_data(right_timeshift / 1e-9, min_accept_signal, 2)
+    multi_trace.set_data(left_timeshift / 1e-9, max_accept_signal, 3)
 
     multi_trace.set_lbls(
         x_str='Time since trigger [ns]',

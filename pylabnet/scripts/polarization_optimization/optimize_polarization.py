@@ -9,9 +9,8 @@ def launch(**kwargs):
     clients = kwargs['clients']
 
     config = load_script_config(script='thorlabs_pm320e',
-                            config=kwargs['config'],
-                            logger=logger)
-
+                                config=kwargs['config'],
+                                logger=logger)
 
     powermeter = find_client(clients=clients, settings=config, client_type='thorlabs_pm320e')
     pol_paddle = find_client(clients=clients, settings=config, client_type='thorlabs_mpc320')

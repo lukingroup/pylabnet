@@ -56,4 +56,3 @@ class MWSrcInterface(abc.ABC):
 
 class MWSrcError(Exception):
     pass
-

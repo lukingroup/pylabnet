@@ -2,6 +2,7 @@ import numpy as np
 
 # Base classes ----------------------------------------------------------------
 
+
 class PulseBase:
     """ Base class for Pulse objects
     """
@@ -35,6 +36,7 @@ class DfltPulseBase:
 
 # Digital Pulse classes --------------------------------------------------------
 
+
 class PTrue(PulseBase):
     """ Pulse: Boolean True
     """
@@ -45,7 +47,6 @@ class PTrue(PulseBase):
         # Define an automatic default.
         self.auto_default = DFalse()
         self.is_analog = False
-
 
     def __str__(self):
         return 'True'
@@ -85,13 +86,14 @@ class PFalse(PulseBase):
 
 # Analog Pulse classes ---------------------------------------------------------
 
+
 class PSin(PulseBase):
     """ Pulse: Sine
     """
 
-    def __init__(self, ch, dur, t0=0, amp=0, freq=0, ph=0, 
-                mod=False, mod_freq=0, mod_ph=0,
-                iq=False, iq_params=None):
+    def __init__(self, ch, dur, t0=0, amp=0, freq=0, ph=0,
+                 mod=False, mod_freq=0, mod_ph=0,
+                 iq=False, iq_params=None):
         """ Construct Sin Pulse object
 
         :param ch: (str) channel name
@@ -126,8 +128,8 @@ class PSin(PulseBase):
         ret_str = 'Sin(amp={:.2e} freq={:.2e} ph={:.2f}' \
                   ''.format(self.amp, self.freq, self.ph)
 
-        ret_str = ret_str +  f', mod_freq={self.mod_freq:.2e}, ' \
-                             f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
+        ret_str = ret_str + f', mod_freq={self.mod_freq:.2e}, ' \
+            f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
         return ret_str
 
     def get_value(self, t_ar, mod=None):
@@ -140,7 +142,7 @@ class PSin(PulseBase):
 
         t_ar = np.array(t_ar, dtype=np.float32)
         ret_ar = np.sin(
-            2*np.pi*self.freq*t_ar + np.pi*self.ph/180
+            2 * np.pi * self.freq * t_ar + np.pi * self.ph / 180
         ) * self.amp
 
         # Use own value of mod parameter if not provided
@@ -149,17 +151,18 @@ class PSin(PulseBase):
 
         # Add sin modulation
         if mod:
-            ret_ar *= np.sin(2*np.pi*t_ar*self.mod_freq + np.pi*self.mod_ph/180)
+            ret_ar *= np.sin(2 * np.pi * t_ar * self.mod_freq + np.pi * self.mod_ph / 180)
 
         return ret_ar
+
 
 class PGaussian(PulseBase):
     """ Pulse: Gaussian pulse with optional Sin modulation
     """
 
-    def __init__(self, ch, dur, t0=0, amp=0, stdev=1, 
-                mod=False, mod_freq=0, mod_ph=0, 
-                iq=False, iq_params=None):
+    def __init__(self, ch, dur, t0=0, amp=0, stdev=1,
+                 mod=False, mod_freq=0, mod_ph=0,
+                 iq=False, iq_params=None):
         """ Construct Gaussian Pulse object
 
         :param ch: (str) channel name
@@ -192,8 +195,8 @@ class PGaussian(PulseBase):
         ret_str = f'Gaussian(amp={self.amp:.2e}, ' \
                   f'stdev={self.stdev:.2f}, mod={self.mod}'
 
-        ret_str = ret_str +  f', mod_freq={self.mod_freq:.2e}, ' \
-                             f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
+        ret_str = ret_str + f', mod_freq={self.mod_freq:.2e}, ' \
+            f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
 
         return ret_str
 
@@ -214,20 +217,21 @@ class PGaussian(PulseBase):
         # Use own value of mod parameter if not provided
         if mod is None:
             mod = self.mod
-        
+
         # Add sin modulation
         if mod:
-            ret_ar *= np.sin(2*np.pi*t_ar*self.mod_freq + np.pi*self.mod_ph/180)
+            ret_ar *= np.sin(2 * np.pi * t_ar * self.mod_freq + np.pi * self.mod_ph / 180)
 
         return ret_ar
+
 
 class PConst(PulseBase):
     """ Pulse: Constant value with optional Sin modulation
     """
 
-    def __init__(self, ch, dur, t0=0, val=0.0, 
-                mod=False, mod_freq=0, mod_ph=0,
-                iq=False, iq_params=None):
+    def __init__(self, ch, dur, t0=0, val=0.0,
+                 mod=False, mod_freq=0, mod_ph=0,
+                 iq=False, iq_params=None):
         """ Construct Constant Pulse
 
         :param ch: (str) channel name
@@ -256,9 +260,9 @@ class PConst(PulseBase):
     def __str__(self):
         ret_str = f'Const(val={self.val}'
 
-        ret_str =  ret_str + f', mod_freq={self.mod_freq:.2e}, ' \
-                             f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
-        
+        ret_str = ret_str + f', mod_freq={self.mod_freq:.2e}, ' \
+            f'mod_ph={self.mod_ph:.2f})' if self.mod else ')'
+
         return ret_str
 
     def get_value(self, t_ar, mod=None):
@@ -279,9 +283,10 @@ class PConst(PulseBase):
         # Add sin modulation
         if mod:
 
-            ret_ar *= np.sin(2*np.pi*t_ar*self.mod_freq + np.pi*self.mod_ph/180)
+            ret_ar *= np.sin(2 * np.pi * t_ar * self.mod_freq + np.pi * self.mod_ph / 180)
 
         return ret_ar
+
 
 class PCombined(PulseBase):
     """ Pulse: A meta-pulse comprising of a combination of a list of non-overlapping
@@ -299,14 +304,14 @@ class PCombined(PulseBase):
 
         if len(set(pulse.ch for pulse in pulselist)) > 1:
             raise ValueError("More than 1 channel detected. "
-                        "All pulses to be merged must have the same channel.")
+                             "All pulses to be merged must have the same channel.")
 
-        # Sort by start times of each pulse 
+        # Sort by start times of each pulse
         pulselist.sort(key=lambda pulse: pulse.t0)
 
         # Check that pulses are non-overlapping
         for i in range(1, len(pulselist)):
-            if pulselist[i].t0 < (pulselist[i-1].t0 + pulselist[i-1].dur):
+            if pulselist[i].t0 < (pulselist[i - 1].t0 + pulselist[i - 1].dur):
                 raise ValueError("Overlapping pulses detected.")
 
         ch = pulselist[0].ch
@@ -344,14 +349,14 @@ class PCombined(PulseBase):
 
         :param t_ar: (numpy.array) array of time points
         :return: (numpy.array(dtype=np.float32)) array of samples
-        """ 
+        """
 
         ret_ar = np.zeros_like(t_ar)
 
         curr_pulse_idx = 0
         curr_pulse = self.pulselist[curr_pulse_idx]
 
-        # TODO: Improve on this method to avoid getting value for each individual timestep, but 
+        # TODO: Improve on this method to avoid getting value for each individual timestep, but
         # TODO: instead process it in ranges based on each pulse's start and end times.
         # Get the value from each constituent pulse depending on the time value
         for idx, t in enumerate(t_ar):
@@ -368,30 +373,31 @@ class PCombined(PulseBase):
                     value = curr_pulse.get_value([t], self.mod)
                     break
                 #t >= (curr_pulse.t0 + curr_pulse.dur)
-                else: 
+                else:
                     # We have finished the current pulse, go to the next one
                     # Now go up the loop to check the value from this new block
                     curr_pulse_idx += 1
                     curr_pulse = self.pulselist[curr_pulse_idx]
-                
-            ret_ar[idx] = value        
+
+            ret_ar[idx] = value
 
         return ret_ar
 
     def merge(self, other):
-        """ Merge with a PCombined pulse or a normal pulse and returns a new object. 
+        """ Merge with a PCombined pulse or a normal pulse and returns a new object.
 
-        The pulselists of both objects are combined and pulse parameters are 
+        The pulselists of both objects are combined and pulse parameters are
         recomputed by the __init__ function.
         """
 
-        # We follow the default pulse of the self object 
+        # We follow the default pulse of the self object
         if type(other) == PCombined:
             return PCombined(self.pulselist + other.pulselist, self.auto_default)
         else:
             return PCombined(self.pulselist + [other], self.auto_default)
 
 # Default Pulse classes -------------------------------------------------------
+
 
 class DFalse(DfltPulseBase):
     """ DfltPulse: Boolean False

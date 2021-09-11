@@ -9,4 +9,3 @@ def get_signature(*args, **kwargs):
     kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
     signature = ", ".join(args_repr + kwargs_repr)
     return signature
-

@@ -17,4 +17,3 @@ class DataTakerExperimentWorker(QObject):
         """Long-running task."""
         self.run_experiment()
         self.finished.emit()
-

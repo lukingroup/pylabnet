@@ -9,7 +9,7 @@
 # gsimond   20140922    modified from Adrien.Deline version
 #
 
-import io,re,sys
+import io
 from serial import Serial, SerialException
 
 NUM_READLINES = 8
@@ -46,7 +46,7 @@ class FW102C(object):
         save      This will save all the settings as default on power up
 
     """
-    isOpen   = False
+    isOpen = False
 
     def __init__(self, port, logger):
 
@@ -54,19 +54,19 @@ class FW102C(object):
 
         try:
             self._fw = Serial(port=port, baudrate=115200,
-                                  bytesize=8, parity='N', stopbits=1,
-                                  timeout=1, xonxoff=0, rtscts=0)
-        except  SerialException as ex:
+                              bytesize=8, parity='N', stopbits=1,
+                              timeout=1, xonxoff=0, rtscts=0)
+        except SerialException as ex:
             self.log.error('Port {0} is unavailable: {1}'.format(port, ex))
             return
-        except  OSError as ex:
+        except OSError as ex:
             self.log.error('Port {0} is unavailable: {1}'.format(port, ex))
             return
         self._sio = io.TextIOWrapper(io.BufferedRWPair(self._fw, self._fw, 1),
-                       newline=None, encoding='ascii')
+                                     newline=None, encoding='ascii')
 
         self._sio.flush()
-        self.isOpen  = True
+        self.isOpen = True
     # end def __init__
 
     def help(self):
@@ -94,8 +94,8 @@ class FW102C(object):
         #end if
 
         ans = 'ERROR'
-        
-        res = self._sio.write(str(cmdstr+'\r'))
+
+        res = self._sio.write(str(cmdstr + '\r'))
         self._sio.flush()
         if res:
             ans = self._sio.readlines(NUM_READLINES)[1][:-1]
@@ -115,10 +115,7 @@ class FW102C(object):
         ans = 'ERROR'
         self._sio.flush()
         cmd = cmdstr.split('=')[0]
-        res = self._sio.write(str(cmdstr+'\r'))
+        res = self._sio.write(str(cmdstr + '\r'))
         self._sio.readline()
 
         return ans
-
-
- 

@@ -122,7 +122,7 @@ class MultiTraceFig(MultiTraceInterface):
         to_allocate = ind - self._num_ch
         if to_allocate >= 0:
             self._allocate_arrays(
-                num_arrays=to_allocate+1
+                num_arrays=to_allocate + 1
             )
 
         # Update figure
@@ -131,7 +131,7 @@ class MultiTraceFig(MultiTraceInterface):
             if self._shot_noise:
 
                 if noise is None:
-                    noise = 0*y_ar
+                    noise = 0 * y_ar
 
                 # Input shot noise
                 x_rev = x_ar[::-1]
@@ -139,13 +139,13 @@ class MultiTraceFig(MultiTraceInterface):
                 y_lower = y_ar - noise
                 y_lower = y_lower[::-1]
                 with self._fig.batch_update():
-                    self._fig.data[ind*2].x = np.hstack((x_ar, x_rev))
-                    self._fig.data[ind*2].y = np.hstack((y_upper, y_lower))
+                    self._fig.data[ind * 2].x = np.hstack((x_ar, x_rev))
+                    self._fig.data[ind * 2].y = np.hstack((y_upper, y_lower))
 
                 # Now data
                 with self._fig.batch_update():
-                    self._fig.data[2*ind+1].x = x_ar
-                    self._fig.data[2*ind+1].y = y_ar
+                    self._fig.data[2 * ind + 1].x = x_ar
+                    self._fig.data[2 * ind + 1].y = y_ar
 
             else:
                 with self._fig.batch_update():
@@ -165,9 +165,9 @@ class MultiTraceFig(MultiTraceInterface):
         if x_ar is not None or y_ar is not None:
 
             if self._shot_noise:
-                # NOTE: Not implemented yet 
+                # NOTE: Not implemented yet
                 pass
-            
+
             else:
                 with self._fig.batch_update():
                     self._fig.data[ind].x = self._x_ar
@@ -221,7 +221,7 @@ class MultiTraceFig(MultiTraceInterface):
                     self._fig.add_scatter(
                         x=[],
                         y=[],
-                        name='ch'+str(index),
+                        name='ch' + str(index),
                         showlegend=False,
                         fill='tozerox',
                         line=dict(color='rgba(255,255,255,0)'),
@@ -231,7 +231,7 @@ class MultiTraceFig(MultiTraceInterface):
                         x=[],
                         y=[],
                         mode='lines',
-                        name='ch'+str(index),
+                        name='ch' + str(index),
                         line=dict(color=dflt_plotly_colors[index])
                     )
                 else:
@@ -239,7 +239,7 @@ class MultiTraceFig(MultiTraceInterface):
                         x=[],
                         y=[],
                         mode='lines',
-                        name='ch'+str(index)
+                        name='ch' + str(index)
                     )
                 self._num_ch += 1
 
@@ -333,12 +333,12 @@ class StaggeredTraceFig():
 
         self._fig.append_trace(
             go.Scatter(
-                    x=x_ar,
-                    y=y_ar,
-                    mode='lines',
-                    name=self._ch_names[channel_index]
+                x=x_ar,
+                y=y_ar,
+                mode='lines',
+                name=self._ch_names[channel_index]
             ),
-            row=channel_index+1,
+            row=channel_index + 1,
             col=1
         )
 
@@ -358,7 +358,7 @@ class StaggeredTraceFig():
             self._fig.update_xaxes(title_text=x_str, row=self._num_plots, col=1)
 
         if y_str is not None:
-            self._fig.update_yaxes(title_text=y_str, row=int(self._num_plots / 2)+1, col=1)
+            self._fig.update_yaxes(title_text=y_str, row=int(self._num_plots / 2) + 1, col=1)
 
 
 class HeatMapFig(HeatMapInterface):
@@ -494,6 +494,7 @@ class ComboTraceHMapPBar:
     def show(self):
         display(self._grid)
 
+
 def main():
     ch_names = ['CH1', 'CH2']
     iplt = StaggeredTraceFig(ch_names=ch_names)
@@ -504,6 +505,7 @@ def main():
         y_ar=np.zeros(5),
         channel_index=0
     )
+
 
 if __name__ == '__main__':
     main()

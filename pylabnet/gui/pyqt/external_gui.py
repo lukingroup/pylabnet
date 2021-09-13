@@ -41,11 +41,13 @@ import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath, upload_and_append_picture
+from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
+from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 from decouple import config
 import datetime
 from atlassian import Confluence
-
+from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
@@ -70,7 +72,7 @@ class Window(QtWidgets.QMainWindow):
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 
-    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False):
+    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False, log=None):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -104,6 +106,7 @@ class Window(QtWidgets.QMainWindow):
         self.containers = {}
         self.windows = {}
         self.auto_close = auto_close
+        self.log = log
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -141,83 +144,61 @@ class Window(QtWidgets.QMainWindow):
             if port is not None:
                 self.port_label.setText(f'Port: {port}')
                 self.port = port
-        except:
+        except: 
             pass
 
-   
-        extractAction = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
-        extractAction.setShortcut("Ctrl+A")
-        extractAction.setStatusTip('Upload to the confluence page')
-        extractAction.triggered.connect(self.upload_pic)
+        # Confluence handler and its button
+        self.confluence_handler = Confluence_Handler(self.app, "Confluence_info_setting")
+
+        extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+        extractAction_Upload.setShortcut("Ctrl+S")
+        extractAction_Upload.setStatusTip('Upload to the confluence page')
+        extractAction_Upload.triggered.connect(self.upload_pic)
+
+        extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+        extractAction_Update.setShortcut("Ctrl+X")
+        extractAction_Update.setStatusTip('The space and page names of confluence')
+        extractAction_Update.triggered.connect(self.update_setting)
+
 
         mainMenu = self.menuBar()
-        fileMenu = mainMenu.addMenu('&File')
-        fileMenu.addAction(extractAction)
+        ActionMenu = mainMenu.addMenu('&Action')
+        SettingMenu = mainMenu.addMenu('&Setting')
+        mainMenu.addMenu('&Edit')
+        mainMenu.addMenu('&Selection')
+        ActionMenu.addAction(extractAction_Upload)
+        SettingMenu.addAction(extractAction_Update)
 
-
-
+        # apply stylesheet
         self.apply_stylesheet()
 
+    def update_setting(self):
+        self.confluence_handler.Popup()
+        pass
+
+
+
     def upload_pic(self):
-        # load the env params
-        SCRNSHOT_ROOT = config('SCRNSHOT_ROOT')
-        URL = config('CONFLUENCE_URL')
-        USERNAME = config('CONFLUENCE_USERNAME')
-        PW = config('CONFLUENCE_PW')
-        USERKEY = config('CONFLUENCE_USERKEY')
-        DEV_root_id = config('CONFLUENCE_DEV_root_id')
-        
+        window_Title = self.windowTitle()
+        self.setWindowTitle('uploading ...')
+
         # screenshot and save
         timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
         scrn_shot_filename = "Screenshot_{}".format(timestamp_datetime) +  ".png"
-        scrn_shot_AbsPath = os.path.join(SCRNSHOT_ROOT, scrn_shot_filename)
+        scrn_shot_AbsPath = os.path.join("../../temp", scrn_shot_filename)
         pix = self.grab()
         pix.save(scrn_shot_AbsPath)
 
+        # upload to confluence page
+        upload_setting = "Settings" # Typically created by LabVIEW or successor.
+        upload_comment = "Upload successfully."
 
-
-        # upload to the confluence page
-        upload_setting = "Settings 1" # Typically created by LabVIEW or successor.
-        upload_comment = "Upload successfully. 1"
-
-        timestamp_date = datetime.datetime.now().strftime('%b %d %Y')
-        timestamp_day = datetime.datetime.now().strftime('%b %d %Y')
-        upload_page_title   =  "test-uploading graphs {}".format(timestamp_day)
-
-
-        confluence = Confluence(
-            url='{}/wiki'.format(URL), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
-            username=USERNAME,
-            password=PW)
-
-        if( confluence.page_exists('DEV', upload_page_title) ):
-            upload_page_id = confluence.get_page_id('DEV', upload_page_title)
-        else:
-            response = confluence.update_or_create(
-                parent_id=DEV_root_id, 
-                title=upload_page_title,
-                body='',
-                representation='storage')
-
-            upload_page_id = response['id']
-            web_url = response['_links']['base']+response['_links']['webui']
-            print(web_url)
-
-        upload_and_append_picture(
-            confluence=confluence,
-            USERKEY=USERKEY,
-            fileAbsPath=scrn_shot_AbsPath,
-            filename=scrn_shot_filename, 
-            comment=upload_comment, 
-            settings=upload_setting, 
-            page_id=upload_page_id, 
-            page_title=upload_page_title)
+        self.confluence_handler.upload_pic( scrn_shot_AbsPath, scrn_shot_filename, upload_comment, upload_setting)
 
         # delete the temperary file
         os.remove(scrn_shot_AbsPath)
-            
-        # self.log.info('uploaded')
 
+        self.setWindowTitle(window_Title)
         return
 
 
@@ -893,6 +874,7 @@ class ParameterPopup(QtWidgets.QWidget):
         self.base_layout.addWidget(self.configure_button)
         self.configure_button.clicked.connect(self.return_params)
         self.show()
+
 
     def return_params(self):
         """ Returns all parameter values and closes """

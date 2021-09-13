@@ -376,9 +376,6 @@ class Launcher:
 
         self.logger.info(f'Launching script {self.name}')
 
-
-
-
         mod.launch(
             logger=self.logger,
             loghost=self.log_ip,

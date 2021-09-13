@@ -178,7 +178,6 @@ class Controller:
         self.logfile_date_str = None
         self.filenamepath = None
         self.MAX_LOG_FILE_SIZE = 5000000 # 5MB
-        self.last_seen_buffer = ""
 
         # setting selection mode for server list to multi-select
         self.main_window.client_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -389,7 +388,7 @@ class Controller:
         if self.proxy:
             self.main_window.terminal.setText('Connected to master Log Server. \n')
         self.main_window.terminal.setText('Log messages will be displayed below \n')
-        self.main_window.buffer_terminal.document().setMaximumBlockCount(1000)
+        self.main_window.buffer_terminal.document().setMaximumBlockCount(100)
 
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
@@ -420,20 +419,13 @@ class Controller:
     def update_proxy(self, new_msg):
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
-        # Remove the !~ bookmark from the message
         self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
             except TypeError:
                 pass
-        
-        # New update index is the last !~ index found in the message
-        indices_found = re.findall(r'!~\d+~!', new_msg)
-        if len(indices_found) != 0 :
-            self.update_index = int(re.findall(r'\d+', indices_found[-1])[0])
-        else:
-            self.update_index = None
+        self.update_index = int(re.findall(r'\d+', re.findall(r'!~\d+~!', new_msg)[-1])[0])
 
     def kill_servers(self):
         """ Kills all servers connected to the logger, including the Log GUI and Log Server"""
@@ -500,7 +492,7 @@ class Controller:
         self.main_window.client_list.clear()
         self.client_list.clear()
 
-        if search_str != "":
+        if search_str is not "":
             for client, info in clients.items():
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
                 # look for clients that have name or ip address containing search string
@@ -996,85 +988,29 @@ class ProxyUpdater(QtCore.QObject):
     def run(self):
         while True:
             time.sleep(0.001)
-
             # Check clients and update
             self.controller._pull_connections()
 
             # Get buffer terminal
             buffer_terminal = self.controller.gui_client.get_text('buffer')
 
-            # Get the list of all bookmarks that exist in the buffer
-            bookmark_list = re.findall(r'!~\d+~!', buffer_terminal)
+            # Parse buffer terminal to get part of the message that is new
+            new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.controller.update_index+1}~!'):-1]
 
-            # Find the first bookmark in the buffer 
-            if len(bookmark_list) > 0:
-                first_index = int(re.findall(r'\d+', bookmark_list[0])[0])
-            
-            # If the buffer has no bookmarks, it means the entire buffer is 
-            # filled with an extremely long message.
-            else:
-                first_index = None
-            
-            ####
+            # Check if this failed
+            if new_msg == '':
 
-            # If this new buffer has no indices, it could be:
-            # (1) the buffer has not changed from before, if so do nothing.
-            # (2) the buffer has changed, but since there are no bookmarks for
-            # reference, we have no choice but to dump the entire buffer.
-            if first_index is None:
-             
-                # No change from before. Need to do this to check for no change
-                # since no bookmarks are present for reference.
-                if buffer_terminal == self.controller.last_seen_buffer:
-                    new_msg = ""
-                    
-                # The buffer changed, we dump the entire buffer.
-                else:
-                    new_msg = buffer_terminal
-                    new_msg += "\n\n ----------\nDumping entire buffer as no index was found in current buffer.\n"
-                    new_msg += "MESSAGES MAY HAVE BEEN OMITTED DUE TO EXCESSIVE LOGS\n---------- \n\n"
-            
-            # There exists an index in the current buffer.
-            else:  
-            
-                # Parse buffer terminal to get part of the message that is new.
-                # This is indicated by the bookmark with the update index incremented by 1.
-                if self.controller.update_index is not None:
-
-                    # Exclude last character as it some sort of whitespace
-                    new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.controller.update_index+1}~!'):-1]
-
-                    # If no new messages, it means either 
-                    # (1) there is just nothing to update (i.e. update_index+1 doesn't exist)
-                    # (2) there has been too many logs and the bookmark we are looking for has already been 
-                    #     ejected out of the buffer               
-                    if new_msg == "":
-                        # If the buffer is ahead of our expected next-index, 
-                        # we dump the entire buffer as our new message.
-                        if first_index > (self.controller.update_index + 1):
-
-                            new_msg = buffer_terminal
-                            new_msg += "\n\n ----------\nDumping entire buffer as index found in current buffer exceeded our last update's index.\n"
-                            new_msg += "MESSAGES MAY HAVE BEEN OMITTED DUE TO EXCESSIVE LOGS\n---------- \n\n"
-                        
-                        # If the index present is <= our update index,
-                        # it means that there is no new message to update.
-                        else:
-                            pass
-
-                # update_index being None means the previous buffer did not contain any 
-                # indices so we have no idea what the latest index is, so we just
-                # output everything that appears after the first index (which we know exists).
-                else:
-                    new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{first_index}~!'):-1]
-                    new_msg += "\n\n ----------\nPrevious buffer did not contain an index, contiuing from next received index.\n"
-                    new_msg += "MESSAGES MAY HAVE BEEN OMITTED DUE TO EXCESSIVE LOGS\n---------- \n\n"
+                # Check if the buffer is ahead of our last update
+                up_str = re.findall(r'!~\d+~!', new_msg)
+                if len(up_str) > 0:
+                    up_in = int(re.findall(r'\d+', up_str[0]))
+                    if up_in > self.controller.update_index:
+                        new_msg = buffer_terminal
 
             # If we have a new message to add, add it
             if new_msg != '':
                 self.update_signal.emit(new_msg)
 
-            self.controller.last_seen_buffer = buffer_terminal
 
 
 def main():

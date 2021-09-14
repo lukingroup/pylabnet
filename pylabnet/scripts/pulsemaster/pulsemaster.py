@@ -4,12 +4,11 @@ import numpy as np
 import time
 import pyqtgraph as pg
 import json
-import socket
 import functools
 
-from PyQt5.QtWidgets import QShortcut,  QToolBox, QFileDialog,  QMessageBox, QPushButton, QGroupBox, \
-                            QFormLayout, QComboBox, QWidget, QTableWidgetItem, QVBoxLayout, \
-                            QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox, QGridLayout
+from PyQt5.QtWidgets import QShortcut, QToolBox, QFileDialog, QMessageBox, QPushButton, QGroupBox, \
+    QFormLayout, QComboBox, QWidget, QTableWidgetItem, QVBoxLayout, \
+    QTableWidgetItem, QCompleter, QLabel, QLineEdit, QCheckBox, QGridLayout
 from PyQt5.QtGui import QKeySequence
 from PyQt5.QtCore import QRect, Qt, QAbstractTableModel, QTimer, QVariant
 
@@ -71,13 +70,13 @@ class PulseMaster:
             add_pulse_button=1,
             new_pulseblock_button=1,
             pulseblock_combo=1,
-            variable_table_view = 1,
-            add_variable_button = 1,
+            variable_table_view=1,
+            add_variable_button=1,
             pulse_list_vlayout=1,
             pulse_scrollarea=1,
             pulse_layout_widget=1,
             seq_var_table=1,
-            load_seq_vars= 1,
+            load_seq_vars=1,
             save_seq_vars=1,
             seqt_textedit=1,
             load_seqt=1,
@@ -106,7 +105,7 @@ class PulseMaster:
         # Initialize Variable dict
         self.vars = {}
 
-        self.variable_table =self.widgets['variable_table_view']
+        self.variable_table = self.widgets['variable_table_view']
 
         self.variable_table_model = DictionaryTableModel(
             self.vars,
@@ -117,12 +116,12 @@ class PulseMaster:
         self.variable_table.setModel(self.variable_table_model)
 
         # Store completers
-        self.var_completer  = QCompleter(self.vars.keys())
+        self.var_completer = QCompleter(self.vars.keys())
 
         # Initialize Pulse Selector Form
         self.setup_pulse_selector_form()
 
-         # Populate channel table
+        # Populate channel table
         self.populate_ch_table_from_dict()
 
         self.pulse_toolbox = QToolBox()
@@ -153,7 +152,7 @@ class PulseMaster:
         # Initialize preserve_bits checkbox state in dictionary
         self.update_preserve_bits()
 
-         # Apply CSS stylesheet
+        # Apply CSS stylesheet
         self.gui.apply_stylesheet()
 
         # Assign all actions to buttons and data-change events
@@ -226,7 +225,6 @@ class PulseMaster:
         self.widgets["save_pulseblock"].clicked.connect(self.save_current_pb_constructor)
         self.widgets["load_pulseblock"].clicked.connect(self.load_pulseblock_from_file)
 
-
     def pulseblock_dropdown_changed(self):
         self.update_pulse_list_toolbox()
         self.plot_current_pulseblock()
@@ -237,27 +235,26 @@ class PulseMaster:
     def get_pb_specifier_from_dict(self, pulsedict):
         """ Create PulseSpecifier object from dictionary."""
 
-        pulsetype_dict =  self._get_pulsetype_dict_by_pb_type(pulsedict['pulsetype'])
+        pulsetype_dict = self._get_pulsetype_dict_by_pb_type(pulsedict['pulsetype'])
 
         pb_specifier = PulseSpecifier(
-            channel = pulsedict['channel'],
-            pulsetype = pulsedict['pulsetype'],
-            pulsetype_name = pulsedict['name'],
-            is_analog = simple_eval(pulsetype_dict["is_analog"])
+            channel=pulsedict['channel'],
+            pulsetype=pulsedict['pulsetype'],
+            pulsetype_name=pulsedict['name'],
+            is_analog=simple_eval(pulsetype_dict["is_analog"])
         )
 
         pb_specifier.set_timing_info(
-            offset = pulsedict['offset'],
-            dur = pulsedict['dur'],
-            tref = pulsedict['tref']
+            offset=pulsedict['offset'],
+            dur=pulsedict['dur'],
+            tref=pulsedict['tref']
         )
 
         pb_specifier.set_pulse_params(
-            pulsevar_dict = pulsedict['pulse_vars']
+            pulsevar_dict=pulsedict['pulse_vars']
         )
 
         return pb_specifier
-
 
     def get_pb_constructor_from_dict(self, pb_dict):
         """Generate Pb contructor from dictionary."""
@@ -295,7 +292,7 @@ class PulseMaster:
         imported_contructor = self.get_pb_constructor_from_dict(pb_dict)
 
         # Check if pulseblock with same name alraedy exists
-        if  imported_contructor.name in [constructor.name for constructor in self.pulseblock_constructors]:
+        if imported_contructor.name in [constructor.name for constructor in self.pulseblock_constructors]:
             self.showerror(f"There already exists a pulseblock with the name '{imported_contructor.name}'.")
             return
 
@@ -448,17 +445,16 @@ class PulseMaster:
         cursor.clearSelection()
         self.widgets['seqt_textedit'].setTextCursor(cursor)
 
-
     def text_filesave(self, data, filetype="Sequencer-template files (*.seqct)"):
         """ Generic text file save."""
-        name = QFileDialog.getSaveFileName( self.gui, 'Save File', '', filetype)
+        name = QFileDialog.getSaveFileName(self.gui, 'Save File', '', filetype)
         with open(name[0], "w") as text_file:
             text_file.write(data)
 
     def json_file_save(self, data):
         """ Generic file saving."""
-        name = QFileDialog.getSaveFileName( self.gui, 'Save File', '', "JSON files (*.json)")
-        with open(name[0],'w') as fp:
+        name = QFileDialog.getSaveFileName(self.gui, 'Save File', '', "JSON files (*.json)")
+        with open(name[0], 'w') as fp:
             json.dump(data, fp, indent=4)
 
         self.log.info(f"Successfully saved data as {name[0]}")
@@ -504,14 +500,14 @@ class PulseMaster:
 
     def get_seq_var_dict_from_previous(self):
         """ Read at stored sequence variable dict filepaths and loads it"""
-        if  self.seq_var_filepath is not None:
+        if self.seq_var_filepath is not None:
             f = open(self.seq_var_filepath)
             seq_var_dict = json.load(f)
             self.set_seq_var_dict(seq_var_dict)
 
     def get_filename(self, filetype="JSON files (*.json)"):
         """Open file selector widget and get files."""
-        return QFileDialog.getOpenFileName(self.gui, 'Open file', '',filetype)
+        return QFileDialog.getOpenFileName(self.gui, 'Open file', '', filetype)
 
     def load_json_dict(self):
         """Open pop-up, search for JSON file and return as dict."""
@@ -655,11 +651,11 @@ class PulseMaster:
                 y_ar.append(ch_index)
                 text_ar.append(f'{pb_obj.dur:.2e}')
 
-            pen=pg.mkPen(
-               color=self.gui.COLOR_LIST[
-                ch_index
-            ],
-            width=3
+            pen = pg.mkPen(
+                color=self.gui.COLOR_LIST[
+                    ch_index
+                ],
+                width=3
             )
             self.widgets["pulse_layout_widget"].addLegend()
             self.widgets["pulse_layout_widget"].plot(x_ar, y_ar, pen=pen, name=ch.name)
@@ -731,7 +727,7 @@ class PulseMaster:
 
         return copied_constructor
 
-    def  return_pulseblock_new_pulseblock_constructor(self):
+    def return_pulseblock_new_pulseblock_constructor(self):
         """ Add new pulseblock by clicking the "Add Pb" button."""
 
         inherit_combobox_text = self.add_pb_popup.pulseblock_inherit_field.currentText()
@@ -739,10 +735,10 @@ class PulseMaster:
 
         # If no option is choosen in the dropdown, generate new pb contructor.
         if inherit_combobox_text == "":
-            pb_constructor= PulseblockConstructor(
+            pb_constructor = PulseblockConstructor(
                 name=pb_name,
                 log=self.log,
-                var_dict = self.vars,
+                var_dict=self.vars,
                 config=self.config_dict
             )
 
@@ -750,8 +746,8 @@ class PulseMaster:
         else:
             ref_pb_constructor = self.get_pb_contructor_by_name(inherit_combobox_text)
             pb_constructor = self.copy_pulseblock_constructor(
-                pb_constructor = ref_pb_constructor,
-                new_name = pb_name
+                pb_constructor=ref_pb_constructor,
+                new_name=pb_name
             )
 
         return pb_constructor
@@ -813,7 +809,7 @@ class PulseMaster:
 
         if new_index < 0 or new_index >= len(pb_constructor.pulse_specifiers):
             self.showerror(f"Moving pulse type {pulse_specifier.pulsetype_name}"
-                f"by {direction} would move it out of bounds.")
+                           f"by {direction} would move it out of bounds.")
             return
 
         # Create a copy of the original
@@ -858,7 +854,7 @@ class PulseMaster:
             channel_is_analog = (self.ch_assignment_dict[value][0] == "analog")
             if channel_is_analog != eval(pulsetype_dict["is_analog"]):
                 self.showerror(f"Type of pulse {pulsetype_dict['name']} "
-                                f"does not match channel {value}.")
+                               f"does not match channel {value}.")
                 return
             pulse_specifier.channel = value
 
@@ -904,7 +900,6 @@ class PulseMaster:
         self.plot_current_pulseblock()
 
     def get_pulse_specifier_form(self, pulse_specifier, pb_constructor, pulse_index):
-
         """Change input fields if pulse selector dropdown has been changed."""
 
         # Setup widget box
@@ -919,7 +914,7 @@ class PulseMaster:
 
         # Add channel as an extra field since it is not in the pulse fields
         pulse_fields = [{'label': 'Channel', 'input_type': 'QLineEdit', 'var': 'ch'}] \
-                        + pulsetype_dict['fields']
+            + pulsetype_dict['fields']
 
         # Add the labels and fields for each variable
         for row, field in enumerate(pulse_fields):
@@ -933,12 +928,12 @@ class PulseMaster:
 
             # Add choices to combobox.
             if type(field_input) is QComboBox:
-                    field_input.addItems(field['combo_choice'])
+                field_input.addItems(field['combo_choice'])
 
             # Auto create name of widget:
             input_widget_name = self._get_pulse_mod_field_name(
-                field_dict = field,
-                uid = pulse_specifier.uid
+                field_dict=field,
+                uid=pulse_specifier.uid
             )
 
             field_input.setObjectName(input_widget_name)
@@ -1008,9 +1003,10 @@ class PulseMaster:
                 field_input.clicked.connect(pulse_mod_function)
 
         # Add buttons to move pulse up/down
-        pulse_up_function = lambda: self.shift_pulse_specifier(
+        def pulse_up_function(): return self.shift_pulse_specifier(
             pulse_specifier, pb_constructor, -1)
-        pulse_down_function = lambda: self.shift_pulse_specifier(
+
+        def pulse_down_function(): return self.shift_pulse_specifier(
             pulse_specifier, pb_constructor, +1)
 
         up_button = QPushButton("Move Up")
@@ -1029,7 +1025,7 @@ class PulseMaster:
         delete_button = QPushButton("Delete Pulse")
         delete_button.setStyleSheet("background-color : #6a040f")
 
-        remove_pulse_function = lambda: self.remove_pulse_specifier(
+        def remove_pulse_function(): return self.remove_pulse_specifier(
             pulse_specifier=pulse_specifier,
             pb_constructor=pb_constructor
         )
@@ -1059,7 +1055,6 @@ class PulseMaster:
         self.pulse_selector_form_layout_static.addRow(QLabel("Pulse Type:"), self.pulse_selector_pulse_drop_down)
         self.pulse_selector_form_static.setLayout(self.pulse_selector_form_layout_static)
 
-
         # Add a second form containing the fields that change from pulsetype to pulsetype
         self.pulse_selector_form_variable = QGroupBox()
         self.pulse_selector_form_variable.setObjectName("pulse_var_toolbox")
@@ -1076,7 +1071,7 @@ class PulseMaster:
 
     def get_pb_contructor_list(self):
         """ Return list of names of all instanciated Pulseblock contructors."""
-        return  [pb_constructor.name for pb_constructor in self.pulseblock_constructors]
+        return [pb_constructor.name for pb_constructor in self.pulseblock_constructors]
 
     def get_pb_contructor_by_name(self, name):
         """ For a given pulseblock name, return the corresponding PulseblockConstrutor"""
@@ -1121,7 +1116,7 @@ class PulseMaster:
                 var_val_float = float(var_val)
             except ValueError:
                 self.log.warn(f'Variable value {var_val} cannot be typecast to float.')
-                validated =  False
+                validated = False
 
         return validated, table_data
 
@@ -1158,11 +1153,9 @@ class PulseMaster:
         self.add_pb_popup.global_hbox = QVBoxLayout()
         self.add_pb_popup.setLayout(self.add_pb_popup.global_hbox)
 
-
         # Setup of box.
         self.add_pb_popup.form_groupbox = QGroupBox("Add Pulseblock")
         self.add_pb_popup.form_layout = QFormLayout()
-
 
         self.add_pb_popup.pulseblock_name_field = QLineEdit()
         self.add_pb_popup.pulseblock_inherit_field = QComboBox()
@@ -1205,7 +1198,6 @@ class PulseMaster:
     def get_pulseblock_names(self):
         return self.pulseblocks.keys()
 
-
     def add_pulseblock_constructors_from_popup(self):
         """Create new pulseblock instance and add to pb dictionary"""
 
@@ -1223,7 +1215,7 @@ class PulseMaster:
             pb_constructor
         )
 
-         #Temporarliy disconnect the currentIndexChanged so it does not fire during the
+        #Temporarliy disconnect the currentIndexChanged so it does not fire during the
         # constructor generation
         self.widgets["pulseblock_combo"].currentIndexChanged.disconnect()
 
@@ -1254,10 +1246,10 @@ class PulseMaster:
         """
 
         pulse_specifier = PulseSpecifier(
-            channel = pulse_data_dict["channel"],
-            pulsetype = pulsetype_dict["pulseblock_type"],
-            pulsetype_name = pulsetype_dict["name"],
-            is_analog = simple_eval(pulsetype_dict["is_analog"])
+            channel=pulse_data_dict["channel"],
+            pulsetype=pulsetype_dict["pulseblock_type"],
+            pulsetype_name=pulsetype_dict["name"],
+            is_analog=simple_eval(pulsetype_dict["is_analog"])
         )
 
         # Add timing info.
@@ -1279,7 +1271,7 @@ class PulseMaster:
                 pulsevar_dict[pulse_param_name] = pulse_param_value
 
         pulse_specifier.set_pulse_params(
-            pulsevar_dict = pulsevar_dict
+            pulsevar_dict=pulsevar_dict
         )
 
         return pulse_specifier
@@ -1331,16 +1323,15 @@ class PulseMaster:
         # Plot
         self.plot_current_pulseblock()
 
-
     def return_pulsedict(self, pulsetype_dict):
         """ Return values of pulse fields."""
 
         # Keys = String from config specifying the field type
         # Values = (QObject for the field, Function to extract the field's value)
         input_field_handlers = {
-            "QLineEdit" : (QLineEdit, lambda obj: obj.text()),
-            "QComboBox" : (QComboBox, lambda obj: obj.currentText()),
-            "QCheckBox" : (QCheckBox, lambda obj: obj.isChecked())
+            "QLineEdit": (QLineEdit, lambda obj: obj.text()),
+            "QComboBox": (QComboBox, lambda obj: obj.currentText()),
+            "QCheckBox": (QCheckBox, lambda obj: obj.isChecked())
         }
 
         # Get the name and field type from config file
@@ -1407,7 +1398,7 @@ class PulseMaster:
 
         # IQ setting must be ticked with Modulation setting
         if ("iq" in pulsedict and pulsedict["iq"] and
-            "mod" in pulsedict and not pulsedict["mod"]):
+                "mod" in pulsedict and not pulsedict["mod"]):
             self.showerror("IQ setting cannot be set without modulation!")
             return False, None
 
@@ -1416,7 +1407,7 @@ class PulseMaster:
         # Create a list of channel names that this pulse uses
         # Would be a 1-element list for a normal pulse and 2-element for IQ pulse
         if "iq" in pulsedict and pulsedict["iq"]:
-            pulse_ch_list = [channel+"_i", channel+"_q"]
+            pulse_ch_list = [channel + "_i", channel + "_q"]
         else:
             pulse_ch_list = [channel]
 
@@ -1444,7 +1435,7 @@ class PulseMaster:
             channel_is_analog = (self.ch_assignment_dict[ch][0] == "analog")
             if channel_is_analog != eval(pulsetype_dict["is_analog"]):
                 self.showerror(f"Type of pulse {pulsetype_dict['name']} "
-                                f"does not match channel {ch}.")
+                               f"does not match channel {ch}.")
                 return False, None
 
         return True, pulsedict
@@ -1460,7 +1451,7 @@ class PulseMaster:
 
     def update_var_completer(self):
         """ Update variable completer """
-        self.var_completer  = QCompleter(self.vars.keys())
+        self.var_completer = QCompleter(self.vars.keys())
 
         # Retrieve all Qlineedits
         var_completer_widgets = []
@@ -1476,7 +1467,7 @@ class PulseMaster:
         #     self.log.info(qlinedit.objectName())
 
         for widget in var_completer_widgets:
-                widget.setCompleter(self.var_completer)
+            widget.setCompleter(self.var_completer)
 
     def setup_pulse_selector_form(self):
         self.pulse_selector_form_static = QGroupBox()
@@ -1558,7 +1549,6 @@ class PulseMaster:
 
         return input_widget_name
 
-
     def _get_pulse_fieldtype(self, field_dict):
         """Determine input field type."""
         # Build field.
@@ -1596,7 +1586,7 @@ class PulseMaster:
 
             # Add choices to combobox.
             if type(field_input) is QComboBox:
-                    field_input.addItems(field['combo_choice'])
+                field_input.addItems(field['combo_choice'])
 
             # Auto create name of widget:
             input_widget_name = self._get_form_field_widget_name(field)
@@ -1643,11 +1633,9 @@ class PulseMaster:
         # Apply CSS stylesheet
         self.gui.apply_stylesheet()
 
-
     def set_pulsetype_combobox(self, combobox):
         for pulsetype in self.config_dict['pulse_types']:
             combobox.addItem(pulsetype['name'])
-
 
     def set_channel_completer(self):
         """Reset the autocomplete for the channel selection."""
@@ -1658,8 +1646,8 @@ class PulseMaster:
         """Read in channel assignment dictionary and store as member variable."""
         # Load channel assignment.
         ch_assignment_dict = load_config(
-                config_filename=self.config_dict['ch_dict'],
-                logger=self.log
+            config_filename=self.config_dict['ch_dict'],
+            logger=self.log
         )
 
         # Check for duplciate channels
@@ -1669,7 +1657,7 @@ class PulseMaster:
                 channels.append(item)
             else:
                 self.showerror(f"Channel number {item} is duplicated in the "
-                    "chanel assignment dictionary. ")
+                               "chanel assignment dictionary. ")
                 return
 
         self.ch_assignment_dict = ch_assignment_dict
@@ -1688,6 +1676,7 @@ class PulseMaster:
 
         self.log.info('Channel settings successfully loaded.')
 
+
 def launch(**kwargs):
     """ Launches the pulsemaster script """
 
@@ -1696,10 +1685,10 @@ def launch(**kwargs):
 
     try:
         mw_source_client = find_client(
-        clients=kwargs['clients'],
-        settings=kwargs['config'],
-        client_type='HMC_T2220',
-        logger=logger)
+            clients=kwargs['clients'],
+            settings=kwargs['config'],
+            client_type='HMC_T2220',
+            logger=logger)
     except:
         mw_source_client = None
 
@@ -1713,7 +1702,7 @@ def launch(**kwargs):
         constructor = PulseblockConstructor(
             name='test',
             log=logger,
-            var_dict = {},
+            var_dict={},
             config=pulsemaster.config_dict
         )
         pulsemaster.pulseblock_constructors.append(constructor)

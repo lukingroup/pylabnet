@@ -13,6 +13,7 @@ class Service(ServiceBase):
     def exposed_is_on(self, channel_id):
         return self._module.is_on(channel_id)
 
+
 class Client(ClientBase):
 
     def turn_on(self, channel_id):

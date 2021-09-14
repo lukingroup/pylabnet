@@ -1,5 +1,4 @@
 from pyvisa import ResourceManager, VisaIOError
-import socket
 from pylabnet.hardware.awg.dio_breakout import Driver
 from pylabnet.utils.helper_methods import get_ip, load_device_config
 from pylabnet.network.client_server.dio_breakout import Service, Client

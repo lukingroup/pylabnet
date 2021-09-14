@@ -1,9 +1,7 @@
 """ Hardware wrapper for Swabian Instruments TimeTagger, including client and server access classes """
 
 import TimeTagger as TT
-import pickle
 import time
-import socket
 import numpy as np
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -275,7 +273,7 @@ class Wrap:
         if delay is not None:
             self._channels[f'{channel_name}_delayed'] = TT.DelayedChannel(
                 tagger=self._tagger,
-                input_channel= gate_ch,
+                input_channel=gate_ch,
                 delay=int(delay)
             )
             self._channels[f'{channel_name}_delayed_falling'] = TT.DelayedChannel(
@@ -311,7 +309,6 @@ class Wrap:
         )
         self.log.info(f'Created delayed channel {channel_name}, '
                       f'click channel: {click_ch}, delay: {delay}')
-
 
     def create_combined_channel(self, channel_name, channel_list):
         """ Creates a combined virtual channel which includes events from multiple cahnnels
@@ -362,7 +359,6 @@ class Wrap:
         self._tagger.setTriggerLevel(int(channel), float(voltage))
         new_trigger_val = self._tagger.getTriggerLevel(int(channel))
         self.log.info(f"Changed trigger level of channel {channel} to {new_trigger_val} V.")
-
 
     @staticmethod
     def handle_name(name):

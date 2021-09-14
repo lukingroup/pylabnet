@@ -3,8 +3,8 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.gui.igui.iplot import SingleTraceFig, MultiTraceFig
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (generic_save, get_gui_widgets,
-    get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
-    load_config, pyqtgraph_save, find_client, get_ip, load_script_config)
+                                           get_legend_from_graphics_view, add_to_legend, create_server, unpack_launcher,
+                                           load_config, pyqtgraph_save, find_client, get_ip, load_script_config)
 from pylabnet.network.client_server.count_histogram import Service
 from pylabnet.scripts.counter.hist_fit import FitPopup
 
@@ -54,15 +54,14 @@ class TimeTrace:
         self.is_paused = False
         self.up_in = update_interval
 
-
     def start_acquisition(self):
         """ Begins time-trace acquisition """
 
         if self.correlation:
             self.ctr.start_correlation(
                 name=self.hist,
-                ch_1 = self.start_ch,
-                ch_2 = self.click_ch,
+                ch_1=self.start_ch,
+                ch_2=self.click_ch,
                 binwidth=self.binwidth,
                 n_bins=self.n_bins
             )
@@ -97,7 +96,7 @@ class TimeTrace:
         """ Instantiates a plot, assuming counter is live """
         self.plot = SingleTraceFig(title_str='Count Histogram')
         self.plot.set_data(
-            x_ar=self.ctr.get_x_axis(self.hist)/1e12,
+            x_ar=self.ctr.get_x_axis(self.hist) / 1e12,
             y_ar=self.ctr.get_counts(self.hist)[0]
         )
 
@@ -107,7 +106,6 @@ class TimeTrace:
         self.plot.set_data(
             y_ar=self.ctr.get_counts(self.hist)[0]
         )
-
 
     def go(self):
         """ Runs counter from scratch """
@@ -151,7 +149,7 @@ class TimeTrace:
 
         generic_save(
             data=np.array([
-                self.ctr.get_x_axis(self.hist)/1e12,
+                self.ctr.get_x_axis(self.hist) / 1e12,
                 self.ctr.get_counts(self.hist)[0]
             ]),
             filename=filename,
@@ -299,10 +297,10 @@ class TimeTraceGui(TimeTrace):
 
     def update_window_length_label(self):
         """ Update label previewing the total window length"""
-        binwidth=int(self._get_binwidth()),
-        n_bins=self.gui.n_bins.value()
+        binwidth = int(self._get_binwidth()),
+        n_bins = self.gui.n_bins.value()
 
-        window_length = binwidth[0]*n_bins # in ps
+        window_length = binwidth[0] * n_bins # in ps
         self.gui.window_length.setText(f'{window_length/1000} ns')
 
     def update_parameters(self, binwidth, n_bins):
@@ -312,12 +310,11 @@ class TimeTraceGui(TimeTrace):
         :param n_Bins: (int) total number of bins
         """
 
-
         self.set_parameters(binwidth, n_bins)
         for gate in self.gates.values():
             gate.set_parameters(binwidth, n_bins)
 
-    def fit_config(self, status:bool):
+    def fit_config(self, status: bool):
         """ Configures fitting add-on
 
         :param status: (bool) whether or not fit button is checked
@@ -326,10 +323,10 @@ class TimeTraceGui(TimeTrace):
         # If box is newly checked, instantiate popup
         if status:
             self.fit_popup = FitPopup(ui='fit_popup_hist',
-                                      x=np.array(range(self.gui.n_bins.value()))*int(self._get_binwidth())/1e12, #dummy values, not actually used None, #self.ctr.get_x_axis(self.hist)/1e12,
+                                      x=np.array(range(self.gui.n_bins.value())) * int(self._get_binwidth()) / 1e12, #dummy values, not actually used None, #self.ctr.get_x_axis(self.hist)/1e12,
                                       data=np.zeros(self.gui.n_bins.value()), #dummy values, not actually used #None, #self.ctr.get_counts(self.hist)[0],
-                                      p0 = None,
-                                      config = self.config,
+                                      p0=None,
+                                      config=self.config,
                                       log=self.log)
             self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
             self.fit_curve = self.gui.graph.plot(
@@ -402,7 +399,7 @@ class TimeTraceGui(TimeTrace):
         self.curve.clear()
 
         self.curve.setData(
-            self.ctr.get_x_axis(self.hist)/1e12,
+            self.ctr.get_x_axis(self.hist) / 1e12,
             self.ctr.get_counts(self.hist)[0]
         )
 
@@ -414,7 +411,7 @@ class TimeTraceGui(TimeTrace):
         for gate_name, gate_curve in self.gate_curves.items():
             gate_curve.clear()
             gate_curve.setData(
-                self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist)/1e12,
+                self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist) / 1e12,
                 self.gates[gate_name].ctr.get_counts(self.gates[gate_name].hist)[0]
             )
 
@@ -422,7 +419,7 @@ class TimeTraceGui(TimeTrace):
         """ Adds latest data to the plot """
 
         self.curve.setData(
-            self.ctr.get_x_axis(self.hist)/1e12,
+            self.ctr.get_x_axis(self.hist) / 1e12,
             self.ctr.get_counts(self.hist)[0]
         )
 
@@ -431,7 +428,7 @@ class TimeTraceGui(TimeTrace):
 
         for gate_name, gate_curve in self.gate_curves.items():
             gate_curve.setData(
-                self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist)/1e12,
+                self.gates[gate_name].ctr.get_x_axis(self.gates[gate_name].hist) / 1e12,
                 self.gates[gate_name].ctr.get_counts(self.gates[gate_name].hist)[0]
             )
 
@@ -439,15 +436,15 @@ class TimeTraceGui(TimeTrace):
         """ Updates fits """
         if self.fit_popup.mod is not None and self.fit_popup.mod.init_params is not None:
             self.fit_popup.data = np.array(self.ctr.get_counts(self.hist)[0])
-            self.fit_popup.x = np.array(self.ctr.get_x_axis(self.hist)/1e12)
+            self.fit_popup.x = np.array(self.ctr.get_x_axis(self.hist) / 1e12)
             if self.p0 is not None:
                 self.fit_popup.p0 = self.p0
             self.fit, self.p0 = self.fit_popup.fit_mod()
             if self.fit_popup.fit_suc:
                 self.fit_curve.setData(
-                        self.ctr.get_x_axis(self.hist)/1e12,
-                        self.fit
-                    )
+                    self.ctr.get_x_axis(self.hist) / 1e12,
+                    self.fit
+                )
 
     def _get_binwidth(self):
         """ Gets the binwidth using the unit combo box
@@ -460,11 +457,11 @@ class TimeTraceGui(TimeTrace):
         if unit_index == 0:
             return val
         elif unit_index == 1:
-            return val*1e3
+            return val * 1e3
         elif unit_index == 2:
-            return val*1e6
+            return val * 1e6
         elif unit_index == 3:
-            return val*1e9
+            return val * 1e9
 
     def _configure_gui_gates(self):
         """ Configures the gates part of the GUI """
@@ -517,7 +514,7 @@ class TimeTraceGui(TimeTrace):
 
         generic_save(
             data=np.array([
-                self.ctr.get_x_axis(self.hist)/1e12,
+                self.ctr.get_x_axis(self.hist) / 1e12,
                 self.ctr.get_counts(self.hist)[0]
             ]),
             filename=filename,
@@ -528,7 +525,7 @@ class TimeTraceGui(TimeTrace):
         for gate_name, gate in self.gates.items():
             generic_save(
                 data=np.array([
-                    gate.ctr.get_x_axis(gate.hist)/1e12,
+                    gate.ctr.get_x_axis(gate.hist) / 1e12,
                     gate.ctr.get_counts(gate.hist)[0]
                 ]),
                 filename=gate_name,
@@ -560,16 +557,16 @@ def launch(**kwargs):
     )
 
     ctr = find_client(
-                clients,
-                config,
-                client_type='si_tt',
-                client_config='standard_ctr',
-                logger=logger
+        clients,
+        config,
+        client_type='si_tt',
+        client_config='standard_ctr',
+        logger=logger
     )
 
     # Instantiate Monitor script
     trace = TimeTraceGui(
-        ctr = ctr,
+        ctr=ctr,
         log=logger,
         config=config,
     )
@@ -587,4 +584,3 @@ def launch(**kwargs):
     while True:
 
         trace.gui.force_update()
-

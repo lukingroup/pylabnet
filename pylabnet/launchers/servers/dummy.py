@@ -3,12 +3,12 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
 
-import socket
 import os
 
 
 class Dummy:
     pass
+
 
 class Client(ClientBase):
     pass

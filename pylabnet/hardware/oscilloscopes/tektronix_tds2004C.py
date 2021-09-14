@@ -61,8 +61,8 @@ class Driver():
 
         # Tidy up response using regex.
         trig_channel = re.compile(
-             ':TRIGGER:MAIN:EDGE:SOURCE[ ]([^\\n]+)'
-            ).match(res).group(1)
+            ':TRIGGER:MAIN:EDGE:SOURCE[ ]([^\\n]+)'
+        ).match(res).group(1)
 
         return trig_channel
 
@@ -95,8 +95,8 @@ class Driver():
         """
 
         value = float(re.compile(
-             f'{command}[ ]([0-9\.\+Ee-]+)'
-            ).match(value).group(1))
+            f'{command}[ ]([0-9\.\+Ee-]+)'
+        ).match(value).group(1))
 
         return value
 
@@ -155,17 +155,17 @@ class Driver():
             (
                 np.arange(int(wave_pre_matches['n_points'])) -
                 int(wave_pre_matches['pt_off'])
-            ) * float(wave_pre_matches['x_incr'])
+        ) * float(wave_pre_matches['x_incr'])
 
         x_unit = wave_pre_matches['x_unit']
         y_unit = wave_pre_matches['y_unit']
 
         # Construct trace dictionary.
         trace_dict = {
-            'trace':    trace,
-            'ts':       ts,
-            'x_unit':   x_unit,
-            'y_unit':   y_unit
+            'trace': trace,
+            'ts': ts,
+            'x_unit': x_unit,
+            'y_unit': y_unit
         }
 
         return trace_dict
@@ -208,7 +208,7 @@ class Driver():
         raw_curve = res.replace(':CURVE', '').replace(' ', '').replace('\n', '')
 
         # Transform in numpy array.
-        trace = np.fromstring(raw_curve,  dtype=int, sep=',')
+        trace = np.fromstring(raw_curve, dtype=int, sep=',')
 
         # Read wave preamble.
         wave_pre = self.device.query('WFMPre?')

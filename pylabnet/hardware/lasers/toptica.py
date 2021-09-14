@@ -20,7 +20,7 @@ class DLC_Pro:
         self.port = port
         self.log = LogHandler(logger)
         self.dlc = None
-        self.laser_nums = range(1, num_lasers+1)
+        self.laser_nums = range(1, num_lasers + 1)
 
         # Check connection
         try:
@@ -36,8 +36,6 @@ class DLC_Pro:
             self.log.error('Could not connect to Toptica DLC Pro at '
                            f'IP address: {self.host}, port: {self.port}')
 
-
-
     def _check_laser_connection(self, laser_num=1):
         """ Read out laser number
 
@@ -49,7 +47,6 @@ class DLC_Pro:
         self.dlc.write(f"(param-disp 'laser{laser_num}:dl:serial-number)\n".encode('utf'))
         serial = int(self.dlc.read_until(b'>', timeout=1).split()[-3].decode('utf')[1:-1])
         self.log.info(f'Connected to Toptica {laser_type} {laser_num}, S/N {serial}')
-
 
     def is_laser_on(self, laser_num=1):
         """ Checks if the laser is on or off
@@ -184,7 +181,7 @@ class DLC_Pro:
         """
 
         # Check that parameters are within range
-        if (offset + (amplitude/2) > 130) or (offset - (amplitude/2) < -1):
+        if (offset + (amplitude / 2) > 130) or (offset - (amplitude / 2) < -1):
             self.log.warn('Warning, invalid scan parameters set.'
                           'Make sure voltages are between -1 and 130 V')
 

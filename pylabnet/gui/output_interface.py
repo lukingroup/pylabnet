@@ -1,5 +1,6 @@
 import abc
 
+
 class MultiTraceInterface(abc.ABC):
 
     @abc.abstractmethod
@@ -54,4 +55,3 @@ class PBarInterface(abc.ABC):
     @abc.abstractmethod
     def set_value(self, value):
         pass
-

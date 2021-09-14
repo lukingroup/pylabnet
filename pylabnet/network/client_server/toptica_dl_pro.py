@@ -93,7 +93,6 @@ class Service(ServiceBase):
         return self._module.stop_scan(laser_num)
 
 
-
 class Client(ClientBase):
 
     def is_laser_on(self, laser_num=1):
@@ -124,7 +123,6 @@ class Client(ClientBase):
         voltage = pickle.dumps(voltages[0])
         ao_channel = pickle.dumps(ao_channel)
         return self._service.exposed_set_voltage(voltage, ao_channel)
-
 
     def current_sp(self, laser_num):
         """ Gets current setpoint

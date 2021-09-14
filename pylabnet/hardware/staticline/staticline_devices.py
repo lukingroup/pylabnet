@@ -4,6 +4,8 @@ from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 
 # Maximal output for Hittite MW source
 MW_MAXVAL = 25
+
+
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
 
@@ -33,7 +35,7 @@ class StaticLineHardwareHandler(ABC):
         self.setup()
         self.log.info(
             f"Setup of staticline {name} using module {self.hardware_name} successful."
-            )
+        )
 
     @abstractmethod
     def setup(self):
@@ -41,7 +43,6 @@ class StaticLineHardwareHandler(ABC):
         device client function calls. This is an abstract method as each
         subclass implements its own version based on its own functions.
         '''
-        pass
 
 
 class HDAWG(StaticLineHardwareHandler):
@@ -119,6 +120,7 @@ class HDAWG(StaticLineHardwareHandler):
         # Set correct mode to manual
         self.hardware_client.seti('dios/0/mode', 0)
 
+
 class NiDaqMx(StaticLineHardwareHandler):
 
     def setup(self):
@@ -168,7 +170,9 @@ class NiDaqMx(StaticLineHardwareHandler):
 
     def set_dig_value(self, value):
         self.up_voltage = value
-        if (self.is_up): self.up()
+        if (self.is_up):
+            self.up()
+
 
 class DioBreakout(StaticLineHardwareHandler):
     def setup(self):
@@ -184,6 +188,7 @@ class DioBreakout(StaticLineHardwareHandler):
         else:
             self.hardware_client.set_low_voltage(self.board, self.channel, value)
 
+
 class Toptica(StaticLineHardwareHandler):
 
     def setup(self):
@@ -194,6 +199,7 @@ class Toptica(StaticLineHardwareHandler):
         self.up = self.hardware_client.turn_on
         self.down = self.hardware_client.turn_off
         self.log.info(f'Toptica DLC PRO successfully assigned to staticline {self.name}')
+
 
 class HMCT2220(StaticLineHardwareHandler):
 
@@ -215,9 +221,10 @@ class HMCT2220(StaticLineHardwareHandler):
             value = self.maxval
 
         self.hardware_client.set_power(float(value))
+
     def set_value(self, value):
         #This will be used for setting the frequencies with an analog staticline
-        self.hardware_client.set_freq(float(value)*1E9)
+        self.hardware_client.set_freq(float(value) * 1E9)
 
 
 class TPLinkHS103(StaticLineHardwareHandler):
@@ -227,8 +234,8 @@ class TPLinkHS103(StaticLineHardwareHandler):
         device client function calls.
         '''
 
-        self.up = lambda: self.hardware_client.turn_on(channel_id = self.config['plug_name'])
-        self.down = lambda: self.hardware_client.turn_off(channel_id = self.config['plug_name'])
+        self.up = lambda: self.hardware_client.turn_on(channel_id=self.config['plug_name'])
+        self.down = lambda: self.hardware_client.turn_off(channel_id=self.config['plug_name'])
         self.log.info(f'Smart Plug successfully assigned to staticline {self.name}')
 
 
@@ -242,6 +249,7 @@ class AbstractDevice(StaticLineHardwareHandler):
         self.up = lambda: self.hardware_client.up_function(self.config["ch"])
         self.down = lambda: self.hardware_client.down_function(self.config["ch"])
         self.set_value = lambda value: self.hardware_client.set_value_function(value, self.config["ch"])
+
 
 class agilent_83732b(StaticLineHardwareHandler):
 
@@ -269,13 +277,13 @@ class agilent_83732b(StaticLineHardwareHandler):
         if self.setting == "frequency":
             self.hardware_client.set_freq(float(value))
 
+
 class CLD101x(StaticLineHardwareHandler):
 
     def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
-        pass
 
     def up(self):
         self.hardware_client.turn_laser_on()
@@ -288,9 +296,10 @@ class CLD101x(StaticLineHardwareHandler):
 
 ################################################################################
 
+
 registered_staticline_modules = {
-    'HMC_T2220':  HMCT2220,
-    'zi_hdawg':  HDAWG,
+    'HMC_T2220': HMCT2220,
+    'zi_hdawg': HDAWG,
     'nidaqmx_green': NiDaqMx,
     'nidaqmx': NiDaqMx,
     'dio_breakout': DioBreakout,

@@ -1,5 +1,4 @@
 from decouple import config
-import os
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -8,7 +7,6 @@ try:
     SLACKBOT_ACCESS_TOKEN = config('SLACK_BOT_TOKEN')
 except:
     SLACKBOT_ACCESS_TOKEN = None
-
 
 
 class PylabnetSlackBot():
@@ -20,7 +18,7 @@ class PylabnetSlackBot():
 
     def subscribe_channel(self, channel):
         """ Add Slack channel to list of subscribed channels."""
-        channel_list  = channel if isinstance(channel, list) else [channel]
+        channel_list = channel if isinstance(channel, list) else [channel]
 
         for channel in channel_list:
             self.subscribed_channels.append(channel)
@@ -57,11 +55,13 @@ class PylabnetSlackBot():
         for channel in self.subscribed_channels:
             self.upload_file(channel, filepath)
 
+
 def main():
     slackbot = PylabnetSlackBot()
     slackbot.subscribe_channel(['#pylabnet_slackbot'])
     slackbot.broadcast_to_channels('Lorem Ipsum')
     slackbot.upload_to_channels('devices.ico')
+
 
 if __name__ == "__main__":
     main()

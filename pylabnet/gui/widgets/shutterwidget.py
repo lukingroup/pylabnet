@@ -38,8 +38,7 @@ class ShutterToogle():
         self.toogle = widgets.HBox(
             [widgets.Label('Shutter {}:'.format(self.name)),
              self.toogle_raw]
-            )
-
+        )
 
         self.output = widgets.Output()
 

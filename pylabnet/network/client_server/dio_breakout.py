@@ -1,5 +1,3 @@
-import os
-import ctypes
 
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
@@ -32,13 +30,13 @@ class Service(ServiceBase):
         return self._module.disable_override(board, channel)
 
     def close_server(self):
-        """ Closes the server for which the service is running 
-        
+        """ Closes the server for which the service is running
+
         Overwrites parent class method
         """
 
         self._module.close()
-        
+
         super().close_server()
 
 

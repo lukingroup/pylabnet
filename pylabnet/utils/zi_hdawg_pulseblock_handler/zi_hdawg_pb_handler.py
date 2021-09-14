@@ -209,7 +209,7 @@ class AWGPulseBlockHandler():
 
             # Extract the sample at that time position for each channel
             sample_dict = {dio_bit: ch_samples[sample_num] for
-                        dio_bit, ch_samples in self.digital_sample_dict.items()}
+                           dio_bit, ch_samples in self.digital_sample_dict.items()}
 
             codeword = self.gen_single_digital_codeword(sample_dict)
 
@@ -237,8 +237,8 @@ class AWGPulseBlockHandler():
         #     self.log.error("Pulsemaster is currently only designed to handle 2 analog channels.")
         #     return
 
-        analog_pulse_dict = {ch:pulse_list for (ch, pulse_list) in
-                        self.pb.p_dict.items() if ch.is_analog}
+        analog_pulse_dict = {ch: pulse_list for (ch, pulse_list) in
+                             self.pb.p_dict.items() if ch.is_analog}
 
         #### 1. Merge all nearby pulses within each single channel ####
 
@@ -260,7 +260,7 @@ class AWGPulseBlockHandler():
                 for idx, pulse in enumerate(pulse_list[:-1]):
 
                     p1 = pulse_list[idx]
-                    p2 = pulse_list[idx+1]
+                    p2 = pulse_list[idx + 1]
 
                     if (p1.t0 + p1.dur) > p2.t0:
                         self.log.error("Found overlapping pulses!")
@@ -274,7 +274,7 @@ class AWGPulseBlockHandler():
                         # Don't merge if different settings
                         if (p1.mod != p2.mod or
                             p1.mod_freq != p2.mod_freq or
-                            p1.mod_ph != p2.mod_ph):
+                                p1.mod_ph != p2.mod_ph):
                             continue
 
                         # Don't merge if any of them have variable times
@@ -289,7 +289,7 @@ class AWGPulseBlockHandler():
                         else:
                             pulse_list.append(PCombined([p1, p2], dflt_pulse))
 
-                        del pulse_list[idx:idx+2]
+                        del pulse_list[idx:idx + 2]
                         # Go back to the start of the for loop to avoid looping
                         # over a modified list.
                         merge_found = True
@@ -310,16 +310,15 @@ class AWGPulseBlockHandler():
                 temp = pulse.mod
                 pulse.mod = False
                 samp_arr, n_pts, add_pts = pulse_sample(pulse, dflt_pulse,
-                                    self.analog_sr, len_min=32, len_step=16)
+                                                        self.analog_sr, len_min=32, len_step=16)
                 pulse.mod = temp
 
-                 # Variable for the waveform in the code
+                # Variable for the waveform in the code
                 wave_var_name = f"{self.pb.name}_{ch.name}_{pulse.t0:.2}"
 
                 # Remove illegal chars
                 wave_var_name = re.sub("[-* ]", "", wave_var_name)
                 wave_var_name = re.sub("[.+]", "_", wave_var_name)
-
 
                 if wave_var_name in [wave[0] for wave in waveforms]:
                     self.log.error("Found two pulses at the same time in the same channel.")
@@ -341,12 +340,12 @@ class AWGPulseBlockHandler():
                 setup_instr += f'wave {wave_var_name} = placeholder({len(samp_arr)});\n'
 
                 waveforms.append([wave_var_name,
-                                ch.name,
-                                tstep_start,
-                                tstep_end,
-                                True, # whether to dynamically upload this waveform,
-                                waveform_idx,
-                                samp_arr])
+                                  ch.name,
+                                  tstep_start,
+                                  tstep_end,
+                                  True, # whether to dynamically upload this waveform,
+                                  waveform_idx,
+                                  samp_arr])
 
                 # Assign wave index
                 if pulse.iq:
@@ -367,7 +366,6 @@ class AWGPulseBlockHandler():
                     setup_instr += f'assignWaveIndex({wave_var_name}, {waveform_idx});\n'
                     waveform_idx += 1
 
-
         #### 3. Extract parameters for channel / output setup procedure  ####
 
             # Frequency, Phase of oscillator
@@ -381,17 +379,17 @@ class AWGPulseBlockHandler():
             if pulse.mod:
                 mod, mod_freq, mod_ph = pulse.mod, pulse.mod_freq, pulse.mod_ph
 
-                self.setup_config_dict[ch.name].update({ "mod": mod,
-                                                    "mod_freq": mod_freq,
-                                                    "mod_ph": mod_ph})
+                self.setup_config_dict[ch.name].update({"mod": mod,
+                                                        "mod_freq": mod_freq,
+                                                        "mod_ph": mod_ph})
 
             if pulse.iq:
                 amp_iq, dc_iq, lo_freq = pulse.iq_params["amp_iq"], pulse.iq_params["dc_iq"], pulse.iq_params["lo_freq"]
 
                 self.setup_config_dict[ch.name].update({
-                                                    "amp_iq": amp_iq,
-                                                    "dc_iq": dc_iq,
-                                                    "lo_freq": lo_freq})
+                    "amp_iq": amp_iq,
+                    "dc_iq": dc_iq,
+                    "lo_freq": lo_freq})
 
         #### 3. Handle synchronization of pulses across channel ####
         # Forces pulses that overlap across channels to have the same start and
@@ -522,7 +520,6 @@ class AWGPulseBlockHandler():
         return codewords, codeword_times
 
     def combine_command_timings(self, digital_codewords, digital_times, waveforms):
-
         """ Combine the commands and timings from the analog and digital commands
         to give a combined list of codewords and wait time intervals.
 
@@ -577,10 +574,10 @@ class AWGPulseBlockHandler():
                 # Check if subsequent waveforms start at the same time
                 # The case where they are somewhat close but need to be padded
                 # will be handled earlier in the pulse parser
-                for ana_index_search in range(ana_index+1, len(waveforms)+1):
+                for ana_index_search in range(ana_index + 1, len(waveforms) + 1):
                     # Stop when reach end of list or a pulse with a different time
                     if (ana_index_search == len(waveforms) or
-                        waveforms[ana_index][2] != waveforms[ana_index_search][2]):
+                            waveforms[ana_index][2] != waveforms[ana_index_search][2]):
                         break
 
                 # Store waveform var name and channel name for the waveforms
@@ -596,7 +593,7 @@ class AWGPulseBlockHandler():
 
         # Waittimes are just the differences between the command times
         # Don't use np.diff since that converts Placeholder to np float
-        combined_waittimes = [combined_times[i] - combined_times[i-1] for i in range(1, len(combined_times))]
+        combined_waittimes = [combined_times[i] - combined_times[i - 1] for i in range(1, len(combined_times))]
 
         return combined_commands, combined_waittimes
 
@@ -648,7 +645,8 @@ class AWGPulseBlockHandler():
             # For analog waveforms, the command is playWave(ch, wave, ch, wave, ...)
             # Put the waveforms from the earlier channels first.
             for ch_num, waveform_var_name in sorted(zip(ch_nums, waveform_var_names)):
-                if wave_str != "": wave_str += ", "  # Separator btw channels
+                if wave_str != "":
+                    wave_str += ", "  # Separator btw channels
                 # Convert from overall ch number to ch number relative to each core
                 reduced_ch_num = ((ch_num - 1) % chs_per_core) + 1
                 wave_str += f"{reduced_ch_num}, {waveform_var_name}"
@@ -683,7 +681,6 @@ class AWGPulseBlockHandler():
                     self.hd.log.warn(f"Unsupported analog channel config {config_type}.")
 
         return sequence
-
 
     def construct_awg_sequence(self, commands, waittimes, wait_offset=SETDIO_OFFSET):
         """Construct .seqc sequence representing the AWG instructions to output
@@ -757,9 +754,9 @@ class AWGPulseBlockHandler():
         waveforms, iq_waveforms, analog_setup = self.gen_analog_instructions(waveform_idx)
 
         combined_commands, combined_waittimes = self.combine_command_timings(
-                                                    digital_codewords,
-                                                    digital_times,
-                                                    waveforms)
+            digital_codewords,
+            digital_times,
+            waveforms)
 
         # Reconstruct set of .seqc instructions representing the digital waveform.
         sequence = self.construct_awg_sequence(combined_commands, combined_waittimes)

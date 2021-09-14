@@ -2,7 +2,6 @@
 
 import socket
 import json
-import struct
 from pylabnet.utils.helper_methods import (load_config, find_client, load_script_config)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 
@@ -19,6 +18,7 @@ class MSquaredWMServer:
     :wavemeterclient: (object) Wavemeter client instance.
     :log_tcp: (bool) If True, log incoming and outgoing TCP packets.
     """
+
     def __init__(self, ip, port, channel, log_client, wavemeterclient, log_tcp):
         self.ip = ip
         self.port = port
@@ -185,6 +185,7 @@ class MSquaredWMServer:
         }
         return data
 
+
 def launch(**kwargs):
     logger = kwargs['logger']
 
@@ -204,6 +205,3 @@ def launch(**kwargs):
 
     server = MSquaredWMServer(ip, port, channel, logger, wavemeter_client, log_tcp)
     server.start()
-
-
-

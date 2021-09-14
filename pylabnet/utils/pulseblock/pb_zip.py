@@ -94,7 +94,7 @@ def pb_zip(pb_obj, dur_quant):
             left_idx = 0
 
         # Handle right-most intervals
-        if left_idx == quant_num-1 or left_idx == quant_num:
+        if left_idx == quant_num - 1 or left_idx == quant_num:
             # The entire interval fits into the 'default-True' area
             # [(quant_num - 1)-st element and reminder], so no change
             # has to be made in use_ar
@@ -109,7 +109,7 @@ def pb_zip(pb_obj, dur_quant):
             # broadcasting errors:
             right_idx = quant_num - 1
 
-        use_ar[left_idx : right_idx+1] = np.full(
+        use_ar[left_idx: right_idx + 1] = np.full(
             shape=right_idx - left_idx + 1,
             fill_value=True
         )
@@ -437,7 +437,7 @@ def pb_snip(pb_obj, start_t, stop_t, snip_name=None, use_centers=False):
 
             # Method 1: use pulse center
             if use_centers:
-                pulse_center = pulse.t0 + pulse.dur/2
+                pulse_center = pulse.t0 + pulse.dur / 2
                 if pulse_center <= start_t:
                     # pulse is fully to the left from snip window
                     continue
@@ -460,11 +460,11 @@ def pb_snip(pb_obj, start_t, stop_t, snip_name=None, use_centers=False):
 
             # Method 2: use pulse edges
             else:
-                if pulse.t0+pulse.dur <= start_t:
+                if pulse.t0 + pulse.dur <= start_t:
                     # pulse is fully to the left from snip window
                     continue
 
-                elif start_t <= pulse.t0 and pulse.t0+pulse.dur <= stop_t:
+                elif start_t <= pulse.t0 and pulse.t0 + pulse.dur <= stop_t:
                     # pulse is fully inside the snip window
 
                     if ch not in new_pb.p_dict.keys():
@@ -486,11 +486,11 @@ def pb_snip(pb_obj, start_t, stop_t, snip_name=None, use_centers=False):
                 # Alternatively, it might be some unexpected comparison error.
                 else:
                     # Determine the conflicting edge
-                    if pulse.t0 < start_t < pulse.t0+pulse.dur:
+                    if pulse.t0 < start_t < pulse.t0 + pulse.dur:
                         edge_type = 'start_t'
                         edge_t = start_t
 
-                    elif pulse.t0 < stop_t < pulse.t0+pulse.dur:
+                    elif pulse.t0 < stop_t < pulse.t0 + pulse.dur:
                         edge_type = 'stop_t'
                         edge_t = stop_t
 

@@ -65,7 +65,6 @@ class CountMonitor:
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-
         if self.combined_channel:
             num_plots = 3
         else:
@@ -79,7 +78,6 @@ class CountMonitor:
             event_button=num_plots,
             legend_widget=num_plots
         )
-
 
         # Load config
         self.config = {}
@@ -211,9 +209,8 @@ class CountMonitor:
             )
             self.widgets['legend_widget'][plot_index].addItem(
                 self.widgets[f'curve_{channel}'],
-                ' - '+f'Channel {channel}'
+                ' - ' + f'Channel {channel}'
             )
-
 
             # Assign scalar
             # self.gui_handler.assign_label(
@@ -228,12 +225,12 @@ class CountMonitor:
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
 
         if self.combined_channel:
-            self.widgets['curve_combo'] = self.widgets['graph_widget'][index+1].plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[color+1])
+            self.widgets['curve_combo'] = self.widgets['graph_widget'][index + 1].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[color + 1])
             )
-            self.widgets['legend_widget'][index+1].addItem(
+            self.widgets['legend_widget'][index + 1].addItem(
                 self.widgets['curve_combo'],
-                ' - '+'Combined Counts'
+                ' - ' + 'Combined Counts'
             )
 
     def _clear_plot(self, plot_index):
@@ -247,7 +244,7 @@ class CountMonitor:
             channel = 'combo'
             # Set the curve to constant with last point for all entries
             self.widgets[f'curve_{channel}'].setData(
-                np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
+                np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
             )
         else:
             # Find all curves in this plot
@@ -255,7 +252,7 @@ class CountMonitor:
 
                 # Set the curve to constant with last point for all entries
                 self.widgets[f'curve_{channel}'].setData(
-                    np.ones(self._n_bins)*self.widgets[f'curve_{channel}'].yData[-1]
+                    np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
                 )
 
         self._ctr.clear_ctr(name=self.config['name'])
@@ -267,7 +264,7 @@ class CountMonitor:
         # x_axis = self._ctr.get_x_axis()/1e12
 
         counts = self._ctr.get_counts(name=self.config['name'])
-        counts_per_sec = counts*(1e12/self._bin_width)
+        counts_per_sec = counts * (1e12 / self._bin_width)
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0
 
@@ -297,7 +294,7 @@ class CountMonitor:
             # )
 
             self.widgets[f'curve_{channel}'].setData(count_array)
-            self.widgets[f'number_label'][channel-1].setText(str(count_array[-1]))
+            self.widgets[f'number_label'][channel - 1].setText(str(count_array[-1]))
 
         if self.combined_channel:
             self.widgets['curve_combo'].setData(summed_counts)
@@ -314,7 +311,6 @@ def launch(**kwargs):
         kwargs['config'],
         logger
     )
-
 
     if config['combined_channel'] == 'True':
         combined_channel = True

@@ -3,8 +3,6 @@ from pylabnet.network.client_server.hdawg import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.utils.helper_methods import load_device_config, get_ip
 
-import socket
-
 
 def launch(**kwargs):
 
@@ -25,4 +23,3 @@ def launch(**kwargs):
     )
 
     hd_server.start()
-

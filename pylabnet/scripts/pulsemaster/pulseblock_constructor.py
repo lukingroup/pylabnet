@@ -92,7 +92,7 @@ class PulseblockConstructor():
             arg_dict = {}
 
             # Extract parameters from the pulsevar dict
-            offset = self.resolve_value(pb_spec.offset)  * 1e-6
+            offset = self.resolve_value(pb_spec.offset) * 1e-6
             arg_dict["ch"] = pb_spec.channel
             arg_dict["dur"] = self.resolve_value(pb_spec.dur) * 1e-6
 
@@ -100,25 +100,25 @@ class PulseblockConstructor():
             self.append_value_to_dict(var_dict, "amp", arg_dict)
             self.append_value_to_dict(var_dict, "freq", arg_dict)
             self.append_value_to_dict(var_dict, "ph", arg_dict)
-            self.append_value_to_dict(var_dict, "stdev", arg_dict, fn=lambda x: 1e-6*x)
+            self.append_value_to_dict(var_dict, "stdev", arg_dict, fn=lambda x: 1e-6 * x)
             self.append_value_to_dict(var_dict, "iq", arg_dict)
             self.append_value_to_dict(var_dict, "mod", arg_dict)
             self.append_value_to_dict(var_dict, "mod_freq", arg_dict)
             self.append_value_to_dict(var_dict, "mod_ph", arg_dict)
 
             supported_pulses = {
-                "PTrue" : po.PTrue,
-                "PSin" : po.PSin,
-                "PGaussian" : po.PGaussian,
-                "PConst" : po.PConst
+                "PTrue": po.PTrue,
+                "PSin": po.PSin,
+                "PGaussian": po.PGaussian,
+                "PConst": po.PConst
             }
 
             # Handle IQ mixing case
             if "iq" in arg_dict and arg_dict["iq"]:
 
                 (if_freq, lo_freq, phase_opt,
-                amp_i_opt, amp_q_opt,
-                dc_i_opt, dc_q_opt) = self.iq_calibration.get_optimal_hdawg_and_LO_values(arg_dict["mod_freq"])
+                 amp_i_opt, amp_q_opt,
+                 dc_i_opt, dc_q_opt) = self.iq_calibration.get_optimal_hdawg_and_LO_values(arg_dict["mod_freq"])
 
                 self.log.info(f"if={if_freq}, lo={lo_freq}, phase={phase_opt}")
 
@@ -147,7 +147,6 @@ class PulseblockConstructor():
             else:
                 arg_dict_list = [arg_dict]
 
-
             # Construct a pulse and add it to the pulseblock
             # The iteration over arg_dict takes care of the IQ mixing case
             # idx = 0 is the I portion, idx = 1 is the Q portion.
@@ -170,7 +169,7 @@ class PulseblockConstructor():
                     if pb_spec.tref == "Absolute":
                         pulseblock.append_po_as_pb(
                             p_obj=pulse,
-                            offset=-pb_dur+offset
+                            offset=-pb_dur + offset
                         )
 
                     # CASE 2
@@ -185,7 +184,7 @@ class PulseblockConstructor():
                         # Take timing reference based on the last pulse's t0
                         pulseblock.append_po_as_pb(
                             p_obj=pulse,
-                            offset=-pb_dur+prev_t0+offset
+                            offset=-pb_dur + prev_t0 + offset
                         )
 
                     # CASE 4
@@ -193,7 +192,7 @@ class PulseblockConstructor():
                         # Take timing reference based on the last pulse's t0 and duration
                         pulseblock.append_po_as_pb(
                             p_obj=pulse,
-                            offset=-pb_dur+prev_t0+prev_dur+offset
+                            offset=-pb_dur + prev_t0 + prev_dur + offset
                         )
 
                     # CASE 5
@@ -208,7 +207,7 @@ class PulseblockConstructor():
 
                         pulseblock.append_po_as_pb(
                             p_obj=pulse,
-                            offset=-pb_dur+last_pulsetime+offset
+                            offset=-pb_dur + last_pulsetime + offset
                         )
 
                 else:
@@ -218,7 +217,7 @@ class PulseblockConstructor():
                     # the I pulse since this is executed right after the I pulse.
                     pulseblock.append_po_as_pb(
                         p_obj=pulse,
-                        offset=-pb_dur+prev_t0
+                        offset=-pb_dur + prev_t0
                     )
 
         self.pulseblock = pulseblock
@@ -251,7 +250,7 @@ class PulseblockConstructor():
         pb_dictionary["name"] = self.name
         pb_dictionary["dur"] = self.pulseblock.dur
         pb_dictionary["timestamp"] = datetime.now().strftime("%d-%b-%Y_%H_%M_%S")
-        pb_dictionary["var_dict"] =  self.var_dict
+        pb_dictionary["var_dict"] = self.var_dict
         pb_dictionary["pulse_specifiers_dicts"] = [ps.get_dict() for ps in self.pulse_specifiers]
         self.log.info(str(pb_dictionary))
         return pb_dictionary

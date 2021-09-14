@@ -3,8 +3,8 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
-    load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client,
-    load_script_config, get_ip)
+                                           load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client,
+                                           load_script_config, get_ip)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 
 import numpy as np
@@ -65,7 +65,6 @@ class WlmMonitor:
                 zero=4, voltage=2, error=2
             )
 
-
         # Set parameters
         self.set_parameters(**params)
 
@@ -81,7 +80,6 @@ class WlmMonitor:
                 channel=channel.number,
                 setpoint=channel.data[-1]
             ))
-
 
     def set_parameters(self, channel_params):
         """ Instantiates new channel objects with given parameters and assigns them to the WlmMonitor
@@ -252,7 +250,7 @@ class WlmMonitor:
         physical_channel = self.channels[self._get_channels().index(channel)]
 
         # Generate array of points to go to
-        traverse = np.linspace(physical_channel.setpoint, value, int((value-physical_channel.setpoint)/step_size))
+        traverse = np.linspace(physical_channel.setpoint, value, int((value - physical_channel.setpoint) / step_size))
 
         for frequency in traverse:
             self.set_parameters([dict(
@@ -277,30 +275,30 @@ class WlmMonitor:
 
         # Create curves
         # frequency
-        self.widgets['curve'].append(self.widgets['graph'][2*index].plot(
+        self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
         ))
         add_to_legend(
-            legend=self.widgets['legend'][2*index],
-            curve=self.widgets['curve'][4*index],
+            legend=self.widgets['legend'][2 * index],
+            curve=self.widgets['curve'][4 * index],
             curve_name=channel.curve_name
         )
 
         # Setpoint
-        self.widgets['curve'].append(self.widgets['graph'][2*index].plot(
+        self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
         ))
         add_to_legend(
-            legend=self.widgets['legend'][2*index],
-            curve=self.widgets['curve'][4*index+1],
+            legend=self.widgets['legend'][2 * index],
+            curve=self.widgets['curve'][4 * index + 1],
             curve_name=channel.setpoint_name
         )
 
         # Clear data
-        self.widgets['clear'][2*index].clicked.connect(
+        self.widgets['clear'][2 * index].clicked.connect(
             lambda: self.clear_channel(channel)
         )
-        self.widgets['clear'][2*index+1].clicked.connect(
+        self.widgets['clear'][2 * index + 1].clicked.connect(
             lambda: self.clear_channel(channel)
         )
 
@@ -313,30 +311,30 @@ class WlmMonitor:
         )
 
         # Voltage
-        self.widgets['curve'].append(self.widgets['graph'][2*index+1].plot(
+        self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
         ))
         add_to_legend(
-            legend=self.widgets['legend'][2*index+1],
-            curve=self.widgets['curve'][4*index+2],
+            legend=self.widgets['legend'][2 * index + 1],
+            curve=self.widgets['curve'][4 * index + 2],
             curve_name=channel.voltage_curve
         )
 
         # Error
-        self.widgets['curve'].append(self.widgets['graph'][2*index+1].plot(
+        self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
         ))
         add_to_legend(
-            legend=self.widgets['legend'][2*index+1],
-            curve=self.widgets['curve'][4*index+3],
+            legend=self.widgets['legend'][2 * index + 1],
+            curve=self.widgets['curve'][4 * index + 3],
             curve_name=channel.error_curve
         )
 
         # zero
-        self.widgets['zero'][2*index].clicked.connect(
+        self.widgets['zero'][2 * index].clicked.connect(
             lambda: self.zero_voltage(channel)
         )
-        self.widgets['zero'][2*index+1].clicked.connect(
+        self.widgets['zero'][2 * index + 1].clicked.connect(
             lambda: self.zero_voltage(channel)
         )
 
@@ -357,11 +355,11 @@ class WlmMonitor:
             channel.update(self.wlm_client.get_wavelength(channel.number))
 
             # Update frequency
-            self.widgets['curve'][4*index].setData(channel.data)
+            self.widgets['curve'][4 * index].setData(channel.data)
             self.widgets['freq'][index].setValue(channel.data[-1])
 
             # Update setpoints
-            self.widgets['curve'][4*index+1].setData(channel.sp_data)
+            self.widgets['curve'][4 * index + 1].setData(channel.sp_data)
 
             # Update the setpoint to GUI directly if it has been changed
             # if channel.setpoint_override:
@@ -379,11 +377,10 @@ class WlmMonitor:
             else:
                 self.widgets['error_status'][index].setChecked(False)
 
-
             # Now update lock + voltage plots
-            self.widgets['curve'][4*index+2].setData(channel.voltage)
+            self.widgets['curve'][4 * index + 2].setData(channel.voltage)
             self.widgets['voltage'][index].setValue(channel.voltage[-1])
-            self.widgets['curve'][4*index+3].setData(channel.error)
+            self.widgets['curve'][4 * index + 3].setData(channel.error)
             self.widgets['error'][index].setValue(channel.error[-1])
 
     def _get_gui_data(self):
@@ -635,7 +632,7 @@ class Channel:
 
         try:
             if self.ao is not None:
-                v_set = (self._min_voltage + self._max_voltage)/2
+                v_set = (self._min_voltage + self._max_voltage) / 2
                 self.ao['client'].set_ao_voltage(
                     ao_channel=self.ao['channel'],
                     voltages=[v_set]
@@ -761,7 +758,7 @@ def launch(**kwargs):
         clients=kwargs['clients'],
         settings=config,
         client_type='high_finesse_ws7',
-        logger=logger    )
+        logger=logger)
 
     # Get list of ao client names
     ao_clients = {}

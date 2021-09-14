@@ -1,6 +1,5 @@
 ''' Configures a Staticline instance to use a NIDaqmx output'''
 
-import socket
 
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline

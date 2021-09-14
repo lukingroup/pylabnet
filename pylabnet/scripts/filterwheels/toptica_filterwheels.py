@@ -3,7 +3,6 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.utils.helper_methods import get_ip, unpack_launcher, get_gui_widgets, find_client, load_script_config
 from pylabnet.gui.pyqt.external_gui import Window
 
-import time
 import numpy as np
 
 
@@ -11,7 +10,6 @@ class TopticaFilterWheelController:
     """ Class for controlling Toptica scan and laser properties """
 
     def __init__(self, filterwheel1, filterwheel2, gui='toptica_filterwheels', logger=None, port=None):
-
 
         self.filterwheel1 = filterwheel1
         self.filterwheel2 = filterwheel2
@@ -46,12 +44,12 @@ class TopticaFilterWheelController:
         self.current_pos_2 = filterwheel2.get_pos()
 
         # Set comboboxes to current filter positions.
-        self.widgets['comboBox_filter1'].setCurrentIndex(int(self.current_pos_1)-1)
-        self.widgets['comboBox_filter2'].setCurrentIndex(int(self.current_pos_2)-1)
+        self.widgets['comboBox_filter1'].setCurrentIndex(int(self.current_pos_1) - 1)
+        self.widgets['comboBox_filter2'].setCurrentIndex(int(self.current_pos_2) - 1)
 
         # Connect change events
-        self.widgets['comboBox_filter1'].currentTextChanged.connect(lambda : self.change_filter(filter_index=1))
-        self.widgets['comboBox_filter2'].currentTextChanged.connect(lambda:  self.change_filter(filter_index=2))
+        self.widgets['comboBox_filter1'].currentTextChanged.connect(lambda: self.change_filter(filter_index=1))
+        self.widgets['comboBox_filter2'].currentTextChanged.connect(lambda: self.change_filter(filter_index=2))
 
         # Update OD reading
         self.update_od()
@@ -62,7 +60,7 @@ class TopticaFilterWheelController:
     def change_filter(self, filter_index):
         ''' Read in index from combobox and change filter accordingly.'''
         # Read in new filter.
-        new_pos = int(self.widgets[f'comboBox_filter{filter_index}'].currentIndex())+1
+        new_pos = int(self.widgets[f'comboBox_filter{filter_index}'].currentIndex()) + 1
 
         if filter_index == 1:
             filterwheel = self.filterwheel1
@@ -81,7 +79,7 @@ class TopticaFilterWheelController:
             changed_position = filterwheel.get_pos()
 
             # Set combobox to new position
-            self.widgets[f'comboBox_filter{filter_index}'].setCurrentIndex(int(changed_position)-1)
+            self.widgets[f'comboBox_filter{filter_index}'].setCurrentIndex(int(changed_position) - 1)
 
         # Update OD reading
         self.update_od()
@@ -92,11 +90,11 @@ class TopticaFilterWheelController:
 
     def update_od(self):
 
-        filter_pos1 = int(self.widgets['comboBox_filter1'].currentIndex())+1
+        filter_pos1 = int(self.widgets['comboBox_filter1'].currentIndex()) + 1
         filter_string1 = self.filterwheel1.get_filter_dict()[str(filter_pos1)]
         filter1_od = float(filter_string1.replace(' OD', ""))
 
-        filter_pos2 = int(self.widgets['comboBox_filter2'].currentIndex())+1
+        filter_pos2 = int(self.widgets['comboBox_filter2'].currentIndex()) + 1
         filter_string2 = self.filterwheel2.get_filter_dict()[str(filter_pos2)]
         filter2_od = float(filter_string2.replace(' OD', ""))
 
@@ -109,15 +107,15 @@ class TopticaFilterWheelController:
 
         :param check_vals: (bool) whether or not to check the values of current and temp
         """
-        pass
+
 
 def launch(**kwargs):
 
     logger = kwargs['logger']
     clients = kwargs['clients']
     config = load_script_config(script='filterwheel',
-                        config=kwargs['config'],
-                        logger=logger)
+                                config=kwargs['config'],
+                                logger=logger)
 
     filterwheel1 = find_client(logger=logger, settings=config, clients=clients, client_type="fw102c", client_config='toptica_filterwheel1')
     filterwheel2 = find_client(logger=logger, settings=config, clients=clients, client_type="fw102c", client_config='toptica_filterwheel2')
@@ -131,5 +129,3 @@ def launch(**kwargs):
     )
 
     toptica_controller.gui.app.exec_()
-
-

@@ -1,15 +1,19 @@
 import codecs
-import os, sys
+import os
+import sys
 import subprocess
 from setuptools import setup, find_packages
 
+
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
 
 def read(rel_path):
     here = os.path.abspath(os.path.dirname(__file__))
     with codecs.open(os.path.join(here, rel_path), 'r') as fp:
         return fp.read()
+
 
 def get_version(rel_path):
     for line in read(rel_path).splitlines():
@@ -19,12 +23,17 @@ def get_version(rel_path):
     else:
         raise RuntimeError("Unable to find version string.")
 
+
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 # Needed for jupyter notebook in developer mode
 if len(sys.argv) > 1 and sys.argv[1] == 'develop':
     install('jupyter')
+
+    install('pre-commit')
+    from pre_commit.main import main as pre_commit_main
+    pre_commit_main(['install', '--install-hooks', '--overwrite'])
 
 setup(
     name='pylabnet',
@@ -45,8 +54,8 @@ setup(
             'pylabnet_proxy=pylabnet.launchers.launch_control:main_proxy',
             'pylabnet_master=pylabnet.launchers.launch_control:main_master',
             'pylabnet_staticproxy =pylabnet.launchers.launch_control:main_staticproxy'
-            ]
-        },
+        ]
+    },
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

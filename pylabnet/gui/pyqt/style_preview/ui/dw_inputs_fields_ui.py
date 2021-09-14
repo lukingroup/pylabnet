@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
+from qdarkstyle import style_rc
 from qtpy import QtCore, QtGui, QtWidgets
 
 
@@ -308,18 +309,18 @@ class Ui_DockWidget(object):
         self.textEdit.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.textEdit.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
         self.textEdit.setHtml(_translate("DockWidget", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans Serif\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\'; font-size:11pt;\">TextEdit</span></p></body></html>"))
+                                         "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                         "p, li { white-space: pre-wrap; }\n"
+                                         "</style></head><body style=\" font-family:\'Sans Serif\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+                                         "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\'; font-size:11pt;\">TextEdit</span></p></body></html>"))
         self.textEditDis.setToolTip(_translate("DockWidget", "This is a tool tip"))
         self.textEditDis.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.textEditDis.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
         self.textEditDis.setHtml(_translate("DockWidget", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans Serif\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\'; font-size:11pt;\">TextEdit</span></p></body></html>"))
+                                            "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                            "p, li { white-space: pre-wrap; }\n"
+                                            "</style></head><body style=\" font-family:\'Sans Serif\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+                                            "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-family:\'Cantarell\'; font-size:11pt;\">TextEdit</span></p></body></html>"))
         self.label_15.setToolTip(_translate("DockWidget", "This is a tool tip"))
         self.label_15.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.label_15.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
@@ -386,4 +387,3 @@ class Ui_DockWidget(object):
         self.label_51.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.label_51.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
         self.label_51.setText(_translate("DockWidget", "Inside DockWidget"))
-from qdarkstyle import style_rc

@@ -23,7 +23,7 @@ class MCS2:
     MOVE_MODE_DC_REL = 3
     MOVE_MODE_DC_ABS = 2
     SCALE = 65535
-    DC_VEL_MIN = 100/56635
+    DC_VEL_MIN = 100 / 56635
     DC_VEL_MAX = 10**8
 
     def __init__(self, logger=None):
@@ -50,7 +50,7 @@ class MCS2:
 
             #Establishes a connection to a device
             self.dev_name = buffer.value.decode("utf-8")
-            dhandle =  ctypes.c_uint32()
+            dhandle = ctypes.c_uint32()
             connect = self._nanopositionersdll.SA_CTL_Open(dhandle, buffer.value, None)
             if connect == 0:
                 self.dhandle = dhandle.value
@@ -167,8 +167,8 @@ class MCS2:
         if dc_vel is not None:
 
             # Check for reasonable range
-            bit_vel = int(dc_vel * (self.SCALE/100))
-            if 1 <= bit_vel <= self.SCALE*10**6:
+            bit_vel = int(dc_vel * (self.SCALE / 100))
+            if 1 <= bit_vel <= self.SCALE * 10**6:
                 result_vel = self._nanopositionersdll.SA_CTL_SetProperty_i64(
                     self.dhandle, channel, self.PKEY_DC_VEL, bit_vel
                 )
@@ -294,7 +294,6 @@ class MCS2:
             return False
         else:
             return True
-
 
     # Technical methods
 

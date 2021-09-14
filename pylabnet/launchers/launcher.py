@@ -41,12 +41,10 @@ NOTE: Requires windows (TODO: make OS agnostic)
 """
 
 import time
-import subprocess
 import numpy as np
 import sys
 import traceback
 import os
-import socket
 import importlib.util
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import get_ip, parse_args, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
@@ -139,22 +137,21 @@ class Launcher:
 
             # Check if there is a port for this client, instantiate connector if so
             port_name = 'port{}'.format(client_index + 1)
-            client_name = self.args['client{}'.format(client_index+1)]
-
+            client_name = self.args['client{}'.format(client_index + 1)]
 
             #First see if there is a device id
             try:
-                device_id = self.args['device_id{}'.format(client_index+1)]
+                device_id = self.args['device_id{}'.format(client_index + 1)]
             except KeyError:
                 self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
                 device_id = None
             try:
                 self.connectors[client_name] = Connector(
-                            name=client_name,
-                            ip=self.args['ip{}'.format(client_index+1)],
-                            port=self.args[port_name],
-                            device_id=device_id
-                        )
+                    name=client_name,
+                    ip=self.args['ip{}'.format(client_index + 1)],
+                    port=self.args[port_name],
+                    device_id=device_id
+                )
             except KeyError:
                 pass
 
@@ -197,7 +194,7 @@ class Launcher:
             os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 'servers',
-                module+'.py'
+                module + '.py'
             )
         )
         mod = importlib.util.module_from_spec(spec)
@@ -279,7 +276,7 @@ class Launcher:
                     raise Exception('Server must be launched manually prior to script')
             else:
                 self.logger.info(f'No active servers matching module {module_name}'
-                                ' were found. Instantiating a new server.')
+                                 ' were found. Instantiating a new server.')
                 host, port = launch_device_server(
                     server=module,
                     dev_config=config_name,
@@ -290,11 +287,11 @@ class Launcher:
                     logger=self.logger
                 )
 
-                tries=0
-                while tries<NUM_TRIES:
+                tries = 0
+                while tries < NUM_TRIES:
                     try:
                         self._connect_to_server(module, host, port, device_id)
-                        tries = NUM_TRIES+1
+                        tries = NUM_TRIES + 1
                     except ConnectionRefusedError:
                         time.sleep(0.1)
                         tries += 1
@@ -312,8 +309,8 @@ class Launcher:
             self.logger.info(msg_str)
             for index, match in enumerate(matches):
                 msg_str = ('------------------------------------------\n'
-                        + '                    ({})                   \n'.format(index + 1)
-                        + match.summarize())
+                           + '                    ({})                   \n'.format(index + 1)
+                           + match.summarize())
                 self.logger.info(msg_str)
             self.logger.info('------------------------------------------\n\n'
                              'Which server would you like to connect to?\n'
@@ -345,11 +342,11 @@ class Launcher:
                     logger=self.logger
                 )
 
-                tries=0
-                while tries<NUM_TRIES:
+                tries = 0
+                while tries < NUM_TRIES:
                     try:
                         self._connect_to_server(module, host, port, device_id)
-                        tries = NUM_TRIES+1
+                        tries = NUM_TRIES + 1
                     except ConnectionRefusedError:
                         time.sleep(0.1)
                         tries += 1
@@ -362,7 +359,6 @@ class Launcher:
 
         self.use_index = params['index']
         self.waiting_flag = False
-
 
     def _launch_scripts(self):
         """ Launch the scripts to be run sequentially in this thread """
@@ -481,9 +477,9 @@ def main():
     script = Launcher()
     script.launch()
 
+
 if __name__ == '__main__':
     try:
         main()
     except Exception as e:
         warning_popup(traceback.format_exc())
-

@@ -6,7 +6,7 @@ class PID:
 
     def __init__(self, p=0, i=0, d=0, setpoint=0, memory=20):
         """ Constructor for PID class
-        
+
         :rtype: object
         :param p: proportional gain
         :param i: integral
@@ -50,7 +50,7 @@ class PID:
         if pv_length < self.memory:
 
             # Pad constants onto the beginning of the array
-            self._pv = np.hstack((np.ones(self.memory-pv_length)*self._pv[0], self._pv))
+            self._pv = np.hstack((np.ones(self.memory - pv_length) * self._pv[0], self._pv))
 
     def set_pv(self, pv=np.zeros(10)):
         """ Sets process variable
@@ -64,11 +64,11 @@ class PID:
 
         # If it's too short, append it onto the current pv
         if pv_length < self.memory:
-            self._pv = np.append(self._pv[self.memory-pv_length:], pv)
+            self._pv = np.append(self._pv[self.memory - pv_length:], pv)
 
         # Otherwise just take the last elements
         else:
-            self._pv = pv[pv_length-self.memory:]
+            self._pv = pv[pv_length - self.memory:]
 
     def set_cv(self):
         """Calculates the appropriate value of the control variable"""
@@ -79,7 +79,7 @@ class PID:
 
         # Calculate response
         if len(error) > 1:
-            self.cv = self.p*error[-1] + self.i*np.sum(error)/self.memory + self.d*(error[-1] - error[-2])
+            self.cv = self.p * error[-1] + self.i * np.sum(error) / self.memory + self.d * (error[-1] - error[-2])
         else:
             #if only have a single error so far, then derivative is undefined so do not calculate it
-            self.cv = self.p*error[-1] + self.i*np.sum(error)/self.memory 
+            self.cv = self.p * error[-1] + self.i * np.sum(error) / self.memory

@@ -1,5 +1,3 @@
-import socket
-import sys
 
 from pylabnet.hardware.nanopositioners.smaract import MCS2
 from pylabnet.network.core.generic_server import GenericServer

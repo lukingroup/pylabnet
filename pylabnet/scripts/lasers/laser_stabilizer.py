@@ -3,7 +3,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import (get_ip, unpack_launcher, create_server,
-    load_script_config, load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
+                                           load_script_config, load_config, get_gui_widgets, get_legend_from_graphics_view, add_to_legend, find_client)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 import pylabnet.hardware.ni_daqs.nidaqmx_card as nidaqmx
 import pylabnet.hardware.staticline.staticline as staticline
@@ -11,12 +11,12 @@ import pylabnet.network.client_server.nidaqmx_card as nidaqmx_card_server
 
 import numpy as np
 import time
-import copy
-import pickle
 import pyqtgraph as pg
+
 
 class LaserStabilizer:
     """A class for stabilizing the laser power given a DAQ input, a power control output, and a setpoint"""
+
     def __init__(self, config, ao_client=None, ai_client=None, hd=None, check_aom=False, logger=None):
         """Instantiates LaserStabilizer script object for stabilizing the laser
              :param config: (str) name of config file """
@@ -27,13 +27,12 @@ class LaserStabilizer:
             host=get_ip()
         )
         self.widgets = get_gui_widgets(self.gui, p_setpoint=1, p_outputVoltage=1, label_power=1, config=1,
-            graph=2, legend=2, hardware_control=1, clear=1, start=1, stop=1)
+                                       graph=2, legend=2, hardware_control=1, clear=1, start=1, stop=1)
 
         self._ao_client = ao_client
         self._ai_client = ai_client
         self._hd = hd
         self.log = logger
-
 
         self.config = config
         self.check_aom = check_aom
@@ -74,13 +73,14 @@ class LaserStabilizer:
         self.min_voltage = self.config['min_output_voltage'] #Minimum output voltage
         self.max_voltage = self.config['max_output_voltage'] #Maximum output voltage
         self.gain = self.config['gain'] #"Gain" between measured voltage and corresponding power
-                                        # NOTE: Internally we store all measured powers as the raw voltages
-                                        # we then only multiply by the gain factor when displaying
-                                        # it to the user.
-        self.max_input_voltage =  self.config['max_input_voltage'] #Maximum possible input voltage, used for scaling
-                                                                    #the DAQ acquisition range.
+        # NOTE: Internally we store all measured powers as the raw voltages
+        # we then only multiply by the gain factor when displaying
+        # it to the user.
+        self.max_input_voltage = self.config['max_input_voltage'] #Maximum possible input voltage, used for scaling
+        #the DAQ acquisition range.
 
-        self._hwc_thresh = self.config['hardware_ctrl_thresh']; #Threshold to turn hardware control on/off
+        self._hwc_thresh = self.config['hardware_ctrl_thresh']
+        #Threshold to turn hardware control on/off
 
         #Loading PID parameters
         self.paramP = self.config["pid"]["p"]
@@ -98,7 +98,7 @@ class LaserStabilizer:
         dio_config = load_config('dio_assignment_global')
         DIO_bit = dio_config[self.config["aom_staticline"]]
         current_config = self._hd.geti('dios/0/output')
-        DIO_bit_bitshifted =  (0b1 << DIO_bit) # for bit 3: 000...0001000
+        DIO_bit_bitshifted = (0b1 << DIO_bit) # for bit 3: 000...0001000
 
         DIO_bitup = current_config & DIO_bit_bitshifted
 
@@ -122,21 +122,20 @@ class LaserStabilizer:
                     self._update_output_voltage_label()
                 else:
                     #If we are not locking the power, just read the power
-                    currSignal =  self.read_power()
+                    currSignal = self.read_power()
             else:
                 currSignal = self._update_feedback()
                 self._update_output_voltage_label()
 
         else:
             #If we are not locking the power, just read the power
-            currSignal =  self.read_power()
-
+            currSignal = self.read_power()
 
         #We always need to update the plots
         self._update_plots(currSignal)
         self.gui.force_update()
 
-    def start(self, update_st_gui=True, display_pts = 1000):
+    def start(self, update_st_gui=True, display_pts=1000):
         """This method turns on power stabilizationpdate_vs to False to not update the setpoint from the GUI
             :param update_vs_gui: (Boolean) whether the setpoint should be updated based on the value in the gui,
                                 Will always be true when start is run in the GUI, but should be false if
@@ -201,16 +200,16 @@ class LaserStabilizer:
         currTime = time.time()
         if currTime - self._last_power_text_update > 1:
 
-            power = self.gain*currSignal
+            power = self.gain * currSignal
 
-            self.widgets['label_power'].setText(str(self.gain*power[-1])[:5])
-            self._last_power = power[-1]/self.gain
+            self.widgets['label_power'].setText(str(self.gain * power[-1])[:5])
+            self._last_power = power[-1] / self.gain
             self._last_power_text_update = currTime
 
         return currSignal
 
-
     #TODO: Can potentially use some getters/setters to clean up the below two functions make them a little more cllean for the user.
+
     def _update_output_voltage_label(self):
         """Updates the output voltage label to the current voltage being outputted.
         This is called when the laser is "locked" and the PID loop is actively changing
@@ -223,7 +222,7 @@ class LaserStabilizer:
         the user to control the output voltage  directly when the laser power is not "locked".
         """
         if (not self._is_stabilizing): #Only updates value if we are not stabilizing, otherwise the PID loop will be driving the output voltage
-                                  #as opposed to the user.
+            #as opposed to the user.
             self._curr_output_voltage = self.widgets['p_outputVoltage'].value()
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
@@ -235,7 +234,7 @@ class LaserStabilizer:
 
     def _update_voltageSetpoint_fromGUI(self):
         """Update the voltage setpoint to whatever value is currently in the setpoint spin box"""
-        self.voltageSetpoint = self.widgets['p_setpoint'].value()/self.gain
+        self.voltageSetpoint = self.widgets['p_setpoint'].value() / self.gain
 
     def set_setpoint(self, value):
         """Updates the power setpoint, for use by external programs wishing to interface with
@@ -243,7 +242,7 @@ class LaserStabilizer:
         :param value: (float) setpoint value to use in units of power (not voltage!)
         NOTE: Using the GUI this is not normally automatically called. Instead the user must
         hit start again to update the setpoint if they are in the middle of power stabilizing"""
-        self.voltageSetpoint = value/self.gain
+        self.voltageSetpoint = value / self.gain
         self.widgets['p_setpoint'].setValue(value)
         #Need to reset the PID loop with this new setpoint value
         self._update_PID()
@@ -276,7 +275,6 @@ class LaserStabilizer:
         elif self._curr_output_voltage > self.max_voltage:
             self._curr_output_voltage = self.max_voltage
 
-
         #Finally updating the analog output
 
         #Do a final check to make sure that if you are in hardware control mode that the voltage control is still HIGH
@@ -286,31 +284,30 @@ class LaserStabilizer:
         if (not self._under_hardware_control): #or self.ai_client.get_ai_voltage(self._hwc_ai_channel)[-1] > self._hwc_thresh):
             self._ao_client.set_ao_voltage(self._ao_channel, self._curr_output_voltage)
 
-
         #Checks if > 1s has elapsed since the last change to the power reading label
         #I do this since otherwise the text label updates too quickly and it's annoying
         #to read.
         currTime = time.time()
         if currTime - self._last_power_text_update > 1:
-            power = self.gain*currSignal
+            power = self.gain * currSignal
 
-            self.widgets['label_power'].setText(str(self.gain*power[-1])[:5])
-            self._last_power = power[-1]/self.gain
+            self.widgets['label_power'].setText(str(self.gain * power[-1])[:5])
+            self._last_power = power[-1] / self.gain
             self._last_power_text_update = currTime
 
         return currSignal
 
-    def _clear_data_plots(self, display_pts = 1000):
+    def _clear_data_plots(self, display_pts=1000):
         """Initializes/clears the variables holding the data which is plotted"""
         #Initializing variables for plotting
         self.out_voltages = np.ones(display_pts) * self._curr_output_voltage
         self.measured_powers = np.ones(display_pts) * self._last_power
 
         # Check that setpoint is reasonable, otherwise set error to 0
-        self.errors = np.ones(display_pts) * (self._last_power-self.voltageSetpoint)
+        self.errors = np.ones(display_pts) * (self._last_power - self.voltageSetpoint)
         self.sp_data = np.ones(display_pts) * self.voltageSetpoint
 
-    def  _initialize_graphs(self):
+    def _initialize_graphs(self):
         """Initializes a channel and outputs to the GUI
 
         Should only be called in the initialization of the project
@@ -378,47 +375,59 @@ class LaserStabilizer:
         self.sp_data = np.append(self.sp_data[1:], self.voltageSetpoint)
 
         #Update power plot
-        self.widgets['curve'][0].setData(self.measured_powers*self.gain)
+        self.widgets['curve'][0].setData(self.measured_powers * self.gain)
         #Update setpoint plot
-        self.widgets['curve'][1].setData(self.sp_data*self.gain)
+        self.widgets['curve'][1].setData(self.sp_data * self.gain)
         # Update voltage plot
         self.widgets['curve'][2].setData(self.out_voltages)
         # Update error plot
-        self.widgets['curve'][3].setData(self.errors*self.gain)
+        self.widgets['curve'][3].setData(self.errors * self.gain)
+
 
 class Service(ServiceBase):
     """ A service to enable external updating of LaserStabilizer parameters """
+
     def exposed_start(self):
         return self._module.start()
+
     def exposed_stop(self):
         return self._module.stop()
+
     def exposed_set_control_voltage(self, value):
         return self._module.set_control_voltage(value)
+
     def exposed_set_setpoint(self, value):
         return self._module.set_setpoint(value)
+
     def exposed_set_hardware_control(self, value):
         return self._module.set_hardware_control(value)
+
 
 class Client(ClientBase):
     def start(self):
         return self._service.exposed_start()
+
     def stop(self):
         return self._service.exposed_stop()
+
     def set_control_voltage(self, value):
         return self._service.exposed_set_control_voltage(value)
+
     def set_setpoint(self, value):
         return self._service.exposed_set_setpoint(value)
+
     def set_hardware_control(self, value):
         return self._service.set_hardware_control(value)
 
+
 def main():
-    laser_stabilizer=LaserStabilizer('toptica_laser_stabilization')
+    laser_stabilizer = LaserStabilizer('toptica_laser_stabilization')
     while True:
         laser_stabilizer.run()
 
+
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
-
 
     logger = kwargs['logger']
     clients = kwargs['clients']
@@ -456,10 +465,9 @@ def launch(**kwargs):
             )
 
     if config['check_aom'] == "True":
-        check_aom= True
+        check_aom = True
     else:
         check_aom = False
-
 
     # Instantiate Monitor script
     laser_stabilizer = LaserStabilizer(
@@ -467,7 +475,7 @@ def launch(**kwargs):
         ao_client=ao_client,
         ai_client=ai_client,
         hd=hd,
-        check_aom = check_aom,
+        check_aom=check_aom,
         logger=logger
     )
 

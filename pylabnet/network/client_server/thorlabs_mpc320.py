@@ -1,6 +1,6 @@
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
-import time
+
 
 class Service(ServiceBase):
 
@@ -9,7 +9,7 @@ class Service(ServiceBase):
 
     def exposed_close(self):
         return self._module.close()
-        
+
     def exposed_home(self, paddle_num):
         return self._module.home(paddle_num)
 
@@ -18,7 +18,7 @@ class Service(ServiceBase):
 
     def exposed_move(self, paddle_num, pos, sleep_time):
         return self._module.move(paddle_num, pos, sleep_time)
-       
+
     def exposed_move_rel(self, paddle_num, step, sleep_time):
         return self._module.move_rel(paddle_num, step, sleep_time)
 
@@ -42,14 +42,9 @@ class Client(ClientBase):
 
     def move(self, paddle_num, pos, sleep_time):
         return self._service.exposed_move(paddle_num, pos, sleep_time)
-       
+
     def move_rel(self, paddle_num, step, sleep_time):
         return self._service.exposed_move_rel(paddle_num, step, sleep_time)
 
     def get_angle(self, paddle_num):
         return self._service.exposed_get_angle(paddle_num)
-
-    
-
-
-    

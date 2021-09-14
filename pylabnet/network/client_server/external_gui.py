@@ -292,5 +292,3 @@ class Client(ClientBase):
             for label, text in data['gui_labels'].items():
                 self.set_label(text, label)
         logger.info(f'Loaded GUI values from {get_config_filepath(config_filename, folder_root)}')
-
-

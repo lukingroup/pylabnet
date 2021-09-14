@@ -1,7 +1,5 @@
 """ Implements connection and server launching of NI-daqMX card for wavemeter locking"""
 
-import socket
-import os
 
 from pylabnet.hardware.filterwheel.filterwheel import FW102CFilterWheel
 from pylabnet.network.client_server.filterwheel import Service, Client
@@ -27,9 +25,8 @@ def launch(**kwargs):
     device_name = config['device_name']
     port_name = config['device_id']
     filters = config['filters']
-    filters = {  f'{i+1}' : f'{filters[i]} OD' for i in range(len(filters))}
+    filters = {f'{i+1}': f'{filters[i]} OD' for i in range(len(filters))}
     filterwheel = FW102CFilterWheel(port_name=port_name, device_name=device_name, filters=filters, logger=logger)
-
 
     filterwheel_service = Service()
     filterwheel_service.assign_module(module=filterwheel)

@@ -290,11 +290,11 @@ class Wrap(GatedCtrInterface):
         #   "idle" if measurement is terminated,
         #   "void" if counter breaks
         start_time = time.time()
-        sleep_time = abs(timeout)/100
+        sleep_time = abs(timeout) / 100
 
         while self.get_status() == 1:
             # stop waiting if timeout elapses
-            if time.time()-start_time > timeout >= 0:
+            if time.time() - start_time > timeout >= 0:
                 break
             time.sleep(sleep_time)
 

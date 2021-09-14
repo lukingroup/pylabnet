@@ -89,7 +89,7 @@ class Driver:
             return float(-777)
 
         return self._set_low_voltage(voltage)
-    
+
     def get_high_voltage(self, board, channel):
         """ Gets a channel's high voltage
 
@@ -131,10 +131,10 @@ class Driver:
             min=0,
             max=10
         )
-    
+
     def save(self):
         """ Saves current state of low/high for all channels to non-volatile memory
-        
+
         :return: (int) 0 if successful
         """
 
@@ -156,7 +156,7 @@ class Driver:
             self.log.warn('Failed to save DIO breakout settings.'
                           'Connection may be corrupted.')
             return 1
-    
+
     def override(self, board, channel, state=True):
         """ Overrides HDAWG output
 
@@ -178,7 +178,7 @@ class Driver:
 
         self.log.info(f'Board {board} channel {channel} in override mode')
         return 0
-    
+
     def disable_override(self, board, channel):
         """ Disables the override
 
@@ -199,13 +199,13 @@ class Driver:
 
         self.log.info(f'Board {board} channel {channel} override has been disabled')
         return 0
-    
+
     def close(self):
         """ Closes the connection to the device """
 
         self.device.close()
         self.log.info(f'Closed connection to device at {self.addr}')
-    
+
     # Technical methods (not to be exposed)
 
     def _set_board(self, board):
@@ -218,7 +218,7 @@ class Driver:
 
         board = int(board)
         # Check within bounds
-        if board < 0 or board > self.BOARDS-1:
+        if board < 0 or board > self.BOARDS - 1:
             self.log.warn(f'Board to set must be an integer between 0 and {self.BOARDS-1}')
             return 1
 

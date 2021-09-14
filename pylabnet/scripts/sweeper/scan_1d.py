@@ -1,7 +1,6 @@
 """ Module for 1D scanning experiments with convenient GUI interface """
 
 import os
-import sys
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtCore import Qt
 import importlib
@@ -12,8 +11,8 @@ from pylabnet.scripts.sweeper.sweeper import MultiChSweep1D
 from pylabnet.network.client_server.sweeper import Service
 from pylabnet.gui.pyqt.external_gui import Window, Popup
 from pylabnet.utils.helper_methods import (get_gui_widgets, load_script_config,
-    get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
-    unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background, find_client)
+                                           get_legend_from_graphics_view, add_to_legend, fill_2dlist, generic_save,
+                                           unpack_launcher, create_server, pyqtgraph_save, get_ip, set_graph_background, find_client)
 from pylabnet.scripts.sweeper.scan_fit import FitPopup
 
 
@@ -39,8 +38,6 @@ class Controller(MultiChSweep1D):
 
         self.module = None
 
-
-
         # Instantiate GUI
         self.gui = Window(
             gui_template='scan_1d',
@@ -48,9 +45,8 @@ class Controller(MultiChSweep1D):
             max=True
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
-            graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
-            autosave=1, save_name=1, save=1, reps=1, rep_tracker=1, avg=2)
-
+                                       graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,
+                                       autosave=1, save_name=1, save=1, reps=1, rep_tracker=1, avg=2)
 
         # Configure default parameters
         self.min = self.widgets['p_min'].value()
@@ -77,7 +73,6 @@ class Controller(MultiChSweep1D):
         # Configure list of experiments
         self.widgets['config'].setText(config)
 
-
         self.exp_path = self.config['exp_path']
         model = QtWidgets.QFileSystemModel()
         model.setRootPath(self.exp_path)
@@ -100,7 +95,7 @@ class Controller(MultiChSweep1D):
                 clients=self.clients,
                 settings=client_config,
                 client_type=client_type,
-                client_config = client_config,
+                client_config=client_config,
                 logger=self.log
             )
             if (client == None):
@@ -112,13 +107,12 @@ class Controller(MultiChSweep1D):
 
             else:
                 self.log.info(client)
-                client_name_concat =  f"{client_type}_{client_config}"
+                client_name_concat = f"{client_type}_{client_config}"
                 client_item = QtWidgets.QListWidgetItem(client_name_concat)
                 client_item.setToolTip(str(client))
                 self.widgets['clients'].addItem(client_item)
 
         #Checking for any missing clients, and adding them as greyed out on the list of clients
-
 
         # Manually add logger to client
         self.clients['logger'] = logger
@@ -149,7 +143,7 @@ class Controller(MultiChSweep1D):
 
             # Configure Hmap to work the way we want
             hmap = pg.ImageView(view=pg.PlotItem())
-            self.gui.graph_layout.insertWidget(2*index+1, hmap)
+            self.gui.graph_layout.insertWidget(2 * index + 1, hmap)
             hmap.setPredefinedGradient('inferno')
             hmap.show()
             hmap.view.setAspectLocked(False)
@@ -172,11 +166,10 @@ class Controller(MultiChSweep1D):
 
             self.widgets['exp_preview'].setText(exp_content)
             self.widgets['exp_preview'].setStyleSheet('font: 12pt "Consolas"; '
-                                                    'color: rgb(255, 255, 255); '
-                                                    'background-color: #19232D;')
+                                                      'color: rgb(255, 255, 255); '
+                                                      'background-color: #19232D;')
             self.cur_path = self.widgets['exp'].model().filePath(self.widgets['exp'].currentIndex())
             self.exp_name = os.path.split(os.path.basename(self.cur_path))[0]
-
 
     def configure_experiment(self):
         """ Configures experiment to be the currently selected item """
@@ -192,7 +185,7 @@ class Controller(MultiChSweep1D):
 
         self.x_fwd = self._generate_x_axis()
         if self.sweep_type != 'sawtooth':
-                self.x_bwd = self._generate_x_axis(backward=True)
+            self.x_bwd = self._generate_x_axis(backward=True)
         else:
             self.x_bwd = self._generate_x_axis()
 
@@ -268,7 +261,7 @@ class Controller(MultiChSweep1D):
 
         # Save average
         generic_save(
-            data = np.vstack((self.x_fwd, np.array([self.avg_fwd]))),
+            data=np.vstack((self.x_fwd, np.array([self.avg_fwd]))),
             filename=f'{filename}_fwd_avg',
             directory=directory,
             date_dir=date_dir
@@ -297,7 +290,7 @@ class Controller(MultiChSweep1D):
             )
             # Save average
             generic_save(
-                data = np.vstack((self.x_bwd, np.array([self.avg_bwd]))),
+                data=np.vstack((self.x_bwd, np.array([self.avg_bwd]))),
                 filename=f'{filename}_bwd_avg',
                 directory=directory,
                 date_dir=date_dir
@@ -339,7 +332,7 @@ class Controller(MultiChSweep1D):
                     date_dir=date_dir
                 )'''
 
-    def fit_config(self, status:bool):
+    def fit_config(self, status: bool):
         """ Configures fitting add-on
 
         :param status: (bool) whether or not fit button is checked
@@ -348,13 +341,13 @@ class Controller(MultiChSweep1D):
         # If box is newly checked, instantiate popup
         if status:
             self.fit_popup = FitPopup(ui='fit_popup',
-                                      x_fwd = self.x_fwd,
-                                      data_fwd = self.avg_fwd,
-                                      x_bwd = self.x_bwd,
-                                      data_bwd = self.avg_bwd,
-                                      p0_fwd = None,
-                                      p0_bwd = None,
-                                      config = self.config,
+                                      x_fwd=self.x_fwd,
+                                      data_fwd=self.avg_fwd,
+                                      x_bwd=self.x_bwd,
+                                      data_bwd=self.avg_bwd,
+                                      p0_fwd=None,
+                                      p0_bwd=None,
+                                      config=self.config,
                                       log=self.log)
             self.fit_popup.model_type.activated.connect(self.fit_popup.fit_selection)
             '''
@@ -405,8 +398,6 @@ class Controller(MultiChSweep1D):
 
         for index, graph in enumerate(self.widgets['graph']):
 
-
-
             if self.sweep_type != 'sawtooth':
                 self.widgets['curve'].append(graph.plot(
                     pen=pg.mkPen(color=self.gui.COLOR_LIST[6])
@@ -427,7 +418,7 @@ class Controller(MultiChSweep1D):
                 )
 
                 self.widgets['fit_avg'].append(graph.plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
+                    pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
                 ))
                 add_to_legend(
                     self.widgets['legend'][index],
@@ -486,10 +477,10 @@ class Controller(MultiChSweep1D):
                 # Update average and plot
                 try:
                     cur_rep = len(self.data_bwd)
-                    self.avg_bwd[cur_ind-1] = (
-                        (cur_rep-1) * self.avg_bwd[cur_ind-1]
+                    self.avg_bwd[cur_ind - 1] = (
+                        (cur_rep - 1) * self.avg_bwd[cur_ind - 1]
                         + self.data_bwd[-1][-1]
-                    )/cur_rep
+                    ) / cur_rep
                     self.widgets['curve_avg'][1].setData(
                         self.x_bwd,
                         self.avg_bwd
@@ -504,7 +495,7 @@ class Controller(MultiChSweep1D):
                     self.widgets['hmap'][1].setImage(
                         img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
                         pos=(self.min, 0),
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         autoRange=False
                     )
             else:
@@ -519,10 +510,10 @@ class Controller(MultiChSweep1D):
                 # Update average and plot
                 try:
                     cur_rep = len(self.data_fwd)
-                    self.avg_fwd[cur_ind-1] = (
-                        (cur_rep-1) * self.avg_fwd[cur_ind-1]
+                    self.avg_fwd[cur_ind - 1] = (
+                        (cur_rep - 1) * self.avg_fwd[cur_ind - 1]
                         + self.data_fwd[-1][-1]
-                    )/cur_rep
+                    ) / cur_rep
                     self.widgets['curve_avg'][0].setData(
                         self.x_fwd,
                         self.avg_fwd
@@ -537,7 +528,7 @@ class Controller(MultiChSweep1D):
                     self.widgets['hmap'][0].setImage(
                         img=np.transpose(fill_2dlist(self.data_fwd)),
                         pos=(self.min, 0),
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         autoRange=False
                     )
 
@@ -555,10 +546,10 @@ class Controller(MultiChSweep1D):
                 # Update average and plot
                 try:
                     cur_rep = len(self.data_fwd)
-                    self.avg_fwd[cur_ind-1] = (
-                        (cur_rep-1) * self.avg_fwd[cur_ind-1]
+                    self.avg_fwd[cur_ind - 1] = (
+                        (cur_rep - 1) * self.avg_fwd[cur_ind - 1]
                         + self.data_fwd[-1][-1]
-                    )/cur_rep
+                    ) / cur_rep
                     self.widgets['curve_avg'][0].setData(
                         self.x_fwd,
                         self.avg_fwd
@@ -573,13 +564,13 @@ class Controller(MultiChSweep1D):
                     self.widgets['hmap'][0].setImage(
                         img=np.transpose(fill_2dlist(self.data_fwd)),
                         pos=(self.min, 0),
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         autoRange=False
                     )
                     self.widgets['hmap'][1].setImage(
                         img=np.transpose(fill_2dlist(self.data_bwd)),
                         pos=(self.min, 0),
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         autoRange=False
                     )
 
@@ -593,10 +584,10 @@ class Controller(MultiChSweep1D):
                 # Update average and plot
                 try:
                     cur_rep = len(self.data_bwd)
-                    self.avg_bwd[cur_ind-1] = (
-                        (cur_rep-1) * self.avg_bwd[cur_ind-1]
+                    self.avg_bwd[cur_ind - 1] = (
+                        (cur_rep - 1) * self.avg_bwd[cur_ind - 1]
                         + self.data_bwd[-1][-1]
-                    )/cur_rep
+                    ) / cur_rep
                     self.widgets['curve_avg'][1].setData(
                         self.x_bwd,
                         self.avg_bwd
@@ -611,7 +602,7 @@ class Controller(MultiChSweep1D):
                     self.widgets['hmap'][1].setImage(
                         img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
                         pos=(self.min, 0),
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         autoRange=False
                     )
             except TypeError:
@@ -625,10 +616,10 @@ class Controller(MultiChSweep1D):
                 # Update average and plot
                 try:
                     cur_rep = len(self.data_fwd)
-                    self.avg_fwd[cur_ind-1] = (
-                        (cur_rep-1) * self.avg_fwd[cur_ind-1]
+                    self.avg_fwd[cur_ind - 1] = (
+                        (cur_rep - 1) * self.avg_fwd[cur_ind - 1]
                         + self.data_fwd[-1][-1]
-                    )/cur_rep
+                    ) / cur_rep
                     self.widgets['curve_avg'][0].setData(
                         self.x_fwd,
                         self.avg_fwd
@@ -643,7 +634,7 @@ class Controller(MultiChSweep1D):
                     self.widgets['hmap'][0].setImage(
                         img=np.transpose(fill_2dlist(self.data_fwd)),
                         pos=(self.min, 0),
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         autoRange=False
                     )
 
@@ -657,13 +648,13 @@ class Controller(MultiChSweep1D):
                 self.widgets['hmap'][1].setImage(
                     img=np.transpose(np.fliplr(fill_2dlist(self.data_bwd))),
                     pos=(self.min, 0),
-                    scale=((self.max-self.min)/self.pts,1),
+                    scale=((self.max - self.min) / self.pts, 1),
                     autoRange=False
                 )
             self.widgets['hmap'][0].setImage(
                 img=np.transpose(fill_2dlist(self.data_fwd)),
                 pos=(self.min, 0),
-                scale=((self.max-self.min)/self.pts,1),
+                scale=((self.max - self.min) / self.pts, 1),
                 autoRange=False
             )
 
@@ -677,7 +668,7 @@ class Controller(MultiChSweep1D):
         """ Updates fits """
         if len(self.avg_fwd) != 0 and self.fit_popup is not None:
             if self.fit_popup.mod is not None and\
-            self.fit_popup.mod.init_params is not None:
+                    self.fit_popup.mod.init_params is not None:
                 self.fit_popup.data_fwd = np.array(self.avg_fwd)
                 self.fit_popup.data_bwd = np.array(self.avg_bwd)
                 if self.p0_fwd is not None and self.p0_bwd is not None:
@@ -687,13 +678,13 @@ class Controller(MultiChSweep1D):
                 self.fit_fwd, self.fit_bwd, self.p0_fwd, self.p0_bwd = self.fit_popup.fit_mod()
                 if self.fit_popup.fit_suc:
                     self.widgets['fit_avg'][0].setData(
-                            self.x_fwd,
-                            self.fit_fwd
-                        )
+                        self.x_fwd,
+                        self.fit_fwd
+                    )
                     self.widgets['fit_avg'][1].setData(
-                            self.x_bwd,
-                            self.fit_bwd
-                        )
+                        self.x_bwd,
+                        self.fit_bwd
+                    )
                 #print(self.avg_fwd)
         else:
             pass
@@ -728,8 +719,9 @@ def main():
     # NOTE: needs to be changed based on the exact config file you are
     # using within configs/scripts/scan1d
     config_name = 'fake_expt'
-    control=Controller(config=config_name)
+    control = Controller(config=config_name)
     control.gui.app.exec_()
+
 
 def launch(**kwargs):
     """ Launches the sweeper GUI """

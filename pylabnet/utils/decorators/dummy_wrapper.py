@@ -3,7 +3,6 @@ from .decorator_utils import get_signature
 import functools
 
 
-
 def dummy_wrap(func):
     """ Decorator which re-routed functions of Driver() objects
     to only produce logged outputs, if the dummy flas ist set.

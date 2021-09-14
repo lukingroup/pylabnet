@@ -1,7 +1,6 @@
 import rpyc
 import traceback
 import time
-import socket
 import logging
 import sys
 import os
@@ -11,6 +10,7 @@ import re
 import pickle
 from pylabnet.utils.helper_methods import get_os, get_dated_subdirectory_filepath, get_ip, load_config
 from pylabnet.utils.slackbot.slackbot import PylabnetSlackBot
+
 
 class LogHandler:
     """Protection wrapper for logger instance.
@@ -106,7 +106,6 @@ class LogHandler:
             return -1
 
 
-
 class ILog:
     pass
 
@@ -187,7 +186,7 @@ class LogClient:
                         key = os.path.join(os.environ['WINDIR'], 'System32', key)
                     elif self.operating_system == 'Linux':
                         key = os.path.join('/etc/ssl/certs', key)
-                    cert=key
+                    cert = key
                     self._connection = rpyc.ssl_connect(
                         host=self._host,
                         port=self._port,
@@ -246,11 +245,9 @@ class LogClient:
         slackbot = PylabnetSlackBot()
         slackbot.subscribe_channel([channel])
 
-
         message = f"Log from `{self._module_tag}`: `{msg_str}`"
 
         slackbot.broadcast_to_channels(message)
-
 
     def exception(self, msg_str):
         # Get traceback string from the last exception

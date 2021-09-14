@@ -1,13 +1,9 @@
 """ Initializes the logger + graphical display for launching pylabnet scripts """
 
 import sys
-import socket
 import os
 import time
 from contextlib import closing
-import subprocess
-import platform
-from io import StringIO
 import copy
 import ctypes
 import re
@@ -25,8 +21,8 @@ from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
-    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
-    get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
+                                           remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
+                                           get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -58,6 +54,7 @@ class LaunchWindow(Window):
         if not self.controller.proxy:
             self.controller.kill_servers()
         self.stop_button.setChecked(True)
+
 
 class Controller:
     """ Class for log system controller """
@@ -202,7 +199,7 @@ class Controller:
             self.gui_logger = LogClient(
                 host=self.host,
                 port=self.log_port,
-                module_tag=self.GUI_NAME+module_str,
+                module_tag=self.GUI_NAME + module_str,
                 ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
@@ -281,7 +278,7 @@ class Controller:
             self.port_list[self.GUI_NAME] = [port for port in self.log_server._server.clients][0]
             self.main_window.client_list.addItem(self.client_list[self.GUI_NAME])
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
-            self.client_data[self.GUI_NAME+module_str] = self.log_service.client_data[self.GUI_NAME]
+            self.client_data[self.GUI_NAME + module_str] = self.log_service.client_data[self.GUI_NAME]
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
@@ -352,14 +349,14 @@ class Controller:
             self.log_server, self.log_port = create_server(
                 self.log_service,
                 host=get_ip()
-                )
+            )
         else:
             try:
                 self.log_server = GenericServer(
                     service=self.log_service,
                     host=get_ip(),
                     port=self.log_port
-                    )
+                )
             except ConnectionRefusedError:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
                 raise
@@ -382,8 +379,8 @@ class Controller:
             ip_str_2 = f' ({get_ip()})'
             log_str = 'Master'
         self.main_window.ip_label.setText(
-            f'{ip_str}IP Address: {self.host}'+ip_str_2
-            )
+            f'{ip_str}IP Address: {self.host}' + ip_str_2
+        )
         self.main_window.logger_label.setText(f'{log_str} Logger Port: {self.log_port}')
 
         if self.proxy:
@@ -427,10 +424,10 @@ class Controller:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
             except TypeError:
                 pass
-        
+
         # New update index is the last !~ index found in the message
         indices_found = re.findall(r'!~\d+~!', new_msg)
-        if len(indices_found) != 0 :
+        if len(indices_found) != 0:
             self.update_index = int(re.findall(r'\d+', indices_found[-1])[0])
         else:
             self.update_index = None
@@ -480,8 +477,6 @@ class Controller:
             if os.stat(self.filenamepath).st_size > self.MAX_LOG_FILE_SIZE:
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
-
-
 
     def _configure_client_search(self):
         self.main_window.client_search.textChanged.connect(self._search_clients)
@@ -597,7 +592,7 @@ class Controller:
             device_config = os.path.basename(filepath)[:-5]
 
             self.gui_logger.info(f'Launching device {device_server} '
-                                         f'with configuration {device_config}')
+                                 f'with configuration {device_config}')
 
             # Initial configurations: All flags down.
             server_debug_flag = '0'
@@ -637,7 +632,7 @@ class Controller:
             script_config = os.path.basename(filepath)[:-5]
 
             self.gui_logger.info(f'Launching device {script_name} '
-                                         f'with configuration {script_config}')
+                                 f'with configuration {script_config}')
 
             # Initial configurations: All flags down.
             debug_flag, server_debug_flag = '0', '0'
@@ -754,7 +749,7 @@ class Controller:
 
             # Add client data
             self.client_data[client] = {}
-            print('Client: '+client)
+            print('Client: ' + client)
             if 'ip: ' in clients[client]:
                 self.client_data[client]['ip'] = clients[client].split('ip: ')[1].split('\n')[0]
             if 'timestamp: ' in clients[client]:
@@ -765,8 +760,6 @@ class Controller:
                 self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
             if 'device_id: ' in clients[client]:
                 self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
-
-
 
         # Remove clients
         for client in remove_clients:
@@ -888,7 +881,6 @@ class Controller:
         if self.logfile_date_str is not None:
             self.log_service.stop_latest_logfile()
 
-
         if self.main_window.logfile_status_button.isChecked() or master_log:
 
             date_str = datetime.now().strftime("%Y_%m_%d")
@@ -960,7 +952,7 @@ class Controller:
 class WriteStream:
     """ Wrapper for sys.stdout to pipe to gui """
 
-    def __init__(self,queue):
+    def __init__(self, queue):
         self.queue = queue
 
     def write(self, text):
@@ -1006,15 +998,15 @@ class ProxyUpdater(QtCore.QObject):
             # Get the list of all bookmarks that exist in the buffer
             bookmark_list = re.findall(r'!~\d+~!', buffer_terminal)
 
-            # Find the first bookmark in the buffer 
+            # Find the first bookmark in the buffer
             if len(bookmark_list) > 0:
                 first_index = int(re.findall(r'\d+', bookmark_list[0])[0])
-            
-            # If the buffer has no bookmarks, it means the entire buffer is 
+
+            # If the buffer has no bookmarks, it means the entire buffer is
             # filled with an extremely long message.
             else:
                 first_index = None
-            
+
             ####
 
             # If this new buffer has no indices, it could be:
@@ -1022,21 +1014,21 @@ class ProxyUpdater(QtCore.QObject):
             # (2) the buffer has changed, but since there are no bookmarks for
             # reference, we have no choice but to dump the entire buffer.
             if first_index is None:
-             
+
                 # No change from before. Need to do this to check for no change
                 # since no bookmarks are present for reference.
                 if buffer_terminal == self.controller.last_seen_buffer:
                     new_msg = ""
-                    
+
                 # The buffer changed, we dump the entire buffer.
                 else:
                     new_msg = buffer_terminal
                     new_msg += "\n\n ----------\nDumping entire buffer as no index was found in current buffer.\n"
                     new_msg += "MESSAGES MAY HAVE BEEN OMITTED DUE TO EXCESSIVE LOGS\n---------- \n\n"
-            
+
             # There exists an index in the current buffer.
-            else:  
-            
+            else:
+
                 # Parse buffer terminal to get part of the message that is new.
                 # This is indicated by the bookmark with the update index incremented by 1.
                 if self.controller.update_index is not None:
@@ -1044,25 +1036,25 @@ class ProxyUpdater(QtCore.QObject):
                     # Exclude last character as it some sort of whitespace
                     new_msg = buffer_terminal[buffer_terminal.rfind(f'!~{self.controller.update_index+1}~!'):-1]
 
-                    # If no new messages, it means either 
+                    # If no new messages, it means either
                     # (1) there is just nothing to update (i.e. update_index+1 doesn't exist)
-                    # (2) there has been too many logs and the bookmark we are looking for has already been 
-                    #     ejected out of the buffer               
+                    # (2) there has been too many logs and the bookmark we are looking for has already been
+                    #     ejected out of the buffer
                     if new_msg == "":
-                        # If the buffer is ahead of our expected next-index, 
+                        # If the buffer is ahead of our expected next-index,
                         # we dump the entire buffer as our new message.
                         if first_index > (self.controller.update_index + 1):
 
                             new_msg = buffer_terminal
                             new_msg += "\n\n ----------\nDumping entire buffer as index found in current buffer exceeded our last update's index.\n"
                             new_msg += "MESSAGES MAY HAVE BEEN OMITTED DUE TO EXCESSIVE LOGS\n---------- \n\n"
-                        
+
                         # If the index present is <= our update index,
                         # it means that there is no new message to update.
                         else:
                             pass
 
-                # update_index being None means the previous buffer did not contain any 
+                # update_index being None means the previous buffer did not contain any
                 # indices so we have no idea what the latest index is, so we just
                 # output everything that appears after the first index (which we know exists).
                 else:
@@ -1084,11 +1076,13 @@ def main():
     log_controller = Controller()
     run(log_controller)
 
+
 def main_proxy():
     """ Runs the launch controller overriding commandline arguments in proxy mode """
 
     log_controller = Controller(proxy=True)
     run(log_controller)
+
 
 def main_master():
     """ Runs the launch controller overriding commandline arguments in master mode """
@@ -1096,11 +1090,13 @@ def main_master():
     log_controller = Controller(master=True)
     run(log_controller)
 
+
 def main_staticproxy():
     """ Runs the launch controller overriding commandline arguments in staticproxy mode """
 
     log_controller = Controller(staticproxy=True)
     run(log_controller)
+
 
 def run(log_controller):
     """ Runs the launch controller once a Controller is instantiated"""

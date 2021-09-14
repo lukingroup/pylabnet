@@ -6,8 +6,6 @@ Originally taken from:
 https://github.com/AlexShkarin/pyLabLib/blob/master/pylablib/aux_libs/devices/M2.py
 Modifications by Graham Joe, M. Chalupnik
 """
-from telnetlib import Telnet
-from copy import deepcopy
 
 from pylabnet.utils.logging.logger import LogHandler
 import time
@@ -18,6 +16,7 @@ import websocket
 BUFFERSIZE = 2048
 MIN_WAVELENGTH = 650
 MAX_WAVELENGTH = 1100
+
 
 class Driver():
 
@@ -175,7 +174,6 @@ class Driver():
             pass
         self.socket.settimeout(self._timeout)
 
-
     tune_wavelength_commands = {"tune_wavelength": "set_wave_m", "tune_wavelength_table": "move_wave_t"}
     get_wavelength_tuning_status_commands = {"tune_wavelength": "poll_wave_m", "tune_wavelength_table": "poll_wave_t"}
     stop_tuning_wavelength_commands = {"tune_wavelength": "stop_wave_m", "tune_wavelength_table": "stop_move_wave_t"}
@@ -282,7 +280,7 @@ class Driver():
             self.log.warn("no link to wavemeter")
 
     terascan_rates = [50E3, 100E3, 200E3, 500E3, 1E6, 2E6, 5E6, 10E6, 20E6, 50E6, 100E6, 200E6, 500E6, 1E9, 2E9, 5E9,
-                       10E9, 15E9, 20E9, 50E9, 100E9]
+                      10E9, 15E9, 20E9, 50E9, 100E9]
     terascan_setup_states = ["scan setup completed", "start out of range", "stop out of range", "rate out of range",
                              "TeraScan not available"]
 
@@ -329,7 +327,7 @@ class Driver():
         :param update_period: Does nothing (outdated parameter here to prevent ancient code from breaking)
         """
         _, parameters_reply = self.send("scan_stitch_output",
-                             {"operation": ("start" if enable else "stop"), "update": [update_period]})
+                                        {"operation": ("start" if enable else "stop"), "update": [update_period]})
         #reply_status = parameters_reply["status"][0]
         #if reply_status != 0:
         #    self.log.warning(self.terascan_update_states[reply_status])
@@ -358,8 +356,8 @@ class Driver():
         self._last_status[self._terascan_update_op] = {}
 
     terascan_op_states = ["TeraScan Started",
-                             "can't start TeraScan: operation failed",
-                             "can't start TeraScan: TeraScan not available"]
+                          "can't start TeraScan: operation failed",
+                          "can't start TeraScan: TeraScan not available"]
 
     def start_terascan(self, scan_type, report=False):
         """Start terascan.
@@ -436,7 +434,7 @@ class Driver():
     def get_terascan_status(self, scan_type):
         """Get status of a terascan of a given type. Do not use this function if terascan updates are enabled as the
         socket will timeout.
-        
+
         :param scan_type: Scan type
             'medium': BRF+etalon, rate from 100 GHz/s to 1 GHz/s
             'fine': All elements, rate from 20 GHz/s to 1 MHz/s
@@ -455,9 +453,9 @@ class Driver():
         _, reply = self.send("scan_stitch_status", {"scan": scan_type})
         return reply
 
-    fast_scan_types = {"cavity_continuous", "cavity_single", "cavity_triangular","resonator_continuous",
-                        "resonator_single", "resonator_ramp", "resonator_triangular", "ect_continuous", "ecd_ramp",
-                        "fringe_test"}
+    fast_scan_types = {"cavity_continuous", "cavity_single", "cavity_triangular", "resonator_continuous",
+                       "resonator_single", "resonator_ramp", "resonator_triangular", "ect_continuous", "ecd_ramp",
+                       "fringe_test"}
     fast_scan_start_states = ["successful, scan in progress",
                               "can't start fast scan: width too great for the current tuning position",
                               "can't start fast scan: reference cavity not fitted",
@@ -582,7 +580,7 @@ class Driver():
         # Disregard partial messages cut off by the buffer size
         if len(message) >= self.buffersize:
             self.log.warn('Message size >= buffer size, increase buffer read rate and/or buffer size to avoid '
-                             'missing information')
+                          'missing information')
             # split from right
             msg = message.rsplit('},{', 1)
             message = msg[0]
@@ -622,7 +620,7 @@ class Driver():
         :param op: original operation
         :return string: parsed operation
         """
-        if op ==  self._terascan_update_op:
+        if op == self._terascan_update_op:
             return op
         elif op[-4:] == '_f_r':
             return op[:-4]
@@ -746,13 +744,9 @@ class Driver():
             self.log.warn("unknown fast scan type: {}".format(scan_type))
 
 
-
-
-
 def main():
 
     from pylabnet.utils.logging.logger import LogClient
-
 
     logger = LogClient(
         host='localhost',
@@ -764,8 +758,8 @@ def main():
     port1 = '1111'
     port2 = '2222'
     tisa = Driver(
-        ip, 
-        port1, 
+        ip,
+        port1,
         port2,
         logger=logger
     )

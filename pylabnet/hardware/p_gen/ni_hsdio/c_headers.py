@@ -166,10 +166,6 @@ class NIConst:
     # #define NIHSDIO_VAL_MARKER_EVENT2                        "marker2"
     # #define NIHSDIO_VAL_MARKER_EVENT3                        "marker3"
 
-
-
-
-
     # NIHSDIO_ATTR_DATA_WIDTH = NITypes.ViInt32(IVI_SPECIFIC_PUBLIC_ATTR_BASE + 108)
     NIHSDIO_ATTR_SAMPLE_CLOCK_SOURCE = NITypes.ViInt32(IVI_SPECIFIC_PUBLIC_ATTR_BASE + 13)  # output type: ViString
     NIHSDIO_ATTR_SAMPLE_CLOCK_RATE = NITypes.ViInt32(IVI_SPECIFIC_PUBLIC_ATTR_BASE + 14)

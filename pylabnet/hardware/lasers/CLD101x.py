@@ -2,7 +2,6 @@ from pyvisa import VisaIOError, ResourceManager
 
 from pylabnet.utils.logging.logger import LogHandler
 import numpy as np
-import time
 
 
 class Driver():

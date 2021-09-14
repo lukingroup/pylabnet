@@ -12,8 +12,8 @@ from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph
 
 class Dataset():
 
-    def __init__(self, gui:Window, log:LogClient=None, data=None,
-        x=None, graph=None, name=None, dont_clear=False, **kwargs):
+    def __init__(self, gui: Window, log: LogClient = None, data=None,
+                 x=None, graph=None, name=None, dont_clear=False, **kwargs):
         """ Instantiates an empty generic dataset
 
         :param gui: (Window) GUI window for data graphing
@@ -52,7 +52,7 @@ class Dataset():
         self.is_important = False
 
     def add_child(self, name, mapping=None, data_type=None,
-        new_plot=True, dont_clear=False, **kwargs):
+                  new_plot=True, dont_clear=False, **kwargs):
         """ Adds a child dataset with a particular data mapping
 
         :param name: (str) name of processed dataset
@@ -105,7 +105,6 @@ class Dataset():
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
 
-
     def visualize(self, graph, **kwargs):
         """ Prepare data visualization on GUI
 
@@ -117,7 +116,7 @@ class Dataset():
         if 'color_index' in kwargs:
             color_index = kwargs['color_index']
         else:
-            color_index = self.gui.graph_layout.count()-1
+            color_index = self.gui.graph_layout.count() - 1
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 color_index
@@ -138,7 +137,6 @@ class Dataset():
 
         for child in self.children.values():
             child.clear_all_data()
-
 
     def update(self, **kwargs):
         """ Updates current data to plot"""
@@ -219,7 +217,6 @@ class Dataset():
         for child in self.children.values():
             child.save(filename, directory, date_dir)
 
-
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
 
@@ -273,7 +270,7 @@ class Dataset():
                         window_title = 'Graph Holder'
 
                     self.gui.windows[kwargs['window']] = GraphPopup(
-                        window_title=window_title, size=(700,300)
+                        window_title=window_title, size=(700, 300)
                     )
 
                 self.graph = pg.PlotWidget()
@@ -370,7 +367,7 @@ class PreselectedHistogram(AveragedHistogram):
             mapping=self.preselect,
             data_type=AveragedHistogram
         )
-        self.log.update_metadata(presel_params = self.presel_params)
+        self.log.update_metadata(presel_params=self.presel_params)
         self.add_params_to_gui(**self.presel_params)
 
         self.widgets['threshold'].valueChanged.connect(self.update_threshold)
@@ -448,7 +445,7 @@ class PreselectedHistogram(AveragedHistogram):
 
     @staticmethod
     def recent(dataset, prev_dataset):
-	    prev_dataset.data = dataset.recent_data
+        prev_dataset.data = dataset.recent_data
 
 
 class InvisibleData(Dataset):
@@ -535,7 +532,6 @@ class InfiniteRollingLine(RollingLine):
                 super().update(**kwargs)
 
 
-
 class ManualOpenLoopScan(Dataset):
 
     def __init__(self, *args, **kwargs):
@@ -578,10 +574,9 @@ class ManualOpenLoopScan(Dataset):
         self.integration, self.max_runs, self.bins_per_ghz, self.min_bins = config['integration'], config['max_runs'], config['bins_per_ghz'], config['min_bins']
         # Questions: Why is this line necessary for the plot to appear.
         self.kwargs.update(dict(
-                x=np.linspace(400, 500, 100),
-                name='Fwd trace'
-            ))
-
+            x=np.linspace(400, 500, 100),
+            name='Fwd trace'
+        ))
 
     def visualize(self, graph, **kwargs):
         self.handle_new_window(graph, **kwargs)
@@ -589,21 +584,20 @@ class ManualOpenLoopScan(Dataset):
         if 'color_index' in kwargs:
             color_index = kwargs['color_index']
         else:
-            color_index = self.gui.graph_layout.count()-1
+            color_index = self.gui.graph_layout.count() - 1
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 color_index
             ]),
-            symbol = 'o',
-            symbolPen = pg.mkPen(self.gui.COLOR_LIST[
+            symbol='o',
+            symbolPen=pg.mkPen(self.gui.COLOR_LIST[
                 color_index
             ]),
-            symbolBrush = pg.mkBrush(self.gui.COLOR_LIST[color_index]),
-            downsample = 0.5,
-            downsampleMethod ='mean'
+            symbolBrush=pg.mkBrush(self.gui.COLOR_LIST[color_index]),
+            downsample=0.5,
+            downsampleMethod='mean'
         )
         self.update(**kwargs)
-
 
     def set_data(self, data=None, x=None, wavelength=None):
         """ Sets the data for a new round of acquisition
@@ -616,7 +610,6 @@ class ManualOpenLoopScan(Dataset):
 
         # Add wavelength to aux monitor.
         self.children['Wavelength'].set_data(wavelength)
-
 
         # Append new data.
         if self.data is None:
@@ -635,7 +628,6 @@ class ManualOpenLoopScan(Dataset):
         self.data = self.data[np.argsort(self.x)]
         self.x = self.x[np.argsort(self.x)]
 
-
         # Add data to parent dataset.
         super().set_data(self.data, self.x)
 
@@ -645,7 +637,7 @@ class ManualOpenLoopScan(Dataset):
         previous_y = dataset.data
 
         data_len = len(previous_y)
-        scan_span =  ((previous_x[-1] - previous_x[0])*1e3)
+        scan_span = ((previous_x[-1] - previous_x[0]) * 1e3)
         current_bins_per_ghz = data_len / scan_span
 
         # self.log.info(f'Scan span = {scan_span}')
@@ -655,8 +647,6 @@ class ManualOpenLoopScan(Dataset):
         new_num_bins = int(scan_span * self.bins_per_ghz)
         #self.log.info(f'new_num_bins = {new_num_bins}')
 
-
-
         if current_bins_per_ghz < self.bins_per_ghz or scan_span < 0.001 or new_num_bins < self.min_bins:
             prev_dataset.data = previous_y
             prev_dataset.x = previous_x
@@ -665,9 +655,8 @@ class ManualOpenLoopScan(Dataset):
             self.log.info(f'new_num_bins = {new_num_bins}')
             self.log.info(f'data_len = {data_len}')
 
-
-            padded_x = np.pad(previous_x, (0, new_num_bins - data_len%new_num_bins), 'constant')
-            padded_y = np.pad(previous_y, (0, new_num_bins - data_len%new_num_bins), 'constant')
+            padded_x = np.pad(previous_x, (0, new_num_bins - data_len % new_num_bins), 'constant')
+            padded_y = np.pad(previous_y, (0, new_num_bins - data_len % new_num_bins), 'constant')
 
             binlength = int(len(padded_x) / new_num_bins)
 
@@ -681,9 +670,9 @@ class ManualOpenLoopScan(Dataset):
 
             for i in range(new_num_bins):
                 # Sum counts
-                rebinned_y[i] = np.sum(padded_y[i*binlength:(i+1)*binlength])
+                rebinned_y[i] = np.sum(padded_y[i * binlength:(i + 1) * binlength])
                 # Average wavelength
-                rebinned_x[i] = np.average(padded_x[i*binlength:(i+1)*binlength])
+                rebinned_x[i] = np.average(padded_x[i * binlength:(i + 1) * binlength])
 
             # Remove nans.
             nan_index = ~np.isnan(rebinned_x)
@@ -694,6 +683,7 @@ class ManualOpenLoopScan(Dataset):
 
             prev_dataset.data = rebinned_y[:-1]
             prev_dataset.x = rebinned_x[:-1]
+
 
 class LockMonitor(Dataset):
 
@@ -714,26 +704,26 @@ class LockMonitor(Dataset):
 
         super().__init__(*self.args, **self.kwargs)
 
-         # Add child for PD current
+        # Add child for PD current
         self.add_child(
-                name='Piezo Voltage',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                color_index=4
+            name='Piezo Voltage',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            color_index=4
         )
 
-         # Add child for PD current
+        # Add child for PD current
         self.add_child(
-                name='PD Transmission',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                color_index=4
+            name='PD Transmission',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            color_index=4
         )
         self.add_child(
-                name='Demodulated PD Transmission',
-                data_type=InfiniteRollingLine,
-                data_length=10000,
-                color_index=4
+            name='Demodulated PD Transmission',
+            data_type=InfiniteRollingLine,
+            data_length=10000,
+            color_index=4
         )
         self.add_child(
             name='Cavity lock',
@@ -777,6 +767,7 @@ class Scatterplot(Dataset):
         self.curve = pg.ScatterPlotItem(x=[0], y=[0])
         self.graph.addItem(self.curve)
         self.update(**kwargs)
+
 
 class TriangleScan1D(Dataset):
     """ 1D Triangle sweep of a parameter """
@@ -885,9 +876,9 @@ class TriangleScan1D(Dataset):
         if dataset.reps > 1:
             current_index = len(dataset.data) - 1
             prev_dataset.data[current_index] = (
-                prev_dataset.data[current_index]*(dataset.reps-1)
+                prev_dataset.data[current_index] * (dataset.reps - 1)
                 + dataset.data[-1]
-            )/(dataset.reps)
+            ) / (dataset.reps)
         else:
             prev_dataset.data = dataset.data
 
@@ -941,6 +932,7 @@ class TriangleScan1D(Dataset):
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
 
+
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """
 
@@ -983,7 +975,7 @@ class SawtoothScan1D(Dataset):
 
         # Add child for averaged plot
         self.add_child(
-            name= config['name'] + 'avg',
+            name=config['name'] + 'avg',
             mapping=self.avg,
             data_type=Dataset,
             new_plot=False,
@@ -993,7 +985,7 @@ class SawtoothScan1D(Dataset):
 
         # Add child for HMAP
         self.add_child(
-            name= config['name'] + 'scans',
+            name=config['name'] + 'scans',
             mapping=self.hmap,
             data_type=HeatMap,
             min=self.min,
@@ -1009,9 +1001,9 @@ class SawtoothScan1D(Dataset):
         if dataset.reps > 1:
             current_index = len(dataset.data) - 1
             prev_dataset.data[current_index] = (
-                prev_dataset.data[current_index]*(dataset.reps-1)
+                prev_dataset.data[current_index] * (dataset.reps - 1)
                 + dataset.data[-1]
-            )/(dataset.reps)
+            ) / (dataset.reps)
         else:
             prev_dataset.data = dataset.data
 
@@ -1059,6 +1051,7 @@ class SawtoothScan1D(Dataset):
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
 
+
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
@@ -1081,7 +1074,7 @@ class HeatMap(Dataset):
                     self.graph.setImage(
                         img=np.transpose(self.data),
                         autoRange=False,
-                        scale=((self.max-self.min)/self.pts,1),
+                        scale=((self.max - self.min) / self.pts, 1),
                         pos=(self.min, 0)
                     )
                 else:
@@ -1153,7 +1146,7 @@ class HeatMap(Dataset):
 
         # Reset Heatmap with zeros
         self.graph.setImage(
-            img=np.transpose(np.zeros((10,10))),
+            img=np.transpose(np.zeros((10, 10))),
             autoRange=False
         )
 
@@ -1209,7 +1202,6 @@ class LockedCavityScan1D(TriangleScan1D):
         self.children['Cavity history'].set_data(self.v)
         self.children['Max count history'].set_data(counts)
 
-
     def clear_data(self):
 
         # Clear forward/backward scan line
@@ -1264,7 +1256,6 @@ class LockedCavityPreselectedHistogram(PreselectedHistogram):
             window_title='Single-photon data'
         )
 
-
     def set_v_and_counts(self, v, counts):
         """ Updates voltage and counts"""
 
@@ -1281,16 +1272,16 @@ class ErrorBarGraph(Dataset):
         :param graph: (pg.PlotWidget) graph to use
         """
 
-        self.error=None
+        self.error = None
         self.handle_new_window(graph, **kwargs)
 
         if 'color_index' in kwargs:
             color_index = kwargs['color_index']
         else:
             if 'window' in kwargs:
-                color_index = self.gui.windows[kwargs['window']].graph_layout.count()-1
+                color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
             else:
-                color_index = self.gui.graph_layout.count()-1
+                color_index = self.gui.graph_layout.count() - 1
         self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index]), width=0.5)
         self.error_curve = pg.ErrorBarItem(pen=None, symbol='o', beam=0.5)
         self.graph.addItem(self.curve)
@@ -1303,7 +1294,7 @@ class ErrorBarGraph(Dataset):
         if self.data is not None:
             if self.x is not None:
                 try:
-                    width = (self.x[1]-self.x[0])/2
+                    width = (self.x[1] - self.x[0]) / 2
                 except IndexError:
                     width = 0.5
                 self.curve.setOpts(x=self.x, height=self.data, width=width)
@@ -1314,7 +1305,7 @@ class ErrorBarGraph(Dataset):
         if self.error is not None:
             if self.x is not None:
                 try:
-                    width = (self.x[1]-self.x[0])/2
+                    width = (self.x[1] - self.x[0]) / 2
                 except IndexError:
                     width = 0.5
                 self.error_curve.setData(x=self.x, y=self.data, height=self.error, beam=width)
@@ -1333,13 +1324,13 @@ class ErrorBarPlot(Dataset):
         :param graph: (pg.PlotWidget) graph to use
         """
 
-        self.error=None
+        self.error = None
         self.handle_new_window(graph, **kwargs)
 
         if 'color_index' in kwargs:
             color_index = kwargs['color_index']
         else:
-            color_index = self.gui.graph_layout.count()-1
+            color_index = self.gui.graph_layout.count() - 1
         self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[color_index]), symbol='o')
         self.graph.addItem(self.curve)
         self.update(**kwargs)
@@ -1350,7 +1341,7 @@ class ErrorBarPlot(Dataset):
         if self.data is not None and self.error is not None:
             if self.x is not None:
                 try:
-                    width = (self.x[1]-self.x[0])/2
+                    width = (self.x[1] - self.x[0]) / 2
                 except IndexError:
                     width = 0.5
                 self.curve.setData(x=self.x, y=self.data, height=self.error, beam=width)
@@ -1382,7 +1373,7 @@ class PhotonErrorBarPlot(ErrorBarGraph):
     un_normalized = np.array([])
     normalized = np.array([])
     total_events = 0
-    reps=0
+    reps = 0
 
     def visualize(self, graph, **kwargs):
         super().visualize(graph, **kwargs)
@@ -1453,7 +1444,7 @@ class InterpolatedMap(Dataset):
         ax = fig.gca()
 
         # Ignore the first field (# of datapoints at that coord)
-        obs_dict = {key:val[1] for key, val in self.data.items()}
+        obs_dict = {key: val[1] for key, val in self.data.items()}
         # Extract datapoints as arrays
         coords, fidelities = zip(*obs_dict.items())
         coords = np.array(coords)
@@ -1461,10 +1452,10 @@ class InterpolatedMap(Dataset):
         # Compute plotting bounds
         xlims = min(coords[:, 0]), max(coords[:, 0])
         ylims = min(coords[:, 1]), max(coords[:, 1])
-        
+
         # Create grid for plotting region, imaginary number is part of mgrid() syntax
         n_points = 50
-        xgrid = np.mgrid[0.95*xlims[0]:1.05*xlims[1]:n_points*1j, 0.95*ylims[0]:1.05*ylims[1]:n_points*1j]
+        xgrid = np.mgrid[0.95 * xlims[0]:1.05 * xlims[1]:n_points * 1j, 0.95 * ylims[0]:1.05 * ylims[1]:n_points * 1j]
 
         # Flatten grid, apply the interpolator to this flattened grid, reshape back to grid
         xflat = xgrid.reshape(2, -1).T
@@ -1495,7 +1486,7 @@ class InterpolatedMap(Dataset):
                         window_title = 'Graph Holder'
 
                     self.gui.windows[kwargs['window']] = GraphPopup(
-                        window_title=window_title, size=(700,300)
+                        window_title=window_title, size=(700, 300)
                     )
 
                 self.graph = MatplotlibWidget()
@@ -1512,14 +1503,14 @@ class InterpolatedMap(Dataset):
             self.graph = graph
 
 
-
 # Useful mappings
 
 def moving_average(dataset, prev_dataset=None):
-	n=20
-	ret = np.cumsum(dataset.data)
-	ret[n:] = ret[n:] - ret[:-n]
-	prev_dataset.set_data(data=ret[n-1:]/n)
+    n = 20
+    ret = np.cumsum(dataset.data)
+    ret[n:] = ret[n:] - ret[:-n]
+    prev_dataset.set_data(data=ret[n - 1:] / n)
+
 
 def passthru(dataset, prev_dataset):
-        prev_dataset.set_data(x=dataset.x, data=dataset.data)
+    prev_dataset.set_data(x=dataset.x, data=dataset.data)

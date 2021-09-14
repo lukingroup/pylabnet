@@ -1,4 +1,7 @@
-import socket
+from pylabnet.utils.helper_methods import get_ip, load_device_config
+from pylabnet.network.client_server.si_tt import Service, Client
+from pylabnet.network.core.generic_server import GenericServer
+from pylabnet.hardware.counter.swabian_instruments.time_tagger import Wrap
 
 IMPORT_STATUS = True
 
@@ -6,11 +9,6 @@ try:
     import TimeTagger as TT
 except ModuleNotFoundError:
     IMPORT_STATUS = False
-
-from pylabnet.hardware.counter.swabian_instruments.time_tagger import Wrap
-from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server.si_tt import Service, Client
-from pylabnet.utils.helper_methods import get_ip, load_device_config
 
 
 def launch(**kwargs):

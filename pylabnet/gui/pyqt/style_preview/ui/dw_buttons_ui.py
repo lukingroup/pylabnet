@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 
 
+from qdarkstyle import style_rc
 from qtpy import QtCore, QtGui, QtWidgets
 
 
@@ -360,12 +361,12 @@ class Ui_DockWidget(object):
         self.buttonBox = QtWidgets.QDialogButtonBox(self.dockWidgetContents)
         self.buttonBox.setMinimumSize(QtCore.QSize(0, 0))
         self.buttonBox.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.gridLayout.addWidget(self.buttonBox, 14, 1, 1, 2)
         self.buttonBoxDis = QtWidgets.QDialogButtonBox(self.dockWidgetContents)
         self.buttonBoxDis.setEnabled(False)
-        self.buttonBoxDis.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBoxDis.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.buttonBoxDis.setObjectName("buttonBoxDis")
         self.gridLayout.addWidget(self.buttonBoxDis, 14, 3, 1, 2)
         spacerItem = QtWidgets.QSpacerItem(20, 4, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -502,4 +503,3 @@ class Ui_DockWidget(object):
         self.label_36.setStatusTip(_translate("DockWidget", "This is a status tip"))
         self.label_36.setWhatsThis(_translate("DockWidget", "This is \"what is this\""))
         self.label_36.setText(_translate("DockWidget", "Inside DockWidget"))
-from qdarkstyle import style_rc

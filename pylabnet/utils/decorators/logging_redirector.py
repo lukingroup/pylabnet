@@ -29,4 +29,3 @@ def log_standard_output(func):
         return func_return
 
     return wrapper
-

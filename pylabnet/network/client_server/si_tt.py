@@ -8,7 +8,7 @@ class Service(ServiceBase):
 
     def exposed_start_trace(self, name, ch_list=[1], bin_width=1000000000,
                             n_bins=10000):
-        ch_list=pickle.loads(ch_list)
+        ch_list = pickle.loads(ch_list)
         return self._module.start_trace(
             name=name,
             ch_list=ch_list,
@@ -73,6 +73,7 @@ class Service(ServiceBase):
 
     def exposed_set_trigger_level(self, channel, voltage):
         return self._module.set_trigger_level(channel, voltage)
+
 
 class Client(ClientBase):
 
@@ -165,8 +166,8 @@ class Client(ClientBase):
 
     def count_between_markers(self, name, click_ch, marker_ch, bins=1000):
         """ Starts a new counter that counts at the rising edge of a marker
-        
-        Starts counting at rising edge of marker channel, and returns count value 
+
+        Starts counting at rising edge of marker channel, and returns count value
         into array at the next marker rising edge
 
         :param name: (str) name of counter measurement to use
@@ -257,11 +258,11 @@ class Client(ClientBase):
         return self._service.exposed_create_delayed_channel(channel_name, click_ch, delay)
 
     def create_combined_channel(self, channel_name, channel_list):
-        """ Creates a combined virtual channel which includes events from multiple cahnnels 
-        
+        """ Creates a combined virtual channel which includes events from multiple cahnnels
+
         :param channel_name: (str) name, identifier of the channel
         :param channel_list: (list) list of channel numbers or names to combine
-        """  
+        """
         return self._service.exposed_create_combined_channel(
             channel_name, pickle.dumps(channel_list)
         )

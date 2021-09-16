@@ -973,7 +973,7 @@ def set_graph_background(widget):
 
     :param widget: base graph or legend widget
     """
-
+    
     try:
         widget.getViewBox().setBackgroundColor('#19232D')
 

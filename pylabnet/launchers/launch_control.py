@@ -16,6 +16,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
 from queue import Queue
 import numpy as np
+import pickle
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
@@ -27,6 +28,7 @@ from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
     remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
     get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
+from pylabnet.utils.confluence_handler.confluence_handler import LaunchControl_Confluence_Handler
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -47,7 +49,7 @@ class LaunchWindow(Window):
         :param run: whether or not to run GUI on instantiation
         """
 
-        super().__init__(app, gui_template=gui_template)
+        super().__init__(app, gui_template=gui_template, enable_confluence=False)
         self.controller = controller
         self.apply_stylesheet()
         self.buffer_terminal.setVisible(False)
@@ -84,6 +86,7 @@ class Controller:
 
         self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
         self.main_window.stop_button.clicked.connect(self._kill)
+
         if self.operating_system not in ['Linux', 'Windows']:
             raise UnsupportedOSException
         try:
@@ -181,6 +184,9 @@ class Controller:
 
         # setting selection mode for server list to multi-select
         self.main_window.client_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+
+        # confluence handler
+        self.confluence_handler = LaunchControl_Confluence_Handler( self, self.app)
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -282,6 +288,9 @@ class Controller:
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
             self.client_data[self.GUI_NAME+module_str] = self.log_service.client_data[self.GUI_NAME]
 
+
+        
+
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
 
@@ -366,6 +375,9 @@ class Controller:
 
         self.log_service.logger.info('log service succesfully started')
 
+        # initiate confluence data into log's metadata
+        self.confluence_handler.confleunce_popup.okay_event(is_close=False)
+
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
@@ -403,6 +415,8 @@ class Controller:
         self.main_window.logfile_status_button.setHidden(True)
         self.main_window.log_previous.setHidden(True)
         self.main_window.logfile_status_indicator.setEnabled(False)
+        self.main_window.confluence_update.clicked.connect(self.confluence_info_update)
+
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -674,6 +688,11 @@ class Controller:
                 client_cmd=bash_cmd,
                 logger=self.gui_logger
             )
+
+    def confluence_info_update(self):
+        self.confluence_handler.confleunce_popup.Popup_Update()
+
+        
 
     def _load_scripts(self):
         """ Loads all relevant scripts/devices from filesystem"""

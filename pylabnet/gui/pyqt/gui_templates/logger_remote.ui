@@ -24,24 +24,49 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="4" column="2">
-     <widget class="QLineEdit" name="space_field"/>
-    </item>
-    <item row="3" column="2">
-     <widget class="QLabel" name="space_label">
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;upload space name:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <item row="1" column="4" rowspan="10">
+     <widget class="QListWidget" name="client_list">
+      <property name="font">
+       <font>
+        <family>Calibri Light</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="toolTip">
+       <string/>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>
-    <item row="17" column="4">
-     <widget class="QPushButton" name="close_server">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(170, 0, 0);
-color: rgb(255, 255, 255);</string>
+    <item row="0" column="5">
+     <widget class="QLabel" name="label_2">
+      <property name="font">
+       <font>
+        <family>Calibri Light</family>
+        <pointsize>12</pointsize>
+       </font>
       </property>
       <property name="text">
-       <string>Close server</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Scripts:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="11" column="4">
+     <widget class="QLineEdit" name="client_search">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <widget class="QRadioButton" name="autoscroll_off_check">
+      <property name="text">
+       <string>Autoscroll off</string>
       </property>
      </widget>
     </item>
@@ -79,110 +104,62 @@ color: rgb(255, 255, 255);</string>
       </property>
      </widget>
     </item>
-    <item row="13" column="2">
-     <widget class="QLabel" name="debug_label">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="visible">
-       <bool>true</bool>
-      </property>
-      <property name="text">
-       <string>Debug module:</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="6">
-     <widget class="QLabel" name="label_4">
-      <property name="font">
-       <font>
-        <family>Calibri Light</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Devices:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-    </item>
-    <item row="14" column="2">
-     <widget class="QComboBox" name="debug_comboBox">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="visible">
-       <bool>true</bool>
-      </property>
-      <property name="styleSheet">
-       <string notr="true"/>
-      </property>
-      <property name="currentText">
-       <string>launcher</string>
+    <item row="0" column="3">
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <property name="spacing">
+       <number>100</number>
       </property>
       <item>
-       <property name="text">
-        <string>launcher</string>
-       </property>
+       <widget class="QLabel" name="ip_label">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;IP Address: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
       </item>
       <item>
-       <property name="text">
-        <string>pylabnet_server</string>
-       </property>
+       <widget class="QLabel" name="logger_label">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Logger Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
       </item>
-     </widget>
+      <item>
+       <widget class="QLabel" name="gui_label">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>12</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;GUI Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
-    <item row="1" column="3" rowspan="17">
-     <widget class="QTextBrowser" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <family>Courier New</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="6" rowspan="17">
-     <widget class="QTreeView" name="devices"/>
-    </item>
-    <item row="1" column="5" rowspan="17">
-     <widget class="QTreeView" name="scripts"/>
-    </item>
-    <item row="1" column="2">
-     <widget class="QRadioButton" name="debug_radio_button">
-      <property name="text">
-       <string>Debug</string>
-      </property>
-      <property name="autoExclusive">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="4">
-     <widget class="QLabel" name="label">
-      <property name="maximumSize">
-       <size>
-        <width>200</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="font">
-       <font>
-        <family>Calibri Light</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Active servers:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-      </property>
-     </widget>
-    </item>
-    <item row="15" column="2" rowspan="3">
+    <item row="10" column="2" rowspan="3">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QRadioButton" name="log_file_button">
@@ -261,75 +238,46 @@ background-color: green;</string>
       </item>
      </layout>
     </item>
-    <item row="0" column="5">
-     <widget class="QLabel" name="label_2">
-      <property name="font">
-       <font>
-        <family>Calibri Light</family>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
+    <item row="1" column="6" rowspan="12">
+     <widget class="QTreeView" name="devices"/>
+    </item>
+    <item row="1" column="2">
+     <widget class="QRadioButton" name="debug_radio_button">
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Scripts:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>Debug</string>
+      </property>
+      <property name="autoExclusive">
+       <bool>false</bool>
       </property>
      </widget>
     </item>
-    <item row="0" column="3">
-     <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <property name="spacing">
-       <number>100</number>
+    <item row="9" column="2">
+     <widget class="QComboBox" name="debug_comboBox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="visible">
+       <bool>true</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
+      <property name="currentText">
+       <string>launcher</string>
       </property>
       <item>
-       <widget class="QLabel" name="ip_label">
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>12</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;IP Address: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
+       <property name="text">
+        <string>launcher</string>
+       </property>
       </item>
       <item>
-       <widget class="QLabel" name="logger_label">
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>12</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;Logger Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
+       <property name="text">
+        <string>pylabnet_server</string>
+       </property>
       </item>
-      <item>
-       <widget class="QLabel" name="gui_label">
-        <property name="font">
-         <font>
-          <family>Calibri Light</family>
-          <pointsize>12</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;GUI Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     </widget>
     </item>
-    <item row="18" column="2">
+    <item row="13" column="2">
      <widget class="QTextBrowser" name="buffer_terminal">
       <property name="maximumSize">
        <size>
@@ -351,53 +299,95 @@ background-color: green;</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="2">
-     <widget class="QRadioButton" name="autoscroll_off_check">
+    <item row="8" column="2">
+     <widget class="QLabel" name="debug_label">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="visible">
+       <bool>true</bool>
+      </property>
       <property name="text">
-       <string>Autoscroll off</string>
+       <string>Debug module:</string>
       </property>
      </widget>
     </item>
-    <item row="16" column="4">
-     <widget class="QLineEdit" name="client_search">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="4" rowspan="15">
-     <widget class="QListWidget" name="client_list">
+    <item row="0" column="6">
+     <widget class="QLabel" name="label_4">
       <property name="font">
        <font>
         <family>Calibri Light</family>
         <pointsize>12</pointsize>
        </font>
       </property>
-      <property name="toolTip">
-       <string/>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Devices:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="4">
+     <widget class="QPushButton" name="close_server">
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(170, 0, 0);
+color: rgb(255, 255, 255);</string>
+      </property>
+      <property name="text">
+       <string>Close server</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="5" rowspan="12">
+     <widget class="QTreeView" name="scripts"/>
+    </item>
+    <item row="0" column="4">
+     <widget class="QLabel" name="label">
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Calibri Light</family>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Active servers:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3" rowspan="12">
+     <widget class="QTextBrowser" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <family>Courier New</family>
+        <pointsize>12</pointsize>
+       </font>
       </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>
-    <item row="5" column="2">
-     <widget class="QLabel" name="page_label">
+    <item row="3" column="2">
+     <widget class="QPushButton" name="confluence_update">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="font">
        <font>
-        <pointsize>10</pointsize>
+        <pointsize>12</pointsize>
        </font>
       </property>
       <property name="text">
-       <string>upload page title</string>
+       <string>Update Confluence Info</string>
       </property>
      </widget>
-    </item>
-    <item row="6" column="2">
-     <widget class="QLineEdit" name="page_field"/>
     </item>
    </layout>
   </widget>

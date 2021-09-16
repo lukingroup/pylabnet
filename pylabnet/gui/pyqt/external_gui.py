@@ -72,7 +72,7 @@ class Window(QtWidgets.QMainWindow):
                    '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                    '#000075', '#808080']
 
-    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False, log=None):
+    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False, log=None, enable_confluence=True):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -148,60 +148,40 @@ class Window(QtWidgets.QMainWindow):
             pass
 
         # Confluence handler and its button
-        self.confluence_handler = Confluence_Handler(self.app, "Confluence_info_setting")
+        self.confluence_handler  = None
 
-        extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
-        extractAction_Upload.setShortcut("Ctrl+S")
-        extractAction_Upload.setStatusTip('Upload to the confluence page')
-        extractAction_Upload.triggered.connect(self.upload_pic)
+        if(enable_confluence is True):
+            self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
 
-        extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
-        extractAction_Update.setShortcut("Ctrl+X")
-        extractAction_Update.setStatusTip('The space and page names of confluence')
-        extractAction_Update.triggered.connect(self.update_setting)
+            extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+            extractAction_Upload.setShortcut("Ctrl+S")
+            extractAction_Upload.setStatusTip('Upload to the confluence page')
+            extractAction_Upload.triggered.connect(self.upload_pic)
+
+            extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+            extractAction_Update.setShortcut("Ctrl+X")
+            extractAction_Update.setStatusTip('The space and page names of confluence')
+            extractAction_Update.triggered.connect(self.update_setting)
 
 
-        mainMenu = self.menuBar()
-        ActionMenu = mainMenu.addMenu('&Action')
-        SettingMenu = mainMenu.addMenu('&Setting')
-        mainMenu.addMenu('&Edit')
-        mainMenu.addMenu('&Selection')
-        ActionMenu.addAction(extractAction_Upload)
-        SettingMenu.addAction(extractAction_Update)
+            mainMenu = self.menuBar()
+            ActionMenu = mainMenu.addMenu('&Action')
+            SettingMenu = mainMenu.addMenu('&Setting')
+            mainMenu.addMenu('&Edit')
+            mainMenu.addMenu('&Selection')
+            ActionMenu.addAction(extractAction_Upload)
+            SettingMenu.addAction(extractAction_Update)
 
         # apply stylesheet
         self.apply_stylesheet()
 
     def update_setting(self):
-        self.confluence_handler.Popup()
-        pass
-
+        self.confluence_handler.confleunce_popup.Popup_Update()
 
 
     def upload_pic(self):
-        window_Title = self.windowTitle()
-        self.setWindowTitle('uploading ...')
-
-        # screenshot and save
-        timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
-        scrn_shot_filename = "Screenshot_{}".format(timestamp_datetime) +  ".png"
-        scrn_shot_AbsPath = os.path.join("../../temp", scrn_shot_filename)
-        pix = self.grab()
-        pix.save(scrn_shot_AbsPath)
-
-        # upload to confluence page
-        upload_setting = "Settings" # Typically created by LabVIEW or successor.
-        upload_comment = "Upload successfully."
-
-        self.confluence_handler.upload_pic( scrn_shot_AbsPath, scrn_shot_filename, upload_comment, upload_setting)
-
-        # delete the temperary file
-        os.remove(scrn_shot_AbsPath)
-
-        self.setWindowTitle(window_Title)
+        self.confluence_handler.confleunce_popup.Popup_Upload()
         return
-
-
 
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):

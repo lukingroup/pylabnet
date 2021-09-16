@@ -67,7 +67,8 @@ class CountMonitor:
             app,
             gui_template=ui,
             host=get_ip(),
-            port=server_port
+            port=server_port,
+            log=self.log
         )
 
         # Setup stylesheet.

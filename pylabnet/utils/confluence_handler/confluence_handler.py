@@ -6,16 +6,37 @@ import ctypes
 import os 
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 import sys
+from functools import partial
 
-class Confluence_Handler(QtWidgets.QDialog):
-    def __init__(self, app, template):
-        # params
+
+class Confluence_Handler():
+    def __init__(self,  parent_wins, app,  log_client):
+        self.log = log_client
+        self.confleunce_popup = Confluence_Popping_Windows(parent_wins, app, self.log, "Confluence_info_window" )
+        
+        # needs to be inplemented on launch_control.py
+        # c_params = log_client.get_confluence_parameters()
+
+
+class LaunchControl_Confluence_Handler():
+    def __init__(self,  controller, app):
+        self.confleunce_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl' )
+
+
+class Confluence_Popping_Windows(QtWidgets.QMainWindow):
+    def __init__(self, parent_wins, app, log_client=None, template= "Confluence_info_window"):
+        # param (global)
+        self.parent_wins = parent_wins
         self.url = config('CONFLUENCE_URL')
         self.username = config('CONFLUENCE_USERNAME')
         self.pw = config('CONFLUENCE_PW')
         self.userkey = config('CONFLUENCE_USERKEY')
         self.dev_root_id = config('CONFLUENCE_DEV_root_id')
+        self.log = log_client
 
+        # param (condition)
+        self.upload = False
+        self.pix = None
         self._gui_directory = "gui_templates"
         self.app = app  # Application instance onto which to load the GUI.
         
@@ -27,17 +48,19 @@ class Confluence_Handler(QtWidgets.QDialog):
                 QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
             )
 
-        # Initialize parent class QWidgets.QMainWindow
-        super(Confluence_Handler, self).__init__()
-
+        # Initialize parent class QtWidgets.QDialog
+        super(Confluence_Popping_Windows, self).__init__()
 
         self.confluence = Confluence(
             url='{}/wiki'.format(self.url), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
             username=self.username,
             password=self.pw)
+            
+            
 
         # load the gui, but not show
-        self._load_gui(gui_template="Confluence_info_setting", run=False)
+        self._load_gui(gui_template=template, run=False)
+        
 
         # the initial fields' info
         timestamp_date = datetime.datetime.now().strftime('%b %d %Y')
@@ -46,36 +69,103 @@ class Confluence_Handler(QtWidgets.QDialog):
         self.page_field.setText("test-uploading graphs {}".format(timestamp_day) )
         self.upload_space = self.space_field.text()
         self.upload_page_title = self.page_field.text()
-        
+        self.upload_setting = self.setting_field.text()
+        self.upload_comment = self.comment_field.text()
 
-        # accept and reject button
-        self.buttonBox.accepted.connect(self.myaccept)
-        self.buttonBox.rejected.connect(self.myreject)
+        # Handle button pressing
+        self.ok_button.clicked.connect(self.okay_event)
+        self.cancel_button.clicked.connect(self.cancel_event)
+        self.actionaccess_from_logserver.triggered.connect(self.Update_confluence_info)
 
+        # init the space and page as in the launch control
+        self.Update_confluence_info()
         return
 
-    def Popup(self):
+    def Update_confluence_info(self):
+        # access metadata
+        metadata = self.log.get_metadata()
+        self.upload_space = metadata['confluence_space']
+        self.upload_page_title = metadata['confluence_page']
+        
+        # update display
+        self.space_field.setText(self.upload_space)
+        self.page_field.setText(self.upload_page_title)
+        return
+        
+
+    def Popup_Update(self):
+        self.ok_button.setText("OK")
+        self.space_field.setText(self.upload_space)
+        self.page_field.setText(self.upload_page_title)
+        self.setting_field.setText(self.upload_setting)
+        self.comment_field.setText(self.upload_comment)
+
+        self.ok_button.setText("Ok")
+        self.setWindowTitle( self.upload_space + '/' + self.upload_page_title )
+        self._run_gui()
+
+    def Popup_Upload(self):
+        self.upload = True
+
+        #screenshot
+        self.pix = self.parent_wins.grab()
+
+        # display setting
+        self.ok_button.setText("Upload")
+        self.space_field.setText(self.upload_space)
+        self.page_field.setText(self.upload_page_title)
+        self.setting_field.setText(self.upload_setting)
+        self.comment_field.setText(self.upload_comment)
+
+        # pop out
         self._run_gui()
         self.setWindowTitle( self.upload_space + '/' + self.upload_page_title )
     
-    def myreject(self):
+    def cancel_event(self):
         self.close()
         
 
-    def myaccept(self):
+    def okay_event(self):
         self.upload_space = self.space_field.text()
         self.upload_page_title = self.page_field.text()
+        self.upload_setting = self.setting_field.text()
+        self.upload_comment = self.comment_field.text()
+        
+        if(self.upload == False):
+            self.close()
+            return
+
+        # upload case
+        wintitle = self.windowTitle()
+        self.setWindowTitle('Uploading ...')
+
+        # save the temperary file
+        timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
+        scrn_shot_filename = "Screenshot_{}".format(timestamp_datetime) +  ".png"
+        scrn_shot_AbsPath = os.path.join("..\\..\\temp", scrn_shot_filename)
+        self.pix.save(scrn_shot_AbsPath)
+
+        # upload
+        self.upload_pic(scrn_shot_AbsPath, scrn_shot_filename)
+
+        # delete the temperary file
+        os.remove(scrn_shot_AbsPath)
+
+        self.setWindowTitle(wintitle)
+        self.upload = False
+
         self.close()
+        return
 
 
     def _load_gui(self, gui_template=None, run=True):
         """ Loads a GUI template to the main window.
 
-        Currently assumes all templates are in the directory given by the self._gui_directory attribute. If no
+        Currently assumes all templates are in the directory given by the self._gui_directory. If no
         gui_template is passed, the self._default_template is used. By default, this method also runs the GUI window.
 
         :param gui_template: name of the GUI template to use (str)
-        :param run: whether or not to also run the GUI (bool)
+        :param run: whether or not to also run the GUI (bool) 
         """
 
         if gui_template is None:
@@ -114,7 +204,7 @@ class Confluence_Handler(QtWidgets.QDialog):
 
         self.show()
 
-    def upload_pic(self, scrn_shot_AbsPath, scrn_shot_filename, upload_comment, upload_setting):
+    def upload_pic(self, scrn_shot_AbsPath, scrn_shot_filename):
         ''' Upload the picture if the page exists, otherwise firtst create a new page and then upload the picture
         '''
         if( self.confluence.page_exists(self.upload_space, self.upload_page_title) ):
@@ -128,15 +218,16 @@ class Confluence_Handler(QtWidgets.QDialog):
 
             upload_page_id = response['id']
             web_url = response['_links']['base']+response['_links']['webui']
-            print(web_url)
 
         self.upload_and_append_picture(
             fileAbsPath=scrn_shot_AbsPath,
             filename=scrn_shot_filename, 
-            comment=upload_comment, 
-            settings=upload_setting, 
+            comment=self.upload_comment, 
+            settings=self.upload_setting, 
             page_id=upload_page_id, 
             page_title=self.upload_page_title)
+        
+        return
 
 
 
@@ -194,4 +285,102 @@ class Confluence_Handler(QtWidgets.QDialog):
         return status
 
 
+
+class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
+    def __init__(self,  controller, app,  template= 'Confluence_info_from_LaunchControl'):
+        # param
+        self.controller = controller
+        self.app = app  # Application instance onto which to load the GUI.
+        self._gui_directory = "gui_templates"
+
+        if self.app is None:
+            if get_os() == 'Windows':
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+            self.app = QtWidgets.QApplication(sys.argv)
+            self.app.setWindowIcon(
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+            )
+
+        # Initialize parent class QtWidgets.QDialog
+        super(LaunchControl_Confluence_Windows, self).__init__()
+        
+
+        # load the gui, but not show
+        self._load_gui(gui_template=template, run=False)
+
+        # the initial fields' info
+        timestamp_day = datetime.datetime.now().strftime('%b %d %Y')
+        self.space_field.setText('DEV')
+        self.page_field.setText("test-uploading graphs {}".format(timestamp_day) )
+        self.upload_space = self.space_field.text()
+        self.upload_page_title = self.page_field.text()
+
+        # Handle button pressing
+        self.ok_button.clicked.connect(partial(self.okay_event, True))
+        self.cancel_button.clicked.connect(self.cancel_event)
+
+        return
+
+    def Popup_Update(self):
+        self._run_gui()
+        self.setWindowTitle( self.upload_space + '/' + self.upload_page_title )
+
+    def cancel_event(self):
+        self.close()
+        return
+        
+
+    def okay_event(self, is_close=True):
+        self.upload_space = self.space_field.text()
+        self.upload_page_title = self.page_field.text()
+        self.controller.log_service.metadata.update(confluence_space =  self.upload_space )
+        self.controller.log_service.metadata.update(confluence_page =  self.upload_page_title )
+        if(is_close is True): self.close()
+        return
+
+    def _load_gui(self, gui_template=None, run=True):
+        """ Loads a GUI template to the main window.
+
+        Currently assumes all templates are in the directory given by the self._gui_directory. If no
+        gui_template is passed, the self._default_template is used. By default, this method also runs the GUI window.
+
+        :param gui_template: name of the GUI template to use (str)
+        :param run: whether or not to also run the GUI (bool) 
+        """
+
+        if gui_template is None:
+            gui_template = self._default_template
+
+        # Check for proper formatting
+        if not gui_template.endswith(".ui"):
+            gui_template += ".ui"
+
+        # Find path to GUI
+        # Currently assumes all templates are in the directory given by the self._gui_directory attribute
+    
+        # self._ui = os.path.join(
+        #     os.path.dirname(os.path.abspath(__file__ )),
+        #     '_gui_directory',
+        #     gui_template
+        # )
+        
+        self._ui = os.path.join(
+            (os.path.abspath("..\\..\\pylabnet\\gui\\pyqt" ) ),
+            self._gui_directory,
+            gui_template
+        )
+
+        # Load UI
+        try:
+            uic.loadUi(self._ui, self)
+        except FileNotFoundError:
+            raise
+
+        if run:
+            self._run_gui()
+            
+    def _run_gui(self):
+        """Runs the GUI. Displays the main window"""
+
+        self.show()
         

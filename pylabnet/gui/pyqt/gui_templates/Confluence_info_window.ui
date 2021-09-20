@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>376</height>
+    <width>676</width>
+    <height>415</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tab_3">
      <attribute name="title">
@@ -111,7 +111,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>15</y>
+        <y>55</y>
         <width>111</width>
         <height>31</height>
        </rect>
@@ -125,11 +125,11 @@
        <string>Space:</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="space_field">
+     <widget class="QLineEdit" name="space_name_field">
       <property name="geometry">
        <rect>
         <x>130</x>
-        <y>25</y>
+        <y>65</y>
         <width>400</width>
         <height>30</height>
        </rect>
@@ -140,14 +140,14 @@
        </font>
       </property>
       <property name="text">
-       <string>DEV</string>
+       <string>...</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_2">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>70</y>
+        <y>110</y>
         <width>101</width>
         <height>30</height>
        </rect>
@@ -165,7 +165,7 @@
       <property name="geometry">
        <rect>
         <x>130</x>
-        <y>75</y>
+        <y>115</y>
         <width>400</width>
         <height>30</height>
        </rect>
@@ -177,6 +177,42 @@
       </property>
       <property name="text">
        <string>Test</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="space_key_field">
+      <property name="geometry">
+       <rect>
+        <x>130</x>
+        <y>10</y>
+        <width>281</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>DEV</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>10</y>
+        <width>101</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>Space Key: </string>
       </property>
      </widget>
     </widget>
@@ -213,7 +249,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>651</width>
+     <width>676</width>
      <height>26</height>
     </rect>
    </property>

@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QLineEdit" name="space_field">
+   <widget class="QLineEdit" name="space_name_field">
     <property name="geometry">
      <rect>
       <x>220</x>
@@ -29,15 +29,15 @@
      </font>
     </property>
     <property name="text">
-     <string>DEV</string>
+     <string>...</string>
     </property>
    </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>90</x>
       <y>90</y>
-      <width>111</width>
+      <width>121</width>
       <height>31</height>
      </rect>
     </property>
@@ -47,7 +47,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Space:</string>
+     <string>Space name:</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_2">
@@ -110,6 +110,42 @@
     </property>
     <property name="text">
      <string>Ok</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>30</y>
+      <width>101</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Space Key: </string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="space_key_field">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>30</y>
+      <width>221</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>DEV</string>
     </property>
    </widget>
   </widget>

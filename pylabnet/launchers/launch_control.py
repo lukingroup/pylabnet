@@ -16,7 +16,6 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
 from queue import Queue
 import numpy as np
-import pickle
 
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer

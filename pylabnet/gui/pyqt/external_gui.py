@@ -44,10 +44,6 @@ from pylabnet.network.core.client_base import ClientBase
 from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
 from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 from decouple import config
-import datetime
-from atlassian import Confluence
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import QMainWindow, QApplication
 
 # Should help with scaling issues on monitors of differing resolution
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):

@@ -145,6 +145,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         # upload case
         wintitle = self.windowTitle()
         self.setWindowTitle('Uploading ...')
+        self.log.info("Uploading to the confluence page")
 
         # save the temperary file
         timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
@@ -161,6 +162,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.setWindowTitle(wintitle)
         self.upload = False
 
+        self.log.info("Finish uploading")
         self.close()
         return
 

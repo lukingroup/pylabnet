@@ -170,7 +170,7 @@ class Window(QtWidgets.QMainWindow):
             mainMenu.addMenu('&Edit')
             mainMenu.addMenu('&Selection')
             ActionMenu.addAction(extractAction_Upload)
-            SettingMenu.addAction(extractAction_Update)
+            ActionMenu.addAction(extractAction_Update)
 
         # apply stylesheet
         self.apply_stylesheet()

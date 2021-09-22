@@ -12,7 +12,7 @@ import subprocess
 import paramiko
 import platform
 import decouple
-from datetime import date, datetime
+from datetime import datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 

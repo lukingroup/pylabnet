@@ -1,13 +1,9 @@
 """ Initializes the logger + graphical display for launching pylabnet scripts """
 
 import sys
-import socket
 import os
 import time
 from contextlib import closing
-import subprocess
-import platform
-from io import StringIO
 import copy
 import ctypes
 import re

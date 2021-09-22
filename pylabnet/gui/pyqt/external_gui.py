@@ -34,10 +34,8 @@ import pyqtgraph as pg
 pg.setConfigOption('background', '#19232D')
 import numpy as np
 import os
-import pickle
 import copy
 import sys
-import socket
 import ctypes
 
 from pylabnet.network.core.client_base import ClientBase

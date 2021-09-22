@@ -279,15 +279,18 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
 
         base_html = '{}\\{}'.format(templates_root, html_template_filename)
 
-        timestamp =  datetime.datetime.now().strftime('%Y-%m-%d')
-
+        timestamp_date =  datetime.datetime.now().strftime('%Y-%m-%d')
+        timestamp_time =  datetime.datetime.now().strftime('%H:%M')
+        
         replace_dict = {
-        'DATETIME' : timestamp,
+        'DATE' : timestamp_date,
+        'TIME' : timestamp_time,
         'USERKEY'  : self.userkey,
         'SETTING'  : settings,
         'COMMENT'  : comment,
         'FILENAME' : filename
         }
+        # self.log.info(replace_dict)
 
         status = self.append_rendered_html( base_html, replace_dict, page_id, page_title)
 

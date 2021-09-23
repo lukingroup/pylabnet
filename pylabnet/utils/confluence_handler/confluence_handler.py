@@ -1,3 +1,4 @@
+""" Handle the confluence uploading"""
 from decouple import config
 import datetime
 from atlassian import Confluence
@@ -11,20 +12,32 @@ import numpy as np
 import logging
 
 class Confluence_Handler():
+    """ Handle the gui's confluence handler except main window (log server) """
     def __init__(self,  parent_wins, app,  log_client):
         self.log = log_client
         self.confleunce_popup = Confluence_Popping_Windows(parent_wins, app, self.log, "Confluence_info_window" )
-        
-        # needs to be inplemented on launch_control.py
-        # c_params = log_client.get_confluence_parameters()
 
 
 class LaunchControl_Confluence_Handler():
+    """ Handle the main window (log server)'s confluence setting """
     def __init__(self,  controller, app):
         self.confleunce_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl' )
 
 
 class Confluence_Popping_Windows(QtWidgets.QMainWindow):
+    """ Instantiate a popping-up window, which documents the confluence setting, but not show until users press popping-up button.
+        It loads html template from 'pylabnet/configs/gui/html_template/html_template_0.html' as the base, 
+        and append it to the confluence page by setting information.
+        self.load determines whether it is in the 'upload' mode. If it is not, then update the info. It it is, then screenshot the whole gui and save into the 'temp/ folder/'. 
+        The screenshot file is then uploaded to the confluence page and then deleted after all things are settled.
+
+        Param: parent_win - the Window class who calls the confluence handler
+        Param: url, username, pw, uerkey, dev_root_id - the information required for using confluenc API (https://pypi.org/project/atlassian-python-api/, https://atlassian-python-api.readthedocs.io/ )
+        Param: upload (bool) - whether it is in the upload mode or not
+        Param: log - log client
+        Param: pix - screenshot stuffs, a class defined by QtWidgets.QMainWindow
+        Param: Confluence - a class from atlassian (https://pypi.org/project/atlassian-python-api/, https://atlassian-python-api.readthedocs.io/ )
+     """
     def __init__(self, parent_wins, app, log_client=None, template= "Confluence_info_window"):
         # param (global)
         self.parent_wins = parent_wins
@@ -57,8 +70,6 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             username=self.username,
             password=self.pw)
             
-            
-
         # load the gui, but not show
         self._load_gui(gui_template=template, run=False)
         
@@ -263,7 +274,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             title=page_title,
             append_body=append_html
         )
-        self.log.info(status['_links']['base'] + status['_links']['webui'])
+        self.log.info('PAGE URL: '+ status['_links']['base'] + status['_links']['webui'])
 
         return status
         
@@ -300,6 +311,15 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
 
 
 class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
+    '''
+    It instantiates the confluence window for the main window (Log server). It only shows when users press the button. The updatted info will be saved into
+    the new entry of the metadata's dictionary
+
+    Param: controller - the Controller class who calls the confluence handler
+    Param: url, username, pw, uerkey, dev_root_id - the information required for using confluenc API (https://pypi.org/project/atlassian-python-api/, https://atlassian-python-api.readthedocs.io/ )
+    Param: dict_name_key - the dictionary of space's name -> key
+    Param: Confluence - a class from atlassian (https://pypi.org/project/atlassian-python-api/, https://atlassian-python-api.readthedocs.io/ )
+    '''
     def __init__(self,  controller, app,  template= 'Confluence_info_from_LaunchControl'):
         # param (global)
         self.url = config('CONFLUENCE_URL')

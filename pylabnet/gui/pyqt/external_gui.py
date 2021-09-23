@@ -75,6 +75,7 @@ class Window(QtWidgets.QMainWindow):
         :param run: (bool, optional) whether or not to run (display) the GUI upon instantiation. Can set to false in
             order to debug and access Window methods directly in an interactive session
         :param max: (bool, optional) whether or not to show GUI maximized
+        :param confluence, instances of confluence_handler class - handle confluence things. 
         """
 
         self.app = app  # Application instance onto which to load the GUI.

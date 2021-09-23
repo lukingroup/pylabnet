@@ -246,7 +246,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         '''
         with open(base_html, "r+") as f:
             replaced_html = f.read()
-
+            
             for key in replace_dict:
                 replaced_html = replaced_html.replace(key, replace_dict[key])
         return replaced_html
@@ -263,6 +263,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             title=page_title,
             append_body=append_html
         )
+        self.log.info(status['_links']['base'] + status['_links']['webui'])
 
         return status
         

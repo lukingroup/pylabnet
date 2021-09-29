@@ -283,6 +283,9 @@ class Controller:
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
             self.client_data[self.GUI_NAME+module_str] = self.log_service.client_data[self.GUI_NAME]
 
+        # initiate confluence data into log's metadata
+        self.confluence_handler.confleunce_popup.okay_event(is_close=False)
+
 
         
 
@@ -370,8 +373,7 @@ class Controller:
 
         self.log_service.logger.info('log service succesfully started')
 
-        # initiate confluence data into log's metadata
-        self.confluence_handler.confleunce_popup.okay_event(is_close=False)
+
 
     def initialize_gui(self):
         """ Initializes basic GUI display """

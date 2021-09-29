@@ -21,7 +21,9 @@ class Confluence_Handler():
 class LaunchControl_Confluence_Handler():
     """ Handle the main window (log server)'s confluence setting """
     def __init__(self,  controller, app):
+        
         self.confleunce_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl' )
+        
 
 
 class Confluence_Popping_Windows(QtWidgets.QMainWindow):
@@ -96,11 +98,14 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         return
 
     def Update_confluence_info(self):
+        confluence_config_dict = load_config('confluence_upload')
+        lab = confluence_config_dict["lab"]
+
         # access metadata
         metadata = self.log.get_metadata()
-        self.upload_space_key = metadata['confluence_space_key']
-        self.upload_space_name = metadata['confluence_space_name']
-        self.upload_page_title = metadata['confluence_page']
+        self.upload_space_key = metadata['confluence_space_key_' + lab]
+        self.upload_space_name = metadata['confluence_space_name_' + lab]
+        self.upload_page_title = metadata['confluence_page_' + lab]
         
         # update display
         self.space_key_field.setText(self.upload_space_key)
@@ -334,6 +339,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         self._gui_directory = "gui_templates"
         self.dict_name_key = {}
 
+
         if self.app is None:
             if get_os() == 'Windows':
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
@@ -356,6 +362,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
 
         # the initial fields' info
         timestamp_day = datetime.datetime.now().strftime('%b %d %Y')
+
         self.space_key_field.setText('DEV')
         self.space_name_field.setText('API Dev Test Space')
         self.page_field.setText("test-uploading graphs {}".format(timestamp_day) )
@@ -367,14 +374,15 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         self.space_name_field.textChanged[str].connect(self.change_space_name_event)
         self.ok_button.clicked.connect(partial(self.okay_event, True))
         self.cancel_button.clicked.connect(self.cancel_event)
-
+        
         return
 
 
     def Popup_Update(self):
-        self.controller.log_service.logger.setLevel(logging.INFO)
+
+        if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.INFO)
         response = self.confluence.get_all_spaces(start=0, limit=500, expand=None)['results']
-        self.controller.log_service.logger.setLevel(logging.DEBUG)
+        if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.DEBUG)
 
         # update dictionary
         all_space_key_list = [item["key"] for item in response]
@@ -406,11 +414,11 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         self.page_field.setReadOnly(False)
 
         # autocomplete for pages
-        self.controller.log_service.logger.setLevel(logging.INFO)
+        if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.INFO)
         response = self.confluence.get_all_pages_from_space(self.upload_space_key, start=0, limit=100, status=None, expand=None, content_type='page')
-        self.controller.log_service.logger.setLevel(logging.DEBUG)
+        if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.DEBUG)
         all_page_name_list = [item["title"] for item in response]
-        # self.controller.log_service.logger.info(all_page_name_list)
+        self.controller.gui_loggger.logger.info(all_page_name_list)
         names = QtWidgets.QCompleter(all_page_name_list)
         self.page_field.setCompleter( names )
 
@@ -420,12 +428,22 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         
 
     def okay_event(self, is_close=True):
+        confluence_config_dict = load_config('confluence_upload')
+        lab = confluence_config_dict["lab"]
         self.upload_space_key = self.space_key_field.text()
         self.upload_space_name = self.space_name_field.text()
         self.upload_page_title = self.page_field.text()
-        self.controller.log_service.metadata.update(confluence_space_key =  self.upload_space_key ) 
-        self.controller.log_service.metadata.update(confluence_space_name =  self.upload_space_name )
-        self.controller.log_service.metadata.update(confluence_page =  self.upload_page_title )
+        
+        if(self.controller.staticproxy):
+            self.controller.gui_logger.update_metadata(**{ 'confluence_space_key_' + lab :  self.upload_space_key  } ) 
+            self.controller.gui_logger.update_metadata(**{ 'confluence_space_name_' + lab:   self.upload_space_name } )
+            self.controller.gui_logger.update_metadata( **{'confluence_page_' + lab  :  self.upload_page_title } )
+        else:
+            pass
+            self.controller.log_service.metadata.update(**{ 'confluence_space_key_' + lab :  self.upload_space_key  }  ) 
+            self.controller.log_service.metadata.update(**{ 'confluence_space_name_' + lab:   self.upload_space_name } )
+            self.controller.log_service.metadata.update( **{'confluence_page_' + lab  :  self.upload_page_title } )
+
         self.controller.main_window.confluence_space.setText('Space:\n' + self.upload_space_name)
         self.controller.main_window.confluence_page.setText('Page:\n' + self.upload_page_title)
         if(is_close is True): self.close()

@@ -325,7 +325,6 @@ class LogClient:
 
         :param metadata: (dict) dictionary containing relevant metadata
         """
-
         self._service.exposed_update_metadata(pickle.dumps(metadata))
 
     def get_metadata(self):
@@ -521,3 +520,5 @@ class LogService(rpyc.Service):
         """ Returns all client metadata"""
 
         return pickle.dumps(self.metadata)
+
+    

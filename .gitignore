@@ -163,3 +163,6 @@ secretkeys.env
 # Data folders
 pylabnet/utils/iq_upconversion/results/*
 
+# Temporary files
+temp/*
+temp/

@@ -415,7 +415,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
 
         # autocomplete for pages
         if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.INFO)
-        response = self.confluence.get_all_pages_from_space(self.upload_space_key, start=0, limit=100, status=None, expand=None, content_type='page')
+        response = self.confluence.get_all_pages_from_space(self.upload_space_key, start=0, limit=500, status=None, expand=None, content_type='page')
         if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.DEBUG)
         all_page_name_list = [item["title"] for item in response]
 

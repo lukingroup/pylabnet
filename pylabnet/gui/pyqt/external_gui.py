@@ -145,6 +145,8 @@ class Window(QtWidgets.QMainWindow):
         # Confluence handler and its button
         self.confluence_handler  = None
 
+        if(self.log == None): enable_confluence = False
+
         if(enable_confluence is True):
             self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
 

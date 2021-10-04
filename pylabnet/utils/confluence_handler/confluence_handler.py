@@ -15,14 +15,14 @@ class Confluence_Handler():
     """ Handle the gui's confluence handler except main window (log server) """
     def __init__(self,  parent_wins, app,  log_client):
         self.log = log_client
-        self.confleunce_popup = Confluence_Popping_Windows(parent_wins, app, self.log, "Confluence_info_window" )
+        self.confluence_popup = Confluence_Popping_Windows(parent_wins, app, self.log, "Confluence_info_window" )
 
 
 class LaunchControl_Confluence_Handler():
     """ Handle the main window (log server)'s confluence setting """
     def __init__(self,  controller, app):
         
-        self.confleunce_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl' )
+        self.confluence_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl' )
         
 
 
@@ -55,6 +55,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.pix = None
         self._gui_directory = "gui_templates"
         self.app = app  # Application instance onto which to load the GUI.
+        self.auto_info_setting_mode = True # automatically access info from the launch control 
         
         if self.app is None:
             if get_os() == 'Windows':
@@ -82,20 +83,51 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.space_key_field.setText('DEV')
         self.space_name_field.setText('API Dev Test Space')
         self.page_field.setText("test-uploading graphs {}".format(timestamp_day) )
+        self.comment_field.setFontPointSize(12)
         self.upload_space_key = self.space_key_field.text()
         self.upload_space_name = self.space_name_field.text()
         self.upload_page_title = self.page_field.text()
         self.upload_setting = self.setting_field.text()
-        self.upload_comment = self.comment_field.text()
+        self.upload_comment = self.comment_field.toPlainText()
 
         # Handle button pressing
         self.ok_button.clicked.connect(self.okay_event)
         self.cancel_button.clicked.connect(self.cancel_event)
-        self.actionaccess_from_logserver.triggered.connect(self.Update_confluence_info)
+        self.actionchage_typing_mode.triggered.connect(self.Change_typing_mode)
 
         # init the space and page as in the launch control
         self.Update_confluence_info()
+
+        # init the reading settings
+        if(self.auto_info_setting_mode):
+            self.space_name_field.setReadOnly(True)
+            self.space_name_field.setStyleSheet("background-color: gray; color: white")
+            self.page_field.setReadOnly(True)
+            self.page_field.setStyleSheet("background-color: gray; color: white")   
+
         return
+
+    def Change_typing_mode(self):
+        if(self.auto_info_setting_mode):
+            self.auto_info_setting_mode = False
+            self.actionchage_typing_mode.setText('Change to Auto-typing mode (From launch control')
+
+            self.space_name_field.setReadOnly(False)
+            self.space_name_field.setStyleSheet("background-color: black; color: white")
+            self.page_field.setReadOnly(False)
+            self.page_field.setStyleSheet("background-color: black; color: white")
+
+        else:
+            self.auto_info_setting_mode = True
+            self.actionchage_typing_mode.setText('Change to Manual-typing mode')   
+
+            self.Update_confluence_info()
+            self.space_name_field.setReadOnly(True)
+            self.space_name_field.setStyleSheet("background-color: gray; color: white")
+            self.page_field.setReadOnly(True)
+            self.page_field.setStyleSheet("background-color: gray; color: white")         
+        return
+        
 
     def Update_confluence_info(self):
         confluence_config_dict = load_config('confluence_upload')
@@ -108,23 +140,31 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.upload_page_title = metadata['confluence_page_' + lab]
         
         # update display
+        self.space_name_field.setReadOnly(False)
+        self.page_field.setReadOnly(False)
+
         self.space_key_field.setText(self.upload_space_key)
         self.space_name_field.setText(self.upload_space_name)
         self.page_field.setText(self.upload_page_title)
+
+        if(self.auto_info_setting_mode): self.space_name_field.setReadOnly(True)
+        if(self.auto_info_setting_mode): self.page_field.setReadOnly(True)
         return
         
 
     def Popup_Update(self):
+        self.upload = False
         self.ok_button.setText("OK")
         self.space_key_field.setText(self.upload_space_key)
         self.space_name_field.setText(self.upload_space_name)
         self.page_field.setText(self.upload_page_title)
         self.setting_field.setText(self.upload_setting)
-        self.comment_field.setText(self.upload_comment)
+        self.comment_field.setPlainText(self.upload_comment)
 
         self.ok_button.setText("Ok")
         self.setWindowTitle( self.upload_space_key + '/' + self.upload_page_title )
         self._run_gui()
+        self.ok_button.setShortcut("Ctrl+Return")
 
     def Popup_Upload(self):
         self.upload = True
@@ -132,17 +172,23 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         #screenshot
         self.pix = self.parent_wins.grab()
 
+        # access the info of the space and page from the launch control
+        if(self.auto_info_setting_mode): 
+            self.Update_confluence_info()
+
+
         # display setting
         self.ok_button.setText("Upload")
         self.space_key_field.setText(self.upload_space_key)
         self.space_name_field.setText(self.upload_space_name)
         self.page_field.setText(self.upload_page_title)
         self.setting_field.setText(self.upload_setting)
-        self.comment_field.setText(self.upload_comment)
+        self.comment_field.setPlainText(self.upload_comment)
 
         # pop out
         self._run_gui()
         self.setWindowTitle( self.upload_space_key + '/' + self.upload_page_title )
+        self.ok_button.setShortcut("Ctrl+Return")
     
     def cancel_event(self):
         self.close()
@@ -152,7 +198,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.upload_space_name = self.space_name_field.text()
         self.upload_page_title = self.page_field.text()
         self.upload_setting = self.setting_field.text()
-        self.upload_comment = self.comment_field.text()
+        self.upload_comment = self.comment_field.toPlainText()
         
         if(self.upload == False):
             self.close()
@@ -372,6 +418,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
 
         # Handle events
         self.space_name_field.textChanged[str].connect(self.change_space_name_event)
+        self.ok_button.setShortcut("Ctrl+Return")
         self.ok_button.clicked.connect(partial(self.okay_event, True))
         self.cancel_button.clicked.connect(self.cancel_event)
         
@@ -419,7 +466,10 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         if(not self.controller.staticproxy): self.controller.log_service.logger.setLevel(logging.DEBUG)
         all_page_name_list = [item["title"] for item in response]
 
-        if(self.controller.staticproxy): self.controller.gui_logger.info(all_page_name_list)
+        if(self.controller.staticproxy):
+            if(len(all_page_name_list) > 20): self.controller.gui_logger.info( str( all_page_name_list[0:20])[:-1] + '... ]' )
+            else: self.controller.gui_logger.info(all_page_name_list)
+
         names = QtWidgets.QCompleter(all_page_name_list)
         self.page_field.setCompleter( names )
 

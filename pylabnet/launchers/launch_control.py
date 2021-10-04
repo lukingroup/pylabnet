@@ -285,7 +285,7 @@ class Controller:
             self.client_data[self.GUI_NAME + module_str] = self.log_service.client_data[self.GUI_NAME]
 
         # initiate confluence data into log's metadata
-        self.confluence_handler.confleunce_popup.okay_event(is_close=False)
+        self.confluence_handler.confluence_popup.okay_event(is_close=False)
 
 
         
@@ -692,7 +692,7 @@ class Controller:
             )
 
     def confluence_info_update(self):
-        self.confluence_handler.confleunce_popup.Popup_Update()
+        self.confluence_handler.confluence_popup.Popup_Update()
 
         
 

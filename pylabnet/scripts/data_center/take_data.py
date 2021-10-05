@@ -29,7 +29,8 @@ class DataTaker:
         # Instantiate GUI window
         self.gui = Window(
             gui_template='data_taker',
-            host=get_ip()
+            host=get_ip(),
+            log=self.log,
         )
 
         # Configure list of experiments

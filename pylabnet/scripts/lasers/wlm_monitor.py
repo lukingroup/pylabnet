@@ -47,6 +47,7 @@ class WlmMonitor:
             gui_template=gui,
             host=get_ip(),
             port=port,
+            log=self.log
         )
 
         # Setup stylesheet.

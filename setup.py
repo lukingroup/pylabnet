@@ -65,6 +65,7 @@ setup(
         "Topic :: Scientific/Engineering :: Physics"
     ],
     install_requires=[
+        'atlassian-python-api>=3.13.2',
         'debugpy>=1.3.0',
         'decorator>=4.4.0',
         'ipywidgets>=7.5.1',

@@ -27,6 +27,7 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
+from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
 from pylabnet.network.core.client_base import ClientBase
 import ctypes
@@ -64,7 +65,7 @@ class Window(QtWidgets.QMainWindow):
                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                   '#000075', '#808080']
 
-    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False):
+    def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False, log=None, enable_confluence=True):
         """ Instantiates main window object.
 
         :param app: instance of QApplication class - MUST be instantiated prior to Window
@@ -73,6 +74,7 @@ class Window(QtWidgets.QMainWindow):
         :param run: (bool, optional) whether or not to run (display) the GUI upon instantiation. Can set to false in
             order to debug and access Window methods directly in an interactive session
         :param max: (bool, optional) whether or not to show GUI maximized
+        :param confluence, instances of confluence_handler class - handle confluence things.
         """
 
         self.app = app  # Application instance onto which to load the GUI.
@@ -87,7 +89,6 @@ class Window(QtWidgets.QMainWindow):
 
         # Initialize parent class QWidgets.QMainWindow
         super(Window, self).__init__()
-
         self._ui = None  # .ui file to use as a template
 
         # Holds all widgets assigned to the GUI from an external script
@@ -99,6 +100,7 @@ class Window(QtWidgets.QMainWindow):
         self.containers = {}
         self.windows = {}
         self.auto_close = auto_close
+        self.log = log
 
         # Configuration queue lists
         # When a script requests to configure a widget (e.g. add or remove a plot, curve, scalar, or label), the request
@@ -138,7 +140,47 @@ class Window(QtWidgets.QMainWindow):
                 self.port = port
         except:
             pass
+
+        # Confluence handler and its button
+        self.confluence_handler = None
+
+        if(self.log == None):
+            enable_confluence = False
+
+        if(enable_confluence is True):
+            self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
+
+            extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+            extractAction_Upload.setShortcut("Ctrl+S")
+            extractAction_Upload.setStatusTip('Upload to the confluence page')
+            extractAction_Upload.triggered.connect(self.upload_pic)
+
+            extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+            extractAction_Update.setShortcut("Ctrl+X")
+            extractAction_Update.setStatusTip('The space and page names of confluence')
+            extractAction_Update.triggered.connect(self.update_setting)
+
+            mainMenu = self.menuBar()
+            ActionMenu = mainMenu.addMenu('&Action')
+            ActionMenu.addAction(extractAction_Upload)
+            ActionMenu.addAction(extractAction_Update)
+
+
+
+
+
+
+
+
+        # apply stylesheet
         self.apply_stylesheet()
+
+    def update_setting(self):
+        self.confluence_handler.confluence_popup.Popup_Update()
+
+    def upload_pic(self):
+        self.confluence_handler.confluence_popup.Popup_Upload()
+        return
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):
         """ Loads and applies GUI settings from a config file

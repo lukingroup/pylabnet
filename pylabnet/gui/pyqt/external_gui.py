@@ -162,20 +162,24 @@ class Window(QtWidgets.QMainWindow):
 
             mainMenu = self.menuBar()
             ActionMenu = mainMenu.addMenu('&Action')
-            SettingMenu = mainMenu.addMenu('&Setting')
-            mainMenu.addMenu('&Edit')
-            mainMenu.addMenu('&Selection')
             ActionMenu.addAction(extractAction_Upload)
             ActionMenu.addAction(extractAction_Update)
+
+
+
+
+
+
+
 
         # apply stylesheet
         self.apply_stylesheet()
 
     def update_setting(self):
-        self.confluence_handler.confleunce_popup.Popup_Update()
+        self.confluence_handler.confluence_popup.Popup_Update()
 
     def upload_pic(self):
-        self.confluence_handler.confleunce_popup.Popup_Upload()
+        self.confluence_handler.confluence_popup.Popup_Upload()
         return
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):

@@ -163,7 +163,7 @@ class Dataset():
     def clear_data(self):
         self.data = None
         self.curve.setData([])
-
+    #test
     # Note: This recursive code could potentially run into infinite iteration problem.
     def clear_all_data(self):
 

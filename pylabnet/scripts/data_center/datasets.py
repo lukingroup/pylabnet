@@ -46,6 +46,7 @@ class Dataset():
 
         # Configure data visualization
         self.gui = gui
+
         self.visualize(graph, **kwargs)
 
         # Property which defines whether dataset is important, i.e. should it be saved in a separate dataset

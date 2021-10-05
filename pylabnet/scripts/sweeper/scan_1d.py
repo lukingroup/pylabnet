@@ -42,7 +42,8 @@ class Controller(MultiChSweep1D):
         self.gui = Window(
             gui_template='scan_1d',
             host=get_ip(),
-            max=True
+            max=True,
+            log=self.log,
         )
         self.widgets = get_gui_widgets(self.gui, p_min=1, p_max=1, pts=1, config=1,
                                        graph=2, legend=2, clients=1, exp=1, exp_preview=1, configure=1, run=1,

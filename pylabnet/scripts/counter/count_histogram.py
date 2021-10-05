@@ -180,7 +180,8 @@ class TimeTraceGui(TimeTrace):
         # Setup GUI
         self.gui = Window(
             gui_template='histogram',
-            host=get_ip()
+            host=get_ip(),
+            log=log
         )
 
         # Setup stylesheet.

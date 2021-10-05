@@ -27,6 +27,7 @@ For error handling, all gui update requests should be enclosed in a try/except s
 would be thrown in case the GUI crashes. This enables scripts to continue running even if the GUI crashes.
 """
 
+from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
 from pylabnet.network.core.client_base import ClientBase
 import ctypes
@@ -39,8 +40,6 @@ import qdarkstyle
 
 import pyqtgraph as pg
 pg.setConfigOption('background', '#19232D')
-
-from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 
 
 # Should help with scaling issues on monitors of differing resolution
@@ -75,11 +74,11 @@ class Window(QtWidgets.QMainWindow):
         :param run: (bool, optional) whether or not to run (display) the GUI upon instantiation. Can set to false in
             order to debug and access Window methods directly in an interactive session
         :param max: (bool, optional) whether or not to show GUI maximized
-        :param confluence, instances of confluence_handler class - handle confluence things. 
+        :param confluence, instances of confluence_handler class - handle confluence things.
         """
 
         self.app = app  # Application instance onto which to load the GUI.
-        
+
         if self.app is None:
             if get_os() == 'Windows':
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
@@ -139,16 +138,17 @@ class Window(QtWidgets.QMainWindow):
             if port is not None:
                 self.port_label.setText(f'Port: {port}')
                 self.port = port
-        except: 
+        except:
             pass
 
         # Confluence handler and its button
-        self.confluence_handler  = None
+        self.confluence_handler = None
 
-        if(self.log == None): enable_confluence = False
+        if(self.log == None):
+            enable_confluence = False
 
         if(enable_confluence is True):
-            self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
+            self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
 
             extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
             extractAction_Upload.setShortcut("Ctrl+S")
@@ -159,7 +159,6 @@ class Window(QtWidgets.QMainWindow):
             extractAction_Update.setShortcut("Ctrl+X")
             extractAction_Update.setStatusTip('The space and page names of confluence')
             extractAction_Update.triggered.connect(self.update_setting)
-
 
             mainMenu = self.menuBar()
             ActionMenu = mainMenu.addMenu('&Action')
@@ -175,11 +174,9 @@ class Window(QtWidgets.QMainWindow):
     def update_setting(self):
         self.confluence_handler.confleunce_popup.Popup_Update()
 
-
     def upload_pic(self):
         self.confluence_handler.confleunce_popup.Popup_Upload()
         return
-
 
     def load_gui(self, script_filename, config_filename, folder_root=None, logger=None):
         """ Loads and applies GUI settings from a config file
@@ -853,7 +850,6 @@ class ParameterPopup(QtWidgets.QWidget):
         self.base_layout.addWidget(self.configure_button)
         self.configure_button.clicked.connect(self.return_params)
         self.show()
-
 
     def return_params(self):
         """ Returns all parameter values and closes """

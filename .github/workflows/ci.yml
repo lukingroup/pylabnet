@@ -1,7 +1,5 @@
 name: CI
-on:
-  push:
-    branches: [ master ]
+on: push
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -11,7 +9,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
+    - uses: TrueBrain/actions-flake8@v2
     - name: Python Interrogate Check
       uses: JackMcKew/python-interrogate-check@main
       with:
         path: 'pylabnet'
+        fail-under: 0

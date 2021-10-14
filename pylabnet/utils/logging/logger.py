@@ -521,4 +521,8 @@ class LogService(rpyc.Service):
 
         return pickle.dumps(self.metadata)
 
-    
+
+class ugly_code():
+    def __init__(self):
+
+        i = 0

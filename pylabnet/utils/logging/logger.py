@@ -520,5 +520,3 @@ class LogService(rpyc.Service):
         """ Returns all client metadata"""
 
         return pickle.dumps(self.metadata)
-
-    

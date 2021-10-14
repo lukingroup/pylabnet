@@ -245,7 +245,7 @@ class Controller:
             )
 
             # Ugly hack to set DC voltage of Front X to 0
-            self.log.info(f"Channel {channel}")
+            #self.log.info(f"Channel {channel}")
             if channel in BROKEN_CHANNELS:
                 self._update_voltage(channel, 0)
 

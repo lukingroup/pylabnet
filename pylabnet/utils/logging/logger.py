@@ -526,3 +526,13 @@ class ugly_code():
     def __init__(self):
 
         i = 0
+
+
+def no_docstring():
+    pass
+
+
+class ugly_code2():
+    def __init__(self):
+
+        i = 0

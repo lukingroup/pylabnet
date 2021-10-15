@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QShortcut
 
 
 # If in this list, set DC voltage to 0 after taking a step.
-BROKEN_CHANNELS = [6]
+BROKEN_CHANNELS = []
 
 
 class Controller:

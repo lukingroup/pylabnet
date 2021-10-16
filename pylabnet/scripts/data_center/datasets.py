@@ -1,13 +1,15 @@
+from numpy.lib.function_base import kaiser
 import pyqtgraph as pg
 import numpy as np
 import copy
 import time
+import datetime
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
 from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
+from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 
 class Dataset():
@@ -58,24 +60,24 @@ class Dataset():
 
         if(self.log == None): enable_confluence = False
 
-        if(enable_confluence is True):
-            self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
+        # if(enable_confluence is True):
+        #     self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
 
-            extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
-            extractAction_Upload.setShortcut("Ctrl+S")
-            extractAction_Upload.setStatusTip('Upload to the confluence page')
-            extractAction_Upload.triggered.connect(self.upload_pic)
+        #     extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+        #     extractAction_Upload.setShortcut("Ctrl+S")
+        #     extractAction_Upload.setStatusTip('Upload to the confluence page')
+        #     extractAction_Upload.triggered.connect(self.upload_pic)
 
-            extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
-            extractAction_Update.setShortcut("Ctrl+X")
-            extractAction_Update.setStatusTip('The space and page names of confluence')
-            extractAction_Update.triggered.connect(self.update_setting)
+        #     extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+        #     extractAction_Update.setShortcut("Ctrl+X")
+        #     extractAction_Update.setStatusTip('The space and page names of confluence')
+        #     extractAction_Update.triggered.connect(self.update_setting)
 
 
-            mainMenu = self.menuBar()
-            ActionMenu = mainMenu.addMenu('&Action')
-            ActionMenu.addAction(extractAction_Upload)
-            ActionMenu.addAction(extractAction_Update)
+        #     mainMenu = self.menuBar()
+        #     ActionMenu = mainMenu.addMenu('&Action')
+        #     ActionMenu.addAction(extractAction_Upload)
+        #     ActionMenu.addAction(extractAction_Update)
 
 
     def update_setting(self):
@@ -163,7 +165,7 @@ class Dataset():
     def clear_data(self):
         self.data = None
         self.curve.setData([])
-
+    #test
     # Note: This recursive code could potentially run into infinite iteration problem.
     def clear_all_data(self):
 
@@ -309,14 +311,22 @@ class Dataset():
                         window_title=window_title, size=(700, 300)
                     )
 
-                self.graph = pg.PlotWidget()
+                if('datetime_axis' in kwargs and kwargs['datetime_axis']):
+                    date_axis = TimeAxisItem(orientation='bottom')
+                    self.graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+                else:
+                    self.graph = pg.PlotWidget()
+
                 self.gui.windows[kwargs['window']].graph_layout.addWidget(
                     self.graph
                 )
 
             # Otherwise, add a graph to the main layout
             else:
-                self.graph = self.gui.add_graph()
+                if('datetime_axis' in kwargs and kwargs['datetime_axis']):
+                    self.graph = self.gui.add_graph(datetime_axis=True)
+                else:
+                    self.graph = self.gui.add_graph()
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -566,6 +576,44 @@ class InfiniteRollingLine(RollingLine):
                     child.update(**kwargs)
             else:
                 super().update(**kwargs)
+
+class time_trace_monitor(RollingLine):
+    def __init__(self, *args, **kwargs):
+        kwargs['data_length'] = 1000
+        kwargs['datetime_axis'] = True
+        super().__init__(*args, **kwargs)
+
+    def set_data(self, data):
+        """ Updates data
+
+        :param data: (scalar) data to add
+        """
+        dt_timestamp = time.time()
+
+        if self.data is None:
+            self.data = np.array([data])
+
+        else:
+            if len(self.data) == self.data_length:
+                self.data = np.append(self.data, data)[1:]
+            else:
+                self.data = np.append(self.data, data)
+
+        if self.x is None:
+            self.x = np.array([dt_timestamp])
+
+        else:
+            if len(self.x) == self.data_length:
+                self.x = np.append(self.x, dt_timestamp)[1:]
+            else:
+                self.x = np.append(self.x, dt_timestamp)
+
+
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+        
 
 
 class ManualOpenLoopScan(Dataset):

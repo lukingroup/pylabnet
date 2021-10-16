@@ -28,7 +28,7 @@ would be thrown in case the GUI crashes. This enables scripts to continue runnin
 """
 
 from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
-from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath
+from pylabnet.utils.helper_methods import get_os, load_script_config, get_config_filepath, TimeAxisItem
 from pylabnet.network.core.client_base import ClientBase
 import ctypes
 import sys
@@ -231,7 +231,7 @@ class Window(QtWidgets.QMainWindow):
             self.port = port
             self.port_label.setText(f'Port: {port}')
 
-    def add_graph(self, graph_layout=None, index=None):
+    def add_graph(self, graph_layout=None, index=None, datetime_axis=False):
         """ Adds a new pyqtgraph to a graph layout and returns
 
         :param graph_layout: (str) name of graph layout to add to
@@ -244,7 +244,12 @@ class Window(QtWidgets.QMainWindow):
         else:
             layout = getattr(self, graph_layout)
 
-        graph = pg.PlotWidget()
+        if(datetime_axis):
+            date_axis = TimeAxisItem(orientation='bottom')
+            graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+        else:
+            graph = pg.PlotWidget()
+
         if index is None:
             layout.addWidget(graph)
         else:

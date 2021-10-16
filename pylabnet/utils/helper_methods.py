@@ -15,7 +15,13 @@ import decouple
 from datetime import datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
+import pyqtgraph.exporters
 
+
+
+class TimeAxisItem(pg.AxisItem):
+    def tickStrings(self, values, scale, spacing):
+        return [datetime.fromtimestamp(value) for value in values]
 
 
 def str_to_float(in_val):

@@ -12,6 +12,9 @@ from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 
+import sys
+
+
 class Dataset():
 
     def __init__(self, gui: Window, log: LogClient = None, data=None,
@@ -23,7 +26,7 @@ class Dataset():
         :param data: initial data to set
         :param x: x axis
         :param graph: (pg.PlotWidget) graph to use
-        :param confluence, instances of confluence_handler class - handle confluence things. 
+        :param confluence, instances of confluence_handler class - handle confluence things.
         """
 
         self.log = LogHandler(log)
@@ -56,38 +59,37 @@ class Dataset():
         self.is_important = False
 
         # Confluence handler and its button
-        self.confluence_handler  = None
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.confluence_handler = None
 
-        if(self.log == None): enable_confluence = False
+        if(self.log == None):
+            enable_confluence = False
 
-        # if(enable_confluence is True):
-        #     self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
+        if(enable_confluence is True):
+            pass
+            # self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
 
-        #     extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
-        #     extractAction_Upload.setShortcut("Ctrl+S")
-        #     extractAction_Upload.setStatusTip('Upload to the confluence page')
-        #     extractAction_Upload.triggered.connect(self.upload_pic)
+            # extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+            # extractAction_Upload.setShortcut("Ctrl+S")
+            # extractAction_Upload.setStatusTip('Upload to the confluence page')
+            # extractAction_Upload.triggered.connect(self.upload_pic)
 
-        #     extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
-        #     extractAction_Update.setShortcut("Ctrl+X")
-        #     extractAction_Update.setStatusTip('The space and page names of confluence')
-        #     extractAction_Update.triggered.connect(self.update_setting)
+            # extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+            # extractAction_Update.setShortcut("Ctrl+X")
+            # extractAction_Update.setStatusTip('The space and page names of confluence')
+            # extractAction_Update.triggered.connect(self.update_setting)
 
-
-        #     mainMenu = self.menuBar()
-        #     ActionMenu = mainMenu.addMenu('&Action')
-        #     ActionMenu.addAction(extractAction_Upload)
-        #     ActionMenu.addAction(extractAction_Update)
-
+            # mainMenu = self.menuBar()
+            # ActionMenu = mainMenu.addMenu('&Action')
+            # ActionMenu.addAction(extractAction_Upload)
+            # ActionMenu.addAction(extractAction_Update)
 
     def update_setting(self):
         self.confluence_handler.confluence_popup.Popup_Update()
 
-
     def upload_pic(self):
         self.confluence_handler.confluence_popup.Popup_Upload()
         return
-
 
     def add_child(self, name, mapping=None, data_type=None,
                   new_plot=True, dont_clear=False, **kwargs):

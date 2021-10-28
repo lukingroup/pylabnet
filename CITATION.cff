@@ -1,0 +1,14 @@
+authors:
+  - name: "Silicon Vacancy Subgroup of the Lukin Group at Harvard University"
+    address: "11 Oxford Street"
+    city: "Cambridge"
+    post-code: "02139"
+    website: "https://lukin.physics.harvard.edu/"
+cff-version: "1.1.0"
+version: 1.0.1
+date-released: 2021-10-28
+doi: "10.5281/zenodo.5610008"
+license: MIT
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/lukingroup/pylabnet"
+title: "pylabnet - Client-server, python-based laboratory software"

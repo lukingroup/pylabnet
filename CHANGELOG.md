@@ -4,7 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.0.0
+### Added
+- Complete migration to `pyQT` based GUI (no notebooks used anymore)
+- Numerous hardware drivers
+- Automatic GUI generation for `Staticline` devices
+- `datataker`, a class based measurment suite which automatically generates GUI windows based on type of taken data
+- Added option to run a global log-server, allowing for multi-lab hardware sharing
+- `pulsemaster`, a user-friendly pulse-sequence generator for the Zurich Instrument HDAWG
+- Histogram viewer for Swabian Instrument Time Tagger
+- `Slack` and `Confluence` integration
+
 
 ## 0.3.0
 ### Added

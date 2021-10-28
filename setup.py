@@ -35,6 +35,9 @@ if len(sys.argv) > 1 and sys.argv[1] == 'develop':
     from pre_commit.main import main as pre_commit_main
     pre_commit_main(['install', '--install-hooks', '--overwrite'])
 
+    install('flake8')
+    install('interrogate')
+
 setup(
     name='pylabnet',
     version=get_version('pylabnet/__init__.py'),

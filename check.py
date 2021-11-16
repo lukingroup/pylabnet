@@ -1,4 +1,6 @@
-'''Check documentation coverage and PEP8 compliance.'''
+'''Check documentation coverage and PEP8 compliance.
+
+Arguments passed on command line are treated as arguments passed to `git diff` to narrow the scope of checking. Otherwise, the entire pylabnet directory is checked.'''
 
 import subprocess
 import sys
@@ -18,7 +20,7 @@ def check(*diff_args):
     flake8_instance.initialize(['--ignore=E26,E265,E266,E501', '--jobs=auto'])
     if len(diff_args) > 0:
         flake8_instance.running_against_diff = True
-        flake8_instance.parsed_diff = flake8_utils.parse_unified_diff(git('diff', '-U0', *diff_args))
+        flake8_instance.parsed_diff = {key: value for key, value in flake8_utils.parse_unified_diff(git('diff', '-U0', *diff_args)) if key.endswith('.py')}
     flake8_instance.run_checks()
     flake8_instance.report()
 

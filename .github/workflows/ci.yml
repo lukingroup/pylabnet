@@ -17,4 +17,6 @@ jobs:
         python setup.py ci
     - name: Run check.py
       run: |
-        python check.py origin/${GITHUB_BASE_REF:-HEAD~}..origin/${GITHUB_HEAD_REF:-HEAD}
+        [[ -z "$GITHUB_BASE_REF" ]] && REV1=origin/$GITHUB_BASE_REF || REV1='HEAD~'
+        [[ -z "$GITHUB_HEAD_REF" ]] && REV2=origin/$GITHUB_HEAD_REF || REV2=HEAD
+        python check.py $REV1 $REV2

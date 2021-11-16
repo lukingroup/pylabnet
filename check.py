@@ -11,7 +11,9 @@ from interrogate import coverage as interrogate_coverage
 
 def git(*args):
     '''Run git in a subprocess with the given arguments and return its standard output as a string.'''
-    return subprocess.run(['git', *args], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    output = subprocess.run(['git', *args], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    print(output)
+    return output
 
 
 def check(*diff_args):

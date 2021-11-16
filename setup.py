@@ -28,15 +28,19 @@ with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 # Needed for jupyter notebook in developer mode
-if len(sys.argv) > 1 and sys.argv[1] == 'develop':
-    install('jupyter')
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'develop' or sys.argv[1] == 'ci':
+        install('flake8')
+        install('interrogate')
 
-    install('pre-commit')
-    from pre_commit.main import main as pre_commit_main
-    pre_commit_main(['install', '--install-hooks', '--overwrite'])
+        if sys.argv[1] == 'ci':
+            sys.exit(0)
 
-    install('flake8')
-    install('interrogate')
+        install('jupyter')
+
+        install('pre-commit')
+        from pre_commit.main import main as pre_commit_main
+        pre_commit_main(['install', '--install-hooks', '--overwrite'])
 
 setup(
     name='pylabnet',

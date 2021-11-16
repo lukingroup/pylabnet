@@ -10,9 +10,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Set up development environment
+    - name: Set up CI environment
       run: |
-        python setup.py develop
+        python setup.py ci
     - name: Run check.py
       run: |
         python check.py ${GITHUB_BASE_REF:-HEAD^}..HEAD

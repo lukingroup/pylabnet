@@ -15,4 +15,4 @@ jobs:
         python setup.py ci
     - name: Run check.py
       run: |
-        python check.py ${GITHUB_BASE_REF:-HEAD~}..HEAD
+        python check.py ${GITHUB_BASE_REF:-$GITHUB_SHA~}..${GITHUB_HEAD_REF:-$GITHUB_SHA}

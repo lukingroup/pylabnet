@@ -22,7 +22,10 @@ def check(*diff_args):
     flake8_instance.initialize(['--ignore=E26,E265,E266,E501', '--jobs=auto'])
     if len(diff_args) > 0:
         flake8_instance.running_against_diff = True
-        flake8_instance.parsed_diff = {key: value for key, value in flake8_utils.parse_unified_diff(git('diff', '-U0', *diff_args)).items() if key.endswith('.py')}
+        parsed_diff = {key: value for key, value in flake8_utils.parse_unified_diff(git('diff', '-U0', *diff_args)).items() if key.endswith('.py')}
+        if not parsed_diff:
+            return True
+        flake8_instance.parsed_diff = parsed_diff
     flake8_instance.run_checks()
     flake8_instance.report()
 

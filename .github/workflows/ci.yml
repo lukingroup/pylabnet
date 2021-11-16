@@ -1,22 +1,18 @@
 name: CI
-on: push
+on: [push, pull_request]
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repo
+      uses: actions/checkout@v2
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Setup flake8 annotations
-      uses: rbialon/flake8-annotations@v1
-    - name: Lint with flake8
+    - name: Set up development environment
       run: |
-        pip install flake8
-        flake8 . --count --exit-zero --max-complexity=10 --ignore=E26,E265,E266,E501 --statistic
-    - name: Python Interrogate Check
-      uses: JackMcKew/python-interrogate-check@main
-      with:
-        path: 'pylabnet'
-        fail-under: 0
+        python setup.py develop
+    - name: Run check.py
+      run: |
+        python check.py ${GITHUB_BASE_REF:-HEAD^}..HEAD

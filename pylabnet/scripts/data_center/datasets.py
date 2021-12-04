@@ -14,7 +14,7 @@ from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Hand
 
 import sys
 
-"ttt"
+
 class Dataset():
 
     def __init__(self, gui: Window, log: LogClient = None, data=None,
@@ -581,7 +581,8 @@ class InfiniteRollingLine(RollingLine):
 
 class time_trace_monitor(RollingLine):
     def __init__(self, *args, **kwargs):
-        kwargs['data_length'] = 1000
+        if('data_length' not in kwargs):
+            kwargs['data_length'] = "just to bypass the popup window and the datalength will be set up later"
         kwargs['datetime_axis'] = True
         super().__init__(*args, **kwargs)
 

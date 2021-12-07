@@ -70,10 +70,32 @@ class ANC300:
         # line endings
         
         if check_ack:
-            split_return =  raw.rsplit(sep='\n')[-2].strip("\r")
-            self._check_acknowledgement(split_return)
+            split_return = raw.rsplit(sep='\n')
+            if len(split_return) == 3:
+                # No argument returned
+                check =  split_return[-2].strip("\r")
+                ret = split_return[0].strip("\r")
+            elif len(split_return) == 4:
+                check =  split_return[-2].strip("\r")
+                ret = split_return[1].strip("\r")
+
+            self._check_acknowledgement(check)
 
         return ret
+
+    def _extract_value(self, reply):
+        """ preprocess_reply function for the Attocube console. This function
+        tries to extract <value> from 'name = <value> [unit]'. If <value> can
+        not be identified the original string is returned.
+        :param reply: reply string
+        :returns: string with only the numerical value, or the original string
+        """
+        r = self._reg_value.search(reply)
+        if r:
+            return r.groups()[0]
+        else:
+            return reply
+
 
     def _write(self, command, check_ack=True):
         """ Writes a command to the instrument
@@ -86,28 +108,21 @@ class ANC300:
         self.lastcommand = command
         command = command + self.write_termination
         self.connection.write(command.encode())
+
+        reply = None
+
         if check_ack:
             reply = self._read(check_ack=True)
             #msg =  reply.strip(self.read_termination)
             #self.check_acknowledgement(msg)
-
-    def _ask(self, command):
-        """ Writes a command to the instrument and returns the resulting ASCII
-        response
-        :param command: command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        self._write(command)
-        time.sleep(self.query_delay)
-        return self._read()
-
+        return reply
 
     def _set_mode(self, channel, mode):
-        self._write("setm " + str(channel) + " " + mode)
+        self._write(f"setm {str(channel)} {str(mode)}")
 
     def ground(self, channel):
         self._set_mode(channel, 'gnd')
-
+        self.log.info(f"Grounded channel {channel}.")
 
     def set_parameters(self, channel, mode=None, frequency=None, amplitude=None):
         """ Sets parameters for motion
@@ -122,20 +137,41 @@ class ANC300:
         pass
 
 
-    def get_voltage(self, channel):
-        """ Returns the current DC voltage on a piezo
+    def get_step_voltage(self, channel):
+        """ Returns the cstep voltage in V
+
+        :param channel: (int) channel index (from 1)
+        """
+        return self._extract_value(self._write(f"getv {str(channel)}")) 
+         
+
+    def set_step_voltage(self, channel, voltage=30):
+        """ Sets the step voltage to the piezo
 
         :param channel: (int) channel index (from 0)
+        :param voltage: (float) voltage to set from 0 to 100 V (default is 30)
         """
-        pass
+        
+        self._write(f"setv {str(channel)} {str(voltage)}")
+        self.log.info(f"Change step voltage of channel {channel} to {voltage}.")
 
-    def set_voltage(self, channel, voltage=50):
-        """ Sets an absolute voltage to the piezo
+    def get_step_frequency(self, channel):
+        """ Returns the step frequency on channel
+
+        :param channel: (int) channel index (from 1)
+        """
+        return self._extract_value(self._write(f"getf {str(channel)}")) 
+         
+    
+    def set_step_frequency(self, channel, freq=1000):
+        """ Sets the step voltage to the piezo
 
         :param channel: (int) channel index (from 0)
-        :param voltage: (float) voltage to set from 0 to 100 V (default is 50)
+        :param voltage: (float) voltage to set from 0 to 100 V (default is 30)
         """
-        pass
+        self._write(f"setf {str(channel)} {str(freq)}")
+        self.log.info(f"Change step frequency of channel {channel} to {freq}.")
+
 
     def n_steps(self, channel, n=1):
         """ Takes n steps
@@ -178,5 +214,11 @@ if __name__ == "__main__":
  
 
     anc = ANC300(host=host, port=port)
-    anc.ground(3)
-    
+    anc.set_step_voltage(1, 30)
+    voltage = anc.get_step_voltage(2)
+
+
+    anc.set_step_frequency(2, 700)
+    freq = anc.get_step_frequency(2)
+
+    print(f"Voltage {voltage}, freq {freq}")

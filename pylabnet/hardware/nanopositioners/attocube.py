@@ -278,6 +278,9 @@ class ANC300:
             self._write(f"stepu {str(channel)} {str(n)}")
         else:
             self._write(f"stepd {str(channel)} {str(abs(n))}")
+            
+        self.log.info(f"Took {n} steps on channel {channel}.")
+
 
     @check_channel
     def get_capacitance(self, channel):

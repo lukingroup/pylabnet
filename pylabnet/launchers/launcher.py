@@ -36,8 +36,6 @@ Example config dict:
     ],
     "script" : "C:\\Users\\mbhas\\pylabnet\\pylabnet\\scripts\\deviceless_test.py"
 }
-
-NOTE: Requires windows (TODO: make OS agnostic)
 """
 
 import time

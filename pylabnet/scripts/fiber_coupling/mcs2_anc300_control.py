@@ -285,6 +285,12 @@ class Controller:
                         self.gui.force_update()
                     self.widgets['is_moving'][channel].setChecked(False)
                     self.widgets['is_moving'][channel].setCheckable(False)
+
+                # Ugly hack to set DC voltage of Front X to 0
+                if channel in BROKEN_CHANNELS:
+                    self._update_voltage(channel, 0)    
+
+                self._set_voltage_display(channel)
             else:
                 if self.attocube.is_moving(attocube_channel):
 
@@ -295,16 +301,9 @@ class Controller:
                     self.widgets['is_moving'][channel].setChecked(False)
                     self.widgets['is_moving'][channel].setCheckable(False)
 
-            self.widgets['step_right'][channel].setStyleSheet(
-                'background-color:black'
-            )
-
-            if not attocube:
-            # Ugly hack to set DC voltage of Front X to 0
-                if channel in BROKEN_CHANNELS:
-                    self._update_voltage(channel, 0)    
-
-                self._set_voltage_display(channel)
+                self.widgets['step_right'][channel].setStyleSheet(
+                    'background-color:black'
+                )
         else:
             self.log.info("LOCKED")
 
@@ -350,6 +349,14 @@ class Controller:
                 self.widgets['step_right'][channel].setStyleSheet(
                     'background-color:black'
                 )
+
+                
+                # Ugly hack to set DC voltage of Front X to 0
+                if channel in BROKEN_CHANNELS:
+                    self._update_voltage(channel, 0)
+
+                self._set_voltage_display(channel)
+
             else:
                 if self.attocube.is_moving(attocube_channel):
 
@@ -364,59 +371,121 @@ class Controller:
                     'background-color:black'
                 )
 
-            # Ugly hack to set DC voltage of Front X to 0
-            if channel in BROKEN_CHANNELS:
-                self._update_voltage(channel, 0)
-
-            self._set_voltage_display(channel)
-
     def _walk_left(self, channel: int):
+
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
+
 
         if not self._is_axis_locked(channel):
 
-            if not self.pos.is_moving(channel):
-                self.widgets['walk_left'][channel].setStyleSheet(
-                    'background-color:red'
-                )
-                self.pos.move(channel, backward=True)
-
-                while self.pos.is_moving(channel):
-                    self.widgets['is_moving'][channel].setCheckable(True)
-                    self.widgets['is_moving'][channel].setChecked(True)
-                    self.gui.force_update()
-                self.widgets['is_moving'][channel].setChecked(False)
-                self.widgets['is_moving'][channel].setCheckable(False)
-
-                if not self.widgets['walk_left'][channel].isDown():
+            if not attocube:
+                if not self.pos.is_moving(channel):
                     self.widgets['walk_left'][channel].setStyleSheet(
-                        'background-color:black'
+                        'background-color:red'
                     )
+                    self.pos.move(channel, backward=True)
 
-                    self._set_voltage_display(channel)
+                    while self.pos.is_moving(channel):
+                        self.widgets['is_moving'][channel].setCheckable(True)
+                        self.widgets['is_moving'][channel].setChecked(True)
+                        self.gui.force_update()
+                    self.widgets['is_moving'][channel].setChecked(False)
+                    self.widgets['is_moving'][channel].setCheckable(False)
+
+                    if not self.widgets['walk_left'][channel].isDown():
+                        self.widgets['walk_left'][channel].setStyleSheet(
+                            'background-color:black'
+                        )
+
+                        self._set_voltage_display(channel)
+            else:
+                  if not self.attocube.is_moving(attocube_channel):
+                    self.widgets['walk_left'][channel].setStyleSheet(
+                        'background-color:red'
+                    )
+                    self.attocube.move(attocube_channel, backward=True)
+
+                    while self.attocube.is_moving(attocube_channel):
+                        self.widgets['is_moving'][channel].setCheckable(True)
+                        self.widgets['is_moving'][channel].setChecked(True)
+                        self.gui.force_update()
+                    self.widgets['is_moving'][channel].setChecked(False)
+                    self.widgets['is_moving'][channel].setCheckable(False)
+
+                    if not self.widgets['walk_left'][channel].isDown():
+                        self.widgets['walk_left'][channel].setStyleSheet(
+                            'background-color:black'
+                        )
+
+                       
+
 
     def _walk_right(self, channel: int):
 
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
         if not self._is_axis_locked(channel):
 
-            if not self.pos.is_moving(channel):
-                self.widgets['walk_right'][channel].setStyleSheet(
-                    'background-color:red'
-                )
-                self.pos.move(channel, backward=False)
+            if not attocube:
 
-                while self.pos.is_moving(channel):
-                    self.widgets['is_moving'][channel].setCheckable(True)
-                    self.widgets['is_moving'][channel].setChecked(True)
-                    self.gui.force_update()
-                self.widgets['is_moving'][channel].setChecked(False)
-                self.widgets['is_moving'][channel].setCheckable(False)
-
-                if not self.widgets['walk_right'][channel].isDown():
+                if not self.pos.is_moving(channel):
                     self.widgets['walk_right'][channel].setStyleSheet(
-                        'background-color:black'
+                        'background-color:red'
                     )
+                    self.pos.move(channel, backward=False)
 
-                    self._set_voltage_display(channel)
+                    while self.pos.is_moving(channel):
+                        self.widgets['is_moving'][channel].setCheckable(True)
+                        self.widgets['is_moving'][channel].setChecked(True)
+                        self.gui.force_update()
+                    self.widgets['is_moving'][channel].setChecked(False)
+                    self.widgets['is_moving'][channel].setCheckable(False)
+
+                    if not self.widgets['walk_right'][channel].isDown():
+                        self.widgets['walk_right'][channel].setStyleSheet(
+                            'background-color:black'
+                        )
+                        self._set_voltage_display(channel)
+            else:
+                if not self.attocube.is_moving(attocube_channel):
+                    self.widgets['walk_right'][channel].setStyleSheet(
+                        'background-color:red'
+                    )
+                    self.attocube.move(attocube_channel, backward=False)
+
+                    while  self.attocube.is_moving(attocube_channel):
+                        self.widgets['is_moving'][channel].setCheckable(True)
+                        self.widgets['is_moving'][channel].setChecked(True)
+                        self.gui.force_update()
+                    self.widgets['is_moving'][channel].setChecked(False)
+                    self.widgets['is_moving'][channel].setCheckable(False)
+
+                    if not self.widgets['walk_right'][channel].isDown():
+                        self.widgets['walk_right'][channel].setStyleSheet(
+                            'background-color:black'
+                        )
+
+
+
+    def _stop(self, channel):
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+            self.attocube.stop(attocube_channel)
+        else:
+            attocube = False
+            self.pos.stop(channel)
+
+       
 
     def _update_voltage(self, channel: int, voltage: float):
         """ Updates the channels DC voltage
@@ -425,6 +494,9 @@ class Controller:
         :param voltage: (float) value of voltage to update ot
         """
 
+        if channel in ATTOCUBE_CHANNELS:
+            return
+        
         # If locked, get the current voltage and reset the GUI value to it
         if self._is_axis_locked(channel):
             self.widgets['voltage'][channel].setValue(
@@ -443,6 +515,56 @@ class Controller:
                 self.widgets['is_moving'][channel].setChecked(False)
                 self.widgets['is_moving'][channel].setCheckable(False)
 
+    def _update_amplitude(self, channel, amplitude):
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
+        if not attocube:
+            self.pos.set_parameters(
+                    channel=channel,
+                    amplitude=amplitude
+                )
+        else:
+            self.attocube.set_step_voltage(
+                    channel=attocube_channel,
+                    voltage=amplitude
+                )
+
+    def _update_frequency(self, channel, frequency):
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
+        if not attocube:
+            self.pos.set_parameters(
+                    channel=channel,
+                    frequency=frequency
+                )
+        else:
+            self.attocube.set_step_frequency(
+                    channel=attocube_channel,
+                    freq=frequency
+                )
+            
+    def _update_velocity(self, channel, dc_vel):
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
+        if not attocube:
+            self.pos.set_parameters(
+                    channel=channel,
+                    dc_vel=dc_vel
+                )
+        
+            
     def _setup_gui(self):
         """ Configures what all buttons do """
 
@@ -478,13 +600,13 @@ class Controller:
                 lambda channel=channel_no: self._walk_left(channel)
             )
             self.widgets['walk_left'][channel_no].released.connect(
-                lambda channel=channel_no: self.pos.stop(channel)
+                lambda channel=channel_no: self._stop(channel)
             )
             self.widgets['walk_right'][channel_no].pressed.connect(
                 lambda channel=channel_no: self._walk_right(channel)
             )
             self.widgets['walk_right'][channel_no].released.connect(
-                lambda channel=channel_no: self.pos.stop(channel)
+                lambda channel=channel_no: self._stop(channel)
             )
 
             # Parameters
@@ -495,19 +617,19 @@ class Controller:
                 )
             )
             self.widgets['amplitude'][channel_no].valueChanged.connect(
-                lambda state, channel=channel_no: self.pos.set_parameters(
+                lambda state, channel=channel_no: self._update_amplitude(
                     channel=channel,
                     amplitude=state
                 )
             )
             self.widgets['frequency'][channel_no].valueChanged.connect(
-                lambda state, channel=channel_no: self.pos.set_parameters(
+                lambda state, channel=channel_no: self._update_frequency(
                     channel=channel,
                     frequency=state
                 )
             )
             self.widgets['velocity'][channel_no].valueChanged.connect(
-                lambda state, channel=channel_no: self.pos.set_parameters(
+                lambda state, channel=channel_no: self._update_velocity(
                     channel=channel,
                     dc_vel=state
                 )

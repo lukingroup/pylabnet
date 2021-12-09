@@ -38,7 +38,7 @@ class ANC300:
      # compiled regular expression for finding numerical values in reply strings
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
-    def __init__(self, host, port=0, query_delay=0.05, passwd=None, limits=DEFAULT_LIMITS, logger=None):
+    def __init__(self, host, port=0, query_delay=0.001, passwd=None, limits=DEFAULT_LIMITS, logger=None):
         """ Instantiate Nanopositioners"""
 
 
@@ -278,7 +278,7 @@ class ANC300:
             self._write(f"stepu {str(channel)} {str(n)}")
         else:
             self._write(f"stepd {str(channel)} {str(abs(n))}")
-            
+
         self.log.info(f"Took {n} steps on channel {channel}.")
 
 
@@ -357,54 +357,55 @@ class ANC300:
             self.ground(i)
 
 if __name__ == "__main__":
-    from telnetlib import Telnet
-    import time
+    pass
+    # from telnetlib import Telnet
+    # import time
 
     
  
-    from pylabnet.network.client_server.attocube_anc300 import Client
-    host='192.168.50.208' 
-    port=7230
+    # from pylabnet.network.client_server.attocube_anc300 import Client
+    # host='192.168.50.208' 
+    # port=7230
 
 
-    anc = Client(
-        host='192.168.50.111', 
-        port=36637
-    )
+    # anc = Client(
+    #     host='192.168.50.111', 
+    #     port=36637
+    # )
 
-    #Connect Client
-    anc.connect()
+    # #Connect Client
+    # anc.connect()
 
-    #anc = ANC300(host=host, port=port, passwd='123456')
-    anc.ground(channel = 0)
+    # #anc = ANC300(host=host, port=port, passwd='123456')
+    # anc.ground(channel = 0)
 
-    anc.set_step_voltage(1, 40)
-    voltage = anc.get_step_voltage(1)
+    # anc.set_step_voltage(1, 40)
+    # voltage = anc.get_step_voltage(1)
 
 
-    anc.set_step_frequency(1, 100)
-    anc.set_step_frequency(2, 100)
-    anc.set_step_frequency(3, 100)
-    freq = anc.get_step_frequency(2)
+    # anc.set_step_frequency(1, 100)
+    # anc.set_step_frequency(2, 100)
+    # anc.set_step_frequency(3, 100)
+    # freq = anc.get_step_frequency(2)
     
-    print(f"Voltage {voltage}, freq {freq}")
-    anc.stop(2)
+    # print(f"Voltage {voltage}, freq {freq}")
+    # anc.stop(2)
 
-    # step around for 0.5 s
-    anc.move(2, backward=True)
-    for i in range(10):
-        print (anc.is_moving(2))
+    # # step around for 0.5 s
+    # anc.move(2, backward=True)
+    # for i in range(10):
+    #     print (anc.is_moving(2))
 
-    anc.stop(2)
-    anc.move(2)
-    for i in range(10):
-        print (anc.is_moving(2))
-    anc.stop(2)
-    print (anc.is_moving(2))
+    # anc.stop(2)
+    # anc.move(2)
+    # for i in range(10):
+    #     print (anc.is_moving(2))
+    # anc.stop(2)
+    # print (anc.is_moving(2))
 
-    anc.n_steps(1, 10000)
-    anc.n_steps(2, 10000)
-    anc.n_steps(3, 10000)
+    # anc.n_steps(1, 10000)
+    # anc.n_steps(2, 10000)
+    # anc.n_steps(3, 10000)
 
-    anc.stop_all()
-    anc.ground_all()
+    # anc.stop_all()
+    # anc.ground_all()

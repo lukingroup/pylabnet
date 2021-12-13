@@ -20,7 +20,7 @@ MATCHING_DICT = {
     '5' : 3
 }
 
-
+GREY_BUTTON_STYLESHEET = 'background-color:#54687A'
 
 def to_attocube_channel(mcs_channel):
 
@@ -37,7 +37,7 @@ class Controller:
         step_left=NUM_CHANNELS, step_right=NUM_CHANNELS, walk_left=NUM_CHANNELS,
         walk_right=NUM_CHANNELS, n_steps=NUM_CHANNELS, is_moving=NUM_CHANNELS,
         amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS,
-        lock_button=int(NUM_CHANNELS / 3), keyboard_change_combo=1
+        lock_button=int(NUM_CHANNELS / 3), keyboard_change_combo=1, ground=3, get_capacitance=3, c_box=3
     )
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
@@ -290,6 +290,10 @@ class Controller:
                 if channel in BROKEN_CHANNELS:
                     self._update_voltage(channel, 0)    
 
+                self.widgets['step_right'][channel].setStyleSheet(
+                    GREY_BUTTON_STYLESHEET
+                )
+
                 self._set_voltage_display(channel)
             else:
                 if self.attocube.is_moving(attocube_channel):
@@ -302,7 +306,7 @@ class Controller:
                     self.widgets['is_moving'][channel].setCheckable(False)
 
                 self.widgets['step_right'][channel].setStyleSheet(
-                    'background-color:black'
+                    GREY_BUTTON_STYLESHEET
                 )
         else:
             self.log.info("LOCKED")
@@ -347,7 +351,7 @@ class Controller:
                     self.widgets['is_moving'][channel].setCheckable(False)
 
                 self.widgets['step_right'][channel].setStyleSheet(
-                    'background-color:black'
+                    GREY_BUTTON_STYLESHEET
                 )
 
                 
@@ -368,7 +372,7 @@ class Controller:
                     self.widgets['is_moving'][channel].setCheckable(False)
 
                 self.widgets['step_right'][channel].setStyleSheet(
-                    'background-color:black'
+                    GREY_BUTTON_STYLESHEET
                 )
 
     def _walk_left(self, channel: int):
@@ -399,7 +403,7 @@ class Controller:
 
                     if not self.widgets['walk_left'][channel].isDown():
                         self.widgets['walk_left'][channel].setStyleSheet(
-                            'background-color:black'
+                            GREY_BUTTON_STYLESHEET
                         )
 
                         self._set_voltage_display(channel)
@@ -419,7 +423,7 @@ class Controller:
 
                     if not self.widgets['walk_left'][channel].isDown():
                         self.widgets['walk_left'][channel].setStyleSheet(
-                            'background-color:black'
+                            GREY_BUTTON_STYLESHEET
                         )
 
                        
@@ -452,7 +456,7 @@ class Controller:
 
                     if not self.widgets['walk_right'][channel].isDown():
                         self.widgets['walk_right'][channel].setStyleSheet(
-                            'background-color:black'
+                            GREY_BUTTON_STYLESHEET
                         )
                         self._set_voltage_display(channel)
             else:
@@ -471,7 +475,7 @@ class Controller:
 
                     if not self.widgets['walk_right'][channel].isDown():
                         self.widgets['walk_right'][channel].setStyleSheet(
-                            'background-color:black'
+                            GREY_BUTTON_STYLESHEET
                         )
 
 
@@ -545,11 +549,14 @@ class Controller:
                     channel=channel,
                     frequency=frequency
                 )
+           
         else:
             self.attocube.set_step_frequency(
                     channel=attocube_channel,
                     freq=frequency
                 )
+
+
             
     def _update_velocity(self, channel, dc_vel):
         if channel in ATTOCUBE_CHANNELS:
@@ -565,6 +572,10 @@ class Controller:
                 )
         
             
+    def _measure_set_C(self, channel):
+        cap = self.attocube.get_capacitance(channel)
+        self.widgets['c_box'][channel-1].setValue(int(cap))
+
     def _setup_gui(self):
         """ Configures what all buttons do """
 
@@ -635,10 +646,33 @@ class Controller:
                 )
             )
 
-            
+        # Ugly assignment of ground buttons. 
+        self.widgets['ground'][0].pressed.connect(
+                    lambda: self.attocube.ground(1)
+            )
+        self.widgets['ground'][1].pressed.connect(
+                    lambda: self.attocube.ground(2)
+            )
+        self.widgets['ground'][2].pressed.connect(
+                    lambda: self.attocube.ground(3)
+            )
 
 
-
+        # Ugly assignment of capacitance buttons. 
+        self.widgets['get_capacitance'][0].pressed.connect(
+                    lambda: self._measure_set_C(1)
+            )
+        self.widgets['c_box'][0].setSuffix(' nF')
+        self.widgets['get_capacitance'][1].pressed.connect(
+                    lambda: self._measure_set_C(2)
+            )
+        self.widgets['c_box'][1].setSuffix(' nF')
+        self.widgets['get_capacitance'][2].pressed.connect(
+                    lambda: self._measure_set_C(3)
+            )
+        self.widgets['c_box'][2].setSuffix(' nF')
+        
+ 
 def launch(**kwargs):
     """ Launches the full nanopositioner control + GUI script """
 
@@ -651,7 +685,7 @@ def launch(**kwargs):
     nanopos_client = find_client(clients=clients, settings=config, client_type='mcs2')
     attocube_client = find_client(clients=clients, settings=config, client_type='anc300')
 
-    gui_client = 'positioner_control'
+    gui_client = 'positioner_control_mixed'
 
     # Instantiate controller
     control = Controller(nanopos_client, attocube_client, gui_client, logger, config=kwargs['config'], port=kwargs['server_port'])

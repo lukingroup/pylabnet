@@ -293,7 +293,9 @@ class ANC300:
         # Set into stepping mode
         self._set_mode(channel, 'cap')
         time.sleep(1)
-        return float(self._extract_value(self._write(f"getc {str(channel)}")))         
+        cap = float(self._extract_value(self._write(f"getc {str(channel)}")))     
+        self.log.info(f"Capacitance measured on chanel {channel}: {cap} nF.")
+        return cap    
 
     @check_channel   
     def get_output_voltage(self, channel):

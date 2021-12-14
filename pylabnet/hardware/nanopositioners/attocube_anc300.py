@@ -11,6 +11,7 @@ import re
 
 class ANC300:
 
+
      # compiled regular expression for finding numerical values in reply strings
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
@@ -33,12 +34,25 @@ class ANC300:
         ret = self._read(check_ack=False)
         authmsg = ret.split(self.read_termination)[1]
 
-       
-        if authmsg != 'Authorization success':
-            self.log.error(f"Attocube authorization failed '{authmsg}'")
-        else:
-            self.log.info("ANC300 successfully connected.")
+        if logger is not None:
+            if authmsg != 'Authorization success':
+                self.log.error(f"Attocube authorization failed '{authmsg}'")
+            else:
+                self.log.info("ANC300 successfully connected.")
 
+
+    def _extract_value(self, reply):
+        """ preprocess_reply function for the Attocube console. This function
+        tries to extract <value> from 'name = <value> [unit]'. If <value> can
+        not be identified the original string is returned.
+        :param reply: reply string
+        :returns: string with only the numerical value, or the original string
+        """
+        r = self._reg_value.search(reply)
+        if r:
+            return r.groups()[0]
+        else:
+            return reply
 
     def _check_acknowledgement(self, reply, msg=""):
         """ checks the last reply of the instrument to be 'OK', otherwise a
@@ -49,7 +63,7 @@ class ANC300:
         if reply != 'OK':
             if msg == "":  # clear buffer
                 msg = reply
-                self._read()
+                super().read()
             raise ValueError("AttocubeConsoleAdapter: Error after command "
                              f"{self.lastcommand} with message {msg}")
 
@@ -60,7 +74,6 @@ class ANC300:
         a ValueError is raised.
         :returns: String ASCII response of the instrument.
         """
-        time.sleep(self.query_delay)
         ret = self.connection.read_some().decode() + \
                 self.connection.read_very_eager().decode()
                 
@@ -69,10 +82,11 @@ class ANC300:
         # is not possible because of a firmware bug resulting in inconsistent
         # line endings
         
-        if check_ack:
-            split_return =  raw.rsplit(sep='\n')[-2].strip("\r")
-            self._check_acknowledgement(split_return)
 
+        if check_ack:
+            ret, ack = raw.rsplit(sep='\n', maxsplit=1)
+            ret = ret.strip('\r')  # strip possible CR char
+            self._check_acknowledgement(ack, ret)
         return ret
 
     def _write(self, command, check_ack=True):
@@ -82,14 +96,13 @@ class ANC300:
             back from the instrument. This should be True for set pure commands
             and False otherwise.
         """
-        time.sleep(self.query_delay)
         self.lastcommand = command
         command = command + self.write_termination
         self.connection.write(command.encode())
         if check_ack:
-            reply = self._read(check_ack=True)
-            #msg =  reply.strip(self.read_termination)
-            #self.check_acknowledgement(msg)
+            reply = self.connection.read_until(self.read_termination.encode())
+            msg = reply.decode().strip(self.read_termination)
+            self.check_acknowledgement(msg)
 
     def _ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
@@ -97,16 +110,9 @@ class ANC300:
         :param command: command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        self._write(command)
+        self.write(command, check_ack=False)
         time.sleep(self.query_delay)
-        return self._read()
-
-
-    def _set_mode(self, channel, mode):
-        self._write("setm " + str(channel) + " " + mode)
-
-    def ground(self, channel):
-        self._set_mode(channel, 'gnd')
+        return self.read()
 
 
     def set_parameters(self, channel, mode=None, frequency=None, amplitude=None):
@@ -120,7 +126,6 @@ class ANC300:
         :param amp: (float) amplitude in volts from 0 to 100
         """
         pass
-
 
     def get_voltage(self, channel):
         """ Returns the current DC voltage on a piezo
@@ -178,5 +183,5 @@ if __name__ == "__main__":
  
 
     anc = ANC300(host=host, port=port)
-    anc.ground(3)
+
     

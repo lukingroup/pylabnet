@@ -1,4 +1,8 @@
-""" Module for controlling attocube open-loop nanopositioners using the ANC300 controller """
+""" Module for controlling attocube open-loop nanopositioners using the ANC300 controller
+
+NOTE: Substantial part of this driver has been adapted from the very nice pymeasure project:
+https://pymeasure.readthedocs.io/en/latest/api/instruments/attocube/anc300.html
+"""
 
 
 from pylabnet.network.core.service_base import ServiceBase

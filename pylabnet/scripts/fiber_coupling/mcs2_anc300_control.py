@@ -15,19 +15,21 @@ BROKEN_CHANNELS = []
 ATTOCUBE_CHANNELS = [1, 6, 5]
 
 MATCHING_DICT = {
-    '6' : 1,
-    '1' : 2,
-    '5' : 3
+    '6': 1,
+    '1': 2,
+    '5': 3
 }
 
 GREY_BUTTON_STYLESHEET = 'background-color:#54687A'
 
+
 def to_attocube_channel(mcs_channel):
 
     if not mcs_channel in ATTOCUBE_CHANNELS:
-        return 
+        return
     else:
         return MATCHING_DICT[str(mcs_channel)]
+
 
 class Controller:
     """ A script class for controlling MCS2 positioners + interfacing with GUI"""
@@ -42,7 +44,7 @@ class Controller:
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
 
-    def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client,  gui='positioner_control_mixed', log_client=None, config=None, port=None):
+    def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client, gui='positioner_control_mixed', log_client=None, config=None, port=None):
         """ Instantiates the controller
 
         :param nanopos_client: (pylabnet.network.client_server.smaract_mcs2.Client)
@@ -141,7 +143,6 @@ class Controller:
             voltage
         """
 
-
         if channel not in ATTOCUBE_CHANNELS:
             self.pos.set_parameters(channel, amplitude=params[2])
             self.pos.set_parameters(channel, frequency=params[3])
@@ -153,7 +154,7 @@ class Controller:
         else:
             self.attocube.set_step_voltage(to_attocube_channel(channel), voltage=params[2])
             self.attocube.set_step_frequency(to_attocube_channel(channel), freq=params[3])
-            
+
     def get_GUI_parameters(self, channel):
         """ Gets the current GUI parameters for a given channel
 
@@ -180,8 +181,6 @@ class Controller:
         # Stop Smaracts
         for channel in range(self.NUM_CHANNELS):
             self.pos.stop(channel)
-
-        
 
     def load_settings(self):
         """ Loads settings from configuration """
@@ -259,10 +258,9 @@ class Controller:
 
         if not self._is_axis_locked(channel):
 
-
             if attocube:
-                    
-                    self.attocube.n_steps(
+
+                self.attocube.n_steps(
                     channel=attocube_channel,
                     n=-self.widgets['n_steps'][channel].value()
                 )
@@ -288,7 +286,7 @@ class Controller:
 
                 # Ugly hack to set DC voltage of Front X to 0
                 if channel in BROKEN_CHANNELS:
-                    self._update_voltage(channel, 0)    
+                    self._update_voltage(channel, 0)
 
                 self.widgets['step_right'][channel].setStyleSheet(
                     GREY_BUTTON_STYLESHEET
@@ -327,13 +325,13 @@ class Controller:
 
             if attocube:
                 self.attocube.n_steps(
-                channel=attocube_channel,
-                n=self.widgets['n_steps'][channel].value()
+                    channel=attocube_channel,
+                    n=self.widgets['n_steps'][channel].value()
                 )
             else:
                 self.pos.n_steps(
-                channel=channel,
-                n=self.widgets['n_steps'][channel].value()
+                    channel=channel,
+                    n=self.widgets['n_steps'][channel].value()
                 )
 
             self.widgets['step_right'][channel].setStyleSheet(
@@ -354,7 +352,6 @@ class Controller:
                     GREY_BUTTON_STYLESHEET
                 )
 
-                
                 # Ugly hack to set DC voltage of Front X to 0
                 if channel in BROKEN_CHANNELS:
                     self._update_voltage(channel, 0)
@@ -383,8 +380,6 @@ class Controller:
         else:
             attocube = False
 
-
-
         if not self._is_axis_locked(channel):
 
             if not attocube:
@@ -408,7 +403,7 @@ class Controller:
 
                         self._set_voltage_display(channel)
             else:
-                  if not self.attocube.is_moving(attocube_channel):
+                if not self.attocube.is_moving(attocube_channel):
                     self.widgets['walk_left'][channel].setStyleSheet(
                         'background-color:red'
                     )
@@ -425,9 +420,6 @@ class Controller:
                         self.widgets['walk_left'][channel].setStyleSheet(
                             GREY_BUTTON_STYLESHEET
                         )
-
-                       
-
 
     def _walk_right(self, channel: int):
 
@@ -466,7 +458,7 @@ class Controller:
                     )
                     self.attocube.move(attocube_channel, backward=False)
 
-                    while  self.attocube.is_moving(attocube_channel):
+                    while self.attocube.is_moving(attocube_channel):
                         self.widgets['is_moving'][channel].setCheckable(True)
                         self.widgets['is_moving'][channel].setChecked(True)
                         self.gui.force_update()
@@ -478,8 +470,6 @@ class Controller:
                             GREY_BUTTON_STYLESHEET
                         )
 
-
-
     def _stop(self, channel):
         if channel in ATTOCUBE_CHANNELS:
             attocube = True
@@ -488,8 +478,6 @@ class Controller:
         else:
             attocube = False
             self.pos.stop(channel)
-
-       
 
     def _update_voltage(self, channel: int, voltage: float):
         """ Updates the channels DC voltage
@@ -500,7 +488,7 @@ class Controller:
 
         if channel in ATTOCUBE_CHANNELS:
             return
-        
+
         # If locked, get the current voltage and reset the GUI value to it
         if self._is_axis_locked(channel):
             self.widgets['voltage'][channel].setValue(
@@ -528,14 +516,14 @@ class Controller:
 
         if not attocube:
             self.pos.set_parameters(
-                    channel=channel,
-                    amplitude=amplitude
-                )
+                channel=channel,
+                amplitude=amplitude
+            )
         else:
             self.attocube.set_step_voltage(
-                    channel=attocube_channel,
-                    voltage=amplitude
-                )
+                channel=attocube_channel,
+                voltage=amplitude
+            )
 
     def _update_frequency(self, channel, frequency):
         if channel in ATTOCUBE_CHANNELS:
@@ -546,18 +534,16 @@ class Controller:
 
         if not attocube:
             self.pos.set_parameters(
-                    channel=channel,
-                    frequency=frequency
-                )
-           
+                channel=channel,
+                frequency=frequency
+            )
+
         else:
             self.attocube.set_step_frequency(
-                    channel=attocube_channel,
-                    freq=frequency
-                )
+                channel=attocube_channel,
+                freq=frequency
+            )
 
-
-            
     def _update_velocity(self, channel, dc_vel):
         if channel in ATTOCUBE_CHANNELS:
             attocube = True
@@ -567,14 +553,13 @@ class Controller:
 
         if not attocube:
             self.pos.set_parameters(
-                    channel=channel,
-                    dc_vel=dc_vel
-                )
-        
-            
+                channel=channel,
+                dc_vel=dc_vel
+            )
+
     def _measure_set_C(self, channel):
         cap = self.attocube.get_capacitance(channel)
-        self.widgets['c_box'][channel-1].setValue(int(cap))
+        self.widgets['c_box'][channel - 1].setValue(int(cap))
 
     def _setup_gui(self):
         """ Configures what all buttons do """
@@ -595,7 +580,6 @@ class Controller:
 
         for channel in range(self.NUM_CHANNELS):
 
-            
             channel_no = copy.deepcopy(channel)
 
             # Step buttons
@@ -646,33 +630,32 @@ class Controller:
                 )
             )
 
-        # Ugly assignment of ground buttons. 
+        # Ugly assignment of ground buttons.
         self.widgets['ground'][0].pressed.connect(
-                    lambda: self.attocube.ground(1)
-            )
+            lambda: self.attocube.ground(1)
+        )
         self.widgets['ground'][1].pressed.connect(
-                    lambda: self.attocube.ground(2)
-            )
+            lambda: self.attocube.ground(2)
+        )
         self.widgets['ground'][2].pressed.connect(
-                    lambda: self.attocube.ground(3)
-            )
+            lambda: self.attocube.ground(3)
+        )
 
-
-        # Ugly assignment of capacitance buttons. 
+        # Ugly assignment of capacitance buttons.
         self.widgets['get_capacitance'][0].pressed.connect(
-                    lambda: self._measure_set_C(1)
-            )
+            lambda: self._measure_set_C(1)
+        )
         self.widgets['c_box'][0].setSuffix(' nF')
         self.widgets['get_capacitance'][1].pressed.connect(
-                    lambda: self._measure_set_C(2)
-            )
+            lambda: self._measure_set_C(2)
+        )
         self.widgets['c_box'][1].setSuffix(' nF')
         self.widgets['get_capacitance'][2].pressed.connect(
-                    lambda: self._measure_set_C(3)
-            )
+            lambda: self._measure_set_C(3)
+        )
         self.widgets['c_box'][2].setSuffix(' nF')
-        
- 
+
+
 def launch(**kwargs):
     """ Launches the full nanopositioner control + GUI script """
 

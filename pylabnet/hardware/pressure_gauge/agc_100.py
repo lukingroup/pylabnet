@@ -23,6 +23,10 @@ class AGC_100:
 
         self.sio = io.TextIOWrapper(io.BufferedRWPair(ser, ser))
 
+        # Log initial pressure. 
+        init_pressure = self.get_pressure()
+        self.log.info(f"Successfully reading {init_pressure} mBar.")
+
     def get_pressure(self):
         '''Returns pressure in mBar'''
         raw_data = self.sio.readline()

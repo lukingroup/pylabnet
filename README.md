@@ -2,6 +2,9 @@
 
 Client-server, python-based laboratory software
 
+
+[![DOI](https://zenodo.org/badge/219227835.svg)](https://zenodo.org/badge/latestdoi/219227835)
+
  ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/master/devices.ico)
 
 This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group.

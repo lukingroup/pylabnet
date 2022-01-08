@@ -1,0 +1,24 @@
+authors:
+- family-names: "Knaut"
+  given-names: "Can M."
+  orcid: "https://orcid.org/0000-0003-2720-4452"
+- family-names: "Bhaskar"
+  given-names: "Mihir"
+- family-names: "Stroganov"
+  given-names: "Pavel"
+- family-names: "Huan"
+  given-names: "Yan Qi"
+- family-names: "Stas"
+  given-names: "Pieter-Jan"
+- family-names: "Assumpcao"
+  given-names: "Daniel"
+- family-names: "Gong"
+  given-names: "Wenjie"
+cff-version: "1.1.0"
+version: 1.0.1
+date-released: 2021-10-28
+doi: "10.5281/zenodo.5610008"
+license: MIT
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/lukingroup/pylabnet"
+title: "pylabnet - Client-server, python-based laboratory software"

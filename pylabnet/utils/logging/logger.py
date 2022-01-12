@@ -134,13 +134,14 @@ class LogClient:
         self._server_port = server_port  # Identifies a server running in client's thread
         self._ui = ui  # Identifies a relevant .ui file for the client
         self.operating_system = get_os()
-        self.lab_name = None
+        #self.lab_name = None
 
-        # try:
-        #     lab_name = load_config("lab_name")['lab_name']
-        #     self.lab_name = lab_name
-        # except FileNotFoundError:
-        #     self.lab_name = None
+        try:
+            lab_name_dict = load_config("lab_name")
+            self.lab_name = lab_name_dict['lab_name']
+        except:
+            print('found no lab_name config file, assigning to NO LAB')
+            self.lab_name = None
 
         # Set module alias to display with log messages
         self._module_tag = module_tag

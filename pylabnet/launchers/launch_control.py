@@ -687,9 +687,9 @@ class Controller:
                 if 'ui' in self.client_data[client]:
                     bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
 
-                # Add lab name, if specified by lab_name.json file
-                if 'lab_name' in self.client_data[client]:
-                    bash_cmd += ' --lab_name{} {}'.format(client_index, self.client_data[client]['lab_name'])
+                # # Add lab name, if specified by lab_name.json file
+                # if 'lab_name' in self.client_data[client]:
+                #     bash_cmd += ' --lab_name{} {}'.format(client_index, self.client_data[client]['lab_name'])
 
                 client_index += 1
 

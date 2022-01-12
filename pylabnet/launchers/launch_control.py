@@ -754,6 +754,8 @@ class Controller:
                 self.client_data[client]['device_id'] = info.split('device_id: ')[1].split('\n')[0]
             if 'lab_name: ' in clients[client]:
                 self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
+            else: # if no lab name is specified
+                self.client_data[client]['lab_name'] = "NO LAB"
 
     def _pull_connections(self):
         """ Updates the proxy's client list """
@@ -787,6 +789,8 @@ class Controller:
                 self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
             if 'lab_name: ' in clients[client]:
                 self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
+            else: # if no lab name is specified
+                self.client_data[client]['lab_name'] = "NO LAB"
 
         # Remove clients
         for client in remove_clients:
@@ -809,6 +813,8 @@ class Controller:
                     self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
                 if 'lab_name: ' in clients[client]:
                     self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
+                else: # if no lab name is specified
+                    self.client_data[client]['lab_name'] = "NO LAB"
 
     def _configure_autoscroll_off(self):
         self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)

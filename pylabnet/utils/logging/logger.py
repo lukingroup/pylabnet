@@ -135,6 +135,12 @@ class LogClient:
         self._ui = ui  # Identifies a relevant .ui file for the client
         self.operating_system = get_os()
 
+        try:
+            lab_name = load_config("lab_name")['lab_name']
+            self.lab_name = lab_name
+        except FileNotFoundError:
+            self.lab_name = None
+
         # Set module alias to display with log messages
         self._module_tag = module_tag
 
@@ -211,6 +217,11 @@ class LogClient:
                 client_data['port'] = self._server_port
             if self._ui is not None:
                 client_data['ui'] = self._ui
+
+            if self.lab_name is not None:
+                client_data['lab_name'] = self.lab_name
+            else:
+                client_data['lab_name'] = 'NO LAB'
 
             client_data_pickle = pickle.dumps(client_data)
             self._service.add_client_data(self._module_tag, client_data_pickle)

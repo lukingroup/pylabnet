@@ -283,9 +283,9 @@ class ANC300:
         self._set_mode(channel, 'stp')
 
         if n > 0:
-            self._write(f"stepu {str(channel)} {str(n)}")
+            self._write(f"stepu {str(channel)} {str(n)}", check_ack=False)
         else:
-            self._write(f"stepd {str(channel)} {str(abs(n))}")
+            self._write(f"stepd {str(channel)} {str(abs(n))}", check_ack=False)
 
         self.log.info(f"Took {n} steps on channel {channel}.")
 
@@ -324,9 +324,9 @@ class ANC300:
         self._set_mode(channel, 'stp')
 
         if not backward:
-            self._write(f"stepu {str(channel)} c")
+            self._write(f"stepu {str(channel)} c", check_ack=False)
         else:
-            self._write(f"stepd {str(channel)} c")
+            self._write(f"stepd {str(channel)} c", check_ack=False)
 
     @check_channel
     def stop(self, channel):

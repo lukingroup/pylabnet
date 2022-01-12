@@ -293,19 +293,19 @@ class Controller:
                 )
 
                 self._set_voltage_display(channel)
-            else:
-                if self.attocube.is_moving(attocube_channel):
+            # else:
+            #     if self.attocube.is_moving(attocube_channel):
 
-                    while self.attocube.is_moving(attocube_channel):
-                        self.widgets['is_moving'][channel].setCheckable(True)
-                        self.widgets['is_moving'][channel].setChecked(True)
-                        self.gui.force_update()
-                    self.widgets['is_moving'][channel].setChecked(False)
-                    self.widgets['is_moving'][channel].setCheckable(False)
+            #         while self.attocube.is_moving(attocube_channel):
+            #             self.widgets['is_moving'][channel].setCheckable(True)
+            #             self.widgets['is_moving'][channel].setChecked(True)
+            #             self.gui.force_update()
+            #         self.widgets['is_moving'][channel].setChecked(False)
+            #         self.widgets['is_moving'][channel].setCheckable(False)
 
-                self.widgets['step_right'][channel].setStyleSheet(
-                    GREY_BUTTON_STYLESHEET
-                )
+            #     self.widgets['step_right'][channel].setStyleSheet(
+            #         GREY_BUTTON_STYLESHEET
+            #     )
         else:
             self.log.info("LOCKED")
 
@@ -358,19 +358,19 @@ class Controller:
 
                 self._set_voltage_display(channel)
 
-            else:
-                if self.attocube.is_moving(attocube_channel):
+            # else:
+            #     if self.attocube.is_moving(attocube_channel):
 
-                    while self.attocube.is_moving(attocube_channel):
-                        self.widgets['is_moving'][channel].setCheckable(True)
-                        self.widgets['is_moving'][channel].setChecked(True)
-                        self.gui.force_update()
-                    self.widgets['is_moving'][channel].setChecked(False)
-                    self.widgets['is_moving'][channel].setCheckable(False)
+            #         while self.attocube.is_moving(attocube_channel):
+            #             self.widgets['is_moving'][channel].setCheckable(True)
+            #             self.widgets['is_moving'][channel].setChecked(True)
+            #             self.gui.force_update()
+            #         self.widgets['is_moving'][channel].setChecked(False)
+            #         self.widgets['is_moving'][channel].setCheckable(False)
 
-                self.widgets['step_right'][channel].setStyleSheet(
-                    GREY_BUTTON_STYLESHEET
-                )
+            #     self.widgets['step_right'][channel].setStyleSheet(
+            #         GREY_BUTTON_STYLESHEET
+            #     )
 
     def _walk_left(self, channel: int):
 
@@ -402,24 +402,24 @@ class Controller:
                         )
 
                         self._set_voltage_display(channel)
-            else:
-                if not self.attocube.is_moving(attocube_channel):
-                    self.widgets['walk_left'][channel].setStyleSheet(
-                        'background-color:red'
-                    )
-                    self.attocube.move(attocube_channel, backward=True)
+            # else:
+            #     if not self.attocube.is_moving(attocube_channel):
+            #         self.widgets['walk_left'][channel].setStyleSheet(
+            #             'background-color:red'
+            #         )
+            #         self.attocube.move(attocube_channel, backward=True)
 
-                    while self.attocube.is_moving(attocube_channel):
-                        self.widgets['is_moving'][channel].setCheckable(True)
-                        self.widgets['is_moving'][channel].setChecked(True)
-                        self.gui.force_update()
-                    self.widgets['is_moving'][channel].setChecked(False)
-                    self.widgets['is_moving'][channel].setCheckable(False)
+            #         while self.attocube.is_moving(attocube_channel):
+            #             self.widgets['is_moving'][channel].setCheckable(True)
+            #             self.widgets['is_moving'][channel].setChecked(True)
+            #             self.gui.force_update()
+            #         self.widgets['is_moving'][channel].setChecked(False)
+            #         self.widgets['is_moving'][channel].setCheckable(False)
 
-                    if not self.widgets['walk_left'][channel].isDown():
-                        self.widgets['walk_left'][channel].setStyleSheet(
-                            GREY_BUTTON_STYLESHEET
-                        )
+            #         if not self.widgets['walk_left'][channel].isDown():
+            #             self.widgets['walk_left'][channel].setStyleSheet(
+            #                 GREY_BUTTON_STYLESHEET
+            #             )
 
     def _walk_right(self, channel: int):
 

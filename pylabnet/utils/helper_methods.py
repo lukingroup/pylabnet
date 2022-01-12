@@ -855,7 +855,7 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
 
     if len(cmd) > 8191:
         if logger is not None:
-            logger.error('Cmd too long! Server will not instantiate!')
+            logger.error(f'Cmd too long! (Cmd len: {len(cmd)}) Server will not instantiate!')
         return
     else:
         if logger is not None:

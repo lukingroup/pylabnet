@@ -42,6 +42,7 @@ import time
 import numpy as np
 import sys
 import traceback
+import re
 import os
 import debugpy
 import os
@@ -52,12 +53,6 @@ from pylabnet.network.client_server import external_gui
 from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.gui.pyqt.external_gui import ParameterPopup, fresh_popup, warning_popup
-
-
-def recast_client_dict(client_dict):
-    """Hacky backwards compatible fix:
-    While with branck cknaut/iss307 the client list is not passed
-    as commadn ,ine argument anymore, the parsing of the """
 
 
 class Launcher:
@@ -161,9 +156,13 @@ class Launcher:
 
             # Client dict will contain entry for this script itself, don't want this
             # to be added as a connector.
-            if client_name == self.name:
-                pass
 
+            #remove any possible numbering from self client name
+            # e.g. MCS_control0 will be excluded too, if self.name = MCS_control
+            p = re.compile(f'({self.name})\d*$')
+
+            if p.match(client_name) != None:
+                continue
             ip = self.client_dict[client_name]['ip']
             port = self.client_dict[client_name]['port']
 
@@ -171,7 +170,7 @@ class Launcher:
             try:
                 device_id = self.client_dict[client_name]['device_id']
             except KeyError:
-                self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
+                #self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
                 device_id = None
 
             self.connectors[client_name] = Connector(
@@ -187,34 +186,34 @@ class Launcher:
             except KeyError:
                 pass
 
-        for client_index in range(self.num_clients):
+        # for client_index in range(self.num_clients):
 
-            # Check if there is a port for this client, instantiate connector if so
-            port_name = 'port{}'.format(client_index + 1)
-            client_name = self.args['client{}'.format(client_index + 1)]
+        #     # Check if there is a port for this client, instantiate connector if so
+        #     port_name = 'port{}'.format(client_index + 1)
+        #     client_name = self.args['client{}'.format(client_index + 1)]
 
-            #First see if there is a device id
-            try:
-                device_id = self.args['device_id{}'.format(client_index + 1)]
-            except KeyError:
-                self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
-                device_id = None
-            try:
-                self.connectors[client_name] = Connector(
-                    name=client_name,
-                    ip=self.args['ip{}'.format(client_index + 1)],
-                    port=self.args[port_name],
-                    device_id=device_id
-                )
-            except KeyError:
-                pass
+        #     #First see if there is a device id
+        #     try:
+        #         device_id = self.args['device_id{}'.format(client_index + 1)]
+        #     except KeyError:
+        #         self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
+        #         device_id = None
+        #     try:
+        #         self.connectors[client_name] = Connector(
+        #             name=client_name,
+        #             ip=self.args['ip{}'.format(client_index + 1)],
+        #             port=self.args[port_name],
+        #             device_id=device_id
+        #         )
+        #     except KeyError:
+        #         pass
 
-            # Check for a ui file as well, if it is a GUI
-            ui_name = 'ui{}'.format(client_index + 1)
-            try:
-                self.connectors[client_name].set_ui(self.args[ui_name])
-            except KeyError:
-                pass
+        #     # Check for a ui file as well, if it is a GUI
+        #     ui_name = 'ui{}'.format(client_index + 1)
+        #     try:
+        #         self.connectors[client_name].set_ui(self.args[ui_name])
+        #     except KeyError:
+        #         pass
 
     def _connect_to_server(self, module, host, port, device_id=None):
         """ Connects to a server and stores the client as an attribute, to be used in the main script(s)

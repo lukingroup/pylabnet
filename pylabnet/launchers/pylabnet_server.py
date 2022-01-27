@@ -82,20 +82,11 @@ def main():
     # Retrieve debug flag.
     debug = int(args['debug'])
 
-    # # Halt execution and wait for debugger connection if debug flag is up.
-    # if debug:
-    #     import debugpy
-    #     # 5678 is the default attach port in the VS Code debug configurations
-    #     server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
-    #     debugpy.listen(('localhost', 5678))
-    #     debugpy.wait_for_client()
-    #     debugpy.breakpoint()
-
     if debug == 1:
         import ptvsd
         import os
         # 5678 is the default attach port in the VS Code debug configurations
-        self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
+        server_logger.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
         ptvsd.enable_attach(address=('localhost', 5678))
         ptvsd.wait_for_attach()
         breakpoint()

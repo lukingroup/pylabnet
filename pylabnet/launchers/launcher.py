@@ -44,8 +44,6 @@ import sys
 import traceback
 import re
 import os
-import debugpy
-import os
 import importlib.util
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import get_ip, parse_args, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
@@ -85,20 +83,6 @@ class Launcher:
             logger=self.logger
         )
 
-        # Halt execution and wait for debugger connection if debug flag is up.
-        # if self.debug == 1:
-        #     # 5678 is the default attach port in the VS Code debug configurations
-
-        #     # debugpy.listen(('localhost', 5678))
-        #     # debugpy.wait_for_client()
-        #     # debugpy.breakpoint()
-
-        #     import ptvsd
-        #     self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
-        #     ptvsd.enable_attach()
-        #     ptvsd.wait_for_attach()
-        #     breakpoint()
-
         if self.debug == 1:
             import ptvsd
             import os
@@ -115,8 +99,6 @@ class Launcher:
             self.logger.error(f"Uncaught exception: {error_msg}")
 
         self.client_dict = self.logger.get_client_data()
-
-        #debugpy.breakpoint()
 
         sys.excepthook = log_exceptions
 

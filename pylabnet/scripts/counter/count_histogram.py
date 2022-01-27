@@ -249,7 +249,9 @@ class TimeTraceGui(TimeTrace):
             n_bins=self.gui.n_bins.value()
         ))
         self.gui.clear.clicked.connect(self.clear_all)
-        self.gui.save.clicked.connect(self.save)
+        # Need Lambda to force it to use default args
+        # https://stackoverflow.com/questions/60001583/pyqt5-slot-function-does-not-take-default-argument
+        self.gui.save.clicked.connect(lambda: self.save())
         self.gui.run.clicked.connect(self.run)
 
         #### CHANGED CHANGED CHANGED

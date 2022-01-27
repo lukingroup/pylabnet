@@ -164,45 +164,49 @@ class Launcher:
 
             if p.match(client_name) != None:
                 continue
-            ip = self.client_dict[client_name]['ip']
-            port = self.client_dict[client_name]['port']
 
-            # First see if there is a device id
             try:
-                device_id = self.client_dict[client_name]['device_id']
-            except KeyError:
-                #self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
-                device_id = None
+                ip = self.client_dict[client_name]['ip']
+                port = self.client_dict[client_name]['port']
 
-            # Check if there is a lab name
-            try:
-                lab_name = self.args['lab_name{}'.format(client_index + 1)]
-            except KeyError:
-                #self.logger.warn('lab_name not specified, assigning to NO LAB')
-                lab_name = 'NO_LAB'
-            try:
+                # First see if there is a device id
+                try:
+                    device_id = self.client_dict[client_name]['device_id']
+                except KeyError:
+                    #self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
+                    device_id = None
+
+                # # Check if there is a lab name
+                # try:
+                #     lab_name = self.args['lab_name{}'.format(client_index + 1)]
+                # except KeyError:
+                #     #self.logger.warn('lab_name not specified, assigning to NO LAB')
+                #     lab_name = 'NO_LAB'
+                # try:
+                #     self.connectors[client_name] = Connector(
+                #         name=client_name,
+                #         ip=self.args['ip{}'.format(client_index + 1)],
+                #         port=self.args[port_name],
+                #         device_id=device_id,
+                #         lab_name=lab_name
+                #     )
+                # except KeyError:
+                #     pass
+
                 self.connectors[client_name] = Connector(
                     name=client_name,
-                    ip=self.args['ip{}'.format(client_index + 1)],
-                    port=self.args[port_name],
-                    device_id=device_id,
-                    lab_name=lab_name
+                    ip=ip,
+                    port=port,
+                    device_id=device_id
                 )
+                # Check for device ID
+                try:
+                    ui_name = self.client_dict[client_name]['ui']
+                    self.connectors[client_name].set_ui(ui_name)
+                except KeyError:
+                    pass
             except KeyError:
-                pass
-
-            self.connectors[client_name] = Connector(
-                name=client_name,
-                ip=ip,
-                port=port,
-                device_id=device_id
-            )
-            # Check for device ID
-            try:
-                ui_name = self.client_dict[client_name]['ui']
-                self.connectors[client_name].set_ui(ui_name)
-            except KeyError:
-                pass
+                continue
 
         # for client_index in range(self.num_clients):
 

@@ -249,10 +249,7 @@ class TimeTraceGui(TimeTrace):
             n_bins=self.gui.n_bins.value()
         ))
         self.gui.clear.clicked.connect(self.clear_all)
-        self.gui.save.clicked.connect(lambda: self.save(
-            filename=self.gui.save_name.text(),
-            directory=self.config['save_path']
-        ))
+        self.gui.save.clicked.connect(self.save)
         self.gui.run.clicked.connect(self.run)
 
         #### CHANGED CHANGED CHANGED
@@ -355,10 +352,7 @@ class TimeTraceGui(TimeTrace):
             self.gui.run.setStyleSheet('background-color: green')
             self.log.info('Stopped histogram')
             if self.gui.autosave.isChecked():
-                self.save(
-                    filename=self.gui.save_name.text(),
-                    directory=self.config['save_path']
-                )
+                self.save()
             self.pause()
             for gate in self.gates.values():
                 gate.pause()
@@ -379,10 +373,7 @@ class TimeTraceGui(TimeTrace):
             if self.gui.autosave.isChecked():
                 current_time = time.time()
                 if current_time - last_save > self.gui.save_time.value():
-                    self.save(
-                        filename=self.gui.save_name.text(),
-                        directory=self.config['save_path']
-                    )
+                    self.save()
                     last_save = current_time
             if self.gui.auto_clear.isChecked():
                 current_time = time.time()
@@ -511,6 +502,12 @@ class TimeTraceGui(TimeTrace):
 
     def save(self, filename=None, directory=None):
         """ Saves the current data """
+
+        if filename is None:
+            filename = self.gui.save_name.text()
+
+        if directory is None:
+            directory = self.config['save_path']
 
         generic_save(
             data=np.array([

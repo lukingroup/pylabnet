@@ -854,18 +854,22 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     else:
         raise UnsupportedOSException
 
-    #config_dict = load_device_config(script, config)
 
-    # if 'lab_name' in config_dict:
-    #     lab_name = config_dict['lab_name']
-    # else:
-    #     lab_name = 'NO_LAB'
+    #logger.info(f'Script : {script}')
+    #logger.info(f'config : {config}')
+
+    config_dict = load_script_config(script, config)
+
+    if 'lab_name' in config_dict:
+        lab_name = config_dict['lab_name']
+    else:
+        lab_name = 'NO_LAB'
 
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--script {script} --num_clients {num_clients} '
     cmd += f'--config {config} --debug {debug_flag} '
     cmd += f'--server_debug {server_debug_flag} '
-    cmd += f'--lab_name NO_LAB'
+    cmd += f'--lab_name {lab_name}'
     cmd += client_cmd
 
     if len(cmd) > 8191:

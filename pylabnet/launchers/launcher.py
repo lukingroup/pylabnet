@@ -70,6 +70,7 @@ class Launcher:
         self.log_ip = self.args['logip']
         self.log_port = int(self.args['logport'])
         self.debug = int(self.args['debug'])
+        self.lab_name = self.args['lab_name']
         self.server_debug = int(self.args['server_debug'])
         self.num_clients = int(self.args['num_clients'])
 
@@ -85,13 +86,13 @@ class Launcher:
 
         # Halt execution and wait for debugger connection if debug flag is up.
         if self.debug == 1:
-            import debugpy
+            import ptvsd
             import os
             # 5678 is the default attach port in the VS Code debug configurations
             self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
-            debugpy.listen(('localhost', 5678))
-            debugpy.wait_for_client()
-            debugpy.breakpoint()
+            ptvsd.enable_attach(address=('localhost', 5678))
+            ptvsd.wait_for_attach()
+            breakpoint()
 
         # Register new exception hook.
         def log_exceptions(exc_type, exc_value, exc_traceback):
@@ -417,6 +418,11 @@ class Launcher:
         self.logger.update_data(data=dict(
             port=self.script_server_port
         ))
+
+        self.logger.update_data(data=dict(
+            lab_name=self.lab_name
+        ))
+
 
 
 class Connector:

@@ -43,6 +43,8 @@ import numpy as np
 import sys
 import traceback
 import os
+import debugpy
+import os
 import importlib.util
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import get_ip, parse_args, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
@@ -82,20 +84,35 @@ class Launcher:
         )
 
         # Halt execution and wait for debugger connection if debug flag is up.
+        # if self.debug == 1:
+        #     # 5678 is the default attach port in the VS Code debug configurations
+
+        #     # debugpy.listen(('localhost', 5678))
+        #     # debugpy.wait_for_client()
+        #     # debugpy.breakpoint()
+
+        #     import ptvsd
+        #     self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
+        #     ptvsd.enable_attach()
+        #     ptvsd.wait_for_attach()
+        #     breakpoint()
+
         if self.debug == 1:
-            import debugpy
+            import ptvsd
             import os
             # 5678 is the default attach port in the VS Code debug configurations
             self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
-            debugpy.listen(('localhost', 5678))
-            debugpy.wait_for_client()
-            debugpy.breakpoint()
+            ptvsd.enable_attach(address=('localhost', 5678))
+            ptvsd.wait_for_attach()
+            breakpoint()
 
         # Register new exception hook.
         def log_exceptions(exc_type, exc_value, exc_traceback):
             """Handler for unhandled exceptions that will write to the logs"""
             error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             self.logger.error(f"Uncaught exception: {error_msg}")
+
+        #debugpy.breakpoint()
 
         sys.excepthook = log_exceptions
 

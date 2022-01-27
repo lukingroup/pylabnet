@@ -98,6 +98,14 @@ class LogHandler:
         except:
             return -1
 
+    def get_client_data(self):
+        """ Returns all metadata"""
+
+        try:
+            return self._logger.get_client_data()
+        except:
+            return -1
+
     def slack(self, msg_str):
 
         try:
@@ -343,8 +351,10 @@ class LogClient:
 
     def get_metadata(self):
         """ Returns all metadata"""
-
         return pickle.loads(self._service.exposed_get_metadata())
+
+    def get_client_data(self):
+        return pickle.loads(self._service.exposed_get_client_data())
 
 
 class LogService(rpyc.Service):
@@ -421,6 +431,9 @@ class LogService(rpyc.Service):
         # code that runs after the connection has already closed
         # (to finalize the service, if needed)
         self.logger.debug('Client disconnected')
+
+    def exposed_get_client_data(self):
+        return pickle.dumps(self.client_data)
 
     def exposed_log_msg(self, msg_str, level_str):
 

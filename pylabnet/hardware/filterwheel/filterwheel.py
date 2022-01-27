@@ -13,6 +13,7 @@ from pylabnet.network.core.service_base import ServiceBase
 from pylabnet.network.core.client_base import ClientBase
 
 
+
 class FW102CFilterWheel:
 
     def __init__(self, port_name, device_name, filters, logger=None):

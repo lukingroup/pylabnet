@@ -36,14 +36,15 @@ Example config dict:
     ],
     "script" : "C:\\Users\\mbhas\\pylabnet\\pylabnet\\scripts\\deviceless_test.py"
 }
-
-NOTE: Requires windows (TODO: make OS agnostic)
 """
 
 import time
 import numpy as np
 import sys
 import traceback
+import re
+import os
+import debugpy
 import os
 import importlib.util
 from pylabnet.utils.logging import logger
@@ -85,6 +86,19 @@ class Launcher:
         )
 
         # Halt execution and wait for debugger connection if debug flag is up.
+        # if self.debug == 1:
+        #     # 5678 is the default attach port in the VS Code debug configurations
+
+        #     # debugpy.listen(('localhost', 5678))
+        #     # debugpy.wait_for_client()
+        #     # debugpy.breakpoint()
+
+        #     import ptvsd
+        #     self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
+        #     ptvsd.enable_attach()
+        #     ptvsd.wait_for_attach()
+        #     breakpoint()
+
         if self.debug == 1:
             import ptvsd
             import os
@@ -99,6 +113,10 @@ class Launcher:
             """Handler for unhandled exceptions that will write to the logs"""
             error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             self.logger.error(f"Uncaught exception: {error_msg}")
+
+        self.client_dict = self.logger.get_client_data()
+
+        #debugpy.breakpoint()
 
         sys.excepthook = log_exceptions
 
@@ -134,15 +152,24 @@ class Launcher:
     def _scan_servers(self):
         """ Scans all servers/GUIs connected as clients to the LogServer and adds them to internal attributes"""
 
-        for client_index in range(self.num_clients):
+        # Retrieve all client conncetions
+        for client_name in self.client_dict.keys():
 
-            # Check if there is a port for this client, instantiate connector if so
-            port_name = 'port{}'.format(client_index + 1)
-            client_name = self.args['client{}'.format(client_index + 1)]
+            # Client dict will contain entry for this script itself, don't want this
+            # to be added as a connector.
+
+            #remove any possible numbering from self client name
+            # e.g. MCS_control0 will be excluded too, if self.name = MCS_control
+            p = re.compile(f'({self.name})\d*$')
+
+            if p.match(client_name) != None:
+                continue
+            ip = self.client_dict[client_name]['ip']
+            port = self.client_dict[client_name]['port']
 
             # First see if there is a device id
             try:
-                device_id = self.args['device_id{}'.format(client_index + 1)]
+                device_id = self.client_dict[client_name]['device_id']
             except KeyError:
                 #self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
                 device_id = None
@@ -164,12 +191,47 @@ class Launcher:
             except KeyError:
                 pass
 
-            # Check for a ui file as well, if it is a GUI
-            ui_name = 'ui{}'.format(client_index + 1)
+            self.connectors[client_name] = Connector(
+                name=client_name,
+                ip=ip,
+                port=port,
+                device_id=device_id
+            )
+            # Check for device ID
             try:
-                self.connectors[client_name].set_ui(self.args[ui_name])
+                ui_name = self.client_dict[client_name]['ui']
+                self.connectors[client_name].set_ui(ui_name)
             except KeyError:
                 pass
+
+        # for client_index in range(self.num_clients):
+
+        #     # Check if there is a port for this client, instantiate connector if so
+        #     port_name = 'port{}'.format(client_index + 1)
+        #     client_name = self.args['client{}'.format(client_index + 1)]
+
+        #     #First see if there is a device id
+        #     try:
+        #         device_id = self.args['device_id{}'.format(client_index + 1)]
+        #     except KeyError:
+        #         self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
+        #         device_id = None
+        #     try:
+        #         self.connectors[client_name] = Connector(
+        #             name=client_name,
+        #             ip=self.args['ip{}'.format(client_index + 1)],
+        #             port=self.args[port_name],
+        #             device_id=device_id
+        #         )
+        #     except KeyError:
+        #         pass
+
+        #     # Check for a ui file as well, if it is a GUI
+        #     ui_name = 'ui{}'.format(client_index + 1)
+        #     try:
+        #         self.connectors[client_name].set_ui(self.args[ui_name])
+        #     except KeyError:
+        #         pass
 
     def _connect_to_server(self, module, host, port, device_id=None):
         """ Connects to a server and stores the client as an attribute, to be used in the main script(s)

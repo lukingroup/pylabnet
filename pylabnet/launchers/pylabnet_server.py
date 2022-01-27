@@ -19,7 +19,6 @@ However, you can also call this directly, with command-line arguments:
 
 import importlib
 import numpy as np
-import os
 import sys
 import traceback
 
@@ -83,16 +82,26 @@ def main():
     # Retrieve debug flag.
     debug = int(args['debug'])
 
-    # Halt execution and wait for debugger connection if debug flag is up.
-    if debug:
-        import debugpy
+    # # Halt execution and wait for debugger connection if debug flag is up.
+    # if debug:
+    #     import debugpy
+    #     # 5678 is the default attach port in the VS Code debug configurations
+    #     server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
+    #     debugpy.listen(('localhost', 5678))
+    #     debugpy.wait_for_client()
+    #     debugpy.breakpoint()
+
+    if debug == 1:
+        import ptvsd
+        import os
         # 5678 is the default attach port in the VS Code debug configurations
-        server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
-        debugpy.listen(('localhost', 5678))
-        debugpy.wait_for_client()
-        debugpy.breakpoint()
+        self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
+        ptvsd.enable_attach(address=('localhost', 5678))
+        ptvsd.wait_for_attach()
+        breakpoint()
 
     # Register new exception hook.
+
     def log_exceptions(exc_type, exc_value, exc_traceback):
         """Handler for unhandled exceptions that will write to the logs"""
         error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))

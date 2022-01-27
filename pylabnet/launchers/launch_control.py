@@ -667,33 +667,27 @@ class Controller:
                 elif self.debug_level == "pylabnet_server":
                     server_debug_flag = '1'
 
-            # Build client list cmdline arg
-            client_index = 1
-            bash_cmd = ''
-            for client in self.client_list:
-                bash_cmd += ' --client{} {} --ip{} {}'.format(
-                    client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
-                )
+            # # Build client list cmdline arg
+            # client_index = 1
+            # bash_cmd = ''
+            # for client in self.client_list:
+            #     bash_cmd += ' --client{} {} --ip{} {}'.format(
+            #         client_index, remove_spaces(client), client_index, self.client_data[client]['ip']
+            #     )
 
-                # Add device ID of client's corresponding hardware, if applicable
-                if 'device_id' in self.client_data[client]:
-                    bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
+            #     # Add device ID of client's corresponding hardware, if applicable
+            #     if 'device_id' in self.client_data[client]:
+            #         bash_cmd += ' --device_id{} {}'.format(client_index, self.client_data[client]['device_id'])
 
-                # Add port of client's server, if applicable
-                if 'port' in self.client_data[client]:
-                    bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
+            #     # Add port of client's server, if applicable
+            #     if 'port' in self.client_data[client]:
+            #         bash_cmd += ' --port{} {}'.format(client_index, self.client_data[client]['port'])
 
-                # If this client has relevant .ui file, pass this info
-                if 'ui' in self.client_data[client]:
-                    bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
+            #     # If this client has relevant .ui file, pass this info
+            #     if 'ui' in self.client_data[client]:
+            #         bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
 
-                # Add lab name, if applicable
-                if 'lab_name' in self.client_data[client]:
-                    bash_cmd += ' --lab_name{} {}'.format(client_index, self.client_data[client]['lab_name'])
-                else:
-                    bash_cmd += ' --lab_name{} {}'.format(client_index, 'NO_LAB')
-
-                client_index += 1
+            #     client_index += 1
 
             launch_script(
                 script=script_name,
@@ -703,7 +697,6 @@ class Controller:
                 debug_flag=debug_flag,
                 server_debug_flag=server_debug_flag,
                 num_clients=len(self.client_list),
-                client_cmd=bash_cmd,
                 logger=self.gui_logger
             )
 
@@ -1180,4 +1173,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main()

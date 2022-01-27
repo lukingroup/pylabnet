@@ -54,6 +54,12 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.gui.pyqt.external_gui import ParameterPopup, fresh_popup, warning_popup
 
 
+def recast_client_dict(client_dict):
+    """Hacky backwards compatible fix:
+    While with branck cknaut/iss307 the client list is not passed
+    as commadn ,ine argument anymore, the parsing of the """
+
+
 class Launcher:
 
     def __init__(self):
@@ -112,6 +118,8 @@ class Launcher:
             error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
             self.logger.error(f"Uncaught exception: {error_msg}")
 
+        self.client_dict = self.logger.get_client_data()
+
         #debugpy.breakpoint()
 
         sys.excepthook = log_exceptions
@@ -147,6 +155,37 @@ class Launcher:
 
     def _scan_servers(self):
         """ Scans all servers/GUIs connected as clients to the LogServer and adds them to internal attributes"""
+
+        # Retrieve all client conncetions
+        for client_name in self.client_dict.keys():
+
+            # Client dict will contain entry for this script itself, don't want this
+            # to be added as a connector.
+            if client_name == self.name:
+                pass
+
+            ip = self.client_dict[client_name]['ip']
+            port = self.client_dict[client_name]['port']
+
+            #First see if there is a device id
+            try:
+                device_id = self.client_dict[client_name]['device_id']
+            except KeyError:
+                self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
+                device_id = None
+
+            self.connectors[client_name] = Connector(
+                name=client_name,
+                ip=ip,
+                port=port,
+                device_id=device_id
+            )
+            # Check for device ID
+            try:
+                ui_name = self.client_dict[client_name]['ui']
+                self.connectors[client_name].set_ui(ui_name)
+            except KeyError:
+                pass
 
         for client_index in range(self.num_clients):
 

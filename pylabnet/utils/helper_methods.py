@@ -836,6 +836,10 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
         'launcher.py'
     )
 
+    retrieved_client_list = logger.get_client_data()
+    logger.info(f"retrieved list = {retrieved_client_list}")
+    logger.info(f"Client command {client_cmd}")
+
     # Build command
     operating_system = get_os()
     if operating_system == 'Windows':

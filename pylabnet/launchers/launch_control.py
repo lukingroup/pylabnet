@@ -208,6 +208,15 @@ class Controller:
             time.sleep(10)
             raise
 
+        # if lab name is specified: add to gui_logger
+        try:
+            lab_name_dict = load_config("lab_name")
+            lab_name = lab_name_dict['lab_name']
+        except:
+            lab_name = 'NO_LAB'
+
+        self.gui_logger.update_data(data=dict(lab_name=lab_name))
+
         # Instantiate GUI server and update GUI with port details
         self.gui_service = Service()
         self.gui_service.assign_module(module=self.main_window)
@@ -1173,4 +1182,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main()
+    main_staticproxy()

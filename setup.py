@@ -65,7 +65,6 @@ setup(
         "Topic :: Scientific/Engineering :: Physics"
     ],
     install_requires=[
-        'debugpy>=1.3.0',
         'decorator>=4.4.0',
         'ipywidgets>=7.5.1',
         'matplotlib>=3.1.3',
@@ -81,6 +80,7 @@ setup(
         'python-kasa>=0.4.0.dev2',
         'pytz>=2019.3',
         'PyVISA>=1.10.1',
+        'ptvsd>=5.0.0a12'
         'qdarkstyle>=2.8.1',
         'rpyc>=4.1.2',
         'scipy>=1.6.1',

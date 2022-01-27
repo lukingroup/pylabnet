@@ -7,8 +7,7 @@ relevant commandline arguments. For example,
     "C:\\Users\\mbhas\\pylabnet\\venv\\pylabnet-test\\Scripts\\python.exe"
     "C:\\Users\\mbhas\\pylabnet\\pylabnet\\launchers\\launcher.py"
     --logip 192.168.0.106 --logport 21189 --script dummy_testing
-    --num_clients 1 --config three_fake_devices --debug 0 --server_debug 0
-    --client1 logger_GUI --ip1 192.168.0.106 --port1 44847 --ui1 logger_remote'
+    --num_clients 1
 
 This command is usually constructed automatically via the Launch Control
 (see pylabnet.launchers.launch_control for details).
@@ -43,8 +42,6 @@ import numpy as np
 import sys
 import traceback
 import re
-import os
-import debugpy
 import os
 import importlib.util
 from pylabnet.utils.logging import logger
@@ -85,20 +82,6 @@ class Launcher:
             logger=self.logger
         )
 
-        # Halt execution and wait for debugger connection if debug flag is up.
-        # if self.debug == 1:
-        #     # 5678 is the default attach port in the VS Code debug configurations
-
-        #     # debugpy.listen(('localhost', 5678))
-        #     # debugpy.wait_for_client()
-        #     # debugpy.breakpoint()
-
-        #     import ptvsd
-        #     self.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
-        #     ptvsd.enable_attach()
-        #     ptvsd.wait_for_attach()
-        #     breakpoint()
-
         if self.debug == 1:
             import ptvsd
             import os
@@ -115,8 +98,6 @@ class Launcher:
             self.logger.error(f"Uncaught exception: {error_msg}")
 
         self.client_dict = self.logger.get_client_data()
-
-        #debugpy.breakpoint()
 
         sys.excepthook = log_exceptions
 
@@ -165,6 +146,8 @@ class Launcher:
             if p.match(client_name) != None:
                 continue
 
+            # TODO: This try-loop is necessary to catch instances for scripts that are launched with without port and IP
+            # This is still a bug and under investigation.
             try:
                 ip = self.client_dict[client_name]['ip']
                 port = self.client_dict[client_name]['port']
@@ -175,23 +158,6 @@ class Launcher:
                 except KeyError:
                     #self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
                     device_id = None
-
-                # # Check if there is a lab name
-                # try:
-                #     lab_name = self.args['lab_name{}'.format(client_index + 1)]
-                # except KeyError:
-                #     #self.logger.warn('lab_name not specified, assigning to NO LAB')
-                #     lab_name = 'NO_LAB'
-                # try:
-                #     self.connectors[client_name] = Connector(
-                #         name=client_name,
-                #         ip=self.args['ip{}'.format(client_index + 1)],
-                #         port=self.args[port_name],
-                #         device_id=device_id,
-                #         lab_name=lab_name
-                #     )
-                # except KeyError:
-                #     pass
 
                 self.connectors[client_name] = Connector(
                     name=client_name,
@@ -327,7 +293,6 @@ class Launcher:
         """
 
         device_id = config['device_id']
-
 
         num_matches = len(matches)
         module_name = module
@@ -488,7 +453,6 @@ class Launcher:
         self.logger.update_data(data=dict(
             lab_name=self.lab_name
         ))
-
 
 
 class Connector:

@@ -371,6 +371,11 @@ color: rgb(255, 255, 255);</string>
       </item>
       <item>
        <property name="text">
+        <string>SHARED</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>B16</string>
        </property>
       </item>

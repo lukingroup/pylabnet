@@ -55,8 +55,16 @@ def main():
     else:
         config = None
 
+    # If lab name is specified, add lab name
+    if 'lab_name' in args:
+        lab_name = args['lab_name']
+    else:
+        lab_name = 'NO_LAB'
+
     device_id = args['device_id']
     logger_tag = server + '_server' + '_' + device_id
+
+
 
     # Instantiate logger. This creates a client_data entry in the LogServer
     # that is populated with the server name, port.
@@ -69,6 +77,8 @@ def main():
 
     # Add device ID of server to LogClient data dict
     server_logger.update_data(data=dict(device_id=device_id))
+    # Add lab name of server to LogClient data dict
+    server_logger.update_data(data=dict(lab_name=lab_name))
 
     # Retrieve debug flag.
     debug = int(args['debug'])

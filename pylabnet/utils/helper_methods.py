@@ -786,10 +786,17 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     else:
         raise UnsupportedOSException
 
+    if 'lab_name' in config_dict:
+        lab_name = config_dict['lab_name']
+    else:
+        lab_name = 'NO_LAB'
+
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
     cmd += f'--device_id "{config_dict["device_id"]}" '
-    cmd += f'--config {dev_config} --debug {debug}'
+    cmd += f'--config {dev_config} --debug {debug} '
+    cmd += f'--lab_name {lab_name}'
 
     if len(cmd) > 8191:
         if logger is not None:
@@ -847,10 +854,18 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     else:
         raise UnsupportedOSException
 
+    #config_dict = load_device_config(script, config)
+
+    # if 'lab_name' in config_dict:
+    #     lab_name = config_dict['lab_name']
+    # else:
+    #     lab_name = 'NO_LAB'
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--script {script} --num_clients {num_clients} '
     cmd += f'--config {config} --debug {debug_flag} '
-    cmd += f'--server_debug {server_debug_flag}'
+    cmd += f'--server_debug {server_debug_flag} '
+    cmd += f'--lab_name NO_LAB'
     cmd += client_cmd
 
     if len(cmd) > 8191:

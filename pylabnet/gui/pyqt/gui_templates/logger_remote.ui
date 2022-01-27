@@ -386,7 +386,7 @@ color: rgb(255, 255, 255);</string>
       </item>
       <item>
        <property name="text">
-        <string>NO LAB</string>
+        <string>NO_LAB</string>
        </property>
       </item>
      </widget>

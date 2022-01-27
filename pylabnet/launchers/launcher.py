@@ -139,18 +139,26 @@ class Launcher:
             port_name = 'port{}'.format(client_index + 1)
             client_name = self.args['client{}'.format(client_index + 1)]
 
-            #First see if there is a device id
+            # First see if there is a device id
             try:
                 device_id = self.args['device_id{}'.format(client_index + 1)]
             except KeyError:
-                self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
+                #self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
                 device_id = None
+
+            # Check if there is a lab name
+            try:
+                lab_name = self.args['lab_name{}'.format(client_index + 1)]
+            except KeyError:
+                #self.logger.warn('lab_name not specified, assigning to NO LAB')
+                lab_name = 'NO_LAB'
             try:
                 self.connectors[client_name] = Connector(
                     name=client_name,
                     ip=self.args['ip{}'.format(client_index + 1)],
                     port=self.args[port_name],
-                    device_id=device_id
+                    device_id=device_id,
+                    lab_name=lab_name
                 )
             except KeyError:
                 pass
@@ -257,7 +265,7 @@ class Launcher:
             lab_name_ = config['lab_name']
         except:
             self.logger.info('lab_name not specified, assigning to NO LAB')
-            lab_name = 'NO LAB'
+            lab_name = 'NO_LAB'
 
         num_matches = len(matches)
         module_name = module

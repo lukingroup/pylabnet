@@ -687,6 +687,12 @@ class Controller:
                 if 'ui' in self.client_data[client]:
                     bash_cmd += ' --ui{} {}'.format(client_index, self.client_data[client]['ui'])
 
+                # Add lab name, if applicable
+                if 'lab_name' in self.client_data[client]:
+                    bash_cmd += ' --lab_name{} {}'.format(client_index, self.client_data[client]['lab_name'])
+                else:
+                    bash_cmd += ' --lab_name{} {}'.format(client_index, 'NO_LAB')
+
                 client_index += 1
 
             launch_script(
@@ -755,7 +761,7 @@ class Controller:
             if 'lab_name: ' in clients[client]:
                 self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
             else: # if no lab name is specified
-                self.client_data[client]['lab_name'] = "NO LAB"
+                self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _pull_connections(self):
         """ Updates the proxy's client list """
@@ -790,7 +796,7 @@ class Controller:
             if 'lab_name: ' in clients[client]:
                 self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
             else: # if no lab name is specified
-                self.client_data[client]['lab_name'] = "NO LAB"
+                self.client_data[client]['lab_name'] = "NO_LAB"
 
         # Remove clients
         for client in remove_clients:
@@ -814,7 +820,7 @@ class Controller:
                 if 'lab_name: ' in clients[client]:
                     self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
                 else: # if no lab name is specified
-                    self.client_data[client]['lab_name'] = "NO LAB"
+                    self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _configure_autoscroll_off(self):
         self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)

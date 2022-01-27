@@ -136,12 +136,12 @@ class LogClient:
         self.operating_system = get_os()
         #self.lab_name = None
 
-        try:
-            lab_name_dict = load_config("lab_name")
-            self.lab_name = lab_name_dict['lab_name']
-        except:
-            print('found no lab_name config file, assigning to NO LAB')
-            self.lab_name = None
+        # try:
+        #     lab_name_dict = load_config("lab_name")
+        #     self.lab_name = lab_name_dict['lab_name']
+        # except:
+        #     print('found no lab_name config file, assigning to NO LAB')
+        #     self.lab_name = None
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
@@ -220,10 +220,10 @@ class LogClient:
             if self._ui is not None:
                 client_data['ui'] = self._ui
 
-            if self.lab_name is not None:
-                client_data['lab_name'] = self.lab_name
-            else:
-                client_data['lab_name'] = 'NO LAB'
+            # if self.lab_name is not None:
+            #     client_data['lab_name'] = self.lab_name
+            # else:
+            #     client_data['lab_name'] = 'NO LAB'
 
             client_data_pickle = pickle.dumps(client_data)
             self._service.add_client_data(self._module_tag, client_data_pickle)

@@ -253,6 +253,12 @@ class Launcher:
 
         device_id = config['device_id']
 
+        try:
+            lab_name_ = config['lab_name']
+        except:
+            self.logger.info('lab_name not specified, assigning to NO LAB')
+            lab_name = 'NO LAB'
+
         num_matches = len(matches)
         module_name = module
 
@@ -413,7 +419,7 @@ class Launcher:
 class Connector:
     """ Generic container for information about current clients to the LogServer"""
 
-    def __init__(self, name=None, ip=None, port=None, device_id=None):
+    def __init__(self, name=None, ip=None, port=None, device_id=None, lab_name=None):
         """ Instantiates connector
 
         :param name: (str, optional) name of the client
@@ -427,6 +433,7 @@ class Connector:
         self.port = port
         self.ui = None
         self.device_id = device_id
+        self.lab_name = lab_name
 
     def set_name(self, name):
         """ Sets the name of the connector
@@ -462,6 +469,13 @@ class Connector:
         :param device_id: (str) device ID
         """
         self.device_id = device_id
+
+    def set_lab_name(self, lab_name):
+        """ Sets the lab name
+
+        :param lab_name: (str) name of the lab
+        """
+        self.lab_name = lab_name
 
     def summarize(self):
         """ Summarizes connector properties. Useful for debugging/logging purposes

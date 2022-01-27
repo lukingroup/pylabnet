@@ -261,11 +261,6 @@ class Launcher:
 
         device_id = config['device_id']
 
-        try:
-            lab_name_ = config['lab_name']
-        except:
-            self.logger.info('lab_name not specified, assigning to NO LAB')
-            lab_name = 'NO_LAB'
 
         num_matches = len(matches)
         module_name = module

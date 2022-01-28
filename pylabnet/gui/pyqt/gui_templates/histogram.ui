@@ -545,11 +545,17 @@ color: rgb(255, 255, 255);</string>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="save_name">
-        <property name="maximumSize">
+       <widget class="QLineEdit" name="save_name">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
          <size>
-          <width>16777215</width>
-          <height>16777215</height>
+          <width>180</width>
+          <height>0</height>
          </size>
         </property>
         <property name="font">
@@ -558,17 +564,8 @@ color: rgb(255, 255, 255);</string>
           <pointsize>12</pointsize>
          </font>
         </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
         <property name="text">
          <string>histogram</string>
-        </property>
-        <property name="textInteractionFlags">
-         <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextEditable|Qt::TextEditorInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>

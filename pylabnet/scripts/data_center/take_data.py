@@ -65,6 +65,7 @@ class DataTaker:
                 client_config=client_config,
                 logger=self.log
             )
+
             if (client == None):
                 self.missing_clients[f"{client_type}_{client_config}"] = [client_type, client_config]
             else:

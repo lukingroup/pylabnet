@@ -141,7 +141,7 @@ class Window(QtWidgets.QMainWindow):
         except:
             pass
 
-        # Confluence handler and its button
+        # Confluence handler and its button, which relies on the logger. If no logger, then disable the confluence handler
         self.confluence_handler = None
 
         if(self.log == None):
@@ -896,6 +896,77 @@ class GraphPopup(QtWidgets.QWidget):
         self.setWindowTitle(window_title)
         self.setLayout(self.graph_layout)
         self.show()
+
+
+class Confluence_support_GraphPopup(QtWidgets.QWidget):
+    """ Widget class for holding new graphs """
+
+    def __init__(self, **kwargs):
+    
+        QtWidgets.QWidget.__init__(self)
+
+        # self.app = app
+
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
+
+        if 'log' in kwargs:
+            self.log = kwargs['log']
+        else:
+            self.log=None
+
+        if 'app' in kwargs:
+            self.app = kwargs['app']
+        else:
+            self.app=None
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+
+        # Confluence handler and its button
+        enable_confluence=True
+        
+        self.confluence_handler = None
+
+        if(self.log is None):
+            enable_confluence = False
+
+        if(enable_confluence is True):
+            self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
+
+            extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+            extractAction_Upload.setShortcut("Ctrl+S")
+            extractAction_Upload.setStatusTip('Upload to the confluence page')
+            extractAction_Upload.triggered.connect(self.upload_pic)
+
+            extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+            extractAction_Update.setShortcut("Ctrl+X")
+            extractAction_Update.setStatusTip('The space and page names of confluence')
+            extractAction_Update.triggered.connect(self.update_setting)
+
+            
+            mainMenu = QtWidgets.QMenuBar(self)
+
+            ActionMenu = mainMenu.addMenu('&Action')
+            ActionMenu.addAction(extractAction_Upload)
+            ActionMenu.addAction(extractAction_Update)
+
+            
+        self.graph_layout = QtWidgets.QVBoxLayout()
+        self.graph_layout.setContentsMargins(30,30,30,30)
+        self.setWindowTitle(window_title)
+        self.setLayout(self.graph_layout)
+        self.show()
+
+    def update_setting(self):
+        self.confluence_handler.confluence_popup.Popup_Update()
+
+    def upload_pic(self):
+        self.confluence_handler.confluence_popup.Popup_Upload()
+        return
+
 
 
 class Plot:

@@ -7,12 +7,12 @@ import datetime
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
 
-import sys
+import sys, json
 
 
 class Dataset():
@@ -34,7 +34,12 @@ class Dataset():
             self.config = kwargs['config']
         else:
             self.config = {}
-        self.metadata = self.log.get_metadata()
+        
+        if(log is None):
+            self.metadata = None
+        else:
+            self.metadata = self.log.get_metadata()
+
         if name is None:
             self.name = self.__class__.__name__
         else:
@@ -50,39 +55,24 @@ class Dataset():
         # Flag indicating whether data should be
         self.dont_clear = dont_clear
 
+        # Confluence handler and its button
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.confluence_handler = None
+
+        self.enable_confluence = enable_confluence
+        self.log.debug('enable_confluence = ')
+        self.log.debug(enable_confluence)
+        if(log == None):
+            self.enable_confluence = False
+
         # Configure data visualization
         self.gui = gui
-
         self.visualize(graph, **kwargs)
 
         # Property which defines whether dataset is important, i.e. should it be saved in a separate dataset
         self.is_important = False
 
-        # Confluence handler and its button
-        self.app = QtWidgets.QApplication(sys.argv)
-        self.confluence_handler = None
-
-        if(self.log == None):
-            enable_confluence = False
-
-        if(enable_confluence is True):
-            pass
-            # self.confluence_handler = Confluence_Handler(self, self.app,  log_client=self.log)
-
-            # extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
-            # extractAction_Upload.setShortcut("Ctrl+S")
-            # extractAction_Upload.setStatusTip('Upload to the confluence page')
-            # extractAction_Upload.triggered.connect(self.upload_pic)
-
-            # extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
-            # extractAction_Update.setShortcut("Ctrl+X")
-            # extractAction_Update.setStatusTip('The space and page names of confluence')
-            # extractAction_Update.triggered.connect(self.update_setting)
-
-            # mainMenu = self.menuBar()
-            # ActionMenu = mainMenu.addMenu('&Action')
-            # ActionMenu.addAction(extractAction_Upload)
-            # ActionMenu.addAction(extractAction_Update)
+        return
 
     def update_setting(self):
         self.confluence_handler.confluence_popup.Popup_Update()
@@ -109,13 +99,15 @@ class Dataset():
 
         if data_type is None:
             data_type = self.__class__
-
+        
+        self.log.debug('children...')
         self.children[name] = data_type(
             gui=self.gui,
             data=self.data,
             graph=graph,
             name=name,
             dont_clear=dont_clear,
+            log=self.log,
             **kwargs
         )
 
@@ -162,7 +154,7 @@ class Dataset():
                 color_index
             ])
         )
-        self.update(**kwargs)
+        # self.update(**kwargs)
 
     def clear_data(self):
         self.data = None
@@ -297,10 +289,8 @@ class Dataset():
         """ Handles visualizing and possibility of new popup windows """
 
         if graph is None:
-
             # If we want to use a separate window
             if 'window' in kwargs:
-
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
@@ -309,9 +299,17 @@ class Dataset():
                     else:
                         window_title = 'Graph Holder'
 
-                    self.gui.windows[kwargs['window']] = GraphPopup(
-                        window_title=window_title, size=(700, 300)
-                    )
+                    # self.gui.windows[kwargs['window']] = GraphPopup(
+                    #     window_title=window_title, size=(700, 300))
+
+                    if(self.enable_confluence):
+                        self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
+                            app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                        )
+                    else:
+                        self.gui.windows[kwargs['window']] = GraphPopup(
+                            window_title=window_title, size=(700, 300)
+                        )
 
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')

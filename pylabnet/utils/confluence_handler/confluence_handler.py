@@ -10,6 +10,7 @@ import sys
 from functools import partial
 import numpy as np
 import logging
+import pickle, json
 
 
 class Confluence_Handler():
@@ -43,7 +44,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         Param: Confluence - a class from atlassian (https://pypi.org/project/atlassian-python-api/, https://atlassian-python-api.readthedocs.io/ )
      """
 
-    def __init__(self, parent_wins, app, log_client=None, template="Confluence_info_window"):
+    def __init__(self, parent_wins, app, log_client=None,  template="Confluence_info_window"):
         # param (global)
         self.parent_wins = parent_wins
         self.url = config('CONFLUENCE_URL')
@@ -60,13 +61,13 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.app = app  # Application instance onto which to load the GUI.
         self.auto_info_setting_mode = True # automatically access info from the launch control
 
-        if self.app is None:
-            if get_os() == 'Windows':
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
-            self.app = QtWidgets.QApplication(sys.argv)
-            self.app.setWindowIcon(
-                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
-            )
+        # if self.app is None:
+        #     if get_os() == 'Windows':
+        #         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
+        #     self.app = QtWidgets.QApplication(sys.argv)
+        #     self.app.setWindowIcon(
+        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        #     )
 
         # Initialize parent class QtWidgets.QDialog
         super(Confluence_Popping_Windows, self).__init__()
@@ -95,6 +96,10 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.ok_button.clicked.connect(self.okay_event)
         self.cancel_button.clicked.connect(self.cancel_event)
         self.actionchage_typing_mode.triggered.connect(self.Change_typing_mode)
+
+        # Initialize the checkbox setting
+        self.setting_checkbox.setChecked(False)
+        self.comment_checkbox.setChecked(True)
 
         # init the space and page as in the launch control
         self.Update_confluence_info()
@@ -132,10 +137,10 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     def Update_confluence_info(self):
         confluence_config_dict = load_config('confluence_upload')
         lab = confluence_config_dict["lab"]
-
+        
         # access metadata
         metadata = self.log.get_metadata()
-        self.log.info(metadata.keys())
+        
         self.upload_space_key = metadata['confluence_space_key_' + lab]
         self.upload_space_name = metadata['confluence_space_name_' + lab]
         self.upload_page_title = metadata['confluence_page_' + lab]
@@ -334,8 +339,19 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
 
         confluence_config_dict = load_config('confluence_upload')
         templates_root = confluence_config_dict['templates_root']
-        html_template_filename = confluence_config_dict['html_template_filename']
 
+
+        if(self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked() ):
+            html_template_filename = confluence_config_dict['html_template_filename']
+        elif(self.setting_checkbox.isChecked() and not self.comment_checkbox.isChecked()):
+            html_template_filename = confluence_config_dict['html_template_no_comment_filename']
+        elif(not self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()): 
+            html_template_filename = confluence_config_dict['html_template_no_setting_filename']
+        else:
+            html_template_filename = confluence_config_dict['html_template_neither_filename']
+            
+
+        # base_html = '{}\\{}'.format(templates_root, html_template_filename)
         base_html = '{}\\{}'.format(templates_root, html_template_filename)
 
         timestamp_date = datetime.datetime.now().strftime('%Y-%m-%d')

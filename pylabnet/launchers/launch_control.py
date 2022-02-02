@@ -182,7 +182,7 @@ class Controller:
         self.main_window.client_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
         # confluence handler
-        self.confluence_handler = LaunchControl_Confluence_Handler( self, self.app)
+        self.confluence = None
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -284,7 +284,8 @@ class Controller:
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
             self.client_data[self.GUI_NAME + module_str] = self.log_service.client_data[self.GUI_NAME]
 
-        # initiate confluence data into log's metadata
+        # confluence handler and initiate confluence data into log's metadata
+        self.confluence_handler = LaunchControl_Confluence_Handler( self, self.app)
         self.confluence_handler.confluence_popup.okay_event(is_close=False)
 
 

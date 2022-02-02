@@ -60,8 +60,7 @@ class Dataset():
         self.confluence_handler = None
 
         self.enable_confluence = enable_confluence
-        self.log.debug('enable_confluence = ')
-        self.log.debug(enable_confluence)
+
         if(log == None):
             self.enable_confluence = False
 
@@ -100,7 +99,6 @@ class Dataset():
         if data_type is None:
             data_type = self.__class__
         
-        self.log.debug('children...')
         self.children[name] = data_type(
             gui=self.gui,
             data=self.data,

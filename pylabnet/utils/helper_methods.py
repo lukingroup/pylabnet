@@ -18,7 +18,6 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 
 
-
 class TimeAxisItem(pg.AxisItem):
     def tickStrings(self, values, scale, spacing):
         return [datetime.fromtimestamp(value) for value in values]
@@ -596,6 +595,7 @@ def get_gui_widgets(gui, **kwargs):
 
     return widgets
 
+
 def get_gui_widgets_dummy(gui, **kwargs):
     """ Returns the GUI widget objects specified in kwargs
 
@@ -821,10 +821,16 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     else:
         raise UnsupportedOSException
 
+    if 'lab_name' in config_dict:
+        lab_name = config_dict['lab_name']
+    else:
+        lab_name = 'NO_LAB'
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
     cmd += f'--device_id "{config_dict["device_id"]}" '
-    cmd += f'--config {dev_config} --debug {debug}'
+    cmd += f'--config {dev_config} --debug {debug} '
+    cmd += f'--lab_name {lab_name}'
 
     if len(cmd) > 8191:
         if logger is not None:
@@ -844,10 +850,12 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     else:
         subprocess.Popen(cmd, shell=True)
 
+    logger.info(f"Cmd: {cmd}")
+
     return host_ip, server_port
 
 
-def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, client_cmd, logger=None):
+def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_flag, num_clients, logger=None):
     """ Launches a script
 
     :param script: (str) name of the script. Should be the directory in which the
@@ -861,8 +869,6 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     :param server_debug_flag: (bool) whether or not to debug on the
         server-launching level
     :param num_clients: (int) total number of clients to the log server
-    :param client_cmd: (str) a series of commandline arguments specifying the
-        client dictionary details for passing to the launcher
     """
 
     launch_path = os.path.join(
@@ -870,6 +876,9 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
         'launchers',
         'launcher.py'
     )
+
+    # retrieved_client_list = logger.get_client_data()
+    # logger.info(f"retrieved list = {retrieved_client_list}")
 
     # Build command
     operating_system = get_os()
@@ -882,19 +891,31 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
     else:
         raise UnsupportedOSException
 
+    #logger.info(f'Script : {script}')
+    #logger.info(f'config : {config}')
+
+    config_dict = load_script_config(script, config)
+
+    if 'lab_name' in config_dict:
+        lab_name = config_dict['lab_name']
+    else:
+        lab_name = 'NO_LAB'
+
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--script {script} --num_clients {num_clients} '
     cmd += f'--config {config} --debug {debug_flag} '
-    cmd += f'--server_debug {server_debug_flag}'
-    cmd += client_cmd
+    cmd += f'--server_debug {server_debug_flag} '
+    cmd += f'--lab_name {lab_name}'
 
     if len(cmd) > 8191:
         if logger is not None:
-            logger.error('Cmd too long! Server will not instantiate!')
+            logger.error(f'Cmd too long! (Cmd len: {len(cmd)}) Server will not instantiate!')
         return
     else:
         if logger is not None:
             logger.info("Cmd len: " + str(len(cmd)))
+
+    logger.info(f"cmd = {cmd}")
 
     subprocess.Popen(cmd, shell=True)
 
@@ -998,7 +1019,7 @@ def set_graph_background(widget):
 
     :param widget: base graph or legend widget
     """
-    
+
     try:
         widget.getViewBox().setBackgroundColor('#19232D')
 

@@ -98,6 +98,14 @@ class LogHandler:
         except:
             return -1
 
+    def get_client_data(self):
+        """ Returns all metadata"""
+
+        try:
+            return self._logger.get_client_data()
+        except:
+            return -1
+
     def slack(self, msg_str):
 
         try:
@@ -134,6 +142,14 @@ class LogClient:
         self._server_port = server_port  # Identifies a server running in client's thread
         self._ui = ui  # Identifies a relevant .ui file for the client
         self.operating_system = get_os()
+        #self.lab_name = None
+
+        # try:
+        #     lab_name_dict = load_config("lab_name")
+        #     self.lab_name = lab_name_dict['lab_name']
+        # except:
+        #     print('found no lab_name config file, assigning to NO LAB')
+        #     self.lab_name = None
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
@@ -211,6 +227,11 @@ class LogClient:
                 client_data['port'] = self._server_port
             if self._ui is not None:
                 client_data['ui'] = self._ui
+
+            # if self.lab_name is not None:
+            #     client_data['lab_name'] = self.lab_name
+            # else:
+            #     client_data['lab_name'] = 'NO LAB'
 
             client_data_pickle = pickle.dumps(client_data)
             self._service.add_client_data(self._module_tag, client_data_pickle)
@@ -329,8 +350,10 @@ class LogClient:
 
     def get_metadata(self):
         """ Returns all metadata"""
-
         return pickle.loads(self._service.exposed_get_metadata())
+
+    def get_client_data(self):
+        return pickle.loads(self._service.exposed_get_client_data())
 
 
 class LogService(rpyc.Service):
@@ -407,6 +430,9 @@ class LogService(rpyc.Service):
         # code that runs after the connection has already closed
         # (to finalize the service, if needed)
         self.logger.debug('Client disconnected')
+
+    def exposed_get_client_data(self):
+        return pickle.dumps(self.client_data)
 
     def exposed_log_msg(self, msg_str, level_str):
 

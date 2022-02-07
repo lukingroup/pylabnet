@@ -10,7 +10,6 @@ import sys
 from functools import partial
 import numpy as np
 import logging
-import pickle, json
 
 
 class Confluence_Handler():
@@ -44,7 +43,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         Param: Confluence - a class from atlassian (https://pypi.org/project/atlassian-python-api/, https://atlassian-python-api.readthedocs.io/ )
      """
 
-    def __init__(self, parent_wins, app, log_client=None,  template="Confluence_info_window"):
+    def __init__(self, parent_wins, app, log_client=None, template="Confluence_info_window"):
         # handle the case that disables the confluence handler
         self.enable = True
 
@@ -88,7 +87,6 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             self.confluence = None
             self.enable = False
             self.log.error("Confluence key or password is invalid")
-
 
         # load the gui, but not show
         self._load_gui(gui_template=template, run=False)
@@ -154,16 +152,15 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         except:
             self.log.error("Confluence-cannot find the confluence_upload.json in the config folder!")
             self.enable = False
-            
+
         if(not self.enable):
             self.log.error("Confluence-Update_confluence_info: has disabled the confluence functions")
             return
 
-
         # access metadata
         try:
             metadata = self.log.get_metadata()
-            
+
             self.upload_space_key = metadata['confluence_space_key_' + lab]
             self.upload_space_name = metadata['confluence_space_name_' + lab]
             self.upload_page_title = metadata['confluence_page_' + lab]
@@ -261,7 +258,6 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             os.remove(scrn_shot_AbsPath)
         except:
             self.log.error("cannot remoe the temperary graph.")
-            pass
 
         self.setWindowTitle(wintitle)
         self.upload = False
@@ -370,7 +366,8 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     def upload_and_append_picture(self, fileAbsPath, filename, comment, settings, page_id, page_title):
         ''' Upload a picture and embed it to page, alongside measurement setting informations and possible comments
         '''
-        if(not self.enable): return
+        if(not self.enable):
+            return
 
         self.confluence.attach_file(fileAbsPath, name=None, content_type=None, page_id=page_id, title=None, space=None, comment=None)
 
@@ -383,11 +380,11 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             return
 
         try:
-            if(self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked() ):
+            if(self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()):
                 html_template_filename = confluence_config_dict['html_template_filename']
             elif(self.setting_checkbox.isChecked() and not self.comment_checkbox.isChecked()):
                 html_template_filename = confluence_config_dict['html_template_no_comment_filename']
-            elif(not self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()): 
+            elif(not self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()):
                 html_template_filename = confluence_config_dict['html_template_no_setting_filename']
             else:
                 html_template_filename = confluence_config_dict['html_template_neither_filename']
@@ -430,6 +427,9 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
     '''
 
     def __init__(self, controller, app, template='Confluence_info_from_LaunchControl'):
+        # Initialize parent class QtWidgets.QDialog
+        super(LaunchControl_Confluence_Windows, self).__init__()
+
         # handle the case that disables LaunchControl_Confluence_Windows
         self.enable = True
 
@@ -442,7 +442,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
             self.dev_root_id = config('CONFLUENCE_DEV_root_id')
         except:
             self.enable = False
-            self.controller.gui_logger.error("Launcher Confluence: Cannot find the confluence key in the .env! Disable the confluence functions")
+            controller.gui_logger.error("Launcher Confluence: Cannot find the confluence key in the .env! Disable the confluence functions")
 
         # param
         self.controller = controller
@@ -458,9 +458,6 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
                 QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
             )
 
-        # Initialize parent class QtWidgets.QDialog
-        super(LaunchControl_Confluence_Windows, self).__init__()
-
         # confluence
         if(not self.enable):
             self.confluence = None
@@ -474,7 +471,6 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
             self.confluence = None
             self.enable = False
             self.controller.gui_logger.error("Launcher Confluence: Confluence key or password is invalid")
-
 
         # load the gui, but not show
         self._load_gui(gui_template=template, run=False)
@@ -567,11 +563,11 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
             self.enable = False
         if(is_close is True):
             self.close()
-        if(not self.enable): 
+        if(not self.enable):
             self.controller.gui_logger.error("Launcher Confluence-okay-event: has disabled the confluece functions")
             return
 
-        # update upload setting    
+        # update upload setting
         lab = confluence_config_dict["lab"]
 
         self.upload_space_key = self.space_key_field.text()
@@ -618,6 +614,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         # )
 
         self._ui = os.path.join(
+            # (os.path.abspath("pylabnet\\gui\\pyqt")),
             (os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")),
             self._gui_directory,
             gui_template

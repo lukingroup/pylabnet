@@ -166,3 +166,5 @@ pylabnet/utils/iq_upconversion/results/*
 
 
 temp/*
+pylabnet/YOUR_PYRPL_DESTINATION_FOLDER/*
+

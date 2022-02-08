@@ -17,7 +17,7 @@ import pyqtgraph as pg
 class WlmMonitor:
     """ A script class for monitoring and locking lasers based on the wavemeter """
 
-    def __init__(self, wlm_client, logger_client, gui='wavemeter_monitor', display_pts=5000, threshold=0.0002, port=None, params=None, three_lasers=False):
+    def __init__(self, wlm_client, logger_client, gui='wavemeter_monitor_only', display_pts=5000, threshold=0.0002, port=None, params=None, three_lasers=False):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
 
         :param wlm_client: (obj) instance of wavemeter client
@@ -54,7 +54,6 @@ class WlmMonitor:
 
         # Make fullscreen
         self.gui.showFullScreen()
-  
 
         if three_lasers:
             self.widgets = get_gui_widgets(
@@ -78,7 +77,6 @@ class WlmMonitor:
         self.widgets['curve'] = []
         self.initialize_channels()
 
-    
         for channel in self.channels:
             self.update_parameters(dict(
                 channel=channel.number,
@@ -266,10 +264,7 @@ class WlmMonitor:
         self.widgets['clear'][index].clicked.connect(
             lambda: self.clear_channel(channel)
         )
-       
-    
-        
-    
+
     def _update_channels(self):
         """ Updates all channels + displays
 
@@ -285,8 +280,6 @@ class WlmMonitor:
             self.widgets['curve'][index].setData(channel.data)
             self.widgets['freq'][index].setValue(channel.data[-1])
 
-
-        
     def _get_channels(self):
         """ Returns all active channel numbers
 
@@ -319,7 +312,6 @@ class Service(ServiceBase):
 
     def exposed_reconnect_gui(self):
         return self._module.reconnect_gui()
-
 
     def exposed_pause(self):
 
@@ -426,7 +418,6 @@ class Channel:
 
         # self.lock_override = True
 
-
     def initialize_sp_data(self, display_pts=5000):
         self.sp_data = np.ones(display_pts) * self.data[-1]
 
@@ -465,7 +456,6 @@ class Channel:
         self.prev_gui_setpoint = copy.deepcopy(self.gui_setpoint)
         self.sp_data = np.append(self.sp_data[1:], self.setpoint)
 
-    
     def _overwrite_parameters(self, channel_params):
         """ Sets all internal channel parameters to input
 
@@ -499,7 +489,6 @@ class Channel:
             self.setpoint = None
         self.setpoint_name = self.name + ' Setpoint'  # Name used for identifying setpoint Curve object
 
-       
 
 def launch(**kwargs):
     """ Launches the WLM monitor + lock script """
@@ -534,7 +523,7 @@ def launch(**kwargs):
         params=params,
         three_lasers=three_lasers
     )
- 
+
     update_service = kwargs['service']
     update_service.assign_module(module=wlm_monitor)
     logger.update_data(data=dict(device_id=device_id))

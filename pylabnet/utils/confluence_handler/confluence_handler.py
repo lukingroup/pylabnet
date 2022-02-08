@@ -247,7 +247,11 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         # save the temperary file
         timestamp_datetime = datetime.datetime.now().strftime("%b_%d_%Y__%H_%M_%S")
         scrn_shot_filename = "Screenshot_{}".format(timestamp_datetime) + ".png"
-        scrn_shot_AbsPath = os.path.join("..\\..\\temp", scrn_shot_filename)
+        os_string = get_os()
+        if os_string == 'Windows':
+            scrn_shot_AbsPath = os.path.join("..\\..\\temp", scrn_shot_filename)
+        elif os_string == "Linux":
+            scrn_shot_AbsPath = os.path.join("../../temp", scrn_shot_filename)
         self.pix.save(scrn_shot_AbsPath)
 
         # upload
@@ -292,8 +296,15 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         #     self._gui_directory,
         #     gui_template
         # )
+
+        os_string = get_os()
+        if os_string == 'Windows':
+            pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
+        elif os_string == "Linux":
+            pyqtpath = os.path.abspath("../../pylabnet/gui/pyqt")
+
         self._ui = os.path.join(
-            (os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")),
+            (pyqtpath),
             self._gui_directory,
             gui_template
         )
@@ -395,7 +406,12 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             return
 
         # base_html = '{}\\{}'.format(templates_root, html_template_filename)
-        base_html = '{}\\{}'.format(templates_root, html_template_filename)
+
+        os_string = get_os()
+        if os_string == 'Windows':
+            base_html = '{}\\{}'.format(templates_root, html_template_filename)
+        elif os_string == "Linux":
+            base_html = '{}/{}'.format(templates_root, html_template_filename)
 
         timestamp_date = datetime.datetime.now().strftime('%Y-%m-%d')
         timestamp_time = datetime.datetime.now().strftime('%H:%M')
@@ -613,9 +629,15 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         #     gui_template
         # )
 
+        os_string = get_os()
+        if os_string == 'Windows':
+            pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
+        elif os_string == "Linux":
+            pyqtpath = os.path.abspath("../../pylabnet/gui/pyqt")
+
         self._ui = os.path.join(
             # (os.path.abspath("pylabnet\\gui\\pyqt")),
-            (os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")),
+            (pyqtpath),
             self._gui_directory,
             gui_template
         )

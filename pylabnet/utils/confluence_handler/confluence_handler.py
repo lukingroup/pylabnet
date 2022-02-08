@@ -301,7 +301,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         if os_string == 'Windows':
             pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
         elif os_string == "Linux":
-            pyqtpath = os.path.abspath("../../pylabnet/gui/pyqt")
+            pyqtpath = os.path.abspath("./pylabnet/gui/pyqt")
 
         self._ui = os.path.join(
             (pyqtpath),
@@ -633,7 +633,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         if os_string == 'Windows':
             pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
         elif os_string == "Linux":
-            pyqtpath = os.path.abspath("../../pylabnet/gui/pyqt")
+            pyqtpath = os.path.abspath("./pylabnet/gui/pyqt")
 
         self._ui = os.path.join(
             # (os.path.abspath("pylabnet\\gui\\pyqt")),

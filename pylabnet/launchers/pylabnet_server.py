@@ -19,7 +19,6 @@ However, you can also call this directly, with command-line arguments:
 
 import importlib
 import numpy as np
-import os
 import sys
 import traceback
 
@@ -55,6 +54,12 @@ def main():
     else:
         config = None
 
+    # If lab name is specified, add lab name
+    if 'lab_name' in args:
+        lab_name = args['lab_name']
+    else:
+        lab_name = 'NO_LAB'
+
     device_id = args['device_id']
     logger_tag = server + '_server' + '_' + device_id
 
@@ -69,20 +74,23 @@ def main():
 
     # Add device ID of server to LogClient data dict
     server_logger.update_data(data=dict(device_id=device_id))
+    # Add lab name of server to LogClient data dict
+    server_logger.update_data(data=dict(lab_name=lab_name))
 
     # Retrieve debug flag.
     debug = int(args['debug'])
 
-    # Halt execution and wait for debugger connection if debug flag is up.
-    if debug:
-        import debugpy
+    if debug == 1:
+        import ptvsd
+        import os
         # 5678 is the default attach port in the VS Code debug configurations
-        server_logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (pylabnet_server)")
-        debugpy.listen(('localhost', 5678))
-        debugpy.wait_for_client()
-        debugpy.breakpoint()
+        server_logger.logger.info(f"Waiting for debugger to attach to PID {os.getpid()} (launcher)")
+        ptvsd.enable_attach(address=('localhost', 5678))
+        ptvsd.wait_for_attach()
+        breakpoint()
 
     # Register new exception hook.
+
     def log_exceptions(exc_type, exc_value, exc_traceback):
         """Handler for unhandled exceptions that will write to the logs"""
         error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))

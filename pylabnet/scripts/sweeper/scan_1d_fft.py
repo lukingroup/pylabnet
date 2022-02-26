@@ -695,8 +695,8 @@ class Controller(MultiChSweep1D):
 
         # find forward peak number, and use a sliding-window-like way to find numbers 
         # peaks, _ = find_peaks(self.data_fwd[-1], height=[0.1,0.16], distance=80, width=10)
-        peaks, _ = find_peaks(self.data_fwd[-1], height=[0.12,0.16], distance=self.pts/(self.max-self.min)*4E-6, width=self.pts/(self.max-self.min)*5E-7)
-        dips, _ = find_peaks(-1*np.array(self.data_fwd[-1]), height=[-0.08,0.], distance=self.pts/(self.max-self.min)*4E-6, width=self.pts/(self.max-self.min)*5E-7)
+        peaks, _ = find_peaks(self.data_fwd[-1], height=[0.09,0.16], distance=self.pts/(self.max-self.min)*4E-6, width=self.pts/(self.max-self.min)*5E-7)
+        dips, _ = find_peaks(-1*np.array(self.data_fwd[-1]), height=[-0.05,0.], distance=self.pts/(self.max-self.min)*4E-6, width=self.pts/(self.max-self.min)*5E-7)
         num_fwd = 0
         if(len(peaks) > 0 and len(dips) > 0):
             ptr_dips, ptr_peaks, ptr_ispeak, ans_q = 0, 0, (peaks[0] <= dips[0]), []

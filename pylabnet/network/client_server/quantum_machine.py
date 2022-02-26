@@ -9,12 +9,18 @@ class Service(ServiceBase):
         job = self._module.execute()
         return pickle.dumps(job)
         
-    def exposed_execute(self, prog, config):
-        job = self._module.execute()
-        return pickle.dumps(job)
+    def exposed_simulate(self, prog, config, duration=2000):
+        job, samples = self._module.simulate()
+        return pickle.dumps(job), pickle.dumps(samples)
 
 
 class Client(ClientBase):
-    def Request_data(self,):
-        v_rms_pickle, a_peak_pickle, a_rms_pickle, crest_pickle, temperature_pickle = self._service.exposed_Request_data()
-        return pickle.loads(v_rms_pickle), pickle.loads(a_peak_pickle), pickle.loads(a_rms_pickle), pickle.loads(crest_pickle), pickle.loads(temperature_pickle)
+    def execute(self):
+        job = self._service.exposed_execute()
+        return pickle.loads(job)
+
+    def simulate(self):
+        job_pickle, samples_pickle= self._service.exposed_simulate()
+        return pickle.loads(job_pickle), pickle.loads(samples_pickle)
+
+

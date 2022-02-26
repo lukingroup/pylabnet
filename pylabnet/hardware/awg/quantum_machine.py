@@ -16,11 +16,15 @@ import json
 
 class Driver:
     def __init__(self, device_name='QM', host='192.168.50.97', port=80, logger=None, dummy=False) -> None:
+        # Instantiate log
+        self.log = LogHandler(logger=logger)
+
         self.qmm = QuantumMachinesManager(host=host, port='80')
+        
         return
 
-    def execute(self, prog, config):
-        qm = self.qmm.open_qm(config)
+    def execute(self, prog, config_QM):
+        qm = self.qmm.open_qm(config_QM)
         job = qm.execute(prog)
         return job
 
@@ -35,17 +39,18 @@ class Driver:
         return job, samples
 
 
-if __name__== "main":
+if __name__ == "__main__":
     from configuration import config
     myQM = Driver()
     
     # prog
-    with program() as generate_tt:
+    print('start...')
+    with program() as prog:
         with infinite_loop_():
             play('trigger', 'tt') 
             # play('X', 'e_spin')
             wait(100, 'tt')
 
     # execute
-    myQM.execute()
+    myQM.execute(prog, config)
     pass

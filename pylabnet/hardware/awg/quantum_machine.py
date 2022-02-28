@@ -2,15 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from pip import main
 from qm.QuantumMachinesManager import QuantumMachinesManager
 from qm.qua import infinite_loop_, play, program, wait
 from qm.simulate import SimulationConfig
-from pylabnet.hardware.interface.gated_ctr import GatedCtrInterface
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.network.core.service_base import ServiceBase
-from pylabnet.network.core.client_base import ClientBase
-from pylabnet.utils.decorators.dummy_wrapper import dummy_wrap
 
 
 class Driver:

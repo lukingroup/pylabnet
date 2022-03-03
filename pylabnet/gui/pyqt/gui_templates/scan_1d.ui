@@ -358,6 +358,12 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </item>
       <item>
        <widget class="QLabel" name="config">
+        <property name="minimumSize">
+         <size>
+          <width>128</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
@@ -404,11 +410,17 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="save_name">
-        <property name="maximumSize">
+       <widget class="QLineEdit" name="save_name">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
          <size>
-          <width>16777215</width>
-          <height>16777215</height>
+          <width>250</width>
+          <height>0</height>
          </size>
         </property>
         <property name="font">
@@ -417,17 +429,8 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           <pointsize>12</pointsize>
          </font>
         </property>
-        <property name="styleSheet">
-         <string notr="true">color: rgb(255, 255, 255);</string>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
-        </property>
         <property name="text">
          <string>sweeper</string>
-        </property>
-        <property name="textInteractionFlags">
-         <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextEditable|Qt::TextEditorInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
         </property>
        </widget>
       </item>
@@ -819,7 +822,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1948</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

@@ -121,10 +121,9 @@ class Controller(MultiChSweep1D):
         self.widgets['configure'].clicked.connect(self.configure_experiment)
         self.widgets['run'].clicked.connect(self.run_pressed)
         self.widgets['autosave'].toggled.connect(self._update_autosave)
-        self.widgets['save'].pressed.connect(lambda: self.save(
-            filename=self.widgets['save_name'].text(),
-            directory=self.config['save_path']
-        ))
+        # Need Lambda to force it to use default args
+        # https://stackoverflow.com/questions/60001583/pyqt5-slot-function-does-not-take-default-argument
+        self.widgets['save'].pressed.connect(lambda: self.save())
         self.widgets['reps'].valueChanged.connect(self.set_reps)
         self.widgets['avg'][0].clicked.connect(lambda: self._clear_show_trace(0))
         self.widgets['avg'][1].clicked.connect(lambda: self._clear_show_trace(1))
@@ -331,6 +330,7 @@ class Controller(MultiChSweep1D):
                     directory=directory,
                     date_dir=date_dir
                 )'''
+        self.log.info('Data saved')
 
     def fit_config(self, status: bool):
         """ Configures fitting add-on

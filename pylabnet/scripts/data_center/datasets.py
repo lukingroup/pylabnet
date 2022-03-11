@@ -593,8 +593,8 @@ class time_trace_monitor(RollingLine):
             self.data = np.array([data])
 
         else:
-            if len(self.data) == self.data_length:
-                self.data = np.append(self.data, data)[1:]
+            if len(self.data) >= self.data_length:
+                self.data = np.append(self.data, data)[-1*self.data_length:]
             else:
                 self.data = np.append(self.data, data)
 
@@ -602,8 +602,8 @@ class time_trace_monitor(RollingLine):
             self.x = np.array([dt_timestamp])
 
         else:
-            if len(self.x) == self.data_length:
-                self.x = np.append(self.x, dt_timestamp)[1:]
+            if len(self.x) >= self.data_length:
+                self.x = np.append(self.x, dt_timestamp)[-1*self.data_length:]
             else:
                 self.x = np.append(self.x, dt_timestamp)
 

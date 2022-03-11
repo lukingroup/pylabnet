@@ -81,7 +81,7 @@ class CountMonitor:
         self.widgets = get_gui_widgets_dummy(
             self.gui,
             graph_widget=num_plots,
-            number_label=4,
+            number_label=5,
             event_button=num_plots,
             legend_widget=num_plots,
             save_button=1
@@ -236,7 +236,7 @@ class CountMonitor:
 
             # init output and iter
             self.output = self.default
-            self._ctr_out.set_ao_voltage('ao4', self.output)
+            # self._ctr_out.set_ao_voltage('ao4', self.output)
             self.iter = 0
 
             # Assign scalar
@@ -301,12 +301,15 @@ class CountMonitor:
             self.widgets[f'curve_{channel}'].setData(
                 self.x, self.data[index]
             )
+        self.iter = 0
 
     def _update_output(self):
         """ Updates the output to all current values"""
 
         # Update all active channels + do locking loop
-        voltage = np.mean(self._ctr_in.get_ai_voltage('ai0', 500, 10) )
+        monitor_voltage = np.mean(self._ctr_in.get_ai_voltage('ai0', 500, 10) )
+        rp_out_voltage = np.mean(self._ctr_in.get_ai_voltage('ai1', 500, 10) )
+
         # voltage_0 = np.mean(self._ctr_in.get_ai_voltage('ai0', 10, 10) )
         # self._ctr_out.set_ao_voltage('ao4', self.output + 0.25)
         # voltage_1 = np.mean(self._ctr_in.get_ai_voltage('ai0', 10, 10) )
@@ -334,27 +337,24 @@ class CountMonitor:
 
         dt_timestamp = time.time()
 
-        # update voltage
+        # update voltage and iter
         self.x = np.concatenate((self.x[1:], np.array([dt_timestamp])))
-        self.data[0] = np.concatenate((self.data[0, 1:], np.array([voltage]) ) )
+        self.data[0] = np.concatenate((self.data[0, 1:], np.array([monitor_voltage]) ) )
         self.data[1] = np.concatenate((self.data[1, 1:], np.array([self.pid.setpoint]) ) )
-
-
-        # locking part
-        self._lock( )
-        self._ctr_out.set_ao_voltage('ao4', self.output)
-
-        # update output and iter
-        self.data[2] = np.concatenate((self.data[2, 1:], np.array([self.output])) )
+        self.data[2] = np.concatenate((self.data[2, 1:], np.array([rp_out_voltage]) ) )
         self.iter += 1
 
-        # do fft if iter is n_bin
+        # do fft and std if iter is n_bin
         if(self.iter == self._n_bins):
             self.iter = 0
             self.f_ary = 1/(self.x[-1] -self.x[0]) * np.arange(self._n_bins)
             self.data[3] = np.fft.fft(self.data[0, :]) / self._n_bins
             self.widgets[f'curve_4'].setData( self.f_ary, np.absolute(self.data[3]))
-            self.widgets['graph_widget'][2].setYRange(0, 5E-3)
+            self.widgets['graph_widget'][2].setYRange(0, 1E-2)
+
+            self.log.info( np.std( self.data[0] ) )
+            self.widgets[f'number_label'][4].setText(str(  format(np.std( self.data[0] ), ".4f")   )) 
+
 
 
         for index, channel in enumerate(self._ch_list):

@@ -4,6 +4,7 @@ import os
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtCore import Qt
 import importlib
+import pkg_resources
 import pyqtgraph as pg
 import numpy as np
 
@@ -87,6 +88,7 @@ class Controller(MultiChSweep1D):
         self.num_avg  = None
         self.fft_fwd, self.fft_fwd_avg = None, None
         self.fft_bwd, self.fft_bwd_avg = None, None
+        self.pk, self.dip = None, None
 
         if self.sweep_type != 'sawtooth':
             self.x_bwd = self._generate_x_axis(backward=True)
@@ -695,8 +697,12 @@ class Controller(MultiChSweep1D):
 
         # find forward peak number, and use a sliding-window-like way to find numbers 
         # peaks, _ = find_peaks(self.data_fwd[-1], height=[0.1,0.16], distance=80, width=10)
-        peaks, _ = find_peaks(self.data_fwd[-1], height=[0.09,0.16], distance=self.pts/(self.max-self.min)*4E-6, width=self.pts/(self.max-self.min)*5E-7)
-        dips, _ = find_peaks(-1*np.array(self.data_fwd[-1]), height=[-0.05,0.], distance=self.pts/(self.max-self.min)*4E-6, width=self.pts/(self.max-self.min)*5E-7)
+
+        height_pk = self.pk
+        height_dip = [-1*self.dip[1], -1*self.dip[0]]
+
+        peaks, _ = find_peaks(self.data_fwd[-1], height=height_pk, distance=self.pts/(self.max-self.min)*2E-5, width=self.pts/(self.max-self.min)*5E-7)
+        dips, _ = find_peaks(-1*np.array(self.data_fwd[-1]), height=height_dip, distance=self.pts/(self.max-self.min)*2E-5, width=self.pts/(self.max-self.min)*5E-7)
         num_fwd = 0
         if(len(peaks) > 0 and len(dips) > 0):
             ptr_dips, ptr_peaks, ptr_ispeak, ans_q = 0, 0, (peaks[0] <= dips[0]), []
@@ -727,8 +733,8 @@ class Controller(MultiChSweep1D):
         self.log.info('num_fwd=' + str(num_fwd))
 
         # find backward peak number, and use a sliding-window-like way to find numbers 
-        peaks, _ = find_peaks(self.data_bwd[-1], height=[0.1,0.16], distance=self.pts/(self.max-self.min)*2E-6, width=self.pts/(self.max-self.min)*3E-7)
-        dips, _ = find_peaks(-1*np.array(self.data_bwd[-1]), height=[-0.06,0.], distance=self.pts/(self.max-self.min)*2E-6, width=self.pts/(self.max-self.min)*3E-7)
+        peaks, _ = find_peaks(self.data_fwd[-1], height=height_pk, distance=self.pts/(self.max-self.min)*2E-5, width=self.pts/(self.max-self.min)*5E-7)
+        dips, _ = find_peaks(-1*np.array(self.data_fwd[-1]), height=height_dip, distance=self.pts/(self.max-self.min)*2E-5, width=self.pts/(self.max-self.min)*5E-7)
         
         num_bwd = 0
         if(len(peaks) > 0 and len(dips) > 0):
@@ -876,7 +882,7 @@ class Controller(MultiChSweep1D):
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot_1(plot_index), plot_index=plot_index))
 
 
-    def set_params_1(self, bin_width_1=1e9, n_bins_1=1e3, ch_list_1=[1], plot_list_1=[[1]]):
+    def set_params(self, pk=[0.75, 1], dip=[0.25, 0.55], bin_width_1=1e9, n_bins_1=1e3, ch_list_1=[1], plot_list_1=[[1]]):
         """ Sets counter parameters
 
         :param bin_width: bin width in ps
@@ -887,6 +893,8 @@ class Controller(MultiChSweep1D):
 
 
         # Save params to internal variables
+        self.pk = pk
+        self.dip = dip
         self._bin_width_1 = int(bin_width_1)
         self._n_bins_1 = int(n_bins_1)
         self._ch_list_1 = ch_list_1
@@ -987,8 +995,8 @@ def launch(**kwargs):
     update_port = kwargs['server_port']
     control.gui.set_network_info(port=update_port)
 
-    # set params for gui_1
-    control.set_params_1(**control.config['params'])
+    # set params for gui and gui_1
+    control.set_params(**control.config['params'])
 
     # initialize the window_1
     control._initialize_display_1()

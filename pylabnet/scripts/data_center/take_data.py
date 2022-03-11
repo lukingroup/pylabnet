@@ -231,22 +231,43 @@ class DataTaker:
             )
             '''
 
-            self.experiment_thread = ExperimentThread(
+            # self.experiment_thread = ExperimentThread(
+            #     self.experiment,
+            #     dataset=self.dataset,
+            #     gui=self.gui,
+            #     **self.clients
+            # )
+
+            #
+            self.experiment_thread = QtCore.QThread()
+            self.experiment_worker = ExperimentWorker(
                 self.experiment,
                 dataset=self.dataset,
                 gui=self.gui,
                 **self.clients
             )
-
-            self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
+            self.experiment_worker.moveToThread(self.experiment_thread)
+            self.experiment_thread.started.connect(self.experiment_worker.run)
+            self.experiment_worker.finished.connect(self.experiment_thread.quit)
             self.experiment_thread.finished.connect(self.stop)
+            self.experiment_worker.finished.connect(self.experiment_worker.deleteLater)
+            self.experiment_thread.finished.connect(self.experiment_thread.deleteLater)
+            self.experiment_worker.status_flag.connect(self.dataset.interpret_status)
+
+            self.experiment_thread.start()
+            #
+
+            # self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
+            # self.experiment_thread.finished.connect(self.stop)
             self.log.update_metadata(
                 exp_start_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
             )
 
         # Stop experiment
         else:
-            self.experiment_thread.running = False
+            # self.experiment_thread.running = False
+            self.experiment_worker.running = False
+
 
     def stop(self):
         """ Stops the experiment"""
@@ -309,6 +330,32 @@ class ExperimentThread(QtCore.QThread):
                 status_flag=self.status_flag,
                 **self.params)
             self.params['iter_num'] += 1
+
+class ExperimentWorker(QtCore.QObject):
+    """ Worker for Thread that simply runs the experiment repeatedly """
+
+    # Flag to monitor whether experiment alarm goes off
+    status_flag = QtCore.pyqtSignal(str)
+    finished = QtCore.pyqtSignal()
+
+    def __init__(self, experiment, **params):
+        self.experiment = experiment
+        self.params = params
+        self.running = True
+        super().__init__()
+        # self.start()
+
+    def run(self):
+        self.params['iter_num'] = 0
+        while self.running:
+            self.experiment(
+                thread=self,
+                status_flag=self.status_flag,
+                **self.params)
+            self.params['iter_num'] += 1
+
+        self.finished.emit()
+        return
 
 
 class UpdateThread(QtCore.QThread):

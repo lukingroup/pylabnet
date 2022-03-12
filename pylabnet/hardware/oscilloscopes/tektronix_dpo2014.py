@@ -253,7 +253,7 @@ class Driver():
         self._check_channel(channel)
 
         # Get attenuation.
-        command = f":{channel}:PRO"
+        command = f":{channel}:PRO:GAIN"
         attenuation = self.device.query(f"{command}?")
 
         # Extract float.
@@ -275,7 +275,7 @@ class Driver():
         self._check_channel_attenuation(attenuation)
 
         # Set attenuation.
-        self.device.write(f'{channel}:PRObe {attenuation}')
+        self.device.write(f'{channel}:PRO:GAIN {attenuation}')
 
     def get_channel_scale(self, channel):
         """ Return vertical scale of channel.

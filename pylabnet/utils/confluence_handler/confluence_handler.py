@@ -47,18 +47,25 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         # handle the case that disables the confluence handler
         self.enable = True
 
+        # diable if cannot use the log
+        if(self.enable):
+            try:
+                self.log = log_client
+            except:
+                self.enable = False
+
         # param (global)
-        try:
-            self.parent_wins = parent_wins
-            self.url = config('CONFLUENCE_URL')
-            self.username = config('CONFLUENCE_USERNAME')
-            self.pw = config('CONFLUENCE_PW')
-            self.userkey = config('CONFLUENCE_USERKEY')
-            self.dev_root_id = config('CONFLUENCE_DEV_root_id')
-            self.log = log_client
-        except:
-            self.log.error("Confluence:.env does not have confluence key! Disable the confluence functions")
-            self.enable = False
+        if(self.enable):
+            try:
+                self.parent_wins = parent_wins
+                self.url = config('CONFLUENCE_URL')
+                self.username = config('CONFLUENCE_USERNAME')
+                self.pw = config('CONFLUENCE_PW')
+                self.userkey = config('CONFLUENCE_USERKEY')
+                self.dev_root_id = config('CONFLUENCE_DEV_root_id')
+            except:
+                self.log.error("Confluence:.env does not have confluence key! Disable the confluence functions")
+                self.enable = False
 
         # param (condition)
         self.upload = False
@@ -78,15 +85,16 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         # Initialize parent class QtWidgets.QDialog
         super(Confluence_Popping_Windows, self).__init__()
 
-        try:
-            self.confluence = Confluence(
-                url='{}/wiki'.format(self.url), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
-                username=self.username,
-                password=self.pw)
-        except:
-            self.confluence = None
-            self.enable = False
-            self.log.error("Confluence key or password is invalid")
+        if(self.enable):
+            try:
+                self.confluence = Confluence(
+                    url='{}/wiki'.format(self.url), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
+                    username=self.username,
+                    password=self.pw)
+            except:
+                self.confluence = None
+                self.enable = False
+                self.log.error("Confluence key or password is invalid")
 
         # load the gui, but not show
         self._load_gui(gui_template=template, run=False)
@@ -125,6 +133,8 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         return
 
     def Change_typing_mode(self):
+        if(not self.enable):
+            return
         if(self.auto_info_setting_mode):
             self.auto_info_setting_mode = False
             self.actionchage_typing_mode.setText('Change to Auto-typing mode (From launch control')
@@ -146,6 +156,9 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         return
 
     def Update_confluence_info(self):
+        if(not self.enable):
+            return
+
         try:
             confluence_config_dict = load_config('confluence_upload')
             lab = confluence_config_dict["lab"]
@@ -183,6 +196,9 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         return
 
     def Popup_Update(self):
+        if(not self.enable):
+            return
+
         self.upload = False
         self.ok_button.setText("OK")
         self.space_key_field.setText(self.upload_space_key)
@@ -197,6 +213,9 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.ok_button.setShortcut("Ctrl+Return")
 
     def Popup_Upload(self):
+        if(not self.enable):
+            return
+
         self.upload = True
 
         #screenshot
@@ -220,9 +239,15 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.ok_button.setShortcut("Ctrl+Return")
 
     def cancel_event(self):
+        if(not self.enable):
+            return
+
         self.close()
 
     def okay_event(self):
+        if(not self.enable):
+            return
+
         self.upload_space_key = self.space_key_field.text()
         self.upload_space_name = self.space_name_field.text()
         self.upload_page_title = self.page_field.text()
@@ -300,6 +325,8 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         os_string = get_os()
         if os_string == 'Windows':
             pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
+            # pyqtpath = os.path.abspath("pylabnet\\gui\\pyqt")
+
         elif os_string == "Linux":
             pyqtpath = os.path.abspath("./pylabnet/gui/pyqt")
 
@@ -326,6 +353,9 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     def upload_pic(self, scrn_shot_AbsPath, scrn_shot_filename):
         ''' Upload the picture if the page exists, otherwise firtst create a new page and then upload the picture
         '''
+        if(not self.enable):
+            return
+
         if(self.confluence.page_exists(self.upload_space_key, self.upload_page_title)):
             upload_page_id = self.confluence.get_page_id(self.upload_space_key, self.upload_page_title)
         else:
@@ -351,6 +381,9 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         '''
         Reads in a HTML template and replaces occurences of the keys of replace_dict by the key values.
         '''
+        if(not self.enable):
+            return
+
         with open(base_html, "r+") as f:
             replaced_html = f.read()
 
@@ -362,6 +395,8 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         '''
         Renders base_html according to replace_dict and appends it on existing page
         '''
+        if(not self.enable):
+            return
 
         append_html = self.replace_html(base_html, replace_dict)
 
@@ -632,6 +667,8 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         os_string = get_os()
         if os_string == 'Windows':
             pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
+            # pyqtpath = os.path.abspath("pylabnet\\gui\\pyqt")
+
         elif os_string == "Linux":
             pyqtpath = os.path.abspath("./pylabnet/gui/pyqt")
 

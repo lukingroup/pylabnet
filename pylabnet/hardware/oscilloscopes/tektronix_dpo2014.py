@@ -115,6 +115,12 @@ class Driver():
 
         self.device.write('acquire:stopafter sequence')
 
+    def set_cont_run_acq(self):
+        """Set acquisition mode to single run."""
+
+        self.device.write('ACQUIRE:STOPAFTER RUNSTop')
+        self.device.write('acquire:state on')
+
     def acquire_single_run(self):
         """ Run single acquisition."""
 

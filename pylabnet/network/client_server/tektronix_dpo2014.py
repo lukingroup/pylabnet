@@ -27,6 +27,9 @@ class Service(ServiceBase):
     def exposed_set_single_run_acq(self):
         return self._module.set_single_run_acq()
 
+    def exposed_set_cont_run_acq(self):
+        return self._module.set_cont_run_acq()
+
     def exposed_acquire_single_run(self):
         return self._module.acquire_single_run()
 
@@ -104,6 +107,9 @@ class Client(ClientBase):
 
     def set_single_run_acq(self):
         return self._service.exposed_set_single_run_acq()
+
+    def set_cont_run_acq(self):
+        return self._service.exposed_set_cont_run_acq()
 
     def acquire_single_run(self):
         return self._service.exposed_acquire_single_run()

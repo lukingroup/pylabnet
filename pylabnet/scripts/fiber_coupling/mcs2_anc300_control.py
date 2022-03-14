@@ -14,10 +14,13 @@ from PyQt5.QtWidgets import QShortcut
 BROKEN_CHANNELS = []
 ATTOCUBE_CHANNELS = [1, 6, 5]
 
+ATTOCUBE_CHANNEL_ORDER = [4, 5, 6]
+
+
 MATCHING_DICT = {
-    '6': 1,
-    '1': 2,
-    '5': 3
+    '6': ATTOCUBE_CHANNEL_ORDER[0],
+    '1': ATTOCUBE_CHANNEL_ORDER[1],
+    '5': ATTOCUBE_CHANNEL_ORDER[2]
 }
 
 GREY_BUTTON_STYLESHEET = 'background-color:#54687A'
@@ -559,7 +562,7 @@ class Controller:
 
     def _measure_set_C(self, channel):
         cap = self.attocube.get_capacitance(channel)
-        self.widgets['c_box'][channel - 1].setValue(int(cap))
+        self.widgets['c_box'][ATTOCUBE_CHANNEL_ORDER.index(channel)].setValue(int(cap))
 
     def _setup_gui(self):
         """ Configures what all buttons do """
@@ -632,26 +635,26 @@ class Controller:
 
         # Ugly assignment of ground buttons.
         self.widgets['ground'][0].pressed.connect(
-            lambda: self.attocube.ground(1)
+            lambda: self.attocube.ground(ATTOCUBE_CHANNEL_ORDER[0])
         )
         self.widgets['ground'][1].pressed.connect(
-            lambda: self.attocube.ground(2)
+            lambda: self.attocube.ground(ATTOCUBE_CHANNEL_ORDER[1])
         )
         self.widgets['ground'][2].pressed.connect(
-            lambda: self.attocube.ground(3)
+            lambda: self.attocube.ground(ATTOCUBE_CHANNEL_ORDER[2])
         )
 
         # Ugly assignment of capacitance buttons.
         self.widgets['get_capacitance'][0].pressed.connect(
-            lambda: self._measure_set_C(1)
+            lambda: self._measure_set_C(ATTOCUBE_CHANNEL_ORDER[0])
         )
         self.widgets['c_box'][0].setSuffix(' nF')
         self.widgets['get_capacitance'][1].pressed.connect(
-            lambda: self._measure_set_C(2)
+            lambda: self._measure_set_C(ATTOCUBE_CHANNEL_ORDER[1])
         )
         self.widgets['c_box'][1].setSuffix(' nF')
         self.widgets['get_capacitance'][2].pressed.connect(
-            lambda: self._measure_set_C(3)
+            lambda: self._measure_set_C(ATTOCUBE_CHANNEL_ORDER[2])
         )
         self.widgets['c_box'][2].setSuffix(' nF')
 

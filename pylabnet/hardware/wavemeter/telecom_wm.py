@@ -26,11 +26,11 @@ class Driver(WavemeterInterface):
             self.log.error(f'Connection to {gpib_addr} failed.')
 
         # Check that WLM is running and log details
-        power = self.device.query(':MEASure:POWer?').strip()
+        power = float(self.device.query(':MEASure:POWer?').strip())
         pwrunit = self.device.query(':DISP:UNIT:POWer?').strip()
-        resolution = self.device.query('DISP:RESolution?').strip()
+        resolution = float(self.device.query('DISP:RESolution?').strip())
 
-        if power > 0:
+        if power != 0:
             self._is_running = 1
             self.log.info(f'Connected to WA1650. Measuring {power} {pwrunit}. Resolution is set to {resolution} nm, max is 0.0001 nm.')
         else:
@@ -51,10 +51,10 @@ class Driver(WavemeterInterface):
         """
 
         if units == 'Wavelength (nm)':
-            return float(self.device.query(':MEASure:WAVelength?').strip()) # already in nm
+            return float(self.device.query(':FETCh:WAVelength?').strip()) # already in nm
 
         else:
-            freq_ghz = self.device.query(':MEASure:FREQuency?').strip() # in GHz
+            freq_ghz = self.device.query(':FETCh:FREQuency?').strip() # in GHz
             freq_thz = float(freq_ghz)/1000 # convert to THz
             return freq_thz
 

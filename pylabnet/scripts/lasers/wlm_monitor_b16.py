@@ -352,6 +352,7 @@ class WlmMonitor:
 
         Called continuously inside run() method to refresh WLM data and output on GUI
         """
+        # time.sleep(0.5)
 
         for index, channel in enumerate(self.channels):
 

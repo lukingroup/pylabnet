@@ -12,7 +12,7 @@ class Controller:
     """ Class for controlling Toptica scan and laser properties """
 
     def __init__(self, dlc: toptica_dl_pro.Client,
-                 gui='toptica_control', logger=None, port=None):
+                 gui='toptica_control', logger=None, port=None, config=None):
         """ Initializes toptica specific parameters
 
         :param dlc: DLC client for the Toptica laser
@@ -48,8 +48,10 @@ class Controller:
         self.dlc = dlc
         self.offset = 65
         self.amplitude = 100
-        self.scan = [False, False]
-        self.emission = [False, False]
+        self.config = config
+        self.num_lasers = int(self.config["num_lasers"])
+        self.scan = [False] * self.num_lasers
+        self.emission = [False] * self.num_lasers
 
         # Setup stylesheet.
         self.gui.apply_stylesheet()
@@ -72,7 +74,7 @@ class Controller:
         # self.gui.deactivate_scalar('current_actual')
 
         # Check for on/off updates
-        for i in range(2):
+        for i in range(self.num_lasers):
             if self.widgets['on_off'][i].isChecked() != self.emission[i]:
 
                 # If laser was already on, turn off
@@ -88,7 +90,7 @@ class Controller:
                     self.log.info(f'Toptica DL {i+1} turned on')
 
         # Now handle a scan event
-        for i in range(2):
+        for i in range(self.num_lasers):
             if self.widgets['scan'][i].isChecked() != self.scan[i]:
 
                 # If we were previously scanning, terminate the scan
@@ -118,34 +120,22 @@ class Controller:
         # Handle value checking
         if self.widgets['update_params'].isChecked():
 
-            for i in range(2):
+            for i in range(self.num_lasers):
                 self.widgets['temperature_actual'][i].setDisabled(False)
                 self.widgets['current_actual'][i].setDisabled(False)
 
             if check_vals:
-                try:
-                    temp_1 = self.dlc.temp_act(1)
-                    if temp_1 < 50:
-                        self.widgets['temperature_actual'][0].setValue(
-                            temp_1
-                        )
-                    time.sleep(0.1)
-                    self.widgets['current_actual'][0].setValue(
-                        self.dlc.current_act(1)
-                    )
-                    temp_2 = self.dlc.temp_act(2)
-                    if temp_2 < 50:
-                        self.widgets['temperature_actual'][1].setValue(
-                            temp_2
-                        )
-                    time.sleep(0.1)
-                    self.widgets['current_actual'][1].setValue(
-                        self.dlc.current_act(2)
-                    )
-                except ValueError:
-                    pass
+                for i in range(self.num_lasers):
+                    try:
+                        temp = self.dlc.temp_act(i + 1)
+                        if temp < 50:
+                            self.widgets['temperature_actual'][i].setValue(temp)
+                        time.sleep(0.1)
+                        self.widgets['current_actual'][i].setValue(self.dlc.current_act(i + 1))
+                    except ValueError:
+                        pass
         else:
-            for i in range(2):
+            for i in range(self.num_lasers):
                 self.widgets['temperature_actual'][i].setDisabled(True)
                 self.widgets['current_actual'][i].setDisabled(True)
 
@@ -156,44 +146,41 @@ class Controller:
 
         # Check if laser is on and update
 
-        for i in range(2):
+        for i in range(self.num_lasers):
             self.emission[i] = self.dlc.is_laser_on(i + 1)
             self.widgets['on_off'][i].setChecked(self.emission[i])
             time.sleep(0.1)
 
         # Get temperature setpoint and actual temperature
-        temp_sp_1 = 100
-        while temp_sp_1 > 50:
-            temp_sp_1 = self.dlc.temp_sp(1)
-            temp_sp_2 = self.dlc.temp_sp(2)
+        temp_sp_arr = [100] * self.num_lasers
+        while temp_sp_arr[0] > 50:
+            for i in range(self.num_lasers):
+                temp_sp_arr[i] = self.dlc.temp_sp(i + 1)
             time.sleep(0.1)
 
-        self.widgets['temperature'][0].setValue(temp_sp_1)
-        self.widgets['temperature'][1].setValue(temp_sp_2)
+        for i in range(self.num_lasers):
+            self.widgets['temperature'][i].setValue(temp_sp_arr[i])
 
-        temp_act_1 = 100
-        while temp_act_1 > 50:
-            temp_act_1 = self.dlc.temp_act(1)
-            temp_act_2 = self.dlc.temp_act(2)
+        temp_act_arr = [100] * self.num_lasers
+        while temp_act_arr[0] > 50:
+            for i in range(self.num_lasers):
+                temp_act_arr[i] = self.dlc.temp_act(i + 1)
             time.sleep(0.1)
-        self.widgets['temperature_actual'][0].setValue(temp_act_1)
-        self.widgets['temperature_actual'][1].setValue(temp_act_2)
+
+        for i in range(self.num_lasers):
+            self.widgets['temperature_actual'][i].setValue(temp_act_arr[i])
 
         # Get current setpoint and actual current
-        self.widgets['current'][0].setValue(self.dlc.current_sp(1))
-        time.sleep(0.1)
-        self.widgets['current'][1].setValue(self.dlc.current_sp(2))
-        time.sleep(0.1)
-        self.widgets['current_actual'][0].setValue(self.dlc.current_act(1))
-        time.sleep(0.1)
-        self.widgets['current_actual'][1].setValue(self.dlc.current_act(2))
-        time.sleep(0.1)
+        for i in range(self.num_lasers):
+            self.widgets['current'][i].setValue(self.dlc.current_sp(i + 1))
+            time.sleep(0.1)
+            self.widgets['current_actual'][i].setValue(self.dlc.current_act(i + 1))
+            time.sleep(0.1)
 
         # Assign button pressing
-        self.widgets['update_temp'][0].clicked.connect(lambda: self._set_temperature(1))
-        self.widgets['update_temp'][1].clicked.connect(lambda: self._set_temperature(2))
-        self.widgets['update_current'][0].clicked.connect(lambda: self._set_current(1))
-        self.widgets['update_current'][1].clicked.connect(lambda: self._set_current(2))
+        for i in range(self.num_lasers):
+            self.widgets['update_temp'][i].clicked.connect(lambda: self._set_temperature(i + 1))
+            self.widgets['update_current'][i].clicked.connect(lambda: self._set_current(i + 1))
 
     def _set_temperature(self, laser_num):
         """ Sets the temperature to the setpoint value in the GUI """
@@ -221,7 +208,8 @@ def launch(**kwargs):
     dlc_client = find_client(clients=clients, settings=config, client_type='toptica_dlc_pro')
 
     # Instantiate Monitor script
-    toptica_controller = Controller(dlc_client, logger=logger, port=kwargs['server_port'])
+    toptica_controller = Controller(dlc_client, logger=logger, port=kwargs['server_port'],
+                                    config=config)
 
     # Run continuously
     # Note that the actual operation inside run() can be paused using the update server

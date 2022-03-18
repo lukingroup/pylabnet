@@ -30,7 +30,11 @@ class DLC_Pro:
             self.dlc.read_until(b'>', timeout=1)
 
             for laser_num in self.laser_nums:
-                self._check_laser_connection(laser_num)
+                try:
+                    self._check_laser_connection(laser_num)
+                except ValueError:
+                    self.log.error('Could not connect to Toptica DLC Pro '
+                           f'laser number {laser_num}.')
 
         except ConnectionRefusedError:
             self.log.error('Could not connect to Toptica DLC Pro at '

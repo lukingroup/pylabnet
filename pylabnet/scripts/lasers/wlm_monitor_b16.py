@@ -17,10 +17,10 @@ import pyqtgraph as pg
 class WlmMonitor:
     """ A script class for monitoring and locking lasers based on the wavemeter """
 
-    def __init__(self, wlm_client, logger_client, gui='wavemeter_monitor', ao_clients=None, display_pts=5000, threshold=0.0002, port=None, params=None, three_lasers=False):
+    def __init__(self, wlm_clients, logger_client, gui='wavemeter_monitor', ao_clients=None, display_pts=5000, threshold=0.0002, port=None, params=None, three_lasers=False):
         """ Instantiates WlmMonitor script object for monitoring wavemeter
 
-        :param wlm_client: (obj) instance of wavemeter client
+        :param wlm_client: (list) list of wavemeter clients
         :param gui_client: (obj) instance of GUI client.
         :param logger_client: (obj) instance of logger client.
         :param ao_clients: (dict, optional) dictionary of ao client objects with keys to identify. Exmaple:
@@ -36,7 +36,16 @@ class WlmMonitor:
         if three_lasers:
             gui = 'wavemeter_monitor_3lasers'
 
-        self.wlm_client = wlm_client
+        self.wlm_clients = wlm_clients
+        laser_num = 3 if three_lasers else 2
+
+        if type(self.wlm_clients) != list:
+            self.wlm_clients = list(self.wlm_clients)
+        if len(self.wlm_clients) == 1:
+            self.wlm_clients = self.wlm_clients * laser_num
+        if len(self.wlm_clients) != laser_num:
+            self.log.error("Number of wavemeter clients did not match number of lasers!")
+
         self.ao_clients = ao_clients
         self.display_pts = display_pts
         self.threshold = threshold
@@ -269,7 +278,7 @@ class WlmMonitor:
 
         # Get wavelength and initialize data arrays
         channel.initialize(
-            wavelength=self.wlm_client.get_wavelength(channel.number),
+            wavelength=self.wlm_clients[index].get_wavelength(channel.number),
             display_pts=self.display_pts
         )
 
@@ -352,7 +361,7 @@ class WlmMonitor:
                 channel.setpoint_override = 0
 
             # Update data with the new wavelength
-            channel.update(self.wlm_client.get_wavelength(channel.number))
+            channel.update(self.wlm_clients[index].get_wavelength(channel.number))
 
             # Update frequency
             self.widgets['curve'][4 * index].setData(channel.data)
@@ -411,7 +420,7 @@ class WlmMonitor:
     def get_wavelength(self, channel):
         # Index of channel
         physical_channel = self.channels[self._get_channels().index(channel)]
-        return self.wlm_client.get_wavelength(physical_channel.number)
+        return self.wlm_clients[physical_channel].get_wavelength(physical_channel.number)
 
 
 class Service(ServiceBase):
@@ -754,11 +763,16 @@ def launch(**kwargs):
         three_lasers = False
     device_id = config['device_id']
 
-    wavemeter_client = find_client(
-        clients=kwargs['clients'],
-        settings=config,
-        client_type='high_finesse_ws7',
-        logger=logger)
+    wavemeter_clients = []
+
+    for wm_type in config["wm_type"]:
+        wavemeter_client = find_client(
+            clients=kwargs['clients'],
+            settings=config,
+            client_type=wm_type,
+            logger=logger)
+
+        wavemeter_clients.append(wavemeter_client)
 
     # Get list of ao client names
     ao_clients = {}
@@ -778,7 +792,7 @@ def launch(**kwargs):
 
     # Instantiate Monitor script
     wlm_monitor = WlmMonitor(
-        wlm_client=wavemeter_client,
+        wlm_clients=wavemeter_clients,
         ao_clients=ao_clients,
         logger_client=logger,
         params=params,

@@ -7,7 +7,7 @@ from pylabnet.utils.logging.logger import LogHandler
 class Driver(WavemeterInterface):
     """ Hardware class to control WA1650 Wavemeter."""
 
-    def __init__(self, gpib_addr,logger=None):
+    def __init__(self, gpib_addr, logger=None):
         """ Instantiate wavemeter
         :param logger: instance of LogClient class (optional)
         """
@@ -25,7 +25,6 @@ class Driver(WavemeterInterface):
         except pyvisa.VisaIOError:
             self.log.error(f'Connection to {gpib_addr} failed.')
 
-
         # Check that WLM is running and log details
         power = self.device.query(':MEASure:POWer?').strip()
         pwrunit = self.device.query(':DISP:UNIT:POWer?').strip()
@@ -39,7 +38,7 @@ class Driver(WavemeterInterface):
             'Please check the optical connection and try again.'
             self.log.warn(msg_str)
             # raise WavemeterError(msg_str)
-        
+
         resolution = self.device.write(':DISPlay:RESolution .0001') # why would anyone want less than MAX RES :p
 
         self.log.info('Device initialized with resolution = 0.0001')
@@ -56,16 +55,16 @@ class Driver(WavemeterInterface):
 
         else:
             freq_ghz = self.device.query(':MEASure:FREQuency?').strip() # in GHz
-            freq_thz = float(freq_ghz)/1000 # convert to THz 
+            freq_thz = float(freq_ghz)/1000 # convert to THz
             return freq_thz
 
 
-"""FUTURE; WOULD REQUIRE WAVEMETER CLASS MODS?"""
-    """def set_resolution(res):
-        if res in self.res_options:
-            self.device.write(f':DISPlay:RESolution {res}')
-            self.log.info(f'Resolution set to {res}')
-            return
-        else: 
-            self.log.error('Resolution must be one of' + self.res_options)
-            return
+# """FUTURE; WOULD REQUIRE WAVEMETER CLASS MODS?"""
+#     """def set_resolution(res):
+#         if res in self.res_options:
+#             self.device.write(f':DISPlay:RESolution {res}')
+#             self.log.info(f'Resolution set to {res}')
+#             return
+#         else:
+#             self.log.error('Resolution must be one of' + self.res_options)
+#             return

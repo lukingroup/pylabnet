@@ -5,22 +5,22 @@ from pylabnet.network.core.client_base import ClientBase
 
 
 class Service(ServiceBase):
-    def exposed_execute(self, prog, config):
-        job = self._module.execute()
-        return pickle.dumps(job)
+    def exposed_execute(self, config, prog_pickle ):
+        job = self._module.execute(config,  pickle.loads(prog_pickle))
+        return job
         
-    def exposed_simulate(self, prog, config, duration=2000):
-        job, samples = self._module.simulate()
-        return pickle.dumps(job), pickle.dumps(samples)
+    def exposed_simulate(self, config, prog_pickle, duration=2000):
+        job, samples = self._module.simulate(config, pickle.loads(prog_pickle), duration)
+        return job, pickle.dumps(samples)
 
 
 class Client(ClientBase):
-    def execute(self):
-        job = self._service.exposed_execute()
-        return pickle.loads(job)
+    def execute(self, config, prog_pickle):
+        job = self._service.exposed_execute(config, prog_pickle)
+        return job
 
-    def simulate(self):
-        job_pickle, samples_pickle= self._service.exposed_simulate()
-        return pickle.loads(job_pickle), pickle.loads(samples_pickle)
+    def simulate(self, config, prog_pickle, duration=2000):
+        job, samples_pickle= self._service.exposed_simulate(config, prog_pickle, duration)
+        return job, pickle.loads(samples_pickle)
 
 

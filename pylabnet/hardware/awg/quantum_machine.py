@@ -12,25 +12,26 @@ class Driver:
     def __init__(self, device_name='QM', host='192.168.50.97', port=80, logger=None, dummy=False) -> None:
         # Instantiate log
         self.log = LogHandler(logger=logger)
-
         self.qmm = QuantumMachinesManager(host=host, port='80')
-
+        self.job = None
+        if(self.log is not None):
+            self.log.info("quantum machine manager is created!")
         return
 
     def execute(self, config_QM, prog):
         qm = self.qmm.open_qm(config_QM)
-        job = qm.execute(prog)
-        return job
+        self.job = qm.execute(prog)
+        return self.job
 
     def simulate(self, config_QM, prog, duration=2000):
         # OPX Simulate
-        job = self.qmm.simulate(config_QM, prog, SimulationConfig(duration=duration,
+        self.job = self.qmm.simulate(config_QM, prog, SimulationConfig(duration=duration,
                                                                   include_analog_waveforms=True,    # include analog waveform names (default True)
                                                                   include_digital_waveforms=True))   # include digital waveform  (default True))
 
         # get DAC and digital samples
-        samples = job.get_simulated_samples()
-        return job, samples
+        samples = self.job.get_simulated_samples()
+        return self.job, samples
 
 
 if __name__ == "__main__":

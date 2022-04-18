@@ -101,8 +101,7 @@ class Driver():
             lambda: zhinst.utils.create_api_session(
                 device_id,
                 api_level,
-                required_devtype='HDAWG',
-                required_err_msg=err_msg
+                server_host='127.0.0.1' # TODO: Read this from config file
             )
         )
 

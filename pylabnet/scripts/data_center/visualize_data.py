@@ -96,26 +96,6 @@ class DataVisualizer:
         # self.module = importlib.import_module(exp_name)
         # self.module = importlib.reload(self.module)
 
-        x_data_name =  self.gui.x_data.currentItem().text()
-        y_data_name =  self.gui.y_data.currentItem().text()
-
-        x_data = np.loadtxt(self.data_path + "\\" + x_data_name + ".txt")
-        y_data = np.loadtxt(self.data_path + "\\" + y_data_name + ".txt")
-
-        plot_method = self.gui.plot_method.currentItem().text()
-
-        if plot_method is None:
-            plot_method = "Standard 1D plot"
-
-        if plot_method == "Standard 1D plot":
-            self.plot_1D(x_data, y_data)
-
-        if plot_method == "Thresholded 1D plot":
-            self.plot_1D_thrsh(x_data, y_data)
-        
-        if plot_method == "Histogram":
-            self.plot_hist(x_data, y_data)
-
         # Clear graph area and set up new or cleaned up dataset
         for index in reversed(range(self.gui.graph_layout.count())):
             try:
@@ -126,77 +106,122 @@ class DataVisualizer:
                 except AttributeError:
                     pass
         self.gui.windows = {}
+
+        x_data_name =  self.gui.x_data.currentItem().text()
+        y_data_name =  self.gui.y_data.currentItem().text()
+
+        x_data = np.loadtxt(self.data_path + "\\" + x_data_name + ".txt")
+        y_data = np.loadtxt(self.data_path + "\\" + y_data_name + ".txt")
+
+        thrsh = self.gui.thrsh_val.value()
+
+        plot_method = self.gui.plot_method.currentItem().text()
+
+        if plot_method is None:
+            plot_method = "Standard 1D plot (no x-axis)"
+
+        if plot_method == "Standard 1D plot (no x-axis)":
+            self.plot_1D(x_data, y_data, x_axis = False)
+
+        if plot_method == "Standard 1D plot":
+            self.plot_1D(x_data, y_data, x_axis = True)
+
+        if plot_method == "Thresholded 1D plot (no x-axis)":
+            self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = False)
+
+        if plot_method == "Thresholded 1D plot":
+            self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = True)
+        
+        if plot_method == "Histogram":
+            self.plot_hist(x_data, y_data)
+
+        
         # If we're not setting up a new measurement type, just clear the data
 
         # We are reading in the required base-dataset by looking at the define_dataset() as defined in the experiment script.
-        try:
-            classname = self.module.define_dataset()
-        except AttributeError:
-            error_msg = "No 'define_dataset' method found in experiment script."
-            self.log.error("No 'define_dataset' method found in experiment script.")
-            return
+        # try:
+        #     classname = self.module.define_dataset()
+        # except AttributeError:
+        #     error_msg = "No 'define_dataset' method found in experiment script."
+        #     self.log.error("No 'define_dataset' method found in experiment script.")
+        #     return
 
-        try:
-            self.dataset = getattr(datasets, classname)(
-                gui=self.gui,
-                log=self.log,
-                config=self.config
-            )
-        except AttributeError:
-            error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
-            self.log.error(error_msg)
-            return
+        # try:
+        #     self.dataset = getattr(datasets, classname)(
+        #         gui=self.gui,
+        #         log=self.log,
+        #         config=self.config
+        #     )
+        # except AttributeError:
+        #     error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
+        #     self.log.error(error_msg)
+        #     return
 
-        # Run any pre-experiment configuration
-        try:
-            self.module.configure(dataset=self.dataset, **self.clients)
-        except AttributeError:
-            pass
-        self.experiment = self.module.experiment
+        # # Run any pre-experiment configuration
+        # try:
+        #     self.module.configure(dataset=self.dataset, **self.clients)
+        # except AttributeError:
+        #     pass
+        # self.experiment = self.module.experiment
 
-    def plot_1D(self, x=None, y=None):
+    def plot_1D(self, x=None, y=None, x_axis = False):
 
-        self.handle_new_window(graph, **kwargs)
+        self.handle_new_window(None)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = self.gui.graph_layout.count() - 1
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 color_index
             ])
         )
 
-        if y is not None:
-            if x is not None:
-                self.curve.setData(x[:len(y)], y)
-            else:
-                self.curve.setData(y)
+        if np.shape(np.shape(y)) == (2,):
+            data = np.mean(y, axis=0)
+        else:
+            data = y
+
+        if x_axis:
+            self.curve.setData(x, data)
+        else:
+            self.curve.setData(data)
+
    
-    def plot_1D_thrsh(self, x=None, y=None, thrsh=0):
+    def plot_1D_thrsh(self, x=None, y=None, thrsh=0, x_axis = False):
 
-        self.handle_new_window(graph, **kwargs)
+        self.handle_new_window(None)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = self.gui.graph_layout.count() - 1
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 color_index
             ])
         )
 
-        if y is not None:
-            if x is not None:
-                self.curve.setData(x[:len(y)], 1*(y>thrsh))
-            else:
-                self.curve.setData(1*(y>thrsh))
+        if np.shape(np.shape(y)) == (2,):
+            data = np.mean(y>thrsh, axis=0)
+        else:
+            data = 1*(y>thrsh)
+
+        if x_axis:
+            self.curve.setData(x, data)
+        else:
+            self.curve.setData(data)
 
     def plot_hist(self, x=None, y=None):
         pass
 
+    def handle_new_window(self, graph, **kwargs):
+        """ Handles visualizing and possibility of new popup windows """
+
+        if graph is None:
+            self.graph = self.gui.add_graph()
+            #self.graph.getPlotItem().setTitle(self.name)
+        
+        # Reuse a PlotWidget if provided
+        else:
+            self.graph = graph
         
     def run(self):
         """ Runs/stops the experiment """

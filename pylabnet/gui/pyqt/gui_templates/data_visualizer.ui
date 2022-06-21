@@ -439,7 +439,17 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           </item>
           <item>
            <property name="text">
+            <string>Standard 1D plot (no x-axis)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
             <string>Thresholded 1D plot</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Thresholded 1D plot (no x-axis)</string>
            </property>
           </item>
           <item>

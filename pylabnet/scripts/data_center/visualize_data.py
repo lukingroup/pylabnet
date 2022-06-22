@@ -65,6 +65,7 @@ class DataVisualizer:
         self.gui.apply_stylesheet()
 
     def update_date(self):
+        """ updates what data folder is selected in function of date """
         year = self.gui.year_val.text()
         month = self.gui.month_val.text()
         day = self.gui.day_val.text()
@@ -81,7 +82,7 @@ class DataVisualizer:
             self.gui.x_data.clear()
     
     def update_data_list(self):
-        """ Updates list of experiments """
+        """ Updates list of x and y data """
 
         self.gui.y_data.clear()
         self.gui.x_data.clear()
@@ -105,6 +106,7 @@ class DataVisualizer:
                         self.gui.y_data.addItem(filename[:-4])
 
     def update_fit_method(self):
+        """ updates the function used for fitting """
 
         fit_method = self.gui.fit_method.currentItem().text()
 
@@ -198,6 +200,7 @@ class DataVisualizer:
             self.fit_and_plot(x, y)
 
     def plot_1D(self, x=None, y=None, x_axis = False):
+        """ Straightforward 1D plot of data """
 
         self.choose_color_index()
 
@@ -208,6 +211,7 @@ class DataVisualizer:
             width=2)
         )
 
+        # checks if data is y data is 2-dimensional and if so, averages it to a 1-D vector
         if np.shape(np.shape(y)) == (2,):
             data = np.mean(y, axis=0)
         else:
@@ -224,7 +228,7 @@ class DataVisualizer:
         return x, data
   
     def plot_1D_thrsh(self, x=None, y=None, thrsh=0, x_axis = False):
-
+        """ Thresholded 1D plot of data """
         self.choose_color_index()
 
         self.curve = self.graph.plot(
@@ -234,6 +238,7 @@ class DataVisualizer:
             width=2)
         )
 
+        # checks if data is y data is 2-dimensional and if so, averages it to a 1-D vector
         if np.shape(np.shape(y)) == (2,):
             data = np.mean(y>thrsh, axis=0)
         else:
@@ -250,6 +255,7 @@ class DataVisualizer:
         return x, data
 
     def plot_hist(self, y=None, thrsh=0):
+        """ Occurence histogram of data (integer bins) """
 
         self.choose_color_index()
         self.curve_l = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[self.current_color_index]), width=0.5)
@@ -271,6 +277,7 @@ class DataVisualizer:
         return x, y
 
     def fit_and_plot(self, x, y):
+        """ fits given data, plots it, and displays optimized fitting parameters """
 
         if self.use_p0:
             p0_str = self.gui.p0_val.text()
@@ -290,6 +297,7 @@ class DataVisualizer:
         self.gui.p0_val.setText(popt_string)
 
     def choose_color_index(self):
+        """ Updates color index for plotting """
         self.current_color_index += 1
         if self.current_color_index > (len(self.gui.COLOR_LIST) - 1):
             self.current_color_index = 0
@@ -301,6 +309,7 @@ class DataVisualizer:
             self.graph = self.gui.add_graph()
 
     def clear_all_data(self):
+        """ clears all plots """
         for index in reversed(range(self.gui.graph_layout.count())):
             try:
                 self.gui.graph_layout.itemAt(index).widget().deleteLater()

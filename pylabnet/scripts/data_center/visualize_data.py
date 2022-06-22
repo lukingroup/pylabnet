@@ -38,10 +38,8 @@ class DataVisualizer:
         self.config = config
         self.bare_data_path = self.config['data_path']
        
-        # if self.exp_path is None:
-        #     self.exp_path = os.getcwd()
-        # sys.path.insert(1, self.exp_path)
-        # self.update_experiment_list()
+        self.graph = None
+        self.current_color_index = 0
 
         # sys.path.insert(1, self.data_path)
         self.update_date()
@@ -52,11 +50,13 @@ class DataVisualizer:
         self.gui.day_val.textChanged.connect(self.update_date)
 
         self.gui.plot.clicked.connect(self.configure)
-        self.gui.save.clicked.connect(self.save)
+        self.gui.clear_data.clicked.connect(self.clear_all_data)
 
         self.gui.load_config.clicked.connect(self.reload_config)
         self.gui.showMaximized()
         self.gui.apply_stylesheet()
+
+
 
     def update_date(self):
         year = self.gui.year_val.text()
@@ -85,27 +85,18 @@ class DataVisualizer:
     def configure(self):
         """ Configures the currently selected experiment + dataset """
 
-        # Load the config
-        #self.reload_config()
-
-        # Set all experiments to normal state and highlight configured expt
-        # for item_no in range(self.gui.exp.count()):
-        #     self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
-        # self.gui.exp.currentItem().setBackground(QtGui.QBrush(QtGui.QColor('darkRed')))
-        # exp_name = self.gui.exp.currentItem().text()
-        # self.module = importlib.import_module(exp_name)
-        # self.module = importlib.reload(self.module)
-
         # Clear graph area and set up new or cleaned up dataset
-        for index in reversed(range(self.gui.graph_layout.count())):
-            try:
-                self.gui.graph_layout.itemAt(index).widget().deleteLater()
-            except AttributeError:
-                try:
-                    self.gui.graph_layout.itemAt(index).layout().deleteLater()
-                except AttributeError:
-                    pass
-        self.gui.windows = {}
+        # for index in reversed(range(self.gui.graph_layout.count())):
+        #     try:
+        #         self.gui.graph_layout.itemAt(index).widget().deleteLater()
+        #     except AttributeError:
+        #         try:
+        #             self.gui.graph_layout.itemAt(index).layout().deleteLater()
+        #         except AttributeError:
+        #             pass
+        # self.gui.windows = {}
+
+        self.create_graph()
 
         x_data_name =  self.gui.x_data.currentItem().text()
         y_data_name =  self.gui.y_data.currentItem().text()
@@ -121,58 +112,34 @@ class DataVisualizer:
             plot_method = "Standard 1D plot (no x-axis)"
 
         if plot_method == "Standard 1D plot (no x-axis)":
-            self.plot_1D(x_data, y_data, x_axis = False)
+            x, y = self.plot_1D(x_data, y_data, x_axis = False)
 
         if plot_method == "Standard 1D plot":
-            self.plot_1D(x_data, y_data, x_axis = True)
+            x, y = self.plot_1D(x_data, y_data, x_axis = True)
 
         if plot_method == "Thresholded 1D plot (no x-axis)":
-            self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = False)
+            x, y = self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = False)
 
         if plot_method == "Thresholded 1D plot":
-            self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = True)
+            x, y = self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = True)
         
         if plot_method == "Histogram":
-            self.plot_hist(y_data, thrsh=thrsh)
+            x, y = self.plot_hist(y_data, thrsh=thrsh)
 
         
-        # If we're not setting up a new measurement type, just clear the data
+        self.fitting_on = self.gui.fit_check.isChecked()
 
-        # We are reading in the required base-dataset by looking at the define_dataset() as defined in the experiment script.
-        # try:
-        #     classname = self.module.define_dataset()
-        # except AttributeError:
-        #     error_msg = "No 'define_dataset' method found in experiment script."
-        #     self.log.error("No 'define_dataset' method found in experiment script.")
-        #     return
-
-        # try:
-        #     self.dataset = getattr(datasets, classname)(
-        #         gui=self.gui,
-        #         log=self.log,
-        #         config=self.config
-        #     )
-        # except AttributeError:
-        #     error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
-        #     self.log.error(error_msg)
-        #     return
-
-        # # Run any pre-experiment configuration
-        # try:
-        #     self.module.configure(dataset=self.dataset, **self.clients)
-        # except AttributeError:
-        #     pass
-        # self.experiment = self.module.experiment
+        if self.fitting_on:
+            self.fit_method = self.gui.fit_method.currentItem().text()
+            self.fit_and_plot(x, y)
 
     def plot_1D(self, x=None, y=None, x_axis = False):
 
-        self.create_graph(None)
-
-        color_index = self.gui.graph_layout.count() - 1
+        self.choose_color_index()
 
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
-                color_index
+                self.current_color_index
             ])
         )
 
@@ -185,16 +152,16 @@ class DataVisualizer:
             self.curve.setData(x, data)
         else:
             self.curve.setData(data)
+
+        return x, data
   
     def plot_1D_thrsh(self, x=None, y=None, thrsh=0, x_axis = False):
 
-        self.create_graph(None)
-
-        color_index = self.gui.graph_layout.count() - 1
+        self.choose_color_index()
 
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
-                color_index
+                self.current_color_index
             ])
         )
 
@@ -208,16 +175,15 @@ class DataVisualizer:
         else:
             self.curve.setData(data)
 
+        return x, data
+
     def plot_hist(self, y=None, thrsh=0):
 
-        self.create_graph(None)
+        self.choose_color_index()
+        self.curve_l = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[self.current_color_index]), width=0.5)
 
-        
-        color_index_l = self.gui.graph_layout.count() - 1
-        self.curve_l = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index_l]), width=0.5)
-
-        color_index_h = self.gui.graph_layout.count()
-        self.curve_h = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index_h]), width=0.5)
+        self.choose_color_index()
+        self.curve_h = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[self.current_color_index]), width=0.5)
 
         self.graph.addItem(self.curve_l)
         self.graph.addItem(self.curve_h)
@@ -230,15 +196,33 @@ class DataVisualizer:
         self.curve_l.setOpts(x=x, height=(x<=thrsh)*data, width=0.5)
         self.curve_h.setOpts(x=x, height=(x>thrsh)*data, width=0.5)
 
-    def create_graph(self, graph, **kwargs):
+        return x, y
+
+    def choose_color_index(self):
+        self.current_color_index += 1
+        if self.current_color_index > (len(self.gui.COLOR_LIST) - 1):
+            self.current_color_index = 0
+        
+    def create_graph(self):
         """ Creates graph to plot on if it does not exist"""
 
-        if graph is None:
+        if self.graph is None:
             self.graph = self.gui.add_graph()
-        
-        # Reuse a PlotWidget if provided
-        else:
-            self.graph = graph
+
+    def clear_all_data(self):
+        for index in reversed(range(self.gui.graph_layout.count())):
+            try:
+                self.gui.graph_layout.itemAt(index).widget().deleteLater()
+            except AttributeError:
+                try:
+                    self.gui.graph_layout.itemAt(index).layout().deleteLater()
+                except AttributeError:
+                    pass
+        self.gui.windows = {}
+        self.graph = None
+
+    def fit_and_plot(self, x, y):
+        pass
 
     def save(self):
         """ Saves data """

@@ -586,7 +586,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="save">
+           <widget class="QPushButton" name="clear_data">
             <property name="maximumSize">
              <size>
               <width>150</width>
@@ -605,7 +605,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
 color: rgb(255, 255, 255);</string>
             </property>
             <property name="text">
-             <string>Save</string>
+             <string>Clear data</string>
             </property>
             <property name="checkable">
              <bool>false</bool>

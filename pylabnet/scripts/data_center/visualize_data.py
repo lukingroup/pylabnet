@@ -86,7 +86,7 @@ class DataVisualizer:
         """ Configures the currently selected experiment + dataset """
 
         # Load the config
-        self.reload_config()
+        #self.reload_config()
 
         # Set all experiments to normal state and highlight configured expt
         # for item_no in range(self.gui.exp.count()):
@@ -133,7 +133,7 @@ class DataVisualizer:
             self.plot_1D_thrsh(x_data, y_data, thrsh = thrsh, x_axis = True)
         
         if plot_method == "Histogram":
-            self.plot_hist(x_data, y_data)
+            self.plot_hist(y_data, thrsh=thrsh)
 
         
         # If we're not setting up a new measurement type, just clear the data
@@ -166,7 +166,7 @@ class DataVisualizer:
 
     def plot_1D(self, x=None, y=None, x_axis = False):
 
-        self.handle_new_window(None)
+        self.create_graph(None)
 
         color_index = self.gui.graph_layout.count() - 1
 
@@ -189,7 +189,7 @@ class DataVisualizer:
    
     def plot_1D_thrsh(self, x=None, y=None, thrsh=0, x_axis = False):
 
-        self.handle_new_window(None)
+        self.create_graph(None)
 
         color_index = self.gui.graph_layout.count() - 1
 
@@ -209,11 +209,30 @@ class DataVisualizer:
         else:
             self.curve.setData(data)
 
-    def plot_hist(self, x=None, y=None):
-        pass
+    def plot_hist(self, y=None, thrsh=0):
 
-    def handle_new_window(self, graph, **kwargs):
-        """ Handles visualizing and possibility of new popup windows """
+        self.create_graph(None)
+
+        
+        color_index_l = self.gui.graph_layout.count() - 1
+        self.curve_l = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index_l]), width=0.5)
+
+        color_index_h = self.gui.graph_layout.count()
+        self.curve_h = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index_h]), width=0.5)
+
+        self.graph.addItem(self.curve_l)
+        self.graph.addItem(self.curve_h)
+
+        BIN_NUMS = int(np.round(np.max(y)) + 1)
+
+        data, _ = np.histogram(y.flatten(), bins=BIN_NUMS, range=(0, BIN_NUMS-1))
+
+        x = np.arange(0, len(data))
+        self.curve_l.setOpts(x=x, height=(x<=thrsh)*data, width=0.5)
+        self.curve_h.setOpts(x=x, height=(x>thrsh)*data, width=0.5)
+
+    def create_graph(self, graph, **kwargs):
+        """ Creates graph to plot on if it does not exist"""
 
         if graph is None:
             self.graph = self.gui.add_graph()

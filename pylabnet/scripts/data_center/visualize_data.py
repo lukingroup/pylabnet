@@ -49,6 +49,9 @@ class DataVisualizer:
         self.gui.month_val.textChanged.connect(self.update_date)
         self.gui.day_val.textChanged.connect(self.update_date)
 
+        self.gui.x_data_searchbar.textChanged.connect(self.update_data_list)
+        self.gui.y_data_searchbar.textChanged.connect(self.update_data_list)
+
         self.gui.plot.clicked.connect(self.configure)
         self.gui.clear_data.clicked.connect(self.clear_all_data)
 
@@ -58,10 +61,15 @@ class DataVisualizer:
 
 
 
+
+
     def update_date(self):
         year = self.gui.year_val.text()
         month = self.gui.month_val.text()
         day = self.gui.day_val.text()
+
+        self.gui.y_data_searchbar.setText("")
+        self.gui.x_data_searchbar.setText("")
 
         self.data_path = self.bare_data_path + "\\" + year + "\\" + month + "\\" + day
 
@@ -76,11 +84,24 @@ class DataVisualizer:
 
         self.gui.y_data.clear()
         self.gui.x_data.clear()
+
+        x_search = self.gui.x_data_searchbar.text()
+        y_search = self.gui.y_data_searchbar.text()
+
         for filename in os.listdir(self.data_path):
             if filename.endswith('.txt'):
-                self.gui.x_data.addItem(filename[:-4])
-                self.gui.y_data.addItem(filename[:-4])
-        # self.gui.exp.itemClicked.connect(self.display_experiment)
+                
+                if x_search == "":
+                    self.gui.x_data.addItem(filename[:-4])
+                else:
+                    if x_search in filename:
+                        self.gui.x_data.addItem(filename[:-4])
+                
+                if y_search == "":
+                    self.gui.y_data.addItem(filename[:-4])
+                else:
+                    if y_search in filename:
+                        self.gui.y_data.addItem(filename[:-4])
 
     def configure(self):
         """ Configures the currently selected experiment + dataset """

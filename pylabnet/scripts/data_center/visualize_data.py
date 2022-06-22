@@ -10,6 +10,7 @@ import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
+from scipy.optimize import curve_fit
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
@@ -40,8 +41,9 @@ class DataVisualizer:
        
         self.graph = None
         self.current_color_index = 0
+        self.use_p0 = False
+        self.fitting_f = None
 
-        # sys.path.insert(1, self.data_path)
         self.update_date()
 
         # Configure button clicks
@@ -52,16 +54,14 @@ class DataVisualizer:
         self.gui.x_data_searchbar.textChanged.connect(self.update_data_list)
         self.gui.y_data_searchbar.textChanged.connect(self.update_data_list)
 
-        self.gui.plot.clicked.connect(self.configure)
+        self.gui.fit_method.itemClicked.connect(self.update_fit_method)
+
+        self.gui.plot.clicked.connect(self.plot_data)
         self.gui.clear_data.clicked.connect(self.clear_all_data)
 
         self.gui.load_config.clicked.connect(self.reload_config)
         self.gui.showMaximized()
         self.gui.apply_stylesheet()
-
-
-
-
 
     def update_date(self):
         year = self.gui.year_val.text()
@@ -103,19 +103,45 @@ class DataVisualizer:
                     if y_search in filename:
                         self.gui.y_data.addItem(filename[:-4])
 
-    def configure(self):
-        """ Configures the currently selected experiment + dataset """
+    def update_fit_method(self):
 
-        # Clear graph area and set up new or cleaned up dataset
-        # for index in reversed(range(self.gui.graph_layout.count())):
-        #     try:
-        #         self.gui.graph_layout.itemAt(index).widget().deleteLater()
-        #     except AttributeError:
-        #         try:
-        #             self.gui.graph_layout.itemAt(index).layout().deleteLater()
-        #         except AttributeError:
-        #             pass
-        # self.gui.windows = {}
+        fit_method = self.gui.fit_method.currentItem().text()
+        self.use_p0 = False
+
+        if fit_method == "Single Gaussian":
+            self.gui.p0_val.setText("freq,amplitude,width,offset")
+            self.fitting_f = single_gaussian
+        
+        if fit_method == "Double Gaussian":
+            self.gui.p0_val.setText("freq1,amplitude1,freq2,amplitude2,width,offset")
+            self.fitting_f = double_gaussian
+
+        if fit_method == "Quadruple Gaussian":
+            self.gui.p0_val.setText("freq1,amplitude1,freq2,amplitude2,freq3,amplitude3,freq4,amplitude4,width,offset")
+            self.fitting_f = quadruple_gaussian
+
+        if fit_method == "Sine":
+            self.gui.p0_val.setText("pi_time,amplitude,offset")
+            self.fitting_f = sine
+
+        if fit_method == "Quartic Sine (swap-swap)":
+            self.gui.p0_val.setText("pi_time,amplitude,offset")
+            self.fitting_f = quartic_sine
+
+        if fit_method == "Quadratic Decay":
+            self.gui.p0_val.setText("T2,amplitde,offset")
+            self.fitting_f = gaussian_decay
+        
+        if fit_method == "Linear Decay":
+            self.gui.p0_val.setText("T2,amplitde,offset")
+            self.fitting_f = linear_decay
+
+        if fit_method == "Free Power Decay":
+            self.gui.p0_val.setText("T2,amplitde,offset,alpha")
+            self.fitting_f = free_power_decay
+
+    def plot_data(self):
+        """ plots data """
 
         self.create_graph()
 
@@ -147,11 +173,7 @@ class DataVisualizer:
         if plot_method == "Histogram":
             x, y = self.plot_hist(y_data, thrsh=thrsh)
 
-        
-        self.fitting_on = self.gui.fit_check.isChecked()
-
-        if self.fitting_on:
-            self.fit_method = self.gui.fit_method.currentItem().text()
+        if self.gui.fit_check.isChecked() and self.fitting_f is not None:
             self.fit_and_plot(x, y)
 
     def plot_1D(self, x=None, y=None, x_axis = False):
@@ -243,21 +265,25 @@ class DataVisualizer:
         self.graph = None
 
     def fit_and_plot(self, x, y):
-        pass
 
-    def save(self):
-        """ Saves data """
+        if self.use_p0:
+            p0_str = self.gui.p0_val.text()
+            p0 = [float(entry) for entry in p0_str.split(',')]
 
-        self.log.update_metadata(notes=self.gui.notes.toPlainText())
-        filename = self.gui.save_name.text()
-        directory = self.config['save_path']
-        self.dataset.save(
-            filename=filename,
-            directory=directory,
-            date_dir=True
-        )
-        save_metadata(self.log, filename, directory, True)
-        self.log.info('Data saved')
+            popt, _ = curve_fit(self.fitting_f, x, y, p0=p0)
+        else:
+            popt, _ = curve_fit(self.fitting_f, x, y)
+
+        x_fit = np.linspace(np.min(x),np.max(x), 1000)
+        self.plot_1D(x=x_fit, y=self.fitting_f(x_fit, *popt), x_axis = True)
+
+        popt_string = ""
+        for i in range(len(popt)):
+            popt_string += f"{popt[i]:.4e}" + ","
+        self.gui.p0_val.setText(popt_string)
+
+    def p0_changed(self):
+        self.use_p0 = True
 
     def reload_config(self):
         """ Loads a new config file """
@@ -268,6 +294,29 @@ class DataVisualizer:
             logger=self.log
         )
 
+def single_gaussian(f, f0, a, w, offset):
+    return a*np.exp(-((f-f0)/w)**2) + offset
+
+def double_gaussian(f, f0, a0, f1, a1, w, offset):
+    return a0*np.exp(-((f-f0)/w)**2) + a1*np.exp(-((f-f1)/w)**2) + offset
+
+def quadruple_gaussian(f, f0, a0, f1, a1, f2, a2, f3, a3, w, offset):
+    return a0*np.exp(-((f-f0)/w)**2) + a1*np.exp(-((f-f1)/w)**2) + a2*np.exp(-((f-f2)/w)**2) + a3*np.exp(-((f-f3)/w)**2) + offset
+
+def sine(t, pi_t, a, offset):
+    return a*np.sin(np.pi/2 * t / pi_t)**2 + offset
+
+def quartic_sine(t, pi_t, a, offset):
+    return a*np.sin(np.pi/2 * t / pi_t)**4 + offset
+
+def gaussian_decay(t, T2, a, offset):
+    return a*np.exp(-(t/T2)**2) + offset
+
+def linear_decay(t, T2, a, offset):
+    return a*np.exp(-t/T2) + offset
+
+def free_power_decay(t, T2, a, offset, alpha):
+    return a*np.exp(-(t/T2)**alpha) + offset
 
 def main():
     control = DataVisualizer(config='preselected_histogram')

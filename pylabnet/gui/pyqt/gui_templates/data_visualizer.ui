@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Data Taker</string>
+   <string>Data Visualizer</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -208,7 +208,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <layout class="QVBoxLayout" name="graph_layout"/>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0">
+       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetMinimumSize</enum>
         </property>
@@ -557,6 +557,11 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           </item>
           <item>
            <property name="text">
+            <string>Quartic Sine (swap-swap)</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
             <string>Quadratic Decay</string>
            </property>
           </item>
@@ -571,6 +576,9 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            </property>
           </item>
          </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="p0_val"/>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_7">

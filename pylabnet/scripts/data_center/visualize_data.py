@@ -55,6 +55,7 @@ class DataVisualizer:
         self.gui.y_data_searchbar.textChanged.connect(self.update_data_list)
 
         self.gui.fit_method.itemClicked.connect(self.update_fit_method)
+        self.gui.p0_val.textChanged.connect(self.p0_changed)
 
         self.gui.plot.clicked.connect(self.plot_data)
         self.gui.clear_data.clicked.connect(self.clear_all_data)
@@ -106,50 +107,70 @@ class DataVisualizer:
     def update_fit_method(self):
 
         fit_method = self.gui.fit_method.currentItem().text()
-        self.use_p0 = False
 
         if fit_method == "Single Gaussian":
+            self.gui.fit_param.setText("freq,amplitude,width,offset")
             self.gui.p0_val.setText("freq,amplitude,width,offset")
             self.fitting_f = single_gaussian
         
         if fit_method == "Double Gaussian":
+            self.gui.fit_param.setText("freq1,amplitude1,freq2,amplitude2,width,offset")
             self.gui.p0_val.setText("freq1,amplitude1,freq2,amplitude2,width,offset")
             self.fitting_f = double_gaussian
 
         if fit_method == "Quadruple Gaussian":
+            self.gui.fit_param.setText("freq1,amplitude1,freq2,amplitude2,freq3,amplitude3,freq4,amplitude4,width,offset")
             self.gui.p0_val.setText("freq1,amplitude1,freq2,amplitude2,freq3,amplitude3,freq4,amplitude4,width,offset")
             self.fitting_f = quadruple_gaussian
 
         if fit_method == "Sine":
+            self.gui.fit_param.setText("pi_time,amplitude,offset")
             self.gui.p0_val.setText("pi_time,amplitude,offset")
             self.fitting_f = sine
 
         if fit_method == "Quartic Sine (swap-swap)":
+            self.gui.fit_param.setText("pi_time,amplitude,offset")
             self.gui.p0_val.setText("pi_time,amplitude,offset")
             self.fitting_f = quartic_sine
 
         if fit_method == "Quadratic Decay":
+            self.gui.fit_param.setText("T2,amplitde,offset")
             self.gui.p0_val.setText("T2,amplitde,offset")
             self.fitting_f = gaussian_decay
         
         if fit_method == "Linear Decay":
+            self.gui.fit_param.setText("T2,amplitde,offset")
             self.gui.p0_val.setText("T2,amplitde,offset")
             self.fitting_f = linear_decay
 
         if fit_method == "Free Power Decay":
+            self.gui.fit_param.setText("T2,amplitde,offset,alpha")
             self.gui.p0_val.setText("T2,amplitde,offset,alpha")
             self.fitting_f = free_power_decay
+
+        self.use_p0 = False
+
+    def p0_changed(self):
+        self.use_p0 = True
 
     def plot_data(self):
         """ plots data """
 
         self.create_graph()
 
-        x_data_name =  self.gui.x_data.currentItem().text()
-        y_data_name =  self.gui.y_data.currentItem().text()
+        try:
+            x_data_name =  self.gui.x_data.currentItem().text()
+            x_data = np.loadtxt(self.data_path + "\\" + x_data_name + ".txt")
+        except:
+            self.gui.warning_msg.setText("WARNING: no x-data selected")
+            x_data = []
 
-        x_data = np.loadtxt(self.data_path + "\\" + x_data_name + ".txt")
-        y_data = np.loadtxt(self.data_path + "\\" + y_data_name + ".txt")
+        try:
+            y_data_name =  self.gui.y_data.currentItem().text()
+            y_data = np.loadtxt(self.data_path + "\\" + y_data_name + ".txt")
+        except:
+            self.gui.warning_msg.setText("WARNING: no y-data selected")
+            y_data =[]
 
         thrsh = self.gui.thrsh_val.value()
 
@@ -183,7 +204,8 @@ class DataVisualizer:
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 self.current_color_index
-            ])
+            ],
+            width=2)
         )
 
         if np.shape(np.shape(y)) == (2,):
@@ -192,7 +214,10 @@ class DataVisualizer:
             data = y
 
         if x_axis:
-            self.curve.setData(x, data)
+            if len(x) == len(data):
+                self.curve.setData(x, data)
+            else:
+                self.gui.warning_msg.setText("WARNING: x-data and y-data not same length")
         else:
             self.curve.setData(data)
 
@@ -205,7 +230,8 @@ class DataVisualizer:
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 self.current_color_index
-            ])
+            ],
+            width=2)
         )
 
         if np.shape(np.shape(y)) == (2,):
@@ -214,7 +240,10 @@ class DataVisualizer:
             data = 1*(y>thrsh)
 
         if x_axis:
-            self.curve.setData(x, data)
+            if len(x) == len(data):
+                self.curve.setData(x, data)
+            else:
+                self.gui.warning_msg.setText("WARNING: x-data and y-data not same length")
         else:
             self.curve.setData(data)
 
@@ -241,6 +270,25 @@ class DataVisualizer:
 
         return x, y
 
+    def fit_and_plot(self, x, y):
+
+        if self.use_p0:
+            p0_str = self.gui.p0_val.text()
+            p0 = [float(entry) for entry in p0_str.split(',')]
+
+            popt, _ = curve_fit(self.fitting_f, x, y, p0=p0)
+        else:
+            popt, _ = curve_fit(self.fitting_f, x, y)
+
+        x_fit = np.linspace(np.min(x),np.max(x), 1000)
+        self.plot_1D(x=x_fit, y=self.fitting_f(x_fit, *popt), x_axis = True)
+
+        popt_string = ""
+        for i in range(len(popt)):
+            popt_string += f"{popt[i]:.4e}" + ","
+        popt_string = popt_string[:-1]
+        self.gui.p0_val.setText(popt_string)
+
     def choose_color_index(self):
         self.current_color_index += 1
         if self.current_color_index > (len(self.gui.COLOR_LIST) - 1):
@@ -264,27 +312,6 @@ class DataVisualizer:
         self.gui.windows = {}
         self.graph = None
 
-    def fit_and_plot(self, x, y):
-
-        if self.use_p0:
-            p0_str = self.gui.p0_val.text()
-            p0 = [float(entry) for entry in p0_str.split(',')]
-
-            popt, _ = curve_fit(self.fitting_f, x, y, p0=p0)
-        else:
-            popt, _ = curve_fit(self.fitting_f, x, y)
-
-        x_fit = np.linspace(np.min(x),np.max(x), 1000)
-        self.plot_1D(x=x_fit, y=self.fitting_f(x_fit, *popt), x_axis = True)
-
-        popt_string = ""
-        for i in range(len(popt)):
-            popt_string += f"{popt[i]:.4e}" + ","
-        self.gui.p0_val.setText(popt_string)
-
-    def p0_changed(self):
-        self.use_p0 = True
-
     def reload_config(self):
         """ Loads a new config file """
 
@@ -293,6 +320,11 @@ class DataVisualizer:
             config=self.gui.config.text(),
             logger=self.log
         )
+
+
+
+
+
 
 def single_gaussian(f, f0, a, w, offset):
     return a*np.exp(-((f-f0)/w)**2) + offset

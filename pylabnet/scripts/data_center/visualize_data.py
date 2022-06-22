@@ -185,8 +185,7 @@ class DataVisualizer:
             self.curve.setData(x, data)
         else:
             self.curve.setData(data)
-
-   
+  
     def plot_1D_thrsh(self, x=None, y=None, thrsh=0, x_axis = False):
 
         self.create_graph(None)
@@ -236,89 +235,10 @@ class DataVisualizer:
 
         if graph is None:
             self.graph = self.gui.add_graph()
-            #self.graph.getPlotItem().setTitle(self.name)
         
         # Reuse a PlotWidget if provided
         else:
             self.graph = graph
-        
-    def run(self):
-        """ Runs/stops the experiment """
-
-        # Run experiment
-        if self.gui.run.text() == 'Run':
-            self.gui.run.setStyleSheet('background-color: red')
-            self.gui.run.setText('Stop')
-            self.log.info('Experiment started')
-
-            # Run update thread
-            self.update_thread = UpdateThread(
-                autosave=self.gui.autosave.isChecked(),
-                save_time=self.gui.autosave_interval.value()
-            )
-            self.update_thread.data_updated.connect(self.dataset.update)
-            self.update_thread.save_flag.connect(self.save)
-            self.gui.autosave.toggled.connect(self.update_thread.update_autosave)
-            self.gui.autosave_interval.valueChanged.connect(self.update_thread.update_autosave_interval)
-
-            '''
-            # Step 2: Create a QThread object
-            self.thread = QThread()
-            # Step 3: Create a worker object
-            self.worker = Worker()
-            # Step 4: Move worker to the thread
-            self.worker.moveToThread(self.thread)
-            # Step 5: Connect signals and slots
-            self.thread.started.connect(self.worker.run)
-            self.worker.finished.connect(self.thread.quit)
-            self.worker.finished.connect(self.worker.deleteLater)
-            self.thread.finished.connect(self.thread.deleteLater)
-            self.worker.progress.connect(self.reportProgress)
-            # Step 6: Start the thread
-            self.thread.start()
-
-            # Final resets
-            self.longRunningBtn.setEnabled(False)
-            self.thread.finished.connect(
-                lambda: self.longRunningBtn.setEnabled(True)
-            )
-            self.thread.finished.connect(
-                lambda: self.stepLabel.setText("Long-Running Step: 0")
-            )
-            '''
-
-            self.experiment_thread = ExperimentThread(
-                self.experiment,
-                dataset=self.dataset,
-                gui=self.gui,
-                **self.clients
-            )
-
-            self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
-            self.experiment_thread.finished.connect(self.stop)
-            self.log.update_metadata(
-                exp_start_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
-            )
-
-        # Stop experiment
-        else:
-            self.experiment_thread.running = False
-
-    def stop(self):
-        """ Stops the experiment"""
-
-        self.gui.run.setStyleSheet('background-color: green')
-        self.gui.run.setText('Run')
-        self.log.info('Experiment stopped')
-        self.update_thread.running = False
-
-        self.log.update_metadata(
-            exp_stop_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
-        )
-
-        # Autosave if relevant
-        if self.gui.autosave.isChecked():
-            self.save()
 
     def save(self):
         """ Saves data """
@@ -342,68 +262,6 @@ class DataVisualizer:
             config=self.gui.config.text(),
             logger=self.log
         )
-
-
-class ExperimentThread(QtCore.QThread):
-    """ Thread that simply runs the experiment repeatedly """
-
-    # Flag to monitor whether experiment alarm goes off
-    status_flag = QtCore.pyqtSignal(str)
-
-    def __init__(self, experiment, **params):
-        self.experiment = experiment
-        self.params = params
-        self.running = True
-        super().__init__()
-        self.start()
-
-    def run(self):
-        self.params['iter_num'] = 0
-        while self.running:
-            self.experiment(
-                thread=self,
-                status_flag=self.status_flag,
-                **self.params)
-            self.params['iter_num'] += 1
-
-
-class UpdateThread(QtCore.QThread):
-    """ Thread that continuously signals GUI to update data """
-
-    data_updated = QtCore.pyqtSignal()
-    save_flag = QtCore.pyqtSignal()
-
-    def __init__(self, **kwargs):
-        self.running = True
-        self.autosave = kwargs['autosave']
-        self.save_time = kwargs['save_time']
-        super().__init__()
-        self.start()
-
-    def update_autosave(self, status: bool):
-        """ Updates whether or not to autosave
-
-        :param status: (bool) whether or not to autosave
-        """
-
-        self.autosave = status
-
-    def update_autosave_interval(self, interval: int):
-        """ Updates autosave interval
-
-        :param interval: (int) duration in seconds for autosave
-        """
-
-        self.save_time = interval
-
-    def run(self):
-        last_save = time.time()
-        while self.running:
-            self.data_updated.emit()
-            if self.autosave and np.abs(time.time() - last_save) > self.save_time:
-                self.save_flag.emit()
-                last_save = time.time()
-            self.msleep(REFRESH_RATE)
 
 
 def main():

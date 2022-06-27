@@ -1,19 +1,24 @@
+from numpy.lib.function_base import kaiser
 import pyqtgraph as pg
 import numpy as np
 import copy
 import time
+import datetime
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist
+from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
+from pylabnet.utils.confluence_handler.confluence_handler import Confluence_Handler
+
+import sys, json
 
 
 class Dataset():
 
     def __init__(self, gui: Window, log: LogClient = None, data=None,
-                 x=None, graph=None, name=None, dont_clear=False, **kwargs):
+                 x=None, graph=None, name=None, dont_clear=False, enable_confluence=True, **kwargs):
         """ Instantiates an empty generic dataset
 
         :param gui: (Window) GUI window for data graphing
@@ -21,6 +26,7 @@ class Dataset():
         :param data: initial data to set
         :param x: x axis
         :param graph: (pg.PlotWidget) graph to use
+        :param confluence, instances of confluence_handler class - handle confluence things.
         """
 
         self.log = LogHandler(log)
@@ -28,7 +34,12 @@ class Dataset():
             self.config = kwargs['config']
         else:
             self.config = {}
-        self.metadata = self.log.get_metadata()
+        
+        if(log is None):
+            self.metadata = None
+        else:
+            self.metadata = self.log.get_metadata()
+
         if name is None:
             self.name = self.__class__.__name__
         else:
@@ -44,12 +55,30 @@ class Dataset():
         # Flag indicating whether data should be
         self.dont_clear = dont_clear
 
+        # Confluence handler and its button
+        self.app = QtWidgets.QApplication(sys.argv)
+        self.confluence_handler = None
+
+        self.enable_confluence = enable_confluence
+
+        if(log == None):
+            self.enable_confluence = False
+
         # Configure data visualization
         self.gui = gui
         self.visualize(graph, **kwargs)
 
         # Property which defines whether dataset is important, i.e. should it be saved in a separate dataset
         self.is_important = False
+
+        return
+
+    def update_setting(self):
+        self.confluence_handler.confluence_popup.Popup_Update()
+
+    def upload_pic(self):
+        self.confluence_handler.confluence_popup.Popup_Upload()
+        return
 
     def add_child(self, name, mapping=None, data_type=None,
                   new_plot=True, dont_clear=False, **kwargs):
@@ -69,13 +98,14 @@ class Dataset():
 
         if data_type is None:
             data_type = self.__class__
-
+        
         self.children[name] = data_type(
             gui=self.gui,
             data=self.data,
             graph=graph,
             name=name,
             dont_clear=dont_clear,
+            log=self.log,
             **kwargs
         )
 
@@ -122,12 +152,12 @@ class Dataset():
                 color_index
             ])
         )
-        self.update(**kwargs)
+        # self.update(**kwargs)
 
     def clear_data(self):
         self.data = None
         self.curve.setData([])
-
+    #test
     # Note: This recursive code could potentially run into infinite iteration problem.
     def clear_all_data(self):
 
@@ -257,10 +287,8 @@ class Dataset():
         """ Handles visualizing and possibility of new popup windows """
 
         if graph is None:
-
             # If we want to use a separate window
             if 'window' in kwargs:
-
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
@@ -269,18 +297,34 @@ class Dataset():
                     else:
                         window_title = 'Graph Holder'
 
-                    self.gui.windows[kwargs['window']] = GraphPopup(
-                        window_title=window_title, size=(700, 300)
-                    )
+                    # self.gui.windows[kwargs['window']] = GraphPopup(
+                    #     window_title=window_title, size=(700, 300))
 
-                self.graph = pg.PlotWidget()
+                    if(self.enable_confluence):
+                        self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
+                            app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                        )
+                    else:
+                        self.gui.windows[kwargs['window']] = GraphPopup(
+                            window_title=window_title, size=(700, 300)
+                        )
+
+                if('datetime_axis' in kwargs and kwargs['datetime_axis']):
+                    date_axis = TimeAxisItem(orientation='bottom')
+                    self.graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+                else:
+                    self.graph = pg.PlotWidget()
+
                 self.gui.windows[kwargs['window']].graph_layout.addWidget(
                     self.graph
                 )
 
             # Otherwise, add a graph to the main layout
             else:
-                self.graph = self.gui.add_graph()
+                if('datetime_axis' in kwargs and kwargs['datetime_axis']):
+                    self.graph = self.gui.add_graph(datetime_axis=True)
+                else:
+                    self.graph = self.gui.add_graph()
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -530,6 +574,45 @@ class InfiniteRollingLine(RollingLine):
                     child.update(**kwargs)
             else:
                 super().update(**kwargs)
+
+class time_trace_monitor(RollingLine):
+    def __init__(self, *args, **kwargs):
+        if('data_length' not in kwargs):
+            kwargs['data_length'] = "just to bypass the popup window and the datalength will be set up later"
+        kwargs['datetime_axis'] = True
+        super().__init__(*args, **kwargs)
+
+    def set_data(self, data):
+        """ Updates data
+
+        :param data: (scalar) data to add
+        """
+        dt_timestamp = time.time()
+
+        if self.data is None:
+            self.data = np.array([data])
+
+        else:
+            if len(self.data) >= self.data_length:
+                self.data = np.append(self.data, data)[-1*self.data_length:]
+            else:
+                self.data = np.append(self.data, data)
+
+        if self.x is None:
+            self.x = np.array([dt_timestamp])
+
+        else:
+            if len(self.x) >= self.data_length:
+                self.x = np.append(self.x, dt_timestamp)[-1*self.data_length:]
+            else:
+                self.x = np.append(self.x, dt_timestamp)
+
+
+        for name, child in self.children.items():
+            # If we need to process the child data, do it
+            if name in self.mapping:
+                self.mapping[name](self, prev_dataset=child)
+        
 
 
 class ManualOpenLoopScan(Dataset):

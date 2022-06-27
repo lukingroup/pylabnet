@@ -59,7 +59,7 @@ nest-asyncio==1.5.1
 netifaces==0.10.9
 nidaqmx==0.5.7
 nodeenv==1.6.0
-notebook==6.2.0
+notebook==6.4.12
 numpy==1.20.1
 oauthlib==3.1.1
 packaging==20.9

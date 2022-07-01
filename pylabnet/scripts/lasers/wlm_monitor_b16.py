@@ -37,6 +37,10 @@ class WlmMonitor:
             gui = 'wavemeter_monitor_3lasers'
 
         self.wlm_clients = wlm_clients
+        self.ao_clients = ao_clients
+        self.display_pts = display_pts
+        self.threshold = threshold
+        self.log = LogHandler(logger_client)
         laser_num = 3 if three_lasers else 2
 
         if type(self.wlm_clients) != list:
@@ -46,10 +50,11 @@ class WlmMonitor:
         if len(self.wlm_clients) != laser_num:
             self.log.error("Number of wavemeter clients did not match number of lasers!")
 
-        self.ao_clients = ao_clients
-        self.display_pts = display_pts
-        self.threshold = threshold
-        self.log = LogHandler(logger_client)
+
+        # HACK: Don't update too often
+        # self.last_update_time = time.time()
+        # self.cached_frequencies = dict()
+        # HACK: End
 
         # Instantiate gui
         self.gui = Window(
@@ -276,9 +281,14 @@ class WlmMonitor:
         Should only be called in the beginning of channel use to assign physical GUI widgets
         """
 
+        wavelength = self.wlm_clients[index].get_wavelength(channel.number)\
+
+        # HACK
+        # self.cached_frequencies[index] = wavelength
+
         # Get wavelength and initialize data arrays
         channel.initialize(
-            wavelength=self.wlm_clients[index].get_wavelength(channel.number),
+            wavelength=wavelength,
             display_pts=self.display_pts
         )
 
@@ -352,7 +362,15 @@ class WlmMonitor:
 
         Called continuously inside run() method to refresh WLM data and output on GUI
         """
-        # time.sleep(0.5)
+
+        # HACK: don't query device too often, just repeat last data
+        # t = time.time()
+        # LOCK_EVERY = 0.2
+        # if (t - self.last_update_time) < LOCK_EVERY:
+        #     query_wavelength = True
+        # else:
+        #     query_wavelength = True
+        # HACK: END
 
         for index, channel in enumerate(self.channels):
 
@@ -361,8 +379,21 @@ class WlmMonitor:
                 self.widgets['sp'][index].setValue(channel.setpoint_override)
                 channel.setpoint_override = 0
 
+            # HACK: can query device 0 as much as we like
+            # if index == 0:
+            wavelength = self.wlm_clients[index].get_wavelength(channel.number)
+            # HACK: don't query device index 1 too often, just repeat last data
+            # else:
+            #     if query_wavelength:
+            #         wavelength = self.wlm_clients[index].get_wavelength(channel.number)
+            #         self.cached_frequencies[index] = wavelength
+            #         self.last_update_time = t
+            #     else:
+            #         wavelength = self.cached_frequencies[index]
+            # HACK: END
+
             # Update data with the new wavelength
-            channel.update(self.wlm_clients[index].get_wavelength(channel.number))
+            channel.update(wavelength)
 
             # Update frequency
             self.widgets['curve'][4 * index].setData(channel.data)

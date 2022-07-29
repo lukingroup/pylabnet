@@ -16,14 +16,14 @@ import numpy as np
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, LaunchControl_Confluence_Handler
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
     remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
     get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
-from pylabnet.utils.confluence_handler.confluence_handler import LaunchControl_Confluence_Handler
+#from pylabnet.utils.confluence_handler.confluence_handler import LaunchControl_Confluence_Handler
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)

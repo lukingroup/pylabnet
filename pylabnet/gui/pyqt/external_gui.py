@@ -1692,35 +1692,12 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         if not gui_template.endswith(".ui"):
             gui_template += ".ui"
 
-        # Find path to GUI
-        # Currently assumes all templates are in the directory given by the self._gui_directory attribute
-
-        # self._ui = os.path.join(
-        #     os.path.dirname(os.path.abspath(__file__ )),
-        #     "..\\..\\",
-        #     self._gui_directory,
-        #     gui_template
-        # )
 
         self._ui = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             self._gui_directory,
             gui_template
         )
-
-        # os_string = get_os()
-        # if os_string == 'Windows':
-        #     pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
-        #     # pyqtpath = os.path.abspath("pylabnet\\gui\\pyqt")
-
-        # elif os_string == "Linux":
-        #     pyqtpath = os.path.abspath("./pylabnet/gui/pyqt")
-
-        # self._ui = os.path.join(
-        #     (pyqtpath),
-        #     self._gui_directory,
-        #     gui_template
-        # )
 
 
         # Load UI
@@ -1866,7 +1843,6 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
     def __init__(self, controller, app, template='Confluence_info_from_LaunchControl'):
         # Initialize parent class QtWidgets.QDialog
         super(LaunchControl_Confluence_Windows, self).__init__()
-        #super().__init__(app, gui_template=template, run=False) #, enable_confluence=False)
 
         # handle the case that disables LaunchControl_Confluence_Windows
         self.enable = True
@@ -2041,30 +2017,6 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         # Check for proper formatting
         if not gui_template.endswith(".ui"):
             gui_template += ".ui"
-
-        # Find path to GUI
-        # Currently assumes all templates are in the directory given by the self._gui_directory attribute
-
-        # self._ui = os.path.join(
-        #     os.path.dirname(os.path.abspath(__file__ )),
-        #     '_gui_directory',
-        #     gui_template
-        # )
-
-        # os_string = get_os()
-        # if os_string == 'Windows':
-        #     pyqtpath = os.path.abspath("..\\..\\pylabnet\\gui\\pyqt")
-        #     # pyqtpath = os.path.abspath("pylabnet\\gui\\pyqt")
-
-        # elif os_string == "Linux":
-        #     pyqtpath = os.path.abspath("./pylabnet/gui/pyqt")
-
-        # self._ui = os.path.join(
-        #     # (os.path.abspath("pylabnet\\gui\\pyqt")),
-        #     (pyqtpath),
-        #     self._gui_directory,
-        #     gui_template
-        # )
 
         self._ui = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),

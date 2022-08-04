@@ -16,7 +16,12 @@ from datetime import datetime
 from pylabnet.network.core.generic_server import GenericServer
 import pyqtgraph as pg
 import pyqtgraph.exporters
-#import netifaces as ni
+
+
+
+class TimeAxisItem(pg.AxisItem):
+    def tickStrings(self, values, scale, spacing):
+        return [datetime.fromtimestamp(value) for value in values]
 
 
 def str_to_float(in_val):
@@ -591,6 +596,36 @@ def get_gui_widgets(gui, **kwargs):
 
     return widgets
 
+def get_gui_widgets_dummy(gui, **kwargs):
+    """ Returns the GUI widget objects specified in kwargs
+
+    :param gui: (Window) main window gui object containing other widgets
+    :param kwargs: keyword arguments with argument name being the name
+        of the widget (str, widget_name) and argument value an integer specifying the
+        number of copies of that widget
+
+        For any number of widget copy, assumes the name is assigned as
+        widget_name_1, widget_name_2, etc.
+
+    :return: (dict) dictionary with keywords as widget name and values
+        as either individual widgets or list of widgets in case of multiple
+        similarly named widgets
+    """
+
+    widgets = dict()
+    for widget_name, widget_number in kwargs.items():
+
+        # Check if it is multiple named widgets
+        widget_list = []
+        for widget_index in range(widget_number):
+            widget_list.append(getattr(
+                gui,
+                f'{widget_name}_{widget_index+1}'
+            ))
+        widgets[widget_name] = widget_list
+
+    return widgets
+
 
 def get_legend_from_graphics_view(legend_widget: pg.GraphicsView):
     """ Configures and returns a legend widget given a GraphicsView
@@ -986,7 +1021,7 @@ def set_graph_background(widget):
 
     :param widget: base graph or legend widget
     """
-
+    
     try:
         widget.getViewBox().setBackgroundColor('#19232D')
 

@@ -19,7 +19,7 @@ from pylabnet.scripts.data_center import datasets
 REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
 
 
-class DataTaker:
+class Dummy_DataTaker:
 
     def __init__(self, logger=None, client_tuples=None, config=None, config_name=None):
 
@@ -65,7 +65,6 @@ class DataTaker:
                 client_config=client_config,
                 logger=self.log
             )
-
             if (client == None):
                 self.missing_clients[f"{client_type}_{client_config}"] = [client_type, client_config]
             else:
@@ -80,7 +79,7 @@ class DataTaker:
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setForeground(Qt.gray)
             self.gui.clients.addItem(client_item)
-            self.log.error("Datataker missing client: " + client_name)
+            self.log.error("Dummy Datataker missing client: " + client_name)
 
         # Configure button clicks
         self.gui.configure.clicked.connect(self.configure)
@@ -231,43 +230,22 @@ class DataTaker:
             )
             '''
 
-            # self.experiment_thread = ExperimentThread(
-            #     self.experiment,
-            #     dataset=self.dataset,
-            #     gui=self.gui,
-            #     **self.clients
-            # )
-
-            #
-            self.experiment_thread = QtCore.QThread()
-            self.experiment_worker = ExperimentWorker(
+            self.experiment_thread = ExperimentThread(
                 self.experiment,
                 dataset=self.dataset,
                 gui=self.gui,
                 **self.clients
             )
-            self.experiment_worker.moveToThread(self.experiment_thread)
-            self.experiment_thread.started.connect(self.experiment_worker.run)
-            self.experiment_worker.finished.connect(self.experiment_thread.quit)
+
+            self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
             self.experiment_thread.finished.connect(self.stop)
-            self.experiment_worker.finished.connect(self.experiment_worker.deleteLater)
-            self.experiment_thread.finished.connect(self.experiment_thread.deleteLater)
-            self.experiment_worker.status_flag.connect(self.dataset.interpret_status)
-
-            self.experiment_thread.start()
-            #
-
-            # self.experiment_thread.status_flag.connect(self.dataset.interpret_status)
-            # self.experiment_thread.finished.connect(self.stop)
             self.log.update_metadata(
                 exp_start_time=datetime.now().strftime('%d/%m/%Y %H:%M:%S:%f')
             )
 
         # Stop experiment
         else:
-            # self.experiment_thread.running = False
-            self.experiment_worker.running = False
-
+            self.experiment_thread.running = False
 
     def stop(self):
         """ Stops the experiment"""
@@ -331,32 +309,6 @@ class ExperimentThread(QtCore.QThread):
                 **self.params)
             self.params['iter_num'] += 1
 
-class ExperimentWorker(QtCore.QObject):
-    """ Worker for Thread that simply runs the experiment repeatedly """
-
-    # Flag to monitor whether experiment alarm goes off
-    status_flag = QtCore.pyqtSignal(str)
-    finished = QtCore.pyqtSignal()
-
-    def __init__(self, experiment, **params):
-        self.experiment = experiment
-        self.params = params
-        self.running = True
-        super().__init__()
-        # self.start()
-
-    def run(self):
-        self.params['iter_num'] = 0
-        while self.running:
-            self.experiment(
-                thread=self,
-                status_flag=self.status_flag,
-                **self.params)
-            self.params['iter_num'] += 1
-
-        self.finished.emit()
-        return
-
 
 class UpdateThread(QtCore.QThread):
     """ Thread that continuously signals GUI to update data """
@@ -398,7 +350,7 @@ class UpdateThread(QtCore.QThread):
 
 
 def main():
-    control = DataTaker(config='preselected_histogram')
+    control = Dummy_DataTaker(config='preselected_histogram')
     control.gui.app.exec_()
 
 
@@ -411,7 +363,7 @@ def launch(**kwargs):
     )
 
     # Instantiate Monitor script
-    control = DataTaker(
+    control = Dummy_DataTaker(
         logger=kwargs['logger'],
         client_tuples=kwargs['clients'],
         config=config,

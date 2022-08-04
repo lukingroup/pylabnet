@@ -15,7 +15,8 @@ import re
 # Room temperature limits as cautions default limit.
 DEFAULT_LIMITS = {
     "freq_lim": 10000,
-    "step_voltage_lim": 60
+    "step_voltage_lim": 60,
+    "offset_voltage_limits": 2
 }
 
 
@@ -57,6 +58,7 @@ class ANC300:
         self.lastcommand = ""
         self.freq_lim = limits["freq_lim"]
         self.step_voltage_lim = limits["step_voltage_lim"]
+        self.offset_voltage_limits = limits["offset_voltage_limits"]
 
         # Instantiate Telnet Connection
         self.connection = Telnet(host, port)
@@ -198,7 +200,7 @@ class ANC300:
         """ Set mode of controller
         :param channel: (int) index of channel from 1 to self.num_ch
 
-        :param mode: String indicating mode, which can be gnd (grounded), cap,
+        :param mode: String indicating mode, which can be gnd (grounded), cap,off
         (capacitance measurement), and stp (Step mode)
         """
         self._write(f"setm {str(channel)} {str(mode)}")
@@ -270,6 +272,38 @@ class ANC300:
 
         self._write(f"setf {str(channel)} {str(freq)}")
         self.log.info(f"Change step frequency of channel {channel} to {freq} Hz.")
+
+    @check_channel
+    def set_offset_voltage(self, channel, voltage=1):
+        """ Sets the offset voltage to the piezo
+
+        :param channel: (int) channel index from 1 to self.num_ch
+        :param voltage: (float) voltage to set from 0 to 150 V
+        """
+
+        if not (0 <= voltage <= self.offset_voltage_limits):
+            self.log.error(f"Offset voltage has to be between 0 V and {self.offset_voltage_limits} V")
+            return
+
+        # Set into offset mode
+        self._set_mode(channel, 'off')
+
+        self._write(f"seta {str(channel)} {str(voltage)}")
+        self.log.info(f"Offset voltage of {channel} set to {voltage} V.")
+
+    @check_channel
+    def get_offset_voltage(self, channel):
+        """ Reads the offset voltage to the piezo
+
+        :param channel: (int) channel index from 1 to self.num_ch
+        """
+
+        # Set into offset mode
+        self._set_mode(channel, 'off')
+
+        voltage = float(self._extract_value(self._write(f"geta {str(channel)}")))
+        self.log.info(f"Offset voltage measured on chanel {channel}: {voltage} V.")
+        return voltage
 
     @check_channel
     def n_steps(self, channel, n=1):

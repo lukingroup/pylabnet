@@ -26,6 +26,10 @@ MATCHING_DICT = {
 GREY_BUTTON_STYLESHEET = 'background-color:#54687A'
 
 
+# Value to set DC voltage to after every step
+MIDVOLTAGE = 50
+
+
 def to_attocube_channel(mcs_channel):
 
     if not mcs_channel in ATTOCUBE_CHANNELS:
@@ -42,12 +46,12 @@ class Controller:
         step_left=NUM_CHANNELS, step_right=NUM_CHANNELS, walk_left=NUM_CHANNELS,
         walk_right=NUM_CHANNELS, n_steps=NUM_CHANNELS, is_moving=NUM_CHANNELS,
         amplitude=NUM_CHANNELS, frequency=NUM_CHANNELS, velocity=NUM_CHANNELS, voltage=NUM_CHANNELS,
-        lock_button=int(NUM_CHANNELS / 3), keyboard_change_combo=1, ground=3, get_capacitance=3, c_box=3
+        lock_button=int(NUM_CHANNELS / 3), keyboard_change_combo=1, ground=3, get_capacitance=3, c_box=3,
     )
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
 
-    def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client, gui='positioner_control_mixed', log_client=None, config=None, port=None):
+    def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client, gui='positioner_control_mixed_DC', log_client=None, config=None, port=None):
         """ Instantiates the controller
 
         :param nanopos_client: (pylabnet.network.client_server.smaract_mcs2.Client)
@@ -200,10 +204,22 @@ class Controller:
         :param channel: (int) channel index (from 0)
         """
 
-        voltage = self.pos.get_voltage(channel)
-        self.prev_voltage[channel] = voltage
-        self.widgets['voltage'][channel].setValue(voltage)
-        self.voltage_override = True
+        if channel in ATTOCUBE_CHANNELS:
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
+        if not attocube:
+            voltage = self.pos.get_voltage(channel)
+            self.prev_voltage[channel] = voltage
+            self.widgets['voltage'][channel].setValue(voltage)
+            self.voltage_override = True
+        else:
+            voltage = self.attocube.get_offset_voltage(attocube_channel)
+            self.prev_voltage[channel] = voltage
+            self.widgets['voltage'][channel].setValue(voltage)
+            self.voltage_override = True
 
     def save(self):
         """Saves or loads settings if relevant"""
@@ -309,6 +325,7 @@ class Controller:
                 self.widgets['step_right'][channel].setStyleSheet(
                     GREY_BUTTON_STYLESHEET
                 )
+                self._set_voltage_display(channel)
         else:
             self.log.info("LOCKED")
 
@@ -374,6 +391,7 @@ class Controller:
                 self.widgets['step_right'][channel].setStyleSheet(
                     GREY_BUTTON_STYLESHEET
                 )
+                self._set_voltage_display(channel)
 
     def _walk_left(self, channel: int):
 
@@ -403,7 +421,6 @@ class Controller:
                         self.widgets['walk_left'][channel].setStyleSheet(
                             GREY_BUTTON_STYLESHEET
                         )
-
                         self._set_voltage_display(channel)
             else:
                 if not self.attocube.is_moving(attocube_channel):
@@ -423,6 +440,7 @@ class Controller:
                         self.widgets['walk_left'][channel].setStyleSheet(
                             GREY_BUTTON_STYLESHEET
                         )
+                    self._set_voltage_display(channel)
 
     def _walk_right(self, channel: int):
 
@@ -472,6 +490,7 @@ class Controller:
                         self.widgets['walk_right'][channel].setStyleSheet(
                             GREY_BUTTON_STYLESHEET
                         )
+                    self._set_voltage_display(channel)
 
     def _stop(self, channel):
         if channel in ATTOCUBE_CHANNELS:
@@ -490,7 +509,19 @@ class Controller:
         """
 
         if channel in ATTOCUBE_CHANNELS:
-            return
+            attocube = True
+            attocube_channel = to_attocube_channel(channel)
+        else:
+            attocube = False
+
+        self.log.info(f"Channel {channel} moved.")
+
+        if attocube:
+            self.attocube.set_offset_voltage(
+                channel=attocube_channel,
+                voltage=voltage
+            )
+            self._set_voltage_display(channel)
 
         # If locked, get the current voltage and reset the GUI value to it
         if self._is_axis_locked(channel):
@@ -671,7 +702,7 @@ def launch(**kwargs):
     nanopos_client = find_client(clients=clients, settings=config, client_type='mcs2')
     attocube_client = find_client(clients=clients, settings=config, client_type='anc300')
 
-    gui_client = 'positioner_control_mixed'
+    gui_client = 'positioner_control_mixed_DC'
 
     # Instantiate controller
     control = Controller(nanopos_client, attocube_client, gui_client, logger, config=kwargs['config'], port=kwargs['server_port'])

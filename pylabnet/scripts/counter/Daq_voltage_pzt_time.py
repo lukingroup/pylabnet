@@ -1,14 +1,16 @@
 """ Generic script for monitoring counts from a counter """
 
 import numpy as np
-import time
+import time, datetime
 import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.scripts.pause_script import PauseService
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.network.client_server import si_tt
-from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
+from pylabnet.network.client_server import si_tt, nidaqmx_card
+from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config, get_gui_widgets_dummy
+import time
+from pylabnet.scripts.pid import PID
 
 
 # Static methods
@@ -31,7 +33,8 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
+    def __init__(self, ctr_client_in: nidaqmx_card, ctr_client_out: nidaqmx_card, ui='count_monitor_3plots_save'\
+        , logger_client=None, server_port=None, combined_channel=False, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
@@ -41,7 +44,8 @@ class CountMonitor:
         :combined_channel: (bool) If true, show additional trace with summed counts.
         """
 
-        self._ctr = ctr_client
+        self._ctr_in = ctr_client_in
+        self._ctr_out = ctr_client_out
         self.log = logger_client
         self.combined_channel = combined_channel
         self._bin_width = None
@@ -49,11 +53,16 @@ class CountMonitor:
         self._ch_list = None
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
+        self.data = None
+        self.x = None
+        self.f_ary = None
+        self.pid = None
+        self.gain = None
+        self.output = None
+        self.iter = None
+        self.savepath = None
 
-        if self.combined_channel:
-            ui = 'count_monitor_combined'
-        else:
-            ui = 'count_monitor'
+
 
         # Instantiate GUI window
         self.gui = Window(
@@ -66,18 +75,16 @@ class CountMonitor:
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-        if self.combined_channel:
-            num_plots = 3
-        else:
-            num_plots = 2
+        num_plots = 3
 
         # Get all GUI widgets
-        self.widgets = get_gui_widgets(
+        self.widgets = get_gui_widgets_dummy(
             self.gui,
             graph_widget=num_plots,
-            number_label=8,
+            number_label=5,
             event_button=num_plots,
-            legend_widget=num_plots
+            legend_widget=num_plots,
+            save_button=1
         )
 
         # Load config
@@ -92,16 +99,18 @@ class CountMonitor:
         if not 'name' in self.config:
             self.config.update({'name': f'monitor{np.random.randint(1000)}'})
 
-    def set_hardware(self, ctr):
+    def set_hardware(self, ctr_in,  ctr_out):
         """ Sets hardware client for this script
 
         :param ctr: instance of count monitor hardware client
         """
 
         # Initialize counter instance
-        self._ctr = ctr
+        self._ctr_in = ctr_in
+        self._ctr_out = ctr_out
 
-    def set_params(self, bin_width=1e9, n_bins=1e4, ch_list=[1], plot_list=None):
+
+    def set_params(self, bin_width=1e9, n_bins=1e3, ch_list=[1], plot_list=None, locking_point=0, P=0, I=0, D=0, memory=20, gain=1, default=5 ):
         """ Sets counter parameters
 
         :param bin_width: bin width in ps
@@ -110,11 +119,31 @@ class CountMonitor:
         :param plot_list: list of channels to assign to each plot (e.g. [[1,2], [3,4]])
         """
 
+        dt_timestamp = time.time()
+
         # Save params to internal variables
         self._bin_width = int(bin_width)
         self._n_bins = int(n_bins)
         self._ch_list = ch_list
         self._plot_list = plot_list
+        self.data = np.zeros([len(ch_list), self._n_bins])
+        self.x = np.ones(self._n_bins) * dt_timestamp
+        self.pid = PID(
+                p=P,
+                i=I,
+                d=D,
+                memory=memory,
+                setpoint=locking_point
+            )
+        self.gain = gain
+        self.default = default
+
+        # initialize
+        self.output = default
+
+    def set_savepath(self, savepath):
+        self.savepath = savepath
+
 
     def run(self):
         """ Runs the counter from scratch"""
@@ -127,13 +156,6 @@ class CountMonitor:
             # Give time to initialize
             # time.sleep(0.05)
             self._is_running = True
-
-            self._ctr.start_trace(
-                name=self.config['name'],
-                ch_list=self._ch_list,
-                bin_width=self._bin_width,
-                n_bins=self._n_bins
-            )
 
             # Continuously update data until paused
             while self._is_running:
@@ -159,7 +181,6 @@ class CountMonitor:
             self._is_running = True
 
             # Clear counter and resume plotting
-            self._ctr.clear_ctr(name=self.config['name'])
             while self._is_running:
                 self._update_output()
 
@@ -213,6 +234,11 @@ class CountMonitor:
                 ' - ' + f'Channel {channel}'
             )
 
+            # init output and iter
+            self.output = self.default
+            # self._ctr_out.set_ao_voltage('ao4', self.output)
+            self.iter = 0
+
             # Assign scalar
             # self.gui_handler.assign_label(
             #     label_widget=self._number_widgets[channel - 1],
@@ -224,81 +250,149 @@ class CountMonitor:
 
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
+            
+        self.widgets["save_button"][0].clicked.connect(partial(self._save_plot, self.savepath))
 
-        if self.combined_channel:
-            self.widgets['curve_combo'] = self.widgets['graph_widget'][index + 1].plot(
-                pen=pg.mkPen(color=self.gui.COLOR_LIST[color + 1])
-            )
-            self.widgets['legend_widget'][index + 1].addItem(
-                self.widgets['curve_combo'],
-                ' - ' + 'Combined Counts'
-            )
+    def _save_plot(self, save_path):
+        """"
+        save all plots to the save_path
+        """
+        filename_x = save_path  + "\\" + "Daq_monitoring_data_x_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
+        filename_f = save_path  + "\\" + "Daq_monitoring_data_f_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
+        filename = save_path  + "\\" + "Daq_monitoring_data_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
+        try:
+            if(self.data is not None):
+                np.savetxt(filename, self.data)
+            else:
+                self.log.info("data is None")
+            
+            if(self.x is not None):
+                np.savetxt(filename_x, self.x)
+            else:
+                self.log.info("data'x is None")
+
+            if(self.f_ary is not None):
+                np.savetxt(filename_f, self.f_ary)
+            else:
+                self.log.info("data'f is None")
+
+            self.log.info("saved data")
+
+        except:
+            self.log.error("error: cannot save the data")
+        return
+
 
     def _clear_plot(self, plot_index):
         """ Clears the curves on a particular plot
 
         :param plot_index: (int) index of plot to clear
         """
+        dt_timestamp = time.time()
 
-        # First, handle case where combined count channel is clears (very ugly).
-        if self.combined_channel and plot_index == len(self._plot_list):
-            channel = 'combo'
+        # Find all curves in this plot
+        for index, channel in enumerate(self._plot_list[plot_index]):
+
             # Set the curve to constant with last point for all entries
+            self.data[index] = np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
+            self.x = np.ones(self._n_bins) * dt_timestamp
+
+
             self.widgets[f'curve_{channel}'].setData(
-                np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
+                self.x, self.data[index]
             )
-        else:
-            # Find all curves in this plot
-            for channel in self._plot_list[plot_index]:
-
-                # Set the curve to constant with last point for all entries
-                self.widgets[f'curve_{channel}'].setData(
-                    np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
-                )
-
-        self._ctr.clear_ctr(name=self.config['name'])
+        self.iter = 0
 
     def _update_output(self):
         """ Updates the output to all current values"""
 
-        # Update all active channels
-        # x_axis = self._ctr.get_x_axis()/1e12
+        # Update all active channels + do locking loop
+        monitor_voltage = np.mean(self._ctr_in.get_ai_voltage('ai0', 500, 10) )
+        rp_out_voltage = np.mean(self._ctr_in.get_ai_voltage('ai1', 500, 10) )
 
-        counts = self._ctr.get_counts(name=self.config['name'])
-        counts_per_sec = counts * (1e12 / self._bin_width)
-        # noise = np.sqrt(counts)*(1e12/self._bin_width)
-        # plot_index = 0
+        # voltage_0 = np.mean(self._ctr_in.get_ai_voltage('ai0', 10, 10) )
+        # self._ctr_out.set_ao_voltage('ao4', self.output + 0.25)
+        # voltage_1 = np.mean(self._ctr_in.get_ai_voltage('ai0', 10, 10) )
+        # self._ctr_out.set_ao_voltage('ao4', self.output - 0.25)
+        # voltage_2 = np.mean(self._ctr_in.get_ai_voltage('ai0', 10, 10) )
 
-        summed_counts = np.sum(counts_per_sec, axis=0)
+        # if(voltage_1 > voltage_0):
+        #     self.output += 0.25
+        # elif(voltage_2 > voltage_0):
+        #     self.output -= 0.25
 
-        for index, count_array in enumerate(counts_per_sec):
+        # if(self.output > 9):
+        #     self.output -= 6.5
+        # elif(self.output < -9):
+        #     self.output += 6.5
+        # self.output = max( min(self.output, 9), -9)
+        # self._ctr_out.set_ao_voltage('ao4', self.output)
+        
+
+
+
+        # voltage = voltage_0 
+
+
+
+        dt_timestamp = time.time()
+
+        # update voltage and iter
+        self.x = np.concatenate((self.x[1:], np.array([dt_timestamp])))
+        self.data[0] = np.concatenate((self.data[0, 1:], np.array([monitor_voltage]) ) )
+        self.data[1] = np.concatenate((self.data[1, 1:], np.array([self.pid.setpoint]) ) )
+        self.data[2] = np.concatenate((self.data[2, 1:], np.array([rp_out_voltage]) ) )
+        self.iter += 1
+
+        # do fft and std if iter is n_bin
+        if(self.iter == self._n_bins):
+            self.iter = 0
+            self.f_ary = 1/(self.x[-1] -self.x[0]) * np.arange(self._n_bins)
+            self.data[3] = np.fft.fft(self.data[0, :]) / self._n_bins
+            self.widgets[f'curve_4'].setData( self.f_ary, np.absolute(self.data[3]))
+            self.widgets['graph_widget'][2].setYRange(0, 1E-2)
+
+            self.log.info( np.std( self.data[0] ) )
+            self.widgets[f'number_label'][4].setText(str(  format(np.std( self.data[0] ), ".4f")   )) 
+
+
+
+        for index, channel in enumerate(self._ch_list):
 
             # Figure out which plot to assign to
-            channel = self._ch_list[index]
-            # if self._plot_list is not None:
-            #     for index_plot, channel_set in enumerate(self._plot_list):
-            #         if channel in channel_set:
-            #             plot_index = index_plot
-            #             break
+            if(index != 3):
+                self.widgets[f'curve_{channel}'].setData(self.x-self.x[0], self.data[index])
 
-            # Update GUI data
+            if(index==0):
+                self.widgets[f'number_label'][channel - 1].setText(str(  format(self.data[index][-1], ".8f")   )) 
+            else:
+                self.widgets[f'number_label'][channel - 1].setText(str(  format(self.data[index][-1], ".4f")   )) 
 
-            # self.gui_handler.set_curve_data(
-            #     data=count_array,
-            #     error=noise[index],
-            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #     curve_label='Channel {}'.format(channel)
-            # )
-            # self.gui_handler.set_label(
-            #     text='{:.4e}'.format(count_array[-1]),
-            #     label_label='Channel {}'.format(channel)
-            # )
 
-            self.widgets[f'curve_{channel}'].setData(count_array)
-            self.widgets[f'number_label'][channel - 1].setText(str(count_array[-1]))
 
-        if self.combined_channel:
-            self.widgets['curve_combo'].setData(summed_counts)
+
+    def _lock(self):
+        # pid
+        self.pid.set_pv(pv=self.data[0,-self.pid.memory:])
+        self.pid.set_cv()
+
+        # set output
+        self.output += self.pid.cv * self.gain 
+
+        # protection
+        if(self.output > 9.): self.output = self.default
+        if( self.output < 0): self.output = self.default
+        
+        
+        # scan
+        # dir = 1 if(self.data[2, -1] - self.data[2, -2] >= 0) else -1
+        # if( (self.output >= 5.3 and dir==1) or (self.output <= -0 and dir==-1) ):
+        #     dir *= -1
+        # time.sleep(0.001)
+        # self.output += 0.5 * dir
+
+        return
+
 
 
 def launch(**kwargs):
@@ -313,64 +407,36 @@ def launch(**kwargs):
         logger
     )
 
-    if config['combined_channel'] == 'True':
-        combined_channel = True
-    else:
-        combined_channel = False
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
-            ctr_client=find_client(
+            ctr_client_in=find_client(
                 clients,
                 config,
-                client_type='si_tt',
-                client_config='standard_ctr',
+                client_type="nidaqmx",
+                client_config="daq_ai",
+                logger=logger
+            ),
+            ctr_client_out=find_client(
+                clients,
+                config,
+                client_type="nidaqmx",
+                client_config="daq_ao",
                 logger=logger
             ),
             logger_client=logger,
             server_port=kwargs['server_port'],
-            combined_channel=combined_channel
+            combined_channel=False
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
-    # except:
-    #     config = None
-    #     ch_list = [7, 8]
-    #     plot_list = [[7], [8]]
 
-    # Instantiate Pause server
-    # try:
-    #     pause_logger = LogClient(
-    #         host=loghost,
-    #         port=logport,
-    #         module_tag='count_monitor_pause_server'
-    #     )
-    # except ConnectionRefusedError:
-    #     logger.warn('Could not connect Count Monitor Pause server to logger')
-
-    # pause_service = PauseService()
-    # pause_service.assign_module(module=monitor)
-    # pause_service.assign_logger(logger=pause_logger)
-
-    # timeout = 0
-    # while timeout < 1000:
-    #     try:
-    #         port = np.random.randint(1, 9999)
-    #         pause_server = GenericServer(
-    #             host=get_ip(),
-    #             port=port,
-    #             service=pause_service)
-    #         pause_logger.update_data(data=dict(port=port))
-    #         timeout = 9999
-    #     except ConnectionRefusedError:
-    #         logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')
-    #         timeout += 1
-    # pause_server.start()
 
     # Set parameters
     monitor.set_params(**config['params'])
+    monitor.set_savepath(config["save_path"])
 
     # Run
     monitor.run()

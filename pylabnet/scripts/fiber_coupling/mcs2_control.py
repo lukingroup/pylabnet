@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QShortcut
 
 
 # If in this list, set DC voltage to 0 after taking a step.
-BROKEN_CHANNELS = [6]
+BROKEN_CHANNELS = []
 
 
 class Controller:
@@ -245,7 +245,7 @@ class Controller:
             )
 
             # Ugly hack to set DC voltage of Front X to 0
-            self.log.info(f"Channel {channel}")
+            #self.log.info(f"Channel {channel}")
             if channel in BROKEN_CHANNELS:
                 self._update_voltage(channel, 0)
 

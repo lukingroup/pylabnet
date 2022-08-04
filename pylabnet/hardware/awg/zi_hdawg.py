@@ -101,7 +101,11 @@ class Driver():
             lambda: zhinst.utils.create_api_session(
                 device_id,
                 api_level,
+<<<<<<< HEAD
                 server_host="127.0.0.1",
+=======
+                server_host='127.0.0.1' # TODO: Read this from config file
+>>>>>>> origin
             )
         )
 

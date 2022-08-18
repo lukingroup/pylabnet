@@ -91,7 +91,7 @@ class DataTaker:
         self.gui.showMaximized()
         self.gui.apply_stylesheet()
 
-     def update_experiment_list(self):
+    def update_experiment_list(self):
         """ Updates list of experiments """
 
         model = QtWidgets.QFileSystemModel()

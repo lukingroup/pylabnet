@@ -91,29 +91,49 @@ class DataTaker:
         self.gui.showMaximized()
         self.gui.apply_stylesheet()
 
-    def update_experiment_list(self):
+     def update_experiment_list(self):
         """ Updates list of experiments """
 
-        self.gui.exp.clear()
-        for filename in os.listdir(self.exp_path):
-            if filename.endswith('.py'):
-                self.gui.exp.addItem(filename[:-3])
-        self.gui.exp.itemClicked.connect(self.display_experiment)
+        # self.gui.exp.clear()
+        # for filename in os.listdir(self.exp_path):
+        #     if filename.endswith('.py'):
+        #         self.gui.exp.addItem(filename[:-3])
+        # self.gui.exp.itemClicked.connect(self.display_experiment)
 
-    def display_experiment(self, item):
+        model = QtWidgets.QFileSystemModel()
+        model.setRootPath(self.exp_path)
+        model.setNameFilterDisables(False)
+        model.setNameFilters(['*.py'])
+
+        self.gui.exp.setModel(model)
+        self.gui.exp.setRootIndex(model.index(self.exp_path))
+        self.gui.exp.hideColumn(1)
+        self.gui.exp.hideColumn(2)
+        self.gui.exp.hideColumn(3)
+        self.gui.exp.clicked.connect(self.display_experiment)
+
+    def display_experiment(self, index):
         """ Displays the currently clicked experiment in the text browser
 
         :param item: (QlistWidgetItem) with label of name of experiment to display
         """
 
-        with open(os.path.join(self.exp_path, f'{item.text()}.py'), 'r') as exp_file:
-            exp_content = exp_file.read()
+        # with open(os.path.join(self.exp_path, f'{item.text()}.py'), 'r') as exp_file:
+        #     exp_content = exp_file.read()
 
-        self.gui.exp_preview.setText(exp_content)
-        self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
-                                           'color: rgb(255, 255, 255); '
-                                           'background-color: rgb(0, 0, 0);')
-        self.log.update_metadata(experiment_file=exp_content)
+        filepath = self.gui.exp.model().filePath(index)
+        if not os.path.isdir(filepath):
+            with open(filepath, 'r') as exp_file:
+                exp_content = exp_file.read()
+
+            self.gui.exp_preview.setText(exp_content)
+            self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
+                                            'color: rgb(255, 255, 255); '
+                                            'background-color: rgb(0, 0, 0);')
+            self.log.update_metadata(experiment_file=exp_content)
+
+            self.cur_path = self.gui.exp.model().filePath(self.gui.exp.currentIndex())
+            self.exp_name = os.path.split(os.path.basename(self.cur_path))[1][:-3]
 
     def configure(self):
         """ Configures the currently selected experiment + dataset """
@@ -131,11 +151,12 @@ class DataTaker:
         self.reload_config()
 
         # Set all experiments to normal state and highlight configured expt
-        for item_no in range(self.gui.exp.count()):
-            self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
-        self.gui.exp.currentItem().setBackground(QtGui.QBrush(QtGui.QColor('darkRed')))
-        exp_name = self.gui.exp.currentItem().text()
-        self.module = importlib.import_module(exp_name)
+        # for item_no in range(self.gui.exp.count()):
+        #     self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
+        # self.gui.exp.currentItem().setBackground(QtGui.QBrush(QtGui.QColor('darkRed')))
+        # exp_name = self.gui.exp.currentItem().text()
+        self.log.info(f'Experiment {self.exp_name} configured')
+        self.module = importlib.import_module(self.exp_name)
         self.module = importlib.reload(self.module)
 
         # Clear graph area and set up new or cleaned up dataset
@@ -176,10 +197,11 @@ class DataTaker:
             pass
         self.experiment = self.module.experiment
 
-        self.log.info(f'Experiment {exp_name} configured')
+        self.log.info(f'Experiment {self.exp_name} configured')
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
+
 
     def clear_data(self):
         """ Clears all data from curves"""

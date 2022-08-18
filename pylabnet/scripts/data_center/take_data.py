@@ -94,12 +94,6 @@ class DataTaker:
      def update_experiment_list(self):
         """ Updates list of experiments """
 
-        # self.gui.exp.clear()
-        # for filename in os.listdir(self.exp_path):
-        #     if filename.endswith('.py'):
-        #         self.gui.exp.addItem(filename[:-3])
-        # self.gui.exp.itemClicked.connect(self.display_experiment)
-
         model = QtWidgets.QFileSystemModel()
         model.setRootPath(self.exp_path)
         model.setNameFilterDisables(False)
@@ -117,9 +111,6 @@ class DataTaker:
 
         :param item: (QlistWidgetItem) with label of name of experiment to display
         """
-
-        # with open(os.path.join(self.exp_path, f'{item.text()}.py'), 'r') as exp_file:
-        #     exp_content = exp_file.read()
 
         filepath = self.gui.exp.model().filePath(index)
         if not os.path.isdir(filepath):
@@ -150,12 +141,7 @@ class DataTaker:
         # Load the config
         self.reload_config()
 
-        # Set all experiments to normal state and highlight configured expt
-        # for item_no in range(self.gui.exp.count()):
-        #     self.gui.exp.item(item_no).setBackground(QtGui.QBrush(QtGui.QColor('black')))
-        # self.gui.exp.currentItem().setBackground(QtGui.QBrush(QtGui.QColor('darkRed')))
-        # exp_name = self.gui.exp.currentItem().text()
-        self.log.info(f'Experiment {self.exp_name} configured')
+        # Load experiment module
         self.module = importlib.import_module(self.exp_name)
         self.module = importlib.reload(self.module)
 

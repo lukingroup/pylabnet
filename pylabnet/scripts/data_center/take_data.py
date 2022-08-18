@@ -109,7 +109,7 @@ class DataTaker:
     def display_experiment(self, index):
         """ Displays the currently clicked experiment in the text browser
 
-        :param item: (QlistWidgetItem) with label of name of experiment to display
+        :param index: index of (QTreeView) entry to display
         """
 
         filepath = self.gui.exp.model().filePath(index)

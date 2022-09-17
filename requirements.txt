@@ -61,7 +61,7 @@ nidaqmx==0.5.7
 nodeenv==1.6.0
 notebook==6.2.0
 numpy==1.20.1
-oauthlib==3.1.1
+oauthlib==3.2.1
 packaging==20.9
 pandas==1.2.3
 pandocfilters==1.4.3

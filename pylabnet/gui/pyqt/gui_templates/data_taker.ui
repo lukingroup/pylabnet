@@ -449,6 +449,17 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            <attribute name="title">
             <string>Input vars</string>
            </attribute>
+           <widget class="QWidget" name="gridLayoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>521</width>
+              <height>621</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="input_layout"/>
+           </widget>
           </widget>
           <widget class="QWidget" name="tab">
            <attribute name="title">

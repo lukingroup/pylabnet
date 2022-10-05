@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtWidgets import QLabel, QLineEdit
 from PyQt5.QtCore import Qt
 
 from pylabnet.utils.logging.logger import LogHandler
@@ -34,7 +35,23 @@ class DataTaker:
         )
 
         # Test
-        self.gui.input_vars_tab.setText("LOL")
+        init_dict = {
+            "CNOT1 frequency (MHz):": "225.5",
+            "CNOT2 frequency (MHz):": "2125.5",
+            "Num Samples": "100",
+            "Test": "50",
+            "CNOTd1 frequency (MHz):": "225.5",
+            "CNdOT2 frequency (MHz):": "2125.5",
+            "Numd Samples": "100",
+            "Tedst": "50"
+        }
+
+        for i, (labelname, default_value) in enumerate(init_dict.items()):
+
+            label = QLabel(labelname, self.gui)
+            value_entry = QLineEdit(default_value, self.gui)
+            self.gui.input_layout.addWidget(label, i, 0)
+            self.gui.input_layout.addWidget(value_entry, i, 1)
 
         # Configure list of experiments
         self.gui.config.setText(config_name)

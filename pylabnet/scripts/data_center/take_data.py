@@ -34,25 +34,6 @@ class DataTaker:
             log=self.log,
         )
 
-        # Test
-        init_dict = {
-            "CNOT1 frequency (MHz):": "225.5",
-            "CNOT2 frequency (MHz):": "2125.5",
-            "Num Samples": "100",
-            "Test": "50",
-            "CNOTd1 frequency (MHz):": "225.5",
-            "CNdOT2 frequency (MHz):": "2125.5",
-            "Numd Samples": "100",
-            "Tedst": "50"
-        }
-
-        for i, (labelname, default_value) in enumerate(init_dict.items()):
-
-            label = QLabel(labelname, self.gui)
-            value_entry = QLineEdit(default_value, self.gui)
-            self.gui.input_layout.addWidget(label, i, 0)
-            self.gui.input_layout.addWidget(value_entry, i, 1)
-
         # Configure list of experiments
         self.gui.config.setText(config_name)
         self.config = config
@@ -145,6 +126,28 @@ class DataTaker:
 
             self.cur_path = self.gui.exp.model().filePath(self.gui.exp.currentIndex())
             self.exp_name = os.path.split(os.path.basename(self.cur_path))[1][:-3]
+
+            #Update input parameters
+            module = importlib.import_module(self.exp_name)
+            module = importlib.reload(module)
+
+            # clear input widget
+            for i in reversed(range(self.gui.input_layout.count())):
+                self.gui.input_layout.itemAt(i).widget().setParent(None)
+
+            try:
+                # Load INIT_DICT from datataker script
+                init_dict = module.INIT_DICT
+
+                for i, (labelname, default_value) in enumerate(init_dict.items()):
+
+                    label = QLabel(labelname, self.gui)
+                    value_entry = QLineEdit(default_value, self.gui)
+                    self.gui.input_layout.addWidget(label, i, 0)
+                    self.gui.input_layout.addWidget(value_entry, i, 1)
+
+            except AttributeError:
+                self.gui.input_layout.addWidget(QLabel("No INIT_DICT found", self.gui), 0, 0)
 
     def configure(self):
         """ Configures the currently selected experiment + dataset """

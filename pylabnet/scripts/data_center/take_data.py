@@ -33,6 +33,9 @@ class DataTaker:
             log=self.log,
         )
 
+        # Test
+        self.gui.input_vars_tab.setText("LOL")
+
         # Configure list of experiments
         self.gui.config.setText(config_name)
         self.config = config
@@ -119,8 +122,8 @@ class DataTaker:
 
             self.gui.exp_preview.setText(exp_content)
             self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
-                                            'color: rgb(255, 255, 255); '
-                                            'background-color: rgb(0, 0, 0);')
+                                               'color: rgb(255, 255, 255); '
+                                               'background-color: rgb(0, 0, 0);')
             self.log.update_metadata(experiment_file=exp_content)
 
             self.cur_path = self.gui.exp.model().filePath(self.gui.exp.currentIndex())
@@ -187,7 +190,6 @@ class DataTaker:
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
-
 
     def clear_data(self):
         """ Clears all data from curves"""
@@ -276,7 +278,6 @@ class DataTaker:
             # self.experiment_thread.running = False
             self.experiment_worker.running = False
 
-
     def stop(self):
         """ Stops the experiment"""
 
@@ -338,6 +339,7 @@ class ExperimentThread(QtCore.QThread):
                 status_flag=self.status_flag,
                 **self.params)
             self.params['iter_num'] += 1
+
 
 class ExperimentWorker(QtCore.QObject):
     """ Worker for Thread that simply runs the experiment repeatedly """

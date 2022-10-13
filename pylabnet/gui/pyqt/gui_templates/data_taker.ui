@@ -449,38 +449,27 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            <attribute name="title">
             <string>Input vars</string>
            </attribute>
-           <widget class="QScrollArea" name="scrollArea">
+           <widget class="QScrollArea" name="scroll_area_vars">
             <property name="geometry">
              <rect>
               <x>10</x>
-              <y>9</y>
-              <width>511</width>
-              <height>611</height>
+              <y>10</y>
+              <width>501</width>
+              <height>601</height>
              </rect>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
-            <widget class="QWidget" name="input_scroll_area">
+            <widget class="QWidget" name="scrollAreaWidgetContents">
              <property name="geometry">
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>509</width>
-               <height>609</height>
+               <width>499</width>
+               <height>599</height>
               </rect>
              </property>
-             <widget class="QWidget" name="gridLayoutWidget">
-              <property name="geometry">
-               <rect>
-                <x>10</x>
-                <y>10</y>
-                <width>481</width>
-                <height>601</height>
-               </rect>
-              </property>
-              <layout class="QGridLayout" name="gridLayout"/>
-             </widget>
             </widget>
            </widget>
           </widget>

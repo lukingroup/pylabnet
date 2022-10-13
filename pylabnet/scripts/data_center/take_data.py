@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtWidgets import QLabel, QLineEdit
+from PyQt5.QtWidgets import QLabel, QLineEdit, QGroupBox, QFormLayout, QScrollArea, QVBoxLayout
 from PyQt5.QtCore import Qt
 
 from pylabnet.utils.logging.logger import LogHandler
@@ -131,23 +131,32 @@ class DataTaker:
             module = importlib.import_module(self.exp_name)
             module = importlib.reload(module)
 
-            # clear input widget
-            for i in reversed(range(self.gui.input_layout.count())):
-                self.gui.input_layout.itemAt(i).widget().setParent(None)
+            # # clear input widget
+            # for i in reversed(range(self.gui.input_layout.count())):
+            #     self.gui.input_layout.itemAt(i).widget().setParent(None)
 
-            try:
-                # Load INIT_DICT from datataker script
-                init_dict = module.INIT_DICT
+            # Load INIT_DICT from datataker script
+            init_dict = module.INIT_DICT
 
-                for i, (labelname, default_value) in enumerate(init_dict.items()):
+            scrollarea = self.gui.scroll_area_vars
 
-                    label = QLabel(labelname, self.gui)
-                    value_entry = QLineEdit(default_value, self.gui)
-                    self.gui.input_layout.addWidget(label, i, 0)
-                    self.gui.input_layout.addWidget(value_entry, i, 1)
+            scrollarea.setMinimumHeight(5000)
 
-            except AttributeError:
-                self.gui.input_layout.addWidget(QLabel("No INIT_DICT found", self.gui), 0, 0)
+            mygroupbox = QGroupBox('Variables')
+
+            myform = QFormLayout()
+
+            for i, (labelname, default_value) in enumerate(init_dict.items()):
+                myform.addRow(QLabel(labelname), QLineEdit(default_value))
+
+            mygroupbox.setLayout(myform)
+            scroll = scrollarea
+            scroll.setWidget(mygroupbox)
+            scroll.setWidgetResizable(True)
+            scroll.setFixedHeight(200)
+
+            # except AttributeError:
+            #     self.gui.input_layout.addWidget(QLabel("No INIT_DICT found", self.gui), 0, 0)
 
     def configure(self):
         """ Configures the currently selected experiment + dataset """

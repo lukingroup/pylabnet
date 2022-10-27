@@ -9,6 +9,11 @@ Client-server, python-based laboratory software
 
 This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group.
 
+## Prerequisites
+
+* Supported Python versions: 3.7 - 3.8
+* Microsoft Visual C++ 14.0 or greater, installed from [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/)
+
 ## For users
 
 ### Installation
@@ -17,68 +22,88 @@ The package can be installed from the commandline using
 ```bash
 pip install pylabnet
 ```
-You can now `import pylabnet` and its submodules in your own scripts and notebooks. The package can be updated to the latest version using the command
+You can now `import pylabnet` and its submodules in your own scripts and notebooks. The source code is installed to  `{PYTHONPATH}\Lib\site-packages\pylabnet` and configuration files should be placed in `{PYTHONPATH}\Lib\site-packages\pylabnet\configs`.
+
+The package can be updated to the latest version using the command
 ```bash
 pip install --upgrade pylabnet
 ```
 
 ### <a name="executable"></a>Usage
 
- After `pip` installation of pylabnet, two executables will be created in the system `PATH`: `pylabnet.exe` and `pylabnet_proxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over pylabnet. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
+After `pip` installation of pylabnet, three executables will be created in the system `PATH`: `pylabnet_master.exe`, `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over `pylabnet`. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
 
- > **_NOTE 1:_** You will likely need to allow python through Windows firewall the first time you run Launch Control on a new machine.
+The master Launch Control runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master `LogServer` and mirror its information for convenience on remote machines. The difference between `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe` is that the former will ask for the master `LogServer`'s location interactively while the latter reads directly from `configs/static_proxy.json` via the fields `master_ip`, `master_log_port`, and `master_gui_port`.
 
-> **_NOTE 2:_** The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the commandline
-> ```bash
-> openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
-> ```
-> You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` is automatically placed in the `C:/Windows/System32` directory of the machine it is generated on. It can then be copied into the equivalent directory of any other machines using the same *pylabnetwork*.
+The general workflow is the following:
 
-The master Launch Control runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master and mirror its information for convenience on remote machines.
+1. Launch a master `LogServer`. Can be done from a custom script, but easiest to just use the `pylabnet_master` executable.
+2. (This step is skipped if connecting hardware on the same computer as the one running the master `LogServer`) Launch a proxy `LogServer` on the local computer to be connected to the desired hardware device. This enables the local computer to communicate any device updates to the master `LogServer` where it will be logged.
+3. Connect to hardware device locally, and instantiate a `GenericServer` for each device (or logical module) to allow remote access from anywhere in the network. The `GenericServer` will itself interface with the the device through drivers located in the `pylabnet/hardware` submodule and expose desired functions to be called remotely. These drivers can also be used for standalone control of hardware, if desired.
+4. On any other computers present across the network, create the hardware client for the corresponding hardware server to be connected to. This will enable access to the exposed device functions which can be freely called to remotely communicate with and control the device.
 
-The general workflow is the following
+Steps 2-4 can also be done manually from an interactive python notebook or custom script, but common functionality is incorporated into the Launch Control GUI for automatic "double-click" running of these steps. In particular, step 4 will require knowledge of the hardware server's IP address and port if the client is created manually, but execution from the Launch Control GUI will enable automatic server connection via IP and port values stored in the master `LogServer`.
 
-1. Launch a master `LogServer`. Can be done from a cusftom script, but easiest to just use the `pylabnet` executable.
-2. Connect to hardware locally. This is done through use of drivers located in the `pylabnet/hardware` submodule. These drivers can also be used for standalone control of hardware, if desired.
-3. Instantiate a `GenericServer` for each device (or logical module) to allow remote programming from anywhere in the network
-4. Create clients for the hardware servers, which can be used to perform arbitrary functions on devices present across the network
 
-Steps 2-4 can also be done manually from an interactive python notebook or custom script, but common functionality is incorporated into the Launch Control GUI for automatic "double-click" running of these steps.
+#### Initial Setup Notes
+
+* You will likely need to allow python through Windows firewall the first time you run Launch Control on a new machine.
+
+* The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the commandline
+```bash
+openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
+```
+You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` is automatically placed in the `C:/Windows/System32` directory of the machine it is generated on. It can then be copied into the equivalent directory of any other machines using the same *pylabnetwork*.
+
+* At time of starting up the master `LogServer`, you will require a configuration file named `static_proxy.json` in the `configs` subfolder to specify the ports to be opened and the logging path in the following format:
+```javascript
+{
+    "master_log_port": 12345,
+    "master_gui_port": 12346,
+    "logger_path": "C:\\User\\pylabnet_logs"
+}
+```
 
 ## For developers
 
 ### Installation
 
-First, clone the repository onto the local machine. Make sure git is installed. Cloning can be done from the command line, (preferrably in your home user directory) with the command
+First, clone the repository onto the local machine. Make sure `git` is installed. Cloning can be done from the command line, (preferrably in your home user directory) with the command
 ```bash
 git clone https://github.com/lukingroup/pylabnet.git
 ```
 ---
 **NOTE ON DEVELOPMENT IN DEDICATED ENVIRONMENT**
 
-For installation in a dedicated pip virtual environment to prevent conflicts with the base python package, create a virtual environment - can be done from the command line using
+For installation in a dedicated pip virtual environment to prevent conflicts with the base python package, create a virtual environment using the following command:
 ```bash
 python -m venv /path/to/new/virtual/testenv
 ```
 
-Activate the development environment using the command
+Activate the development environment using the command:
 ```bash
 /path/to/new/virtual/testenv/Scripts/activate
 ```
 Be sure to set the interpreter in your IDE to `/path/to/new/virtual/testenv/Scripts/python.exe` if you will be launching pylabnet scripts directly from the IDE.
 
 ---
-Next, navigate to the root directory in the commandline and run the command
+Next, navigate to the root directory of the cloned repository in the commandline and run the command to install all package requirements:
+```bash
+pip install -r requirements.txt
+```
+
+> **_NOTE:_** If it fails, try upgrading pip with `python -m pip install --upgrade pip`.
+
+Finally, navigate to the root directory in the commandline and run the command to install `pylabnet`:
 ```bash
 python setup.py develop
 ```
-> **_NOTE 1:_** there may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked. If it fails, try running `pip install --upgrade setuptools`.
 
-> **_NOTE 2:_** this command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
+> **_NOTE:_** There may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked. This command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
 
 This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github).
 
-This also creates the standard pylabnet executables which can be used for launching (see [above](#executable)). Just be careful that you are using the correct execuatable if you have installed pylabnet in environments.
+This also creates the standard `pylabnet` executables located in `{PYTHONPATH}\Lib\site-packages\pylabnet` (see [above](#executable)). Just be careful that you are using the correct executable if you have installed `pylabnet` in several environments.
 
 ### Development
 

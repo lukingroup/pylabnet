@@ -94,7 +94,7 @@ pip install -r requirements.txt
 
 > **_NOTE:_** If it fails, try upgrading pip with `python -m pip install --upgrade pip`.
 
-Finally, navigate to the root directory in the commandline and run the command to install `pylabnet`:
+Finally, run the command to install `pylabnet`:
 ```bash
 python setup.py develop
 ```

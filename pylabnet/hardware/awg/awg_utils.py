@@ -2,16 +2,15 @@
 from pylabnet.utils.helper_methods import load_config
 
 
-def convert_awg_pin_to_dio_board(awgPinNumber, configFN="awg_dio_pin_mapping"):
+def convert_awg_pin_to_dio_board(awgPinNumber, configFN):
     """Computes the corresponding board and channel number on the DIO breakout for the
         corresponding input awgPinNumber given the mapping specificed in the configuration
         file provided.
     """
-    #First load the mapping config file
-    config = load_config(configFN)
+
     #Get base pin index for board 0,1 and 2,3
-    baseB01 = config["B01_base"]
-    baseB23 = config["B23_base"]
+    baseB01 = configFN["B01_base"]
+    baseB23 = configFN["B23_base"]
 
     currBase = 0
     board = 0

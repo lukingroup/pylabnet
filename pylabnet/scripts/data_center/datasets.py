@@ -33,7 +33,7 @@ class Dataset():
             self.config = kwargs['config']
         else:
             self.config = {}
-        
+
         if(log is None):
             self.metadata = None
         else:
@@ -97,7 +97,7 @@ class Dataset():
 
         if data_type is None:
             data_type = self.__class__
-        
+
         self.children[name] = data_type(
             gui=self.gui,
             data=self.data,
@@ -611,7 +611,7 @@ class time_trace_monitor(RollingLine):
             # If we need to process the child data, do it
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
-        
+
 
 
 class ManualOpenLoopScan(Dataset):
@@ -1143,7 +1143,7 @@ class HeatMap(Dataset):
         self.graph.show()
         self.graph.view.setAspectLocked(False)
         self.graph.view.invertY(False)
-        self.graph.setPredefinedGradient('inferno')
+        self.graph.setPredefinedGradient('viridis')
         if set(['min', 'max', 'pts']).issubset(kwargs.keys()):
             self.min, self.max, self.pts = kwargs['min'], kwargs['max'], kwargs['pts']
             self.graph.view.setLimits(xMin=kwargs['min'], xMax=kwargs['max'])

@@ -79,7 +79,6 @@ pscript==0.7.5
 ptvsd==5.0.0a12
 pycparser==2.20
 Pygments==2.8.0
--e git+https://github.com/lukingroup/pylabnet.git@462033d0da614a217f04b733f99e69b92d7d8ada#egg=pylabnet
 pylint==2.6.2
 pynacl==1.4.0
 pyparsing==2.4.7

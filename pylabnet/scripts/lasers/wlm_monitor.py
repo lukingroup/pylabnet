@@ -227,7 +227,7 @@ class WlmMonitor:
     def zero_voltage(self, channel):
         """ Zeros the output voltage for this channel
 
-        :param channel: Channel object to zero voltage of
+        :param channel: Channel object to zero voltage
         """
 
         try:

@@ -42,6 +42,7 @@ class Driver:
         for port, desc, hwid in self.ports:
             if com_port == port:
                 self.log.info(f"Found port {port}: {desc} - ID [{hwid}].")
+                break
 
         # Try and open a connection to it
         try:

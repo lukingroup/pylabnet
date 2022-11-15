@@ -154,13 +154,6 @@ class DataTaker:
                     self.gui.graph_layout.itemAt(index).layout().deleteLater()
                 except AttributeError:
                     pass
-
-        # If there are still open windows from previous experiment, close them
-        try:
-            for window_name in self.dataset.gui.windows:
-                self.dataset.gui.windows[window_name].close()
-        except:
-            pass
         self.gui.windows = {}
         # If we're not setting up a new measurement type, just clear the data
 
@@ -176,15 +169,10 @@ class DataTaker:
             self.dataset = getattr(datasets, classname)(
                 gui=self.gui,
                 log=self.log,
-                config=self.config,
-                enable_confluence=False
+                config=self.config
             )
-        # except AttributeError:
-        #     error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
-        #     self.log.error(error_msg)
-        #     return
-        except:
-            error_msg = f"Dsomething bad happened but idk what."
+        except AttributeError:
+            error_msg = f"Dataset name {classname} as provided in 'define_dataset' method in experiment script is not valid."
             self.log.error(error_msg)
             return
 
@@ -192,8 +180,7 @@ class DataTaker:
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
         except AttributeError:
-            error_msg = f"HELP! SOMETHING DIDNT WORK WITH CONFIGURING"
-            self.log.error(error_msg)
+            pass
         self.experiment = self.module.experiment
 
         self.log.info(f'Experiment {self.exp_name} configured')

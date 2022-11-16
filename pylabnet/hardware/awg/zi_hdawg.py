@@ -95,8 +95,6 @@ class Driver():
     def _setup_hdawg(self, device_id, logger, api_level, reset_dio, disable_everything):
         ''' Sets up HDAWG '''
 
-        err_msg = "This example can only be run on an HDAWG."
-
         # try finding the server address
         discovery = zhinst.ziPython.ziDiscovery()
         d_i = discovery.find(device_id).lower()

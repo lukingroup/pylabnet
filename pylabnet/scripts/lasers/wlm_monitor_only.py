@@ -84,7 +84,7 @@ class WlmMonitor:
             ))
 
     def toogle_laser(self):
-        self.self.widgets['curve'][0].hide()
+        self.widgets['curve'][0].hide()
 
     def set_parameters(self, channel_params):
         """ Instantiates new channel objects with given parameters and assigns them to the WlmMonitor
@@ -412,11 +412,15 @@ class Channel:
 
         self.data = np.ones(display_pts) * wavelength
 
-        self.sp_data = np.ones(display_pts) * self.data[-1]
-        self.setpoint = self.data[-1]
-        # self.setpoint_override = True
+        # if self.sp_data already exists, keep its last value so that the
+        # clear data functionality doesn't override the setpoint
+        if len(self.sp_data) > 0:
+            self.sp_data = np.ones(display_pts) * self.sp_data[-1]
+        else:
+            self.sp_data = np.ones(display_pts) * self.data[-1]
 
-        # self.lock_override = True
+        self.setpoint = self.sp_data[-1]
+
 
     def initialize_sp_data(self, display_pts=5000):
         self.sp_data = np.ones(display_pts) * self.data[-1]

@@ -539,16 +539,13 @@ class Channel:
 
         self.data = np.ones(display_pts) * wavelength
 
-        # if self.sp_data already exists, keep its last value so that the 
+        # if self.sp_data already exists, keep its last value so that the
         # clear data functionality doesn't override the setpoint
-        try:
-            if len(self.sp_data) > 0:
-                self.sp_data = np.ones(display_pts) * self.sp_data[-1]
-            else:
-                self.sp_data = np.ones(display_pts) * self.data[-1]
-        except:
+        if len(self.sp_data) > 0:
+            self.sp_data = np.ones(display_pts) * self.sp_data[-1]
+        else:
             self.sp_data = np.ones(display_pts) * self.data[-1]
-        
+
         self.setpoint = self.sp_data[-1]
 
         # Initialize voltage and error

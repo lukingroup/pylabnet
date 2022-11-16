@@ -6,7 +6,7 @@ for the Zurich Instruments HDAWG.
 """
 
 import zhinst.utils
-import zhinst
+import zhinst.ziPython
 import re
 import time
 import textwrap
@@ -97,9 +97,8 @@ class Driver():
 
         # try finding the server address
         discovery = zhinst.ziPython.ziDiscovery()
-        d_i = discovery.find(device_id).lower()
-        discovery_info = discovery.get(d_i)
-        server_address = discovery_info["serveraddress"]
+        device_properties = discovery.get(discovery.find(device_id))
+        server_address = device_properties["serveraddress"]
 
         # Connect to device and log print output, not the lambda expression.
         (daq, device, props) = self.log_stdout(

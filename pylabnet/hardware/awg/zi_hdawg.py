@@ -6,7 +6,7 @@ for the Zurich Instruments HDAWG.
 """
 
 import zhinst.utils
-import zhinst.ziPython as zi
+import zhinst
 import re
 import time
 import textwrap
@@ -98,8 +98,9 @@ class Driver():
         err_msg = "This example can only be run on an HDAWG."
 
         # try finding the server address
-        discovery = zi.ziDiscovery()
-        discovery_info = discovery.get(device_id)
+        discovery = zhinst.ziPython.ziDiscovery()
+        d_i = discovery.find(device_id).lower()
+        discovery_info = discovery.get(d_i)
         server_address = discovery_info["serveraddress"]
 
         # Connect to device and log print output, not the lambda expression.
@@ -107,8 +108,6 @@ class Driver():
             lambda: zhinst.utils.create_api_session(
                 device_id,
                 api_level,
-                #server_host='127.0.0.1' # TODO: Read this from config file
-                #server_host='140.247.189.115'
                 server_host=server_address
             )
         )

@@ -35,7 +35,7 @@
        <item>
         <layout class="QGridLayout" name="gridLayout">
          <item row="3" column="0">
-          <widget class="QLabel" name="labe_int">
+          <widget class="QLabel" name="label_int">
            <property name="text">
             <string>Int Time (us)</string>
            </property>
@@ -49,7 +49,7 @@
           </widget>
          </item>
          <item row="3" column="2">
-          <widget class="QDoubleSpinBox" name="intput_int_time">
+          <widget class="QDoubleSpinBox" name="input_int_time">
            <property name="frame">
             <bool>false</bool>
            </property>
@@ -68,7 +68,7 @@
           </widget>
          </item>
          <item row="1" column="2">
-          <widget class="QDoubleSpinBox" name="intput_I">
+          <widget class="QDoubleSpinBox" name="input_I">
            <property name="frame">
             <bool>false</bool>
            </property>
@@ -128,7 +128,7 @@
           </widget>
          </item>
          <item row="3" column="1">
-          <widget class="QLabel" name="val_int">
+          <widget class="QLabel" name="val_int_time">
            <property name="text">
             <string>0.0</string>
            </property>
@@ -166,13 +166,6 @@
           <widget class="QLabel" name="label_D">
            <property name="text">
             <string>Derivative</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="label_read">
-           <property name="text">
-            <string>Read Interval (s)</string>
            </property>
           </widget>
          </item>
@@ -222,13 +215,6 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
-          <widget class="QLabel" name="val_PIDout_2">
-           <property name="text">
-            <string>0.0</string>
-           </property>
-          </widget>
-         </item>
          <item row="5" column="0">
           <widget class="QLabel" name="label_PIDout">
            <property name="text">
@@ -274,6 +260,13 @@
            </property>
            <property name="decimals">
             <number>3</number>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_read">
+           <property name="text">
+            <string>Read Interval (s)</string>
            </property>
           </widget>
          </item>

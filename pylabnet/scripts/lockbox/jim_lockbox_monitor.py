@@ -6,6 +6,7 @@ from pylabnet.utils.helper_methods import (unpack_launcher, create_server,
                                            load_script_config, get_ip)
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 
+import re
 import time
 import numpy as np
 import pyqtgraph as pg
@@ -50,52 +51,64 @@ class JimLockboxGUI:
 
     def initialize_buttons(self):
         self.gui.set_P.clicked.connect(
-            lambda: self.lockbox.set_P(float(self.gui.input_P.value()))
+            lambda: self.lockbox.set_P(float(self.gui.input_P.text()))
         )
         self.gui.set_I.clicked.connect(
-            lambda: self.lockbox.set_I(float(self.gui.input_I.value()))
+            lambda: self.lockbox.set_I(float(self.gui.input_I.text()))
         )
         self.gui.set_D.clicked.connect(
-            lambda: self.lockbox.set_D(float(self.gui.input_D.value()))
+            lambda: self.lockbox.set_D(float(self.gui.input_D.text()))
         )
         self.gui.set_int_time.clicked.connect(
-            lambda: self.lockbox.set_int_time(float(self.gui.input_int_time.value()))
+            lambda: self.lockbox.set_int_time(float(self.gui.input_int_time.text()))
         )
         self.gui.set_offset.clicked.connect(
-            lambda: self.lockbox.set_offset(float(self.gui.input_offset.value()))
+            lambda: self.lockbox.set_offset(float(self.gui.input_offset.text()))
         )
         self.gui.reset.clicked.connect(
             lambda: self.lockbox.reset()
         )
         self.gui.set_read.clicked.connect(
-            lambda: setattr(self, "read_time", float(self.gui.input_read.value()))
+            lambda: setattr(self, "read_time", float(self.gui.input_read.text()))
         )
 
     def initialize_fields(self):
         self.update_status()
 
-        self.gui.input_P.setValue(self.search_field(self.status, "PVal"))
-        self.gui.input_I.setValue(self.search_field(self.status, "IVal"))
-        self.gui.input_D.setValue(self.search_field(self.status, "DVal"))
-        self.gui.input_int_time.setValue(self.search_field(self.status, "Timebase"))
-        self.gui.input_offset.setValue(self.search_field(self.status, "Offset"))
+        self.gui.input_P.setText(str(self.search_field(self.status, "PVal")))
+        self.gui.input_I.setText(str(self.search_field(self.status, "IVal")))
+        self.gui.input_D.setText(str(self.search_field(self.status, "DVal")))
+        self.gui.input_int_time.setText(str(self.search_field(self.status, "Timebase")))
+        self.gui.input_offset.setText(str(self.search_field(self.status, "Offset")))
 
-        self.read_time = float(self.gui.input_read.value())
+        self.read_time = float(self.gui.input_read.text())
 
     def update_status(self):
         self.status = self.lockbox.get_status()
-        self.gui.statusText.setValue(self.status)
+        self.gui.statusText.setText(self.status)
         self.update_value_labels()
 
     def update_value_labels(self):
-        self.gui.val_P.setValue(self.search_field(self.status, "PVal"))
-        self.gui.val_I.setValue(self.search_field(self.status, "IVal"))
-        self.gui.val_D.setValue(self.search_field(self.status, "DVal"))
-        self.gui.val_int_time.setValue(self.search_field(self.status, "Timebase"))
-        self.gui.val_offset.setValue(self.search_field(self.status, "Offset"))
-        self.gui.val_PIDout.setValue(self.search_field(self.status, "PIDOut"))
+        self.gui.val_P.setText(str(self.search_field(self.status, "PVal")))
+        self.gui.val_I.setText(str(self.search_field(self.status, "IVal")))
+        self.gui.val_D.setText(str(self.search_field(self.status, "DVal")))
+        self.gui.val_int_time.setText(str(self.search_field(self.status, "Timebase")))
+        self.gui.val_offset.setText(str(self.search_field(self.status, "Offset")))
+        self.gui.val_PIDout.setText(str(self.search_field(self.status, "PIDOut")))
 
     # Technical methods
+
+    def search_field(self, string, field):
+        """ Searches for a field of the format [FIELD] = xxxxxx
+        where the xxx are float numbers, and returns the extract numbers.
+
+        :param msg: (str) message to be sent
+        """
+        valid_fields = ["dCount1", "Count2", "Timebase", "PVal", "IVal", "DVal", "ErrorVal", "Integrator", "Offset", "PIDOut"]
+
+        if field not in valid_fields:
+            raise ValueError("Invalid Lockbox field.")
+        return float(re.search(f"{field} = ([0-9\.]*)", string).group(1))
 
     def _initialize_channel(self, index, channel):
 
@@ -177,7 +190,7 @@ class JimLockboxGUI:
 
             # Check for override
             if channel.setpoint_override:
-                self.widgets['sp'][index].setValue(channel.setpoint_override)
+                self.widgets['sp'][index].setText(channel.setpoint_override)
                 channel.setpoint_override = 0
 
             # Update data with the new wavelength
@@ -185,7 +198,7 @@ class JimLockboxGUI:
 
             # Update frequency
             self.widgets['curve'][4 * index].setData(channel.data)
-            self.widgets['freq'][index].setValue(channel.data[-1])
+            self.widgets['freq'][index].setText(channel.data[-1])
 
             # Update setpoints
             self.widgets['curve'][4 * index + 1].setData(channel.sp_data)
@@ -198,7 +211,7 @@ class JimLockboxGUI:
 
             # Now update lock + voltage plots
             self.widgets['curve'][4 * index + 2].setData(channel.voltage)
-            self.widgets['voltage'][index].setValue(channel.voltage[-1])
+            self.widgets['voltage'][index].setText(channel.voltage[-1])
 
 
 def launch(**kwargs):

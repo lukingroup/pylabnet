@@ -207,21 +207,21 @@ def launch(**kwargs):
     logger, clients = kwargs['logger'], kwargs['clients']
 
     config = load_script_config(
-        script='jim_lockbox',
+        script='jim_lockbox_monitor',
         config=kwargs['config'],
         logger=logger
     )
 
-    # lockbox_client = find_client(
-    #     clients,
-    #     config,
-    #     client_type='si_tt',
-    #     client_config='standard_ctr',
-    #     logger=logger
-    # )
+    lockbox_client = find_client(
+        clients,
+        config,
+        client_type='jim_lockbox',
+        client_config='goldberry',
+        logger=logger
+    )
 
     jim_lockbox_gui = JimLockboxGUI(
-        lockbox_client=None,
+        lockbox_client=lockbox_client,
         logger_client=logger,
         server_port=kwargs['server_port']
     )

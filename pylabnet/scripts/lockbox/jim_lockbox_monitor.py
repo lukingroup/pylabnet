@@ -51,37 +51,37 @@ class JimLockboxGUI:
 
     def initialize_buttons(self):
         self.gui.set_P.clicked.connect(
-            lambda: self.lockbox.set_P(float(self.gui.input_P.text()))
+            lambda: self.lockbox.set_P(self.gui.input_P.value())
         )
         self.gui.set_I.clicked.connect(
-            lambda: self.lockbox.set_I(float(self.gui.input_I.text()))
+            lambda: self.lockbox.set_I(self.gui.input_I.value())
         )
         self.gui.set_D.clicked.connect(
-            lambda: self.lockbox.set_D(float(self.gui.input_D.text()))
+            lambda: self.lockbox.set_D(self.gui.input_D.value())
         )
         self.gui.set_int_time.clicked.connect(
-            lambda: self.lockbox.set_int_time(float(self.gui.input_int_time.text()))
+            lambda: self.lockbox.set_int_time(self.gui.input_int_time.value())
         )
         self.gui.set_offset.clicked.connect(
-            lambda: self.lockbox.set_offset(float(self.gui.input_offset.text()))
+            lambda: self.lockbox.set_offset(self.gui.input_offset.value())
         )
         self.gui.reset.clicked.connect(
             lambda: self.lockbox.reset()
         )
         self.gui.set_read.clicked.connect(
-            lambda: setattr(self, "read_time", float(self.gui.input_read.text()))
+            lambda: setattr(self, "read_time", self.gui.input_read.value())
         )
 
     def initialize_fields(self):
         self.update_status()
 
-        self.gui.input_P.setText(str(self.search_field(self.status, "PVal")))
-        self.gui.input_I.setText(str(self.search_field(self.status, "IVal")))
-        self.gui.input_D.setText(str(self.search_field(self.status, "DVal")))
-        self.gui.input_int_time.setText(str(self.search_field(self.status, "Timebase")))
-        self.gui.input_offset.setText(str(self.search_field(self.status, "Offset")))
+        self.gui.input_P.setValue(self.search_field(self.status, "PVal"))
+        self.gui.input_I.setValue(self.search_field(self.status, "IVal"))
+        self.gui.input_D.setValue(self.search_field(self.status, "DVal"))
+        self.gui.input_int_time.setValue(self.search_field(self.status, "Timebase"))
+        self.gui.input_offset.setValue(self.search_field(self.status, "Offset"))
 
-        self.read_time = float(self.gui.input_read.text())
+        self.read_time = self.gui.input_read.value()
 
     def update_status(self):
         self.status = self.lockbox.get_status()

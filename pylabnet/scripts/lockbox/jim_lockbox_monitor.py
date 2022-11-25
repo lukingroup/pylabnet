@@ -28,17 +28,18 @@ class JimLockboxGUI:
         )
 
         self.gui.apply_stylesheet()
+
+        # Set the button functions
         self.initialize_buttons()
+
+        # Read initial status and populate fields with current values
         self.initialize_fields()
 
-        # Configure plots
-        # Get actual legend widgets
-        # self.widgets['legend'] = [get_legend_from_graphics_view(legend) for legend in self.widgets['legend']]
-        # self.widgets['curve'] = []
+        # Assign the plot object, initialize colors
+        self.initialize_plot()
 
     def run(self):
-        """ Runs the lockbox infinitely """
-
+        """ Runs the lockbox infinitely, updating every read_time seconds. """
         tic = time.time()
 
         # Continuously update data per read time
@@ -46,10 +47,11 @@ class JimLockboxGUI:
             if (time.time() - tic) > self.read_time:
                 self.update_status()
                 tic = time.time()
-
             self.gui.force_update()
 
     def initialize_buttons(self):
+        """ Connect the buttons to their functions. """
+
         self.gui.set_P.clicked.connect(
             lambda: self.lockbox.set_P(self.gui.input_P.value())
         )
@@ -72,7 +74,33 @@ class JimLockboxGUI:
             lambda: setattr(self, "read_time", self.gui.input_read.value())
         )
 
+    def update_status(self):
+        """ Read current status from the lockbox, then update the full status dump box
+            as well as the individual parameters labels and plot. """
+        self.status = self.lockbox.get_status()
+        self.gui.statusText.setText(self.status)
+        self.update_value_labels()
+        self.update_plot()
+
+    def update_value_labels(self):
+        """ Extract values of each parameter from the full status dump and update
+            them in the the parameter labels. """
+        self.gui.val_P.setText(str(self.search_field(self.status, "PVal")))
+        self.gui.val_I.setText(str(self.search_field(self.status, "IVal")))
+        self.gui.val_D.setText(str(self.search_field(self.status, "DVal")))
+        self.gui.val_int_time.setText(str(self.search_field(self.status, "Timebase")))
+        self.gui.val_offset.setText(str(self.search_field(self.status, "Offset")))
+        self.gui.val_PIDout.setText(str(self.search_field(self.status, "PIDOut")))
+
+    def update_plot(self):
+        """ Update the current PID out value in the plot."""
+        self.plot.setData(self.search_field(self.status, "PIDOut"))
+
     def initialize_fields(self):
+        """ Called when setting up the GUI. First performs the usual update to get the
+            current parameter labels, then also copy them into the user input fields for
+            convenience. """
+
         self.update_status()
 
         self.gui.input_P.setValue(self.search_field(self.status, "PVal"))
@@ -81,22 +109,12 @@ class JimLockboxGUI:
         self.gui.input_int_time.setValue(self.search_field(self.status, "Timebase"))
         self.gui.input_offset.setValue(self.search_field(self.status, "Offset"))
 
+        # Store the current readout wait time
         self.read_time = self.gui.input_read.value()
 
-    def update_status(self):
-        self.status = self.lockbox.get_status()
-        self.gui.statusText.setText(self.status)
-        self.update_value_labels()
-
-    def update_value_labels(self):
-        self.gui.val_P.setText(str(self.search_field(self.status, "PVal")))
-        self.gui.val_I.setText(str(self.search_field(self.status, "IVal")))
-        self.gui.val_D.setText(str(self.search_field(self.status, "DVal")))
-        self.gui.val_int_time.setText(str(self.search_field(self.status, "Timebase")))
-        self.gui.val_offset.setText(str(self.search_field(self.status, "Offset")))
-        self.gui.val_PIDout.setText(str(self.search_field(self.status, "PIDOut")))
-
-    # Technical methods
+    def initialize_plot(self):
+        """ Assign plot object, intialize colors. """
+        self.plot = self.gui.output_plot.plot(pen=pg.mkPen(color=self.gui.COLOR_LIST[0]))
 
     def search_field(self, string, field):
         """ Searches for a field of the format [FIELD] = xxxxxx
@@ -119,65 +137,13 @@ class JimLockboxGUI:
         )
 
         # Create curves
-        # frequency
-        self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
+        self.widgets['curve'].append(self.widgets['graph'][0].plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
         ))
         add_to_legend(
             legend=self.widgets['legend'][2 * index],
             curve=self.widgets['curve'][4 * index],
             curve_name=channel.curve_name
-        )
-
-        # Setpoint
-        self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index],
-            curve=self.widgets['curve'][4 * index + 1],
-            curve_name=channel.setpoint_name
-        )
-
-        # Clear data
-        self.widgets['clear'][2 * index].clicked.connect(
-            lambda: self.clear_channel(channel)
-        )
-
-        # Setpoint reset
-        self.widgets['rs'][index].clicked.connect(
-            lambda: self.update_parameters(dict(
-                channel=channel.number,
-                setpoint=channel.data[-1]
-            ))
-        )
-
-        # Voltage
-        self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index + 1],
-            curve=self.widgets['curve'][4 * index + 2],
-            curve_name=channel.voltage_curve
-        )
-
-        # Error
-        self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index + 1],
-            curve=self.widgets['curve'][4 * index + 3],
-            curve_name=channel.error_curve
-        )
-
-        # zero
-        self.widgets['zero'][2 * index].clicked.connect(
-            lambda: self.zero_voltage(channel)
-        )
-        self.widgets['zero'][2 * index + 1].clicked.connect(
-            lambda: self.zero_voltage(channel)
         )
 
     def _update_channels(self):
@@ -187,31 +153,9 @@ class JimLockboxGUI:
         """
 
         for index, channel in enumerate(self.channels):
-
-            # Check for override
-            if channel.setpoint_override:
-                self.widgets['sp'][index].setText(channel.setpoint_override)
-                channel.setpoint_override = 0
-
-            # Update data with the new wavelength
-            channel.update(self.wlm_client.get_wavelength(channel.number))
-
             # Update frequency
-            self.widgets['curve'][4 * index].setData(channel.data)
-            self.widgets['freq'][index].setText(channel.data[-1])
-
-            # Update setpoints
-            self.widgets['curve'][4 * index + 1].setData(channel.sp_data)
-
-            # Set the error boolean (true if the lock is active and we are outside the error threshold)
-            if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
-                self.widgets['error_status'][index].setChecked(True)
-            else:
-                self.widgets['error_status'][index].setChecked(False)
-
-            # Now update lock + voltage plots
-            self.widgets['curve'][4 * index + 2].setData(channel.voltage)
-            self.widgets['voltage'][index].setText(channel.voltage[-1])
+            self.widgets['curve'].setData(channel.data)
+            self.widgets['freq'].setText(channel.data[-1])
 
 
 def launch(**kwargs):

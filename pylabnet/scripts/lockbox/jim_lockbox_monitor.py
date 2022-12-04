@@ -27,14 +27,24 @@ class JimLockboxGUI:
             log=self.log
         )
 
+        self.display_pts = 1000
+        self.PID_out_arr = None
+        self.graph = self.gui.output_plot
+        self.curve = self.graph.plot(pen=pg.mkPen(color=self.gui.COLOR_LIST[0]))
+
         self.gui.apply_stylesheet()
         self.initialize_buttons()
         self.initialize_fields()
 
         # Configure plots
         # Get actual legend widgets
+
         # self.widgets['legend'] = [get_legend_from_graphics_view(legend) for legend in self.widgets['legend']]
-        # self.widgets['curve'] = []
+        # add_to_legend(
+        #     legend=self.widgets['legend'][2 * index],
+        #     curve=self.curve,
+        #     curve_name=channel.curve_name
+        # )
 
     def run(self):
         """ Runs the lockbox infinitely """
@@ -75,6 +85,7 @@ class JimLockboxGUI:
     def initialize_fields(self):
         self.update_status()
 
+        # Only update the input fields at initialization time
         self.gui.input_P.setValue(self.search_field(self.status, "PVal"))
         self.gui.input_I.setValue(self.search_field(self.status, "IVal"))
         self.gui.input_D.setValue(self.search_field(self.status, "DVal"))
@@ -89,14 +100,20 @@ class JimLockboxGUI:
         self.update_value_labels()
 
     def update_value_labels(self):
+        new_PIDOut = self.search_field(self.status, "PIDOut")
+
         self.gui.val_P.setText(str(self.search_field(self.status, "PVal")))
         self.gui.val_I.setText(str(self.search_field(self.status, "IVal")))
         self.gui.val_D.setText(str(self.search_field(self.status, "DVal")))
         self.gui.val_int_time.setText(str(self.search_field(self.status, "Timebase")))
         self.gui.val_offset.setText(str(self.search_field(self.status, "Offset")))
-        self.gui.val_PIDout.setText(str(self.search_field(self.status, "PIDOut")))
+        self.gui.val_PIDout.setText(str(new_PIDOut))
 
-    # Technical methods
+        if self.PID_out_arr is None:
+            self.PID_out_arr = new_PIDOut * np.ones(self.display_pts)
+        else:
+            self.PID_out_arr = np.append(self.PID_out_arr[1:], new_PIDOut)
+        self.curve.setData(self.PID_out_arr)
 
     def search_field(self, string, field):
         """ Searches for a field of the format [FIELD] = xxxxxx
@@ -108,110 +125,14 @@ class JimLockboxGUI:
 
         if field not in valid_fields:
             raise ValueError("Invalid Lockbox field.")
-        return float(re.search(f"{field} = ([0-9\.]*)", string).group(1))
 
-    def _initialize_channel(self, index, channel):
+        regex_search = re.search(f"{field} = ([0-9\.]*)", string)
 
-        # Get wavelength and initialize data arrays
-        channel.initialize(
-            wavelength=self.wlm_client.get_wavelength(channel.number),
-            display_pts=self.display_pts
-        )
-
-        # Create curves
-        # frequency
-        self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index],
-            curve=self.widgets['curve'][4 * index],
-            curve_name=channel.curve_name
-        )
-
-        # Setpoint
-        self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index],
-            curve=self.widgets['curve'][4 * index + 1],
-            curve_name=channel.setpoint_name
-        )
-
-        # Clear data
-        self.widgets['clear'][2 * index].clicked.connect(
-            lambda: self.clear_channel(channel)
-        )
-
-        # Setpoint reset
-        self.widgets['rs'][index].clicked.connect(
-            lambda: self.update_parameters(dict(
-                channel=channel.number,
-                setpoint=channel.data[-1]
-            ))
-        )
-
-        # Voltage
-        self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[0])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index + 1],
-            curve=self.widgets['curve'][4 * index + 2],
-            curve_name=channel.voltage_curve
-        )
-
-        # Error
-        self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
-            pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
-        ))
-        add_to_legend(
-            legend=self.widgets['legend'][2 * index + 1],
-            curve=self.widgets['curve'][4 * index + 3],
-            curve_name=channel.error_curve
-        )
-
-        # zero
-        self.widgets['zero'][2 * index].clicked.connect(
-            lambda: self.zero_voltage(channel)
-        )
-        self.widgets['zero'][2 * index + 1].clicked.connect(
-            lambda: self.zero_voltage(channel)
-        )
-
-    def _update_channels(self):
-        """ Updates all channels + displays
-
-        Called continuously inside run() method to refresh WLM data and output on GUI
-        """
-
-        for index, channel in enumerate(self.channels):
-
-            # Check for override
-            if channel.setpoint_override:
-                self.widgets['sp'][index].setText(channel.setpoint_override)
-                channel.setpoint_override = 0
-
-            # Update data with the new wavelength
-            channel.update(self.wlm_client.get_wavelength(channel.number))
-
-            # Update frequency
-            self.widgets['curve'][4 * index].setData(channel.data)
-            self.widgets['freq'][index].setText(channel.data[-1])
-
-            # Update setpoints
-            self.widgets['curve'][4 * index + 1].setData(channel.sp_data)
-
-            # Set the error boolean (true if the lock is active and we are outside the error threshold)
-            if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
-                self.widgets['error_status'][index].setChecked(True)
-            else:
-                self.widgets['error_status'][index].setChecked(False)
-
-            # Now update lock + voltage plots
-            self.widgets['curve'][4 * index + 2].setData(channel.voltage)
-            self.widgets['voltage'][index].setText(channel.voltage[-1])
+        # Check if field is not contained in string
+        if regex_search is not None:
+            return float(regex_search.group(1))
+        else:
+            return ""
 
 
 def launch(**kwargs):

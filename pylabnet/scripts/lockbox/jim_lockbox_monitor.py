@@ -104,7 +104,6 @@ class JimLockboxGUI:
         self.status = self.lockbox.get_status()
         self.gui.statusText.setText(self.status)
         self.update_value_labels()
-        self.update_plot()
 
     def update_value_labels(self):
         new_PIDOut = self.search_field(self.status, "PIDOut")

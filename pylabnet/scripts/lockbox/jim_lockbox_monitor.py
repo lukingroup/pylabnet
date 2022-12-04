@@ -33,7 +33,11 @@ class JimLockboxGUI:
         self.curve = self.graph.plot(pen=pg.mkPen(color=self.gui.COLOR_LIST[0]))
 
         self.gui.apply_stylesheet()
+
+        # Set the button functions
         self.initialize_buttons()
+
+        # Read initial status and populate fields with current values
         self.initialize_fields()
 
         # Configure plots
@@ -47,8 +51,7 @@ class JimLockboxGUI:
         # )
 
     def run(self):
-        """ Runs the lockbox infinitely """
-
+        """ Runs the lockbox infinitely, updating every read_time seconds. """
         tic = time.time()
 
         # Continuously update data per read time
@@ -56,10 +59,11 @@ class JimLockboxGUI:
             if (time.time() - tic) > self.read_time:
                 self.update_status()
                 tic = time.time()
-
             self.gui.force_update()
 
     def initialize_buttons(self):
+        """ Connect the buttons to their functions. """
+
         self.gui.set_P.clicked.connect(
             lambda: self.lockbox.set_P(self.gui.input_P.value())
         )
@@ -95,9 +99,12 @@ class JimLockboxGUI:
         self.read_time = self.gui.input_read.value()
 
     def update_status(self):
+        """ Read current status from the lockbox, then update the full status dump box
+            as well as the individual parameters labels and plot. """
         self.status = self.lockbox.get_status()
         self.gui.statusText.setText(self.status)
         self.update_value_labels()
+        self.update_plot()
 
     def update_value_labels(self):
         new_PIDOut = self.search_field(self.status, "PIDOut")

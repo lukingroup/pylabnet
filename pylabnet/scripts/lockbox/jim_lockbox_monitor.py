@@ -40,16 +40,6 @@ class JimLockboxGUI:
         # Read initial status and populate fields with current values
         self.initialize_fields()
 
-        # Configure plots
-        # Get actual legend widgets
-
-        # self.widgets['legend'] = [get_legend_from_graphics_view(legend) for legend in self.widgets['legend']]
-        # add_to_legend(
-        #     legend=self.widgets['legend'][2 * index],
-        #     curve=self.curve,
-        #     curve_name=channel.curve_name
-        # )
-
     def run(self):
         """ Runs the lockbox infinitely, updating every read_time seconds. """
         tic = time.time()
@@ -87,9 +77,10 @@ class JimLockboxGUI:
         )
 
     def initialize_fields(self):
+        # Do the normal updating step
         self.update_status()
 
-        # Only update the input fields at initialization time
+        # Additionally only update the input fields at initialization time
         self.gui.input_P.setValue(self.search_field(self.status, "PVal"))
         self.gui.input_I.setValue(self.search_field(self.status, "IVal"))
         self.gui.input_D.setValue(self.search_field(self.status, "DVal"))
@@ -104,21 +95,31 @@ class JimLockboxGUI:
         self.status = self.lockbox.get_status()
         self.gui.statusText.setText(self.status)
         self.update_value_labels()
+        self.update_plot()
 
     def update_value_labels(self):
-        new_PIDOut = self.search_field(self.status, "PIDOut")
-
         self.gui.val_P.setText(str(self.search_field(self.status, "PVal")))
         self.gui.val_I.setText(str(self.search_field(self.status, "IVal")))
         self.gui.val_D.setText(str(self.search_field(self.status, "DVal")))
         self.gui.val_int_time.setText(str(self.search_field(self.status, "Timebase")))
         self.gui.val_offset.setText(str(self.search_field(self.status, "Offset")))
-        self.gui.val_PIDout.setText(str(new_PIDOut))
+        self.gui.val_PIDout.setText(str(self.search_field(self.status, "PIDOut")))
 
+    def update_plot(self):
+        new_PIDOut = self.search_field(self.status, "PIDOut")
+
+        # In case the status update failed, we just use the previous value as backup
+        if new_PIDOut == "":
+            new_PIDOut = self.PID_out_arr[-1] if self.PID_out_arr is not None else 0
+
+        # Use the new value to initialize the plotting array if empty
         if self.PID_out_arr is None:
             self.PID_out_arr = new_PIDOut * np.ones(self.display_pts)
+        # Else, just pop out the oldest value and add the new value at the end
         else:
             self.PID_out_arr = np.append(self.PID_out_arr[1:], new_PIDOut)
+
+        # Plot!
         self.curve.setData(self.PID_out_arr)
 
     def search_field(self, string, field):

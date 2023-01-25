@@ -54,7 +54,13 @@ class Dataset():
         self.dont_clear = dont_clear
 
         # Confluence handler and its button
-        self.app = QtWidgets.QApplication(sys.argv)
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            self.app = QtWidgets.QApplication(sys.argv)
+        else:
+            self.log.info('QApplication instance already exists: %s' % str(app))
+            self.app = app
+
         self.confluence_handler = None
 
         self.enable_confluence = enable_confluence

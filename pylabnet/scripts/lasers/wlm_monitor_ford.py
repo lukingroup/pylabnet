@@ -539,11 +539,14 @@ class Channel:
 
         self.data = np.ones(display_pts) * wavelength
 
-        self.sp_data = np.ones(display_pts) * self.data[-1]
-        self.setpoint = self.data[-1]
-        # self.setpoint_override = True
+        # if self.sp_data already exists, keep its last value so that the
+        # clear data functionality doesn't override the setpoint
+        if len(self.sp_data) > 0:
+            self.sp_data = np.ones(display_pts) * self.sp_data[-1]
+        else:
+            self.sp_data = np.ones(display_pts) * self.data[-1]
 
-        # self.lock_override = True
+        self.setpoint = self.sp_data[-1]
 
         # Initialize voltage and error
         self.voltage = np.ones(display_pts) * self.current_voltage

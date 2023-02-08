@@ -1142,7 +1142,7 @@ class HeatMap(Dataset):
         self.graph.show()
         self.graph.view.setAspectLocked(False)
         self.graph.view.invertY(False)
-        self.graph.setPredefinedGradient('inferno')
+        self.graph.setPredefinedGradient('viridis')
         if set(['min', 'max', 'pts']).issubset(kwargs.keys()):
             self.min, self.max, self.pts = kwargs['min'], kwargs['max'], kwargs['pts']
             self.graph.view.setLimits(xMin=kwargs['min'], xMax=kwargs['max'])

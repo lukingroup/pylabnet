@@ -327,7 +327,9 @@ class Controller:
                 self.widgets['step_right'][channel].setStyleSheet(
                     GREY_BUTTON_STYLESHEET
                 )
-                self._set_voltage_display(channel)
+                if attocube_channel in [4, 5, 6]:
+                    self._set_voltage_display(channel)
+
         else:
             self.log.info("LOCKED")
 
@@ -393,7 +395,8 @@ class Controller:
                 self.widgets['step_right'][channel].setStyleSheet(
                     GREY_BUTTON_STYLESHEET
                 )
-                self._set_voltage_display(channel)
+                if attocube_channel in [4, 5, 6]:
+                    self._set_voltage_display(channel)
 
     def _walk_left(self, channel: int):
 
@@ -442,7 +445,9 @@ class Controller:
                         self.widgets['walk_left'][channel].setStyleSheet(
                             GREY_BUTTON_STYLESHEET
                         )
-                    self._set_voltage_display(channel)
+
+                    if attocube_channel in [4, 5, 6]:
+                        self._set_voltage_display(channel)
 
     def _walk_right(self, channel: int):
 
@@ -492,7 +497,9 @@ class Controller:
                         self.widgets['walk_right'][channel].setStyleSheet(
                             GREY_BUTTON_STYLESHEET
                         )
-                    self._set_voltage_display(channel)
+
+                    if attocube_channel in [4, 5, 6]:
+                        self._set_voltage_display(channel)
 
     def _stop(self, channel):
         if channel in ATTOCUBE_CHANNELS:
@@ -523,7 +530,6 @@ class Controller:
                 channel=attocube_channel,
                 voltage=voltage
             )
-            self._set_voltage_display(channel)
 
         # If locked, get the current voltage and reset the GUI value to it
         if self._is_axis_locked(channel):

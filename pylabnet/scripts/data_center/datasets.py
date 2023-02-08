@@ -3,7 +3,6 @@ import pyqtgraph as pg
 import numpy as np
 import copy
 import time
-import datetime
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
@@ -11,7 +10,7 @@ from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, C
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
-import sys, json
+import sys
 
 
 class Dataset():
@@ -33,7 +32,7 @@ class Dataset():
             self.config = kwargs['config']
         else:
             self.config = {}
-        
+
         if(log is None):
             self.metadata = None
         else:
@@ -97,7 +96,7 @@ class Dataset():
 
         if data_type is None:
             data_type = self.__class__
-        
+
         self.children[name] = data_type(
             gui=self.gui,
             data=self.data,
@@ -158,6 +157,7 @@ class Dataset():
         self.curve.setData([])
     #test
     # Note: This recursive code could potentially run into infinite iteration problem.
+
     def clear_all_data(self):
 
         if not self.dont_clear:
@@ -310,7 +310,7 @@ class Dataset():
 
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
-                    self.graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+                    self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
                 else:
                     self.graph = pg.PlotWidget()
 
@@ -574,6 +574,7 @@ class InfiniteRollingLine(RollingLine):
             else:
                 super().update(**kwargs)
 
+
 class time_trace_monitor(RollingLine):
     def __init__(self, *args, **kwargs):
         if('data_length' not in kwargs):
@@ -593,7 +594,7 @@ class time_trace_monitor(RollingLine):
 
         else:
             if len(self.data) >= self.data_length:
-                self.data = np.append(self.data, data)[-1*self.data_length:]
+                self.data = np.append(self.data, data)[-1 * self.data_length:]
             else:
                 self.data = np.append(self.data, data)
 
@@ -602,16 +603,14 @@ class time_trace_monitor(RollingLine):
 
         else:
             if len(self.x) >= self.data_length:
-                self.x = np.append(self.x, dt_timestamp)[-1*self.data_length:]
+                self.x = np.append(self.x, dt_timestamp)[-1 * self.data_length:]
             else:
                 self.x = np.append(self.x, dt_timestamp)
-
 
         for name, child in self.children.items():
             # If we need to process the child data, do it
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
-        
 
 
 class ManualOpenLoopScan(Dataset):
@@ -1396,6 +1395,30 @@ class ErrorBarGraph(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
+
+
+class ErrorBarAveragedHistogram(ErrorBarGraph):
+    """ ErrorBar graph version of AveragedHistogram"""
+
+    def set_data(self, data=None, x=None):
+        """ Sets data by adding to previous histogram
+
+        :param data: new data to set
+        :param x: x axis
+        """
+
+        # Cast as a numpy array if needed
+        if isinstance(data, list):
+            self.recent_data = np.array(data)
+        else:
+            self.recent_data = data
+
+        if self.data is None:
+            self.data = copy.deepcopy(self.recent_data)
+        else:
+            self.data += self.recent_data
+
+        self.set_children_data()
 
 
 class ErrorBarPlot(Dataset):

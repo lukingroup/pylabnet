@@ -152,6 +152,8 @@ class WlmMonitor:
 
                     if 'lock' in parameter:
 
+                        self.log.info('setcheck on the widget...')
+
                         self.widgets['lock'][index].setChecked(parameter['lock'])
                         # channel.lock = parameter['lock']
 
@@ -604,6 +606,7 @@ class Channel:
         #         self.lock_override = False
         # else:
         if self.gui_lock != self.prev_gui_lock:
+            self.log.info(f"udpate lock to {self.gui_lock}")
             self.lock = copy.deepcopy(self.gui_lock)
 
         self.prev_gui_lock = copy.deepcopy(self.gui_lock)

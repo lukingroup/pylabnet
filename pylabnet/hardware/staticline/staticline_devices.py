@@ -294,8 +294,28 @@ class CLD101x(StaticLineHardwareHandler):
     def set_value(self, value):
         self.hardware_client.set_current(float(value))
 
-################################################################################
 
+class SMC100A(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.up = self.hardware_client.on
+        self.down = self.hardware_client.off
+        self.log.info(f'SMC100A assigned to staticline {self.name}')
+
+    def set_dig_value(self, value):
+
+        self.hardware_client.set_power(float(value))
+
+    def set_value(self, value):
+        #This will be used for setting the frequencies with an analog staticline
+        self.hardware_client.set_freq(float(value) * 1E6)
+
+
+################################################################################
 
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
@@ -308,5 +328,6 @@ registered_staticline_modules = {
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice,
     'agilent_83732b': agilent_83732b,
-    'CLD101x': CLD101x
+    'CLD101x': CLD101x,
+    'SMC100A': SMC100A
 }

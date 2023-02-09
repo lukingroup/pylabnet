@@ -3,7 +3,6 @@ import pyqtgraph as pg
 import numpy as np
 import copy
 import time
-import datetime
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
@@ -11,7 +10,7 @@ from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, C
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
-import sys, json
+import sys
 
 
 class Dataset():
@@ -55,7 +54,13 @@ class Dataset():
         self.dont_clear = dont_clear
 
         # Confluence handler and its button
-        self.app = QtWidgets.QApplication(sys.argv)
+        app = QtWidgets.QApplication.instance()
+        if app is None:
+            self.app = QtWidgets.QApplication(sys.argv)
+        else:
+            self.log.info('QApplication instance already exists: %s' % str(app))
+            self.app = app
+
         self.confluence_handler = None
 
         self.enable_confluence = enable_confluence
@@ -158,6 +163,7 @@ class Dataset():
         self.curve.setData([])
     #test
     # Note: This recursive code could potentially run into infinite iteration problem.
+
     def clear_all_data(self):
 
         if not self.dont_clear:
@@ -310,7 +316,7 @@ class Dataset():
 
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
-                    self.graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+                    self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
                 else:
                     self.graph = pg.PlotWidget()
 
@@ -546,12 +552,14 @@ class InfiniteRollingLine(RollingLine):
     def set_data(self, data):
         """ Updates data
 
-        :param data: (scalar) data to add
+        :param data: (scalar or array) data to add
         """
 
         if self.data is None:
-            self.data = np.array([data])
-
+            if(np.isscalar(data)):
+                self.data = np.array([data])
+            else:
+                self.data = np.array(data)
         else:
             self.data = np.append(self.data, data)
 
@@ -574,6 +582,7 @@ class InfiniteRollingLine(RollingLine):
             else:
                 super().update(**kwargs)
 
+
 class time_trace_monitor(RollingLine):
     def __init__(self, *args, **kwargs):
         if('data_length' not in kwargs):
@@ -593,7 +602,7 @@ class time_trace_monitor(RollingLine):
 
         else:
             if len(self.data) >= self.data_length:
-                self.data = np.append(self.data, data)[-1*self.data_length:]
+                self.data = np.append(self.data, data)[-1 * self.data_length:]
             else:
                 self.data = np.append(self.data, data)
 
@@ -602,16 +611,14 @@ class time_trace_monitor(RollingLine):
 
         else:
             if len(self.x) >= self.data_length:
-                self.x = np.append(self.x, dt_timestamp)[-1*self.data_length:]
+                self.x = np.append(self.x, dt_timestamp)[-1 * self.data_length:]
             else:
                 self.x = np.append(self.x, dt_timestamp)
-
 
         for name, child in self.children.items():
             # If we need to process the child data, do it
             if name in self.mapping:
                 self.mapping[name](self, prev_dataset=child)
-
 
 
 class ManualOpenLoopScan(Dataset):

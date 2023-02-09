@@ -23,7 +23,7 @@ class StaticLineHardwareHandler(ABC):
             Contains parameters needed to setup the hardware as a staticline.
     :config: (int)
             Contains type of staticline being configured (digital, analog, or adjustable digital)
-    :config_FN (dict)
+    :awg_dio_pin_mapping (dict)
             Record awg_dio_pin_mapping (for hardware type == dio_breakout only). None if the hardware type is not dio_breakout
     '''
 

@@ -1405,6 +1405,30 @@ class ErrorBarGraph(Dataset):
             child.update(**kwargs)
 
 
+class ErrorBarAveragedHistogram(ErrorBarGraph):
+    """ ErrorBar graph version of AveragedHistogram"""
+
+    def set_data(self, data=None, x=None):
+        """ Sets data by adding to previous histogram
+
+        :param data: new data to set
+        :param x: x axis
+        """
+
+        # Cast as a numpy array if needed
+        if isinstance(data, list):
+            self.recent_data = np.array(data)
+        else:
+            self.recent_data = data
+
+        if self.data is None:
+            self.data = copy.deepcopy(self.recent_data)
+        else:
+            self.data += self.recent_data
+
+        self.set_children_data()
+
+
 class ErrorBarPlot(Dataset):
 
     def visualize(self, graph, **kwargs):

@@ -67,16 +67,26 @@ class StaticLineGUIGeneric():
             if (hardware_client_found):
                 for staticline_idx in range(len(device_params["staticline_names"])):
                     staticline_name = device_params["staticline_names"][staticline_idx]
+
                     # Store the staticline driver under the specified device name
+                    # if "dio_breakout", need to assign extra parameter (awg_dio_pin_mapping); otherwise don't
+                    if hardware_type == "dio_breakout":
+                        self.log.info("diobreakout!")
+                        self.log.info(device_params["awg_dio_pin_mapping"])
+                        awg_dio_pin_mapping = device_params["awg_dio_pin_mapping"]
+                    else:
+                        awg_dio_pin_mapping = None
+
                     self.staticlines[device_name][staticline_name] = staticline.Driver(
                         name=device_name + "_" + staticline_name,
                         logger=logger_client,
                         hardware_client=hardware_client,
                         hardware_type=hardware_type,
-                        config=device_params["staticline_configs"][staticline_idx]
+                        config=device_params["staticline_configs"][staticline_idx],
+                        awg_dio_pin_mapping=awg_dio_pin_mapping
                     )
 
-                    #If it has an initial default value, set that initially using set_value command
+                    # If the staticline has an initial default value, set that initially using set_value command
                     if "default" in device_params["staticline_configs"][staticline_idx]:
                         defaultValue = device_params["staticline_configs"][staticline_idx]["default"]
                         sl_type = device_params["staticline_configs"][staticline_idx]['type']
@@ -84,6 +94,7 @@ class StaticLineGUIGeneric():
                             self.staticlines[device_name][staticline_name].set_value(defaultValue)
                         elif (sl_type == 'adjustable_digital'):
                             self.staticlines[device_name][staticline_name].set_dig_value(defaultValue)
+
             else:
                 #Didn't find the hardware client, so will remove the entry from the staticline dictionary so that the GUI is not updated
                 self.staticlines.pop(device_name, None)

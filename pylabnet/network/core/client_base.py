@@ -68,29 +68,13 @@ class ClientBase:
                     key = os.path.join('/etc/ssl/certs', key)
                 else:
                     raise UnsupportedOSException()
-
-                # Hardcode to only route towards the ONE device
-                # The following command needs to be run on the remote PC
-                # ssh -R 13579:(remote's IP):13579 <user>@(this computer's IP)
-                # This routes our request for localhost : 13579 --> (remote PC) : 13579, where 13579 is the device server port
-                # To extend to more devices on the remote computer, add more forwarded ports, and then route each one manually here
-                # They must be started manually on the remote device -- the SSH isn't set up properly
-                if self._host == "10.245.250.109" and self._port == 13579:
-                    self._connection = rpyc.ssl_connect(
-                        host="localhost",
-                        port=13579,  # Forward the same port number on both sides for convenience, can be different in principle
-                        config={'allow_public_attrs': True},
-                        keyfile=key,
-                        certfile=key
-                    )
-                else:
-                    self._connection = rpyc.ssl_connect(
-                        host=self._host,
-                        port=self._port,
-                        config={'allow_public_attrs': True},
-                        keyfile=key,
-                        certfile=key
-                    )
+                self._connection = rpyc.ssl_connect(
+                    host=self._host,
+                    port=self._port,
+                    config={'allow_public_attrs': True},
+                    keyfile=key,
+                    certfile=key
+                )
             self._service = self._connection.root
 
             return 0

@@ -33,7 +33,7 @@ class StaticLineHardwareHandler(ABC):
         self.hardware_client = hardware_client
         self.hardware_name = str(hardware_client.__class__).split('.')[-2]
         self.config = config
-        self.configFN = awg_dio_pin_mapping
+        self.awg_dio_pin_mapping = awg_dio_pin_mapping
 
         self.setup()
         self.log.info(
@@ -182,7 +182,7 @@ class DioBreakout(StaticLineHardwareHandler):
         assignment_dict = load_config('dio_assignment_global')
 
         DIO_bit = assignment_dict[self.config['bit_name']]
-        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit, self.configFN)
+        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit, self.awg_dio_pin_mapping)
 
         self.isHighVoltage = self.config['is_high_volt']
 

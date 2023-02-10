@@ -71,7 +71,7 @@ class ClientBase:
                 self._connection = rpyc.ssl_connect(
                     host=self._host,
                     port=self._port,
-                    config={'allow_public_attrs': True},
+                    config={'allow_public_attrs': True, 'sync_request_timeout': 0.1},
                     keyfile=key,
                     certfile=key
                 )

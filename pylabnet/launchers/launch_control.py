@@ -565,6 +565,7 @@ class Controller:
                 try:
                     stop_client = ClientBase(host=server_data['ip'], port=server_data['port'])
                     stop_client.close_server()
+                    self._remove_client_from_client_list(client_to_stop)
                 except:
                     self.gui_logger.warn(
                         f'Failed to shutdown server {client_to_stop}'
@@ -601,21 +602,26 @@ class Controller:
         # If we can't find the client connected to the server, just remove it
         else:
             self.gui_logger.warn(f'No matching client connected to LogServer: {client_to_stop}')
-            try:
+            self._remove_client_from_client_list(client_to_stop)
 
-                # The following two member variables don't exist for a proxy.
-                if not self.proxy:
-                    self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
-                    del self.port_list[client_to_stop]
-                    del self.log_service.client_data[client_to_stop]
-                    del self.client_list[client_to_stop]
-                    del self.client_data[client_to_stop]
-                else:
-                    self.gui_client.remove_client_list_entry(client_to_stop)
-                self.gui_logger.info(f'Hard kill of {client_to_stop} successfull.')
 
-            except:
-                pass
+    def _remove_client_from_client_list(self, client_to_stop):
+        try:
+            # The following two member variables don't exist for a proxy.
+            if not self.proxy:
+                self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client_to_stop]))
+                del self.port_list[client_to_stop]
+                del self.log_service.client_data[client_to_stop]
+                del self.client_list[client_to_stop]
+                del self.client_data[client_to_stop]
+            else:
+                self.gui_client.remove_client_list_entry(client_to_stop)
+                self.gui_logger.info(f'Hard kill of {client_to_stop} successful.')
+
+        except:
+            pass
+
+
 
     def _device_clicked(self, index):
         """ Configures behavior for device double click

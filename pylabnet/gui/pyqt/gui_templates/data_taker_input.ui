@@ -449,16 +449,28 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            <attribute name="title">
             <string>Input Dict</string>
            </attribute>
-           <widget class="QWidget" name="gridLayoutWidget">
+           <widget class="QScrollArea" name="init_dict_scrollarea">
             <property name="geometry">
              <rect>
-              <x>20</x>
+              <x>10</x>
               <y>10</y>
               <width>491</width>
-              <height>611</height>
+              <height>581</height>
              </rect>
             </property>
-            <layout class="QGridLayout" name="input_dict_gridlayout"/>
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>489</width>
+               <height>579</height>
+              </rect>
+             </property>
+            </widget>
            </widget>
           </widget>
           <widget class="QWidget" name="tab">
@@ -645,7 +657,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2565</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

@@ -14,6 +14,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata, load_script_config, find_client, get_ip
 from pylabnet.scripts.data_center import datasets
+from PyQt5.QtWidgets import QLabel, QLineEdit, QPushButton
 
 
 REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
@@ -126,6 +127,48 @@ class DataTaker:
             self.cur_path = self.gui.exp.model().filePath(self.gui.exp.currentIndex())
             self.exp_name = os.path.split(os.path.basename(self.cur_path))[1][:-3]
 
+        self.load_init_dict(index)
+
+
+    def load_init_dict(self, index):
+        """ Displays the currently clicked experiment's init dict
+
+        :param index: index of (QTreeView) entry to display
+        """
+
+        filepath = self.gui.exp.model().filePath(index)
+        if not os.path.isdir(filepath):
+           
+            spec = importlib.util.spec_from_file_location("init_dict", filepath)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            self.init_dict = mod.INIT_DICT
+
+        self.update_init_form(self.init_dict)
+
+    def create_gridlayout(self):
+
+        input_init_scrollarea = self.gui.init_dict_scrollarea
+
+        self.gui.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.gui.input_dict_gridlayout = QtWidgets.QGridLayout(self.gui.scrollAreaWidgetContents)
+        input_init_scrollarea.setWidget(self.gui.scrollAreaWidgetContents)
+
+    def update_init_form(self, newform):
+       
+        self.create_gridlayout()
+
+        # Build input dict modification form
+        input_grid_layout = self.gui.input_dict_gridlayout
+        btn1 = QPushButton("Push parameters")
+        
+        for i,  (labelname, default_value) in enumerate(newform.items()):
+            
+                label = QLabel(labelname)
+                value_entry =  QLineEdit(default_value)
+                input_grid_layout.addWidget(label, i, 0)
+                input_grid_layout.addWidget(value_entry, i, 1)
+
     def configure(self):
         """ Configures the currently selected experiment + dataset """
 
@@ -183,8 +226,12 @@ class DataTaker:
             pass
         self.experiment = self.module.experiment
 
-        # Retrieve input dict
-        self.log.info(self.dataset.input_dict)
+        
+
+
+
+
+
 
         self.log.info(f'Experiment {self.exp_name} configured')
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '

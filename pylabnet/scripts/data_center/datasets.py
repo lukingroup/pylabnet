@@ -1147,6 +1147,12 @@ class SawtoothScan1D(Dataset):
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
 
+    def clear_data(self):
+
+        self.data = None
+        self.all_data = None
+        self.reps = 1
+
 
 class HeatMap(Dataset):
 
@@ -1240,10 +1246,10 @@ class HeatMap(Dataset):
 
     def clear_data(self):
 
-        # Reset Heatmap with zeros
+        self.data = None
         self.graph.clear()
 
-        self.data = None
+        
 
 
 class LockedCavityScan1D(TriangleScan1D):

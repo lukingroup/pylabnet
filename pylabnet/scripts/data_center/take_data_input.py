@@ -228,10 +228,11 @@ class DataTaker:
 
         
 
+        # load input dict
+        input_grid_layout = self.gui.input_dict_gridlayout
 
-
-
-
+        # TODO: Read values from gridlayout and store in member variable of parent dataset.
+    
 
         self.log.info(f'Experiment {self.exp_name} configured')
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '

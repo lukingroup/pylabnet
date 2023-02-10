@@ -1465,23 +1465,6 @@ class ErrorBarPlot(Dataset):
             child.update(**kwargs)
 
 
-# class PhotonErrorBarPlot(ErrorBarPlot):
-    # un_normalized = np.array([])
-    # total_events = 0
-    # reps=0
-
-    # def visualize(self, graph, **kwargs):
-
-    #     super().visualize(graph, **kwargs)
-    #     self.add_child(
-    #         name='Photon probabilities, log scale',
-    #         mapping=passthru,
-    #         data_type=Dataset,
-    #         window=kwargs['window']
-    #     )
-    #     self.children['Photon probabilities, log scale'].graph.getPlotItem().setLogMode(False, True)
-
-
 class PhotonErrorBarPlot(ErrorBarGraph):
     un_normalized = np.array([])
     normalized = np.array([])

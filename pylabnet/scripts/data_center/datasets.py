@@ -1244,7 +1244,136 @@ class HeatMap(Dataset):
         self.data = None
         self.graph.clear()
 
-        
+
+class Plot2D(Dataset):
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.all_data = None
+        self.update_hmap = False
+        self.stop = False
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        # Get scan parameters from config
+        if set(['min_x', 'max_x', 'pts_x', 'min_y', 'max_y', 'pts_y']).issubset(self.kwargs.keys()):
+            self.fill_params(self.kwargs)
+
+        # Prompt user if not provided in config
+        else:
+            self.popup = ParameterPopup(min_x=float, max_x=float, pts_x=int, min_y=float, max_y=float, pts_y=int)
+            self.popup.parameters.connect(self.fill_params)
+
+    def fill_params(self, config):
+        """ Fills the min max and pts parameters """
+
+        self.min_x, self.max_x, self.pts_x = config['min_x'], config['max_x'], config['pts_x']
+        self.min_y, self.max_y, self.pts_y = config['min_y'], config['max_y'], config['pts_y']
+
+        pass_kwargs = dict()
+        if 'window' in config:
+            pass_kwargs['window'] = config['window']
+
+    def visualize(self, graph, **kwargs):
+
+        self.handle_new_window(graph, **kwargs)
+
+        self.graph.show()
+        self.graph.view.setAspectLocked(False)
+        self.graph.view.invertY(False)
+        self.graph.setPredefinedGradient('viridis')
+        if set(['min_x', 'max_x', 'pts_x, min_y', 'max_y', 'pts_y']).issubset(kwargs.keys()):
+            self.min_x, self.max_x, self.pts_x = kwargs['min_x'], kwargs['max_x'], kwargs['pts_x']
+            self.min_y, self.max_y, self.pts_y = kwargs['min_y'], kwargs['max_y'], kwargs['pts_y']
+            self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
+
+    def update(self, **kwargs):
+
+        if 'update_hmap' in kwargs and kwargs['update_hmap']:
+            try:
+                if hasattr(self, 'min_x'):
+                    self.graph.setImage(
+                        img=np.transpose(self.data),
+                        autoRange=False,
+                        scale=((self.max_x - self.min_x) / self.pts_x, 1),
+                        pos=(self.min, 0)
+                    )
+                else:
+                    self.graph.setImage(
+                        img=np.transpose(self.data),
+                        autoRange=False
+                    )
+            except:
+                pass
+
+    def save(self, filename=None, directory=None, date_dir=True):
+
+        generic_save(
+            data=self.data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
+        if self.x is not None:
+            generic_save(
+                data=self.x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getView(),
+                f'{filename}_{self.name}',
+                directory,
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
+
+    def handle_new_window(self, graph, **kwargs):
+
+        # If we want to use a separate window
+        if 'window' in kwargs:
+
+            # Check whether this window exists
+            if not hasattr(self.gui, kwargs['window']):
+
+                if 'window_title' in kwargs:
+                    window_title = kwargs['window_title']
+                else:
+                    window_title = 'Graph Holder'
+                setattr(
+                    self.gui,
+                    kwargs['window'],
+                    GraphPopup(window_title=window_title)
+                )
+
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                self.graph
+            )
+
+        # Otherwise, add a graph to the main layout
+        else:
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            self.gui.graph_layout.addWidget(self.graph)
+
+    def clear_data(self):
+
+        self.data = None
+        self.graph.clear()
+
+               
 
 
 class LockedCavityScan1D(TriangleScan1D):

@@ -7,7 +7,7 @@ import pylabnet.hardware.staticline.staticline as staticline
 from pylabnet.gui.pyqt.gui_windowbuilder import GUIWindowFromConfig
 
 from pylabnet.utils.logging.logger import LogHandler
-from pylabnet.utils.helper_methods import get_os, get_ip, unpack_launcher, load_script_config, find_client
+from pylabnet.utils.helper_methods import get_os, get_ip, load_device_config, load_script_config, find_client
 
 
 class StaticLineGUIGeneric():
@@ -53,7 +53,7 @@ class StaticLineGUIGeneric():
             #Try to find if we have a matching device client in staticline_clients
             try:
                 hardware_client = find_client(staticline_clients, self.config_dict, hardware_type, hardware_config, logger_client)
-                if (hardware_client == None):
+                if hardware_client is None:
                     logger_client.error('No staticline device found for device name: ' + device_name)
                     hardware_client_found = False
                 else:
@@ -64,26 +64,18 @@ class StaticLineGUIGeneric():
 
             # Iterate over all staticlines for that device and create a
             # driver instance for each line.
-            if (hardware_client_found):
+            if hardware_client_found:
                 for staticline_idx in range(len(device_params["staticline_names"])):
                     staticline_name = device_params["staticline_names"][staticline_idx]
 
                     # Store the staticline driver under the specified device name
-                    # if "dio_breakout", need to assign extra parameter (awg_dio_pin_mapping); otherwise don't
-                    if hardware_type == "dio_breakout":
-                        self.log.info("diobreakout!")
-                        self.log.info(device_params["awg_dio_pin_mapping"])
-                        awg_dio_pin_mapping = device_params["awg_dio_pin_mapping"]
-                    else:
-                        awg_dio_pin_mapping = None
-
                     self.staticlines[device_name][staticline_name] = staticline.Driver(
                         name=device_name + "_" + staticline_name,
                         logger=logger_client,
                         hardware_client=hardware_client,
                         hardware_type=hardware_type,
-                        config=device_params["staticline_configs"][staticline_idx],
-                        awg_dio_pin_mapping=awg_dio_pin_mapping
+                        hardware_config=load_device_config(hardware_type, hardware_config),
+                        staticline_config=device_params["staticline_configs"][staticline_idx]
                     )
 
                     # If the staticline has an initial default value, set that initially using set_value command

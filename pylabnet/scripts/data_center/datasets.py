@@ -165,6 +165,7 @@ class Dataset():
     # Note: This recursive code could potentially run into infinite iteration problem.
 
     def clear_all_data(self):
+        """ Calls function to clear own data and goes through children to clear their data """
 
         if not self.dont_clear:
             self.clear_data()
@@ -856,6 +857,12 @@ class Scatterplot(Dataset):
         self.curve = pg.ScatterPlotItem(x=[0], y=[0])
         self.graph.addItem(self.curve)
         self.update(**kwargs)
+    
+    def clear_data(self):
+        self.data = None
+        self.curve.setData([])
+        self.graph.clear()
+
 
 
 class TriangleScan1D(Dataset):

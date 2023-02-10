@@ -28,7 +28,7 @@ class DataTaker:
 
         # Instantiate GUI window
         self.gui = Window(
-            gui_template='data_taker',
+            gui_template='data_taker_input',
             host=get_ip(),
             log=self.log,
         )
@@ -182,6 +182,9 @@ class DataTaker:
         except AttributeError:
             pass
         self.experiment = self.module.experiment
+
+        # Retrieve input dict
+        self.log.info(self.dataset.input_dict)
 
         self.log.info(f'Experiment {self.exp_name} configured')
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '

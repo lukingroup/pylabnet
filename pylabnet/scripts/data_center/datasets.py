@@ -84,6 +84,12 @@ class Dataset():
     def set_input_dict(self, input_dict):
         self._input_dict = input_dict
 
+    def get_input_dict(self):
+        return self._input_dict
+
+    def set_output_dict(self, output_dict):
+        self._output_dict = output_dict
+
     def get_output_dict(self):
         return self._output_dict
 

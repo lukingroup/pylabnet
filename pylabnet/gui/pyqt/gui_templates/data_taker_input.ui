@@ -445,6 +445,22 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           <property name="tabBarAutoHide">
            <bool>false</bool>
           </property>
+          <widget class="QWidget" name="tab_4">
+           <attribute name="title">
+            <string>Input Dict</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>10</y>
+              <width>491</width>
+              <height>611</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="input_dict_gridlayout"/>
+           </widget>
+          </widget>
           <widget class="QWidget" name="tab">
            <attribute name="title">
             <string>Experiment preview</string>
@@ -629,7 +645,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2565</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

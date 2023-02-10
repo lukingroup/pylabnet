@@ -1241,10 +1241,7 @@ class HeatMap(Dataset):
     def clear_data(self):
 
         # Reset Heatmap with zeros
-        self.graph.setImage(
-            img=np.transpose(np.zeros((10, 10))),
-            autoRange=False
-        )
+        self.graph.clear()
 
         self.data = None
 

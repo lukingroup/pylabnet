@@ -50,6 +50,10 @@ class Dataset():
         self.mapping = {}
         self.widgets = {}
 
+        # Initialize input and output dicts
+        self._input_dict = None
+        self._output_dict = None
+
         # Flag indicating whether data should be
         self.dont_clear = dont_clear
 
@@ -76,6 +80,12 @@ class Dataset():
         self.is_important = False
 
         return
+
+    def set_input_dict(self, input_dict):
+        self._input_dict = input_dict
+
+    def get_output_dict(self):
+        return self._output_dict
 
     def update_setting(self):
         self.confluence_handler.confluence_popup.Popup_Update()

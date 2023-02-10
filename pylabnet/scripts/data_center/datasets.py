@@ -881,16 +881,6 @@ class TriangleScan1D(Dataset):
             self.config = {}
         self.kwargs.update(self.config)
 
-        # # First, try to get scan parameters from GUI
-        # if hasattr(self, 'widgets'):
-        #     if set(['min', 'max', 'pts', 'reps']).issubset(self.widgets.keys()):
-        #         self.widgets['reps'].setValue(0)
-        #         self.fill_params(dict(
-        #             min = self.widgets['min'].value(),
-        #             max = self.widgets['max'].value(),
-        #             pts = self.widgets['pts'].value()
-        #         ))
-
         # Get scan parameters from config
         if set(['min', 'max', 'pts']).issubset(self.kwargs.keys()):
             self.fill_params(self.kwargs)
@@ -1028,6 +1018,11 @@ class TriangleScan1D(Dataset):
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
 
+    def clear_data(self):
+
+        self.data = None
+        self.all_data = None
+        self.reps = 1
 
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """

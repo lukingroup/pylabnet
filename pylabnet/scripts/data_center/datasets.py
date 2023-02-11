@@ -1247,16 +1247,6 @@ class HeatMap(Dataset):
 
 class Plot2D(Dataset):
 
-    def fill_params(self, config):
-        """ Fills the min max and pts parameters """
-
-        self.min_x, self.max_x, self.pts_x = config['min_x'], config['max_x'], config['pts_x']
-        self.min_y, self.max_y, self.pts_y = config['min_y'], config['max_y'], config['pts_y']
-
-        pass_kwargs = dict()
-        if 'window' in config:
-            pass_kwargs['window'] = config['window']
-
     def visualize(self, graph, **kwargs):
 
         self.handle_new_window(graph, **kwargs)
@@ -1272,6 +1262,7 @@ class Plot2D(Dataset):
         self.data = np.zeros([self.pts_y, self.pts_x])
         self.data[:] = np.nan
         self.position = 0
+        self.all_data = []
 
         self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
 
@@ -1360,6 +1351,9 @@ class Plot2D(Dataset):
                 y = self.position//self.pts_x
                 self.data[y,x] = value
                 self.position += 1
+            
+            if np.mod(self.position,(self.pts_x*self.pts_y)) == 0:
+                self.all_data.append(self.data)
 
 
         
@@ -1367,16 +1361,27 @@ class Plot2D(Dataset):
 
     def save(self, filename=None, directory=None, date_dir=True):
 
+        # save axes
+        axes = [np.linspace(self.min_x, self.max_x, self.pts_x), np.linspace(self.min_y, self.max_y, self.pts_y)]
+        
         generic_save(
-            data=self.data,
-            filename=f'{filename}_{self.name}',
-            directory=directory,
-            date_dir=date_dir
-        )
-        if self.x is not None:
+                data=axes,
+                filename=f'{filename}_{self.name}_axes',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        if len(self.all_data) == 0:
             generic_save(
-                data=self.x,
-                filename=f'{filename}_{self.name}_x',
+                data=self.data,
+                filename=f'{filename}_{self.name}',
+                directory=directory,
+                date_dir=date_dir
+            )
+        else: 
+            generic_save(
+                data=self.all_data,
+                filename=f'{filename}_{self.name}',
                 directory=directory,
                 date_dir=date_dir
             )
@@ -1426,6 +1431,7 @@ class Plot2D(Dataset):
 
         self.data = np.zeros([self.pts_y, self.pts_x])
         self.data[:] = np.nan
+        self.all_data = []
         self.position = 0
         self.graph.clear()
 

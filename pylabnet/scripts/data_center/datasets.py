@@ -1247,27 +1247,27 @@ class HeatMap(Dataset):
 
 class Plot2D(Dataset):
 
-    def __init__(self, *args, **kwargs):
+    # def __init__(self, *args, **kwargs):
 
-        self.args = args
-        self.kwargs = kwargs
-        self.all_data = None
-        self.update_hmap = False
-        self.stop = False
-        if 'config' in kwargs:
-            self.config = kwargs['config']
-        else:
-            self.config = {}
-        self.kwargs.update(self.config)
+    #     self.args = args
+    #     self.kwargs = kwargs
+    #     self.all_data = None
+    #     self.update_hmap = False
+    #     self.stop = False
+    #     if 'config' in kwargs:
+    #         self.config = kwargs['config']
+    #     else:
+    #         self.config = {}
+    #     self.kwargs.update(self.config)
 
-        # Get scan parameters from config
-        if set(['min_x', 'max_x', 'pts_x', 'min_y', 'max_y', 'pts_y']).issubset(self.kwargs.keys()):
-            self.fill_params(self.kwargs)
+    #     # Get scan parameters from config
+    #     if set(['min_x', 'max_x', 'pts_x', 'min_y', 'max_y', 'pts_y']).issubset(self.kwargs.keys()):
+    #         self.fill_params(self.kwargs)
 
-        # Prompt user if not provided in config
-        else:
-            self.popup = ParameterPopup(min_x=float, max_x=float, pts_x=int, min_y=float, max_y=float, pts_y=int)
-            self.popup.parameters.connect(self.fill_params)
+    #     # Prompt user if not provided in config
+    #     else:
+    #         self.popup = ParameterPopup(min_x=float, max_x=float, pts_x=int, min_y=float, max_y=float, pts_y=int)
+    #         self.popup.parameters.connect(self.fill_params)
 
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
@@ -1287,29 +1287,49 @@ class Plot2D(Dataset):
         self.graph.view.setAspectLocked(False)
         self.graph.view.invertY(False)
         self.graph.setPredefinedGradient('viridis')
-        if set(['min_x', 'max_x', 'pts_x, min_y', 'max_y', 'pts_y']).issubset(kwargs.keys()):
-            self.min_x, self.max_x, self.pts_x = kwargs['min_x'], kwargs['max_x'], kwargs['pts_x']
-            self.min_y, self.max_y, self.pts_y = kwargs['min_y'], kwargs['max_y'], kwargs['pts_y']
-            self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
+        
+        self.min_x, self.max_x, self.pts_x = kwargs['min_x'], kwargs['max_x'], kwargs['pts_x']
+        self.min_y, self.max_y, self.pts_y = kwargs['min_y'], kwargs['max_y'], kwargs['pts_y']
+
+        self.data = np.zeros([self.pts_x, self.pts_y])
+        self.position = 0
+
+        self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
+        self.update()
 
     def update(self, **kwargs):
 
-        if 'update_hmap' in kwargs and kwargs['update_hmap']:
+        self.graph.setImage(
+            img=np.transpose(self.data),
+            autoRange=False,
+            scale=((self.max_x - self.min_x) / self.pts_x, (self.max_y - self.min_y) / self.pts_y),
+            pos=(self.min_x, self.min_y)
+        )
+
+    def set_data(self, value):
+
+        if self.position == 0:
             try:
-                if hasattr(self, 'min_x'):
-                    self.graph.setImage(
-                        img=np.transpose(self.data),
-                        autoRange=False,
-                        scale=((self.max_x - self.min_x) / self.pts_x, 1),
-                        pos=(self.min, 0)
-                    )
-                else:
-                    self.graph.setImage(
-                        img=np.transpose(self.data),
-                        autoRange=False
-                    )
-            except:
-                pass
+                shape = value.shape
+                self.data[0,0] = value
+
+            except AttributeError:
+                self.data[0,0] = value
+
+        else:
+            try:
+                shape = value.shape
+                x = np.mod(self.position, self.pts_x)
+                y = self.position//self.pts_x
+                self.data[x,y] = value
+
+            except AttributeError:
+                x = np.mod(self.position, self.pts_x)
+                y = self.position//self.pts_x
+                self.data[x,y] = value
+
+        self.position += 1
+
 
     def save(self, filename=None, directory=None, date_dir=True):
 

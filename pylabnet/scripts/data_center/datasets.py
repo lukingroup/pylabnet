@@ -1268,12 +1268,13 @@ class Plot2D(Dataset):
 
     def update(self, **kwargs):
 
-        self.graph.setImage(
-            img=np.transpose(self.data),
-            autoRange=False,
-            scale=((self.max_x - self.min_x) / self.pts_x, (self.max_y - self.min_y) / self.pts_y),
-            pos=(self.min_x, self.min_y)
-        )
+        if not np.isnan(self.data).all():
+            self.graph.setImage(
+                img=np.transpose(self.data),
+                autoRange=False,
+                scale=((self.max_x - self.min_x) / self.pts_x, (self.max_y - self.min_y) / self.pts_y),
+                pos=(self.min_x, self.min_y)
+            )
 
         for child in self.children.values():
             child.update(**kwargs)
@@ -1445,6 +1446,8 @@ class Plot2DWithAvg(Plot2D):
         try:
             shape = value.shape
 
+            self.data_shape = shape
+
             if len(shape) == 0:
                 x = np.mod(self.position, self.pts_x)
                 y = np.mod(self.position//self.pts_x, self.pts_y)
@@ -1476,6 +1479,7 @@ class Plot2DWithAvg(Plot2D):
                 self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
 
         except AttributeError:
+            self.data_shape = (1,)
             x = np.mod(self.position, self.pts_x)
             y = np.mod(self.position//self.pts_x, self.pts_y)
             self.data[y,x] = value
@@ -1528,26 +1532,40 @@ class Plot2DWithAvg(Plot2D):
 
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """
+        shape = self.data_shape
+        if len(shape) == 0:
+                x = np.mod(self.position-1, self.pts_x)
+                y = np.mod((self.position-1)//self.pts_x, self.pts_y)
+                if (self.position-1)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[y,x] = dataset.data[y,x]
+                else:
+                    n = (self.position-1)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
+        if len(shape) == 1:
+            if shape[0] ==  1:
+                x = np.mod(self.position-1, self.pts_x)
+                y = np.mod((self.position-1)//self.pts_x, self.pts_y)
+                if (self.position-1)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[y,x] = dataset.data[y,x]
+                else:
+                    n = (self.position-1)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
+            elif shape[0] == self.pts_x:
+                y = np.mod((self.position-self.pts_x)//self.pts_x, self.pts_y)
+                if (self.position-self.pts_x)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[y,:] = dataset.data[y,:]
+                else:
+                    n = (self.position-self.pts_x)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[y,:] = (dataset.data[y,:] + n*prev_dataset.data[y,:])/(n+1)
 
-        self.log.error('HERE')
-        self.log.error(f'previous dataset: {prev_dataset.data}')
-        self.log.error(f'new dataset: {dataset.data}')
+        if len(shape) == 2:
+            if ((shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y)) or ((shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y)):
+                if (self.position-self.pts_x*self.pts_y)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[:,:] = dataset.data[:,:]
+                else:
+                    n = (self.position-self.pts_x*self.pts_y)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[:,:] = (dataset.data[:,:] + n*prev_dataset.data[:,:])/(n+1)
 
-        if (self.position-1)//(self.pts_x*self.pts_y) == 0:
-            x = np.mod((self.position-1), self.pts_x)
-            y = np.mod((self.position-1)//self.pts_x, self.pts_y)
-
-            self.log.error(f'x: {x}')
-            self.log.error(f'y: {y}')
-            self.log.error(f'position: {self.position}')
-
-            prev_dataset.data[y,x] = dataset.data[y,x]
-
-        else:
-            n = (self.position-1)//(self.pts_x*self.pts_y)
-            x = np.mod((self.position-1), self.pts_x)
-            y = np.mod((self.position-1)//self.pts_x, self.pts_y)
-            prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
 
 
     def clear_data(self):

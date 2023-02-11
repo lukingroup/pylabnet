@@ -1275,6 +1275,9 @@ class Plot2D(Dataset):
             pos=(self.min_x, self.min_y)
         )
 
+        for child in self.children.values():
+            child.update(**kwargs)
+
     def set_data(self, value):
 
         try:
@@ -1390,7 +1393,7 @@ class Plot2D(Dataset):
     def update_colormap(self, cmap):
         self.graph.setPredefinedGradient(cmap)
 
-class Plot2DWithAvg(Dataset):
+class Plot2DWithAvg(Plot2D):
     """ Plots a 2D dataset on a 2D color plot. Plots latest value for a given entry as well as average. Stores all data."""
 
     def __init__(self, *args, **kwargs):
@@ -1398,7 +1401,6 @@ class Plot2DWithAvg(Dataset):
         self.args = args
         self.kwargs = kwargs
         self.all_data = []
-        self.update_hmap = False
         self.stop = False
         if 'config' in kwargs:
             self.config = kwargs['config']
@@ -1481,6 +1483,9 @@ class Plot2DWithAvg(Dataset):
         
         if np.mod(self.position,(self.pts_x*self.pts_y)) == 0:
             self.all_data.append(self.data)
+        
+        self.set_children_data()
+        
 
 
     def save(self, filename=None, directory=None, date_dir=True):
@@ -1524,15 +1529,24 @@ class Plot2DWithAvg(Dataset):
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """
 
-        if self.position//self.pts_x*self.pts_y == 0:
-            x = np.mod(self.position, self.pts_x)
-            y = np.mod(self.position//self.pts_x, self.pts_y)
+        self.log.error('HERE')
+        self.log.error(f'previous dataset: {prev_dataset.data}')
+        self.log.error(f'new dataset: {dataset.data}')
+
+        if (self.position-1)//(self.pts_x*self.pts_y) == 0:
+            x = np.mod((self.position-1), self.pts_x)
+            y = np.mod((self.position-1)//self.pts_x, self.pts_y)
+
+            self.log.error(f'x: {x}')
+            self.log.error(f'y: {y}')
+            self.log.error(f'position: {self.position}')
+
             prev_dataset.data[y,x] = dataset.data[y,x]
 
         else:
-            n = self.position//self.pts_x*self.pts_y
-            x = np.mod(self.position, self.pts_x)
-            y = np.mod(self.position//self.pts_x, self.pts_y)
+            n = (self.position-1)//(self.pts_x*self.pts_y)
+            x = np.mod((self.position-1), self.pts_x)
+            y = np.mod((self.position-1)//self.pts_x, self.pts_y)
             prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
 
 

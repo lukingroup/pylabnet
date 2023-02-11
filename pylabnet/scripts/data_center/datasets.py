@@ -1246,6 +1246,7 @@ class HeatMap(Dataset):
 
 
 class Plot2D(Dataset):
+    """ Plots a 2D dataset on a 2D color plot. Plots only the latest value and overwrites if more data is added"""
 
     def visualize(self, graph, **kwargs):
 
@@ -1262,7 +1263,6 @@ class Plot2D(Dataset):
         self.data = np.zeros([self.pts_y, self.pts_x])
         self.data[:] = np.nan
         self.position = 0
-        self.all_data = []
 
         self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
 
@@ -1277,114 +1277,67 @@ class Plot2D(Dataset):
 
     def set_data(self, value):
 
-        self.log.info(value)
+        try:
+            shape = value.shape
 
-        if self.position == 0:
-            try:
-                shape = value.shape
-                
-                if len(shape) == 0:
-                    self.data[0,0] = value
-                    self.position += 1
-                elif len(shape) == 1:
-                    if shape[0] ==  1:
-                        self.data[0,0] = value
-                        self.position += 1
-                    elif shape[0] == self.pts_x:
-                        self.data[0,:] = value
-                        self.position += self.pts_x
-                    else:
-                        self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
-
-                elif len(shape) == 2:
-                    if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
-                        self.data = np.transpose(value)
-                        self.position += self.pts_x*self.pts_y
-                    elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
-                        self.data = value
-                        self.position += self.pts_x*self.pts_y
-                    else:
-                        self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
-                else:
-                    self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
-
-            except AttributeError:
-                self.data[0,0] = value
+            if len(shape) == 0:
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
                 self.position += 1
-
-        else:
-            try:
-                shape = value.shape
-
-                if len(shape) == 0:
+            if len(shape) == 1:
+                if shape[0] ==  1:
                     x = np.mod(self.position, self.pts_x)
                     y = np.mod(self.position//self.pts_x, self.pts_y)
                     self.data[y,x] = value
                     self.position += 1
-                if len(shape) == 1:
-                    if shape[0] ==  1:
-                        x = np.mod(self.position, self.pts_x)
-                        y = np.mod(self.position//self.pts_x, self.pts_y)
-                        self.data[y,x] = value
-                        self.position += 1
-                    elif shape[0] == self.pts_x:
-                        y = np.mod(self.position//self.pts_x, self.pts_y)
-                        self.data[y,:] = value
-                        self.position += self.pts_x
-                    else:
-                        self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
-
-                elif len(shape) == 2:
-                    if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
-                        self.data = np.transpose(value)
-                        self.position += self.pts_x*self.pts_y
-                    elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
-                        self.data = value
-                        self.position += self.pts_x*self.pts_y
-                    else:
-                        self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+                elif shape[0] == self.pts_x:
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,:] = value
+                    self.position += self.pts_x
                 else:
-                    self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
+                    self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
 
-            except AttributeError:
-                x = np.mod(self.position, self.pts_x)
-                y = self.position//self.pts_x
-                self.data[y,x] = value
-                self.position += 1
-            
-            if np.mod(self.position,(self.pts_x*self.pts_y)) == 0:
-                self.all_data.append(self.data)
+            elif len(shape) == 2:
+                if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
+                    self.data = np.transpose(value)
+                    self.position += self.pts_x*self.pts_y
+                elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
+                    self.data = value
+                    self.position += self.pts_x*self.pts_y
+                else:
+                    self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+            else:
+                self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
 
-
-        
-
+        except AttributeError:
+            x = np.mod(self.position, self.pts_x)
+            y = np.mod(self.position//self.pts_x, self.pts_y)
+            self.data[y,x] = value
+            self.position += 1
 
     def save(self, filename=None, directory=None, date_dir=True):
 
         # save axes
-        axes = [np.linspace(self.min_x, self.max_x, self.pts_x), np.linspace(self.min_y, self.max_y, self.pts_y)]
+        x = np.linspace(self.min_x, self.max_x, self.pts_x)
+        y = np.linspace(self.min_y, self.max_y, self.pts_y)
         
-        generic_save(
-                data=axes,
-                filename=f'{filename}_{self.name}_axes',
+        generic_save( data=x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+        generic_save( data=y,
+                filename=f'{filename}_{self.name}_y',
                 directory=directory,
                 date_dir=date_dir
             )
 
-        if len(self.all_data) == 0:
-            generic_save(
-                data=self.data,
-                filename=f'{filename}_{self.name}',
-                directory=directory,
-                date_dir=date_dir
-            )
-        else: 
-            generic_save(
-                data=self.all_data,
-                filename=f'{filename}_{self.name}',
-                directory=directory,
-                date_dir=date_dir
-            )
+        generic_save( data=self.data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
 
         if hasattr(self, 'graph'):
             pyqtgraph_save(
@@ -1431,11 +1384,165 @@ class Plot2D(Dataset):
 
         self.data = np.zeros([self.pts_y, self.pts_x])
         self.data[:] = np.nan
-        self.all_data = []
         self.position = 0
         self.graph.clear()
 
-               
+    def update_colormap(self, cmap):
+        self.graph.setPredefinedGradient(cmap)
+
+class Plot2DWithAvg(Dataset):
+    """ Plots a 2D dataset on a 2D color plot. Plots latest value for a given entry as well as average. Stores all data."""
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.all_data = []
+        self.update_hmap = False
+        self.stop = False
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        self.fill_params(self.kwargs)
+
+    def fill_params(self, config):
+        """ Fills the min_x,y max_x,y and pts_x,y parameters """
+
+        self.min_x, self.max_x, self.pts_x = config['min_x'], config['max_x'], config['pts_x']
+        self.min_y, self.max_y, self.pts_y = config['min_y'], config['max_y'], config['pts_y']
+
+        self.kwargs.update(dict(
+            name=config['name'] + 'current'
+        ))
+        super().__init__(*self.args, **self.kwargs)
+
+        pass_kwargs = dict()
+        if 'window' in config:
+            pass_kwargs['window'] = config['window']
+
+        # Add child for averaged plot
+        self.add_child(
+            name=config['name'] + 'avg',
+            mapping=self.avg,
+            data_type=Plot2D,
+            min_x=self.min_x,
+            max_x=self.max_x,
+            pts_x=self.pts_x,
+            min_y=self.min_y,
+            max_y=self.max_y,
+            pts_y=self.pts_y
+        )
+
+        self.children[config['name'] + 'avg'].update_colormap('grey')
+
+    def set_data(self, value):
+
+        try:
+            shape = value.shape
+
+            if len(shape) == 0:
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
+            if len(shape) == 1:
+                if shape[0] ==  1:
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value
+                    self.position += 1
+                elif shape[0] == self.pts_x:
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,:] = value
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
+
+            elif len(shape) == 2:
+                if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
+                    self.data = np.transpose(value)
+                    self.position += self.pts_x*self.pts_y
+                elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
+                    self.data = value
+                    self.position += self.pts_x*self.pts_y
+                else:
+                    self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+            else:
+                self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
+
+        except AttributeError:
+            x = np.mod(self.position, self.pts_x)
+            y = np.mod(self.position//self.pts_x, self.pts_y)
+            self.data[y,x] = value
+            self.position += 1
+        
+        if np.mod(self.position,(self.pts_x*self.pts_y)) == 0:
+            self.all_data.append(self.data)
+
+
+    def save(self, filename=None, directory=None, date_dir=True):
+
+        # save axes
+        x = np.linspace(self.min_x, self.max_x, self.pts_x)
+        y = np.linspace(self.min_y, self.max_y, self.pts_y)
+        
+        generic_save( data=x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+        generic_save( data=y,
+                filename=f'{filename}_{self.name}_y',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        self.all_data.append(self.data)
+        generic_save(
+            data=self.all_data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
+
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getView(),
+                f'{filename}_{self.name}',
+                directory,
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+
+        if self.position//self.pts_x*self.pts_y == 0:
+            x = np.mod(self.position, self.pts_x)
+            y = np.mod(self.position//self.pts_x, self.pts_y)
+            prev_dataset.data[y,x] = dataset.data[y,x]
+
+        else:
+            n = self.position//self.pts_x*self.pts_y
+            x = np.mod(self.position, self.pts_x)
+            y = np.mod(self.position//self.pts_x, self.pts_y)
+            prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
+
+
+    def clear_data(self):
+
+        self.data = np.zeros([self.pts_y, self.pts_x])
+        self.data[:] = np.nan
+        self.all_data = []
+        self.position = 0
+        self.graph.clear()            
 
 
 class LockedCavityScan1D(TriangleScan1D):

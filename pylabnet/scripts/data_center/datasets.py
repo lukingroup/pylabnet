@@ -1308,11 +1308,16 @@ class Plot2D(Dataset):
 
     def set_data(self, value):
 
+        self.log.info(value)
+
         if self.position == 0:
             try:
                 shape = value.shape
-
-                if len(shape) == 1:
+                
+                if len(shape) == 0:
+                    self.data[0,0] = value
+                    self.position += 1
+                elif len(shape) == 1:
                     if shape[0] ==  1:
                         self.data[0,0] = value
                         self.position += 1
@@ -1342,6 +1347,11 @@ class Plot2D(Dataset):
             try:
                 shape = value.shape
 
+                if len(shape) == 0:
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value
+                    self.position += 1
                 if len(shape) == 1:
                     if shape[0] ==  1:
                         x = np.mod(self.position, self.pts_x)

@@ -1247,28 +1247,6 @@ class HeatMap(Dataset):
 
 class Plot2D(Dataset):
 
-    # def __init__(self, *args, **kwargs):
-
-    #     self.args = args
-    #     self.kwargs = kwargs
-    #     self.all_data = None
-    #     self.update_hmap = False
-    #     self.stop = False
-    #     if 'config' in kwargs:
-    #         self.config = kwargs['config']
-    #     else:
-    #         self.config = {}
-    #     self.kwargs.update(self.config)
-
-    #     # Get scan parameters from config
-    #     if set(['min_x', 'max_x', 'pts_x', 'min_y', 'max_y', 'pts_y']).issubset(self.kwargs.keys()):
-    #         self.fill_params(self.kwargs)
-
-    #     # Prompt user if not provided in config
-    #     else:
-    #         self.popup = ParameterPopup(min_x=float, max_x=float, pts_x=int, min_y=float, max_y=float, pts_y=int)
-    #         self.popup.parameters.connect(self.fill_params)
-
     def fill_params(self, config):
         """ Fills the min max and pts parameters """
 
@@ -1292,10 +1270,10 @@ class Plot2D(Dataset):
         self.min_y, self.max_y, self.pts_y = kwargs['min_y'], kwargs['max_y'], kwargs['pts_y']
 
         self.data = np.zeros([self.pts_y, self.pts_x])
+        self.data[:] = np.nan
         self.position = 0
 
         self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
-        self.update()
 
     def update(self, **kwargs):
 
@@ -1446,7 +1424,9 @@ class Plot2D(Dataset):
 
     def clear_data(self):
 
-        self.data = None
+        self.data = np.zeros([self.pts_y, self.pts_x])
+        self.data[:] = np.nan
+        self.position = 0
         self.graph.clear()
 
                

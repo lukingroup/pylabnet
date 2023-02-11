@@ -1291,7 +1291,7 @@ class Plot2D(Dataset):
         self.min_x, self.max_x, self.pts_x = kwargs['min_x'], kwargs['max_x'], kwargs['pts_x']
         self.min_y, self.max_y, self.pts_y = kwargs['min_y'], kwargs['max_y'], kwargs['pts_y']
 
-        self.data = np.zeros([self.pts_x, self.pts_y])
+        self.data = np.zeros([self.pts_y, self.pts_x])
         self.position = 0
 
         self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
@@ -1321,12 +1321,12 @@ class Plot2D(Dataset):
                 shape = value.shape
                 x = np.mod(self.position, self.pts_x)
                 y = self.position//self.pts_x
-                self.data[x,y] = value
+                self.data[y,x] = value
 
             except AttributeError:
                 x = np.mod(self.position, self.pts_x)
                 y = self.position//self.pts_x
-                self.data[x,y] = value
+                self.data[y,x] = value
 
         self.position += 1
 

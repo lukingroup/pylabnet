@@ -1311,24 +1311,70 @@ class Plot2D(Dataset):
         if self.position == 0:
             try:
                 shape = value.shape
-                self.data[0,0] = value
+
+                if len(shape) == 1:
+                    if shape[0] ==  1:
+                        self.data[0,0] = value
+                        self.position += 1
+                    elif shape[0] == self.pts_x:
+                        self.data[0,:] = value
+                        self.position += self.pts_x
+                    else:
+                        self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
+
+                elif len(shape) == 2:
+                    if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
+                        self.data = np.transpose(value)
+                        self.position += self.pts_x*self.pts_y
+                    elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
+                        self.data = value
+                        self.position += self.pts_x*self.pts_y
+                    else:
+                        self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+                else:
+                    self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
 
             except AttributeError:
                 self.data[0,0] = value
+                self.position += 1
 
         else:
             try:
                 shape = value.shape
-                x = np.mod(self.position, self.pts_x)
-                y = self.position//self.pts_x
-                self.data[y,x] = value
+
+                if len(shape) == 1:
+                    if shape[0] ==  1:
+                        x = np.mod(self.position, self.pts_x)
+                        y = np.mod(self.position//self.pts_x, self.pts_y)
+                        self.data[y,x] = value
+                        self.position += 1
+                    elif shape[0] == self.pts_x:
+                        y = np.mod(self.position//self.pts_x, self.pts_y)
+                        self.data[y,:] = value
+                        self.position += self.pts_x
+                    else:
+                        self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
+
+                elif len(shape) == 2:
+                    if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
+                        self.data = np.transpose(value)
+                        self.position += self.pts_x*self.pts_y
+                    elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
+                        self.data = value
+                        self.position += self.pts_x*self.pts_y
+                    else:
+                        self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+                else:
+                    self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
 
             except AttributeError:
                 x = np.mod(self.position, self.pts_x)
                 y = self.position//self.pts_x
                 self.data[y,x] = value
+                self.position += 1
 
-        self.position += 1
+
+        
 
 
     def save(self, filename=None, directory=None, date_dir=True):

@@ -4,7 +4,7 @@ from pylabnet.hardware.staticline.staticline_devices import registered_staticlin
 
 class Driver():
 
-    def __init__(self, name, logger, hardware_client, hardware_type, config, awg_dio_pin_mapping=None):
+    def __init__(self, name, logger, hardware_client, hardware_type, hardware_config, staticline_config):
         '''High level staticline class.
 
         This class is used in conjunction with hardware modules to send out digital
@@ -22,15 +22,10 @@ class Driver():
         :hardware_type: (str)
             Name of the hardware to be controlled, naming is determined by the
             device server name.
-        :config: (dict)
-            Contains parameters needed to setup the hardware as a staticline.
-        :awg_dio_pin_mapping: (dict)
-            For dio breakout driver:mapping configuration for awg's dio pin 
-                e.g.{
-                        "B01_base": 24,
-                        "B23_base": 8
-                    }
-            For other hardware: None
+        :hardware_config: (dict)
+            Parameters needed to setup the hardware controlling the associated staticlines.
+        :staticline_config: (dict)
+            Parameters about each individual staticline control.
         '''
 
         self.name = name
@@ -52,8 +47,8 @@ class Driver():
             name=name,
             log=self.log,
             hardware_client=hardware_client,
-            config=config,
-            awg_dio_pin_mapping=awg_dio_pin_mapping
+            hardware_config=hardware_config,
+            config=staticline_config
         )
 
     def up(self):

@@ -13,27 +13,26 @@ class StaticLineHardwareHandler(ABC):
     which should correspond to setting the staticline to high or low, and
     to set up the hardware accordingly.
 
-    :hardware_client: (object)
-        Hardware client to be used to toggle the staticline.
-    :log: (object)
-        Instance of loghandler.
+
     :name: (str)
         Name of StaticLine instance.
-    :config: (dict)
-            Contains parameters needed to setup the hardware as a staticline.
+    :log: (object)
+        Instance of loghandler.
+    :hardware_client: (object)
+        Hardware client to be used to toggle the staticline.
+    :hardware_config: (dict)
+            Parameters needed to setup the hardware controlling the associated staticlines.
     :config: (int)
-            Contains type of staticline being configured (digital, analog, or adjustable digital)
-    :awg_dio_pin_mapping (dict)
-            Record awg_dio_pin_mapping (for hardware type == dio_breakout only). None if the hardware type is not dio_breakout
+            Parameters about staticline being configured (digital, analog, or adjustable digital)
     '''
 
-    def __init__(self, name, log, hardware_client, config, awg_dio_pin_mapping):
+    def __init__(self, name, log, hardware_client, hardware_config, config):
         self.name = name
         self.log = log
         self.hardware_client = hardware_client
         self.hardware_name = str(hardware_client.__class__).split('.')[-2]
+        self.hardware_config = hardware_config
         self.config = config
-        self.awg_dio_pin_mapping = awg_dio_pin_mapping
 
         self.setup()
         self.log.info(
@@ -182,7 +181,7 @@ class DioBreakout(StaticLineHardwareHandler):
         assignment_dict = load_config('dio_assignment_global')
 
         DIO_bit = assignment_dict[self.config['bit_name']]
-        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit, self.awg_dio_pin_mapping)
+        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit, self.hardware_config["dio_pin_mapping"])
 
         self.isHighVoltage = self.config['is_high_volt']
 

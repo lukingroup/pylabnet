@@ -33,7 +33,7 @@ pip install --upgrade pylabnet
 
 After `pip` installation of pylabnet, three executables will be created in the system `PATH`: `pylabnet_master.exe`, `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over `pylabnet`. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
 
-The master Launch Control runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master `LogServer` and mirror its information for convenience on remote machines. The difference between `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe` is that the former will ask for the master `LogServer`'s location interactively while the latter reads directly from `configs/static_proxy.json` via the fields `master_ip`, `master_log_port`, and `master_gui_port`.
+The master Launch Control `pylabnet_master.exe` runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master `LogServer` and mirror its information for convenience on remote machines. The difference between `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe` is that the former will ask for the master `LogServer`'s location interactively while the latter reads directly from `configs/static_proxy.json` via the fields `master_ip`, `master_log_port`, and `master_gui_port`.
 
 The general workflow is the following:
 
@@ -63,6 +63,7 @@ You may adjust the value of the `days` flag in order to change the period over w
     "logger_path": "C:\\User\\pylabnet_logs"
 }
 ```
+The logger and GUI port can be freely chosen. For subsequent devices that wish to connect to the already-created master `LogServer`, they will require an additional field `master_ip: xxx.xxx.xxx.xxx` where the IP address of the msater `LogServer` will be added. The logger and GUI ports will also need to be the same as those that were originally set on the master server. 
 
 ## For developers
 

@@ -1,4 +1,4 @@
-from pylabnet.network.client_server.rigol_dm3058E import Service
+from pylabnet.network.client_server.rigol_dm3058E import Service, Client
 from pylabnet.hardware.multimeter.rigol_dm3058E import Driver
 from pylabnet.utils.helper_methods import GenericServer, get_ip, load_device_config
 

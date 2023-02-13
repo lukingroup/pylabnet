@@ -44,7 +44,7 @@ class Driver():
 
     def get_resistance(self):
         """ Return measured resistance"""
-        return self.device.query(":MEASure:RESistance?")
+        return float(self.device.query(":MEASure:RESistance?"))
 
     def __init__(self, gpib_address, logger):
         """Instantiate driver class

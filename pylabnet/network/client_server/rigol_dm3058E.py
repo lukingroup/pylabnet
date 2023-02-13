@@ -13,11 +13,11 @@ class Service(ServiceBase):
     def exposed_set_resistance_measurement(self):
         return self._module.set_resistance_measurement()
 
-    def exposed_set_resistance_range(self):
-        return self._module.set_resistance_range()
+    def exposed_set_resistance_range(self, index):
+        return self._module.set_resistance_range(index)
 
-    def exposed_get_resistance(self, db):
-        return self._module.get_resistance(db)
+    def exposed_get_resistance(self):
+        return self._module.get_resistance()
 
   
 class Client(ClientBase):
@@ -28,10 +28,10 @@ class Client(ClientBase):
     def set_resistance_measurement(self):
         return self._service.exposed_set_resistance_measurement()
 
-    def set_resistance_range(self):
-        return self._service.exposed_set_resistance_range()
+    def set_resistance_range(self, index):
+        return self._service.exposed_set_resistance_range(index)
 
-    def get_resistance(self, db):
-        return self._service.exposed_get_resistance(db)
+    def get_resistance(self):
+        return self._service.exposed_get_resistance()
 
    

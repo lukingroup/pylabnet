@@ -455,8 +455,14 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               <x>10</x>
               <y>10</y>
               <width>491</width>
-              <height>561</height>
+              <height>371</height>
              </rect>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -467,7 +473,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <x>0</x>
                <y>0</y>
                <width>489</width>
-               <height>559</height>
+               <height>369</height>
               </rect>
              </property>
             </widget>
@@ -657,7 +663,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>2565</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

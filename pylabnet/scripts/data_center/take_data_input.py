@@ -169,6 +169,30 @@ class DataTaker:
                 input_grid_layout.addWidget(label, i, 0)
                 input_grid_layout.addWidget(value_entry, i, 1)
 
+
+    def load_input_dict(self):
+        """ Load input dict from Gridlayout in GUI"""
+
+         # load input dict
+        input_grid_layout = self.gui.input_dict_gridlayout
+        input_scrollarea = self.gui.scrollAreaWidgetContents
+
+        num_cols = input_grid_layout.columnCount()
+        num_rows = input_grid_layout.rowCount()
+        init_widgets = input_scrollarea.children()[1:] # omitting first one since it's the gridlayout 
+
+        assert len(init_widgets) == num_cols * num_rows
+
+        reconstructed_init_dict = {}    
+
+        for i in range(num_rows):
+            reconstructed_init_dict[init_widgets[i*2].text()] = float(init_widgets[i*2+ 1].text())
+
+        self.log.info(f'Input Dict {reconstructed_init_dict} configured')
+        # Commit input dict to parent dataset
+        self.dataset.set_input_dict(reconstructed_init_dict)
+
+
     def configure(self):
         """ Configures the currently selected experiment + dataset """
 
@@ -219,19 +243,15 @@ class DataTaker:
             self.log.error(error_msg)
             return
 
+        # Load input dict from GUI so it is accessible for config function.
+        self.load_input_dict()
+
         # Run any pre-experiment configuration
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
         except AttributeError:
             pass
         self.experiment = self.module.experiment
-
-        
-
-        # load input dict
-        input_grid_layout = self.gui.input_dict_gridlayout
-
-        # TODO: Read values from gridlayout and store in member variable of parent dataset.
     
 
         self.log.info(f'Experiment {self.exp_name} configured')

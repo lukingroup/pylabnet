@@ -93,7 +93,7 @@ python-decouple==3.4
 python-kasa==0.4.0.dev2
 pytz==2021.1
 pyvisa==1.11.3
-pywin32==300; sys_platform=="win32"
+pywin32==301; sys_platform=="win32"
 pywinpty==0.5.7
 PyYAML==5.4.1
 pyzmq==22.0.3

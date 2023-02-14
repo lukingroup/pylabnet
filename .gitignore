@@ -151,10 +151,6 @@ projects/
 
 # SSL keys
 *.pem
-
-# Config files
-configs/*
-configs
 secretkeys.env
 
 # Generated UI files

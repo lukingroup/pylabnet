@@ -165,6 +165,7 @@ class Dataset():
     # Note: This recursive code could potentially run into infinite iteration problem.
 
     def clear_all_data(self):
+        """ Calls function to clear own data and goes through children to clear their data """
 
         if not self.dont_clear:
             self.clear_data()
@@ -856,6 +857,12 @@ class Scatterplot(Dataset):
         self.curve = pg.ScatterPlotItem(x=[0], y=[0])
         self.graph.addItem(self.curve)
         self.update(**kwargs)
+    
+    def clear_data(self):
+        self.data = None
+        self.curve.setData([])
+        self.graph.clear()
+
 
 
 class TriangleScan1D(Dataset):
@@ -873,16 +880,6 @@ class TriangleScan1D(Dataset):
         else:
             self.config = {}
         self.kwargs.update(self.config)
-
-        # # First, try to get scan parameters from GUI
-        # if hasattr(self, 'widgets'):
-        #     if set(['min', 'max', 'pts', 'reps']).issubset(self.widgets.keys()):
-        #         self.widgets['reps'].setValue(0)
-        #         self.fill_params(dict(
-        #             min = self.widgets['min'].value(),
-        #             max = self.widgets['max'].value(),
-        #             pts = self.widgets['pts'].value()
-        #         ))
 
         # Get scan parameters from config
         if set(['min', 'max', 'pts']).issubset(self.kwargs.keys()):
@@ -1021,6 +1018,11 @@ class TriangleScan1D(Dataset):
                 except ValueError:
                     prev_dataset.data = np.flip(prev_dataset.data)
 
+    def clear_data(self):
+
+        self.data = None
+        self.all_data = None
+        self.reps = 1
 
 class SawtoothScan1D(Dataset):
     """ 1D Sawtooth sweep of a parameter """
@@ -1140,6 +1142,12 @@ class SawtoothScan1D(Dataset):
         if dataset.update_hmap:
             prev_dataset.data = dataset.all_data
 
+    def clear_data(self):
+
+        self.data = None
+        self.all_data = None
+        self.reps = 1
+
 
 class HeatMap(Dataset):
 
@@ -1233,13 +1241,376 @@ class HeatMap(Dataset):
 
     def clear_data(self):
 
-        # Reset Heatmap with zeros
-        self.graph.setImage(
-            img=np.transpose(np.zeros((10, 10))),
-            autoRange=False
+        self.data = None
+        self.graph.clear()
+
+
+class Plot2D(Dataset):
+    """ Plots a 2D dataset on a 2D color plot. Plots only the latest value and overwrites if more data is added"""
+
+    def visualize(self, graph, **kwargs):
+
+        self.handle_new_window(graph, **kwargs)
+
+        self.graph.show()
+        self.graph.view.setAspectLocked(False)
+        self.graph.view.invertY(False)
+        self.graph.setPredefinedGradient('viridis')
+        
+        self.min_x, self.max_x, self.pts_x = kwargs['min_x'], kwargs['max_x'], kwargs['pts_x']
+        self.min_y, self.max_y, self.pts_y = kwargs['min_y'], kwargs['max_y'], kwargs['pts_y']
+
+        self.data = np.zeros([self.pts_y, self.pts_x])
+        self.data[:] = np.nan
+        self.position = 0
+
+        self.graph.view.setLimits(xMin=kwargs['min_x'], xMax=kwargs['max_x'], yMin=kwargs['min_y'], yMax=kwargs['max_y'])
+
+    def update(self, **kwargs):
+
+        if not np.isnan(self.data).all():
+            self.graph.setImage(
+                img=np.transpose(self.data),
+                autoRange=False,
+                scale=((self.max_x - self.min_x) / self.pts_x, (self.max_y - self.min_y) / self.pts_y),
+                pos=(self.min_x, self.min_y)
+            )
+
+        for child in self.children.values():
+            child.update(**kwargs)
+
+    def set_data(self, value):
+
+        try: # check if data is an array and what its shape is
+            shape = value.shape
+
+            if len(shape) == 0: # data is single value
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
+            if len(shape) == 1:
+                if shape[0] ==  1: # data is single value
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value
+                    self.position += 1
+                elif shape[0] == self.pts_x:  # data is one row of the total 2D dataset matrix
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,:] = value
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
+
+            elif len(shape) == 2: # data contains total 2D dataset matrix
+                if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
+                    self.data = np.transpose(value)
+                    self.position += self.pts_x*self.pts_y
+                elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
+                    self.data = value
+                    self.position += self.pts_x*self.pts_y
+                else:
+                    self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+            else:
+                self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
+
+        except AttributeError: # data is not an array. Check if it is list or float, int
+            try: # check if data is list
+                data_length = len(value)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                if data_length ==  1: # data is single value
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value[o]
+                    self.position += 1
+                elif data_length == self.pts_x:  # data (list) is one row of the total 2D dataset matrix
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    for ii in range(self.pts_x):
+                        self.data[y,ii] = value[ ii]
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data length: expected 1 or {self.pts_x}, got {data_length}')
+            except TypeError: # data is not list. Data is float or int
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
+
+    def save(self, filename=None, directory=None, date_dir=True):
+
+        # save axes
+        x = np.linspace(self.min_x, self.max_x, self.pts_x)
+        y = np.linspace(self.min_y, self.max_y, self.pts_y)
+        
+        generic_save( data=x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+        generic_save( data=y,
+                filename=f'{filename}_{self.name}_y',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        generic_save( data=self.data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
         )
 
-        self.data = None
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getView(),
+                f'{filename}_{self.name}',
+                directory,
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
+
+    def handle_new_window(self, graph, **kwargs):
+
+        # If we want to use a separate window
+        if 'window' in kwargs:
+
+            # Check whether this window exists
+            if not hasattr(self.gui, kwargs['window']):
+
+                if 'window_title' in kwargs:
+                    window_title = kwargs['window_title']
+                else:
+                    window_title = 'Graph Holder'
+                setattr(
+                    self.gui,
+                    kwargs['window'],
+                    GraphPopup(window_title=window_title)
+                )
+
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            getattr(self.gui, kwargs['window']).graph_layout.addWidget(
+                self.graph
+            )
+
+        # Otherwise, add a graph to the main layout
+        else:
+            self.graph = pg.ImageView(view=pg.PlotItem())
+            self.gui.graph_layout.addWidget(self.graph)
+
+    def clear_data(self):
+
+        self.data = np.zeros([self.pts_y, self.pts_x])
+        self.data[:] = np.nan
+        self.position = 0
+        self.graph.clear()
+
+    def update_colormap(self, cmap):
+        self.graph.setPredefinedGradient(cmap)
+
+class Plot2DWithAvg(Plot2D):
+    """ Plots a 2D dataset on a 2D color plot. Plots latest value for a given entry as well as average. Stores all data."""
+
+    def __init__(self, *args, **kwargs):
+
+        self.args = args
+        self.kwargs = kwargs
+        self.all_data = []
+        self.stop = False
+        if 'config' in kwargs:
+            self.config = kwargs['config']
+        else:
+            self.config = {}
+        self.kwargs.update(self.config)
+
+        self.fill_params(self.kwargs)
+
+    def fill_params(self, config):
+        """ Fills the min_x,y max_x,y and pts_x,y parameters """
+
+        self.min_x, self.max_x, self.pts_x = config['min_x'], config['max_x'], config['pts_x']
+        self.min_y, self.max_y, self.pts_y = config['min_y'], config['max_y'], config['pts_y']
+
+        self.kwargs.update(dict(
+            name=config['name'] + 'current'
+        ))
+        super().__init__(*self.args, **self.kwargs)
+
+        pass_kwargs = dict()
+        if 'window' in config:
+            pass_kwargs['window'] = config['window']
+
+        # Add child for averaged plot
+        self.add_child(
+            name=config['name'] + 'avg',
+            mapping=self.avg,
+            data_type=Plot2D,
+            min_x=self.min_x,
+            max_x=self.max_x,
+            pts_x=self.pts_x,
+            min_y=self.min_y,
+            max_y=self.max_y,
+            pts_y=self.pts_y
+        )
+
+        self.children[config['name'] + 'avg'].update_colormap('grey')
+
+    def set_data(self, value):
+
+        try: # check if data is an array and what its shape is
+            shape = value.shape
+
+            self.data_shape = shape # pass data shape for averaging
+
+            if len(shape) == 0: # data is single value
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
+            if len(shape) == 1:
+                if shape[0] ==  1: # data is single value
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value
+                    self.position += 1
+                elif shape[0] == self.pts_x: # data is one row of the total 2D dataset matrix
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,:] = value
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
+
+            elif len(shape) == 2: # data contains total 2D dataset matrix
+                if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
+                    self.data = np.transpose(value)
+                    self.position += self.pts_x*self.pts_y
+                elif (shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y):
+                    self.data = value
+                    self.position += self.pts_x*self.pts_y
+                else:
+                    self.log.error(f'Incompatible data shape: expected ({self.pts_x}, {self.pts_y}), got ({shape[0]}, {shape[1]})')
+            else:
+                self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
+
+
+        except AttributeError: # data is not an array. Check if it is list or float, int
+            try: # check if data is list
+                data_length = len(value)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                if data_length ==  1: # data is single value
+                    self.data_shape = (1,) # pass data shape for averaging
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value[o]
+                    self.position += 1
+                elif data_length == self.pts_x:  # data (list) is one row of the total 2D dataset matrix
+                    self.data_shape = (self.pts_x,) # pass data shape for averaging
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    for ii in range(self.pts_x):
+                        self.data[y,ii] = value[ ii]
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data length: expected 1 or {self.pts_x}, got {data_length}')
+            except TypeError: # data is not list. Data is float or int
+                self.data_shape = (1,) # pass data shape for averaging
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
+        
+        # if a whole dataset matrix has been filled, pass it to all_data to be stored
+        if np.mod(self.position,(self.pts_x*self.pts_y)) == 0:
+            self.all_data.append(self.data)
+        
+        self.set_children_data()
+        
+
+
+    def save(self, filename=None, directory=None, date_dir=True):
+
+        # save axes
+        x = np.linspace(self.min_x, self.max_x, self.pts_x)
+        y = np.linspace(self.min_y, self.max_y, self.pts_y)
+        
+        generic_save( data=x,
+                filename=f'{filename}_{self.name}_x',
+                directory=directory,
+                date_dir=date_dir
+            )
+        generic_save( data=y,
+                filename=f'{filename}_{self.name}_y',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        self.all_data.append(self.data)
+        generic_save(
+            data=self.all_data,
+            filename=f'{filename}_{self.name}',
+            directory=directory,
+            date_dir=date_dir
+        )
+
+        if hasattr(self, 'graph'):
+            pyqtgraph_save(
+                self.graph.getView(),
+                f'{filename}_{self.name}',
+                directory,
+                date_dir
+            )
+
+        for child in self.children.values():
+            child.save(filename, directory, date_dir)
+
+        save_metadata(self.log, filename, directory, date_dir)
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+        shape = self.data_shape
+        if len(shape) == 0: # data is single value
+                x = np.mod(self.position-1, self.pts_x)
+                y = np.mod((self.position-1)//self.pts_x, self.pts_y)
+                if (self.position-1)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[y,x] = dataset.data[y,x]
+                else:
+                    n = (self.position-1)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
+        if len(shape) == 1:
+            if shape[0] ==  1: # data is single value
+                x = np.mod(self.position-1, self.pts_x)
+                y = np.mod((self.position-1)//self.pts_x, self.pts_y)
+                if (self.position-1)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[y,x] = dataset.data[y,x]
+                else:
+                    n = (self.position-1)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
+            elif shape[0] == self.pts_x: # data is one row of the total 2D dataset matrix
+                y = np.mod((self.position-self.pts_x)//self.pts_x, self.pts_y)
+                if (self.position-self.pts_x)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[y,:] = dataset.data[y,:]
+                else:
+                    n = (self.position-self.pts_x)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[y,:] = (dataset.data[y,:] + n*prev_dataset.data[y,:])/(n+1)
+
+        if len(shape) == 2: # data contains total 2D dataset matrix
+            if ((shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y)) or ((shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y)):
+                if (self.position-self.pts_x*self.pts_y)//(self.pts_x*self.pts_y) == 0:
+                    prev_dataset.data[:,:] = dataset.data[:,:]
+                else:
+                    n = (self.position-self.pts_x*self.pts_y)//(self.pts_x*self.pts_y)
+                    prev_dataset.data[:,:] = (dataset.data[:,:] + n*prev_dataset.data[:,:])/(n+1)
+
+
+
+    def clear_data(self):
+
+        self.data = np.zeros([self.pts_y, self.pts_x])
+        self.data[:] = np.nan
+        self.all_data = []
+        self.position = 0
+        self.graph.clear()            
 
 
 class LockedCavityScan1D(TriangleScan1D):
@@ -1463,23 +1834,6 @@ class ErrorBarPlot(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
-
-
-# class PhotonErrorBarPlot(ErrorBarPlot):
-    # un_normalized = np.array([])
-    # total_events = 0
-    # reps=0
-
-    # def visualize(self, graph, **kwargs):
-
-    #     super().visualize(graph, **kwargs)
-    #     self.add_child(
-    #         name='Photon probabilities, log scale',
-    #         mapping=passthru,
-    #         data_type=Dataset,
-    #         window=kwargs['window']
-    #     )
-    #     self.children['Photon probabilities, log scale'].graph.getPlotItem().setLogMode(False, True)
 
 
 class PhotonErrorBarPlot(ErrorBarGraph):

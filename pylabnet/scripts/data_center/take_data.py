@@ -49,6 +49,9 @@ class DataTaker:
         # Configure list of missing clients
         self.missing_clients = {}
 
+        # Keep track of valid init dict
+        self.valid_init_dict = False
+
         # Setup Autosave
         # First check whether autosave is specified in config file
         if 'auto_save' in self.config:
@@ -142,15 +145,15 @@ class DataTaker:
             spec = importlib.util.spec_from_file_location("init_dict", filepath)
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
-            no_init_dict = False
+            self.valid_init_dict = True
 
             try:
                 self.init_dict = mod.INIT_DICT
             except AttributeError:
                 self.init_dict = {}
-                no_init_dict = True
+                self.valid_init_dict = False
 
-        self.update_init_form(no_init_dict)
+        self.update_init_form()
 
     def create_gridlayout(self):
 
@@ -160,56 +163,64 @@ class DataTaker:
         self.gui.input_dict_gridlayout = QtWidgets.QGridLayout(self.gui.scrollAreaWidgetContents)
         input_init_scrollarea.setWidget(self.gui.scrollAreaWidgetContents)
 
-    def update_init_form(self, no_init_dict):
+    def update_init_form(self):
        
         self.create_gridlayout()
 
         # Build input dict modification form
         input_grid_layout = self.gui.input_dict_gridlayout
 
-        if no_init_dict:
+        if not self.valid_init_dict:
             label = QLabel("No INIT_DICT found.")
             input_grid_layout.addWidget(label, 0, 0)
         else:
 
-            for i,  (variable_name, entry_dict) in enumerate(self.init_dict.items()):
-                for labelname, default_value in entry_dict.items():
-                    label = QLabel(str(labelname))
-                    value_entry =  QLineEdit(str(default_value))
-                    input_grid_layout.addWidget(label, i, 0)
-                    input_grid_layout.addWidget(value_entry, i, 1)
+            try:
+                for i,  (variable_name, entry_dict) in enumerate(self.init_dict.items()):
+                    for labelname, default_value in entry_dict.items():
+                        label = QLabel(str(labelname))
+                        value_entry =  QLineEdit(str(default_value))
+                        input_grid_layout.addWidget(label, i, 0)
+                        input_grid_layout.addWidget(value_entry, i, 1)
+            except AttributeError:
+                label = QLabel("INIT_DICT found, but structure not valid.")
+                input_grid_layout.addWidget(label, 0, 0)
+                self.valid_init_dict = False
 
 
     def load_input_dict(self):
         """ Load input dict from Gridlayout in GUI"""
 
-         # load input dict
-        input_grid_layout = self.gui.input_dict_gridlayout
-        input_scrollarea = self.gui.scrollAreaWidgetContents
+        if self.valid_init_dict:
+            # load input dict
+            input_grid_layout = self.gui.input_dict_gridlayout
+            input_scrollarea = self.gui.scrollAreaWidgetContents
 
-        num_cols = input_grid_layout.columnCount()
-        num_rows = input_grid_layout.rowCount()
-        init_widgets = input_scrollarea.children()[1:] # omitting first one since it's the gridlayout 
+            num_cols = input_grid_layout.columnCount()
+            num_rows = input_grid_layout.rowCount()
+            init_widgets = input_scrollarea.children()[1:] # omitting first one since it's the gridlayout 
 
-        assert len(init_widgets) == num_cols * num_rows
+            assert len(init_widgets) == num_cols * num_rows
 
-        reconstructed_init_dict = {}    
+            reconstructed_init_dict = {}    
 
-        for i in range(num_rows):
-            reconstructed_init_dict[init_widgets[i*2].text()] = float(init_widgets[i*2+ 1].text())
+            for i in range(num_rows):
+                reconstructed_init_dict[init_widgets[i*2].text()] = float(init_widgets[i*2+ 1].text())
 
-        # reconstructed_init_dict is of form {"labelname" : "value"}
-        # Now need to match it to the variable names:
-        input_init_dict = self.init_dict # Is of form {"varname" : {"labelname" : "value"}}
+            # reconstructed_init_dict is of form {"labelname" : "value"}
+            # Now need to match it to the variable names:
+            input_init_dict = self.init_dict # Is of form {"varname" : {"labelname" : "value"}}
 
-        new_input_dict = self.init_dict.copy()
+            new_input_dict = self.init_dict.copy()
 
-        for varname, entry_dict in new_input_dict.items():
-            for labelname, _ in entry_dict.items():
-                new_input_dict[varname] = {labelname : reconstructed_init_dict[labelname]}
+            for varname, entry_dict in new_input_dict.items():
+                for labelname, _ in entry_dict.items():
+                    new_input_dict[varname] = {labelname : reconstructed_init_dict[labelname]}
 
-        # Commit input dict to parent dataset
-        self.dataset.set_input_dict(new_input_dict)
+            # Commit input dict to parent dataset
+            self.dataset.set_input_dict(new_input_dict)
+        else:
+            pass
 
 
     def configure(self):
@@ -223,6 +234,10 @@ class DataTaker:
                 return
         except:
             pass
+
+
+        if not self.valid_init_dict:
+            self.log.warn("No valid INIT_DICT found.")
 
         # Load the config
         self.reload_config()

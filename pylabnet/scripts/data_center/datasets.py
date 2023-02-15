@@ -1281,28 +1281,28 @@ class Plot2D(Dataset):
 
     def set_data(self, value):
 
-        try:
+        try: # check if data is an array and what its shape is
             shape = value.shape
 
-            if len(shape) == 0:
+            if len(shape) == 0: # data is single value
                 x = np.mod(self.position, self.pts_x)
                 y = np.mod(self.position//self.pts_x, self.pts_y)
                 self.data[y,x] = value
                 self.position += 1
             if len(shape) == 1:
-                if shape[0] ==  1:
+                if shape[0] ==  1: # data is single value
                     x = np.mod(self.position, self.pts_x)
                     y = np.mod(self.position//self.pts_x, self.pts_y)
                     self.data[y,x] = value
                     self.position += 1
-                elif shape[0] == self.pts_x:
+                elif shape[0] == self.pts_x:  # data is one row of the total 2D dataset matrix
                     y = np.mod(self.position//self.pts_x, self.pts_y)
                     self.data[y,:] = value
                     self.position += self.pts_x
                 else:
                     self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
 
-            elif len(shape) == 2:
+            elif len(shape) == 2: # data contains total 2D dataset matrix
                 if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
                     self.data = np.transpose(value)
                     self.position += self.pts_x*self.pts_y
@@ -1314,11 +1314,27 @@ class Plot2D(Dataset):
             else:
                 self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
 
-        except AttributeError:
-            x = np.mod(self.position, self.pts_x)
-            y = np.mod(self.position//self.pts_x, self.pts_y)
-            self.data[y,x] = value
-            self.position += 1
+        except AttributeError: # data is not an array. Check if it is list or float, int
+            try: # check if data is list
+                data_length = len(value)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                if data_length ==  1: # data is single value
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value[o]
+                    self.position += 1
+                elif data_length == self.pts_x:  # data (list) is one row of the total 2D dataset matrix
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    for ii in range(self.pts_x):
+                        self.data[y,ii] = value[ ii]
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data length: expected 1 or {self.pts_x}, got {data_length}')
+            except TypeError: # data is not list. Data is float or int
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
 
     def save(self, filename=None, directory=None, date_dir=True):
 
@@ -1443,30 +1459,30 @@ class Plot2DWithAvg(Plot2D):
 
     def set_data(self, value):
 
-        try:
+        try: # check if data is an array and what its shape is
             shape = value.shape
 
-            self.data_shape = shape
+            self.data_shape = shape # pass data shape for averaging
 
-            if len(shape) == 0:
+            if len(shape) == 0: # data is single value
                 x = np.mod(self.position, self.pts_x)
                 y = np.mod(self.position//self.pts_x, self.pts_y)
                 self.data[y,x] = value
                 self.position += 1
             if len(shape) == 1:
-                if shape[0] ==  1:
+                if shape[0] ==  1: # data is single value
                     x = np.mod(self.position, self.pts_x)
                     y = np.mod(self.position//self.pts_x, self.pts_y)
                     self.data[y,x] = value
                     self.position += 1
-                elif shape[0] == self.pts_x:
+                elif shape[0] == self.pts_x: # data is one row of the total 2D dataset matrix
                     y = np.mod(self.position//self.pts_x, self.pts_y)
                     self.data[y,:] = value
                     self.position += self.pts_x
                 else:
                     self.log.error(f'Incompatible data shape: expected (1, ) or ({self.pts_x}, ), got ({shape[0]}, )')
 
-            elif len(shape) == 2:
+            elif len(shape) == 2: # data contains total 2D dataset matrix
                 if (shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y):
                     self.data = np.transpose(value)
                     self.position += self.pts_x*self.pts_y
@@ -1478,13 +1494,33 @@ class Plot2DWithAvg(Plot2D):
             else:
                 self.log.error(f'Incompatible data shape: expected 1D or 2D, got {len(shape)}D')
 
-        except AttributeError:
-            self.data_shape = (1,)
-            x = np.mod(self.position, self.pts_x)
-            y = np.mod(self.position//self.pts_x, self.pts_y)
-            self.data[y,x] = value
-            self.position += 1
+
+        except AttributeError: # data is not an array. Check if it is list or float, int
+            try: # check if data is list
+                data_length = len(value)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                if data_length ==  1: # data is single value
+                    self.data_shape = (1,) # pass data shape for averaging
+                    x = np.mod(self.position, self.pts_x)
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    self.data[y,x] = value[o]
+                    self.position += 1
+                elif data_length == self.pts_x:  # data (list) is one row of the total 2D dataset matrix
+                    self.data_shape = (self.pts_x,) # pass data shape for averaging
+                    y = np.mod(self.position//self.pts_x, self.pts_y)
+                    for ii in range(self.pts_x):
+                        self.data[y,ii] = value[ ii]
+                    self.position += self.pts_x
+                else:
+                    self.log.error(f'Incompatible data length: expected 1 or {self.pts_x}, got {data_length}')
+            except TypeError: # data is not list. Data is float or int
+                self.data_shape = (1,) # pass data shape for averaging
+                x = np.mod(self.position, self.pts_x)
+                y = np.mod(self.position//self.pts_x, self.pts_y)
+                self.data[y,x] = value
+                self.position += 1
         
+        # if a whole dataset matrix has been filled, pass it to all_data to be stored
         if np.mod(self.position,(self.pts_x*self.pts_y)) == 0:
             self.all_data.append(self.data)
         
@@ -1533,7 +1569,7 @@ class Plot2DWithAvg(Plot2D):
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """
         shape = self.data_shape
-        if len(shape) == 0:
+        if len(shape) == 0: # data is single value
                 x = np.mod(self.position-1, self.pts_x)
                 y = np.mod((self.position-1)//self.pts_x, self.pts_y)
                 if (self.position-1)//(self.pts_x*self.pts_y) == 0:
@@ -1542,7 +1578,7 @@ class Plot2DWithAvg(Plot2D):
                     n = (self.position-1)//(self.pts_x*self.pts_y)
                     prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
         if len(shape) == 1:
-            if shape[0] ==  1:
+            if shape[0] ==  1: # data is single value
                 x = np.mod(self.position-1, self.pts_x)
                 y = np.mod((self.position-1)//self.pts_x, self.pts_y)
                 if (self.position-1)//(self.pts_x*self.pts_y) == 0:
@@ -1550,7 +1586,7 @@ class Plot2DWithAvg(Plot2D):
                 else:
                     n = (self.position-1)//(self.pts_x*self.pts_y)
                     prev_dataset.data[y,x] = (dataset.data[y,x] + n*prev_dataset.data[y,x])/(n+1)
-            elif shape[0] == self.pts_x:
+            elif shape[0] == self.pts_x: # data is one row of the total 2D dataset matrix
                 y = np.mod((self.position-self.pts_x)//self.pts_x, self.pts_y)
                 if (self.position-self.pts_x)//(self.pts_x*self.pts_y) == 0:
                     prev_dataset.data[y,:] = dataset.data[y,:]
@@ -1558,7 +1594,7 @@ class Plot2DWithAvg(Plot2D):
                     n = (self.position-self.pts_x)//(self.pts_x*self.pts_y)
                     prev_dataset.data[y,:] = (dataset.data[y,:] + n*prev_dataset.data[y,:])/(n+1)
 
-        if len(shape) == 2:
+        if len(shape) == 2: # data contains total 2D dataset matrix
             if ((shape[0] ==  self.pts_x) and (shape[1] ==  self.pts_y)) or ((shape[1] ==  self.pts_x) and (shape[0] ==  self.pts_y)):
                 if (self.position-self.pts_x*self.pts_y)//(self.pts_x*self.pts_y) == 0:
                     prev_dataset.data[:,:] = dataset.data[:,:]

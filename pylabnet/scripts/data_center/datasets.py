@@ -82,6 +82,12 @@ class Dataset():
         return
 
     def set_input_dict(self, input_dict):
+
+        # save to metadata
+        self.log.update_metadata(
+            input_dict=input_dict
+        )
+
         self._input_dict = input_dict
 
     def get_input_parameter(self, varname):

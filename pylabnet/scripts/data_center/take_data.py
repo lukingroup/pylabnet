@@ -208,8 +208,6 @@ class DataTaker:
             for labelname, _ in entry_dict.items():
                 new_input_dict[varname] = {labelname : reconstructed_init_dict[labelname]}
 
-        self.log.info(f'Input Dict {new_input_dict} configured')
-
         # Commit input dict to parent dataset
         self.dataset.set_input_dict(new_input_dict)
 

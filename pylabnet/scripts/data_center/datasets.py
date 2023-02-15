@@ -84,8 +84,8 @@ class Dataset():
     def set_input_dict(self, input_dict):
         self._input_dict = input_dict
 
-    def get_input_dict(self):
-        return self._input_dict
+    def get_input_parameter(self, varname):
+        return list(self._input_dict[varname].values())[0]
 
     def set_output_dict(self, output_dict):
         self._output_dict = output_dict
@@ -1060,7 +1060,7 @@ class SawtoothScan1D(Dataset):
 
         # Prompt user if not provided in config
         else:
-            self.popup = ParameterPopup(min=float, max=float, pts=int)
+            self.popup = ParameterPopup(min=float, max=float, pts=int, name=str)
             self.popup.parameters.connect(self.fill_params)
 
     def fill_params(self, config):

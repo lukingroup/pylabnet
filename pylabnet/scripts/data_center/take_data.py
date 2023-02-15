@@ -29,7 +29,7 @@ class DataTaker:
 
         # Instantiate GUI window
         self.gui = Window(
-            gui_template='data_taker_input',
+            gui_template='data_taker',
             host=get_ip(),
             log=self.log,
         )
@@ -142,9 +142,15 @@ class DataTaker:
             spec = importlib.util.spec_from_file_location("init_dict", filepath)
             mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
-            self.init_dict = mod.INIT_DICT
+            no_init_dict = False
 
-        self.update_init_form(self.init_dict)
+            try:
+                self.init_dict = mod.INIT_DICT
+            except AttributeError:
+                self.init_dict = {}
+                no_init_dict = True
+
+        self.update_init_form(no_init_dict)
 
     def create_gridlayout(self):
 
@@ -154,20 +160,24 @@ class DataTaker:
         self.gui.input_dict_gridlayout = QtWidgets.QGridLayout(self.gui.scrollAreaWidgetContents)
         input_init_scrollarea.setWidget(self.gui.scrollAreaWidgetContents)
 
-    def update_init_form(self, newform):
+    def update_init_form(self, no_init_dict):
        
         self.create_gridlayout()
 
         # Build input dict modification form
         input_grid_layout = self.gui.input_dict_gridlayout
-        btn1 = QPushButton("Push parameters")
-        
-        for i,  (labelname, default_value) in enumerate(newform.items()):
-            
-                label = QLabel(labelname)
-                value_entry =  QLineEdit(default_value)
-                input_grid_layout.addWidget(label, i, 0)
-                input_grid_layout.addWidget(value_entry, i, 1)
+
+        if no_init_dict:
+            label = QLabel("No INIT_DICT found.")
+            input_grid_layout.addWidget(label, 0, 0)
+        else:
+
+            for i,  (variable_name, entry_dict) in enumerate(self.init_dict.items()):
+                for labelname, default_value in entry_dict.items():
+                    label = QLabel(str(labelname))
+                    value_entry =  QLineEdit(str(default_value))
+                    input_grid_layout.addWidget(label, i, 0)
+                    input_grid_layout.addWidget(value_entry, i, 1)
 
 
     def load_input_dict(self):
@@ -188,9 +198,20 @@ class DataTaker:
         for i in range(num_rows):
             reconstructed_init_dict[init_widgets[i*2].text()] = float(init_widgets[i*2+ 1].text())
 
-        self.log.info(f'Input Dict {reconstructed_init_dict} configured')
+        # reconstructed_init_dict is of form {"labelname" : "value"}
+        # Now need to match it to the variable names:
+        input_init_dict = self.init_dict # Is of form {"varname" : {"labelname" : "value"}}
+
+        new_input_dict = self.init_dict.copy()
+
+        for varname, entry_dict in new_input_dict.items():
+            for labelname, _ in entry_dict.items():
+                new_input_dict[varname] = {labelname : reconstructed_init_dict[labelname]}
+
+        self.log.info(f'Input Dict {new_input_dict} configured')
+
         # Commit input dict to parent dataset
-        self.dataset.set_input_dict(reconstructed_init_dict)
+        self.dataset.set_input_dict(new_input_dict)
 
 
     def configure(self):

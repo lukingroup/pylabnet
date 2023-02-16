@@ -50,6 +50,10 @@ class Dataset():
         self.mapping = {}
         self.widgets = {}
 
+        # Initialize input and output dicts
+        self._input_dict = None
+        self._output_dict = None
+
         # Flag indicating whether data should be
         self.dont_clear = dont_clear
 
@@ -76,6 +80,24 @@ class Dataset():
         self.is_important = False
 
         return
+
+    def set_input_dict(self, input_dict):
+
+        # save to metadata
+        self.log.update_metadata(
+            input_dict=input_dict
+        )
+
+        self._input_dict = input_dict
+
+    def get_input_parameter(self, varname):
+        return list(self._input_dict[varname].values())[0]
+
+    def set_output_dict(self, output_dict):
+        self._output_dict = output_dict
+
+    def get_output_dict(self):
+        return self._output_dict
 
     def update_setting(self):
         self.confluence_handler.confluence_popup.Popup_Update()
@@ -1046,7 +1068,7 @@ class SawtoothScan1D(Dataset):
 
         # Prompt user if not provided in config
         else:
-            self.popup = ParameterPopup(min=float, max=float, pts=int)
+            self.popup = ParameterPopup(min=float, max=float, pts=int, name=str)
             self.popup.parameters.connect(self.fill_params)
 
     def fill_params(self, config):

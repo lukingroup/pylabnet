@@ -63,8 +63,17 @@ class Driver:
         """
 
         if field not in self.VALID_FIELDS:
-            raise ValueError("Invalid Lockbox field.")
-        return float(re.search(f"{field} = ([0-9\.]*)", string).group(1))
+            self.log.error(f"Invalid Lockbox field {field}.")
+            return 0
+
+        regex_search = re.search(f"{field} = ([0-9\.]*)", string)
+
+        try:
+            return float(regex_search.group(1))
+        # ValueError if float conversion failed, AttributeError if regex had no results (None)
+        except (ValueError, AttributeError) as e:
+            self.log.error(e)
+            return 0
 
     def send_command(self, msg):
         """ Sends a message to the device.
@@ -104,7 +113,7 @@ class Driver:
 
         reply = self.send_read(msg, length)
         if reply != msg + "!":
-            raise ValueError(f"Unexpected reply '{reply}' from Lockbox.")
+            self.log.error(f"Unexpected reply '{reply}' from Lockbox.")
         return reply
 
     def set_P(self, P):

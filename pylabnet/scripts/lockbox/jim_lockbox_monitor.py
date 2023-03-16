@@ -10,6 +10,7 @@ import re
 import time
 import numpy as np
 import pyqtgraph as pg
+from datetime import datetime
 
 
 class JimLockboxGUI:
@@ -93,7 +94,7 @@ class JimLockboxGUI:
         """ Read current status from the lockbox, then update the full status dump box
             as well as the individual parameters labels and plot. """
         self.status = self.lockbox.get_status()
-        self.gui.statusText.setText(self.status)
+        self.gui.statusText.setText(self.status + "\n" + str(datetime.now()))
         self.update_value_labels()
         self.update_plot()
 
@@ -131,15 +132,17 @@ class JimLockboxGUI:
         valid_fields = ["dCount1", "Count2", "Timebase", "PVal", "IVal", "DVal", "ErrorVal", "Integrator", "Offset", "PIDOut"]
 
         if field not in valid_fields:
-            raise ValueError("Invalid Lockbox field.")
+            self.log.error(f"Invalid Lockbox field '{field}'.")
+            return 0
 
         regex_search = re.search(f"{field} = ([0-9\.]*)", string)
 
-        # Check if field is not contained in string
-        if regex_search is not None:
+        try:
             return float(regex_search.group(1))
-        else:
-            return ""
+        # ValueError if float conversion failed, AttributeError if regex had no results (None)
+        except (ValueError, AttributeError) as e:
+            self.log.error(e)
+            return 0
 
 
 def launch(**kwargs):

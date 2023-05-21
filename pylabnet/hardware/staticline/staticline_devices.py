@@ -318,8 +318,28 @@ class SMC100A(StaticLineHardwareHandler):
         self.hardware_client.set_freq(float(value) * 1E6)
 
 
-################################################################################
+class superK(StaticLineHardwareHandler):
 
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.up = self.hardware_client.on
+        self.down = self.hardware_client.off
+        self.log.info(f'superK assigned to staticline {self.name}')
+
+    def set_value(self, value):
+        self.hardware_client.set_power(float(value))
+
+    def up(self):
+        self.hardware_client.emission_on()
+
+    def down(self):
+        self.hardware_client.emission_off()
+
+
+################################################################################
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
     'zi_hdawg': HDAWG,
@@ -332,5 +352,6 @@ registered_staticline_modules = {
     'abstract2': AbstractDevice,
     'agilent_83732b': agilent_83732b,
     'CLD101x': CLD101x,
-    'SMC100A': SMC100A
+    'SMC100A': SMC100A,
+    'superK': superK
 }

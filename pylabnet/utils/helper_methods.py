@@ -18,7 +18,6 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 
 
-
 class TimeAxisItem(pg.AxisItem):
     def tickStrings(self, values, scale, spacing):
         return [datetime.fromtimestamp(value) for value in values]
@@ -389,7 +388,30 @@ def generic_save(data, filename=None, directory=None, date_dir=False):
         pass
 
 
-def save_metadata(log, filename=None, directory=None, date_dir=False):
+def npy_generic_save(data, filename=None, directory=None, date_dir=False):
+    """ Saves data as npy file
+
+    :param dir: (str) directory to save to
+    :param filename: (str) name of file to save
+    :param date_dir: (bool) whether or not to use date sub-directory
+    note: for large-sized data, and don't save graph file
+    """
+
+    filepath = generate_filepath(filename, directory, date_dir)
+    if not filepath.endswith('.npy'):
+        filepath += '.npy'
+
+    try:
+        np.save(filepath, np.array(data))
+    except OSError:
+        os.mkdir(directory)
+        np.save(filepath, np.array(data))
+    except ValueError:
+        # TODO: Potentially incorporate with logger and except hook
+        pass
+
+
+def save_metadata(log, filename=None, directory=None, date_dir=False, unique_id=None):
     """ Saves metadata stored in the logger
 
     :param log: (LogClient)
@@ -398,7 +420,7 @@ def save_metadata(log, filename=None, directory=None, date_dir=False):
     :param date_dir: (bool) whether or not to use date sub-directory
     """
 
-    filepath = generate_filepath(f'{filename}_metadata', directory, date_dir)
+    filepath = generate_filepath(f'{filename}_metadata_{unique_id}', directory, date_dir)
     if not filepath.endswith('.json'):
         filepath += '.json'
 
@@ -595,6 +617,7 @@ def get_gui_widgets(gui, **kwargs):
             widgets[widget_name] = getattr(gui, widget_name)
 
     return widgets
+
 
 def get_gui_widgets_dummy(gui, **kwargs):
     """ Returns the GUI widget objects specified in kwargs
@@ -826,7 +849,6 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     else:
         lab_name = 'NO_LAB'
 
-
     cmd += f'--logip {log_ip} --logport {log_port} '
     cmd += f'--serverport {server_port} --server {server} '
     cmd += f'--device_id "{config_dict["device_id"]}" '
@@ -891,7 +913,6 @@ def launch_script(script, config, log_ip, log_port, debug_flag, server_debug_fla
         cmd = f'{sys.executable} {launch_path} '
     else:
         raise UnsupportedOSException
-
 
     #logger.info(f'Script : {script}')
     #logger.info(f'config : {config}')
@@ -1021,7 +1042,7 @@ def set_graph_background(widget):
 
     :param widget: base graph or legend widget
     """
-    
+
     try:
         widget.getViewBox().setBackgroundColor('#19232D')
 

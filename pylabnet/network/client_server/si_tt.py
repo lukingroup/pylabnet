@@ -22,6 +22,10 @@ class Service(ServiceBase):
     def exposed_get_counts(self, name):
         res_pickle = self._module.get_counts(name=name)
         return pickle.dumps(res_pickle)
+    
+    def exposed_get_bin_widths(self, name):
+        res_pickle = self._module.get_bin_widths(name=name)
+        return pickle.dumps(res_pickle)
 
     def exposed_get_x_axis(self, name):
         res_pickle = self._module.get_x_axis(name=name)
@@ -39,8 +43,12 @@ class Service(ServiceBase):
         )
         return pickle.dumps(res_pickle)
 
-    def exposed_start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
-        return self._module.start_gated_counter(name, click_ch, gate_ch, gated, bins)
+    def exposed_get_timetag_stream_data(self, name):
+        res_pickle = self._module.get_timetag_stream_data(name=name)
+        return pickle.dumps(res_pickle)
+
+    def exposed_start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000, end_channel=None):
+        return self._module.start_gated_counter(name, click_ch, gate_ch, gated, bins, end_channel=end_channel)
 
     def exposed_start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                                 sync_ch=-134217728, binwidth=1000, n_bins=1000,
@@ -51,6 +59,9 @@ class Service(ServiceBase):
 
     def exposed_start_correlation(self, name, ch_1, ch_2, binwidth=1000, n_bins=1000, delay=None):
         return self._module.start_correlation(name, ch_1, ch_2, binwidth, n_bins, delay)
+
+    def exposed_start_timetag_stream(self, name, n_max_events, channel_list):
+        return self._module.start_timetag_stream(name, n_max_events, channel_list)
 
     def exposed_start(self, name):
         return self._module.start(name)
@@ -114,6 +125,16 @@ class Client(ClientBase):
 
         res_pickle = self._service.exposed_get_counts(name=name)
         return pickle.loads(res_pickle)
+    
+    def get_bin_widths(self, name=None):
+        """Gets a 2D array of counts on all channels. See the
+            getData() method of Counter class in TT
+
+        :param name: (str) identifier for the counter measurement
+        """
+
+        res_pickle = self._service.exposed_get_bin_widths(name=name)
+        return pickle.loads(res_pickle)
 
     def get_x_axis(self, name=None):
         """Gets the x axis in picoseconds for the count array.
@@ -150,7 +171,15 @@ class Client(ClientBase):
         )
         return pickle.loads(res_pickle)
 
-    def start_gated_counter(self, name, click_ch, gate_ch, bins=1000):
+    def get_timetag_stream_data(self, name):
+        """ returns channels and timestamps of TimeTagStream object in a tuple
+        :param name: (str) name of TimeTagStream instance
+        """
+
+        res_pickle = self._service.exposed_get_timetag_stream_data(name)
+        return pickle.loads(res_pickle)
+
+    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000, end_channel=None):
         """ Starts a new gated counter
 
         Starts counting at rising edge of gate, and returns count value into array
@@ -162,9 +191,9 @@ class Client(ClientBase):
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, True, bins)
+        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, gated, bins, end_channel=end_channel)
 
-    def count_between_markers(self, name, click_ch, marker_ch, bins=1000):
+    def count_between_markers(self, name, click_ch, marker_ch, bins=1000, end_channel=None):
         """ Starts a new counter that counts at the rising edge of a marker
 
         Starts counting at rising edge of marker channel, and returns count value
@@ -176,7 +205,7 @@ class Client(ClientBase):
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, marker_ch, False, bins)
+        self._service.exposed_start_gated_counter(name, click_ch, marker_ch, False, bins, end_channel=end_channel)
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,
@@ -220,6 +249,18 @@ class Client(ClientBase):
         return self._service.exposed_start_correlation(
             name, ch_1, ch_2, binwidth, n_bins, delay
         )
+
+    def start_timetag_stream(self, name, n_max_events, channel_list):
+        """ Sets up a time tag stream using TT.TimeTagStream class
+
+        :param name: (str) name of measurement for future reference
+        :n_max_events: (int) max number of events to store in stream
+        :channel_list: (list) list of channels to use
+        """
+
+        return self._service.exposed_start_timetag_stream(
+            name, n_max_events, channel_list
+            )
 
     def start(self, name):
         """ Starts a measurement.

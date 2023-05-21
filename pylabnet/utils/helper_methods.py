@@ -767,7 +767,6 @@ def launch_device_server(server, dev_config, log_ip, log_port, server_port, debu
     :param debug: (bool) whether or not to debug the server launching
     :param logger: (LogHandler)
     """
-
     # First load device config into dict
     config_dict = load_device_config(server, dev_config)
 

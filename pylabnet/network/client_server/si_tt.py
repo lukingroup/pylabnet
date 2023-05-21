@@ -27,6 +27,10 @@ class Service(ServiceBase):
         res_pickle = self._module.get_bin_widths(name=name)
         return pickle.dumps(res_pickle)
 
+    def exposed_get_bin_widths(self, name):
+        res_pickle = self._module.get_bin_widths(name=name)
+        return pickle.dumps(res_pickle)
+
     def exposed_get_x_axis(self, name):
         res_pickle = self._module.get_x_axis(name=name)
         return pickle.dumps(res_pickle)
@@ -124,6 +128,16 @@ class Client(ClientBase):
         """
 
         res_pickle = self._service.exposed_get_counts(name=name)
+        return pickle.loads(res_pickle)
+
+    def get_bin_widths(self, name=None):
+        """Gets a 2D array of counts on all channels. See the
+            getData() method of Counter class in TT
+
+        :param name: (str) identifier for the counter measurement
+        """
+
+        res_pickle = self._service.exposed_get_bin_widths(name=name)
         return pickle.loads(res_pickle)
 
     def get_bin_widths(self, name=None):

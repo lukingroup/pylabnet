@@ -1,4 +1,4 @@
-from pylabnet.network.client_server.nkt import Service, Client
+from pylabnet.network.client_server.superK import Service, Client
 from pylabnet.hardware.superK.nkt import Driver
 from pylabnet.utils.helper_methods import GenericServer, get_ip, load_device_config
 

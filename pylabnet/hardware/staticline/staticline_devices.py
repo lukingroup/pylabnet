@@ -325,8 +325,6 @@ class superK(StaticLineHardwareHandler):
         device client function calls.
         '''
 
-        self.up = self.hardware_client.on
-        self.down = self.hardware_client.off
         self.log.info(f'superK assigned to staticline {self.name}')
 
     def set_value(self, value):

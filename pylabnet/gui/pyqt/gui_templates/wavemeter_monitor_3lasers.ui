@@ -43,7 +43,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -70,7 +69,6 @@
          </property>
          <property name="font">
           <font>
-           <family>Calibri Light</family>
            <pointsize>12</pointsize>
           </font>
          </property>
@@ -86,7 +84,6 @@
         <widget class="QLabel" name="port_label">
          <property name="font">
           <font>
-           <family>Calibri Light</family>
            <pointsize>12</pointsize>
           </font>
          </property>
@@ -106,7 +103,6 @@
         <widget class="QLabel" name="step_size_labl">
          <property name="font">
           <font>
-           <family>Calibri Light</family>
            <pointsize>12</pointsize>
           </font>
          </property>
@@ -125,7 +121,6 @@
         <widget class="QDoubleSpinBox" name="step_size">
          <property name="font">
           <font>
-           <family>Calibri Light</family>
            <pointsize>12</pointsize>
           </font>
          </property>
@@ -188,7 +183,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -208,7 +202,6 @@
            <widget class="QLabel" name="label_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>16</pointsize>
              </font>
             </property>
@@ -221,7 +214,6 @@
            <widget class="QDoubleSpinBox" name="freq_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -261,7 +253,7 @@
            <widget class="QLabel" name="label_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="text">
@@ -273,7 +265,6 @@
            <widget class="QDoubleSpinBox" name="sp_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -328,7 +319,6 @@
            <widget class="QPushButton" name="lock_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -355,7 +345,6 @@
            <widget class="QPushButton" name="error_status_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -429,7 +418,6 @@
             </property>
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -470,7 +458,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -487,7 +474,6 @@
            <widget class="QLabel" name="label_5">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>16</pointsize>
              </font>
             </property>
@@ -500,7 +486,6 @@
            <widget class="QDoubleSpinBox" name="freq_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -540,7 +525,7 @@
            <widget class="QLabel" name="label_6">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="text">
@@ -552,7 +537,6 @@
            <widget class="QDoubleSpinBox" name="sp_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -607,7 +591,6 @@
            <widget class="QPushButton" name="lock_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -637,7 +620,6 @@
            <widget class="QPushButton" name="error_status_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -714,7 +696,6 @@
             </property>
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -755,7 +736,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -772,7 +752,6 @@
            <widget class="QLabel" name="label_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>16</pointsize>
              </font>
             </property>
@@ -785,7 +764,6 @@
            <widget class="QDoubleSpinBox" name="voltage_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -825,7 +803,7 @@
            <widget class="QLabel" name="label_4">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="text">
@@ -837,7 +815,6 @@
            <widget class="QDoubleSpinBox" name="error_1">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -927,7 +904,6 @@
             </property>
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -955,6 +931,68 @@
           </widget>
          </widget>
         </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_14">
+            <property name="text">
+             <string>P</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="P_laser_1">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>I</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="I_laser_1">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>D</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="D_laser_1">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="PID_upd_laser_1">
+            <property name="text">
+             <string>Upd PID params</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
        </layout>
       </widget>
      </item>
@@ -968,7 +1006,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -985,7 +1022,6 @@
            <widget class="QLabel" name="label_7">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>16</pointsize>
              </font>
             </property>
@@ -998,7 +1034,6 @@
            <widget class="QDoubleSpinBox" name="voltage_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1038,7 +1073,7 @@
            <widget class="QLabel" name="label_8">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="text">
@@ -1050,7 +1085,6 @@
            <widget class="QDoubleSpinBox" name="error_2">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1140,7 +1174,6 @@
             </property>
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1168,6 +1201,68 @@
           </widget>
          </widget>
         </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_11">
+          <item>
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>P</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="P_laser_2">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>I</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="I_laser_2">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>D</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="D_laser_2">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="PID_upd_laser_2">
+            <property name="text">
+             <string>Upd PID params</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
        </layout>
       </widget>
      </item>
@@ -1181,7 +1276,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -1201,7 +1295,6 @@
            <widget class="QLabel" name="label_9">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>16</pointsize>
              </font>
             </property>
@@ -1214,7 +1307,6 @@
            <widget class="QDoubleSpinBox" name="freq_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1254,7 +1346,6 @@
            <widget class="QLabel" name="label_10">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>10</pointsize>
              </font>
             </property>
@@ -1267,7 +1358,6 @@
            <widget class="QDoubleSpinBox" name="sp_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1325,7 +1415,6 @@
            <widget class="QPushButton" name="lock_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -1352,7 +1441,6 @@
            <widget class="QPushButton" name="error_status_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>8</pointsize>
              </font>
             </property>
@@ -1426,7 +1514,6 @@
             </property>
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1467,7 +1554,6 @@
        </property>
        <property name="font">
         <font>
-         <family>Calibri Light</family>
          <pointsize>12</pointsize>
         </font>
        </property>
@@ -1484,7 +1570,6 @@
            <widget class="QLabel" name="label_11">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>16</pointsize>
              </font>
             </property>
@@ -1497,7 +1582,6 @@
            <widget class="QDoubleSpinBox" name="voltage_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1537,7 +1621,7 @@
            <widget class="QLabel" name="label_12">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
              </font>
             </property>
             <property name="text">
@@ -1549,7 +1633,6 @@
            <widget class="QDoubleSpinBox" name="error_3">
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1639,7 +1722,6 @@
             </property>
             <property name="font">
              <font>
-              <family>Calibri Light</family>
               <pointsize>12</pointsize>
              </font>
             </property>
@@ -1667,6 +1749,68 @@
           </widget>
          </widget>
         </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_12">
+          <item>
+           <widget class="QLabel" name="label_20">
+            <property name="text">
+             <string>P</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="P_laser_3">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_19">
+            <property name="text">
+             <string>I</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="I_laser_3">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>D</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="D_laser_3">
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="PID_upd_laser_3">
+            <property name="text">
+             <string>Upd PID params</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
        </layout>
       </widget>
      </item>
@@ -1679,7 +1823,7 @@
      <x>0</x>
      <y>0</y>
      <width>2560</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

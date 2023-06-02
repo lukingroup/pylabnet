@@ -255,7 +255,7 @@ class WlmMonitor:
                 i=i,
                 d=d
             )
-            self.log.info('New P, I, D values = ' + str(p) + ', ' + str(i), + ', ' + str(d))
+            self.log.info('New P, I, D values = ' + str(p) + ', ' + str(i) + ', ' + str(d))
 
         # Catch error
         except:

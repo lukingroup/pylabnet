@@ -70,7 +70,6 @@ setup(
         'decorator>=4.4.0',
         'ipywidgets>=7.5.1',
         'matplotlib>=3.1.3',
-        'netifaces>=0.10.9',
         'nidaqmx>=0.5.7',
         'numpy>=1.16.5',
         'paramiko>=2.7.2',

@@ -98,6 +98,18 @@ class Wrap:
         # Get count data (see TT documentation)
         return self._ctr[name].getData()
 
+    def get_bin_widths(self, name=None):
+        """Gets a 2D array of binwidths on all channels. See the
+            getBinWidths() method of Counter class in TT
+
+        :param name: (str) identifier for the counter measurement
+        """
+
+        name = self.handle_name(name)
+
+        # Get count data (see TT documentation)
+        return self._ctr[name].getBinWidths()
+
     def get_x_axis(self, name=None):
         """Gets the x axis in picoseconds for the count array.
             See the getIndex() method of Counter class in TT
@@ -144,7 +156,7 @@ class Wrap:
         time.sleep(integration)
         return self._ctr[name].getData()
 
-    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
+    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000, end_channel=None):
         """ Starts a new gated counter
 
         :param name: (str) name of counter measurement to use
@@ -156,13 +168,22 @@ class Wrap:
         """
 
         if gated:
-            self._ctr[name] = TT.CountBetweenMarkers(
-                self._tagger,
-                self._get_channel(click_ch),
-                self._get_channel(gate_ch),
-                end_channel=-gate_ch,
-                n_values=bins
-            )
+            if end_channel is None:
+                self._ctr[name] = TT.CountBetweenMarkers(
+                    self._tagger,
+                    self._get_channel(click_ch),
+                    self._get_channel(gate_ch),
+                    end_channel=-gate_ch,
+                    n_values=bins
+                )
+            else:
+                self._ctr[name] = TT.CountBetweenMarkers(
+                    self._tagger,
+                    self._get_channel(click_ch),
+                    self._get_channel(gate_ch),
+                    end_channel=self._get_channel(end_channel),
+                    n_values=bins
+                )
         else:
             self._ctr[name] = TT.CountBetweenMarkers(
                 self._tagger,
@@ -239,6 +260,21 @@ class Wrap:
             binwidth=binwidth,
             n_bins=n_bins
         )
+
+    def start_timetag_stream(self, name, n_max_events, channel_list):
+
+        channels = [self._get_channel(ch) for ch in channel_list]
+
+        self._ctr[name] = TT.TimeTagStream(
+            tagger=self._tagger,
+            n_max_events=n_max_events,
+            channels=channels
+        )
+
+    def get_timetag_stream_data(self, name):
+        timetag_stream_buffer = self.get_counts(name=name)
+        return ([int(i) for i in timetag_stream_buffer.getChannels()],
+                [int(i) for i in timetag_stream_buffer.getTimestamps()])
 
     def start(self, name):
         """ Starts a measurement.

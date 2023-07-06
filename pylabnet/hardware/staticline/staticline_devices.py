@@ -13,23 +13,25 @@ class StaticLineHardwareHandler(ABC):
     which should correspond to setting the staticline to high or low, and
     to set up the hardware accordingly.
 
-    :hardware_client: (object)
-        Hardware client to be used to toggle the staticline.
-    :log: (object)
-        Instance of loghandler.
+
     :name: (str)
         Name of StaticLine instance.
-    :config: (dict)
-            Contains parameters needed to setup the hardware as a staticline.
+    :log: (object)
+        Instance of loghandler.
+    :hardware_client: (object)
+        Hardware client to be used to toggle the staticline.
+    :hardware_config: (dict)
+            Parameters needed to setup the hardware controlling the associated staticlines.
     :config: (int)
-            Contains type of staticline being configured (digital, analog, or adjustable digital)
+            Parameters about staticline being configured (digital, analog, or adjustable digital)
     '''
 
-    def __init__(self, name, log, hardware_client, config):
+    def __init__(self, name, log, hardware_client, hardware_config, config):
         self.name = name
         self.log = log
         self.hardware_client = hardware_client
         self.hardware_name = str(hardware_client.__class__).split('.')[-2]
+        self.hardware_config = hardware_config
         self.config = config
 
         self.setup()
@@ -179,7 +181,8 @@ class DioBreakout(StaticLineHardwareHandler):
         assignment_dict = load_config('dio_assignment_global')
 
         DIO_bit = assignment_dict[self.config['bit_name']]
-        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit)
+        self.board, self.channel = convert_awg_pin_to_dio_board(DIO_bit, self.hardware_config["dio_pin_mapping"])
+
         self.isHighVoltage = self.config['is_high_volt']
 
     def set_value(self, value):
@@ -294,9 +297,47 @@ class CLD101x(StaticLineHardwareHandler):
     def set_value(self, value):
         self.hardware_client.set_current(float(value))
 
+
+class SMC100A(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.up = self.hardware_client.on
+        self.down = self.hardware_client.off
+        self.log.info(f'SMC100A assigned to staticline {self.name}')
+
+    def set_dig_value(self, value):
+
+        self.hardware_client.set_power(float(value))
+
+    def set_value(self, value):
+        #This will be used for setting the frequencies with an analog staticline
+        self.hardware_client.set_freq(float(value) * 1E6)
+
+
+class superK(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.log.info(f'superK assigned to staticline {self.name}')
+
+    def set_value(self, value):
+        self.hardware_client.set_power(float(value))
+
+    def up(self):
+        self.hardware_client.emission_on()
+
+    def down(self):
+        self.hardware_client.emission_off()
+
+
 ################################################################################
-
-
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
     'zi_hdawg': HDAWG,
@@ -308,5 +349,7 @@ registered_staticline_modules = {
     'abstract': AbstractDevice,
     'abstract2': AbstractDevice,
     'agilent_83732b': agilent_83732b,
-    'CLD101x': CLD101x
+    'CLD101x': CLD101x,
+    'SMC100A': SMC100A,
+    'superK': superK
 }

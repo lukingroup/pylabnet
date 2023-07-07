@@ -56,25 +56,32 @@ class JimLockboxGUI:
         """ Connect the buttons to their functions. """
 
         self.gui.set_P.clicked.connect(
-            lambda: self.lockbox.set_P(self.gui.input_P.value())
+            lambda: (self.lockbox.set_P(self.gui.input_P.value()),
+                     self.log.info(f"Set P value to {self.gui.input_P.value()}."))
         )
         self.gui.set_I.clicked.connect(
-            lambda: self.lockbox.set_I(self.gui.input_I.value())
+            lambda: (self.lockbox.set_I(self.gui.input_I.value()),
+                     self.log.info(f"Set I value to {self.gui.input_I.value()}."))
         )
         self.gui.set_D.clicked.connect(
-            lambda: self.lockbox.set_D(self.gui.input_D.value())
+            lambda: (self.lockbox.set_D(self.gui.input_D.value()),
+                     self.log.info(f"Set D value to {self.gui.input_D.value()}."))
         )
         self.gui.set_int_time.clicked.connect(
-            lambda: self.lockbox.set_int_time(self.gui.input_int_time.value())
+            lambda: (self.lockbox.set_int_time(self.gui.input_int_time.value()),
+                     self.log.info(f"Set int time to {self.gui.input_int_time.value()}."))
         )
         self.gui.set_offset.clicked.connect(
-            lambda: self.lockbox.set_offset(self.gui.input_offset.value())
+            lambda: (self.lockbox.set_offset(self.gui.input_offset.value()),
+                     self.log.info(f"Set offset value to {self.gui.input_offset.value()}."))
         )
         self.gui.reset.clicked.connect(
-            lambda: self.lockbox.reset()
+            lambda: (self.lockbox.reset(),
+                     self.log.info("Reset lockbox."))
         )
         self.gui.set_read.clicked.connect(
-            lambda: setattr(self, "read_time", self.gui.input_read.value())
+            lambda: (setattr(self, "read_time", self.gui.input_read.value()),
+                     self.log.info(f"Set read time to {self.gui.input_read.value()}."))
         )
 
     def initialize_fields(self):

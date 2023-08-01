@@ -217,17 +217,30 @@ class HMCT2220(StaticLineHardwareHandler):
         self.down = self.hardware_client.output_off
         self.log.info(f'HMCT2200 assigned to staticline {self.name}')
 
-    def set_dig_value(self, value):
+        self.setting = self.config['setting']
 
-        if float(value) > self.maxval:
-            self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
-            value = self.maxval
+    # def set_dig_value(self, value):
 
-        self.hardware_client.set_power(float(value))
+    #     if float(value) > self.maxval:
+    #         self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+    #         value = self.maxval
+
+    #     self.hardware_client.set_power(float(value))
+
+    # def set_value(self, value):
+    #     #This will be used for setting the frequencies with an analog staticline
+    #     self.hardware_client.set_freq(float(value) * 1E9)
 
     def set_value(self, value):
-        #This will be used for setting the frequencies with an analog staticline
-        self.hardware_client.set_freq(float(value) * 1E9)
+        if self.setting == "power":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value))
+
+        if self.setting == "frequency":
+            self.hardware_client.set_freq(float(value) * 1E9)
 
 
 class TPLinkHS103(StaticLineHardwareHandler):

@@ -2,7 +2,7 @@ import sys
 
 
 try:
-    sys.path.append("C:\\Users\\Control Software\\pylabnet\\pylabnet\\hardware\\superK")
+    sys.path.append("C:\\Users\\Public\\Documents\\NKT Photonics\\SDK\\Examples\\DLL_Example_Python")
     import NKTP_DLL as NKTP_DLL
 except:
     pass
@@ -22,7 +22,7 @@ from pylabnet.utils.decorators.dummy_wrapper import dummy_wrap
 
 
 class Driver:
-    def __init__(self, com_port='COM12', devID=15, logger=None):
+    def __init__(self, com_port='COM6', devID=15, logger=None):
         # port and devID
         self.com_port = com_port
         self.devID = devID
@@ -30,6 +30,8 @@ class Driver:
         # Log
         self.log = LogHandler(logger=logger)
         self.log.info('launching superK driver')
+
+        self.read_power()
         return
 
     def emission_on(self):
@@ -56,3 +58,14 @@ class Driver:
         rdResult = NKTP_DLL.registerWriteU16(self.com_port, self.devID, 0x37, pow_permille, -1)
         self.log.info('read result message: ' + str(NKTP_DLL.RegisterResultTypes(rdResult)))
         return rdResult
+
+    def close_port(self):
+        closeResult = NKTP_DLL.closePorts(self.com_port)
+        self.log.info('Close the comport:' + str(NKTP_DLL.PortResultTypes(closeResult)))
+
+
+if __name__ == "__main__":
+
+    sk = Driver()
+
+    sk.set_power(0.015)

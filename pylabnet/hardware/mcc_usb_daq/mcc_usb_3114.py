@@ -1,202 +1,192 @@
-import time
 import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 from mcculw import ul
 from mcculw.enums import ULRange
 from mcculw.ul import ULError
+from mcculw.enums import InterfaceType
 
 
 class Driver:
     """Driver for Measurement Computing USB-3114 AO/DIO device"""
     # TODO implement counter
 
-    def __init__(self, device_name, logger=None, dummy=False):
-        #     """Instantiate NI DAQ mx card
+    def __init__(self, device_id, board_number, logger=None, dummy=False):
+        """Instantiate USB-3114 board
 
-        #     :device_name: (str) Name of NI DAQ mx card, as displayed in the measurement and automation explorer
-        #     """
+        :device_id: (str) S/N of specific USB-3114 board
+        :board_number: (str) chosen board number used to identify this board
+        """
 
-        #     # Device name
-        #     self.dev = device_name
+        # Device name
+        self.d_id = device_id
+        self.bn = board_number
 
-        #     # Log
-        #     self.log = LogHandler(logger=logger)
-        #     self.dummy = dummy
+        # Log
+        self.log = LogHandler(logger=logger)
 
-        #     # Try to get info of DAQ device to verify connection
-        #     try:
-        #         ni_daq_device = nidaqmx.system.device.Device(name=device_name)
-        #         self.log.info(
-        #             "Successfully connected to NI DAQ '{device_name}' (type: {product_type}) \n"
-        #             "".format(
-        #                 device_name=ni_daq_device.name,
-        #                 product_type=ni_daq_device.product_type
-        #             )
-        #         )
+        ul.ignore_instacal()
+        devices = ul.get_daq_device_inventory(InterfaceType.ANY)
+        if not devices:
+            self.log.error('Error: No MCC USB DAQ devices found')
 
-        #     # If failed, provide info about connected DAQs
-        #     except (nidaqmx.DaqError, OSError):
+        self.log.info('Found', len(devices), 'DAQ device(s):')
 
-        #         # Log exception message
+        found_device = False
 
-        #         # - get names of all connected NI DAQs
-        #         try:
-        #             ni_daqs_names = nidaqmx.system._collections.device_collection.\
-        #                 DeviceCollection().device_names
+        for device in devices:
+            if (device.product_name == "USB-3114") and (device.unique_id == self.d_id):
+                self.log.info('  ' + device.product_name + ' (' + device.unique_id + ') - ' +
+                              'Device ID = ' + device.product_id + ' -- Match!')
 
-        #             # - exception message
-        #             self.log.error(
-        #                 "NI DAQ card {} not found. \n"
-        #                 "There are {} NI DAQs available: \n "
-        #                 "    {}"
-        #                 "".format(
-        #                     device_name,
-        #                     len(ni_daqs_names),
-        #                     ni_daqs_names
-        #                 )
-        #             )
-        #         except:
-        #             self.log.error('No NI modules found')
-        #         if self.dummy:
-        #             self.log.info('Entering dummy mode instead')
+                self.device = device
+                found_device = True
 
-        #     self.counters = {}
+            else:
+                self.log.info('  ' + device.product_name + ' (' + device.unique_id + ') - ' +
+                              'Device ID = ' + device.product_id)
 
-        # @dummy_wrap
-        # def set_ao_voltage(self, ao_channel, voltages):
-        #     """Set analog output of NI DAQ mx card to a series of voltages
+        if found_device:
+            ul.create_daq_device(self.bn, self.device)
+            self.log.info('MCC USB-3114, device ID: ' + self.d_id + ' set with board number ' + self.bn)
 
-        #     :ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
-        #     :voltages: (list of int) list of voltages which will be output
-        #     """
+        else:
+            self.log.error('Error: No MCC USB-3114 devices with device ID ' + self.d_id + ' found.')
 
-        #     # TODO: Understand the timing between output voltages (sample-wise?)
-        #     channel = self._gen_ch_path(ao_channel)
+    # @dummy_wrap
+    # def set_ao_voltage(self, ao_channel, voltages):
+    #     """Set analog output of NI DAQ mx card to a series of voltages
 
-        #     with nidaqmx.Task() as task:
-        #         task.ao_channels.add_ao_voltage_chan(channel)
-        #         task.write(voltages, auto_start=True)
+    #     :ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
+    #     :voltages: (list of int) list of voltages which will be output
+    #     """
 
-        # def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10.0):
-        #     """Measures the analog input voltage of NI DAQ mx card
+    #     # TODO: Understand the timing between output voltages (sample-wise?)
+    #     channel = self._gen_ch_path(ao_channel)
 
-        #     :param ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
-        #     :aram num_samplies: (int) Number of samples to take
-        #     :param max_range: (float) Maximum range of voltage that will be measured
-        #     """
-        #     channel = self._gen_ch_path(ai_channel)
-        #     with nidaqmx.Task() as task:
-        #         task.ai_channels.add_ai_voltage_chan(channel)
-        #         task.ai_channels[0].ai_rng_high = max_range
-        #         return task.read(number_of_samples_per_channel=num_samples)
-        #     return -1
+    #     with nidaqmx.Task() as task:
+    #         task.ao_channels.add_ao_voltage_chan(channel)
+    #         task.write(voltages, auto_start=True)
 
-        # def get_di_state(self, port, di_channel):
-        #     """Measures the state of a digital Input of a of NI DAQ mx card
+    # def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10.0):
+    #     """Measures the analog input voltage of NI DAQ mx card
 
-        #     :param port: (str) port name ['port0']
-        #     :param channel: (str) channel name ['line1']
-        #     """
-        #     channel = self._gen_di_ch_path(port, di_channel)
-        #     with nidaqmx.Task() as task:
-        #         task.di_channels.add_di_chan(channel, line_grouping=nidaqmx.constants.LineGrouping.CHAN_PER_LINE)
-        #         return task.read(number_of_samples_per_channel=1)
-        #     return -1
+    #     :param ao_channel: (str) Name of output channel (e.g. 'ao1', 'ao2')
+    #     :aram num_samplies: (int) Number of samples to take
+    #     :param max_range: (float) Maximum range of voltage that will be measured
+    #     """
+    #     channel = self._gen_ch_path(ai_channel)
+    #     with nidaqmx.Task() as task:
+    #         task.ai_channels.add_ai_voltage_chan(channel)
+    #         task.ai_channels[0].ai_rng_high = max_range
+    #         return task.read(number_of_samples_per_channel=num_samples)
+    #     return -1
 
-        # def create_timed_counter(
-        #     self, counter_channel, physical_channel, duration=0.1, name=None
-        # ):
-        #     """ Creates a software timed counter channel
+    # def get_di_state(self, port, di_channel):
+    #     """Measures the state of a digital Input of a of NI DAQ mx card
 
-        #     :param counter_channel: (str) channel of counter to use
-        #         e.g. 'Dev1/ctr0'
-        #     :param physical_channel: (str) physical channel of counter
-        #         e.g. 'Dev1/PFI0'
-        #     :param duration: (float) number of seconds for software-timed
-        #         counting inverval
-        #     :param name: (str) Name to use as a reference for counter in
-        #         future calls
+    #     :param port: (str) port name ['port0']
+    #     :param channel: (str) channel name ['line1']
+    #     """
+    #     channel = self._gen_di_ch_path(port, di_channel)
+    #     with nidaqmx.Task() as task:
+    #         task.di_channels.add_di_chan(channel, line_grouping=nidaqmx.constants.LineGrouping.CHAN_PER_LINE)
+    #         return task.read(number_of_samples_per_channel=1)
+    #     return -1
 
-        #     :return: (str) name of the counter to use in future calls
-        #     """
+    # def create_timed_counter(
+    #     self, counter_channel, physical_channel, duration=0.1, name=None
+    # ):
+    #     """ Creates a software timed counter channel
 
-        #     # Create a default name if necessary
-        #     if name is None:
-        #         name = f'counter_{len(self.counters)}'
+    #     :param counter_channel: (str) channel of counter to use
+    #         e.g. 'Dev1/ctr0'
+    #     :param physical_channel: (str) physical channel of counter
+    #         e.g. 'Dev1/PFI0'
+    #     :param duration: (float) number of seconds for software-timed
+    #         counting inverval
+    #     :param name: (str) Name to use as a reference for counter in
+    #         future calls
 
-        #     # Create counter task and assign parameters
-        #     self.counters[name] = TimedCounter(
-        #         logger=self.log,
-        #         counter_channel=self._gen_ch_path(counter_channel),
-        #         physical_channel='/' + self._gen_ch_path(physical_channel)
-        #     )
-        #     self.counters[name].set_parameters(duration)
+    #     :return: (str) name of the counter to use in future calls
+    #     """
 
-        #     return name
+    #     # Create a default name if necessary
+    #     if name is None:
+    #         name = f'counter_{len(self.counters)}'
 
-        # def start_timed_counter(self, name):
-        #     """ Starts a timed counter
+    #     # Create counter task and assign parameters
+    #     self.counters[name] = TimedCounter(
+    #         logger=self.log,
+    #         counter_channel=self._gen_ch_path(counter_channel),
+    #         physical_channel='/' + self._gen_ch_path(physical_channel)
+    #     )
+    #     self.counters[name].set_parameters(duration)
 
-        #     :param name: (str) name of counter to start
-        #         Should be return value of create_timed_counter()
-        #     """
+    #     return name
 
-        #     self.counters[name].start()
+    # def start_timed_counter(self, name):
+    #     """ Starts a timed counter
 
-        # def stop_timed_counter(self, name):
-        #     """ Stops a timed counter
+    #     :param name: (str) name of counter to start
+    #         Should be return value of create_timed_counter()
+    #     """
 
-        #     :param name: (str) name of counter to stop
-        #         Should be return value of create_timed_counter()
-        #     """
+    #     self.counters[name].start()
 
-        #     self.counters[name].terminate_counting()
+    # def stop_timed_counter(self, name):
+    #     """ Stops a timed counter
 
-        # def close_timed_counter(self, name):
-        #     """ Closes a timed counter
+    #     :param name: (str) name of counter to stop
+    #         Should be return value of create_timed_counter()
+    #     """
 
-        #     :param name: (str) name of counter to close
-        #     """
+    #     self.counters[name].terminate_counting()
 
-        #     self.counters[name].close()
+    # def close_timed_counter(self, name):
+    #     """ Closes a timed counter
 
-        # def get_count(self, name):
-        #     """ Returns the count
+    #     :param name: (str) name of counter to close
+    #     """
 
-        #     :param name: (str) name of the counter to use
-        #     :return: (int) value of the count
-        #     """
+    #     self.counters[name].close()
 
-        #     return int(self.counters[name].count)
+    # def get_count(self, name):
+    #     """ Returns the count
 
-        # # Technical methods
+    #     :param name: (str) name of the counter to use
+    #     :return: (int) value of the count
+    #     """
 
-        # def _gen_ch_path(self, channel):
-        #     """ Auxiliary method to build channel path string.
+    #     return int(self.counters[name].count)
 
-        #     :param channel: (str) channel name ['ao1']
-        #     :return: (str) full channel name ['Dev1/ao1']
-        #     """
+    # # Technical methods
 
-        #     return "{device_name}/{channel}".format(
-        #         device_name=self.dev,
-        #         channel=channel
-        #     )
+    # def _gen_ch_path(self, channel):
+    #     """ Auxiliary method to build channel path string.
 
-        # def _gen_di_ch_path(self, port, di_channel):
-        #     """ Auxiliary method to build channel path string for digital inputs.
+    #     :param channel: (str) channel name ['ao1']
+    #     :return: (str) full channel name ['Dev1/ao1']
+    #     """
 
-        #     :param port: (str) port name ['port0']
-        #     :param channel: (str) channel name ['line0:1']
-        #     :return: (str) full channel name ['Dev1/port0/line0:1']
-        #     """
+    #     return "{device_name}/{channel}".format(
+    #         device_name=self.dev,
+    #         channel=channel
+    #     )
 
-        #     return f"{self.dev}/{port}/{di_channel}"
+    # def _gen_di_ch_path(self, port, di_channel):
+    #     """ Auxiliary method to build channel path string for digital inputs.
+
+    #     :param port: (str) port name ['port0']
+    #     :param channel: (str) channel name ['line0:1']
+    #     :return: (str) full channel name ['Dev1/port0/line0:1']
+    #     """
+
+    #     return f"{self.dev}/{port}/{di_channel}"
 
 
-if __name__ == '__main__':
-    port = 'port1'
-    channel = 'line5'
-    dev = Driver('Dev1')
-    dev.get_di_state(port=port, di_channel=channel)
+# if __name__ == '__main__':
+#     port = 'port1'
+#     channel = 'line5'
+#     dev = Driver('Dev1')
+#     dev.get_di_state(port=port, di_channel=channel)

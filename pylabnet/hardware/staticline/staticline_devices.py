@@ -376,7 +376,7 @@ class MCCUSB3114(StaticLineHardwareHandler):
 
         assignment_dict = load_config('dio_assignment_global')
 
-        self.output = assignment_dict[self.config['bit_name']]
+        self.output = int(assignment_dict[self.config['bit_name']])
         self.type = self.config["type"]
 
         if (self.type == "analog") or (self.type == "adjustable_digital"):

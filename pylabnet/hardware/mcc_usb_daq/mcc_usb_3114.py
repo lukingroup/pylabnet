@@ -57,25 +57,25 @@ class Driver:
 
         ul.d_config_port(self.bn, DigitalPortType.AUXPORT, DigitalIODirection.OUT)
 
-    # def set_ao_voltage(self, ao_channel, voltage):
-    #     """Set analog output
+    def set_ao_voltage(self, ao_channel, voltage):
+        """Set analog output
 
-    #     :ao_channel: (int) Output channel (0-15)
-    #     :voltage: (float) voltage value from 10 V to voltage_max value
-    #     """
+        :ao_channel: (int) Output channel (0-15)
+        :voltage: (float) voltage value from 10 V to voltage_max value
+        """
 
-    #     if voltage > MAX_OUTPUT:
-    #         self.log.info("WARNING: Voltage set to " + str(voltage) + " V but max voltage set is 10 V.")
+        if voltage > MAX_OUTPUT:
+            self.log.info("WARNING: Voltage set to " + str(voltage) + " V but max voltage set is 10 V.")
 
-    #     output_int = np.min(1, voltage/MAX_OUTPUT) * (2 ** 16 - 1)
+        output_int = np.min(1, voltage / MAX_OUTPUT) * (2 ** 16 - 1)
 
-    #     ul.a_out(self.bn, ao_channel, ULRange(1), output_int)
+        ul.a_out(self.bn, ao_channel, ULRange(1), output_int)
 
-    # def set_dio(self, digital_pin, value):
-    #     """Set digital output pin high (5 V) or low (0 V)
+    def set_dio(self, digital_pin, value):
+        """Set digital output pin high (5 V) or low (0 V)
 
-    #     :digital_pin: (int) Output pin (0-7)
-    #     :value: (int) output value (0 or 1)
-    #     """
+        :digital_pin: (int) Output pin (0-7)
+        :value: (int) output value (0 or 1)
+        """
 
-    #     ul.d_bit_out(self.bn, DigitalPortType.AUXPORT, digital_pin, value)
+        ul.d_bit_out(self.bn, DigitalPortType.AUXPORT, digital_pin, value)

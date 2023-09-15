@@ -8,7 +8,9 @@ from mcculw.enums import InterfaceType
 
 
 class Driver:
-    """Driver for Measurement Computing USB-3114 AO/DIO device"""
+    """Driver for Measurement Computing USB-3114 AO/DIO device.
+    Make sure InstaCal is installed to access the device.
+    """
     # TODO implement counter
 
     def __init__(self, device_id, board_number, logger=None, dummy=False):
@@ -20,7 +22,7 @@ class Driver:
 
         # Device name
         self.d_id = device_id
-        self.bn = board_number
+        self.bn = int(board_number)
 
         # Log
         self.log = LogHandler(logger=logger)
@@ -30,28 +32,28 @@ class Driver:
         if not devices:
             self.log.error('Error: No MCC USB DAQ devices found')
 
-        self.log.info('Found', len(devices), 'DAQ device(s):')
+        self.log.info('Found ' + str(len(devices)) + ' DAQ device(s):')
 
         found_device = False
 
         for device in devices:
             if (device.product_name == "USB-3114") and (device.unique_id == self.d_id):
-                self.log.info('  ' + device.product_name + ' (' + device.unique_id + ') - ' +
-                              'Device ID = ' + device.product_id + ' -- Match!')
+                self.log.info('  ' + str(device.product_name) + ' (' + str(device.unique_id) + ') - ' +
+                              'Device ID = ' + str(device.product_id) + ' -- Match!')
 
                 self.device = device
                 found_device = True
 
             else:
-                self.log.info('  ' + device.product_name + ' (' + device.unique_id + ') - ' +
-                              'Device ID = ' + device.product_id)
+                self.log.info('  ' + str(device.product_name) + ' (' + str(device.unique_id) + ') - ' +
+                              'Device ID = ' + str(device.product_id))
 
         if found_device:
             ul.create_daq_device(self.bn, self.device)
-            self.log.info('MCC USB-3114, device ID: ' + self.d_id + ' set with board number ' + self.bn)
+            self.log.info('MCC USB-3114, device ID: ' + str(self.d_id) + ' set with board number ' + str(self.bn))
 
         else:
-            self.log.error('Error: No MCC USB-3114 devices with device ID ' + self.d_id + ' found.')
+            self.log.error('Error: No MCC USB-3114 devices with device ID ' + str(self.d_id) + ' found.')
 
     # @dummy_wrap
     # def set_ao_voltage(self, ao_channel, voltages):

@@ -4,7 +4,7 @@
 from pylabnet.hardware.mcc_usb_daq import mcc_usb_3114
 from pylabnet.network.client_server.mcc_usb_3114 import Service, Client
 from pylabnet.network.core.generic_server import GenericServer
-from pylabnet.utils.helper_methods import get_ip, hide_console, load_config
+from pylabnet.utils.helper_methods import get_ip, hide_console, load_config, load_device_config
 
 
 def launch(**kwargs):
@@ -18,26 +18,20 @@ def launch(**kwargs):
     # Instantiate driver
     mcc_usb_3114_logger = kwargs['logger']
     try:
+        config = load_device_config('mcc_usb_3114', kwargs['config'], logger=mcc_usb_3114_logger)
+
         mcc_usb_3114_driver = mcc_usb_3114.Driver(
-            device_id=kwargs['device_id'],
-            board_number=kwargs['board_number'],
+            device_id=config['device_id'],
+            board_number=config['board_number'],
             logger=mcc_usb_3114_logger
         )
     except AttributeError:
-        try:
-            config = load_config(kwargs['config'])
-            mcc_usb_3114_driver = mcc_usb_3114.Driver(
-                device_id=config['device_id'],
-                board_number=config['board_number'],
-                logger=mcc_usb_3114_logger
-            )
-        except AttributeError:
-            mcc_usb_3114_logger.error('Please provide valid config file')
-            raise
-        except KeyError:
-            mcc_usb_3114_logger.error('No device id or board_number provided. '
-                                      'Please make sure proper config file is provided')
-            raise
+        mcc_usb_3114_logger.error('Please provide valid config file')
+        raise
+    except KeyError:
+        mcc_usb_3114_logger.error('No device id or board_number provided. '
+                                  'Please make sure proper config file is provided')
+        raise
 
     # Instantiate server
     mcc_usb_3114_service = Service()

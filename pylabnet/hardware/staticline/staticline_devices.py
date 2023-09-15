@@ -396,7 +396,7 @@ class MCCUSB3114(StaticLineHardwareHandler):
         self.log.info(f"MCC USB-3114 {self.type} output {self.output} successfully assigned to staticline {self.name}.")
 
     def set_value(self, value):
-        self.hardware_client.set_ao_voltage(self.output, value)
+        self.hardware_client.set_ao_voltage(self.output, float(value))
         self.is_up = True
 
     def up(self):
@@ -414,7 +414,7 @@ class MCCUSB3114(StaticLineHardwareHandler):
         self.is_up = False
 
     def set_dig_value(self, value):
-        self.up_voltage = value
+        self.up_voltage = float(value)
         if (self.is_up):
             self.up()
 

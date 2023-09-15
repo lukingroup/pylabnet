@@ -67,7 +67,7 @@ class Driver:
         if voltage > MAX_OUTPUT:
             self.log.info("WARNING: Voltage set to " + str(voltage) + " V but max voltage set is 10 V.")
 
-        output_int = np.min(1, voltage / MAX_OUTPUT) * (2 ** 16 - 1)
+        output_int = int(np.round(np.min(1, voltage / MAX_OUTPUT) * (2 ** 16 - 1)))
 
         ul.a_out(self.bn, ao_channel, ULRange(1), output_int)
 

@@ -434,5 +434,5 @@ registered_staticline_modules = {
     'CLD101x': CLD101x,
     'SMC100A': SMC100A,
     'superK': superK,
-    'MCC_USB_3114': MCCUSB3114
+    'mcc_usb_3114': MCCUSB3114
 }

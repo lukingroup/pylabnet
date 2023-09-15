@@ -9,7 +9,7 @@ class Service(ServiceBase):
         pass
 
     def fake(self):
-        pass
+        return 1 + 1
     # def exposed_set_ao_voltage(self, ao_channel, voltage_pickle):
     #     voltages = pickle.loads(voltage_pickle)
     #     return self._module.set_ao_voltage(

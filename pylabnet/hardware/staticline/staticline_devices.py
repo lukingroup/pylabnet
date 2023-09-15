@@ -374,7 +374,9 @@ class MCCUSB3114(StaticLineHardwareHandler):
         if not 0 <= up_voltage <= 10:
             self.log.error(f'Up voltage of {up_voltage} V is invalid, must be between 0 V and 10 V.')
 
-        self.output = self.config['ao_output']
+        assignment_dict = load_config('dio_assignment_global')
+
+        self.output = assignment_dict[self.config['bit_name']]
         self.type = self.config["type"]
 
         if (self.type == "analog") or (self.type == "adjustable_digital"):

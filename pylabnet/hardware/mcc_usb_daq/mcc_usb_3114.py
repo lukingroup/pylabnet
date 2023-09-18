@@ -61,7 +61,7 @@ class Driver:
         """Set analog output
 
         :ao_channel: (int) Output channel (0-15)
-        :voltage: (float) voltage value from 10 V to voltage_max value
+        :voltage: (float) voltage value from 0 V to 10 V
         """
 
         if voltage > MAX_OUTPUT:

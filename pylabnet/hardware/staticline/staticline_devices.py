@@ -217,17 +217,30 @@ class HMCT2220(StaticLineHardwareHandler):
         self.down = self.hardware_client.output_off
         self.log.info(f'HMCT2200 assigned to staticline {self.name}')
 
-    def set_dig_value(self, value):
+        self.setting = self.config['setting']
 
-        if float(value) > self.maxval:
-            self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
-            value = self.maxval
+    # def set_dig_value(self, value):
 
-        self.hardware_client.set_power(float(value))
+    #     if float(value) > self.maxval:
+    #         self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+    #         value = self.maxval
+
+    #     self.hardware_client.set_power(float(value))
+
+    # def set_value(self, value):
+    #     #This will be used for setting the frequencies with an analog staticline
+    #     self.hardware_client.set_freq(float(value) * 1E9)
 
     def set_value(self, value):
-        #This will be used for setting the frequencies with an analog staticline
-        self.hardware_client.set_freq(float(value) * 1E9)
+        if self.setting == "power":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value))
+
+        if self.setting == "frequency":
+            self.hardware_client.set_freq(float(value) * 1E9)
 
 
 class TPLinkHS103(StaticLineHardwareHandler):
@@ -318,8 +331,26 @@ class SMC100A(StaticLineHardwareHandler):
         self.hardware_client.set_freq(float(value) * 1E6)
 
 
-################################################################################
+class superK(StaticLineHardwareHandler):
 
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.log.info(f'superK assigned to staticline {self.name}')
+
+    def set_value(self, value):
+        self.hardware_client.set_power(float(value))
+
+    def up(self):
+        self.hardware_client.emission_on()
+
+    def down(self):
+        self.hardware_client.emission_off()
+
+
+################################################################################
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
     'zi_hdawg': HDAWG,
@@ -332,5 +363,6 @@ registered_staticline_modules = {
     'abstract2': AbstractDevice,
     'agilent_83732b': agilent_83732b,
     'CLD101x': CLD101x,
-    'SMC100A': SMC100A
+    'SMC100A': SMC100A,
+    'superK': superK
 }

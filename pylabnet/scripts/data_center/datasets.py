@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets, QtCore
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
 from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
+from pylabnet.utils.helper_methods import save_metadata, generic_save, npy_generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
 import sys
 
@@ -78,6 +78,9 @@ class Dataset():
 
         # Property which defines whether dataset is important, i.e. should it be saved in a separate dataset
         self.is_important = False
+
+        # For large-sized data, saving as npy is more efficient
+        self.save_as_npy = False
 
         return
 
@@ -224,56 +227,92 @@ class Dataset():
             self.gui.presel_status.setText(status)
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
-        generic_save(
-            data=self.data,
-            filename=f'{filename}_{self.name}',
-            directory=directory,
-            date_dir=date_dir
-        )
-        if self.x is not None:
-            generic_save(
-                data=self.x,
-                filename=f'{filename}_{self.name}_x',
-                directory=directory,
-                date_dir=date_dir
-            )
+        if(not self.save_as_npy):
 
-        if hasattr(self, 'graph'):
-            pyqtgraph_save(
-                self.graph.getPlotItem(),
-                f'{filename}_{self.name}',
-                directory,
-                date_dir
-            )
-
-        # if the dataset is important, save it again in the important dataset folder.
-        if self.is_important:
             generic_save(
                 data=self.data,
-                filename=f'{filename}_{self.name}',
-                directory=directory + "\\important_data",
+                filename=f'{filename}_{self.name}_{unique_id}',
+                directory=directory,
                 date_dir=date_dir
             )
             if self.x is not None:
                 generic_save(
                     data=self.x,
-                    filename=f'{filename}_{self.name}_x',
-                    directory=directory + "\\important_data",
+                    filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory,
                     date_dir=date_dir
                 )
 
             if hasattr(self, 'graph'):
                 pyqtgraph_save(
                     self.graph.getPlotItem(),
-                    f'{filename}_{self.name}',
-                    directory + "\\important_data",
+                    f'{filename}_{self.name}_{unique_id}',
+                    directory,
                     date_dir
                 )
 
+            # if the dataset is important, save it again in the important dataset folder.
+            if self.is_important:
+                generic_save(
+                    data=self.data,
+                    filename=f'{filename}_{self.name}_{unique_id}',
+                    directory=directory + "\\important_data",
+                    date_dir=date_dir
+                )
+                if self.x is not None:
+                    generic_save(
+                        data=self.x,
+                        filename=f'{filename}_{self.name}_x_{unique_id}',
+                        directory=directory + "\\important_data",
+                        date_dir=date_dir
+                    )
+
+                if hasattr(self, 'graph'):
+                    pyqtgraph_save(
+                        self.graph.getPlotItem(),
+                        f'{filename}_{self.name}_{unique_id}',
+                        directory + "\\important_data",
+                        date_dir
+                    )
+
+            for child in self.children.values():
+                child.save(filename, directory, date_dir, unique_id)
+
+        # save as npy (for large-sized data, and don't save graph file)
+        npy_generic_save(
+            data=self.data,
+            filename=f'{filename}_{self.name}_{unique_id}',
+            directory=directory,
+            date_dir=date_dir
+        )
+        if self.x is not None:
+            npy_generic_save(
+                data=self.x,
+                filename=f'{filename}_{self.name}_x_{unique_id}',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        # if the dataset is important, save it again in the important dataset folder.
+        if self.is_important:
+            npy_generic_save(
+                data=self.data,
+                filename=f'{filename}_{self.name}_{unique_id}',
+                directory=directory + "\\important_data",
+                date_dir=date_dir
+            )
+            if self.x is not None:
+                npy_generic_save(
+                    data=self.x,
+                    filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory + "\\important_data",
+                    date_dir=date_dir
+                )
+
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
@@ -525,6 +564,26 @@ class InvisibleData(Dataset):
 
     def visualize(self, graph, **kwargs):
         self.curve = pg.PlotDataItem()
+
+
+class InvisibleRollingData(Dataset):
+    """ Dataset which does not plot, setting data does not replace the data but appends like InfiniteRollingLine. """
+
+    def visualize(self, graph, **kwargs):
+        self.curve = pg.PlotDataItem()
+
+    def set_data(self, data):
+        """ Updates data
+        :param data: (scalar or array) data to add
+        """
+
+        if self.data is None:
+            if np.isscalar(data):
+                self.data = np.array([data])
+            else:
+                self.data = np.array(data)
+        else:
+            self.data = np.append(self.data, data)
 
 
 class RollingLine(Dataset):
@@ -1206,18 +1265,18 @@ class HeatMap(Dataset):
             except:
                 pass
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
         generic_save(
             data=self.data,
-            filename=f'{filename}_{self.name}',
+            filename=f'{filename}_{self.name}_{unique_id}',
             directory=directory,
             date_dir=date_dir
         )
         if self.x is not None:
             generic_save(
                 data=self.x,
-                filename=f'{filename}_{self.name}_x',
+                filename=f'{filename}_{self.name}_x_{unique_id}',
                 directory=directory,
                 date_dir=date_dir
             )
@@ -1225,15 +1284,15 @@ class HeatMap(Dataset):
         if hasattr(self, 'graph'):
             pyqtgraph_save(
                 self.graph.getView(),
-                f'{filename}_{self.name}',
+                f'{filename}_{self.name}_{unique_id}',
                 directory,
                 date_dir
             )
 
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
-        save_metadata(self.log, filename, directory, date_dir)
+        save_metadata(self.log, filename, directory, date_dir, unique_id)
 
     def handle_new_window(self, graph, **kwargs):
 
@@ -1360,25 +1419,25 @@ class Plot2D(Dataset):
                 self.data[y, x] = value
                 self.position += 1
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
         # save axes
         x = np.linspace(self.min_x, self.max_x, self.pts_x)
         y = np.linspace(self.min_y, self.max_y, self.pts_y)
 
         generic_save(data=x,
-                     filename=f'{filename}_{self.name}_x',
+                     filename=f'{filename}_{self.name}_x_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
         generic_save(data=y,
-                     filename=f'{filename}_{self.name}_y',
+                     filename=f'{filename}_{self.name}_y_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
 
         generic_save(data=self.data,
-                     filename=f'{filename}_{self.name}',
+                     filename=f'{filename}_{self.name}_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
@@ -1386,15 +1445,15 @@ class Plot2D(Dataset):
         if hasattr(self, 'graph'):
             pyqtgraph_save(
                 self.graph.getView(),
-                f'{filename}_{self.name}',
+                f'{filename}_{self.name}_{unique_id}',
                 directory,
                 date_dir
             )
 
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
-        save_metadata(self.log, filename, directory, date_dir)
+        save_metadata(self.log, filename, directory, date_dir, unique_id)
 
     def handle_new_window(self, graph, **kwargs):
 
@@ -1550,19 +1609,19 @@ class Plot2DWithAvg(Plot2D):
 
         self.set_children_data()
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
         # save axes
         x = np.linspace(self.min_x, self.max_x, self.pts_x)
         y = np.linspace(self.min_y, self.max_y, self.pts_y)
 
         generic_save(data=x,
-                     filename=f'{filename}_{self.name}_x',
+                     filename=f'{filename}_{self.name}_x_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
         generic_save(data=y,
-                     filename=f'{filename}_{self.name}_y',
+                     filename=f'{filename}_{self.name}_y_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
@@ -1570,7 +1629,7 @@ class Plot2DWithAvg(Plot2D):
         self.all_data.append(self.data)
         generic_save(
             data=self.all_data,
-            filename=f'{filename}_{self.name}',
+            filename=f'{filename}_{self.name}_{unique_id}',
             directory=directory,
             date_dir=date_dir
         )
@@ -1578,15 +1637,15 @@ class Plot2DWithAvg(Plot2D):
         if hasattr(self, 'graph'):
             pyqtgraph_save(
                 self.graph.getView(),
-                f'{filename}_{self.name}',
+                f'{filename}_{self.name}_{unique_id}',
                 directory,
                 date_dir
             )
 
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
-        save_metadata(self.log, filename, directory, date_dir)
+        save_metadata(self.log, filename, directory, date_dir, unique_id)
 
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """

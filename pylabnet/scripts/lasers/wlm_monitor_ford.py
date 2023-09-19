@@ -113,8 +113,13 @@ class WlmMonitor:
             channel_params = [channel_params]
 
         # Initialize each channel individually
-        for channel_param_set in channel_params:
+        for index, channel_param_set in enumerate(channel_params):
             self.channels.append(Channel(channel_param_set, self.ao_clients, log=self.log))
+
+            # set initial pid values from config file in gui
+            self.widgets['P_laser'][index].setValue(channel_param_set['pid']['p'])
+            self.widgets['I_laser'][index].setValue(channel_param_set['pid']['i'])
+            self.widgets['D_laser'][index].setValue(channel_param_set['pid']['d'])
 
     def update_parameters(self, parameters):
         """ Updates only the parameters given. Can be used in the middle of the script operation via an update client.
@@ -166,9 +171,6 @@ class WlmMonitor:
                             i=parameter['pid']['i'],
                             d=parameter['pid']['d'],
                         )
-                        self.widgets['P_laser'][index].setValue(parameter['pid']['p'])
-                        self.widgets['I_laser'][index].setValue(parameter['pid']['i'])
-                        self.widgets['D_laser'][index].setValue(parameter['pid']['d'])
 
                     # Ignore ao requests if clients have not been assigned
                     if 'ao' in parameter and self.ao_clients is not None:

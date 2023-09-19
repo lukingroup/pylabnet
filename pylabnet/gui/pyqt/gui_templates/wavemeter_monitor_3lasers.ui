@@ -948,6 +948,12 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -965,6 +971,12 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -981,6 +993,12 @@
            <widget class="QDoubleSpinBox" name="D_laser_1">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
             </property>
            </widget>
           </item>
@@ -1218,6 +1236,12 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -1235,6 +1259,12 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -1251,6 +1281,12 @@
            <widget class="QDoubleSpinBox" name="D_laser_2">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
             </property>
            </widget>
           </item>
@@ -1766,6 +1802,12 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -1783,6 +1825,12 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
             </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
+            </property>
            </widget>
           </item>
           <item>
@@ -1799,6 +1847,12 @@
            <widget class="QDoubleSpinBox" name="D_laser_3">
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::NoButtons</enum>
+            </property>
+            <property name="decimals">
+             <number>5</number>
+            </property>
+            <property name="minimum">
+             <double>-99.989999999999995</double>
             </property>
            </widget>
           </item>

@@ -178,7 +178,7 @@ class Dataset():
             color_index = self.gui.graph_layout.count() - 1
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
-                color_index
+                np.mod(color_index, len(self.gui.COLOR_LIST))
             ])
         )
         # self.update(**kwargs)
@@ -758,13 +758,15 @@ class ManualOpenLoopScan(Dataset):
             color_index = self.gui.graph_layout.count() - 1
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
-                color_index
+                np.mod(color_index, len(self.gui.COLOR_LIST))
             ]),
             symbol='o',
             symbolPen=pg.mkPen(self.gui.COLOR_LIST[
-                color_index
+                np.mod(color_index, len(self.gui.COLOR_LIST))
             ]),
-            symbolBrush=pg.mkBrush(self.gui.COLOR_LIST[color_index]),
+            symbolBrush=pg.mkBrush(self.gui.COLOR_LIST[
+                np.mod(color_index, len(self.gui.COLOR_LIST))
+            ]),
             downsample=0.5,
             downsampleMethod='mean'
         )
@@ -1819,7 +1821,9 @@ class ErrorBarGraph(Dataset):
                 color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
             else:
                 color_index = self.gui.graph_layout.count() - 1
-        self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[color_index]), width=0.5)
+        self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[
+            np.mod(color_index, len(self.gui.COLOR_LIST))
+        ]), width=0.5)
         self.error_curve = pg.ErrorBarItem(pen=None, symbol='o', beam=0.5)
         self.graph.addItem(self.curve)
         self.graph.addItem(self.error_curve)
@@ -1892,7 +1896,9 @@ class ErrorBarPlot(Dataset):
             color_index = kwargs['color_index']
         else:
             color_index = self.gui.graph_layout.count() - 1
-        self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[color_index]), symbol='o')
+        self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[
+            np.mod(color_index, len(self.gui.COLOR_LIST))
+        ]), symbol='o')
         self.graph.addItem(self.curve)
         self.update(**kwargs)
 

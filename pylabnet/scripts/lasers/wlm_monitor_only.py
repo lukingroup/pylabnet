@@ -421,7 +421,6 @@ class Channel:
 
         self.setpoint = self.sp_data[-1]
 
-
     def initialize_sp_data(self, display_pts=5000):
         self.sp_data = np.ones(display_pts) * self.data[-1]
 

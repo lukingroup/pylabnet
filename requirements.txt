@@ -78,7 +78,7 @@ prompt-toolkit==3.0.36
 pscript==0.7.5
 ptvsd==5.0.0a12
 pycparser==2.20
-Pygments==2.8.0
+Pygments==2.15.0
 pylint==2.6.2
 pynacl==1.4.0
 pyparsing==2.4.7

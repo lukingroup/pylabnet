@@ -69,6 +69,28 @@
       </property>
      </widget>
     </item>
+    <item row="12" column="1">
+     <widget class="QTextBrowser" name="buffer_terminal">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>10</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="overwriteMode">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
     <item row="6" column="1">
      <widget class="QPushButton" name="confluence_update">
       <property name="text">
@@ -80,6 +102,21 @@
      <widget class="QLabel" name="confluence_page">
       <property name="text">
        <string>Page</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" rowspan="11">
+     <widget class="QTextBrowser" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>
@@ -375,40 +412,6 @@ background-color: green;</string>
      <widget class="QLabel" name="confluence_space">
       <property name="text">
        <string>Space (name):</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2" rowspan="11">
-     <widget class="QPlainTextEdit" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="12" column="1">
-     <widget class="QPlainTextEdit" name="buffer_terminal">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>10</height>
-       </size>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
       </property>
      </widget>
     </item>

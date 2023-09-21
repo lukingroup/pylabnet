@@ -1160,15 +1160,14 @@ def run(log_controller):
         updater.update_signal.connect(log_controller.update_proxy)
 
     else:
+        # Redirect sys.stdout to queue
+        queue = Queue()
+        sys.stdout = WriteStream(queue)
 
         # Instantiate GUI
         log_controller.start_logger()
         log_controller.initialize_gui()
         log_controller.start_gui_server()
-
-        # Redirect sys.stdout to queue
-        queue = Queue()
-        sys.stdout = WriteStream(queue)
 
         # Start logging os in master mode
         if log_controller.master:

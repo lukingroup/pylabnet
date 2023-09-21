@@ -62,11 +62,11 @@ The package uses SSL authentication via a self-signed private key. You can gener
 ```bash
 openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
 ```
-You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` should be placed into the `C:/Windows/System32` (Windows) or the `/etc/ssl/certs` (Linux) directory of the machine it is generated on. On Windows, one of the easiest way to run OpenSSL is using the Git Bash shell that is installed together with Git for Windows.
+You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` should be placed into `C:\Windows\System32` (Windows) or `/etc/ssl/certs` (Linux). On Windows, one of the easiest way to run OpenSSL is using the Git Bash shell that is installed together with Git for Windows.
 
 #### Configuration and environment files 
 
-* Create a configuration file `static_proxy.json` in the `pylabnet/configs` subfolder with the following fields:
+* Create a configuration file `pylabnet/configs/static_proxy.json` with the following fields:
 ```
 {
     "logger_path": "C:\\pylabnet_logs", # Only required for master logger (i.e. running pylabnet_master)
@@ -84,7 +84,7 @@ LOCALHOST_PW=REMOTE_PC_PASSWORD
 ```
 This is needed to ssh into remote computers and start up device servers for devices that are connected to remote computers. A big limitation of the current approach is that it requires all target remote computers to have the same login password.
 
-* (Optional): Create a configuration file `lab_name.json` in the `pylabnet/configs` subfolder with the following field:
+* (Optional): Create a configuration file `pylabnet/configs/lab_name.json` with the following field:
 ```javascript
 {
     "lab_name": B16
@@ -92,7 +92,7 @@ This is needed to ssh into remote computers and start up device servers for devi
 ```
 This can be used for tagging of servers and filtering of servers by lab. Defaults to "NO LAB" if not specified.
 
-* (Optional): Create a configuration file `network_configuration.json` in the `pylabnet/configs` subfolder with the following field:
+* (Optional): Create a configuration file `pylabnet/configs/network_configuration.json` with the following field:
 ```javascript
 {
     "subnet": "192.168",          # Windows

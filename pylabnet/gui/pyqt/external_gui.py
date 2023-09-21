@@ -69,6 +69,8 @@ class Window(QtWidgets.QMainWindow):
     _default_template = "count_monitor"
     COLOR_LIST = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                  '#000075', '#808080', '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+                  '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                   '#000075', '#808080']
 
     def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False, log=None, enable_confluence=True):
@@ -171,13 +173,6 @@ class Window(QtWidgets.QMainWindow):
             ActionMenu.addAction(extractAction_Upload)
             ActionMenu.addAction(extractAction_Update)
 
-
-
-
-
-
-
-
         # apply stylesheet
         self.apply_stylesheet()
 
@@ -252,7 +247,7 @@ class Window(QtWidgets.QMainWindow):
 
         if(datetime_axis):
             date_axis = TimeAxisItem(orientation='bottom')
-            graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+            graph = pg.PlotWidget(axisItems={'bottom': date_axis})
         else:
             graph = pg.PlotWidget()
 
@@ -903,6 +898,7 @@ class GraphPopup(QtWidgets.QWidget):
         self.setLayout(self.graph_layout)
         self.show()
 
+
 class Plot:
     """ Class for plot widgets inside of a Window
 
@@ -1329,7 +1325,7 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
     """ Widget class for holding new graphs """
 
     def __init__(self, **kwargs):
-    
+
         QtWidgets.QWidget.__init__(self)
 
         # self.app = app
@@ -1342,19 +1338,19 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
         if 'log' in kwargs:
             self.log = kwargs['log']
         else:
-            self.log=None
+            self.log = None
 
         if 'app' in kwargs:
             self.app = kwargs['app']
         else:
-            self.app=None
+            self.app = None
 
         if 'size' in kwargs:
             self.setMinimumSize(*kwargs['size'])
 
         # Confluence handler and its button
-        enable_confluence=True
-        
+        enable_confluence = True
+
         self.confluence_handler = None
 
         if(self.log is None):
@@ -1373,16 +1369,14 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
             extractAction_Update.setStatusTip('The space and page names of confluence')
             extractAction_Update.triggered.connect(self.update_setting)
 
-            
             mainMenu = QtWidgets.QMenuBar(self)
 
             ActionMenu = mainMenu.addMenu('&Action')
             ActionMenu.addAction(extractAction_Upload)
             ActionMenu.addAction(extractAction_Update)
 
-            
         self.graph_layout = QtWidgets.QVBoxLayout()
-        self.graph_layout.setContentsMargins(30,30,30,30)
+        self.graph_layout.setContentsMargins(30, 30, 30, 30)
         self.setWindowTitle(window_title)
         self.setLayout(self.graph_layout)
         self.show()
@@ -1394,6 +1388,7 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
         self.confluence_handler.confluence_popup.Popup_Upload()
         return
 
+
 class Confluence_Handler():
     """ Handle the gui's confluence handler except main window (log server) """
 
@@ -1401,12 +1396,14 @@ class Confluence_Handler():
         self.log = log_client
         self.confluence_popup = Confluence_Popping_Windows(parent_wins, app, self.log, "Confluence_info_window")
 
+
 class LaunchControl_Confluence_Handler():
     """ Handle the main window (log server)'s confluence setting """
 
     def __init__(self, controller, app):
 
         self.confluence_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl')
+
 
 class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     """ Instantiate a popping-up window, which documents the confluence setting, but not show until users press popping-up button.
@@ -1692,13 +1689,11 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         if not gui_template.endswith(".ui"):
             gui_template += ".ui"
 
-
         self._ui = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             self._gui_directory,
             gui_template
         )
-
 
         # Load UI
         try:
@@ -1828,6 +1823,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         status = self.append_rendered_html(base_html, replace_dict, page_id, page_title)
 
         return status
+
 
 class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
     '''

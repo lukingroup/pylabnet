@@ -3,7 +3,7 @@ import ctypes
 from ctypes import Structure
 import time
 from pylabnet.utils.logging.logger import LogHandler
-
+import os
 
 #from comtypes.typeinfo import SAFEARRAYABOUND
 
@@ -110,8 +110,12 @@ class Driver():
         # Instantiate log.
         self.log = LogHandler(logger=logger)
         #Loads polarization contorolles DLL and define arguments and result 5types for c function
-        self._polarizationdll = ctypes.cdll.LoadLibrary('Thorlabs.MotionControl.Polarizer.dll')
-        self._devmanagerdll = ctypes.cdll.LoadLibrary('Thorlabs.MotionControl.DeviceManager.dll')
+
+        dllabspath_pol = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "Thorlabs.MotionControl.Polarizer.dll"
+        dllabspath_dm = os.path.dirname(os.path.abspath(__file__)) + os.path.sep + "Thorlabs.MotionControl.DeviceManager.dll"
+
+        self._polarizationdll = ctypes.cdll.LoadLibrary(dllabspath_pol)
+        self._devmanagerdll = ctypes.cdll.LoadLibrary(dllabspath_dm)
         self._configure_functions()
 
         #get device list size
@@ -236,7 +240,7 @@ class Driver():
 
         return move_result #, posinitial, posfinal
 
-    def move_rel(self, paddle_num, step, sleep_time):
+    def move_rel(self, paddle_num, step, sleep_time=0.1):
         #posinitial = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
         move_result = self._polarizationdll.MPC_MoveRelative(self.device, self.paddles[paddle_num], step)
         time.sleep(abs(sleep_time * step / 170))
@@ -248,3 +252,24 @@ class Driver():
         currentpos = self._polarizationdll.MPC_GetPosition(self.device, self.paddles[paddle_num])
 
         return currentpos
+
+
+if __name__ == "__main__":
+
+    import os
+    from pylabnet.utils.logging.logger import LogClient
+
+    device_id = 1
+
+    # Instantiate logger.
+    logger = LogClient(
+        host='10.250.194.110',
+        port=27957,
+        module_tag=f'Pol Paddle'
+    )
+
+    pol = Driver(device_num=device_id, logger=logger)
+
+    pol.move_rel(0, 50)
+    pol.move_rel(1, 78)
+    pol.move_rel(2, 90)

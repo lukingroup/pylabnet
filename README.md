@@ -28,7 +28,7 @@ cd pylabnet
 ```bash
 python -m venv <env_path>
 ```
-where `<env_path>` is the desired location of the virtual environment. For example, if you want to place the environment in the root level of the `pylabnet` folder and name it `env`, the commannd would simply be `python -m venv env`.
+where `<env_path>` is the desired location of the virtual environment. For example, if you want to place the environment in the root level of the `pylabnet` folder and name it `env`, the command would simply be `python -m venv env`.
 
 Activate the development environment using the command:
 ```bash
@@ -56,17 +56,17 @@ There may be some errors during dependency installation, but as long as the comm
 
 ### Initial Setup Notes for Launch Control
 
-* The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the commandline:
+* The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the command line:
 ```bash
 openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
 ```
 You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` should be placed into the `C:/Windows/System32` (Windows) or the `/etc/ssl/certs` (Linux) directory of the machine it is generated on. On Windows, one of the easiest way to run OpenSSL is using the Git Bash shell that is installed together with Git for Windows.
 
 * You will need to create a configuration file named `static_proxy.json` in the `pylabnet/configs` subfolder with the following fields:
-```javascript
+```
 {
-    "logger_path": "C:\\User\\pylabnet_logs"   # Only required for the master logger (i.e. running pylabnet_master)
-    "master_ip": "192.168.50.101",             # Only required for a logger client   (i.e. running pylabnet_staticproxy)
+    "logger_path": "C:\\pylabnet_logs" # Only required for master logger (i.e. running pylabnet_master)
+    "master_ip": "192.168.50.101",     # Only required for logger client   (i.e. running pylabnet_staticproxy)
     "master_log_port": 12345,                  
     "master_gui_port": 12346
 }

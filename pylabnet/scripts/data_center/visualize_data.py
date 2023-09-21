@@ -30,6 +30,8 @@ class DataVisualizer:
             host=get_ip()
         )
 
+        # hello
+
         # Configure list of experiments
         self.gui.config.setText(config_name)
         self.config = config

@@ -67,22 +67,6 @@ class Driver:
 
         ul.d_config_port(self.bn, DigitalPortType.AUXPORT, DigitalIODirection.OUT)
 
-    #analog output
-    def set_ao_voltage(self, ao_channel, voltage):
-        """Set analog output
-
-        :ao_channel: (int) Output channel (0-1)
-        :voltage: (float) voltage value from -10 V to 10 V
-        """
-
-        if voltage > MAX_OUTPUT:
-            self.log.info("WARNING: Voltage set to " + str(voltage) + " V but max voltage set is 10 V.")
-
-        #min part makes sure voltage is not out of range
-        output_int = int(np.round(np.min([1, voltage / MAX_OUTPUT]) * (2 ** RESOLUTION - 1)))
-
-        ul.a_out(self.bn, ao_channel, ULRange.BIP10VOLTS, output_int)
-
     #analog input
     def get_ai_voltage(self, ao_channel, range):
         """Get analog input
@@ -93,11 +77,11 @@ class Driver:
         """
         return ul.a_in(self.bn, ao_channel, range)
 
-    def ai_scan(self, low_ch, high_ch, num_samples, sample_rate, range):
+    def ai_scan(self, low_ch, high_ch, num_samples, sample_rate, range, options):
         """Scans a range of A/D channels and stores the samples in an array
 
         :low_ch: (int) the first A/D channel in the scan
-        :high_ch: (int) the last A/D channel in the scan
+        :high_ch: (int) the last A/D channel in the scan (0-15 for SE, 0-7 for DIFF)
         :num_samples: (int) The total number of A/D samples to collect.
                             If more than one channel is being sampled,
                             the number of samples collected per channel is equal to
@@ -108,9 +92,10 @@ class Driver:
                         The actual sampling rate in some cases will vary a small amount from the requested rate.
                         The actual rate is returned.
         :range: (int) 1 (BIP10VOLTS) , 0 (BIP5VOLTS), 4 (BIP1VOLTS), or 14 (BIP2VOLTS)
+        :options: (int) from ScanOptions in mcculw.enums
         """
         handle = ul.win_buf_alloc(num_samples)
-        return ul.a_in_scan(self.bn, low_ch, high_ch, num_samples, sample_rate, range, handle)
+        return ul.a_in_scan(self.bn, low_ch, high_ch, num_samples, sample_rate, range, handle, options)
 
     def set_dio(self, digital_pin, value):
         """Set digital output pin high (5 V) or low (0 V)
@@ -120,3 +105,14 @@ class Driver:
         """
 
         ul.d_bit_out(self.bn, DigitalPortType.AUXPORT, digital_pin, value)
+
+    def set_trigger(self, type, patt_val, mask):
+        """Selects the trigger source and sets up its params. Initiates a scan
+
+        :type: (int) TrigType enum. This device does digital triggering and allows
+                    TRIG_POS_EDGE, TRIG_NEG_EDGE, TRIG_HIGH, TRIG_LOW
+        :patt_val: (int) sets the pattern value
+        :mask: (int) selects the port mask
+        """
+
+        ul.set_trigger(self.bn, type, patt_val, mask)

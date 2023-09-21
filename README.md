@@ -70,7 +70,7 @@ You may adjust the value of the `days` flag in order to change the period over w
 ```
 {
     "logger_path": "C:\\pylabnet_logs", # Only required for master logger (i.e. running pylabnet_master)
-    "master_ip": "192.168.50.101",      # Only required for logger client   (i.e. running pylabnet_staticproxy)
+    "master_ip": "192.168.50.101",      # Only required for logger client (i.e. running pylabnet_staticproxy)
     "master_log_port": 12345,                  
     "master_gui_port": 12346
 }

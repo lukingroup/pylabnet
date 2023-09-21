@@ -42,6 +42,7 @@ import numpy as np
 import sys
 import traceback
 import re
+import os
 import importlib.util
 from pylabnet.utils.logging import logger
 from pylabnet.utils.helper_methods import get_ip, parse_args, hide_console, create_server, load_config, load_script_config, load_device_config, launch_device_server
@@ -228,11 +229,23 @@ class Launcher:
         :param port: (int) port number of server
         """
         server = module
+        try:
+            full_module_name = 'pylabnet.network.client_server.' + module
+            client_class = getattr(importlib.import_module(full_module_name), "Client")
 
-        full_module_name = 'pylabnet.network.client_server.' + module
-        client_class = getattr(importlib.import_module(full_module_name), "Client")
-
-        self.clients[(server, device_id)] = client_class(host=host, port=port)
+            self.clients[(server, device_id)] = client_class(host=host, port=port)
+        except:
+            spec = importlib.util.spec_from_file_location(
+                module,
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    'servers',
+                    module + '.py'
+                )
+            )
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            self.clients[(server, device_id)] = mod.Client(host=host, port=port)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """

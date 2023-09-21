@@ -84,7 +84,7 @@ class Driver:
         ul.a_out(self.bn, ao_channel, ULRange.BIP10VOLTS, output_int)
 
     #analog input
-    def get_ao_voltage(self, ao_channel, range):
+    def get_ai_voltage(self, ao_channel, range):
         """Get analog input
 
         :ao_channel: (int) Input channel (0-7) 8 SE or 16 DIFF
@@ -92,6 +92,25 @@ class Driver:
         :range: (int) 1 (BIP10VOLTS) , 0 (BIP5VOLTS), 4 (BIP1VOLTS), or 14 (BIP2VOLTS)
         """
         return ul.a_in(self.bn, ao_channel, range)
+
+    def ai_scan(self, low_ch, high_ch, num_samples, sample_rate, range):
+        """Scans a range of A/D channels and stores the samples in an array
+
+        :low_ch: (int) the first A/D channel in the scan
+        :high_ch: (int) the last A/D channel in the scan
+        :num_samples: (int) The total number of A/D samples to collect.
+                            If more than one channel is being sampled,
+                            the number of samples collected per channel is equal to
+                            count / (high_ch – low_ch + 1).
+        :sample_rate: (int) samples per second per channel, up to 500kS/second
+                        For example, sampling four channels, 0 to 3, at a rate of 10,000 scans per second (10 kHz)
+                        results in an A/D converter rate of 40 kHz: four channels at 10,000 samples per channel per second.
+                        The actual sampling rate in some cases will vary a small amount from the requested rate.
+                        The actual rate is returned.
+        :range: (int) 1 (BIP10VOLTS) , 0 (BIP5VOLTS), 4 (BIP1VOLTS), or 14 (BIP2VOLTS)
+        """
+        handle = ul.win_buf_alloc(num_samples)
+        return ul.a_in_scan(self.bn, low_ch, high_ch, num_samples, sample_rate, range, handle)
 
     def set_dio(self, digital_pin, value):
         """Set digital output pin high (5 V) or low (0 V)

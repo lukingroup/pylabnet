@@ -54,7 +54,7 @@ There may be some errors during dependency installation, but as long as the comm
 6. To confirm that the installation has completed, you should be able to run  `import pylabnet` in your scripts, and you should also find the executables `pylabnet_master` and `pylabnet_staticproxy` in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). Continue reading on to the [initial setup notes](initial-setup-notes) for the initial configuration that needs to be done when setting up a new computer.
 
 
-### Initial Setup Notes for Launch Control
+### Initial Setup Notes
 
 1. The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the command line:
 ```bash

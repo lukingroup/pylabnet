@@ -48,6 +48,10 @@ class LaunchWindow(Window):
         self.apply_stylesheet()
         self.buffer_terminal.setVisible(False)
 
+        self.terminal.setReadOnly(True)
+
+
+
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
@@ -174,7 +178,7 @@ class Controller:
         # For day-chopping purposes
         self.logfile_date_str = None
         self.filenamepath = None
-        self.MAX_LOG_FILE_SIZE = 5000000 # 5MB
+        self.MAX_LOG_FILE_SIZE = 50000000 # 50MB
         self.last_seen_buffer = ""
 
         # setting selection mode for server list to multi-select
@@ -474,7 +478,8 @@ class Controller:
             if self.logfile_date_str != datetime.now().strftime("%Y_%m_%d"):
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
-            if os.stat(self.filenamepath).st_size > self.MAX_LOG_FILE_SIZE:
+
+            if os.stat(self.filenamepath.replace("\\", "/")).st_size > self.MAX_LOG_FILE_SIZE:
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
 

@@ -16,7 +16,7 @@ import numpy as np
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, LaunchControl_Confluence_Handler
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, LaunchControl_Confluence_Handler, warning_popup
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
@@ -125,12 +125,11 @@ class Controller:
             try:
                 static_proxy_dict = load_config('static_proxy')
             except:
-                print('No config found named static_proxy.json')
+                warning_popup('No config found named static_proxy.json')
                 time.sleep(10)
                 raise
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
-            hide_console()
         elif self.proxy:
             popup = ParameterPopup(
                 host=str,
@@ -145,14 +144,13 @@ class Controller:
             try:
                 static_proxy_dict = load_config('static_proxy')
             except:
-                print('No config found named static_proxy.json')
+                warning_popup('No config found named static_proxy.json')
                 time.sleep(10)
                 raise
             self.host = static_proxy_dict['master_ip']
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
-            hide_console()
         else:
             self.log_port = self.LOG_PORT
             self.gui_port = self.GUI_PORT
@@ -377,7 +375,6 @@ class Controller:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
                 raise
         self.log_server.start()
-
         self.log_service.logger.info('log service succesfully started')
 
     def initialize_gui(self):
@@ -1121,7 +1118,6 @@ class ProxyUpdater(QtCore.QObject):
 def main():
     """ Runs the launch controller """
 
-    hide_console()
     log_controller = Controller()
     run(log_controller)
 

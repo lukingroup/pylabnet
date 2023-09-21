@@ -23,7 +23,6 @@ software without authentication, change the default value to key=None here and i
 import rpyc
 import threading
 import os
-import time
 import platform
 
 
@@ -78,9 +77,8 @@ class GenericServer:
                 )
 
             else:
-                msg_str = f'No keyfile found, please check that {key} exists.'
+                msg_str = f'\nNo keyfile found, please check that {key} exists.\n'
                 print(msg_str)
-                time.sleep(10)
                 raise FileNotFoundError(msg_str)
 
         self._server_thread = threading.Thread(

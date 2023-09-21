@@ -21,8 +21,8 @@ from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
-    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
-    get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
+                                           remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
+                                           get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -293,11 +293,8 @@ class Controller:
             self.client_data[self.GUI_NAME + module_str] = self.log_service.client_data[self.GUI_NAME]
 
         # confluence handler and initiate confluence data into log's metadata
-        self.confluence_handler = LaunchControl_Confluence_Handler( self, self.app)
+        self.confluence_handler = LaunchControl_Confluence_Handler(self, self.app)
         self.confluence_handler.confluence_popup.okay_event(is_close=False)
-
-
-        
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
@@ -383,8 +380,6 @@ class Controller:
 
         self.log_service.logger.info('log service succesfully started')
 
-
-
     def initialize_gui(self):
         """ Initializes basic GUI display """
 
@@ -423,7 +418,6 @@ class Controller:
         self.main_window.log_previous.setHidden(True)
         self.main_window.logfile_status_indicator.setEnabled(False)
         self.main_window.confluence_update.clicked.connect(self.confluence_info_update)
-
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -551,7 +545,6 @@ class Controller:
                     if self.client_data[client]['lab_name'] == lab_name:
                         self.main_window.client_list.addItem(self.client_list[client])
                     self.client_list[client].setToolTip(info)
-
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
@@ -724,8 +717,6 @@ class Controller:
 
     def confluence_info_update(self):
         self.confluence_handler.confluence_popup.Popup_Update()
-
-        
 
     def _load_scripts(self):
         """ Loads all relevant scripts/devices from filesystem"""
@@ -1127,7 +1118,6 @@ class ProxyUpdater(QtCore.QObject):
                 self.update_signal.emit(new_msg)
 
 
-
 def main():
     """ Runs the launch controller """
 
@@ -1174,14 +1164,15 @@ def run(log_controller):
         updater.update_signal.connect(log_controller.update_proxy)
 
     else:
-        # Redirect sys.stdout to queue
-        queue = Queue()
-        sys.stdout = WriteStream(queue)
 
         # Instantiate GUI
         log_controller.start_logger()
         log_controller.initialize_gui()
         log_controller.start_gui_server()
+
+        # Redirect sys.stdout to queue
+        queue = Queue()
+        sys.stdout = WriteStream(queue)
 
         # Start logging os in master mode
         if log_controller.master:

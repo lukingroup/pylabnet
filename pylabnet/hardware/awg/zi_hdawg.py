@@ -98,15 +98,20 @@ class Driver():
         discovery = zhinst.ziPython.ziDiscovery()
         device_properties = discovery.get(discovery.find(device_id))
         server_address = device_properties["serveraddress"]
+
         interface = "1GbE"  # For Ethernet connection.
+
         server_host = "localhost"
         server_port = 8004
         api_level = 6  # Maximum API level supported for all instruments.
+
         # Create an API session to the Data Server.
         self.daq = zhinst.core.ziDAQServer(server_address, server_port, api_level)
         # Establish a connection between Data Server and Device.
         self.daq.connectDevice(device_id, interface)
+
         self.device_id = device_id
+
         if disable_everything:
             # Create a base configuration
             self.disable_everything()
@@ -131,7 +136,7 @@ class Driver():
         :new_int: New value for integer
         """
 
-        self.daq.setInt(f'/{self.device_id}/{node}', new_int)
+        self.daq.syncSetInt(f'/{self.device_id}/{node}', new_int)
 
     @log_standard_output
     @dummy_wrap
@@ -146,7 +151,7 @@ class Driver():
         :new_double: New value for double.
         """
 
-        self.daq.setDouble(f'/{self.device_id}/{node}', new_double)
+        self.daq.syncSetDouble(f'/{self.device_id}/{node}', new_double)
 
     @log_standard_output
     @dummy_wrap

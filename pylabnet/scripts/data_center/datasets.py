@@ -1869,9 +1869,8 @@ class ErrorBarGraph(Dataset):
             self.curve.setOpts(x=self.x, height=0 * self.x, width=width)
             self.error_curve.setData(x=self.x, y=0 * self.x, height=0 * self.x, beam=width)
         else:
-            self.x = np.arange(0, len(self.data))
-            self.curve.setOpts(x=self.x, height=0 * self.x, width=0.5)
-            self.error_curve.setData(y=self.data, height=0 * self.x, beam=0.5)
+            self.curve.setOpts(x=[], height=[], width=0.5)
+            self.error_curve.setData(x=[], y=[], height=[], beam=0.5)
 
 
 class ErrorBarAveragedHistogram(ErrorBarGraph):
@@ -1934,6 +1933,20 @@ class ErrorBarPlot(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
+
+    def clear_data(self):
+
+        self.data = None
+        self.error = None
+
+        if self.x is not None:
+            try:
+                width = (self.x[1] - self.x[0]) / 2
+            except IndexError:
+                width = 0.5
+            self.curve.setData(x=self.x, y=0 * self.x, height=0 * self.x, beam=width)
+        else:
+            self.curve.setData(x=[], y=[], height=[], beam=0.5)
 
 
 class PhotonErrorBarPlot(ErrorBarGraph):

@@ -56,24 +56,50 @@ There may be some errors during dependency installation, but as long as the comm
 
 ### Initial Setup Notes for Launch Control
 
-* The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the command line:
+1. The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the command line:
 ```bash
 openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
 ```
 You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` should be placed into the `C:/Windows/System32` (Windows) or the `/etc/ssl/certs` (Linux) directory of the machine it is generated on. On Windows, one of the easiest way to run OpenSSL is using the Git Bash shell that is installed together with Git for Windows.
 
-* You will need to create a configuration file named `static_proxy.json` in the `pylabnet/configs` subfolder with the following fields:
+2. You will likely need to allow Python through Windows Firewall the first time you run Launch Control on a new machine.
+
+3. Configuration and environment files:
+
+* The configuration file `static_proxy.json` in the `pylabnet/configs` subfolder requires the following fields:
 ```
 {
-    "logger_path": "C:\\pylabnet_logs" # Only required for master logger (i.e. running pylabnet_master)
-    "master_ip": "192.168.50.101",     # Only required for logger client   (i.e. running pylabnet_staticproxy)
+    "logger_path": "C:\\pylabnet_logs", # Only required for master logger (i.e. running pylabnet_master)
+    "master_ip": "192.168.50.101",      # Only required for logger client   (i.e. running pylabnet_staticproxy)
     "master_log_port": 12345,                  
     "master_gui_port": 12346
 }
 ```
 The `master_log_port` and `master_gui_port` are freely chosen by the master logger in its configuration file, and all LogClients will need to specify these same ports in order to conenct to the master logger. LogClients will additionally also need to specify the master logger's IP address in `master_ip`.
 
-* You will likely need to allow Python through Windows Firewall the first time you run Launch Control on a new machine.
+
+* The environment file `.env` in the root folder requires the following field:
+```
+LOCALHOST_PW=REMOTE_PC_PASSWORD
+```
+This is needed to ssh into remote computers and start up device servers for devices that are connected to remote computers. A big limitation of the current aproach is that it requires all target remote computers to have the same login password.
+
+* (Optional): A configuration file `lab_name.json` in the `pylabnet/configs` subfolder can be created with the following field:
+```javascript
+{
+    "lab_name": B16
+}
+```
+This can be used for tagging of servers and filtering of servers by lab. Defaults to "NO LAB" if not specified.
+
+* (Optional): A configuration file `network_configuration.json` in the `pylabnet/configs` subfolder can be created with the following field:
+```javascript
+{
+    "subnet": "192.168",          # Windows
+    "network_interface": "enp0s3" # Linux
+}
+```
+This is used to specify which IP address of the local computer should be used when creating servers in the event that it has more than one (e.g. one IP for the LAN and another IP for the Internet). For Windows, this is done by specifying a prefix that the IP address should satisfy, while for Linux this is done by specifying the network interface that should be used. To check what IP addresses and network interfaces the computer currently has, run the command `ipconfig` on Windows or `ifconfig` on Linux.  
 
 ---
 

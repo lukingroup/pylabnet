@@ -116,3 +116,19 @@ class Driver:
         """
 
         ul.set_trigger(self.bn, type, patt_val, mask)
+
+    def start_pulses(self, frequency, duty_cycle):
+        """Starts a timer to generate digital pulses at a specified frequency and duty cycle. Use stop_pulses() to stop the output.
+
+        :frequency: (float) 0.0149Hz to 32 MHz
+        :duty_cycle: (float) value in (0,1), non-inlcusive
+
+        could also add initial delay and idle state; see: https://files.digilent.com/manuals/Mcculw_WebHelp/Users_Guide/Analog_Input_Boards/USB-1608G_Series.htm
+        """
+        #second arg is timer number - there is only one on the board
+        ul.pulse_out_start(self.bn, 0, frequency, duty_cycle)
+
+    def stop_pulses(self):
+        """Stops a timer output. Use start_pulses() to start the output."""
+
+        ul.pulse_out_stop(self.bn, 0)

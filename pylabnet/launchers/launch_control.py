@@ -7,6 +7,8 @@ from contextlib import closing
 import copy
 import ctypes
 import re
+import traceback
+
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
@@ -637,15 +639,27 @@ class Controller:
                 server_debug_flag = '1'
 
             server_port = np.random.randint(1024, 49151)
-            launch_device_server(
-                server=device_server,
-                dev_config=device_config,
-                log_ip=self.host,
-                log_port=self.log_port,
-                server_port=server_port,
-                debug=server_debug_flag,
-                logger=self.gui_logger
-            )
+
+            try:
+                launch_device_server(
+                    server=device_server,
+                    dev_config=device_config,
+                    log_ip=self.host,
+                    log_port=self.log_port,
+                    server_port=server_port,
+                    debug=server_debug_flag,
+                    logger=self.gui_logger
+                )
+            except Exception as e:
+                # Can't use warning_popup() as closing that popup will also kill the Launch Control GUI with
+                # this error PyQt: RuntimeError: wrapped C/C++ object has been deleted
+                QtWidgets.QMessageBox.critical(
+                    None,
+                    "Error",
+                    traceback.format_exc(),
+                    QtWidgets.QMessageBox.Ok,
+                    QtWidgets.QMessageBox.NoButton
+                )
 
     def _script_clicked(self, index):
         """ Configures behavior for script double click

@@ -94,7 +94,6 @@ class Driver():
     @dummy_wrap
     def _setup_hdawg(self, device_id, logger, api_level, reset_dio, disable_everything):
         ''' Sets up HDAWG '''
-
         # try finding the server address
         discovery = zhinst.ziPython.ziDiscovery()
         device_properties = discovery.get(discovery.find(device_id))
@@ -116,15 +115,12 @@ class Driver():
         if disable_everything:
             # Create a base configuration
             self.disable_everything()
-
         if reset_dio:
             self.reset_DIO_outputs()
-
         # read out number of channels from property dictionary
         self.num_outputs = int(
             re.compile('HDAWG(4|8{1})').match(device_properties['devicetype']).group(1)
         )
-
         self.log.info(f"Sucessfully connected to HDAWG {device_id} at {server_address}.")
 
     @log_standard_output

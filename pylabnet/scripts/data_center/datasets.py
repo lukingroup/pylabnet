@@ -1232,6 +1232,94 @@ class SawtoothScan1D(Dataset):
         self.reps = 1
 
 
+class SawtoothScan1D_array_update(SawtoothScan1D):
+    """ 1D Sawtooth sweep of a parameter, but accept an array update (more efficient) """
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+
+        # If we have already integrated a full dataset, avg
+        # only update when full scan finishes
+        if dataset.reps > 1:
+            current_data_len = len(dataset.data)
+
+            if(current_data_len == 0):
+                prev_dataset.data = np.mean(dataset.all_data, axis=0)
+        else:
+            prev_dataset.data = dataset.data
+
+    def set_data(self, value):
+
+        if(np.isscalar(value)):
+            if self.data is None:
+                self.reps = 1
+                self.data = np.array([value])
+            else:
+                self.data = np.append(self.data, value)
+
+            if len(self.data) > self.pts:
+                self.update_hmap = True
+                self.reps += 1
+
+                try:
+                    reps_to_do = self.widgets['reps'].value()
+                    if reps_to_do > 0 and self.reps > reps_to_do:
+                        self.stop = True
+                except KeyError:
+                    pass
+
+                if self.all_data is None:
+                    self.all_data = self.data[:-1]
+                else:
+                    self.all_data = np.vstack((self.all_data, self.data[:-1]))
+                self.data = np.array([self.data[-1]])
+
+            self.set_children_data()
+            return
+
+        if(isinstance(value, np.ndarray)):
+            if self.data is None:
+                self.reps = 1
+                self.data = np.array(value)
+            else:
+                self.data = np.append(self.data, value)
+
+            if len(self.data) >= self.pts:
+                self.update_hmap = True
+                self.reps += (len(self.data) // self.pts)
+
+                try:
+                    reps_to_do = self.widgets['reps'].value()
+                    if reps_to_do > 0 and self.reps > reps_to_do:
+                        self.stop = True
+                except KeyError:
+                    pass
+
+                batch = (len(self.data) // self.pts) * self.pts
+                data_stack = self.data[:batch]
+                data_rest = self.data[batch:]
+
+                if self.all_data is None:
+                    self.all_data = data_stack
+                else:
+                    self.all_data = np.vstack((self.all_data, data_stack))
+                self.data = data_rest
+
+            self.set_children_data()
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None and len(self.data) <= len(self.x):
+            self.curve.setData(self.x[:len(self.data)], self.data)
+        if(isinstance(self.data, np.ndarray)):
+            for child in self.children.values():
+                child.update(update_hmap=copy.deepcopy(self.update_hmap))
+
+        if self.update_hmap:
+            self.update_hmap = False
+
+
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
@@ -1856,6 +1944,22 @@ class ErrorBarGraph(Dataset):
         for child in self.children.values():
             child.update(**kwargs)
 
+    def clear_data(self):
+
+        self.data = None
+        self.error = None
+
+        if self.x is not None:
+            try:
+                width = (self.x[1] - self.x[0]) / 2
+            except IndexError:
+                width = 0.5
+            self.curve.setOpts(x=self.x, height=0 * self.x, width=width)
+            self.error_curve.setData(x=self.x, y=0 * self.x, height=0 * self.x, beam=width)
+        else:
+            self.curve.setOpts(x=[], height=[], width=0.5)
+            self.error_curve.setData(x=[], y=[], height=[], beam=0.5)
+
 
 class ErrorBarAveragedHistogram(ErrorBarGraph):
     """ ErrorBar graph version of AveragedHistogram"""
@@ -1917,6 +2021,20 @@ class ErrorBarPlot(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
+
+    def clear_data(self):
+
+        self.data = None
+        self.error = None
+
+        if self.x is not None:
+            try:
+                width = (self.x[1] - self.x[0]) / 2
+            except IndexError:
+                width = 0.5
+            self.curve.setData(x=self.x, y=0 * self.x, height=0 * self.x, beam=width)
+        else:
+            self.curve.setData(x=[], y=[], height=[], beam=0.5)
 
 
 class PhotonErrorBarPlot(ErrorBarGraph):

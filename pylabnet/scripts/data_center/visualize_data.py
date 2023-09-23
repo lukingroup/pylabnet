@@ -12,6 +12,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata, load_script_config, find_client, get_ip
 from pylabnet.scripts.data_center import datasets
+import re
 
 
 REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
@@ -49,6 +50,8 @@ class DataVisualizer:
 
         self.gui.x_data_searchbar.textChanged.connect(self.update_data_list)
         self.gui.y_data_searchbar.textChanged.connect(self.update_data_list)
+        self.gui.y_match_check.clicked.connect(self.match_data_list)
+        self.gui.clear_y_matching.clicked.connect(self.update_data_list)
 
         self.gui.fit_method.itemClicked.connect(self.update_fit_method)
         self.gui.p0_val.textChanged.connect(self.p0_changed)
@@ -77,6 +80,32 @@ class DataVisualizer:
             self.gui.y_data.clear()
             self.gui.x_data.clear()
 
+    def match_data_list(self):
+        # new feature - if you press on x data (and check the box "Help with matching y data"), it will show you only the related y data:
+        try:
+            x_data_name = self.gui.x_data.currentItem().text()
+            self.log.info(f"x_data_name was pressed!")
+            pattern = r'_x(?=_\d{2}_\d{2}_\d{2}$)'
+            match = re.search(pattern, x_data_name)
+            self.log.info(f"x data = {x_data_name}, match = {match}")
+            if match:
+                extracted_x = match.group()
+                modified_string = re.sub(pattern, '', x_data_name) # without _x_
+                self.gui.y_data.clear() # don't care about the y search anymore
+                # self.gui.y_data.addItem(modified_string) # check the filename here
+
+                # add all the y data with a variance of a minute:
+                modified_string_var = modified_string[:-4]
+                self.gui.warning_msg.setText(f"Good! x_data = {x_data_name} search all y data that starts with {modified_string_var}")
+
+                for filename in os.listdir(self.data_path):
+                    if filename.endswith('.txt') and modified_string_var in filename:
+                        self.gui.y_data.addItem(filename[:-4])
+            else:
+                self.gui.warning_msg.setText(f"If you want y matching, please select a file with _x_ in its name")
+        except:
+            self.gui.warning_msg.setText("WARNING: no x-data selected. First select and then press help matching again.")
+
     def update_data_list(self):
         """ Updates list of x and y data """
 
@@ -88,11 +117,11 @@ class DataVisualizer:
 
         for filename in os.listdir(self.data_path):
             if filename.endswith('.txt'):
-
                 if x_search == "":
                     self.gui.x_data.addItem(filename[:-4])
                 else:
                     if x_search in filename:
+                        self.log.info(f"searching for {filename[:-4]}")
                         self.gui.x_data.addItem(filename[:-4])
 
                 if y_search == "":

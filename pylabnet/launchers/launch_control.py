@@ -45,10 +45,14 @@ class LaunchWindow(Window):
         :param run: whether or not to run GUI on instantiation
         """
 
-        super().__init__(app, gui_template=gui_template, enable_confluence=False)
+        super().__init__(app, gui_template=gui_template)
         self.controller = controller
         self.apply_stylesheet()
         self.buffer_terminal.setVisible(False)
+
+        self.terminal.setReadOnly(True)
+
+
 
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
@@ -83,7 +87,6 @@ class Controller:
 
         self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
         self.main_window.stop_button.clicked.connect(self._kill)
-
         if self.operating_system not in ['Linux', 'Windows']:
             raise UnsupportedOSException
         try:
@@ -175,13 +178,11 @@ class Controller:
         # For day-chopping purposes
         self.logfile_date_str = None
         self.filenamepath = None
-        self.MAX_LOG_FILE_SIZE = 5000000 # 5MB
+        self.MAX_LOG_FILE_SIZE = 50000000 # 50MB
+        self.last_seen_buffer = ""
 
         # setting selection mode for server list to multi-select
         self.main_window.client_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-
-        # confluence handler
-        self.confluence = None
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -206,19 +207,10 @@ class Controller:
                 ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
-            self.main_window.terminal.setText('Failed to connect to master. Shutting down')
+            self.main_window.terminal.setPlainText('Failed to connect to master. Shutting down')
             self.main_window.force_update()
             time.sleep(10)
             raise
-
-        # if lab name is specified: add to gui_logger
-        try:
-            lab_name_dict = load_config("lab_name")
-            lab_name = lab_name_dict['lab_name']
-        except:
-            lab_name = 'NO_LAB'
-
-        self.gui_logger.update_data(data=dict(lab_name=lab_name))
 
         # Instantiate GUI server and update GUI with port details
         self.gui_service = Service()
@@ -299,7 +291,7 @@ class Controller:
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
 
-        self.main_window.terminal.append(text)
+        self.main_window.terminal.appendPlainText(text)
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -307,7 +299,7 @@ class Controller:
                 pass
         # Update buffer terminal
         buffer_str = f'!~{self.update_index}~!{text}'
-        self.main_window.buffer_terminal.append(buffer_str)
+        self.main_window.buffer_terminal.appendPlainText(buffer_str)
         self.update_index += 1
 
     def check_disconnection(self, text):
@@ -399,9 +391,9 @@ class Controller:
         self.main_window.logger_label.setText(f'{log_str} Logger Port: {self.log_port}')
 
         if self.proxy:
-            self.main_window.terminal.setText('Connected to master Log Server. \n')
-        self.main_window.terminal.setText('Log messages will be displayed below \n')
-        self.main_window.buffer_terminal.document().setMaximumBlockCount(100)
+            self.main_window.terminal.setPlainText('Connected to master Log Server. \n')
+        self.main_window.terminal.setPlainText('Log messages will be displayed below \n')
+        self.main_window.buffer_terminal.document().setMaximumBlockCount(1000)
 
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
@@ -416,13 +408,13 @@ class Controller:
         self.main_window.logfile_status_button.setHidden(True)
         self.main_window.log_previous.setHidden(True)
         self.main_window.logfile_status_indicator.setEnabled(False)
+        
         self.main_window.confluence_update.clicked.connect(self.confluence_info_update)
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
         self._configure_clicks()
         self._configure_client_search()
-        self._configure_lab_name_select()
         self._configure_debug()
         self._configure_debug_combo_select()
         self._configure_logfile()
@@ -434,7 +426,8 @@ class Controller:
     def update_proxy(self, new_msg):
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
-        self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
+        # Remove the !~ bookmark from the message
+        self.main_window.terminal.appendPlainText(re.sub(r'!~\d+~!', '', new_msg))
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -490,42 +483,33 @@ class Controller:
             if self.logfile_date_str != datetime.now().strftime("%Y_%m_%d"):
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
-            if os.stat(self.filenamepath).st_size > self.MAX_LOG_FILE_SIZE:
+
+            if os.stat(self.filenamepath.replace("\\", "/")).st_size > self.MAX_LOG_FILE_SIZE:
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
 
     def _configure_client_search(self):
-        self.main_window.client_search.textChanged.connect(self._update_displayed_client_list)
-
-    def _configure_lab_name_select(self):
-        self.main_window.lab_name_select.currentIndexChanged.connect(self._update_displayed_client_list)
+        self.main_window.client_search.textChanged.connect(self._search_clients)
 
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
         self.main_window.close_server.pressed.connect(self._stop_server)
 
-    def _update_displayed_client_list(self):
+    def _search_clients(self):
 
         search_str = self.main_window.client_search.text()
-        lab_name = self.main_window.lab_name_select.currentText()
 
         clients = self.gui_client.get_container_info('clients')
 
         self.main_window.client_list.clear()
         self.client_list.clear()
 
-        if lab_name == "ALL LABS": # if ALL LABS is selected, don't filter by lab name
-            if search_str != "":
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    # look for clients that have name or ip address containing search string
-                    if search_str in client or search_str in self.client_data[client]['ip']:
-                        self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
-            else: # if search string is empty, don't use it to filter clients
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
+        if search_str != "":
+            for client, info in clients.items():
+                self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                # look for clients that have name or ip address containing search string
+                if search_str in client or search_str in self.client_data[client]['ip']:
                     self.main_window.client_list.addItem(self.client_list[client])
                     self.client_list[client].setToolTip(info)
 
@@ -780,10 +764,6 @@ class Controller:
                 self.client_data[client]['port'] = info.split('port: ')[1].split('\n')[0]
             if 'device_id: ' in info:
                 self.client_data[client]['device_id'] = info.split('device_id: ')[1].split('\n')[0]
-            if 'lab_name: ' in clients[client]:
-                self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
-            else: # if no lab name is specified
-                self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _pull_connections(self):
         """ Updates the proxy's client list """
@@ -815,10 +795,6 @@ class Controller:
                 self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
             if 'device_id: ' in clients[client]:
                 self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
-            if 'lab_name: ' in clients[client]:
-                self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
-            else: # if no lab name is specified
-                self.client_data[client]['lab_name'] = "NO_LAB"
 
         # Remove clients
         for client in remove_clients:
@@ -839,10 +815,6 @@ class Controller:
                     self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
                 if 'device_id: ' in clients[client]:
                     self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
-                if 'lab_name: ' in clients[client]:
-                    self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
-                else: # if no lab name is specified
-                    self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _configure_autoscroll_off(self):
         self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)
@@ -959,7 +931,7 @@ class Controller:
                     config_dict = load_config('static_proxy')
                     filepath = config_dict['logger_path']
                 except:
-                    self.main_window.terminal.setText('Critical error: '
+                    self.main_window.terminal.setPlainText('Critical error: '
                                                       'no logger_path found in static_proxy.json')
                     self.main_window.force_update()
                     time.sleep(10)
@@ -1051,6 +1023,7 @@ class ProxyUpdater(QtCore.QObject):
     def run(self):
         while True:
             time.sleep(0.001)
+
             # Check clients and update
             self.controller._pull_connections()
 
@@ -1128,6 +1101,7 @@ class ProxyUpdater(QtCore.QObject):
             if new_msg != '':
                 self.update_signal.emit(new_msg)
 
+            self.controller.last_seen_buffer = buffer_terminal
 
 def main():
     """ Runs the launch controller """
@@ -1198,4 +1172,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main_master()

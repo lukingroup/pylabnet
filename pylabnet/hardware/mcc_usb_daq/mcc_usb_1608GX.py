@@ -2,10 +2,9 @@ import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 from mcculw import ul
-from mcculw.enums import ULRange, InterfaceType, DigitalIODirection, DigitalPortType, ScanOptions
+from mcculw.enums import ULRange, InterfaceType, DigitalIODirection, DigitalPortType, AnalogInputMode
 from mcculw.ul import ULError
 
-MAX_OUTPUT = 10.0
 RESOLUTION = 16 #bits
 
 
@@ -65,22 +64,21 @@ class Driver:
         else:
             self.log.error('Error: No MCC USB-1608GX devices with device ID ' + str(self.d_id) + ' found.')
 
-        ul.d_config_port(self.bn, DigitalPortType.AUXPORT, DigitalIODirection.OUT)
+        #configure all channels to be Single-Ended
+        ul.a_input_mode(self.bn, AnalogInputMode.SINGLE_ENDED)
 
     #analog input
+
     def get_ai_voltage(self, ai_channel, range=1):
         """Get analog input
 
-        :ao_channel: (int) Input channel (0-7) 8 SE or 16 DIFF
+        :ai_channel: (int) Input channel (0-15) 16 SE or 8 DIFF
         :voltage: (float) voltage value from -10 V to 10 V
         :range: (int) 1 (-10 to +10 V) , 0 (-5 to +5 V), 4 (-1 to +1 V), or 14 (-2 to +2 V)
         """
         #the a_in function returns the base 10 conversion of the binary value read
         raw_value = ul.a_in(self.bn, ai_channel, ULRange(range))
-
         #so we need to convert it to more useful units
         value_volts = ul.to_eng_units(self.bn, ULRange(range), raw_value)
-
-        self.log.info(f'Read raw value of {raw_value} or {value_volts} V from channel {ai_channel}')
 
         return value_volts

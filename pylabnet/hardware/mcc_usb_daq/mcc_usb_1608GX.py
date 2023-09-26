@@ -2,7 +2,7 @@ import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 from mcculw import ul
-from mcculw.enums import ULRange, InterfaceType, DigitalIODirection, DigitalPortType
+from mcculw.enums import ULRange, InterfaceType, DigitalIODirection, DigitalPortType, ScanOptions
 from mcculw.ul import ULError
 
 MAX_OUTPUT = 10.0
@@ -68,67 +68,19 @@ class Driver:
         ul.d_config_port(self.bn, DigitalPortType.AUXPORT, DigitalIODirection.OUT)
 
     #analog input
-    def get_ai_voltage(self, ao_channel, range):
+    def get_ai_voltage(self, ai_channel, range=1):
         """Get analog input
 
         :ao_channel: (int) Input channel (0-7) 8 SE or 16 DIFF
         :voltage: (float) voltage value from -10 V to 10 V
-        :range: (int) 1 (BIP10VOLTS) , 0 (BIP5VOLTS), 4 (BIP1VOLTS), or 14 (BIP2VOLTS)
+        :range: (int) 1 (-10 to +10 V) , 0 (-5 to +5 V), 4 (-1 to +1 V), or 14 (-2 to +2 V)
         """
-        return ul.a_in(self.bn, ao_channel, range)
+        #the a_in function returns the base 10 conversion of the binary value read
+        raw_value = ul.a_in(self.bn, ai_channel, ULRange(range))
 
-    def ai_scan(self, low_ch, high_ch, num_samples, sample_rate, range, options):
-        """Scans a range of A/D channels and stores the samples in an array
+        #so we need to convert it to more useful units
+        value_volts = ul.to_eng_units(self.bn, ULRange(range), raw_value)
 
-        :low_ch: (int) the first A/D channel in the scan
-        :high_ch: (int) the last A/D channel in the scan (0-15 for SE, 0-7 for DIFF)
-        :num_samples: (int) The total number of A/D samples to collect.
-                            If more than one channel is being sampled,
-                            the number of samples collected per channel is equal to
-                            count / (high_ch – low_ch + 1).
-        :sample_rate: (int) samples per second per channel, up to 500kS/second
-                        For example, sampling four channels, 0 to 3, at a rate of 10,000 scans per second (10 kHz)
-                        results in an A/D converter rate of 40 kHz: four channels at 10,000 samples per channel per second.
-                        The actual sampling rate in some cases will vary a small amount from the requested rate.
-                        The actual rate is returned.
-        :range: (int) 1 (BIP10VOLTS) , 0 (BIP5VOLTS), 4 (BIP1VOLTS), or 14 (BIP2VOLTS)
-        :options: (int) from ScanOptions in mcculw.enums
-        """
-        handle = ul.win_buf_alloc(num_samples)
-        return ul.a_in_scan(self.bn, low_ch, high_ch, num_samples, sample_rate, range, handle, options)
+        self.log.info(f'Read raw value of {raw_value} or {value_volts} V from channel {ai_channel}')
 
-    def set_dio(self, digital_pin, value):
-        """Set digital output pin high (5 V) or low (0 V)
-
-        :digital_pin: (int) Output pin (0-7)
-        :value: (int) output value (0 or 1)
-        """
-
-        ul.d_bit_out(self.bn, DigitalPortType.AUXPORT, digital_pin, value)
-
-    def set_trigger(self, type, patt_val, mask):
-        """Selects the trigger source and sets up its params. Initiates a scan
-
-        :type: (int) TrigType enum. This device does digital triggering and allows
-                    TRIG_POS_EDGE, TRIG_NEG_EDGE, TRIG_HIGH, TRIG_LOW
-        :patt_val: (int) sets the pattern value
-        :mask: (int) selects the port mask
-        """
-
-        ul.set_trigger(self.bn, type, patt_val, mask)
-
-    def start_pulses(self, frequency, duty_cycle):
-        """Starts a timer to generate digital pulses at a specified frequency and duty cycle. Use stop_pulses() to stop the output.
-
-        :frequency: (float) 0.0149Hz to 32 MHz
-        :duty_cycle: (float) value in (0,1), non-inlcusive
-
-        could also add initial delay and idle state; see: https://files.digilent.com/manuals/Mcculw_WebHelp/Users_Guide/Analog_Input_Boards/USB-1608G_Series.htm
-        """
-        #second arg is timer number - there is only one on the board
-        ul.pulse_out_start(self.bn, 0, frequency, duty_cycle)
-
-    def stop_pulses(self):
-        """Stops a timer output. Use start_pulses() to start the output."""
-
-        ul.pulse_out_stop(self.bn, 0)
+        return value_volts

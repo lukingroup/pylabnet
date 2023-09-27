@@ -1409,6 +1409,103 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
     def upload_pic(self):
         self.confluence_handler.confluence_popup.Popup_Upload()
         return
+    
+
+class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
+    """ Widget class for holding new graphs """
+
+    def __init__(self, **kwargs):
+
+        QtWidgets.QWidget.__init__(self)
+
+        # self.app = app
+
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
+
+        if 'log' in kwargs:
+            self.log = kwargs['log']
+        else:
+            self.log = None
+
+        if 'app' in kwargs:
+            self.app = kwargs['app']
+        else:
+            self.app = None
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+
+        # Confluence handler and its button
+        enable_confluence = True
+
+        self.confluence_handler = None
+
+        if(self.log is None):
+            enable_confluence = False
+
+        if(enable_confluence is True):
+            self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
+
+            extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+            extractAction_Upload.setShortcut("Ctrl+S")
+            extractAction_Upload.setStatusTip('Upload to the confluence page')
+            extractAction_Upload.triggered.connect(self.upload_pic)
+
+            extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+            extractAction_Update.setShortcut("Ctrl+X")
+            extractAction_Update.setStatusTip('The space and page names of confluence')
+            extractAction_Update.triggered.connect(self.update_setting)
+
+            mainMenu = QtWidgets.QMenuBar(self)
+
+            ActionMenu = mainMenu.addMenu('&Action')
+            ActionMenu.addAction(extractAction_Upload)
+            ActionMenu.addAction(extractAction_Update)
+
+
+     
+        self.outer_layout = QtWidgets.QVBoxLayout()
+        self.outer_layout.setContentsMargins(30, 30, 30, 30)
+
+
+        # keep track of number of tabs that are filled
+        self.num_tabs = 0
+
+        # Prep first tab
+        self.tabs = QtWidgets.QTabWidget()
+        self.tab1 = QtWidgets.QWidget()
+        self.tabs.addTab(self.tab1, kwargs["tablabel"])
+    
+        self.outer_layout.addWidget(self.tabs)
+
+        self.setWindowTitle(window_title)
+        self.setLayout(self.outer_layout)
+
+        # Prep the Graphlayout for 
+        self.tab1.GraphLayout =  QtWidgets.QVBoxLayout()
+        self.tab1.setLayout(self.tab1.GraphLayout)
+
+
+        self.show()
+
+    def update_setting(self):
+        self.confluence_handler.confluence_popup.Popup_Update()
+
+    def upload_pic(self):
+        self.confluence_handler.confluence_popup.Popup_Upload()
+        return
+    
+    def add_graph_to_new_tab(self, graph, label):
+        new_tab = QtWidgets.QWidget()
+        self.tabs.addTab(new_tab, label)
+        new_tab.GraphLayout =  QtWidgets.QVBoxLayout()
+        new_tab.setLayout(new_tab.GraphLayout)
+        new_tab.GraphLayout.addWidget(graph)
+        self.num_tabs += 1
+        return
 
 
 class Confluence_Handler():

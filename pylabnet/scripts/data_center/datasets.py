@@ -6,7 +6,7 @@ import time
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler, GraphPopupTabs
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler, GraphPopupTabs, Confluence_support_GraphPopupTabs
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, npy_generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
@@ -355,10 +355,24 @@ class Dataset():
 
         if graph is None:
             # If we want to use a separate window
+
+    
+
             if 'window' in kwargs:
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
+                    # Check if we want to enable tabs 
+                    if 'tabs_enabled' in kwargs:
+                        tabs_enabled = kwargs['tabs_enabled']
+
+                        if 'tablabel' in kwargs:
+                            tablabel = kwargs["tablabel"]
+                        else:
+                            tablabel = "Tab"
+                    else:
+                        tabs_enabled = False
+                    
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
@@ -366,15 +380,21 @@ class Dataset():
 
                     # self.gui.windows[kwargs['window']] = GraphPopup(
                     #     window_title=window_title, size=(700, 300))
-                    tabs_enables = kwargs['tabs_enabled']
 
-
-
+            
                     if(self.enable_confluence):
-                        self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
-                            app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
-                        )
-                    elif tabs_enables:
+                        if tabs_enabled:
+
+                            self.gui.windows[kwargs['window']] = Confluence_support_GraphPopupTabs(
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel = tablabel
+                            )
+
+                            self.gui.windows[kwargs['window']].tabs_enabled = True
+                        else:
+                            self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                            )
+                    elif tabs_enabled:
                         self.gui.windows[kwargs['window']] = GraphPopupTabs(
                             window_title=window_title, size=(700, 300), 
                         )
@@ -383,22 +403,49 @@ class Dataset():
                             window_title=window_title, size=(700, 300), 
                         )
 
+                     # Window already exists
+                else:
+                    # Check if we want to enable tabs 
+                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled 
+
+                    if 'tablabel' in kwargs:
+                        tablabel = kwargs["tablabel"]
+                    else:
+                        tablabel = "Tab"
+          
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
                     self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
                 else:
                     self.graph = pg.PlotWidget()
 
-                self.gui.windows[kwargs['window']].graph_layout.addWidget(
-                    self.graph
-                )
+                if tabs_enabled:
+
+                    # If first time populated, add to first tab
+                    if self.gui.windows[kwargs['window']].num_tabs == 0:
+                        # add to first tab
+                        self.gui.windows[kwargs['window']].tab1.GraphLayout.addWidget(
+                            self.graph
+                        )
+                        self.gui.windows[kwargs['window']].num_tabs += 1
+                    else:
+                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
+                        graph = self.graph,
+                        label = tablabel
+                    )
+                else:
+ 
+                    self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)
 
             # Otherwise, add a graph to the main layout
             else:
+                
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     self.graph = self.gui.add_graph(datetime_axis=True)
                 else:
                     self.graph = self.gui.add_graph()
+
+    
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided

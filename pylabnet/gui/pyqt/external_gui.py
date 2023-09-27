@@ -898,6 +898,28 @@ class GraphPopup(QtWidgets.QWidget):
         self.setLayout(self.graph_layout)
         self.show()
 
+class GraphPopupTabs(QtWidgets.QWidget):
+    """ Widget class for holding new graphs in tabbed mode """
+
+    def __init__(self, **kwargs):
+
+        QtWidgets.QWidget.__init__(self)
+
+        self.graph_layout = QtWidgets.QVBoxLayout()
+
+        # if 'window_title' in kwargs:
+        #     window_title = kwargs['window_title']
+        # else:
+            
+        window_title = 'TABS'
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+
+        self.setWindowTitle(window_title)
+        self.setLayout(self.graph_layout)
+        self.show()
+
 
 class Plot:
     """ Class for plot widgets inside of a Window

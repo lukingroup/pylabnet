@@ -6,7 +6,7 @@ import time
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler, GraphPopupTabs
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, npy_generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
@@ -366,14 +366,21 @@ class Dataset():
 
                     # self.gui.windows[kwargs['window']] = GraphPopup(
                     #     window_title=window_title, size=(700, 300))
+                    tabs_enables = kwargs['tabs_enabled']
+
+
 
                     if(self.enable_confluence):
                         self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
                             app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
                         )
+                    elif tabs_enables:
+                        self.gui.windows[kwargs['window']] = GraphPopupTabs(
+                            window_title=window_title, size=(700, 300), 
+                        )
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
-                            window_title=window_title, size=(700, 300)
+                            window_title=window_title, size=(700, 300), 
                         )
 
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):

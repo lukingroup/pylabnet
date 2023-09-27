@@ -84,8 +84,7 @@ class ClientBase:
             self._connection = None
             self._service = None
             print(
-                'Tried to establish a secure SSL connection to a generic (insecure) server.\n'
-                'Please try establishing an insecure client by setting key=None'
+                f'Connection to server hostname: {host}, port: {port} timed out.'
             )
 
         # No server running with host/port parameters

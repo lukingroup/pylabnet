@@ -407,12 +407,9 @@ class Dataset():
                 else:
                     # Check if we want to enable tabs 
                     tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled 
+                    
 
-                    if 'tablabel' in kwargs:
-                        tablabel = kwargs["tablabel"]
-                    else:
-                        tablabel = "Tab"
-          
+                
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
                     self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
@@ -421,18 +418,49 @@ class Dataset():
 
                 if tabs_enabled:
 
-                    # If first time populated, add to first tab
-                    if self.gui.windows[kwargs['window']].num_tabs == 0:
+                    num_tabs = self.gui.windows[kwargs['window']].num_tabs
+
+                    if 'tablabel' in kwargs:
+                        tablabel = kwargs["tablabel"]
+                    else:
+                        tablabel = f"Tab{num_tabs}"
+
+                    tab_widget_labels = [self.gui.windows[kwargs['window']].tabs.tabText(i) for i in range(num_tabs)]
+
+                    if tablabel in tab_widget_labels:
+                        tab_widget_graphlayout = self.gui.windows[kwargs['window']].tabs.widget(tab_widget_labels.index(tablabel)).GraphLayout
+
+                        # add to retrieved tab
+                        tab_widget_graphlayout.addWidget(
+                            self.graph
+                        )
+                        
+                    elif num_tabs == 0:
+
                         # add to first tab
                         self.gui.windows[kwargs['window']].tab1.GraphLayout.addWidget(
                             self.graph
                         )
                         self.gui.windows[kwargs['window']].num_tabs += 1
+
                     else:
                         self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
-                        graph = self.graph,
-                        label = tablabel
-                    )
+                            graph = self.graph,
+                            label = tablabel
+                        )
+                    
+                    # # If first time populated, add to first tab
+                    # if num_tabs == 0:
+                    #     # add to first tab
+                    #     self.gui.windows[kwargs['window']].tab1.GraphLayout.addWidget(
+                    #         self.graph
+                    #     )
+                    #     self.gui.windows[kwargs['window']].num_tabs += 1
+                    # else:
+                    #     self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
+                    #     graph = self.graph,
+                    #     label = tablabel
+                    # )
                 else:
  
                     self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)

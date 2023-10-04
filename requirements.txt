@@ -68,7 +68,7 @@ pandocfilters==1.4.3
 paramiko==2.7.2
 parso==0.8.1
 pickleshare==0.7.5
-pillow==9.3.0
+pillow==10.0.1
 platformdirs==2.3.0
 plotly==4.14.3
 plumbum==1.7.0

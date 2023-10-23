@@ -1418,6 +1418,8 @@ class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
 
         QtWidgets.QWidget.__init__(self)
 
+        self.tabs_enabled = True
+
         # self.app = app
 
         if 'window_title' in kwargs:

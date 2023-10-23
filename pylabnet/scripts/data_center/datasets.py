@@ -13,6 +13,35 @@ from pylabnet.utils.helper_methods import save_metadata, generic_save, npy_gener
 import sys
 
 
+def get_color_index(dataset, kwargs):
+
+    if 'color_index' in kwargs:
+        color_index = kwargs['color_index']
+    else:
+
+        try:
+            tabs_enabled = dataset.gui.windows[kwargs['window']].tabs_enabled
+        
+        # If Window has not tabs
+        except AttributeError:
+            tabs_enabled = False
+
+        # If dataset is initial dataset
+        except KeyError:
+            tabs_enabled = False
+        
+        
+        if tabs_enabled:
+            color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
+        elif 'window' in kwargs:
+            color_index = dataset.gui.windows[kwargs['window']].graph_layout.count() - 1
+        else:
+            color_index = dataset.gui.graph_layout.count() - 1
+
+    return color_index
+
+
+
 class Dataset():
 
     def __init__(self, gui: Window, log: LogClient = None, data=None,
@@ -172,10 +201,13 @@ class Dataset():
 
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
+        # if 'color_index' in kwargs:
+        #     color_index = kwargs['color_index']
+        # else:
+        #     color_index = self.gui.graph_layout.count() - 1
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -1896,13 +1928,23 @@ class ErrorBarGraph(Dataset):
         self.error = None
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            if 'window' in kwargs:
-                color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
-            else:
-                color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
+        # if 'color_index' in kwargs:
+        #     color_index = kwargs['color_index']
+        # else:
+
+        #     if self.gui.windows[kwargs['window']].tabs_enabled:
+        #         color_index = self.gui.windows[kwargs['window']].num_tabs - 1
+
+        #     if 'window' in kwargs:
+
+        #         color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
+        #     else:
+        #         color_index = self.gui.graph_layout.count() - 1
+
+
+
         self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), width=0.5)

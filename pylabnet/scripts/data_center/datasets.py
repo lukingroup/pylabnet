@@ -30,7 +30,6 @@ def get_color_index(dataset, kwargs):
         except KeyError:
             tabs_enabled = False
         
-        
         if tabs_enabled:
             color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
         elif 'window' in kwargs:
@@ -475,19 +474,6 @@ class Dataset():
                             graph = self.graph,
                             label = tablabel
                         )
-                    
-                    # # If first time populated, add to first tab
-                    # if num_tabs == 0:
-                    #     # add to first tab
-                    #     self.gui.windows[kwargs['window']].tab1.GraphLayout.addWidget(
-                    #         self.graph
-                    #     )
-                    #     self.gui.windows[kwargs['window']].num_tabs += 1
-                    # else:
-                    #     self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
-                    #     graph = self.graph,
-                    #     label = tablabel
-                    # )
                 else:
  
                     self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)

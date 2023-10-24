@@ -203,11 +203,6 @@ class Dataset():
 
         color_index = get_color_index(self, kwargs)
 
-        # if 'color_index' in kwargs:
-        #     color_index = kwargs['color_index']
-        # else:
-        #     color_index = self.gui.graph_layout.count() - 1
-
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -428,7 +423,7 @@ class Dataset():
                             )
                     elif tabs_enabled:
                         self.gui.windows[kwargs['window']] = GraphPopupTabs(
-                            window_title=window_title, size=(700, 300), 
+                            window_title=window_title, size=(700, 300), tablabel = tablabel
                         )
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
@@ -866,10 +861,8 @@ class ManualOpenLoopScan(Dataset):
     def visualize(self, graph, **kwargs):
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -1930,21 +1923,6 @@ class ErrorBarGraph(Dataset):
 
         color_index = get_color_index(self, kwargs)
 
-        # if 'color_index' in kwargs:
-        #     color_index = kwargs['color_index']
-        # else:
-
-        #     if self.gui.windows[kwargs['window']].tabs_enabled:
-        #         color_index = self.gui.windows[kwargs['window']].num_tabs - 1
-
-        #     if 'window' in kwargs:
-
-        #         color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
-        #     else:
-        #         color_index = self.gui.graph_layout.count() - 1
-
-
-
         self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), width=0.5)
@@ -2016,10 +1994,8 @@ class ErrorBarPlot(Dataset):
         self.error = None
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), symbol='o')

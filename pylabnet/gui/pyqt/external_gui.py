@@ -876,9 +876,8 @@ class ParameterPopup(QtWidgets.QWidget):
         self.parameters.emit(ret)
         self.close()
 
-
 class GraphPopup(QtWidgets.QWidget):
-    """ Widget class for holding new graphs """
+    """ Widget class for holding new graphs in tabbed mode """
 
     def __init__(self, **kwargs):
 
@@ -899,27 +898,56 @@ class GraphPopup(QtWidgets.QWidget):
         self.show()
 
 class GraphPopupTabs(QtWidgets.QWidget):
-    """ Widget class for holding new graphs in tabbed mode """
+    """ Widget class for holding new graphs """
 
     def __init__(self, **kwargs):
 
         QtWidgets.QWidget.__init__(self)
 
-        self.graph_layout = QtWidgets.QVBoxLayout()
-
-        # if 'window_title' in kwargs:
-        #     window_title = kwargs['window_title']
-        # else:
-            
-        window_title = 'TABS'
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
 
         if 'size' in kwargs:
             self.setMinimumSize(*kwargs['size'])
 
         self.setWindowTitle(window_title)
-        self.setLayout(self.graph_layout)
+
+        self.tabs_enabled = True
+
+        self.outer_layout = QtWidgets.QVBoxLayout()
+        self.outer_layout.setContentsMargins(30, 30, 30, 30)
+
+
+
+        # keep track of number of tabs that are filled
+        self.num_tabs = 0
+
+        # Prep first tab
+        self.tabs = QtWidgets.QTabWidget()
+        self.tab1 = QtWidgets.QWidget()
+        self.tabs.addTab(self.tab1, kwargs["tablabel"])
+    
+        self.outer_layout.addWidget(self.tabs)
+
+        self.setWindowTitle(window_title)
+        self.setLayout(self.outer_layout)
+
+        # Prep the Graphlayout for 
+        self.tab1.GraphLayout =  QtWidgets.QVBoxLayout()
+        self.tab1.setLayout(self.tab1.GraphLayout)
+
         self.show()
 
+    def add_graph_to_new_tab(self, graph, label):
+        new_tab = QtWidgets.QWidget()
+        self.tabs.addTab(new_tab, label)
+        new_tab.GraphLayout =  QtWidgets.QVBoxLayout()
+        new_tab.setLayout(new_tab.GraphLayout)
+        new_tab.GraphLayout.addWidget(graph)
+        self.num_tabs += 1
+        return
 
 class Plot:
     """ Class for plot widgets inside of a Window

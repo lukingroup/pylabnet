@@ -56,13 +56,13 @@ class WlmMonitor:
             self.widgets = get_gui_widgets(
                 gui=self.gui,
                 freq=3, sp=3, rs=3, lock=3, error_status=3, graph=6, legend=6, clear=6,
-                zero=6, voltage=3, error=3
+                zero=6, voltage=3, error=3, P_laser=3, I_laser=3, D_laser=3, PID_upd_laser=3
             )
         else:
             self.widgets = get_gui_widgets(
                 gui=self.gui,
                 freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
-                zero=4, voltage=2, error=2
+                zero=4, voltage=2, error=2, P_laser=2, I_laser=2, D_laser=2, PID_upd_laser=2
             )
 
         # Set parameters
@@ -112,8 +112,13 @@ class WlmMonitor:
             channel_params = [channel_params]
 
         # Initialize each channel individually
-        for channel_param_set in channel_params:
+        for index, channel_param_set in enumerate(channel_params):
             self.channels.append(Channel(channel_param_set, self.ao_clients, log=self.log))
+
+            # set initial pid values from config file in gui
+            self.widgets['P_laser'][index].setValue(channel_param_set['pid']['p'])
+            self.widgets['I_laser'][index].setValue(channel_param_set['pid']['i'])
+            self.widgets['D_laser'][index].setValue(channel_param_set['pid']['d'])
 
     def update_parameters(self, parameters):
         """ Updates only the parameters given. Can be used in the middle of the script operation via an update client.
@@ -239,6 +244,27 @@ class WlmMonitor:
         except:
             self.log.warn('Failed to zero voltage')
 
+    def set_channel_pid(self, channel, p, i, d):
+        """ Sets the pid values for this channel
+
+        :param channel: Channel object to update pid values
+        :param p: (float) p value
+        :param i: (float) i value
+        :param d: (float) d value
+        """
+
+        try:
+            channel.pid.set_parameters(
+                p=p,
+                i=i,
+                d=d
+            )
+            self.log.info('New P, I, D values = ' + str(p) + ', ' + str(i) + ', ' + str(d))
+
+        # Catch error
+        except:
+            self.log.warn('Could not update PID values')
+
     def go_to(self, channel, value, step_size, hold_time):
         """ Sends laser to a setpoint value gradually
 
@@ -310,6 +336,16 @@ class WlmMonitor:
                 channel=channel.number,
                 setpoint=channel.data[-1]
             ))
+        )
+
+        # Update PID values
+        self.widgets['PID_upd_laser'][index].clicked.connect(
+            lambda: self.set_channel_pid(
+                channel=channel,
+                p=self.widgets['P_laser'][index].value(),
+                i=self.widgets['I_laser'][index].value(),
+                d=self.widgets['D_laser'][index].value()
+            )
         )
 
         # Voltage
@@ -764,7 +800,7 @@ def launch(**kwargs):
 
     logger = kwargs['logger']
     config = load_script_config(
-        script='wlm_monitor_b16',
+        script='wlm_monitor',
         config=kwargs['config'],
         logger=logger
     )

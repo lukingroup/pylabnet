@@ -31,7 +31,7 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client: nidaqmx_card, ui='dummy_count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
+    def __init__(self, ctr_client: nidaqmx_card, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
@@ -52,6 +52,10 @@ class CountMonitor:
         self.data = None
         self.x = None
 
+        if self.combined_channel:
+            ui = 'count_monitor_combined'
+        else:
+            ui = 'count_monitor'
 
         # Instantiate GUI window
         self.gui = Window(
@@ -64,13 +68,16 @@ class CountMonitor:
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-        num_plots = 1
+        if self.combined_channel:
+            num_plots = 3
+        else:
+            num_plots = 2
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets_dummy(
             self.gui,
             graph_widget=num_plots,
-            number_label=1,
+            number_label=8,
             event_button=num_plots,
             legend_widget=num_plots
         )
@@ -96,7 +103,7 @@ class CountMonitor:
         # Initialize counter instance
         self._ctr = ctr
 
-    def set_params(self, bin_width=1e9, n_bins=1e3, ch_list=[1], plot_list=None):
+    def set_params(self, bin_width=1e9, n_bins=1e3, ch_list=['ai0'], plot_list=None):
         """ Sets counter parameters
 
         :param bin_width: bin width in ps
@@ -112,9 +119,8 @@ class CountMonitor:
         self._n_bins = int(n_bins)
         self._ch_list = ch_list
         self._plot_list = plot_list
-        self.data = np.zeros(self._n_bins)
+        self.data = np.zeros([len(self._ch_list), self._n_bins])
         self.x = np.ones(self._n_bins) * dt_timestamp
-
 
     def run(self):
         """ Runs the counter from scratch"""
@@ -188,22 +194,6 @@ class CountMonitor:
                         plot_index = index
                         break
 
-            # If we have not assigned this plot yet, assign it
-            # if plot_index not in self._plots_assigned:
-            #     self.gui_handler.assign_plot(
-            #         plot_widget=self._plot_widgets[plot_index],
-            #         plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #         legend_widget=self._legend_widgets[plot_index]
-            #     )
-            #     self._plots_assigned.append(plot_index)
-
-            # Now assign this curve
-            # self.gui_handler.assign_curve(
-            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #     curve_label='Channel {}'.format(channel),
-            #     error=True
-            # )
-
             # Create a curve and store the widget in our dictionary
             self.widgets[f'curve_{channel}'] = self.widgets['graph_widget'][plot_index].plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[color])
@@ -225,6 +215,14 @@ class CountMonitor:
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
 
+        if self.combined_channel:
+            self.widgets['curve_combo'] = self.widgets['graph_widget'][index + 1].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[color + 1])
+            )
+            self.widgets['legend_widget'][index + 1].addItem(
+                self.widgets['curve_combo'],
+                ' - ' + 'Combined Counts'
+            )
 
     def _clear_plot(self, plot_index):
         """ Clears the curves on a particular plot
@@ -234,15 +232,14 @@ class CountMonitor:
         dt_timestamp = time.time()
 
         # Find all curves in this plot
-        for channel in self._plot_list[plot_index]:
+        for index, channel in enumerate(self._ch_list):
 
             # Set the curve to constant with last point for all entries
-            self.data = np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
+            self.data[index] = np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
             self.x = np.ones(self._n_bins) * dt_timestamp
 
-
             self.widgets[f'curve_{channel}'].setData(
-                self.x, self.data
+                self.x, self.data[index]
             )
 
         # self._ctr.clear_ctr(name=self.config['name'])
@@ -253,45 +250,21 @@ class CountMonitor:
         # Update all active channels
         # x_axis = self._ctr.get_x_axis()/1e12
 
-        voltage = np.array( [ np.mean(self._ctr.get_ai_voltage('ai0', 10, 10) ) ])
         dt_timestamp = time.time()
-        # counts = self._ctr.get_counts(name=self.config['name'])
-        # counts_per_sec = counts * (1e12 / self._bin_width)
-        # noise = np.sqrt(counts)*(1e12/self._bin_width)
-        # plot_index = 0
+        dt_timestamp = np.array([dt_timestamp]).flatten()
+        self.x = np.concatenate((self.x[1:], dt_timestamp))
 
-        # summed_counts = np.sum(counts_per_sec, axis=0)
+        for index, channel in enumerate(self._ch_list):
+            v = np.array([np.mean(self._ctr.get_ai_voltage(channel, 1, 10))]).flatten()
 
-        for index, v in enumerate(voltage):
-
-            # Figure out which plot to assign to
-            channel = self._ch_list[index]
-            # if self._plot_list is not None:
-            #     for index_plot, channel_set in enumerate(self._plot_list):
-            #         if channel in channel_set:
-            #             plot_index = index_plot
-            #             break
-
-            # Update GUI data
-
-            # self.gui_handler.set_curve_data(
-            #     data=count_array,
-            #     error=noise[index],
-            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #     curve_label='Channel {}'.format(channel)
-            # )
-            # self.gui_handler.set_label(
-            #     text='{:.4e}'.format(count_array[-1]),
-            #     label_label='Channel {}'.format(channel)
-            # )
-            v = np.array([v])
-            dt_timestamp = np.array([dt_timestamp])
-            self.x = np.concatenate((self.x[1:], dt_timestamp))
             # self.log.debug(self.x)
-            self.data = np.concatenate((self.data[1:], v))
-            self.widgets[f'curve_{channel}'].setData(self.x-self.x[0], self.data)
-            self.widgets[f'number_label'][channel - 1].setText(str(  format(self.data[-1], ".8f")   ))
+            self.data[index] = np.concatenate((self.data[index][1:], v))
+            self.widgets[f'curve_{channel}'].setData(self.x - self.x[0], self.data[index])
+            self.widgets[f'number_label'][index - 1].setText(str(format(self.data[index][-1], ".8f")))
 
+        if self.combined_channel:
+            summed_data = np.sum(self.data[:, :], axis=0)
+            self.widgets['curve_combo'].setData(self.x - self.x[0], summed_data)
 
 
 def launch(**kwargs):
@@ -305,7 +278,10 @@ def launch(**kwargs):
         kwargs['config'],
         logger
     )
-
+    if config['combined_channel'] == 'True':
+        combined_channel = True
+    else:
+        combined_channel = False
     # Instantiate CountMonitor
     try:
         monitor = CountMonitor(
@@ -318,7 +294,7 @@ def launch(**kwargs):
             ),
             logger_client=logger,
             server_port=kwargs['server_port'],
-            combined_channel=False
+            combined_channel=combined_channel
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')

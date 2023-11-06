@@ -10,7 +10,8 @@ def launch(**kwargs):
     zi_logger = kwargs['logger']
 
     device_id = load_device_config('zi_hdawg', kwargs['config'], logger=kwargs['logger'])['device_id']
-    hd = Driver(device_id, zi_logger)
+    interface = load_device_config('zi_hdawg', kwargs['config'], logger=kwargs['logger'])['interface'] #1GbE, USB etc.
+    hd = Driver(device_id, interface, zi_logger)
 
     # Instantiate server
     hd_service = Service()

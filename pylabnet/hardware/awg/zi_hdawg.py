@@ -58,7 +58,7 @@ class Driver():
         self.dummy = dummy
 
         # Setup HDAWG
-        self._setup_hdawg(device_id, logger, api_level, reset_dio, disable_everything)
+        self._setup_hdawg(device_id, interface, logger, api_level, reset_dio, disable_everything)
 
     @dummy_wrap
     def reset_DIO_outputs(self):
@@ -92,7 +92,7 @@ class Driver():
         return input_argument
 
     @dummy_wrap
-    def _setup_hdawg(self, device_id, logger, api_level, reset_dio, disable_everything):
+    def _setup_hdawg(self, device_id, interface, logger, api_level, reset_dio, disable_everything):
         ''' Sets up HDAWG '''
         # try finding the server address
         discovery = zhinst.ziPython.ziDiscovery()

@@ -99,8 +99,6 @@ class Driver():
         device_properties = discovery.get(discovery.find(device_id))
         server_address = device_properties["serveraddress"]
 
-        #interface = "1GbE"  # For Ethernet connection.
-
         server_host = "localhost"
         server_port = 8004
         api_level = 6  # Maximum API level supported for all instruments.

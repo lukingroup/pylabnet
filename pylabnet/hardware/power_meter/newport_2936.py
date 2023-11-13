@@ -32,6 +32,10 @@ class Driver:
             self.log.info(f"Query result {str(query_result, encoding='utf-8')}.")
             self.log.info(f"Successfully connected to {device_key}.")
 
+            # Set power units
+            self.set_unit(1, "W")
+            self.set_unit(2, "W")
+            self.log.info(f"Set units to Watts.")
         except VisaIOError:
             self.log.error(f"Connection to {device_key} failed.")
 

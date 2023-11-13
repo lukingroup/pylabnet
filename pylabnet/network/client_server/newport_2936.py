@@ -22,7 +22,7 @@ class Service(ServiceBase):
     def exposed_get_wavelength(self, ch):
         return self._module.get_wavelength(ch)
 
-    def exposed_set_unit(self, ch, wavelength):
+    def exposed_set_wavelength(self, ch, wavelength):
         return self._module.set_wavelength(ch, wavelength)
 
     def exposed_get_auto(self, ch):

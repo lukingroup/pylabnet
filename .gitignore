@@ -27,6 +27,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -164,3 +165,4 @@ pylabnet/utils/iq_upconversion/results/*
 temp/*
 pylabnet/YOUR_PYRPL_DESTINATION_FOLDER/*
 
+pylabnet/pylabnet_logs/*

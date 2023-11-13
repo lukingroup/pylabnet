@@ -131,17 +131,17 @@ class Driver:
         if ch is not None:
             self.set_channel(ch)
         wavelength = self.query(f'PM:LAMBDA?')
-        return float(wavelength)
+        return int(wavelength)
 
     def set_wavelength(self, ch, wavelength):
         """ Sets the wavelength on the active channel for responsivity calibration.
         :ch: (int) channel to access (either 1 or 2)
-        :wavelength: (float) desired wavelength (nm) setting
+        :wavelength: (int) desired wavelength (nm) setting
         :return: (int) operation error flag, 0 for no error
         """
         if ch is not None:
             self.set_channel(ch)
-        return self.write(f'PM:LAMBDA {wavelength}')
+        return self.write(f'PM:LAMBDA {int(wavelength)}')
 
     def get_auto(self, ch):
         """ Returns the current auto power-range setting on the active channel

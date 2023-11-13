@@ -159,6 +159,7 @@ class Driver:
         :auto: (int) 1 for auto, 0 for manual mode
         :return: (int) operation error flag, 0 for no error
         """
+        auto = int(auto) # Convert bools to ints
         if ch is not None:
             self.set_channel(ch)
         if auto not in [0, 1]:
@@ -286,7 +287,7 @@ class NewportUSB():
 
         if err_flag:
             self.log.error(f"Error while writing command {command} to device {device_key}!")
-            raise VisaIOError
+
         return err_flag
 
     def write(self, command):
@@ -320,7 +321,7 @@ class NewportUSB():
 
         if err_flag:
             self.log.error(f"Error while reading from device {device_key}!")
-            raise VisaIOError
+            return np.nan, 0, 1
 
         if bytes_read == max_read_length:
             self.log.warn("Read length is equal to buffer length -- possibly need a larger buffer.")

@@ -78,19 +78,25 @@ class Driver:
         """
         return int(self.query(f"PM:CHANNEL?"))
 
-    def get_power(self):
+    def get_power(self, ch):
         """ Returns the power in current units on the active channel
+        :ch: (int) channel to access (either 1 or 2)
         :return: (float) power in the current units
         """
+        if ch is not None:
+            self.set_channel(ch)
         power = self.query(f"PM:POWER?")
         return float(power)
 
-    def set_unit(self, unit_str):
+    def set_unit(self, ch, unit_str):
         """ Set the current power unit on the active channel
+        :ch: (int) channel to access (either 1 or 2)
         :unit: (str) unit of power to be set
         :return: (int) operation error flag, 0 for no error
         """
         units_dict = {"A": 0, "V": 1, "W": 2, "W/cm^2": 3, "J": 4, "J/cm^2": 5, "dBm": 6}
+        if ch is not None:
+            self.set_channel(ch)
         if unit_str in units_dict:
             unit = units_dict[unit_str]
             return self.write(f"PM:UNITS {unit}")
@@ -98,71 +104,84 @@ class Driver:
             self.log.error(f"Invalid units {unit_str} chosen, please choose from {units_dict.keys()}")
             return 1
 
-    def get_unit(self):
+    def get_unit(self, ch):
         """ Returns the current power unit on the active channel
+        :ch: (int) channel to access (either 1 or 2)
         :return: (str) current unit of power
         """
         unit = int(self.query(f"PM:UNITS?"))
         units_dict = {0: "A", 1: "V", 2: "W", 3: "W/cm^2", 4: "J", 5: "J/cm^2", 6: "dBm", 11: "Sun"}
+        if ch is not None:
+            self.set_channel(ch)
         if unit in units_dict:
             return units_dict[unit]
         else:
             self.log.error(f"Invalid unit {unit} returned.")
             return None
 
-    def get_wavelength(self):
+    def get_wavelength(self, ch):
         """ Returns the current wavelength in nm on the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :return: (int) wavelength setting for responsivity purposes.
         """
+        if ch is not None:
+            self.set_channel(ch)
         wavelength = self.query(f'PM:LAMBDA?')
         return float(wavelength)
 
-    def set_wavelength(self, wavelength):
+    def set_wavelength(self, ch, wavelength):
         """ Sets the wavelength on the active channel for responsivity calibration.
-
+        :ch: (int) channel to access (either 1 or 2)
         :wavelength: (float) desired wavelength (nm) setting
         :return: (int) operation error flag, 0 for no error
         """
+        if ch is not None:
+            self.set_channel(ch)
         return self.write(f'PM:LAMBDA {wavelength}')
 
-    def get_auto(self):
+    def get_auto(self, ch):
         """ Returns the current auto power-range setting on the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :return: (int) 1 for auto, 0 for manual mode
         """
+        if ch is not None:
+            self.set_channel(ch)
         auto = self.query(f'PM:AUTO?')
         return int(auto)
 
-    def set_auto(self, auto):
+    def set_auto(self, ch, auto):
         """ Sets the current auto power-range setting on the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :auto: (int) 1 for auto, 0 for manual mode
         :return: (int) operation error flag, 0 for no error
         """
+        if ch is not None:
+            self.set_channel(ch)
         if auto not in [0, 1]:
             self.log.error(f"Auto should be either 0 or 1.")
             return 1
         return self.write(f'PM:AUTO {auto}')
 
-    def get_range(self):
+    def get_range(self, ch):
         """ Returns the current power range for the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :return: (int) number from 0-7 indicating range. For our current sensor at 737nm,
         these correspond to 269 nW x 10**n.
         """
-
+        if ch is not None:
+            self.set_channel(ch)
         pr = self.query(f'PM:RANGE?')
         return int(pr)
 
-    def set_range(self, p_range):
+    def set_range(self, ch, p_range):
         """ Sets the power range for the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :p_range: (int) number from 0-7 indicating range. For our current sensor at 737nm,
         these correspond to 269 nW x 10**n.
         :return: (int) operation error flag, 0 for no error
         """
-
+        if ch is not None:
+            self.set_channel(ch)
         if p_range not in range(8):
             self.log.error(f"p_range should be an int from 0-7.")
             return 1

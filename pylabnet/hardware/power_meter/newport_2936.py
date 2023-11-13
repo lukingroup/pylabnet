@@ -321,7 +321,7 @@ class NewportUSB():
 
         if err_flag:
             self.log.error(f"Error while reading from device {device_key}!")
-            return np.nan, 0, 1
+            return 0, 0, 1
 
         if bytes_read == max_read_length:
             self.log.warn("Read length is equal to buffer length -- possibly need a larger buffer.")

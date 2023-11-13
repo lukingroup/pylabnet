@@ -115,7 +115,7 @@ class Driver:
 
         :return: (int) wavelength setting for responsivity purposes.
         """
-        wavelength = self.device.query(f'PM:LAMBDA?')
+        wavelength = self.query(f'PM:LAMBDA?')
         return float(wavelength)
 
     def set_wavelength(self, wavelength):
@@ -188,7 +188,7 @@ class NewportUSB():
         self.dll = ctypes.windll.LoadLibrary('usbdll.dll')
 
         # Define type signatures for functions -- not strictly necessary but will help catch errors
-        # Full type signatures and function headers are NewpDll.h
+        # Full type signatures and function headers are in NewpDll.h
         self.dll.newp_usb_open_devices.argtypes = [ctypes.c_int, ctypes.c_bool, ctypes.POINTER(ctypes.c_int)]
         self.dll.newp_usb_open_devices.retype = ctypes.c_long
 
@@ -233,7 +233,7 @@ class NewportUSB():
         self.set_device(device_key)
 
     def set_device(self, device_key):
-        """ Set a given device as default so that all communuications are direct at that
+        """ Set a given device as default so that all communuications are directed at that
         device unless specified otherwise.
 
         :device_key: (str) Device key of the desired default device.

@@ -159,15 +159,15 @@ class NiDaqMx(StaticLineHardwareHandler):
         self.log.info(f"NiDaq output {self.ao_output} successfully assigned to staticline {self.name}.")
 
     def set_value(self, value):
-        self.hardware_client.set_ao_voltage(self.output, value)
+        self.hardware_client.set_ao_voltage(self.ao_output, value)
         self.is_up = True
 
     def up(self):
-        self.hardware_client.set_ao_voltage(self.output, self.up_voltage)
+        self.hardware_client.set_ao_voltage(self.ao_output, self.up_voltage)
         self.is_up = True
 
     def down(self):
-        self.hardware_client.set_ao_voltage(self.output, self.down_voltage)
+        self.hardware_client.set_ao_voltage(self.ao_output, self.down_voltage)
         self.is_up = False
 
     def set_dig_value(self, value):

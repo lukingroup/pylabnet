@@ -127,29 +127,6 @@ class Monitor:
                 self.rr_index = range_index
                 self.pm.set_range(2, self.THORLABS_RANGE_COMMAND_LIST[self.rr_index])
 
-    def update_settings(self, channel=0):
-        """ Checks GUI for settings updates and implements
-
-        :param channel: (int) channel of power meter to use
-        """
-
-        gui_wl = self.widgets['number_widget_4'].value()
-
-        if self.wavelength[channel] != gui_wl:
-            self.wavelength[channel] = gui_wl
-            self.pm[channel].set_wavelength(1, self.wavelength[channel])
-            self.pm[channel].set_wavelength(2, self.wavelength[channel])
-
-        gui_ir = self.gui.get_item_index(f'ir_{channel}')
-        if self.ir_index[channel] != gui_ir:
-            self.ir_index[channel] = gui_ir
-            self.pm[channel].set_range(2 * channel + 1, self.THORLABS_RANGE_COMMAND_LIST[self.ir_index[channel]])
-
-        gui_rr = self.gui.get_item_index(f'rr_{channel}')
-        if self.rr_index[channel] != gui_rr:
-            self.rr_index[channel] = gui_rr
-            self.pm[channel].set_range(2 * channel + 2, self.THORLABS_RANGE_COMMAND_LIST[self.rr_index[channel]])
-
     def run(self):
         # Continuously update data until paused
         self.running = True

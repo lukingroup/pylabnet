@@ -19,10 +19,10 @@ def launch(**kwargs):
                                   logger=kwargs['logger']
                                   )
 
-    device_key = settings['device_id']
+    device_addr = settings['device_id']
 
     newport_2936_driver = Driver(
-        device_key=device_key,
+        device_addr=device_addr,
         logger=kwargs['logger'])
 
     newport_2936_service = Service()

@@ -32,6 +32,10 @@ class Driver:
             self.log.info(f"Query result {str(query_result, encoding='utf-8')}.")
             self.log.info(f"Successfully connected to {device_key}.")
 
+            # Set power units
+            self.set_unit(1, "W")
+            self.set_unit(2, "W")
+            self.log.info(f"Set units to Watts.")
         except VisaIOError:
             self.log.error(f"Connection to {device_key} failed.")
 
@@ -78,19 +82,25 @@ class Driver:
         """
         return int(self.query(f"PM:CHANNEL?"))
 
-    def get_power(self):
+    def get_power(self, ch):
         """ Returns the power in current units on the active channel
+        :ch: (int) channel to access (either 1 or 2)
         :return: (float) power in the current units
         """
+        if ch is not None:
+            self.set_channel(ch)
         power = self.query(f"PM:POWER?")
         return float(power)
 
-    def set_unit(self, unit_str):
+    def set_unit(self, ch, unit_str):
         """ Set the current power unit on the active channel
+        :ch: (int) channel to access (either 1 or 2)
         :unit: (str) unit of power to be set
         :return: (int) operation error flag, 0 for no error
         """
         units_dict = {"A": 0, "V": 1, "W": 2, "W/cm^2": 3, "J": 4, "J/cm^2": 5, "dBm": 6}
+        if ch is not None:
+            self.set_channel(ch)
         if unit_str in units_dict:
             unit = units_dict[unit_str]
             return self.write(f"PM:UNITS {unit}")
@@ -98,71 +108,85 @@ class Driver:
             self.log.error(f"Invalid units {unit_str} chosen, please choose from {units_dict.keys()}")
             return 1
 
-    def get_unit(self):
+    def get_unit(self, ch):
         """ Returns the current power unit on the active channel
+        :ch: (int) channel to access (either 1 or 2)
         :return: (str) current unit of power
         """
         unit = int(self.query(f"PM:UNITS?"))
         units_dict = {0: "A", 1: "V", 2: "W", 3: "W/cm^2", 4: "J", 5: "J/cm^2", 6: "dBm", 11: "Sun"}
+        if ch is not None:
+            self.set_channel(ch)
         if unit in units_dict:
             return units_dict[unit]
         else:
             self.log.error(f"Invalid unit {unit} returned.")
             return None
 
-    def get_wavelength(self):
+    def get_wavelength(self, ch):
         """ Returns the current wavelength in nm on the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :return: (int) wavelength setting for responsivity purposes.
         """
-        wavelength = self.device.query(f'PM:LAMBDA?')
-        return float(wavelength)
+        if ch is not None:
+            self.set_channel(ch)
+        wavelength = self.query(f'PM:LAMBDA?')
+        return int(wavelength)
 
-    def set_wavelength(self, wavelength):
+    def set_wavelength(self, ch, wavelength):
         """ Sets the wavelength on the active channel for responsivity calibration.
-
-        :wavelength: (float) desired wavelength (nm) setting
+        :ch: (int) channel to access (either 1 or 2)
+        :wavelength: (int) desired wavelength (nm) setting
         :return: (int) operation error flag, 0 for no error
         """
-        return self.write(f'PM:LAMBDA {wavelength}')
+        if ch is not None:
+            self.set_channel(ch)
+        return self.write(f'PM:LAMBDA {int(wavelength)}')
 
-    def get_auto(self):
+    def get_auto(self, ch):
         """ Returns the current auto power-range setting on the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :return: (int) 1 for auto, 0 for manual mode
         """
+        if ch is not None:
+            self.set_channel(ch)
         auto = self.query(f'PM:AUTO?')
         return int(auto)
 
-    def set_auto(self, auto):
+    def set_auto(self, ch, auto):
         """ Sets the current auto power-range setting on the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :auto: (int) 1 for auto, 0 for manual mode
         :return: (int) operation error flag, 0 for no error
         """
+        auto = int(auto) # Convert bools to ints
+        if ch is not None:
+            self.set_channel(ch)
         if auto not in [0, 1]:
             self.log.error(f"Auto should be either 0 or 1.")
             return 1
         return self.write(f'PM:AUTO {auto}')
 
-    def get_range(self):
+    def get_range(self, ch):
         """ Returns the current power range for the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :return: (int) number from 0-7 indicating range. For our current sensor at 737nm,
         these correspond to 269 nW x 10**n.
         """
-
+        if ch is not None:
+            self.set_channel(ch)
         pr = self.query(f'PM:RANGE?')
         return int(pr)
 
-    def set_range(self, p_range):
+    def set_range(self, ch, p_range):
         """ Sets the power range for the active channel
-
+        :ch: (int) channel to access (either 1 or 2)
         :p_range: (int) number from 0-7 indicating range. For our current sensor at 737nm,
         these correspond to 269 nW x 10**n.
         :return: (int) operation error flag, 0 for no error
         """
-
+        if ch is not None:
+            self.set_channel(ch)
         if p_range not in range(8):
             self.log.error(f"p_range should be an int from 0-7.")
             return 1
@@ -188,7 +212,7 @@ class NewportUSB():
         self.dll = ctypes.windll.LoadLibrary('usbdll.dll')
 
         # Define type signatures for functions -- not strictly necessary but will help catch errors
-        # Full type signatures and function headers are NewpDll.h
+        # Full type signatures and function headers are in NewpDll.h
         self.dll.newp_usb_open_devices.argtypes = [ctypes.c_int, ctypes.c_bool, ctypes.POINTER(ctypes.c_int)]
         self.dll.newp_usb_open_devices.retype = ctypes.c_long
 
@@ -233,7 +257,7 @@ class NewportUSB():
         self.set_device(device_key)
 
     def set_device(self, device_key):
-        """ Set a given device as default so that all communuications are direct at that
+        """ Set a given device as default so that all communuications are directed at that
         device unless specified otherwise.
 
         :device_key: (str) Device key of the desired default device.
@@ -263,7 +287,7 @@ class NewportUSB():
 
         if err_flag:
             self.log.error(f"Error while writing command {command} to device {device_key}!")
-            raise VisaIOError
+
         return err_flag
 
     def write(self, command):
@@ -297,7 +321,7 @@ class NewportUSB():
 
         if err_flag:
             self.log.error(f"Error while reading from device {device_key}!")
-            raise VisaIOError
+            return 0, 0, 1
 
         if bytes_read == max_read_length:
             self.log.warn("Read length is equal to buffer length -- possibly need a larger buffer.")

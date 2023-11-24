@@ -10,32 +10,32 @@ class Service(ServiceBase):
     def exposed_set_channel(self, ch):
         return self._module.set_channel(ch)
 
-    def exposed_get_power(self):
-        return self._module.get_power()
+    def exposed_get_power(self, ch):
+        return self._module.get_power(ch)
 
-    def exposed_get_unit(self):
-        return self._module.get_unit()
+    def exposed_get_unit(self, ch):
+        return self._module.get_unit(ch)
 
-    def exposed_set_unit(self, unit_str):
-        return self._module.set_unit(unit_str)
+    def exposed_set_unit(self, ch, unit_str):
+        return self._module.set_unit(ch, unit_str)
 
-    def exposed_get_wavelength(self):
-        return self._module.get_wavelength()
+    def exposed_get_wavelength(self, ch):
+        return self._module.get_wavelength(ch)
 
-    def exposed_set_unit(self, wavelength):
-        return self._module.set_wavelength(wavelength)
+    def exposed_set_wavelength(self, ch, wavelength):
+        return self._module.set_wavelength(ch, wavelength)
 
-    def exposed_get_auto(self):
-        return self._module.get_auto()
+    def exposed_get_auto(self, ch):
+        return self._module.get_auto(ch)
 
-    def exposed_set_auto(self, auto):
-        return self._module.set_auto(auto)
+    def exposed_set_auto(self, ch, auto):
+        return self._module.set_auto(ch, auto)
 
-    def exposed_get_range(self):
-        return self._module.get_range()
+    def exposed_get_range(self, ch):
+        return self._module.get_range(ch)
 
-    def exposed_set_range(self, range):
-        return self._module.set_range(range)
+    def exposed_set_range(self, ch, range):
+        return self._module.set_range(ch, range)
 
 
 class Client(ClientBase):
@@ -46,29 +46,29 @@ class Client(ClientBase):
     def set_channel(self, ch):
         return self._service.exposed_set_channel(ch)
 
-    def get_power(self):
-        return self._service.exposed_get_power()
+    def get_power(self, ch):
+        return self._service.exposed_get_power(ch)
 
-    def get_unit(self):
-        return self._service.exposed_get_unit()
+    def get_unit(self, ch):
+        return self._service.exposed_get_unit(ch)
 
-    def set_unit(self, unit_str):
-        return self._service.exposed_set_unit(unit_str)
+    def set_unit(self, ch, unit_str):
+        return self._service.exposed_set_unit(ch, unit_str)
 
-    def get_wavelength(self):
-        return self._service.exposed_get_wavelength()
+    def get_wavelength(self, ch):
+        return self._service.exposed_get_wavelength(ch)
 
-    def set_wavelength(self, wavelength):
-        return self._service.exposed_set_wavelength(wavelength)
+    def set_wavelength(self, ch, wavelength):
+        return self._service.exposed_set_wavelength(ch, wavelength)
 
-    def get_auto(self):
-        return self._service.exposed_get_auto()
+    def get_auto(self, ch):
+        return self._service.exposed_get_auto(ch)
 
-    def set_auto(self, auto):
-        return self._service.exposed_set_auto(auto)
+    def set_auto(self, ch, auto):
+        return self._service.exposed_set_auto(ch, auto)
 
-    def get_range(self):
-        return self._service.exposed_get_range()
+    def get_range(self, ch):
+        return self._service.exposed_get_range(ch)
 
-    def set_range(self, range):
-        return self._service.exposed_set_range(range)
+    def set_range(self, ch, range):
+        return self._service.exposed_set_range(ch, range)

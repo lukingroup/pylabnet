@@ -20,7 +20,7 @@ THORLABS_RANGE_DISPLAY_LIST = [
     "1 mW", "10 mW", "100 mW", "1 W", "10 W", "100 W", "1 kW"
 ]
 
-NEWPORT_RANGE_COMMAND_LIST = ["Auto", 0, 1, 2, 3, 4, 5, 6, 7]
+NEWPORT_RANGE_COMMAND_LIST = ["AUTO", 0, 1, 2, 3, 4, 5, 6, 7]
 NEWPORT_RANGE_DISPLAY_LIST = [
     "Auto", "281 nW", "2.81 uW", "28.1 uW", "281 uW", "2.81 mW",
     "28.1 mW", "281 mW", "2.81 W"
@@ -277,10 +277,13 @@ class PMInterface:
     def set_range(self, channel, p_range):
         if self.type == 'thorlabs_pm320e':
             return self.client.set_range(channel, p_range)
-        # Newport's Auto mode will take precedence if still active
         elif self.type == 'newport_2936':
-            self.client.set_auto(channel, False)
-            return self.client.set_range(channel, p_range)
+            if p_range == "AUTO":
+                self.set_auto(channel)
+            else:
+                # Newport's Auto mode will take precedence if still active
+                self.client.set_auto(channel, False)
+                return self.client.set_range(channel, p_range)
         else:
             return
 

@@ -9,14 +9,17 @@ from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, fin
 from pylabnet.network.client_server import thorlabs_pm320e
 
 # Time between power meter calls to prevent crashes
-BUFFER = 5e-3
+THORLABS_RANGE_COMMAND_LIST = [
+    'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW',
+    'R1MW', 'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
+]
+THORLABS_RANGE_DISPLAY_LIST = [
+    "Auto", "1 nW", "10 nW", "100 nW", "1 uW", "10 uW", "100 uW",
+    "1 mW", "10 mW", "100 mW", "1 W", "10 W", "100 W", "1 kW"
+]
 
 
 class Monitor:
-    RANGE_LIST = [
-        'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW', 'R1MW',
-        'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
-    ]
 
     def __init__(self, pm_client, gui='fiber_coupling', logger=None, calibration=None, name=None, port=None):
         """ Instantiates a monitor for 2-ch power meter with GUI
@@ -25,7 +28,7 @@ class Monitor:
         :param gui_client: client of monitor GUI
         :param logger: instance of LogClient
         :calibration: (float) Calibration value for power meter.
-        :name: (str) Humand-readable name of the power meter.
+        :name: (str) Human-readable name of the power meter.
         """
 
         self.log = LogHandler(logger)
@@ -97,11 +100,11 @@ class Monitor:
         if channel == 0:
             if self.ir_index != range_index:
                 self.ir_index = range_index
-                self.pm.set_range(1, self.RANGE_LIST[self.ir_index])
+                self.pm.set_range(1, self.THORLABS_RANGE_COMMAND_LIST[self.ir_index])
         elif channel == 1:
             if self.rr_index != range_index:
                 self.rr_index = range_index
-                self.pm.set_range(2, self.RANGE_LIST[self.rr_index])
+                self.pm.set_range(2, self.THORLABS_RANGE_COMMAND_LIST[self.rr_index])
 
     def update_settings(self, channel=0):
         """ Checks GUI for settings updates and implements
@@ -119,12 +122,12 @@ class Monitor:
         gui_ir = self.gui.get_item_index(f'ir_{channel}')
         if self.ir_index[channel] != gui_ir:
             self.ir_index[channel] = gui_ir
-            self.pm[channel].set_range(2 * channel + 1, self.RANGE_LIST[self.ir_index[channel]])
+            self.pm[channel].set_range(2 * channel + 1, self.THORLABS_RANGE_COMMAND_LIST[self.ir_index[channel]])
 
         gui_rr = self.gui.get_item_index(f'rr_{channel}')
         if self.rr_index[channel] != gui_rr:
             self.rr_index[channel] = gui_rr
-            self.pm[channel].set_range(2 * channel + 2, self.RANGE_LIST[self.rr_index[channel]])
+            self.pm[channel].set_range(2 * channel + 2, self.THORLABS_RANGE_COMMAND_LIST[self.rr_index[channel]])
 
     def run(self):
         # Continuously update data until paused
@@ -163,8 +166,7 @@ class Monitor:
         values = [p_in, p_ref, efficiency]
 
         # For the two power readings, reformat.
-        # E.g., split(0.003) will return (3, -3)
-        # And prefix(-3) will return 'm'
+        # E.g., split(0.003) will return (3, -3) and prefix(-3) will return 'm'
         formatted_values = [split_in[0], split_ref[0], efficiency]
         value_prefixes = [prefix(split_val[1]) for split_val in [split_in, split_ref]]
 

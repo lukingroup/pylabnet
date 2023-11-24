@@ -20,6 +20,12 @@ THORLABS_RANGE_DISPLAY_LIST = [
     "1 mW", "10 mW", "100 mW", "1 W", "10 W", "100 W", "1 kW"
 ]
 
+NEWPORT_RANGE_COMMAND_LIST = ["Auto", 0, 1, 2, 3, 4, 5, 6, 7]
+NEWPORT_RANGE_DISPLAY_LIST = [
+    "Auto", "281 nW", "2.81 uW", "28.1 uW", "281 uW", "2.81 mW",
+    "28.1 mW", "281 mW", "2.81 W"
+]
+
 
 class Monitor:
 
@@ -58,6 +64,18 @@ class Monitor:
             name_label=1,
             combo_widget=2
         )
+
+        # Dynamically populate the power ranges
+        if self.pm.type == "thorlabs_pm320e":
+            power_dropdown_list, power_command_list = THORLABS_RANGE_DISPLAY_LIST, THORLABS_RANGE_COMMAND_LIST
+        elif self.pm.type == "newport_2936":
+            power_dropdown_list, power_command_list = NEWPORT_RANGE_DISPLAY_LIST, NEWPORT_RANGE_COMMAND_LIST
+        else:
+            power_dropdown_list, power_command_list = ["Auto"], ["Auto"]
+
+        for power_str in power_dropdown_list:
+            self.widgets['combo_widget'][0].addItem(power_str)
+            self.widgets['combo_widget'][1].addItem(power_str)
 
         self._initialize_gui()
 

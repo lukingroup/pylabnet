@@ -548,76 +548,6 @@
         <property name="editable">
          <bool>true</bool>
         </property>
-        <item>
-         <property name="text">
-          <string>Auto</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 kW</string>
-         </property>
-        </item>
        </widget>
       </item>
       <item>
@@ -653,76 +583,6 @@
         <property name="editable">
          <bool>true</bool>
         </property>
-        <item>
-         <property name="text">
-          <string>Auto</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 kW</string>
-         </property>
-        </item>
        </widget>
       </item>
      </layout>
@@ -735,7 +595,7 @@
      <x>0</x>
      <y>0</y>
      <width>2084</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

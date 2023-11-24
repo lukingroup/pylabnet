@@ -67,13 +67,13 @@ class Monitor:
 
         # Dynamically populate the power ranges
         if self.pm.type == "thorlabs_pm320e":
-            power_dropdown_list, power_command_list = THORLABS_RANGE_DISPLAY_LIST, THORLABS_RANGE_COMMAND_LIST
+            self.power_dropdown_list, self.power_command_list = THORLABS_RANGE_DISPLAY_LIST, THORLABS_RANGE_COMMAND_LIST
         elif self.pm.type == "newport_2936":
-            power_dropdown_list, power_command_list = NEWPORT_RANGE_DISPLAY_LIST, NEWPORT_RANGE_COMMAND_LIST
+            self.power_dropdown_list, self.power_command_list = NEWPORT_RANGE_DISPLAY_LIST, NEWPORT_RANGE_COMMAND_LIST
         else:
-            power_dropdown_list, power_command_list = ["Auto"], ["Auto"]
+            self.power_dropdown_list, self.power_command_list = ["Auto"], ["Auto"]
 
-        for power_str in power_dropdown_list:
+        for power_str in self.power_dropdown_list:
             self.widgets['combo_widget'][0].addItem(power_str)
             self.widgets['combo_widget'][1].addItem(power_str)
 
@@ -116,16 +116,19 @@ class Monitor:
     def _update_range(self, channel):
         """ Update range settings if combobox has been changed."""
 
+        # Current index of range dropdown box
         range_index = self.widgets['combo_widget'][channel].currentIndex()
 
+        # Previous range index is ir_index or rr_index depending on which channel was changed
+        # Channel is 0-indexed (0 or 1)
         if channel == 0:
             if self.ir_index != range_index:
                 self.ir_index = range_index
-                self.pm.set_range(1, self.THORLABS_RANGE_COMMAND_LIST[self.ir_index])
+                self.pm.set_range(1, self.power_command_list[self.ir_index])
         elif channel == 1:
             if self.rr_index != range_index:
                 self.rr_index = range_index
-                self.pm.set_range(2, self.THORLABS_RANGE_COMMAND_LIST[self.rr_index])
+                self.pm.set_range(2, self.power_command_list[self.rr_index])
 
     def run(self):
         # Continuously update data until paused
@@ -143,7 +146,8 @@ class Monitor:
         try:
             p_in = self.pm.get_power(1)
             split_in = split(p_in)
-
+            if p_in > 1E20:
+                raise OverflowError
         # Handle zero error
         except OverflowError:
             p_in = 0
@@ -151,6 +155,8 @@ class Monitor:
         try:
             p_ref = self.pm.get_power(2)
             split_ref = split(p_ref)
+            if p_ref > 1E20:
+                raise OverflowError
         except OverflowError:
             p_ref = 0
             split_ref = (0, 0)
@@ -227,8 +233,11 @@ class PMInterface:
             ]
 
     def get_power(self, channel):
+        # Thorlabs and Newport are 1-indexed
         if self.type in ['thorlabs_pm320e', 'newport_2936']:
             return self.client.get_power(channel)
+
+        # DAQ is 0-indexed
         else:
             index = channel - 1
             return ((self.m[index]
@@ -255,7 +264,11 @@ class PMInterface:
             return
 
     def set_range(self, channel, p_range):
-        if self.type in ['thorlabs_pm320e', 'newport_2936']:
+        if self.type == 'thorlabs_pm320e':
+            return self.client.set_range(channel, p_range)
+        # Newport's Auto mode will take precedence if still active
+        elif self.type == 'newport_2936':
+            self.client.set_auto(channel, False)
             return self.client.set_range(channel, p_range)
         else:
             return

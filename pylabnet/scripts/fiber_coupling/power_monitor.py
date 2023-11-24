@@ -213,6 +213,8 @@ class PMInterface:
             self.type = 'thorlabs_pm320e'
         elif isinstance(self.client, newport_2936.Client):
             self.type = 'newport_2936'
+            self.input_bg = self.config['input_bg']
+            self.ref_bg = self.config['reflection_bg']
         else:
             self.type = 'nidaqmx'
             self.channels = [
@@ -234,8 +236,17 @@ class PMInterface:
 
     def get_power(self, channel):
         # Thorlabs and Newport are 1-indexed
-        if self.type in ['thorlabs_pm320e', 'newport_2936']:
+        if self.type == 'thorlabs_pm320e':
             return self.client.get_power(channel)
+        # Newport has an extra calibration for background power reading with no light
+        elif self.type == 'newport_2936':
+            power_reading = self.client.get_power(channel)
+            if channel == 1: # Input
+                return power_reading - self.input_bg
+            elif channel == 2: # Reflection
+                return power_reading - self.ref_bg
+            else: # Should not occur
+                return power_reading
 
         # DAQ is 0-indexed
         else:

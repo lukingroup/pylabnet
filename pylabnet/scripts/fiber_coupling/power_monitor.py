@@ -6,9 +6,11 @@ from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogHandler
 import pyqtgraph as pg
 from pylabnet.utils.helper_methods import generate_widgets, unpack_launcher, find_client, load_config, get_gui_widgets, load_script_config, get_ip
-from pylabnet.network.client_server import thorlabs_pm320e
+from pylabnet.network.client_server import thorlabs_pm320e, newport_2936
 
 # Time between power meter calls to prevent crashes
+BUFFER = 5e-3
+
 THORLABS_RANGE_COMMAND_LIST = [
     'AUTO', 'R1NW', 'R10NW', 'R100NW', 'R1UW', 'R10UW', 'R100UW',
     'R1MW', 'R10MW', 'R100MW', 'R1W', 'R10W', 'R100W', 'R1KW'
@@ -70,8 +72,9 @@ class Monitor:
         )
 
         # Configure Range to be Auto
-        self.pm.set_range(1, self.RANGE_LIST[0])
-        self.pm.set_range(2, self.RANGE_LIST[0])
+        self.pm.set_auto(1)
+        self.pm.set_auto(2)
+
         self.ir_index = 0
         self.rr_index = 0
 
@@ -141,9 +144,6 @@ class Monitor:
     def _update_output(self):
         """ Runs the power monitor """
 
-        # Check for/implement changes to settings
-        #self.update_settings(0)
-
         # Get all current values
         try:
             p_in = self.pm.get_power(1)
@@ -210,6 +210,8 @@ class PMInterface:
         self.config = config
         if isinstance(self.client, thorlabs_pm320e.Client):
             self.type = 'thorlabs_pm320e'
+        elif isinstance(self.client, newport_2936.Client):
+            self.type = 'newport_2936'
         else:
             self.type = 'nidaqmx'
             self.channels = [
@@ -230,8 +232,7 @@ class PMInterface:
             ]
 
     def get_power(self, channel):
-
-        if self.type == 'thorlabs_pm320e':
+        if self.type in ['thorlabs_pm320e', 'newport_2936']:
             return self.client.get_power(channel)
         else:
             index = channel - 1
@@ -241,26 +242,34 @@ class PMInterface:
                     + self.b[index]) * 1e-6
 
     def get_wavelength(self, channel):
-        if self.type == 'thorlabs_pm320e':
+        if self.type in ['thorlabs_pm320e', 'newport_2936']:
             return self.client.get_wavelength(channel)
         else:
             return 737
 
     def get_range(self, channel):
-        if self.type == 'thorlabs_pm320e':
+        if self.type in ['thorlabs_pm320e', 'newport_2936']:
             return self.client.get_range(channel)
         else:
             return 'AUTO'
 
     def set_wavelength(self, channel, wavelength):
-        if self.type == 'thorlabs_pm320e':
+        if self.type in ['thorlabs_pm320e', 'newport_2936']:
             return self.client.set_wavelength(channel, wavelength)
         else:
             return
 
     def set_range(self, channel, p_range):
-        if self.type == 'thorlabs_pm320e':
+        if self.type in ['thorlabs_pm320e', 'newport_2936']:
             return self.client.set_range(channel, p_range)
+        else:
+            return
+
+    def set_auto(self, channel):
+        if self.type == 'thorlabs_pm320e':
+            return self.client.set_range(channel, "AUTO")
+        elif self.type == 'newport_2936':
+            return self.client.set_auto(channel, True)
         else:
             return
 

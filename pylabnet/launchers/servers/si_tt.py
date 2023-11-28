@@ -47,6 +47,14 @@ def launch(**kwargs):
 
     for channel, trig_level in config['triggers'].items():
         tagger.setTriggerLevel(int(channel), float(trig_level))
+        kwargs['logger'].info(f'Set the trigger for Ch {int(channel)} to {float(trig_level)} V.')
+        kwargs['logger'].info(f'Trigger for Ch {int(channel)} is now read at {tagger.getTriggerLevel(int(channel))} V.')
+
+    if 'dead_times' in config:
+        for channel, dead_time in config['dead_times'].items():
+            tagger.setDeadtime(int(channel), int(dead_time))
+            kwargs['logger'].info(f'Set the dead time for Ch {int(channel)} to {int(dead_time)} ps.')
+            kwargs['logger'].info(f'Dead time for Ch {int(channel)} is now read at {tagger.getDeadtime(int(channel))} ps.')
 
     cnt_trace_wrap = Wrap(
         tagger=tagger,

@@ -4,7 +4,7 @@ from pylabnet.hardware.staticline.staticline_devices import registered_staticlin
 
 class Driver():
 
-    def __init__(self, name, logger, hardware_client, hardware_type, config):
+    def __init__(self, name, logger, hardware_client, hardware_type, hardware_config, staticline_config):
         '''High level staticline class.
 
         This class is used in conjunction with hardware modules to send out digital
@@ -22,8 +22,10 @@ class Driver():
         :hardware_type: (str)
             Name of the hardware to be controlled, naming is determined by the
             device server name.
-        :config: (dict)
-            Contains parameters needed to setup the hardware as a staticline.
+        :hardware_config: (dict)
+            Parameters needed to setup the hardware controlling the associated staticlines.
+        :staticline_config: (dict)
+            Parameters about each individual staticline control.
         '''
 
         self.name = name
@@ -40,11 +42,13 @@ class Driver():
 
         # Instantiate hardware handler. The hardware_handler will handle any
         # calls to the staticline functions like up/down.
+
         self.hardware_handler = HardwareHandler(
             name=name,
             log=self.log,
             hardware_client=hardware_client,
-            config=config
+            hardware_config=hardware_config,
+            config=staticline_config
         )
 
     def up(self):

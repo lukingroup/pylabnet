@@ -226,7 +226,7 @@ class TimeTraceGui(TimeTrace):
 
             # Setup gated channels
             for gate_ch in self.config['gate_ch']:
-                ch_name = f'Gated histogram channel {gate_ch}'
+                ch_name = f'Gated histogram channel {self.config["click_ch"]} with gate {gate_ch}'
                 ctr.create_gated_channel(
                     ch_name,
                     self.config['click_ch'],
@@ -470,7 +470,7 @@ class TimeTraceGui(TimeTrace):
         for index, gate_ch in enumerate(self.config['gate_ch']):
 
             # Configure widgets
-            ch_name = f'Gated histogram channel {gate_ch}'
+            ch_name = f'Gated histogram channel {self.config["click_ch"]} with gate {gate_ch}'
             hbox = QtWidgets.QHBoxLayout()
             hbox.addWidget(QtWidgets.QLabel(text=f'Gate {gate_ch}'))
             hbox.addWidget(QtWidgets.QLabel(text='Delay: '))

@@ -4,6 +4,7 @@
 import os
 import sys
 import importlib
+import uuid
 import time
 from datetime import datetime
 import numpy as np
@@ -14,6 +15,7 @@ from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.helper_methods import load_config, generic_save, unpack_launcher, save_metadata, load_script_config, find_client, get_ip
 from pylabnet.scripts.data_center import datasets
+from PyQt5.QtWidgets import QLabel, QLineEdit, QPushButton
 
 
 REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
@@ -47,6 +49,9 @@ class DataTaker:
 
         # Configure list of missing clients
         self.missing_clients = {}
+
+        # Keep track of valid init dict
+        self.valid_init_dict = False
 
         # Setup Autosave
         # First check whether autosave is specified in config file
@@ -113,18 +118,121 @@ class DataTaker:
         """
 
         filepath = self.gui.exp.model().filePath(index)
+
         if not os.path.isdir(filepath):
             with open(filepath, 'r') as exp_file:
                 exp_content = exp_file.read()
 
             self.gui.exp_preview.setText(exp_content)
             self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
-                                            'color: rgb(255, 255, 255); '
-                                            'background-color: rgb(0, 0, 0);')
+                                               'color: rgb(255, 255, 255); '
+                                               'background-color: rgb(0, 0, 0);')
             self.log.update_metadata(experiment_file=exp_content)
 
             self.cur_path = self.gui.exp.model().filePath(self.gui.exp.currentIndex())
-            self.exp_name = os.path.split(os.path.basename(self.cur_path))[1][:-3]
+
+            # build experiment name by turning path into module
+            # for example: folder1/folder2/exp.py --> folder1.folder2.exp
+            path_beyond_exp_path = self.cur_path.split('/')[len(self.exp_path.split(os.sep)):]
+            # remove .py
+            path_beyond_exp_path[-1] = path_beyond_exp_path[-1][:-3]
+
+            self.exp_name = ''
+            for module_path in path_beyond_exp_path:
+                self.exp_name += module_path
+                self.exp_name += '.'
+            # remove final '.'
+            self.exp_name = self.exp_name[:-1]
+
+        self.load_init_dict(index)
+
+    def load_init_dict(self, index):
+        """ Displays the currently clicked experiment's init dict
+
+        :param index: index of (QTreeView) entry to display
+        """
+
+        filepath = self.gui.exp.model().filePath(index)
+        if not os.path.isdir(filepath):
+
+            spec = importlib.util.spec_from_file_location("init_dict", filepath)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            self.valid_init_dict = True
+
+            try:
+                self.init_dict = mod.INIT_DICT
+            except AttributeError:
+                self.init_dict = {}
+                self.valid_init_dict = False
+
+        self.update_init_form()
+
+    def create_gridlayout(self):
+
+        input_init_scrollarea = self.gui.init_dict_scrollarea
+
+        self.gui.scrollAreaWidgetContents = QtWidgets.QWidget()
+        self.gui.input_dict_gridlayout = QtWidgets.QGridLayout(self.gui.scrollAreaWidgetContents)
+        input_init_scrollarea.setWidget(self.gui.scrollAreaWidgetContents)
+
+    def update_init_form(self):
+
+        self.create_gridlayout()
+
+        # Build input dict modification form
+        input_grid_layout = self.gui.input_dict_gridlayout
+
+        if not self.valid_init_dict:
+            label = QLabel("No INIT_DICT found.")
+            input_grid_layout.addWidget(label, 0, 0)
+        else:
+
+            try:
+                for i, (variable_name, entry_dict) in enumerate(self.init_dict.items()):
+                    for labelname, default_value in entry_dict.items():
+                        label = QLabel(str(labelname))
+                        value_entry = QLineEdit(str(default_value))
+                        input_grid_layout.addWidget(label, i, 0)
+                        input_grid_layout.addWidget(value_entry, i, 1)
+            except AttributeError:
+                label = QLabel("INIT_DICT found, but structure not valid.")
+                input_grid_layout.addWidget(label, 0, 0)
+                self.valid_init_dict = False
+
+    def load_input_dict(self):
+        """ Load input dict from Gridlayout in GUI"""
+
+        if self.valid_init_dict:
+            # load input dict
+            input_grid_layout = self.gui.input_dict_gridlayout
+            input_scrollarea = self.gui.scrollAreaWidgetContents
+
+            num_cols = input_grid_layout.columnCount()
+            num_rows = input_grid_layout.rowCount()
+            init_widgets = input_scrollarea.children()[1:] # omitting first one since it's the gridlayout
+
+            assert len(init_widgets) == num_cols * num_rows
+
+            reconstructed_init_dict = {}
+
+            for i in range(num_rows):
+                reconstructed_init_dict[init_widgets[i * 2].text()] = float(init_widgets[i * 2 + 1].text())
+
+            # reconstructed_init_dict is of form {"labelname" : "value"}
+            # Now need to match it to the variable names:
+            input_init_dict = self.init_dict # Is of form {"varname" : {"labelname" : "value"}}
+
+            new_input_dict = self.init_dict.copy()
+
+            for varname, entry_dict in new_input_dict.items():
+                for labelname, _ in entry_dict.items():
+                    new_input_dict[varname] = {labelname: reconstructed_init_dict[labelname]}
+
+            # Commit input dict to parent dataset
+            self.dataset.set_input_dict(new_input_dict)
+        else:
+            pass
 
     def configure(self):
         """ Configures the currently selected experiment + dataset """
@@ -137,6 +245,9 @@ class DataTaker:
                 return
         except:
             pass
+
+        if not self.valid_init_dict:
+            self.log.warn("No valid INIT_DICT found.")
 
         # Load the config
         self.reload_config()
@@ -176,6 +287,9 @@ class DataTaker:
             self.log.error(error_msg)
             return
 
+        # Load input dict from GUI so it is accessible for config function.
+        self.load_input_dict()
+
         # Run any pre-experiment configuration
         try:
             self.module.configure(dataset=self.dataset, **self.clients)
@@ -187,7 +301,6 @@ class DataTaker:
         self.gui.exp_preview.setStyleSheet('font: 10pt "Consolas"; '
                                            'color: rgb(255, 255, 255); '
                                            'background-color: rgb(50, 50, 50);')
-
 
     def clear_data(self):
         """ Clears all data from curves"""
@@ -276,7 +389,6 @@ class DataTaker:
             # self.experiment_thread.running = False
             self.experiment_worker.running = False
 
-
     def stop(self):
         """ Stops the experiment"""
 
@@ -296,15 +408,18 @@ class DataTaker:
     def save(self):
         """ Saves data """
 
+        unique_id = str(uuid.uuid4())
+
         self.log.update_metadata(notes=self.gui.notes.toPlainText())
         filename = self.gui.save_name.text()
         directory = self.config['save_path']
         self.dataset.save(
             filename=filename,
             directory=directory,
-            date_dir=True
+            date_dir=True,
+            unique_id=unique_id
         )
-        save_metadata(self.log, filename, directory, True)
+        save_metadata(self.log, filename, directory, True, unique_id)
         self.log.info('Data saved')
 
     def reload_config(self):
@@ -338,6 +453,7 @@ class ExperimentThread(QtCore.QThread):
                 status_flag=self.status_flag,
                 **self.params)
             self.params['iter_num'] += 1
+
 
 class ExperimentWorker(QtCore.QObject):
     """ Worker for Thread that simply runs the experiment repeatedly """

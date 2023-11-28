@@ -3099,6 +3099,167 @@ color: rgb(255, 255, 255);</string>
          </item>
          <item>
           <layout class="QGridLayout" name="gridLayout_12">
+           <item row="2" column="1">
+            <widget class="QSpinBox" name="n_steps_9">
+             <property name="font">
+              <font>
+               <family>Calibri Light</family>
+               <pointsize>12</pointsize>
+               <weight>3</weight>
+               <italic>false</italic>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="maximum">
+              <number>100000</number>
+             </property>
+             <property name="value">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="3">
+            <widget class="QSpinBox" name="n_steps_3">
+             <property name="font">
+              <font>
+               <family>Calibri Light</family>
+               <pointsize>12</pointsize>
+               <weight>3</weight>
+               <italic>false</italic>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="maximum">
+              <number>100000</number>
+             </property>
+             <property name="value">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="2">
+            <widget class="QDoubleSpinBox" name="voltage_1">
+             <property name="styleSheet">
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <double>100.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>50.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QPushButton" name="is_moving_3">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>red_LED_off.svg</normaloff>
+               <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
+             </property>
+             <property name="checkable">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="3">
+            <widget class="QDoubleSpinBox" name="amplitude_3">
+             <property name="styleSheet">
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <double>100.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>50.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="3">
+            <widget class="QDoubleSpinBox" name="frequency_3">
+             <property name="styleSheet">
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
+             </property>
+             <property name="frame">
+              <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <double>20000.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>30.000000000000000</double>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="1">
             <widget class="QLabel" name="label_25">
              <property name="font">
@@ -3109,22 +3270,6 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="text">
               <string>X</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QLabel" name="label_26">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>16</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Z</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -3163,6 +3308,38 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="label_26">
+             <property name="font">
+              <font>
+               <family>Calibri Light</family>
+               <pointsize>16</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Z</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_31">
+             <property name="font">
+              <font>
+               <family>Calibri Light</family>
+               <pointsize>10</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Frequency (Hz)</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
            <item row="5" column="0">
             <widget class="QLabel" name="label_29">
              <property name="font">
@@ -3189,22 +3366,6 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="text">
               <string>DC Voltage (V)</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_31">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>10</pointsize>
-              </font>
-             </property>
-             <property name="text">
-              <string>Frequency (Hz)</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -3267,19 +3428,11 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QSpinBox" name="n_steps_9">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>12</pointsize>
-               <weight>3</weight>
-               <italic>false</italic>
-               <bold>false</bold>
-              </font>
-             </property>
+           <item row="4" column="1">
+            <widget class="QDoubleSpinBox" name="frequency_9">
              <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;</string>
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
              </property>
              <property name="frame">
               <bool>false</bool>
@@ -3290,11 +3443,14 @@ color: rgb(255, 255, 255);</string>
              <property name="buttonSymbols">
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
              <property name="maximum">
-              <number>100000</number>
+              <double>20000.000000000000000</double>
              </property>
              <property name="value">
-              <number>1</number>
+              <double>30.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -3321,32 +3477,6 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="value">
               <double>50.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="frequency_9">
-             <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
-             </property>
-             <property name="frame">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
-             </property>
-             <property name="decimals">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <double>20000.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>30.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -3402,24 +3532,29 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="2">
-            <widget class="QPushButton" name="is_moving_1">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
+           <item row="3" column="2">
+            <widget class="QDoubleSpinBox" name="amplitude_1">
+             <property name="styleSheet">
+              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
+color: rgb(255, 255, 255);</string>
              </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>red_LED_off.svg</normaloff>
-               <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
-             </property>
-             <property name="checkable">
+             <property name="frame">
               <bool>false</bool>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="buttonSymbols">
+              <enum>QAbstractSpinBox::NoButtons</enum>
+             </property>
+             <property name="decimals">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <double>100.000000000000000</double>
+             </property>
+             <property name="value">
+              <double>50.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -3454,55 +3589,24 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item row="3" column="2">
-            <widget class="QDoubleSpinBox" name="amplitude_1">
-             <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
+           <item row="1" column="2">
+            <widget class="QPushButton" name="is_moving_1">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
              </property>
-             <property name="frame">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset>
+               <normaloff>red_LED_off.svg</normaloff>
+               <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
+             </property>
+             <property name="checkable">
               <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
-             </property>
-             <property name="decimals">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <double>100.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>50.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="2">
-            <widget class="QDoubleSpinBox" name="frequency_1">
-             <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
-             </property>
-             <property name="frame">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
-             </property>
-             <property name="decimals">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <double>20000.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>30.000000000000000</double>
              </property>
             </widget>
            </item>
@@ -3532,112 +3636,8 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item row="6" column="2">
-            <widget class="QDoubleSpinBox" name="voltage_1">
-             <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
-             </property>
-             <property name="frame">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
-             </property>
-             <property name="decimals">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <double>100.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>50.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QPushButton" name="is_moving_3">
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset>
-               <normaloff>red_LED_off.svg</normaloff>
-               <normalon>red_LED_on.svg</normalon>red_LED_off.svg</iconset>
-             </property>
-             <property name="checkable">
-              <bool>false</bool>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="3">
-            <widget class="QSpinBox" name="n_steps_3">
-             <property name="font">
-              <font>
-               <family>Calibri Light</family>
-               <pointsize>12</pointsize>
-               <weight>3</weight>
-               <italic>false</italic>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;</string>
-             </property>
-             <property name="frame">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
-             </property>
-             <property name="maximum">
-              <number>100000</number>
-             </property>
-             <property name="value">
-              <number>1</number>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="3">
-            <widget class="QDoubleSpinBox" name="amplitude_3">
-             <property name="styleSheet">
-              <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
-color: rgb(255, 255, 255);</string>
-             </property>
-             <property name="frame">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="buttonSymbols">
-              <enum>QAbstractSpinBox::NoButtons</enum>
-             </property>
-             <property name="decimals">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <double>100.000000000000000</double>
-             </property>
-             <property name="value">
-              <double>50.000000000000000</double>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="3">
-            <widget class="QDoubleSpinBox" name="frequency_3">
+           <item row="4" column="2">
+            <widget class="QDoubleSpinBox" name="frequency_1">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>

@@ -2,41 +2,30 @@
 from pylabnet.utils.helper_methods import load_config
 
 
-def convert_awg_pin_to_dio_board(awgPinNumber, configFN="awg_dio_pin_mapping"):
+def convert_awg_pin_to_dio_board(awgPinNumber, breakout_dio_pin_mapping):
     """Computes the corresponding board and channel number on the DIO breakout for the
         corresponding input awgPinNumber given the mapping specificed in the configuration
         file provided.
     """
-    #First load the mapping config file
-    config = load_config(configFN)
-    #Get base pin index for board 0,1 and 2,3
-    baseB01 = config["B01_base"]
-    baseB23 = config["B23_base"]
 
-    currBase = 0
-    board = 0
+    # Check that no channels are duplicated
+    allocated_chs = []
+    for board in breakout_dio_pin_mapping:
+        allocated_chs.extend(list(range(board["ch_start"], board["ch_end"] + 1)))
 
-    #Now checking to see which board corresponds with our AWG pin index
-    if awgPinNumber >= baseB01 and awgPinNumber < baseB01 + 8:
-        #Corresponds with boards 0, 1
-        board = 0
-        currBase = baseB01
-    elif awgPinNumber >= baseB23 and awgPinNumber < baseB23 + 8:
-        #Corresponds with boards 2, 3
-        board = 2
-        currBase = baseB23
-    else:
-        #Means pin number is not covered by range of those currently connected to the dio
-        raise Exception("Invalid pin number")
+    # If there are duplicates, reject the mapping
+    if len(allocated_chs) != len(set(allocated_chs)):
+        raise ValueError("Invalid pin mapping, duplicated channels. ")
 
-    #Finally figure out the channel number within the pair of boards
-    channel = awgPinNumber - currBase
-    if (channel >= 4):
-        #If we are beyond channel 4, we are actually on the 2nd board in the pair so update accordingly
-        channel = channel - 4
-        board = board + 1
+    # Get the board that the desired pin lies on
+    for board in breakout_dio_pin_mapping:
+        if board["ch_start"] <= awgPinNumber <= board["ch_end"]:
+            board_num = board["board_num"]
+            channel = awgPinNumber - board["ch_start"] # channel number on that board
+            return board_num, channel
 
-    return board, channel
+    # If we reach here, it means we failed to find a channel
+    raise ValueError("Invalid pin number")
 
 
 def main():

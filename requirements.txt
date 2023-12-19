@@ -65,7 +65,7 @@ oauthlib==3.2.2
 packaging==20.9
 pandas==1.2.3
 pandocfilters==1.4.3
-paramiko==2.7.2
+paramiko==3.4.0
 parso==0.8.1
 pickleshare==0.7.5
 pillow==9.3.0

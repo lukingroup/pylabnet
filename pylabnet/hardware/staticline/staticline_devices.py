@@ -419,6 +419,23 @@ class MCCUSB3114(StaticLineHardwareHandler):
             self.up()
 
 
+class PhotonSpotBias(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.ch = self.config['ch_name']
+        self.log.info(f'Photon Spot bias box channel {self.ch} successfully assigned to staticline {self.name}')
+
+    def up(self):
+        self.hardware_client.delatch(self.ch)
+
+    def down(self):
+        self.hardware_client.delatch(self.ch)
+
+
 ################################################################################
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
@@ -434,5 +451,6 @@ registered_staticline_modules = {
     'CLD101x': CLD101x,
     'SMC100A': SMC100A,
     'superK': superK,
-    'mcc_usb_3114': MCCUSB3114
+    'mcc_usb_3114': MCCUSB3114,
+    'photonspot_bias': PhotonSpotBias
 }

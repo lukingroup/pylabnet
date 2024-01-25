@@ -20,9 +20,11 @@ def launch(**kwargs):
                                   )
 
     serial_number = settings['device_id']
+    channels = settings['channels']
 
     photonspot_bias_driver = Driver(
         serial_number=serial_number,
+        channels=channels,
         logger=kwargs['logger'])
 
     photonspot_bias_service = Service()

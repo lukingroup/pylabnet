@@ -29,8 +29,8 @@ class Driver:
             self.dac.connect(urllist=urllist, serial_number=serial_number)
 
             for ch in self.channels:
-                self.set_bias(ch, ch["bias_current"])
-                self.log.info(f"Set bias current {ch['bias_current']} uA for channel {ch}.")
+                self.set_bias(ch, self.channels[ch]["bias_current"])
+                self.log.info(f"Set bias current {self.channels[ch]['bias_current']} uA for channel {ch}.")
 
         except Exception as e:
             self.log.error(e)

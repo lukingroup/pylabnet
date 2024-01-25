@@ -47,7 +47,7 @@ class Driver:
         """
         self.dac.set_bias(channel=ch, biascurrent=0.0)
 
-    def set_zero(self, ch, bias_current):
+    def set_bias(self, ch, bias_current):
         """ Sets the bias current of the specified channel.
         :ch: (str) Channel name (e.g. "1A")
         :bias_current: (float) Bias current in uA

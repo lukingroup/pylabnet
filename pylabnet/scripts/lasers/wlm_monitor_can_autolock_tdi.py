@@ -231,17 +231,17 @@ class WlmMonitor:
         for channel in self.channels:
             if np.abs(channel.current_voltage) > 9:
                 self.update_parameters(dict(
-                channel=channel.number,
-                lock=False))
+                    channel=channel.number,
+                    lock=False))
                 self.zero_voltage(channel)
-                time.sleep(3)
+                time.sleep(1)
                 freq = self.wlm_client.get_wavelength(channel.number)
                 self.update_parameters(dict(
-                channel=channel.number,
-                setpoint=freq))
+                    channel=channel.number,
+                    setpoint=freq))
                 self.update_parameters(dict(
-                channel=channel.number,
-                lock=True))
+                    channel=channel.number,
+                    lock=True))
         self._update_channels()
         self.gui.force_update()
 
@@ -440,8 +440,6 @@ class WlmMonitor:
             self.widgets['voltage'][index].setValue(channel.voltage[-1])
             self.widgets['curve'][4 * index + 3].setData(channel.error)
             self.widgets['error'][index].setValue(channel.error[-1])
-
-
 
     def _get_gui_data(self):
         """ Updates setpoint and lock parameters with data pulled from GUI
@@ -706,16 +704,12 @@ class Channel:
         """Zeros the voltage (if applicable)"""
 
         #try:
-        self.log.info('1')
         if self.ao is not None:
-            self.log.info('2')
             v_set = (self._min_voltage + self._max_voltage) / 2
-            self.log.info('3')
             self.ao['client'].set_ao_voltage(
                 ao_channel=self.ao['channel'],
                 voltages=[v_set]
             )
-            self.log.info('4')
             self.current_voltage = v_set
         #except EOFError:
         #    self.ao = None
@@ -821,7 +815,7 @@ def launch(**kwargs):
 
     logger = kwargs['logger']
     config = load_script_config(
-        script='wlm_monitor_b16',
+        script='wlm_monitor_gandalf',
         config=kwargs['config'],
         logger=logger
     )

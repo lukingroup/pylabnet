@@ -35,7 +35,7 @@ class Driver:
         return self.device.write_binary_values(command, data, **kwargs)
 
 
-class Tek70KHelper:
+class Tek70K:
     """ Module with a bunch of helpful functions for the Tektronix70k AWG.
     Mostly just wrappers around sending and receiving text commands. """
 

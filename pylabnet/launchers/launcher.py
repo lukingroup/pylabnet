@@ -229,18 +229,23 @@ class Launcher:
         :param port: (int) port number of server
         """
         server = module
+        try:
+            full_module_name = 'pylabnet.network.client_server.' + module
+            client_class = getattr(importlib.import_module(full_module_name), "Client")
 
-        spec = importlib.util.spec_from_file_location(
-            module,
-            os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                'servers',
-                module + '.py'
+            self.clients[(server, device_id)] = client_class(host=host, port=port)
+        except:
+            spec = importlib.util.spec_from_file_location(
+                module,
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    'servers',
+                    module + '.py'
+                )
             )
-        )
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        self.clients[(server, device_id)] = mod.Client(host=host, port=port)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            self.clients[(server, device_id)] = mod.Client(host=host, port=port)
 
     def _launch_servers(self):
         """ Searches through active servers and connects/launches them """

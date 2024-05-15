@@ -6,11 +6,39 @@ import time
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler, GraphPopupTabs, Confluence_support_GraphPopupTabs
 from pylabnet.utils.logging.logger import LogClient, LogHandler
-from pylabnet.utils.helper_methods import save_metadata, generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
+from pylabnet.utils.helper_methods import save_metadata, generic_save, npy_generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
 import sys
+
+
+def get_color_index(dataset, kwargs):
+
+    if 'color_index' in kwargs:
+        color_index = kwargs['color_index']
+    else:
+
+        try:
+            tabs_enabled = dataset.gui.windows[kwargs['window']].tabs_enabled
+        
+        # If Window has not tabs
+        except AttributeError:
+            tabs_enabled = False
+
+        # If dataset is initial dataset
+        except KeyError:
+            tabs_enabled = False
+        
+        if tabs_enabled:
+            color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
+        elif 'window' in kwargs:
+            color_index = dataset.gui.windows[kwargs['window']].graph_layout.count() - 1
+        else:
+            color_index = dataset.gui.graph_layout.count() - 1
+
+    return color_index
+
 
 
 class Dataset():
@@ -78,6 +106,9 @@ class Dataset():
 
         # Property which defines whether dataset is important, i.e. should it be saved in a separate dataset
         self.is_important = False
+
+        # For large-sized data, saving as npy is more efficient
+        self.save_as_npy = False
 
         return
 
@@ -169,10 +200,8 @@ class Dataset():
 
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -224,56 +253,92 @@ class Dataset():
             self.gui.presel_status.setText(status)
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
-        generic_save(
-            data=self.data,
-            filename=f'{filename}_{self.name}',
-            directory=directory,
-            date_dir=date_dir
-        )
-        if self.x is not None:
-            generic_save(
-                data=self.x,
-                filename=f'{filename}_{self.name}_x',
-                directory=directory,
-                date_dir=date_dir
-            )
+        if(not self.save_as_npy):
 
-        if hasattr(self, 'graph'):
-            pyqtgraph_save(
-                self.graph.getPlotItem(),
-                f'{filename}_{self.name}',
-                directory,
-                date_dir
-            )
-
-        # if the dataset is important, save it again in the important dataset folder.
-        if self.is_important:
             generic_save(
                 data=self.data,
-                filename=f'{filename}_{self.name}',
-                directory=directory + "\\important_data",
+                filename=f'{filename}_{self.name}_{unique_id}',
+                directory=directory,
                 date_dir=date_dir
             )
             if self.x is not None:
                 generic_save(
                     data=self.x,
-                    filename=f'{filename}_{self.name}_x',
-                    directory=directory + "\\important_data",
+                    filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory,
                     date_dir=date_dir
                 )
 
             if hasattr(self, 'graph'):
                 pyqtgraph_save(
                     self.graph.getPlotItem(),
-                    f'{filename}_{self.name}',
-                    directory + "\\important_data",
+                    f'{filename}_{self.name}_{unique_id}',
+                    directory,
                     date_dir
                 )
 
+            # if the dataset is important, save it again in the important dataset folder.
+            if self.is_important:
+                generic_save(
+                    data=self.data,
+                    filename=f'{filename}_{self.name}_{unique_id}',
+                    directory=directory + "\\important_data",
+                    date_dir=date_dir
+                )
+                if self.x is not None:
+                    generic_save(
+                        data=self.x,
+                        filename=f'{filename}_{self.name}_x_{unique_id}',
+                        directory=directory + "\\important_data",
+                        date_dir=date_dir
+                    )
+
+                if hasattr(self, 'graph'):
+                    pyqtgraph_save(
+                        self.graph.getPlotItem(),
+                        f'{filename}_{self.name}_{unique_id}',
+                        directory + "\\important_data",
+                        date_dir
+                    )
+
+            for child in self.children.values():
+                child.save(filename, directory, date_dir, unique_id)
+
+        # save as npy (for large-sized data, and don't save graph file)
+        npy_generic_save(
+            data=self.data,
+            filename=f'{filename}_{self.name}_{unique_id}',
+            directory=directory,
+            date_dir=date_dir
+        )
+        if self.x is not None:
+            npy_generic_save(
+                data=self.x,
+                filename=f'{filename}_{self.name}_x_{unique_id}',
+                directory=directory,
+                date_dir=date_dir
+            )
+
+        # if the dataset is important, save it again in the important dataset folder.
+        if self.is_important:
+            npy_generic_save(
+                data=self.data,
+                filename=f'{filename}_{self.name}_{unique_id}',
+                directory=directory + "\\important_data",
+                date_dir=date_dir
+            )
+            if self.x is not None:
+                npy_generic_save(
+                    data=self.x,
+                    filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory + "\\important_data",
+                    date_dir=date_dir
+                )
+
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
@@ -316,10 +381,24 @@ class Dataset():
 
         if graph is None:
             # If we want to use a separate window
+
+    
+
             if 'window' in kwargs:
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
+                    # Check if we want to enable tabs 
+                    if 'tabs_enabled' in kwargs:
+                        tabs_enabled = kwargs['tabs_enabled']
+
+                        if 'tablabel' in kwargs:
+                            tablabel = kwargs["tablabel"]
+                        else:
+                            tablabel = "Tab"
+                    else:
+                        tabs_enabled = False
+                    
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
@@ -328,31 +407,86 @@ class Dataset():
                     # self.gui.windows[kwargs['window']] = GraphPopup(
                     #     window_title=window_title, size=(700, 300))
 
+            
                     if(self.enable_confluence):
-                        self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
-                            app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                        if tabs_enabled:
+
+                            self.gui.windows[kwargs['window']] = Confluence_support_GraphPopupTabs(
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel = tablabel
+                            )
+
+                            self.gui.windows[kwargs['window']].tabs_enabled = True
+                        else:
+                            self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                            )
+                    elif tabs_enabled:
+                        self.gui.windows[kwargs['window']] = GraphPopupTabs(
+                            window_title=window_title, size=(700, 300), tablabel = tablabel
                         )
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
-                            window_title=window_title, size=(700, 300)
+                            window_title=window_title, size=(700, 300), 
                         )
 
+                     # Window already exists
+                else:
+                    # Check if we want to enable tabs 
+                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled 
+                    
+
+                
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
                     self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
                 else:
                     self.graph = pg.PlotWidget()
 
-                self.gui.windows[kwargs['window']].graph_layout.addWidget(
-                    self.graph
-                )
+                if tabs_enabled:
+
+                    num_tabs = self.gui.windows[kwargs['window']].num_tabs
+
+                    if 'tablabel' in kwargs:
+                        tablabel = kwargs["tablabel"]
+                    else:
+                        tablabel = f"Tab{num_tabs}"
+
+                    tab_widget_labels = [self.gui.windows[kwargs['window']].tabs.tabText(i) for i in range(num_tabs)]
+
+                    if tablabel in tab_widget_labels:
+                        tab_widget_graphlayout = self.gui.windows[kwargs['window']].tabs.widget(tab_widget_labels.index(tablabel)).GraphLayout
+
+                        # add to retrieved tab
+                        tab_widget_graphlayout.addWidget(
+                            self.graph
+                        )
+                        
+                    elif num_tabs == 0:
+
+                        # add to first tab
+                        self.gui.windows[kwargs['window']].tab1.GraphLayout.addWidget(
+                            self.graph
+                        )
+                        self.gui.windows[kwargs['window']].num_tabs += 1
+
+                    else:
+                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
+                            graph = self.graph,
+                            label = tablabel
+                        )
+                else:
+ 
+                    self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)
 
             # Otherwise, add a graph to the main layout
             else:
+                
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     self.graph = self.gui.add_graph(datetime_axis=True)
                 else:
                     self.graph = self.gui.add_graph()
+
+    
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -527,6 +661,26 @@ class InvisibleData(Dataset):
         self.curve = pg.PlotDataItem()
 
 
+class InvisibleRollingData(Dataset):
+    """ Dataset which does not plot, setting data does not replace the data but appends like InfiniteRollingLine. """
+
+    def visualize(self, graph, **kwargs):
+        self.curve = pg.PlotDataItem()
+
+    def set_data(self, data):
+        """ Updates data
+        :param data: (scalar or array) data to add
+        """
+
+        if self.data is None:
+            if np.isscalar(data):
+                self.data = np.array([data])
+            else:
+                self.data = np.array(data)
+        else:
+            self.data = np.append(self.data, data)
+
+
 class RollingLine(Dataset):
     """ Implements a rolling dataset where new values are
         added incrementally e.g. in time-traces """
@@ -693,10 +847,8 @@ class ManualOpenLoopScan(Dataset):
     def visualize(self, graph, **kwargs):
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -1173,6 +1325,94 @@ class SawtoothScan1D(Dataset):
         self.reps = 1
 
 
+class SawtoothScan1D_array_update(SawtoothScan1D):
+    """ 1D Sawtooth sweep of a parameter, but accept an array update (more efficient) """
+
+    def avg(self, dataset, prev_dataset):
+        """ Computes average dataset (mapping) """
+
+        # If we have already integrated a full dataset, avg
+        # only update when full scan finishes
+        if dataset.reps > 1:
+            current_data_len = len(dataset.data)
+
+            if(current_data_len == 0):
+                prev_dataset.data = np.mean(dataset.all_data, axis=0)
+        else:
+            prev_dataset.data = dataset.data
+
+    def set_data(self, value):
+
+        if(np.isscalar(value)):
+            if self.data is None:
+                self.reps = 1
+                self.data = np.array([value])
+            else:
+                self.data = np.append(self.data, value)
+
+            if len(self.data) > self.pts:
+                self.update_hmap = True
+                self.reps += 1
+
+                try:
+                    reps_to_do = self.widgets['reps'].value()
+                    if reps_to_do > 0 and self.reps > reps_to_do:
+                        self.stop = True
+                except KeyError:
+                    pass
+
+                if self.all_data is None:
+                    self.all_data = self.data[:-1]
+                else:
+                    self.all_data = np.vstack((self.all_data, self.data[:-1]))
+                self.data = np.array([self.data[-1]])
+
+            self.set_children_data()
+            return
+
+        if(isinstance(value, np.ndarray)):
+            if self.data is None:
+                self.reps = 1
+                self.data = np.array(value)
+            else:
+                self.data = np.append(self.data, value)
+
+            if len(self.data) >= self.pts:
+                self.update_hmap = True
+                self.reps += (len(self.data) // self.pts)
+
+                try:
+                    reps_to_do = self.widgets['reps'].value()
+                    if reps_to_do > 0 and self.reps > reps_to_do:
+                        self.stop = True
+                except KeyError:
+                    pass
+
+                batch = (len(self.data) // self.pts) * self.pts
+                data_stack = self.data[:batch]
+                data_rest = self.data[batch:]
+
+                if self.all_data is None:
+                    self.all_data = data_stack
+                else:
+                    self.all_data = np.vstack((self.all_data, data_stack))
+                self.data = data_rest
+
+            self.set_children_data()
+
+    def update(self, **kwargs):
+        """ Updates current data to plot"""
+
+        if self.data is not None and len(self.data) <= len(self.x):
+            self.curve.setData(self.x[:len(self.data)], self.data)
+        if(isinstance(self.data, np.ndarray)):
+            for child in self.children.values():
+                child.update(update_hmap=copy.deepcopy(self.update_hmap))
+
+        if self.update_hmap:
+            self.update_hmap = False
+
+
 class HeatMap(Dataset):
 
     def visualize(self, graph, **kwargs):
@@ -1206,18 +1446,18 @@ class HeatMap(Dataset):
             except:
                 pass
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
         generic_save(
             data=self.data,
-            filename=f'{filename}_{self.name}',
+            filename=f'{filename}_{self.name}_{unique_id}',
             directory=directory,
             date_dir=date_dir
         )
         if self.x is not None:
             generic_save(
                 data=self.x,
-                filename=f'{filename}_{self.name}_x',
+                filename=f'{filename}_{self.name}_x_{unique_id}',
                 directory=directory,
                 date_dir=date_dir
             )
@@ -1225,15 +1465,15 @@ class HeatMap(Dataset):
         if hasattr(self, 'graph'):
             pyqtgraph_save(
                 self.graph.getView(),
-                f'{filename}_{self.name}',
+                f'{filename}_{self.name}_{unique_id}',
                 directory,
                 date_dir
             )
 
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
-        save_metadata(self.log, filename, directory, date_dir)
+        save_metadata(self.log, filename, directory, date_dir, unique_id)
 
     def handle_new_window(self, graph, **kwargs):
 
@@ -1360,25 +1600,25 @@ class Plot2D(Dataset):
                 self.data[y, x] = value
                 self.position += 1
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
         # save axes
         x = np.linspace(self.min_x, self.max_x, self.pts_x)
         y = np.linspace(self.min_y, self.max_y, self.pts_y)
 
         generic_save(data=x,
-                     filename=f'{filename}_{self.name}_x',
+                     filename=f'{filename}_{self.name}_x_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
         generic_save(data=y,
-                     filename=f'{filename}_{self.name}_y',
+                     filename=f'{filename}_{self.name}_y_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
 
         generic_save(data=self.data,
-                     filename=f'{filename}_{self.name}',
+                     filename=f'{filename}_{self.name}_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
@@ -1386,15 +1626,15 @@ class Plot2D(Dataset):
         if hasattr(self, 'graph'):
             pyqtgraph_save(
                 self.graph.getView(),
-                f'{filename}_{self.name}',
+                f'{filename}_{self.name}_{unique_id}',
                 directory,
                 date_dir
             )
 
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
-        save_metadata(self.log, filename, directory, date_dir)
+        save_metadata(self.log, filename, directory, date_dir, unique_id)
 
     def handle_new_window(self, graph, **kwargs):
 
@@ -1550,19 +1790,19 @@ class Plot2DWithAvg(Plot2D):
 
         self.set_children_data()
 
-    def save(self, filename=None, directory=None, date_dir=True):
+    def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
         # save axes
         x = np.linspace(self.min_x, self.max_x, self.pts_x)
         y = np.linspace(self.min_y, self.max_y, self.pts_y)
 
         generic_save(data=x,
-                     filename=f'{filename}_{self.name}_x',
+                     filename=f'{filename}_{self.name}_x_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
         generic_save(data=y,
-                     filename=f'{filename}_{self.name}_y',
+                     filename=f'{filename}_{self.name}_y_{unique_id}',
                      directory=directory,
                      date_dir=date_dir
                      )
@@ -1570,7 +1810,7 @@ class Plot2DWithAvg(Plot2D):
         self.all_data.append(self.data)
         generic_save(
             data=self.all_data,
-            filename=f'{filename}_{self.name}',
+            filename=f'{filename}_{self.name}_{unique_id}',
             directory=directory,
             date_dir=date_dir
         )
@@ -1578,15 +1818,15 @@ class Plot2DWithAvg(Plot2D):
         if hasattr(self, 'graph'):
             pyqtgraph_save(
                 self.graph.getView(),
-                f'{filename}_{self.name}',
+                f'{filename}_{self.name}_{unique_id}',
                 directory,
                 date_dir
             )
 
         for child in self.children.values():
-            child.save(filename, directory, date_dir)
+            child.save(filename, directory, date_dir, unique_id)
 
-        save_metadata(self.log, filename, directory, date_dir)
+        save_metadata(self.log, filename, directory, date_dir, unique_id)
 
     def avg(self, dataset, prev_dataset):
         """ Computes average dataset (mapping) """
@@ -1755,13 +1995,8 @@ class ErrorBarGraph(Dataset):
         self.error = None
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            if 'window' in kwargs:
-                color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
-            else:
-                color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), width=0.5)
@@ -1796,6 +2031,22 @@ class ErrorBarGraph(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
+
+    def clear_data(self):
+
+        self.data = None
+        self.error = None
+
+        if self.x is not None:
+            try:
+                width = (self.x[1] - self.x[0]) / 2
+            except IndexError:
+                width = 0.5
+            self.curve.setOpts(x=self.x, height=0 * self.x, width=width)
+            self.error_curve.setData(x=self.x, y=0 * self.x, height=0 * self.x, beam=width)
+        else:
+            self.curve.setOpts(x=[], height=[], width=0.5)
+            self.error_curve.setData(x=[], y=[], height=[], beam=0.5)
 
 
 class ErrorBarAveragedHistogram(ErrorBarGraph):
@@ -1833,10 +2084,8 @@ class ErrorBarPlot(Dataset):
         self.error = None
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), symbol='o')
@@ -1858,6 +2107,20 @@ class ErrorBarPlot(Dataset):
 
         for child in self.children.values():
             child.update(**kwargs)
+
+    def clear_data(self):
+
+        self.data = None
+        self.error = None
+
+        if self.x is not None:
+            try:
+                width = (self.x[1] - self.x[0]) / 2
+            except IndexError:
+                width = 0.5
+            self.curve.setData(x=self.x, y=0 * self.x, height=0 * self.x, beam=width)
+        else:
+            self.curve.setData(x=[], y=[], height=[], beam=0.5)
 
 
 class PhotonErrorBarPlot(ErrorBarGraph):

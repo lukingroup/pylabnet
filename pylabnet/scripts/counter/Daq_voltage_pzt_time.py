@@ -1,7 +1,8 @@
 """ Generic script for monitoring counts from a counter """
 
 import numpy as np
-import time, datetime
+import time
+import datetime
 import pyqtgraph as pg
 from pylabnet.gui.pyqt.external_gui import Window
 from pylabnet.utils.logging.logger import LogClient
@@ -33,8 +34,7 @@ class CountMonitor:
     # Generate all widget instances for the .ui to use
     # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
 
-    def __init__(self, ctr_client_in: nidaqmx_card, ctr_client_out: nidaqmx_card, ui='count_monitor_3plots_save'\
-        , logger_client=None, server_port=None, combined_channel=False, config=None):
+    def __init__(self, ctr_client_in: nidaqmx_card, ctr_client_out: nidaqmx_card, ui='count_monitor_3plots_save', logger_client=None, server_port=None, combined_channel=False, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
@@ -61,8 +61,6 @@ class CountMonitor:
         self.output = None
         self.iter = None
         self.savepath = None
-
-
 
         # Instantiate GUI window
         self.gui = Window(
@@ -99,7 +97,7 @@ class CountMonitor:
         if not 'name' in self.config:
             self.config.update({'name': f'monitor{np.random.randint(1000)}'})
 
-    def set_hardware(self, ctr_in,  ctr_out):
+    def set_hardware(self, ctr_in, ctr_out):
         """ Sets hardware client for this script
 
         :param ctr: instance of count monitor hardware client
@@ -109,8 +107,7 @@ class CountMonitor:
         self._ctr_in = ctr_in
         self._ctr_out = ctr_out
 
-
-    def set_params(self, bin_width=1e9, n_bins=1e3, ch_list=[1], plot_list=None, locking_point=0, P=0, I=0, D=0, memory=20, gain=1, default=5 ):
+    def set_params(self, bin_width=1e9, n_bins=1e3, ch_list=[1], plot_list=None, locking_point=0, P=0, I=0, D=0, memory=20, gain=1, default=5):
         """ Sets counter parameters
 
         :param bin_width: bin width in ps
@@ -129,12 +126,12 @@ class CountMonitor:
         self.data = np.zeros([len(ch_list), self._n_bins])
         self.x = np.ones(self._n_bins) * dt_timestamp
         self.pid = PID(
-                p=P,
-                i=I,
-                d=D,
-                memory=memory,
-                setpoint=locking_point
-            )
+            p=P,
+            i=I,
+            d=D,
+            memory=memory,
+            setpoint=locking_point
+        )
         self.gain = gain
         self.default = default
 
@@ -143,7 +140,6 @@ class CountMonitor:
 
     def set_savepath(self, savepath):
         self.savepath = savepath
-
 
     def run(self):
         """ Runs the counter from scratch"""
@@ -250,22 +246,22 @@ class CountMonitor:
 
         for plot_index, clear_button in enumerate(self.widgets['event_button']):
             clear_button.clicked.connect(partial(lambda plot_index: self._clear_plot(plot_index), plot_index=plot_index))
-            
+
         self.widgets["save_button"][0].clicked.connect(partial(self._save_plot, self.savepath))
 
     def _save_plot(self, save_path):
         """"
         save all plots to the save_path
         """
-        filename_x = save_path  + "\\" + "Daq_monitoring_data_x_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
-        filename_f = save_path  + "\\" + "Daq_monitoring_data_f_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
-        filename = save_path  + "\\" + "Daq_monitoring_data_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
+        filename_x = save_path + "\\" + "Daq_monitoring_data_x_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
+        filename_f = save_path + "\\" + "Daq_monitoring_data_f_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
+        filename = save_path + "\\" + "Daq_monitoring_data_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S") + ".txt"
         try:
             if(self.data is not None):
                 np.savetxt(filename, self.data)
             else:
                 self.log.info("data is None")
-            
+
             if(self.x is not None):
                 np.savetxt(filename_x, self.x)
             else:
@@ -282,7 +278,6 @@ class CountMonitor:
             self.log.error("error: cannot save the data")
         return
 
-
     def _clear_plot(self, plot_index):
         """ Clears the curves on a particular plot
 
@@ -297,7 +292,6 @@ class CountMonitor:
             self.data[index] = np.ones(self._n_bins) * self.widgets[f'curve_{channel}'].yData[-1]
             self.x = np.ones(self._n_bins) * dt_timestamp
 
-
             self.widgets[f'curve_{channel}'].setData(
                 self.x, self.data[index]
             )
@@ -307,8 +301,8 @@ class CountMonitor:
         """ Updates the output to all current values"""
 
         # Update all active channels + do locking loop
-        monitor_voltage = np.mean(self._ctr_in.get_ai_voltage('ai0', 500, 10) )
-        rp_out_voltage = np.mean(self._ctr_in.get_ai_voltage('ai1', 500, 10) )
+        monitor_voltage = np.mean(self._ctr_in.get_ai_voltage('ai0', 500, 10))
+        rp_out_voltage = np.mean(self._ctr_in.get_ai_voltage('ai1', 500, 10))
 
         # voltage_0 = np.mean(self._ctr_in.get_ai_voltage('ai0', 10, 10) )
         # self._ctr_out.set_ao_voltage('ao4', self.output + 0.25)
@@ -327,63 +321,54 @@ class CountMonitor:
         #     self.output += 6.5
         # self.output = max( min(self.output, 9), -9)
         # self._ctr_out.set_ao_voltage('ao4', self.output)
-        
 
-
-
-        # voltage = voltage_0 
-
-
+        # voltage = voltage_0
 
         dt_timestamp = time.time()
 
         # update voltage and iter
         self.x = np.concatenate((self.x[1:], np.array([dt_timestamp])))
-        self.data[0] = np.concatenate((self.data[0, 1:], np.array([monitor_voltage]) ) )
-        self.data[1] = np.concatenate((self.data[1, 1:], np.array([self.pid.setpoint]) ) )
-        self.data[2] = np.concatenate((self.data[2, 1:], np.array([rp_out_voltage]) ) )
+        self.data[0] = np.concatenate((self.data[0, 1:], np.array([monitor_voltage])))
+        self.data[1] = np.concatenate((self.data[1, 1:], np.array([self.pid.setpoint])))
+        self.data[2] = np.concatenate((self.data[2, 1:], np.array([rp_out_voltage])))
         self.iter += 1
 
         # do fft and std if iter is n_bin
         if(self.iter == self._n_bins):
             self.iter = 0
-            self.f_ary = 1/(self.x[-1] -self.x[0]) * np.arange(self._n_bins)
+            self.f_ary = 1 / (self.x[-1] - self.x[0]) * np.arange(self._n_bins)
             self.data[3] = np.fft.fft(self.data[0, :]) / self._n_bins
-            self.widgets[f'curve_4'].setData( self.f_ary, np.absolute(self.data[3]))
+            self.widgets[f'curve_4'].setData(self.f_ary, np.absolute(self.data[3]))
             self.widgets['graph_widget'][2].setYRange(0, 1E-2)
 
-            self.log.info( np.std( self.data[0] ) )
-            self.widgets[f'number_label'][4].setText(str(  format(np.std( self.data[0] ), ".4f")   )) 
-
-
+            self.log.info(np.std(self.data[0]))
+            self.widgets[f'number_label'][4].setText(str(format(np.std(self.data[0]), ".4f")))
 
         for index, channel in enumerate(self._ch_list):
 
             # Figure out which plot to assign to
             if(index != 3):
-                self.widgets[f'curve_{channel}'].setData(self.x-self.x[0], self.data[index])
+                self.widgets[f'curve_{channel}'].setData(self.x - self.x[0], self.data[index])
 
-            if(index==0):
-                self.widgets[f'number_label'][channel - 1].setText(str(  format(self.data[index][-1], ".8f")   )) 
+            if(index == 0):
+                self.widgets[f'number_label'][channel - 1].setText(str(format(self.data[index][-1], ".8f")))
             else:
-                self.widgets[f'number_label'][channel - 1].setText(str(  format(self.data[index][-1], ".4f")   )) 
-
-
-
+                self.widgets[f'number_label'][channel - 1].setText(str(format(self.data[index][-1], ".4f")))
 
     def _lock(self):
         # pid
-        self.pid.set_pv(pv=self.data[0,-self.pid.memory:])
+        self.pid.set_pv(pv=self.data[0, -self.pid.memory:])
         self.pid.set_cv()
 
         # set output
-        self.output += self.pid.cv * self.gain 
+        self.output += self.pid.cv * self.gain
 
         # protection
-        if(self.output > 9.): self.output = self.default
-        if( self.output < 0): self.output = self.default
-        
-        
+        if(self.output > 9.):
+            self.output = self.default
+        if(self.output < 0):
+            self.output = self.default
+
         # scan
         # dir = 1 if(self.data[2, -1] - self.data[2, -2] >= 0) else -1
         # if( (self.output >= 5.3 and dir==1) or (self.output <= -0 and dir==-1) ):
@@ -392,7 +377,6 @@ class CountMonitor:
         # self.output += 0.5 * dir
 
         return
-
 
 
 def launch(**kwargs):
@@ -432,7 +416,6 @@ def launch(**kwargs):
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
-
 
     # Set parameters
     monitor.set_params(**config['params'])

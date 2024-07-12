@@ -4,7 +4,7 @@ Client-server, Python-based laboratory software
 
 [![DOI](https://zenodo.org/badge/219227835.svg)](https://zenodo.org/badge/latestdoi/219227835)
 
- ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/master/devices.ico)
+ ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/master/pylabnet_newlogo.ico)
 
 This is the repository for pylabnet, a software package for client-server, Python-based experiment control, designed for use in solid-state quantum optics and quantum network experiments in the Lukin group.
 
@@ -110,7 +110,7 @@ You will likely need to allow Python through Windows Firewall the first time you
 
 ## Usage
 
-The main executables used for launching the Launch Control GUI are `pylabnet_master` and `pylabnet_staticproxy` located in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). If desired, you can create shortcuts for these executables together with the `devices.ico` icon (shown above) for bonus style.
+The main executables used for launching the Launch Control GUI are `pylabnet_master` and `pylabnet_staticproxy` located in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). If desired, you can create shortcuts for these executables together with the `pylabnet_newlogo.ico` icon (shown above) for bonus style.
 
 The master Launch Control `pylabnet_master` starts a `LogServer` and also keeps track of all servers on the network, while proxy Launch Control instances simply connect to the master logger and mirror its information for convenience on remote machines. The general workflow for working with Launch Control is the following:
 

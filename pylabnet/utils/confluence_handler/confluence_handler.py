@@ -79,7 +79,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         #         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         #     self.app = QtWidgets.QApplication(sys.argv)
         #     self.app.setWindowIcon(
-        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
         #     )
 
         # Initialize parent class QtWidgets.QDialog
@@ -506,7 +506,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
-                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
             )
 
         # confluence

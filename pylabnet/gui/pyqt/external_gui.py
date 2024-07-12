@@ -92,7 +92,7 @@ class Window(QtWidgets.QMainWindow):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
-                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
             )
 
         # Initialize parent class QWidgets.QMainWindow
@@ -876,6 +876,7 @@ class ParameterPopup(QtWidgets.QWidget):
         self.parameters.emit(ret)
         self.close()
 
+
 class GraphPopup(QtWidgets.QWidget):
     """ Widget class for holding new graphs in tabbed mode """
 
@@ -896,6 +897,7 @@ class GraphPopup(QtWidgets.QWidget):
         self.setWindowTitle(window_title)
         self.setLayout(self.graph_layout)
         self.show()
+
 
 class GraphPopupTabs(QtWidgets.QWidget):
     """ Widget class for holding new graphs """
@@ -919,8 +921,6 @@ class GraphPopupTabs(QtWidgets.QWidget):
         self.outer_layout = QtWidgets.QVBoxLayout()
         self.outer_layout.setContentsMargins(30, 30, 30, 30)
 
-
-
         # keep track of number of tabs that are filled
         self.num_tabs = 0
 
@@ -928,14 +928,14 @@ class GraphPopupTabs(QtWidgets.QWidget):
         self.tabs = QtWidgets.QTabWidget()
         self.tab1 = QtWidgets.QWidget()
         self.tabs.addTab(self.tab1, kwargs["tablabel"])
-    
+
         self.outer_layout.addWidget(self.tabs)
 
         self.setWindowTitle(window_title)
         self.setLayout(self.outer_layout)
 
-        # Prep the Graphlayout for 
-        self.tab1.GraphLayout =  QtWidgets.QVBoxLayout()
+        # Prep the Graphlayout for
+        self.tab1.GraphLayout = QtWidgets.QVBoxLayout()
         self.tab1.setLayout(self.tab1.GraphLayout)
 
         self.show()
@@ -943,11 +943,12 @@ class GraphPopupTabs(QtWidgets.QWidget):
     def add_graph_to_new_tab(self, graph, label):
         new_tab = QtWidgets.QWidget()
         self.tabs.addTab(new_tab, label)
-        new_tab.GraphLayout =  QtWidgets.QVBoxLayout()
+        new_tab.GraphLayout = QtWidgets.QVBoxLayout()
         new_tab.setLayout(new_tab.GraphLayout)
         new_tab.GraphLayout.addWidget(graph)
         self.num_tabs += 1
         return
+
 
 class Plot:
     """ Class for plot widgets inside of a Window
@@ -1437,7 +1438,7 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
     def upload_pic(self):
         self.confluence_handler.confluence_popup.Popup_Upload()
         return
-    
+
 
 class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
     """ Widget class for holding new graphs """
@@ -1495,11 +1496,8 @@ class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
             ActionMenu.addAction(extractAction_Upload)
             ActionMenu.addAction(extractAction_Update)
 
-
-     
         self.outer_layout = QtWidgets.QVBoxLayout()
         self.outer_layout.setContentsMargins(30, 30, 30, 30)
-
 
         # keep track of number of tabs that are filled
         self.num_tabs = 0
@@ -1508,16 +1506,15 @@ class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
         self.tabs = QtWidgets.QTabWidget()
         self.tab1 = QtWidgets.QWidget()
         self.tabs.addTab(self.tab1, kwargs["tablabel"])
-    
+
         self.outer_layout.addWidget(self.tabs)
 
         self.setWindowTitle(window_title)
         self.setLayout(self.outer_layout)
 
-        # Prep the Graphlayout for 
-        self.tab1.GraphLayout =  QtWidgets.QVBoxLayout()
+        # Prep the Graphlayout for
+        self.tab1.GraphLayout = QtWidgets.QVBoxLayout()
         self.tab1.setLayout(self.tab1.GraphLayout)
-
 
         self.show()
 
@@ -1527,11 +1524,11 @@ class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
     def upload_pic(self):
         self.confluence_handler.confluence_popup.Popup_Upload()
         return
-    
+
     def add_graph_to_new_tab(self, graph, label):
         new_tab = QtWidgets.QWidget()
         self.tabs.addTab(new_tab, label)
-        new_tab.GraphLayout =  QtWidgets.QVBoxLayout()
+        new_tab.GraphLayout = QtWidgets.QVBoxLayout()
         new_tab.setLayout(new_tab.GraphLayout)
         new_tab.GraphLayout.addWidget(graph)
         self.num_tabs += 1
@@ -1605,7 +1602,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         #         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         #     self.app = QtWidgets.QApplication(sys.argv)
         #     self.app.setWindowIcon(
-        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
         #     )
 
         # Initialize parent class QtWidgets.QDialog
@@ -2014,7 +2011,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
-                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
             )
 
         # confluence
@@ -2196,7 +2193,7 @@ def fresh_popup(**params):
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     operating_system = get_os()
     app.setWindowIcon(
-        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
@@ -2214,7 +2211,7 @@ def warning_popup(message):
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     operating_system = get_os()
     app.setWindowIcon(
-        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')

@@ -280,6 +280,8 @@ class Dataset():
             for child in self.children.values():
                 child.save(filename, directory, date_dir, unique_id)
 
+            return
+
         # save as npy (for large-sized data, and don't save graph file)
         npy_generic_save(
             data=self.data,

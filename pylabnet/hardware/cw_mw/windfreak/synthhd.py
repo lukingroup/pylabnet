@@ -125,9 +125,9 @@ class Driver():
         """ Turn output off """
 
         if channel == 'A':
-            self.synth[0].enable = True
+            self.synth[0].enable = False
         elif channel == 'B':
-            self.synth[1].enable = True
+            self.synth[1].enable = False
         else:
             self.log.warn('Warning: no channel selected, select A or B')
 

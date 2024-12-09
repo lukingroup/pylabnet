@@ -126,4 +126,4 @@ webencodings==0.5.1
 widgetsnbextension==3.5.1
 wrapt==1.12.1
 zhinst==20.7.2701
-zipp==3.4.0
+zipp==3.19.1

@@ -5,7 +5,7 @@ from pylabnet.utils.logging.logger import LogHandler
 class Driver():
     POWER_RANGE = [-75, 20]    # acceptable power range in dBm
     #POWER_PRECISION = 2 # number of digits of precision for power
-    FREQ_RANGE = [10e6, 15e9]    # acceptable frequency range in Hz
+    FREQ_RANGE = [10e6, 40e9]    # acceptable frequency range in Hz
 
     def __init__(self, device_port, logger):
         """ Instantiate driver class, connects to device
@@ -80,6 +80,34 @@ class Driver():
         self.log.warn('previous trigger mode: ' + str(self.synth.trigger_mode))
         self.synth.trigger_mode = trigger_mode
         self.log.info('now, the trigger mode: ' + self.synth.trigger_mode)
+
+    def set_reference_mode(self, arg=None):
+        """Set frequency reference mode.
+
+        Args:
+            arg (str): mode
+        """
+
+        # Set reference mode
+        if(arg is not None):
+            self.synth.reference_mode = arg
+            self.log.warn('reference mode.: ' + str(self.synth.reference_mode))
+        else:
+            self.log.warn('arg cannot be None')
+
+    def set_external_reference_frequency(self, value=None):
+        """Set reference frequency in Hz.
+
+        Args:
+            value (float / int): frequency in Hz
+        """
+
+        # Set reference mode
+        if(value is not None):
+            self.synth.reference_frequency = value
+            self.log.warn('reference frequency (external).: ' + str(self.synth.reference_frequency))
+        else:
+            self.log.warn('value cannot be None')
 
     def output_on(self, channel=None):
         """ Turn output on """

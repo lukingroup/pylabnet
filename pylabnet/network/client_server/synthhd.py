@@ -19,6 +19,12 @@ class Service(ServiceBase):
     def exposed_set_power(self, power, channel=None):
         return self._module.set_power(power, channel=channel)
 
+    def exposed_set_reference_mode(self, arg=None):
+        return self._module.set_reference_mode(arg=arg)
+
+    def exposed_set_external_reference_frequency(self, value=None):
+        return self._module.set_external_reference_frequency(value=value)
+
 
 class Client(ClientBase):
 
@@ -65,3 +71,21 @@ class Client(ClientBase):
         """
 
         return self._service.exposed_set_power(power, channel=channel)
+
+    def set_reference_mode(self, arg=None):
+        """Set frequency reference mode.
+
+        Args:
+            arg (str): mode
+        """
+
+        return self._service.exposed_set_reference_mode(arg=arg)
+
+    def set_external_reference_frequency(self, value=None):
+        """Set reference frequency in Hz.
+
+        Args:
+            value (float / int): frequency in Hz
+        """
+
+        return self._service.exposed_set_external_reference_frequency(value=value)

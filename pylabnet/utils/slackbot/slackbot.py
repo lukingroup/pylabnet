@@ -60,7 +60,7 @@ def main():
     slackbot = PylabnetSlackBot()
     slackbot.subscribe_channel(['#pylabnet_slackbot'])
     slackbot.broadcast_to_channels('Lorem Ipsum')
-    slackbot.upload_to_channels('devices.ico')
+    slackbot.upload_to_channels('pylabnet_newlogo.ico')
 
 
 if __name__ == "__main__":

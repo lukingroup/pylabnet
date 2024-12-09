@@ -43,7 +43,7 @@ SAMPLING_RATE_DICT = {
 
 class Driver():
 
-    def __init__(self, device_id, logger, dummy=False, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
+    def __init__(self, device_id, interface, logger, dummy=False, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
         """ Instantiate AWG
 
         :logger: instance of LogClient class
@@ -58,7 +58,7 @@ class Driver():
         self.dummy = dummy
 
         # Setup HDAWG
-        self._setup_hdawg(device_id, logger, api_level, reset_dio, disable_everything)
+        self._setup_hdawg(device_id, interface, logger, api_level, reset_dio, disable_everything)
 
     @dummy_wrap
     def reset_DIO_outputs(self):
@@ -92,14 +92,12 @@ class Driver():
         return input_argument
 
     @dummy_wrap
-    def _setup_hdawg(self, device_id, logger, api_level, reset_dio, disable_everything):
+    def _setup_hdawg(self, device_id, interface, logger, api_level, reset_dio, disable_everything):
         ''' Sets up HDAWG '''
         # try finding the server address
         discovery = zhinst.ziPython.ziDiscovery()
         device_properties = discovery.get(discovery.find(device_id))
         server_address = device_properties["serveraddress"]
-
-        interface = "1GbE"  # For Ethernet connection.
 
         server_host = "localhost"
         server_port = 8004

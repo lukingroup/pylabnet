@@ -340,9 +340,9 @@ class WlmMonitor:
         self.widgets['PID_upd_laser'][index].clicked.connect(
             lambda: self.set_channel_pid(
                 channel=channel,
-                p=self.widgets['P_laser'][index],
-                i=self.widgets['I_laser'][index],
-                d=self.widgets['D_laser'][index]
+                p=self.widgets['P_laser'][index].value(),
+                i=self.widgets['I_laser'][index].value(),
+                d=self.widgets['D_laser'][index].value()
             )
         )
 

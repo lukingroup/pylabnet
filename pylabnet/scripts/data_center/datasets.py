@@ -6,11 +6,38 @@ import time
 from PyQt5 import QtWidgets, QtCore
 
 from pyqtgraph.widgets.MatplotlibWidget import MatplotlibWidget
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, GraphPopup, Confluence_support_GraphPopup, Confluence_Handler, GraphPopupTabs, Confluence_support_GraphPopupTabs
 from pylabnet.utils.logging.logger import LogClient, LogHandler
 from pylabnet.utils.helper_methods import save_metadata, generic_save, npy_generic_save, pyqtgraph_save, fill_2dlist, TimeAxisItem
 
 import sys
+
+
+def get_color_index(dataset, kwargs):
+
+    if 'color_index' in kwargs:
+        color_index = kwargs['color_index']
+    else:
+
+        try:
+            tabs_enabled = dataset.gui.windows[kwargs['window']].tabs_enabled
+
+        # If Window has not tabs
+        except AttributeError:
+            tabs_enabled = False
+
+        # If dataset is initial dataset
+        except KeyError:
+            tabs_enabled = False
+
+        if tabs_enabled:
+            color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
+        elif 'window' in kwargs:
+            color_index = dataset.gui.windows[kwargs['window']].graph_layout.count() - 1
+        else:
+            color_index = dataset.gui.graph_layout.count() - 1
+
+    return color_index
 
 
 class Dataset():
@@ -172,10 +199,8 @@ class Dataset():
 
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -228,7 +253,6 @@ class Dataset():
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
     def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
-
         if not self.save_as_npy:
 
             generic_save(
@@ -281,7 +305,6 @@ class Dataset():
                 child.save(filename, directory, date_dir, unique_id)
 
         else:
-    
             # save as npy (for large-sized data, and don't save graph file)
             npy_generic_save(
                 data=self.data,
@@ -357,9 +380,21 @@ class Dataset():
 
         if graph is None:
             # If we want to use a separate window
+
             if 'window' in kwargs:
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
+
+                    # Check if we want to enable tabs
+                    if 'tabs_enabled' in kwargs:
+                        tabs_enabled = kwargs['tabs_enabled']
+
+                        if 'tablabel' in kwargs:
+                            tablabel = kwargs["tablabel"]
+                        else:
+                            tablabel = "Tab"
+                    else:
+                        tabs_enabled = False
 
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
@@ -370,13 +405,33 @@ class Dataset():
                     #     window_title=window_title, size=(700, 300))
 
                     if(self.enable_confluence):
-                        self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
-                            app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                        if tabs_enabled:
+
+                            self.gui.windows[kwargs['window']] = Confluence_support_GraphPopupTabs(
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel=tablabel
+                            )
+
+                            self.gui.windows[kwargs['window']].tabs_enabled = True
+                        else:
+                            self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
+                            )
+                            self.gui.windows[kwargs['window']].tabs_enabled = False
+                    elif tabs_enabled:
+                        self.gui.windows[kwargs['window']] = GraphPopupTabs(
+                            window_title=window_title, size=(700, 300), tablabel=tablabel
                         )
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
-                            window_title=window_title, size=(700, 300)
+                            window_title=window_title, size=(700, 300),
                         )
+
+                        self.gui.windows[kwargs['window']].tabs_enabled = False
+
+                     # Window already exists
+                else:
+                    # Check if we want to enable tabs
+                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled
 
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
@@ -384,16 +439,50 @@ class Dataset():
                 else:
                     self.graph = pg.PlotWidget()
 
-                self.gui.windows[kwargs['window']].graph_layout.addWidget(
-                    self.graph
-                )
+                if tabs_enabled:
+
+                    num_tabs = self.gui.windows[kwargs['window']].num_tabs
+
+                    if 'tablabel' in kwargs:
+                        tablabel = kwargs["tablabel"]
+                    else:
+                        tablabel = f"Tab{num_tabs}"
+
+                    tab_widget_labels = [self.gui.windows[kwargs['window']].tabs.tabText(i) for i in range(num_tabs)]
+
+                    if tablabel in tab_widget_labels:
+                        tab_widget_graphlayout = self.gui.windows[kwargs['window']].tabs.widget(tab_widget_labels.index(tablabel)).GraphLayout
+
+                        # add to retrieved tab
+                        tab_widget_graphlayout.addWidget(
+                            self.graph
+                        )
+
+                    elif num_tabs == 0:
+
+                        # add to first tab
+                        self.gui.windows[kwargs['window']].tab1.GraphLayout.addWidget(
+                            self.graph
+                        )
+                        self.gui.windows[kwargs['window']].num_tabs += 1
+
+                    else:
+                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(
+                            graph=self.graph,
+                            label=tablabel
+                        )
+                else:
+
+                    self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)
 
             # Otherwise, add a graph to the main layout
             else:
+
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     self.graph = self.gui.add_graph(datetime_axis=True)
                 else:
                     self.graph = self.gui.add_graph()
+
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -754,10 +843,8 @@ class ManualOpenLoopScan(Dataset):
     def visualize(self, graph, **kwargs):
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = self.graph.plot(
             pen=pg.mkPen(self.gui.COLOR_LIST[
                 np.mod(color_index, len(self.gui.COLOR_LIST))
@@ -1176,10 +1263,10 @@ class SawtoothScan1D(Dataset):
         # If we have already integrated a full dataset, avg
         if dataset.reps > 1:
             current_index = len(dataset.data) - 1
-            prev_dataset.data[current_index] = (
-                prev_dataset.data[current_index] * (dataset.reps - 1)
-                + dataset.data[-1]
-            ) / (dataset.reps)
+            prev_dataset.data[current_index] = float((
+                float(prev_dataset.data[current_index]) * (float(dataset.reps) - 1)
+                + float(dataset.data[-1])
+            ) / float(dataset.reps))
         else:
             prev_dataset.data = dataset.data
 
@@ -1904,13 +1991,8 @@ class ErrorBarGraph(Dataset):
         self.error = None
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            if 'window' in kwargs:
-                color_index = self.gui.windows[kwargs['window']].graph_layout.count() - 1
-            else:
-                color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = pg.BarGraphItem(x=[0], height=[0], brush=pg.mkBrush(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), width=0.5)
@@ -1998,10 +2080,8 @@ class ErrorBarPlot(Dataset):
         self.error = None
         self.handle_new_window(graph, **kwargs)
 
-        if 'color_index' in kwargs:
-            color_index = kwargs['color_index']
-        else:
-            color_index = self.gui.graph_layout.count() - 1
+        color_index = get_color_index(self, kwargs)
+
         self.curve = pg.ErrorBarItem(pen=pg.mkPen(self.gui.COLOR_LIST[
             np.mod(color_index, len(self.gui.COLOR_LIST))
         ]), symbol='o')

@@ -47,7 +47,6 @@ class WlmMonitor:
             gui_template=gui,
             host=get_ip(),
             port=port,
-            log=self.log
         )
 
         # Setup stylesheet.
@@ -157,7 +156,9 @@ class WlmMonitor:
 
                     if 'lock' in parameter:
 
-                        self.widgets['lock'][index].setChecked(parameter['lock'])
+                        # self.widgets['lock'][index].setChecked(parameter['lock'])
+                        channel.lock_override = int(parameter['lock'])
+
                         # channel.lock = parameter['lock']
 
                         # Mark that we should override the GUI lock since it has been updated by the script
@@ -383,10 +384,15 @@ class WlmMonitor:
 
         for index, channel in enumerate(self.channels):
 
-            # Check for override
+            # Check for override (freq)
             if channel.setpoint_override:
                 self.widgets['sp'][index].setValue(channel.setpoint_override)
                 channel.setpoint_override = 0
+
+            # Check for override (lock)
+            if channel.lock_override != -1:
+                self.widgets['lock'][index].setChecked(int(channel.lock_override))
+                channel.lock_override = -1
 
             # Update data with the new wavelength
             channel.update(self.wlm_client.get_wavelength(channel.number))
@@ -450,6 +456,12 @@ class WlmMonitor:
         physical_channel = self.channels[self._get_channels().index(channel)]
         return self.wlm_client.get_wavelength(physical_channel.number)
 
+    def get_setpoint(self, channel):
+        # Index of channel
+
+        physical_channel = self.channels[self._get_channels().index(channel)]
+        return physical_channel.gui_setpoint
+
 
 class Service(ServiceBase):
     """ A service to enable external updating of WlmMonitor parameters """
@@ -487,6 +499,9 @@ class Service(ServiceBase):
     def exposed_get_wavelength(self, channel):
         return self._module.get_wavelength(channel)
 
+    def exposed_get_setpoint(self, channel):
+        return self._module.get_setpoint(channel)
+
 
 class Client(ClientBase):
 
@@ -497,6 +512,9 @@ class Client(ClientBase):
 
     def get_wavelength(self, channel):
         return self._service.exposed_get_wavelength(channel)
+
+    def get_setpoint(self, channel):
+        return self._service.exposed_get_setpoint(channel)
 
     def clear_channel(self, channel):
         return self._service.exposed_clear_channel(channel)
@@ -549,7 +567,7 @@ class Channel:
         self.error = None  # Array of error values, used for plotting/monitoring lock error
         self.labels_updated = False  # Flag to check if we have updated all labels
         self.setpoint_override = 0  # Flag to check if setpoint has been updated + GUI should be overridden
-        # self.lock_override = True  # Flag to check if lock has been updated + GUI should be overridden
+        self.lock_override = -1 # Flag to check if lock has been updated + GUI should be overridden; -1: not overtiden; 0: overriden with false; 1: overriden with true
         self.gui_setpoint = 0  # Current GUI setpoint
         self.gui_lock = False  # Current GUI lock boolean
         self.prev_gui_lock = None  # Previous GUI lock boolean
@@ -782,7 +800,7 @@ def launch(**kwargs):
 
     logger = kwargs['logger']
     config = load_script_config(
-        script='wlm_monitor_ford',
+        script='wlm_monitor_g12laserfromb16',
         config=kwargs['config'],
         logger=logger
     )

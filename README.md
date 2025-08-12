@@ -1,154 +1,122 @@
 # pylabnet
 
-Client-server, python-based laboratory software
-
+Client-server, Python-based laboratory software
 
 [![DOI](https://zenodo.org/badge/219227835.svg)](https://zenodo.org/badge/latestdoi/219227835)
 
- ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/master/devices.ico)
+ ![Devices](https://raw.githubusercontent.com/lukingroup/pylabnet/master/pylabnet_newlogo.ico)
 
-This is the repository for pylabnet, a software package for client-server, python-based experiment control, designed for use in solid-state quantum optics + quantum network experiments in the Lukin group.
+This is the repository for pylabnet, a software package for client-server, Python-based experiment control, designed for use in solid-state quantum optics and quantum network experiments in the Lukin group.
 
 ## Prerequisites
 
 * Supported Python versions: 3.7 - 3.8
-* Microsoft Visual C++ 14.0 or greater, installed from [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/)
 
-## For users
+## Installation
 
-### Installation
-
-The package can be installed from the commandline using
-```bash
-pip install pylabnet
-```
-You can now `import pylabnet` and its submodules in your own scripts and notebooks. The source code is installed to  `{PYTHONPATH}\Lib\site-packages\pylabnet` and configuration files should be placed in `{PYTHONPATH}\Lib\site-packages\pylabnet\configs`.
-
-The package can be updated to the latest version using the command
-```bash
-pip install --upgrade pylabnet
-```
-
-### <a name="executable"></a>Usage
-
-After `pip` installation of pylabnet, three executables will be created in the system `PATH`: `pylabnet_master.exe`, `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe`. These can be used to launch master and proxy versions of the Launch Control GUI, from which relevant experimental software can be accessed over `pylabnet`. If desired, you can create shortcuts for these executables and pin the `devices.ico` icon (shown above and located in the root directory) for bonus style.
-
-The master Launch Control `pylabnet_master.exe` runs a `LogServer` to keep track of all clients and servers on the network, and proxy Launch Control units simply connect to the master `LogServer` and mirror its information for convenience on remote machines. The difference between `pylabnet_proxy.exe` and `pylabnet_staticproxy.exe` is that the former will ask for the master `LogServer`'s location interactively while the latter reads directly from `configs/static_proxy.json` via the fields `master_ip`, `master_log_port`, and `master_gui_port`.
-
-The general workflow is the following:
-
-1. Launch a master `LogServer`. Can be done from a custom script, but easiest to just use the `pylabnet_master` executable.
-2. (This step is skipped if connecting hardware on the same computer as the one running the master `LogServer`) Launch a proxy `LogServer` on the local computer to be connected to the desired hardware device. This enables the local computer to communicate any device updates to the master `LogServer` where it will be logged.
-3. Connect to hardware device locally, and instantiate a `GenericServer` for each device (or logical module) to allow remote access from anywhere in the network. The `GenericServer` will itself interface with the the device through drivers located in the `pylabnet/hardware` submodule and expose desired functions to be called remotely. These drivers can also be used for standalone control of hardware, if desired.
-4. On any other computers present across the network, create the hardware client for the corresponding hardware server to be connected to. This will enable access to the exposed device functions which can be freely called to remotely communicate with and control the device.
-
-Steps 2-4 can also be done manually from an interactive python notebook or custom script, but common functionality is incorporated into the Launch Control GUI for automatic "double-click" running of these steps. In particular, step 4 will require knowledge of the hardware server's IP address and port if the client is created manually, but execution from the Launch Control GUI will enable automatic server connection via IP and port values stored in the master `LogServer`.
-
-
-#### Initial Setup Notes
-
-* You will likely need to allow python through Windows firewall the first time you run Launch Control on a new machine.
-
-* The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the commandline
-```bash
-openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
-```
-You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` is automatically placed in the `C:/Windows/System32` directory of the machine it is generated on. It can then be copied into the equivalent directory of any other machines using the same *pylabnetwork*.
-
-* At time of starting up the master `LogServer`, you will require a configuration file named `static_proxy.json` in the `configs` subfolder to specify the ports to be opened and the logging path in the following format:
-```javascript
-{
-    "master_log_port": 12345,
-    "master_gui_port": 12346,
-    "logger_path": "C:\\User\\pylabnet_logs"
-}
-```
-The logger and GUI port can be freely chosen. For subsequent devices that wish to connect to the already-created master `LogServer`, they will require an additional field `master_ip: xxx.xxx.xxx.xxx` where the IP address of the msater `LogServer` will be added. The logger and GUI ports will also need to be the same as those that were originally set on the master server. 
-
-## For developers
-
-### Installation
-
-First, clone the repository onto the local machine. Make sure `git` is installed. Cloning can be done from the command line, (preferrably in your home user directory) with the command
+1.  Clone the repository onto the local machine. For Windows, this will require [git for Windows](https://gitforwindows.org/) to be installed.
 ```bash
 git clone https://github.com/lukingroup/pylabnet.git
 ```
----
-**NOTE ON DEVELOPMENT IN DEDICATED ENVIRONMENT**
 
-For installation in a dedicated pip virtual environment to prevent conflicts with the base python package, create a virtual environment using the following command:
+2. Navigate into the root directory of the cloned repository:
 ```bash
-python -m venv /path/to/new/virtual/testenv
+cd pylabnet
 ```
+
+3. (Optional but highly recommended to avoid conflicts with dependencies) Create a virtual environment using the following command:
+```bash
+python -m venv <env_path>
+```
+where `<env_path>` is the desired location of the virtual environment. For example, if you want to place the environment in the root level of the `pylabnet` folder and name it `env`, the command would simply be `python -m venv env`.
 
 Activate the development environment using the command:
 ```bash
-/path/to/new/virtual/testenv/Scripts/activate
+<env_path>\Scripts\activate # Windows
+. <env_path>/bin/activate   # Linux
 ```
-Be sure to set the interpreter in your IDE to `/path/to/new/virtual/testenv/Scripts/python.exe` if you will be launching pylabnet scripts directly from the IDE.
+Be sure to set the interpreter in your IDE to `<env_path>\Scripts\python.exe` (Windows) or `<env_path>/bin/python` (Linux) if you will be launching pylabnet scripts directly from the IDE.
 
----
-Next, navigate to the root directory of the cloned repository in the commandline and run the command to install all package requirements:
+4.  Install all package requirements:
 ```bash
 pip install -r requirements.txt
 ```
 
-> **_NOTE:_** If it fails, try upgrading pip with `python -m pip install --upgrade pip`.
+If it fails, try upgrading pip with `python -m pip install --upgrade pip`. Also make sure that your [Python version is supported](#prerequisites).
 
-Finally, run the command to install `pylabnet`:
+5. Finally, run the command to install pylabnet:
 ```bash
 python setup.py develop
 ```
 
-> **_NOTE:_** There may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked. This command can also be re-used at a later time to maintain the environment (either virtual or base) if new package requirements are added to `setup.py`.
+There may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked.
 
-This will now allow you to `import pylabnet` from your scripts, and ensures you have the dependencies installed. It also creates a `pylabnet.egg-info` file which can be safely deleted if desired (it should not be tracked by github).
+6. To confirm that the installation has completed, you should be able to run  `import pylabnet` in your scripts, and you should also find the executables `pylabnet_master` and `pylabnet_staticproxy` in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). Continue reading on to the [initial setup notes](initial-setup-notes) for the initial configuration that needs to be done when setting up a new computer.
 
-This also creates the standard `pylabnet` executables located in `{PYTHONPATH}\Lib\site-packages\pylabnet` (see [above](#executable)). Just be careful that you are using the correct executable if you have installed `pylabnet` in several environments.
 
-### Development
+## Initial Setup Notes
 
-1. **Create a new working branch before making any changes to the repository. Please do not make the changes directly in the master branch!** This can be done either from your IDE of choice, or from the commandline within the local github repository, using `git checkout -b new-branch-name`
+#### Create SSL key
 
-2. Implement and test your changes.
-
-3. For GUI-based applications, it is recommended to create a launcher module (see pylabnet/launchers/README.md for more details.
-
-4. For non-GUI applications, please make a Jupyter notebook in the pylabnet/demo folder in order to demonstrate and test the added functionality.
-
-5. Note that pushing changes to the `lukingroup/pylabnet` repository requires administrative access. Please contact one of the previous contributors for details.
-
-6. Try to keep the your local repository up to date with the online repository to avoid unnecessary merge conflicts down the line.
-
-7. Once stable + working, submit a pull request.
-
-### Publishing a new version to pip
-
-Generally, not every commit or even merge into master needs to be published to pip as a new version. However, if substantial functionality is added that could be useful to other users (especially ones that are not actively developing the platform), it is a good idea to release a new version on pip. In this case, you can do this with the following steps:
-
-1. Make sure the `install_requires` kwarg in `setup.py` is up to date with all mandatory packages. If you have added new depedendencies, add them here.
- > **_NOTE:_** The preferred format is to use `>=` to constrain package versions, rather than `==`. Try not to write code that requires a `<` constraint, since this could cause user-dependent conflicts. As an example of this poor practice, the latest version of spyder has a conflict with the latest versions of pyqt5.
-
-2. Update the version number in `__init__.py` in the root module. We have adoped a 3 digit versioning scheme `x.y.z` where `x` is the major version, each new `y` digit corresponds to a substantially new release (with new software components), and the `z` digit can increment with any improvements, changes, and bug fixes.
-
-3. Update `CHANGELOG.md`
-
-3. Run the following from the commandline
+The package uses SSL authentication via a self-signed private key. You can generate this key using OpenSSL from the command line:
 ```bash
-python setup.py sdist bdist_wheel
+openssl req -new -x509 -days 365 -nodes -out pylabnet.pem -keyout pylabnet.pem
 ```
-This will create a pylabnet/dist directory (which should not be tracked by github) containing the build files for this version. Note that this requires one to `pip install wheel`.
+You may adjust the value of the `days` flag in order to change the period over which the key is valid. This private key file `pylabnet.pem` should be placed into `C:\Windows\System32` (Windows) or `/etc/ssl/certs` (Linux). On Windows, one of the easiest way to run OpenSSL is using the Git Bash shell that is installed together with Git for Windows.
 
-4. To upload to pip, run the command
-```bash
-twine upload dist/*
+#### Configuration and environment files 
+
+* Create a configuration file `pylabnet/configs/static_proxy.json` with the following fields:
 ```
-> **_NOTE:_** This requires credentials on https://pypi.org, as well as the twine package which can be installed with `pip install twine`. You may also run into issues if your `dist/` folder has older distributions, these should be deleted prior to upload.
+{
+    "logger_path": "C:\\pylabnet_logs", # Only required for master logger (i.e. running pylabnet_master)
+    "master_ip": "192.168.50.101",      # Only required for logger client (i.e. running pylabnet_staticproxy)
+    "master_log_port": 12345,
+    "master_gui_port": 12346
+}
+```
+The `master_log_port` and `master_gui_port` are freely chosen by the master logger in its configuration file, and all LogClients will need to specify these same ports in order to conenct to the master logger. LogClients will additionally also need to specify the master logger's IP address in `master_ip`.
+
+
+* Create an environment file `.env` in the root folder with the following field:
+```
+LOCALHOST_PW=REMOTE_PC_PASSWORD
+```
+This is needed to ssh into remote computers and start up device servers for devices that are connected to remote computers. A big limitation of the current approach is that it requires all target remote computers to have the same login password.
+
+* (Optional): Create a configuration file `pylabnet/configs/lab_name.json` with the following field:
+```javascript
+{
+    "lab_name": B16
+}
+```
+This can be used for tagging of servers and filtering of servers by lab. Defaults to "NO LAB" if not specified.
+
+* (Optional): Create a configuration file `pylabnet/configs/network_configuration.json` with the following field:
+```javascript
+{
+    "subnet": "192.168",          # Windows
+    "network_interface": "enp0s3" # Linux
+}
+```
+This is used to specify which IP address of the local computer should be used when creating servers in the event that it has more than one (e.g. one IP for the LAN and another IP for the Internet). For Windows, this is done by specifying a prefix that the IP address should satisfy, while for Linux this is done by specifying the network interface that should be used. To check what IP addresses and network interfaces the computer currently has, run the command `ipconfig` on Windows or `ifconfig` on Linux.
+
+
+#### Windows Firewall
+
+You will likely need to allow Python through Windows Firewall the first time you run Launch Control on a new machine.
+
 ---
-**NOTE**
 
-If you are done using a particular machine for development and would like to use and update the package the standard way via pip, you can remove the pylabnet installation by running the command `pip uninstall pylabnet` from a directory that does not have `pylabnet` inside it.
+## Usage
 
-Your local repository can now be deleted and pylabnet can be installed, used, and maintained via pip.
+The main executables used for launching the Launch Control GUI are `pylabnet_master` and `pylabnet_staticproxy` located in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). If desired, you can create shortcuts for these executables together with the `pylabnet_newlogo.ico` icon (shown above) for bonus style.
 
----
+The master Launch Control `pylabnet_master` starts a `LogServer` and also keeps track of all servers on the network, while proxy Launch Control instances simply connect to the master logger and mirror its information for convenience on remote machines. The general workflow for working with Launch Control is the following:
+
+1. Choose a computer to be the master logger. We recommend that this computer be stable with low downtime as all pylabnet communication will require the master logger to be online. Here, launch a master Launch Control using the `pylabnet_master` executable.
+2. For all other computers on the network, launch a proxy Launch Control with `pylabnet_staticproxy` to mirror the information that is being recorded on the master logger. This enables the local computer to receive logging messages from all other computers on the network.
+3. For each device that you want to connect, a separate configuration JSON file will be required to specify parameters such as the device ID and ssh settings (if the device is located on a remote computer). These config files must be located in `pylabnet/configs/devices/<device_type>/<config_filename>.json`. To start this device server, double click on the config filename in the Devices column of Launch Control. You can then write local scripts that connect to these device servers to interact with the device.
+4. For each script that you want to run, a separate configuration JSON file will be required, which minimally specifies the prerequisite device servers and the script location. These config files must be located in `pylabnet/configs/script/<script_type>/<config_filename>.json`. To start this script, double click on the config filename in the Scripts column of Launch Control.
+
+For an in-depth discussion of how pylabnet works under the hood, refer to the Wiki for [more information](https://github.com/lukingroup/pylabnet/wiki/1.-Intro-to-pylabnet#key-pylabnet-structure).

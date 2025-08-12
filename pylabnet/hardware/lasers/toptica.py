@@ -29,8 +29,7 @@ class DLC_Pro:
             self.dlc = Telnet(host=self.host, port=self.port)
             self.dlc.read_until(b'>', timeout=1)
 
-            for laser_num in self.laser_nums:
-                self._check_laser_connection(laser_num)
+            self._check_laser_connection(laser_num=1)
 
         except ConnectionRefusedError:
             self.log.error('Could not connect to Toptica DLC Pro at '
@@ -40,6 +39,7 @@ class DLC_Pro:
         """ Read out laser number
 
         :laser_num: (int) 1 or 2, indicating laser 1 or laser 2.
+
         """
         self.dlc.read_until(b'>', timeout=1)
         self.dlc.write(f"(param-disp 'laser{laser_num}:dl:type)\n".encode('utf'))

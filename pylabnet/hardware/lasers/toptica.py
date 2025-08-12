@@ -7,7 +7,7 @@ from pylabnet.utils.logging.logger import LogHandler
 class DLC_Pro:
     """ Driver class for Toptica DLC Pro """
 
-    def __init__(self, host, port=1998, logger=None, num_lasers=2):
+    def __init__(self, host, port=1998, logger=None, num_lasers=1):
         """ Instantiates DLC_Pro object
 
         :param host: (str) hostname of laser (IP address)
@@ -29,9 +29,8 @@ class DLC_Pro:
             self.dlc = Telnet(host=self.host, port=self.port)
             self.dlc.read_until(b'>', timeout=1)
 
-            # for laser_num in self.laser_nums:
-            #     self._check_laser_connection(laser_num)
-            self._check_laser_connection(laser_num=1)
+            for laser_num in self.laser_nums:
+                self._check_laser_connection(laser_num)
 
         except ConnectionRefusedError:
             self.log.error('Could not connect to Toptica DLC Pro at '

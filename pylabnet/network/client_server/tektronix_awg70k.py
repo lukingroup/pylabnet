@@ -1,4 +1,4 @@
-
+import pickle
 import numpy as np
 
 from pylabnet.network.core.service_base import ServiceBase
@@ -17,7 +17,7 @@ class Service(ServiceBase):
         return self._module.query_binary_values(command, **kwargs)
 
     def exposed_write_binary_values(self, command, data, **kwargs):
-        return self._module.write_binary_values(command, data, **kwargs)
+        return self._module.write_binary_values(command, pickle.loads(data), **kwargs)
 
 
 class Client(ClientBase):
@@ -32,4 +32,4 @@ class Client(ClientBase):
         return self._service.exposed_query_binary_values(command, **kwargs)
 
     def write_binary_values(self, command, data, **kwargs):
-        return self._service.exposed_write_binary_values(command, data, **kwargs)
+        return self._service.exposed_write_binary_values(command, pickle.dumps(data), **kwargs)

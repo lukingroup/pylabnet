@@ -229,7 +229,7 @@ class Dataset():
 
     def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
-        if(not self.save_as_npy):
+        if not self.save_as_npy:
 
             generic_save(
                 data=self.data,
@@ -280,41 +280,41 @@ class Dataset():
             for child in self.children.values():
                 child.save(filename, directory, date_dir, unique_id)
 
-            return
-
-        # save as npy (for large-sized data, and don't save graph file)
-        npy_generic_save(
-            data=self.data,
-            filename=f'{filename}_{self.name}_{unique_id}',
-            directory=directory,
-            date_dir=date_dir
-        )
-        if self.x is not None:
-            npy_generic_save(
-                data=self.x,
-                filename=f'{filename}_{self.name}_x_{unique_id}',
-                directory=directory,
-                date_dir=date_dir
-            )
-
-        # if the dataset is important, save it again in the important dataset folder.
-        if self.is_important:
+        else:
+    
+            # save as npy (for large-sized data, and don't save graph file)
             npy_generic_save(
                 data=self.data,
                 filename=f'{filename}_{self.name}_{unique_id}',
-                directory=directory + "\\important_data",
+                directory=directory,
                 date_dir=date_dir
             )
             if self.x is not None:
                 npy_generic_save(
                     data=self.x,
                     filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+    
+            # if the dataset is important, save it again in the important dataset folder.
+            if self.is_important:
+                npy_generic_save(
+                    data=self.data,
+                    filename=f'{filename}_{self.name}_{unique_id}',
                     directory=directory + "\\important_data",
                     date_dir=date_dir
                 )
-
-        for child in self.children.values():
-            child.save(filename, directory, date_dir, unique_id)
+                if self.x is not None:
+                    npy_generic_save(
+                        data=self.x,
+                        filename=f'{filename}_{self.name}_x_{unique_id}',
+                        directory=directory + "\\important_data",
+                        date_dir=date_dir
+                    )
+    
+            for child in self.children.values():
+                child.save(filename, directory, date_dir, unique_id)
 
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui

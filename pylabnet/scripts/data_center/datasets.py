@@ -1235,6 +1235,8 @@ class SawtoothScan1D(Dataset):
         pass_kwargs = dict()
         if 'window' in config:
             pass_kwargs['window'] = config['window']
+        if 'window_title' in config:
+            pass_kwargs['window_title'] = config['window_title']
 
         # Add child for averaged plot
         self.add_child(
@@ -1476,18 +1478,19 @@ class HeatMap(Dataset):
         # If we want to use a separate window
         if 'window' in kwargs:
 
-            # Check whether this window exists
+            # # Check whether this window exists
             if not hasattr(self.gui, kwargs['window']):
+                self.log.info('Graph Holder already exists!!!!!!!!!!')
 
-                if 'window_title' in kwargs:
-                    window_title = kwargs['window_title']
-                else:
-                    window_title = 'Graph Holder'
-                setattr(
-                    self.gui,
-                    kwargs['window'],
-                    GraphPopup(window_title=window_title)
-                )
+            if 'window_title' in kwargs:
+                window_title = kwargs['window_title']
+            else:
+                window_title = 'Graph Holder'
+            setattr(
+                self.gui,
+                kwargs['window'],
+                GraphPopup(window_title=window_title)
+            )
 
             self.graph = pg.ImageView(view=pg.PlotItem())
             getattr(self.gui, kwargs['window']).graph_layout.addWidget(

@@ -21,7 +21,7 @@ def get_color_index(dataset, kwargs):
 
         try:
             tabs_enabled = dataset.gui.windows[kwargs['window']].tabs_enabled
-        
+
         # If Window has not tabs
         except AttributeError:
             tabs_enabled = False
@@ -29,7 +29,7 @@ def get_color_index(dataset, kwargs):
         # If dataset is initial dataset
         except KeyError:
             tabs_enabled = False
-        
+
         if tabs_enabled:
             color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
         elif 'window' in kwargs:
@@ -38,7 +38,6 @@ def get_color_index(dataset, kwargs):
             color_index = dataset.gui.graph_layout.count() - 1
 
     return color_index
-
 
 
 class Dataset():
@@ -382,13 +381,11 @@ class Dataset():
         if graph is None:
             # If we want to use a separate window
 
-    
-
             if 'window' in kwargs:
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
-                    # Check if we want to enable tabs 
+                    # Check if we want to enable tabs
                     if 'tabs_enabled' in kwargs:
                         tabs_enabled = kwargs['tabs_enabled']
 
@@ -398,7 +395,7 @@ class Dataset():
                             tablabel = "Tab"
                     else:
                         tabs_enabled = False
-                    
+
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
@@ -407,12 +404,11 @@ class Dataset():
                     # self.gui.windows[kwargs['window']] = GraphPopup(
                     #     window_title=window_title, size=(700, 300))
 
-            
                     if(self.enable_confluence):
                         if tabs_enabled:
 
                             self.gui.windows[kwargs['window']] = Confluence_support_GraphPopupTabs(
-                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel = tablabel
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel=tablabel
                             )
 
                             self.gui.windows[kwargs['window']].tabs_enabled = True
@@ -422,20 +418,18 @@ class Dataset():
                             )
                     elif tabs_enabled:
                         self.gui.windows[kwargs['window']] = GraphPopupTabs(
-                            window_title=window_title, size=(700, 300), tablabel = tablabel
+                            window_title=window_title, size=(700, 300), tablabel=tablabel
                         )
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
-                            window_title=window_title, size=(700, 300), 
+                            window_title=window_title, size=(700, 300),
                         )
 
                      # Window already exists
                 else:
-                    # Check if we want to enable tabs 
-                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled 
-                    
+                    # Check if we want to enable tabs
+                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled
 
-                
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
                     self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
@@ -460,7 +454,7 @@ class Dataset():
                         tab_widget_graphlayout.addWidget(
                             self.graph
                         )
-                        
+
                     elif num_tabs == 0:
 
                         # add to first tab
@@ -470,23 +464,22 @@ class Dataset():
                         self.gui.windows[kwargs['window']].num_tabs += 1
 
                     else:
-                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
-                            graph = self.graph,
-                            label = tablabel
+                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(
+                            graph=self.graph,
+                            label=tablabel
                         )
                 else:
- 
+
                     self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)
 
             # Otherwise, add a graph to the main layout
             else:
-                
+
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     self.graph = self.gui.add_graph(datetime_axis=True)
                 else:
                     self.graph = self.gui.add_graph()
 
-    
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -1239,6 +1232,8 @@ class SawtoothScan1D(Dataset):
         pass_kwargs = dict()
         if 'window' in config:
             pass_kwargs['window'] = config['window']
+        if 'window_title' in config:
+            pass_kwargs['window_title'] = config['window_title']
 
         # Add child for averaged plot
         self.add_child(
@@ -1480,18 +1475,19 @@ class HeatMap(Dataset):
         # If we want to use a separate window
         if 'window' in kwargs:
 
-            # Check whether this window exists
+            # # Check whether this window exists
             if not hasattr(self.gui, kwargs['window']):
+                self.log.info('Graph Holder already exists!!!!!!!!!!')
 
-                if 'window_title' in kwargs:
-                    window_title = kwargs['window_title']
-                else:
-                    window_title = 'Graph Holder'
-                setattr(
-                    self.gui,
-                    kwargs['window'],
-                    GraphPopup(window_title=window_title)
-                )
+            if 'window_title' in kwargs:
+                window_title = kwargs['window_title']
+            else:
+                window_title = 'Graph Holder'
+            setattr(
+                self.gui,
+                kwargs['window'],
+                GraphPopup(window_title=window_title)
+            )
 
             self.graph = pg.ImageView(view=pg.PlotItem())
             getattr(self.gui, kwargs['window']).graph_layout.addWidget(

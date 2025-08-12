@@ -162,6 +162,9 @@ class Monitor:
             split_ref = (0, 0)
         try:
             efficiency = np.sqrt(p_ref / (p_in * self.calibration[0]))
+            # Clip to max 1 efficiency if it's a valid number
+            if not np.isnan(efficiency):
+                efficiency = min(1, efficiency)
         except ZeroDivisionError:
             efficiency = 0
         values = [p_in, p_ref, efficiency]

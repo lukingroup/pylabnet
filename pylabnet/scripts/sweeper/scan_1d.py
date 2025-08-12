@@ -119,7 +119,7 @@ class Controller(MultiChSweep1D):
             client_item = QtWidgets.QListWidgetItem(client_name)
             client_item.setForeground(Qt.gray)
             self.widgets['clients'].addItem(client_item)
-            self.log.error("Datataker missing client: " + client_name)
+            self.log.error("Scan1D missing client: " + client_name)
 
         # Manually add logger to client
         self.clients['logger'] = logger

@@ -87,32 +87,39 @@ class Controller(MultiChSweep1D):
         self.widgets['exp'].clicked.connect(self.display_experiment)
 
         # Configure list of clients
-        self.clients = clients
+        self.clients = {}
+
+        # Configure list of missing clients
+        self.missing_clients = {}
+
+        # Retrieve Clients
         for client_entry in self.config['servers']:
             client_type = client_entry['type']
             client_config = client_entry['config']
             client = find_client(
-                clients=self.clients,
+                clients=clients,
                 settings=client_config,
                 client_type=client_type,
                 client_config=client_config,
                 logger=self.log
             )
-            if (client == None):
-                client_name_concat = client_type
-                client_item = QtWidgets.QListWidgetItem(client_name_concat)
-                client_item.setForeground(Qt.gray)
-                client_item.setToolTip(str("Disconnected"))
-                self.widgets['clients'].addItem(client_item)
 
+            if (client == None):
+                self.missing_clients[f"{client_type}_{client_config}"] = [client_type, client_config]
             else:
-                self.log.info(client)
-                client_name_concat = f"{client_type}_{client_config}"
-                client_item = QtWidgets.QListWidgetItem(client_name_concat)
-                client_item.setToolTip(str(client))
-                self.widgets['clients'].addItem(client_item)
+                self.clients[f"{client_type}_{client_config}"] = client
+
+        for client_name, client_obj in self.clients.items():
+            client_item = QtWidgets.QListWidgetItem(client_name)
+            client_item.setToolTip(str(client_obj))
+            self.widgets['clients'].addItem(client_item)
 
         #Checking for any missing clients, and adding them as greyed out on the list of clients
+        for client_name, client_config in self.missing_clients.items():
+            client_item = QtWidgets.QListWidgetItem(client_name)
+            client_item.setForeground(Qt.gray)
+            self.widgets['clients'].addItem(client_item)
+            self.log.error("Datataker missing client: " + client_name)
 
         # Manually add logger to client
         self.clients['logger'] = logger

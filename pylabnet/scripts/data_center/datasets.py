@@ -253,7 +253,6 @@ class Dataset():
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
     def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
-        
         if not self.save_as_npy:
 
             generic_save(
@@ -306,7 +305,6 @@ class Dataset():
                 child.save(filename, directory, date_dir, unique_id)
 
         else:
-            
             # save as npy (for large-sized data, and don't save graph file)
             npy_generic_save(
                 data=self.data,

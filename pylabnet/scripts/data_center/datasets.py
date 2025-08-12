@@ -1265,10 +1265,10 @@ class SawtoothScan1D(Dataset):
         # If we have already integrated a full dataset, avg
         if dataset.reps > 1:
             current_index = len(dataset.data) - 1
-            prev_dataset.data[current_index] = (
-                prev_dataset.data[current_index] * (dataset.reps - 1)
-                + dataset.data[-1]
-            ) / (dataset.reps)
+            prev_dataset.data[current_index] = float((
+                float(prev_dataset.data[current_index]) * (float(dataset.reps) - 1)
+                + float(dataset.data[-1])
+            ) / float(dataset.reps))
         else:
             prev_dataset.data = dataset.data
 

@@ -37,9 +37,10 @@ Activate the development environment using the command:
 ```
 Be sure to set the interpreter in your IDE to `<env_path>\Scripts\python.exe` (Windows) or `<env_path>/bin/python` (Linux) if you will be launching pylabnet scripts directly from the IDE.
 
-4. Update `pip` version
+4. Update `pip` version:
 ```bash
-python -m pip install --upgrade pip```
+python -m pip install --upgrade pip
+```
 
 5.  Install all package requirements:
 ```bash

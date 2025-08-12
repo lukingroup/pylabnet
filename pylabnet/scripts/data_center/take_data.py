@@ -118,6 +118,7 @@ class DataTaker:
         """
 
         filepath = self.gui.exp.model().filePath(index)
+
         if not os.path.isdir(filepath):
             with open(filepath, 'r') as exp_file:
                 exp_content = exp_file.read()
@@ -129,7 +130,19 @@ class DataTaker:
             self.log.update_metadata(experiment_file=exp_content)
 
             self.cur_path = self.gui.exp.model().filePath(self.gui.exp.currentIndex())
-            self.exp_name = os.path.split(os.path.basename(self.cur_path))[1][:-3]
+
+            # build experiment name by turning path into module
+            # for example: folder1/folder2/exp.py --> folder1.folder2.exp
+            path_beyond_exp_path = self.cur_path.split('/')[len(self.exp_path.split(os.sep)):]
+            # remove .py
+            path_beyond_exp_path[-1] = path_beyond_exp_path[-1][:-3]
+
+            self.exp_name = ''
+            for module_path in path_beyond_exp_path:
+                self.exp_name += module_path
+                self.exp_name += '.'
+            # remove final '.'
+            self.exp_name = self.exp_name[:-1]
 
         self.load_init_dict(index)
 

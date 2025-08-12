@@ -166,7 +166,7 @@ if __name__ == "__main__":
     from telnetlib import Telnet
     import time
 
-    host = "169.254.64.200"
+    host = "192.168.50.208"
     port = 7230
 
     anc = ANC300(host=host, port=port)

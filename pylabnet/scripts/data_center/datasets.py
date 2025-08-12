@@ -21,7 +21,7 @@ def get_color_index(dataset, kwargs):
 
         try:
             tabs_enabled = dataset.gui.windows[kwargs['window']].tabs_enabled
-        
+
         # If Window has not tabs
         except AttributeError:
             tabs_enabled = False
@@ -29,7 +29,7 @@ def get_color_index(dataset, kwargs):
         # If dataset is initial dataset
         except KeyError:
             tabs_enabled = False
-        
+
         if tabs_enabled:
             color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
         elif 'window' in kwargs:
@@ -38,7 +38,6 @@ def get_color_index(dataset, kwargs):
             color_index = dataset.gui.graph_layout.count() - 1
 
     return color_index
-
 
 
 class Dataset():
@@ -61,7 +60,7 @@ class Dataset():
         else:
             self.config = {}
 
-        if(log is None):
+        if (log is None):
             self.metadata = None
         else:
             self.metadata = self.log.get_metadata()
@@ -97,7 +96,7 @@ class Dataset():
 
         self.enable_confluence = enable_confluence
 
-        if(log == None):
+        if (log == None):
             self.enable_confluence = False
 
         # Configure data visualization
@@ -255,7 +254,7 @@ class Dataset():
 
     def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
-        if(not self.save_as_npy):
+        if (not self.save_as_npy):
 
             generic_save(
                 data=self.data,
@@ -382,13 +381,11 @@ class Dataset():
         if graph is None:
             # If we want to use a separate window
 
-    
-
             if 'window' in kwargs:
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
-                    # Check if we want to enable tabs 
+                    # Check if we want to enable tabs
                     if 'tabs_enabled' in kwargs:
                         tabs_enabled = kwargs['tabs_enabled']
 
@@ -398,7 +395,7 @@ class Dataset():
                             tablabel = "Tab"
                     else:
                         tabs_enabled = False
-                    
+
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
@@ -407,36 +404,35 @@ class Dataset():
                     # self.gui.windows[kwargs['window']] = GraphPopup(
                     #     window_title=window_title, size=(700, 300))
 
-            
-                    if(self.enable_confluence):
+                    if (self.enable_confluence):
                         if tabs_enabled:
 
                             self.gui.windows[kwargs['window']] = Confluence_support_GraphPopupTabs(
-                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel = tablabel
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel=tablabel
                             )
-
                             self.gui.windows[kwargs['window']].tabs_enabled = True
                         else:
                             self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
                                 app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
                             )
+                            self.gui.windows[kwargs['window']].tabs_enabled = False
                     elif tabs_enabled:
                         self.gui.windows[kwargs['window']] = GraphPopupTabs(
-                            window_title=window_title, size=(700, 300), tablabel = tablabel
+                            window_title=window_title, size=(700, 300), tablabel=tablabel
                         )
+                        self.gui.windows[kwargs['window']].tabs_enabled = True
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
-                            window_title=window_title, size=(700, 300), 
+                            window_title=window_title, size=(700, 300),
                         )
+                        self.gui.windows[kwargs['window']].tabs_enabled = False
 
                      # Window already exists
                 else:
-                    # Check if we want to enable tabs 
-                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled 
-                    
+                    # Check if we want to enable tabs
+                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled
 
-                
-                if('datetime_axis' in kwargs and kwargs['datetime_axis']):
+                if ('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
                     self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
                 else:
@@ -460,7 +456,7 @@ class Dataset():
                         tab_widget_graphlayout.addWidget(
                             self.graph
                         )
-                        
+
                     elif num_tabs == 0:
 
                         # add to first tab
@@ -470,23 +466,22 @@ class Dataset():
                         self.gui.windows[kwargs['window']].num_tabs += 1
 
                     else:
-                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
-                            graph = self.graph,
-                            label = tablabel
+                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(
+                            graph=self.graph,
+                            label=tablabel
                         )
                 else:
- 
+
                     self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)
 
             # Otherwise, add a graph to the main layout
             else:
-                
-                if('datetime_axis' in kwargs and kwargs['datetime_axis']):
+
+                if ('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     self.graph = self.gui.add_graph(datetime_axis=True)
                 else:
                     self.graph = self.gui.add_graph()
 
-    
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -733,7 +728,7 @@ class InfiniteRollingLine(RollingLine):
         """
 
         if self.data is None:
-            if(np.isscalar(data)):
+            if (np.isscalar(data)):
                 self.data = np.array([data])
             else:
                 self.data = np.array(data)
@@ -762,7 +757,7 @@ class InfiniteRollingLine(RollingLine):
 
 class time_trace_monitor(RollingLine):
     def __init__(self, *args, **kwargs):
-        if('data_length' not in kwargs):
+        if ('data_length' not in kwargs):
             kwargs['data_length'] = "just to bypass the popup window and the datalength will be set up later"
         kwargs['datetime_axis'] = True
         super().__init__(*args, **kwargs)
@@ -1336,14 +1331,14 @@ class SawtoothScan1D_array_update(SawtoothScan1D):
         if dataset.reps > 1:
             current_data_len = len(dataset.data)
 
-            if(current_data_len == 0):
+            if (current_data_len == 0):
                 prev_dataset.data = np.mean(dataset.all_data, axis=0)
         else:
             prev_dataset.data = dataset.data
 
     def set_data(self, value):
 
-        if(np.isscalar(value)):
+        if (np.isscalar(value)):
             if self.data is None:
                 self.reps = 1
                 self.data = np.array([value])
@@ -1370,7 +1365,7 @@ class SawtoothScan1D_array_update(SawtoothScan1D):
             self.set_children_data()
             return
 
-        if(isinstance(value, np.ndarray)):
+        if (isinstance(value, np.ndarray)):
             if self.data is None:
                 self.reps = 1
                 self.data = np.array(value)
@@ -1405,7 +1400,7 @@ class SawtoothScan1D_array_update(SawtoothScan1D):
 
         if self.data is not None and len(self.data) <= len(self.x):
             self.curve.setData(self.x[:len(self.data)], self.data)
-        if(isinstance(self.data, np.ndarray)):
+        if isinstance(self.data, np.ndarray):
             for child in self.children.values():
                 child.update(update_hmap=copy.deepcopy(self.update_hmap))
 
@@ -2155,7 +2150,7 @@ class InterpolatedMap(Dataset):
             from scipy.interpolate import RBFInterpolator
         except ImportError as e:
             self.log.warn("This import requires SciPy >=1.7.0.")
-            raise(e)
+            raise (e)
 
     def set_data(self, data):
         """ Updates data stored in the data dict.

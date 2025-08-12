@@ -10,7 +10,7 @@ This is the repository for pylabnet, a software package for client-server, Pytho
 
 ## Prerequisites
 
-* Supported Python versions: 3.7 - 3.8
+* Supported Python versions: 3.8 (recommended 3.8.10)
 
 ## Installation
 
@@ -37,21 +37,25 @@ Activate the development environment using the command:
 ```
 Be sure to set the interpreter in your IDE to `<env_path>\Scripts\python.exe` (Windows) or `<env_path>/bin/python` (Linux) if you will be launching pylabnet scripts directly from the IDE.
 
-4.  Install all package requirements:
+4. Update `pip` version
+```bash
+python -m pip install --upgrade pip```
+
+5.  Install all package requirements:
 ```bash
 pip install -r requirements.txt
 ```
 
-If it fails, try upgrading pip with `python -m pip install --upgrade pip`. Also make sure that your [Python version is supported](#prerequisites).
+If it fails, make sure that your [Python version is supported](#prerequisites) and that you have upgraded pip.
 
-5. Finally, run the command to install pylabnet:
+6. Finally, run the command to install pylabnet:
 ```bash
 python setup.py develop
 ```
 
 There may be some errors during dependency installation, but as long as the command terminates with output `Finished processing dependencies for pylabnet==x.y.z` the installation has worked.
 
-6. To confirm that the installation has completed, you should be able to run  `import pylabnet` in your scripts, and you should also find the executables `pylabnet_master` and `pylabnet_staticproxy` in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). Continue reading on to the [initial setup notes](initial-setup-notes) for the initial configuration that needs to be done when setting up a new computer.
+7. To confirm that the installation has completed, you should be able to run  `import pylabnet` in your scripts, and you should also find the executables `pylabnet_master` and `pylabnet_staticproxy` in the folder `<env_path>\Scripts` (Windows) or `<env_path>/bin` (Linux). Continue reading on to the [initial setup notes](initial-setup-notes) for the initial configuration that needs to be done when setting up a new computer.
 
 
 ## Initial Setup Notes

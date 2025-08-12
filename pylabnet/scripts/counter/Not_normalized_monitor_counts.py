@@ -269,10 +269,9 @@ class CountMonitor:
         # noise = np.sqrt(counts)*(1e12/self._bin_width)
         # plot_index = 0
 
-        summed_counts = np.sum(counts_per_sec, axis=0)
-        #summed_counts = counts_per_sec[0]/counts_per_sec[0].max() + counts_per_sec[1]/counts_per_sec[1].max()
+        summed_counts = np.sum(counts, axis=0)
 
-        for index, count_array in enumerate(counts_per_sec):
+        for index, count_array in enumerate(counts):
 
             # Figure out which plot to assign to
             channel = self._ch_list[index]

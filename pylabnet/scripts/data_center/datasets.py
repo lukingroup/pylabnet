@@ -254,8 +254,7 @@ class Dataset():
 
     def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
 
-        if (not self.save_as_npy):
-
+        if not self.save_as_npy:
             generic_save(
                 data=self.data,
                 filename=f'{filename}_{self.name}_{unique_id}',
@@ -305,39 +304,40 @@ class Dataset():
             for child in self.children.values():
                 child.save(filename, directory, date_dir, unique_id)
 
-        # save as npy (for large-sized data, and don't save graph file)
-        npy_generic_save(
-            data=self.data,
-            filename=f'{filename}_{self.name}_{unique_id}',
-            directory=directory,
-            date_dir=date_dir
-        )
-        if self.x is not None:
-            npy_generic_save(
-                data=self.x,
-                filename=f'{filename}_{self.name}_x_{unique_id}',
-                directory=directory,
-                date_dir=date_dir
-            )
-
-        # if the dataset is important, save it again in the important dataset folder.
-        if self.is_important:
+        else:
+            # save as npy (for large-sized data, and don't save graph file)
             npy_generic_save(
                 data=self.data,
                 filename=f'{filename}_{self.name}_{unique_id}',
-                directory=directory + "\\important_data",
+                directory=directory,
                 date_dir=date_dir
             )
             if self.x is not None:
                 npy_generic_save(
                     data=self.x,
                     filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+    
+            # if the dataset is important, save it again in the important dataset folder.
+            if self.is_important:
+                npy_generic_save(
+                    data=self.data,
+                    filename=f'{filename}_{self.name}_{unique_id}',
                     directory=directory + "\\important_data",
                     date_dir=date_dir
                 )
-
-        for child in self.children.values():
-            child.save(filename, directory, date_dir, unique_id)
+                if self.x is not None:
+                    npy_generic_save(
+                        data=self.x,
+                        filename=f'{filename}_{self.name}_x_{unique_id}',
+                        directory=directory + "\\important_data",
+                        date_dir=date_dir
+                    )
+    
+            for child in self.children.values():
+                child.save(filename, directory, date_dir, unique_id)
 
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
@@ -425,6 +425,8 @@ class Dataset():
                         self.gui.windows[kwargs['window']] = GraphPopup(
                             window_title=window_title, size=(700, 300),
                         )
+                        self.gui.windows[kwargs['window']].tabs_enabled = False
+
                         self.gui.windows[kwargs['window']].tabs_enabled = False
 
                      # Window already exists
@@ -1234,6 +1236,8 @@ class SawtoothScan1D(Dataset):
         pass_kwargs = dict()
         if 'window' in config:
             pass_kwargs['window'] = config['window']
+        if 'window_title' in config:
+            pass_kwargs['window_title'] = config['window_title']
 
         # Add child for averaged plot
         self.add_child(
@@ -1262,10 +1266,10 @@ class SawtoothScan1D(Dataset):
         # If we have already integrated a full dataset, avg
         if dataset.reps > 1:
             current_index = len(dataset.data) - 1
-            prev_dataset.data[current_index] = (
-                prev_dataset.data[current_index] * (dataset.reps - 1)
-                + dataset.data[-1]
-            ) / (dataset.reps)
+            prev_dataset.data[current_index] = float((
+                float(prev_dataset.data[current_index]) * (float(dataset.reps) - 1)
+                + float(dataset.data[-1])
+            ) / float(dataset.reps))
         else:
             prev_dataset.data = dataset.data
 
@@ -1475,18 +1479,19 @@ class HeatMap(Dataset):
         # If we want to use a separate window
         if 'window' in kwargs:
 
-            # Check whether this window exists
+            # # Check whether this window exists
             if not hasattr(self.gui, kwargs['window']):
+                self.log.info('Graph Holder already exists!!!!!!!!!!')
 
-                if 'window_title' in kwargs:
-                    window_title = kwargs['window_title']
-                else:
-                    window_title = 'Graph Holder'
-                setattr(
-                    self.gui,
-                    kwargs['window'],
-                    GraphPopup(window_title=window_title)
-                )
+            if 'window_title' in kwargs:
+                window_title = kwargs['window_title']
+            else:
+                window_title = 'Graph Holder'
+            setattr(
+                self.gui,
+                kwargs['window'],
+                GraphPopup(window_title=window_title)
+            )
 
             self.graph = pg.ImageView(view=pg.PlotItem())
             getattr(self.gui, kwargs['window']).graph_layout.addWidget(

@@ -12,17 +12,17 @@ from PyQt5.QtWidgets import QShortcut
 
 # If in this list, set DC voltage to 0 after taking a step.
 BROKEN_CHANNELS = []
-ATTOCUBE_CHANNELS = [1, 6, 5, 8, 0, 2]
+ATTOCUBE_CHANNELS = [4, 3, 5, 7, 6, 8]
 
 ATTOCUBE_CHANNEL_ORDER = [4, 5, 6, 1, 2, 3]
 
 MATCHING_DICT = {
-    '6': ATTOCUBE_CHANNEL_ORDER[0],
-    '1': ATTOCUBE_CHANNEL_ORDER[1],
+    '4': ATTOCUBE_CHANNEL_ORDER[0],
+    '3': ATTOCUBE_CHANNEL_ORDER[1],
     '5': ATTOCUBE_CHANNEL_ORDER[2],
-    '8': ATTOCUBE_CHANNEL_ORDER[3],
-    '0': ATTOCUBE_CHANNEL_ORDER[4],
-    '2': ATTOCUBE_CHANNEL_ORDER[5]
+    '7': ATTOCUBE_CHANNEL_ORDER[3],
+    '6': ATTOCUBE_CHANNEL_ORDER[4],
+    '8': ATTOCUBE_CHANNEL_ORDER[5]
 }
 
 GREY_BUTTON_STYLESHEET = 'background-color:#54687A'
@@ -51,10 +51,9 @@ class Controller:
         lock_button=int(NUM_CHANNELS / 3), keyboard_change_combo=1, ground=6, get_capacitance=6, c_box=6,
     )
     DC_TOLERANCE = 0.1
-    AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
-    #AXIS_ORDER = [[0,1,2], [3,4,5], [6,7,8]]
+    AXIS_ORDER = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
 
-    def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client, gui='positioner_control_mixed_two_atto', log_client=None, config=None, port=None):
+    def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client, gui='positioner_control_new_wiring', log_client=None, config=None, port=None):
         """ Instantiates the controller
 
         :param nanopos_client: (pylabnet.network.client_server.smaract_mcs2.Client)
@@ -737,7 +736,7 @@ def launch(**kwargs):
     nanopos_client = find_client(clients=clients, settings=config, client_type='mcs2')
     attocube_client = find_client(clients=clients, settings=config, client_type='anc300')
 
-    gui_client = 'positioner_control_mixed_two_atto'
+    gui_client = 'positioner_control_new_wiring'
 
     # Instantiate controller
     control = Controller(nanopos_client, attocube_client, gui_client, logger, config=kwargs['config'], port=kwargs['server_port'])

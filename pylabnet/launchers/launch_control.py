@@ -52,8 +52,6 @@ class LaunchWindow(Window):
 
         self.terminal.setReadOnly(True)
 
-
-
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
 
@@ -79,7 +77,7 @@ class Controller:
         self.operating_system = get_os()
         self.app = QtWidgets.QApplication(sys.argv)
         self.app.setWindowIcon(
-            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
         )
         # Instantiate GUI application
         if self.operating_system == 'Windows':
@@ -408,7 +406,7 @@ class Controller:
         self.main_window.logfile_status_button.setHidden(True)
         self.main_window.log_previous.setHidden(True)
         self.main_window.logfile_status_indicator.setEnabled(False)
-        
+
         self.main_window.confluence_update.clicked.connect(self.confluence_info_update)
 
         # Configure list of scripts to run and clicking actions
@@ -932,7 +930,7 @@ class Controller:
                     filepath = config_dict['logger_path']
                 except:
                     self.main_window.terminal.setPlainText('Critical error: '
-                                                      'no logger_path found in static_proxy.json')
+                                                           'no logger_path found in static_proxy.json')
                     self.main_window.force_update()
                     time.sleep(10)
                     raise
@@ -1102,6 +1100,7 @@ class ProxyUpdater(QtCore.QObject):
                 self.update_signal.emit(new_msg)
 
             self.controller.last_seen_buffer = buffer_terminal
+
 
 def main():
     """ Runs the launch controller """

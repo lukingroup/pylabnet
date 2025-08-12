@@ -166,3 +166,4 @@ temp/*
 pylabnet/YOUR_PYRPL_DESTINATION_FOLDER/*
 
 pylabnet/pylabnet_logs/*
+*.ttbin

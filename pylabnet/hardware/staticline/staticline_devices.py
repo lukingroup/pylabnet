@@ -243,6 +243,63 @@ class HMCT2220(StaticLineHardwareHandler):
             self.hardware_client.set_freq(float(value) * 1E9)
 
 
+class SYNTHHD(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.maxval = MW_MAXVAL
+
+        # self.up = self.hardware_client.output_on
+        # self.down = self.hardware_client.output_off
+        self.log.info(f'SYNTHHD assigned to staticline {self.name}')
+
+        self.setting = self.config['setting']
+
+    # def set_dig_value(self, value):
+
+    #     if float(value) > self.maxval:
+    #         self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+    #         value = self.maxval
+
+    #     self.hardware_client.set_power(float(value))
+
+    # def set_value(self, value):
+    #     #This will be used for setting the frequencies with an analog staticline
+    #     self.hardware_client.set_freq(float(value) * 1E9)
+
+    def set_value(self, value):
+        if self.setting == "power_A":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value), channel='A')
+
+        if self.setting == "frequency_A":
+            self.hardware_client.set_freq(float(value) * 1E9, channel='A')
+
+        if self.setting == "power_B":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value), channel='B')
+
+        if self.setting == "frequency_B":
+            self.hardware_client.set_freq(float(value) * 1E9, channel='B')
+
+    def up(self):
+        self.hardware_client.output_on(channel='A')
+        self.hardware_client.output_on(channel='B')
+
+    def down(self):
+        self.hardware_client.output_off(channel='A')
+        self.hardware_client.output_off(channel='B')
+
+
 class TPLinkHS103(StaticLineHardwareHandler):
 
     def setup(self):
@@ -471,6 +528,7 @@ class PhotonSpotBias(StaticLineHardwareHandler):
 ################################################################################
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
+    'synthhd': SYNTHHD,
     'zi_hdawg': HDAWG,
     'nidaqmx_green': NiDaqMx,
     'nidaqmx': NiDaqMx,

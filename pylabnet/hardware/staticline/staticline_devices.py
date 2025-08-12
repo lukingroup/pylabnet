@@ -419,6 +419,38 @@ class MCCUSB3114(StaticLineHardwareHandler):
             self.up()
 
 
+class SiglentSDG6032X(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.ch = int(self.config['ch'])
+
+        self.log.info(f'Siglent SDG6032X channel {self.ch} assigned to staticline {self.name}')
+
+    def up(self):
+        self.hardware_client.output_on(ch=self.ch)
+
+    def down(self):
+        self.hardware_client.output_off(ch=self.ch)
+
+
+class AgiltronFFSW(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.log.info(f'Agiltron FFSW assigned to staticline {self.name}')
+
+    def up(self):
+        self.hardware_client.set_output(ch=1)
+
+    def down(self):
+        self.hardware_client.set_output(ch=0)
+
+
 class PhotonSpotBias(StaticLineHardwareHandler):
 
     def setup(self):
@@ -452,5 +484,7 @@ registered_staticline_modules = {
     'SMC100A': SMC100A,
     'superK': superK,
     'mcc_usb_3114': MCCUSB3114,
-    'photonspot_bias': PhotonSpotBias
+    'photonspot_bias': PhotonSpotBias,
+    'siglent_sdg6032x': SiglentSDG6032X,
+    'agiltron_ffsw': AgiltronFFSW
 }

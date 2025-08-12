@@ -21,7 +21,7 @@ def get_color_index(dataset, kwargs):
 
         try:
             tabs_enabled = dataset.gui.windows[kwargs['window']].tabs_enabled
-        
+
         # If Window has not tabs
         except AttributeError:
             tabs_enabled = False
@@ -29,7 +29,7 @@ def get_color_index(dataset, kwargs):
         # If dataset is initial dataset
         except KeyError:
             tabs_enabled = False
-        
+
         if tabs_enabled:
             color_index = dataset.gui.windows[kwargs['window']].num_tabs - 1
         elif 'window' in kwargs:
@@ -38,7 +38,6 @@ def get_color_index(dataset, kwargs):
             color_index = dataset.gui.graph_layout.count() - 1
 
     return color_index
-
 
 
 class Dataset():
@@ -254,8 +253,8 @@ class Dataset():
             self.gui.presel_status.setStyleSheet('background-color: gray;')
 
     def save(self, filename=None, directory=None, date_dir=True, unique_id=None):
-
-        if(not self.save_as_npy):
+        
+        if not self.save_as_npy:
 
             generic_save(
                 data=self.data,
@@ -306,39 +305,41 @@ class Dataset():
             for child in self.children.values():
                 child.save(filename, directory, date_dir, unique_id)
 
-        # save as npy (for large-sized data, and don't save graph file)
-        npy_generic_save(
-            data=self.data,
-            filename=f'{filename}_{self.name}_{unique_id}',
-            directory=directory,
-            date_dir=date_dir
-        )
-        if self.x is not None:
-            npy_generic_save(
-                data=self.x,
-                filename=f'{filename}_{self.name}_x_{unique_id}',
-                directory=directory,
-                date_dir=date_dir
-            )
-
-        # if the dataset is important, save it again in the important dataset folder.
-        if self.is_important:
+        else:
+            
+            # save as npy (for large-sized data, and don't save graph file)
             npy_generic_save(
                 data=self.data,
                 filename=f'{filename}_{self.name}_{unique_id}',
-                directory=directory + "\\important_data",
+                directory=directory,
                 date_dir=date_dir
             )
             if self.x is not None:
                 npy_generic_save(
                     data=self.x,
                     filename=f'{filename}_{self.name}_x_{unique_id}',
+                    directory=directory,
+                    date_dir=date_dir
+                )
+    
+            # if the dataset is important, save it again in the important dataset folder.
+            if self.is_important:
+                npy_generic_save(
+                    data=self.data,
+                    filename=f'{filename}_{self.name}_{unique_id}',
                     directory=directory + "\\important_data",
                     date_dir=date_dir
                 )
-
-        for child in self.children.values():
-            child.save(filename, directory, date_dir, unique_id)
+                if self.x is not None:
+                    npy_generic_save(
+                        data=self.x,
+                        filename=f'{filename}_{self.name}_x_{unique_id}',
+                        directory=directory + "\\important_data",
+                        date_dir=date_dir
+                    )
+    
+            for child in self.children.values():
+                child.save(filename, directory, date_dir, unique_id)
 
     def add_params_to_gui(self, **params):
         """ Adds parameters of dataset to gui
@@ -382,13 +383,11 @@ class Dataset():
         if graph is None:
             # If we want to use a separate window
 
-    
-
             if 'window' in kwargs:
                 # Check whether this window exists
                 if not kwargs['window'] in self.gui.windows:
 
-                    # Check if we want to enable tabs 
+                    # Check if we want to enable tabs
                     if 'tabs_enabled' in kwargs:
                         tabs_enabled = kwargs['tabs_enabled']
 
@@ -398,7 +397,7 @@ class Dataset():
                             tablabel = "Tab"
                     else:
                         tabs_enabled = False
-                    
+
                     if 'window_title' in kwargs:
                         window_title = kwargs['window_title']
                     else:
@@ -407,12 +406,11 @@ class Dataset():
                     # self.gui.windows[kwargs['window']] = GraphPopup(
                     #     window_title=window_title, size=(700, 300))
 
-            
                     if(self.enable_confluence):
                         if tabs_enabled:
 
                             self.gui.windows[kwargs['window']] = Confluence_support_GraphPopupTabs(
-                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel = tablabel
+                                app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500), tablabel=tablabel
                             )
 
                             self.gui.windows[kwargs['window']].tabs_enabled = True
@@ -420,22 +418,23 @@ class Dataset():
                             self.gui.windows[kwargs['window']] = Confluence_support_GraphPopup(
                                 app=None, gui=self.gui, log=self.log, window_title=window_title, size=(1000, 500)
                             )
+                            self.gui.windows[kwargs['window']].tabs_enabled = False
                     elif tabs_enabled:
                         self.gui.windows[kwargs['window']] = GraphPopupTabs(
-                            window_title=window_title, size=(700, 300), tablabel = tablabel
+                            window_title=window_title, size=(700, 300), tablabel=tablabel
                         )
                     else:
                         self.gui.windows[kwargs['window']] = GraphPopup(
-                            window_title=window_title, size=(700, 300), 
+                            window_title=window_title, size=(700, 300),
                         )
+
+                        self.gui.windows[kwargs['window']].tabs_enabled = False
 
                      # Window already exists
                 else:
-                    # Check if we want to enable tabs 
-                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled 
-                    
+                    # Check if we want to enable tabs
+                    tabs_enabled = self.gui.windows[kwargs['window']].tabs_enabled
 
-                
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     date_axis = TimeAxisItem(orientation='bottom')
                     self.graph = pg.PlotWidget(axisItems={'bottom': date_axis})
@@ -460,7 +459,7 @@ class Dataset():
                         tab_widget_graphlayout.addWidget(
                             self.graph
                         )
-                        
+
                     elif num_tabs == 0:
 
                         # add to first tab
@@ -470,23 +469,22 @@ class Dataset():
                         self.gui.windows[kwargs['window']].num_tabs += 1
 
                     else:
-                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(               
-                            graph = self.graph,
-                            label = tablabel
+                        self.gui.windows[kwargs['window']].add_graph_to_new_tab(
+                            graph=self.graph,
+                            label=tablabel
                         )
                 else:
- 
+
                     self.gui.windows[kwargs['window']].graph_layout.addWidget(self.graph)
 
             # Otherwise, add a graph to the main layout
             else:
-                
+
                 if('datetime_axis' in kwargs and kwargs['datetime_axis']):
                     self.graph = self.gui.add_graph(datetime_axis=True)
                 else:
                     self.graph = self.gui.add_graph()
 
-    
             self.graph.getPlotItem().setTitle(self.name)
 
         # Reuse a PlotWidget if provided
@@ -1267,10 +1265,10 @@ class SawtoothScan1D(Dataset):
         # If we have already integrated a full dataset, avg
         if dataset.reps > 1:
             current_index = len(dataset.data) - 1
-            prev_dataset.data[current_index] = (
-                prev_dataset.data[current_index] * (dataset.reps - 1)
-                + dataset.data[-1]
-            ) / (dataset.reps)
+            prev_dataset.data[current_index] = float((
+                float(prev_dataset.data[current_index]) * (float(dataset.reps) - 1)
+                + float(dataset.data[-1])
+            ) / float(dataset.reps))
         else:
             prev_dataset.data = dataset.data
 

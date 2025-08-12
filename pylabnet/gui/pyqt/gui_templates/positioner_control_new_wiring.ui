@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1599</width>
+    <width>1853</width>
     <height>1259</height>
    </rect>
   </property>
@@ -2127,7 +2127,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="2" column="2">
-            <widget class="QSpinBox" name="n_steps_5">
+            <widget class="QSpinBox" name="n_steps_4">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -2198,7 +2198,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QSpinBox" name="n_steps_4">
+            <widget class="QSpinBox" name="n_steps_5">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -2248,7 +2248,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="QDoubleSpinBox" name="amplitude_4">
+            <widget class="QDoubleSpinBox" name="amplitude_5">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -2293,7 +2293,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="3" column="2">
-            <widget class="QDoubleSpinBox" name="amplitude_5">
+            <widget class="QDoubleSpinBox" name="amplitude_4">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -2351,7 +2351,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="4" column="1">
-            <widget class="QDoubleSpinBox" name="frequency_4">
+            <widget class="QDoubleSpinBox" name="frequency_5">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -2377,7 +2377,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="4" column="2">
-            <widget class="QDoubleSpinBox" name="frequency_5">
+            <widget class="QDoubleSpinBox" name="frequency_4">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -2575,7 +2575,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="voltage_4">
+            <widget class="QDoubleSpinBox" name="voltage_5">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -2595,7 +2595,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="5" column="2">
-            <widget class="QDoubleSpinBox" name="voltage_5">
+            <widget class="QDoubleSpinBox" name="voltage_4">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3151,7 +3151,7 @@ color: rgb(255, 255, 255);</string>
          <item>
           <layout class="QGridLayout" name="gridLayout_12">
            <item row="5" column="2">
-            <widget class="QDoubleSpinBox" name="amplitude_8">
+            <widget class="QDoubleSpinBox" name="amplitude_7">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3263,7 +3263,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="6" column="2">
-            <widget class="QDoubleSpinBox" name="frequency_8">
+            <widget class="QDoubleSpinBox" name="frequency_7">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3401,7 +3401,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="4" column="1">
-            <widget class="QSpinBox" name="n_steps_7">
+            <widget class="QSpinBox" name="n_steps_8">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -3432,7 +3432,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="6" column="1">
-            <widget class="QDoubleSpinBox" name="frequency_7">
+            <widget class="QDoubleSpinBox" name="frequency_8">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3598,7 +3598,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="5" column="1">
-            <widget class="QDoubleSpinBox" name="amplitude_7">
+            <widget class="QDoubleSpinBox" name="amplitude_8">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3682,7 +3682,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="4" column="2">
-            <widget class="QSpinBox" name="n_steps_8">
+            <widget class="QSpinBox" name="n_steps_7">
              <property name="font">
               <font>
                <family>Calibri Light</family>
@@ -3745,7 +3745,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="7" column="1">
-            <widget class="QDoubleSpinBox" name="voltage_7">
+            <widget class="QDoubleSpinBox" name="voltage_8">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3765,7 +3765,7 @@ color: rgb(255, 255, 255);</string>
             </widget>
            </item>
            <item row="7" column="2">
-            <widget class="QDoubleSpinBox" name="voltage_8">
+            <widget class="QDoubleSpinBox" name="voltage_7">
              <property name="styleSheet">
               <string notr="true">font: 25 12pt &quot;Calibri Light&quot;;
 color: rgb(255, 255, 255);</string>
@@ -3834,7 +3834,7 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1599</width>
+     <width>1853</width>
      <height>26</height>
     </rect>
    </property>

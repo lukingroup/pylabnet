@@ -53,7 +53,7 @@ class Controller:
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
 
-    def __init__(self, attocube_client: attocube_anc300.Client, gui='positioner_control_new_wiring_v2', log_client=None, config=None, port=None):
+    def __init__(self, attocube_client: attocube_anc300.Client, gui='positioner_control_new_wiring', log_client=None, config=None, port=None):
         """ Instantiates the controller
 
         :param gui: name of .ui file ot use
@@ -736,7 +736,7 @@ def launch(**kwargs):
     # nanopos_client = find_client(clients=clients, settings=config, client_type='mcs2')
     attocube_client = find_client(clients=clients, settings=config, client_type='anc300')
 
-    gui_client = 'positioner_control_new_wiring_v2'
+    gui_client = 'positioner_control_new_wiring'
 
     # Instantiate controller
     control = Controller(attocube_client, gui_client, logger, config=kwargs['config'], port=kwargs['server_port'])

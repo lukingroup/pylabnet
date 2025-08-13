@@ -210,6 +210,13 @@ class Controller:
             time.sleep(10)
             raise
 
+        # If lab name for this Logger instance is specified, add to gui_logger
+        try:
+            lab_name = load_config("lab_name")['lab_name']
+        except (FileNotFoundError, AttributeError, KeyError):
+            lab_name = 'NO_LAB'
+        self.gui_logger.update_data(data=dict(lab_name=lab_name))
+
         # Instantiate GUI server and update GUI with port details
         self.gui_service = Service()
         self.gui_service.assign_module(module=self.main_window)
@@ -413,6 +420,7 @@ class Controller:
         self._load_scripts()
         self._configure_clicks()
         self._configure_client_search()
+        self._configure_lab_name_select()
         self._configure_debug()
         self._configure_debug_combo_select()
         self._configure_logfile()
@@ -489,43 +497,38 @@ class Controller:
     def _configure_client_search(self):
         self.main_window.client_search.textChanged.connect(self._search_clients)
 
+    def _configure_lab_name_select(self):
+        self.main_window.lab_name_select.currentIndexChanged.connect(self._search_clients)
+
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
         self.main_window.close_server.pressed.connect(self._stop_server)
 
     def _search_clients(self):
+        """ Search the current list of clients and only display those that match the search string and/or lab name. """
 
         search_str = self.main_window.client_search.text()
+        lab_name = self.main_window.lab_name_select.currentText()
 
         clients = self.gui_client.get_container_info('clients')
-
         self.main_window.client_list.clear()
         self.client_list.clear()
 
-        if search_str != "":
-            for client, info in clients.items():
-                self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                # look for clients that have name or ip address containing search string
-                if search_str in client or search_str in self.client_data[client]['ip']:
-                    self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
+        # Go through each client, add them to the displayed list if they satisfy the filters
+        for client, info in clients.items():
 
-        else: # filter by lab name
-            if search_str != "":
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    # look for clients that have name or ip address containing search string, and that have the selected lab name
-                    if (search_str in client or search_str in self.client_data[client]['ip']) and (self.client_data[client]['lab_name'] == lab_name):
-                        self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
-            else: # if search string is empty, don't use it to filter clients
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    # look for clients that have the selected lab name
-                    if self.client_data[client]['lab_name'] == lab_name:
-                        self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
+            # Add every client to the client_list but don't necessarily show them
+            self.client_list[client] = QtWidgets.QListWidgetItem(client)
+            self.client_list[client].setToolTip(info)
+
+            # If search_string is non-empty, look for clients that have name or ip address containing search string
+            if (search_str == "") or (search_str in client or search_str in self.client_data[client]['ip']):
+
+                # If lab filter is not ALL_LABS, look for clients that have matching lab
+                if (lab_name == "ALL LABS") or (self.client_data[client]['lab_name'] == lab_name):
+
+                    self.main_window.client_list.addItem(self.client_list[client])
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
@@ -762,6 +765,10 @@ class Controller:
                 self.client_data[client]['port'] = info.split('port: ')[1].split('\n')[0]
             if 'device_id: ' in info:
                 self.client_data[client]['device_id'] = info.split('device_id: ')[1].split('\n')[0]
+            if 'lab_name: ' in info:
+                self.client_data[client]['lab_name'] = info.split('lab_name: ')[1].split('\n')[0]
+            else: # If no lab name is specified
+                self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _pull_connections(self):
         """ Updates the proxy's client list """
@@ -793,6 +800,10 @@ class Controller:
                 self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
             if 'device_id: ' in clients[client]:
                 self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
+            if 'lab_name: ' in clients[client]:
+                self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
+            else: # If no lab name is specified
+                self.client_data[client]['lab_name'] = "NO_LAB"
 
         # Remove clients
         for client in remove_clients:
@@ -813,6 +824,12 @@ class Controller:
                     self.client_data[client]['port'] = clients[client].split('port: ')[1].split('\n')[0]
                 if 'device_id: ' in clients[client]:
                     self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
+                if 'lab_name: ' in clients[client]:
+                    self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
+                else: # If no lab name is specified
+                    self.client_data[client]['lab_name'] = "NO_LAB"
+
+        # self._search_clients()
 
     def _configure_autoscroll_off(self):
         self.main_window.autoscroll_off_check.toggled.connect(self._update_autoscroll_setting)

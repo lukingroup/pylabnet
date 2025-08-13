@@ -214,7 +214,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
        <layout class="QVBoxLayout" name="graph_layout"/>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0,0">
+       <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetNoConstraint</enum>
         </property>
@@ -639,6 +639,29 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            <font>
             <family>Calibri Light</family>
             <pointsize>12</pointsize>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="nofit_param">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Bound parameters</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="nofit_val">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
            </font>
           </property>
          </widget>

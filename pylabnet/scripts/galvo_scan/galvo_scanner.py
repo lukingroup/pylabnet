@@ -14,10 +14,10 @@ from pylabnet.utils.helper_methods import load_config, generic_save, unpack_laun
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 75   # refresh rate in ms, try increasing if GUI lags
+REFRESH_RATE = 10  # refresh rate in ms, try increasing if GUI lags
 
 NIDAQ_SAMPLING_RATE = 5 # in kHz
-WAVEFUNC_LEN = 1000 # in ms
+WAVEFUNC_LEN = 2000 # in ms
 
 
 class GalvoScan:
@@ -158,11 +158,7 @@ class GalvoScan:
         if self.scanning == False:
             return
         else:
-            # self.daq_client.set_ao_voltage(self.daq_x, self.wavefunction_x)
-            # self.daq_client.set_ao_voltage(self.daq_y, self.wavefunction_y)
             self.daq_client.set_ao_voltage([self.daq_x, self.daq_y], [self.wavefunction_x, self.wavefunction_y])
-
-            self.log.info('scanning...')
 
 
 def build_wavefunction(wavetype, period, dc, amp, offset):

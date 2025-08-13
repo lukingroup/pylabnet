@@ -168,6 +168,7 @@ class Controller:
         self.port_list = {}
         self.script_list = {}
         self.client_data = {}
+        self.lab_list = ["ALL LABS", "NO_LAB"]
         self.disconnection = False
         self.debug = False
         self.debug_level = None
@@ -292,6 +293,15 @@ class Controller:
         # confluence handler and initiate confluence data into log's metadata
         self.confluence_handler = LaunchControl_Confluence_Handler(self, self.app)
         self.confluence_handler.confluence_popup.okay_event(is_close=False)
+
+        # Populate the lab list with all the current servers accesible
+        clients = self.gui_client.get_container_info('clients')
+        for client, info in clients.items():
+            if ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] not in self.lab_list):
+                self.lab_list.append(self.client_data[client]["lab_name"])
+
+        for lab_name in self.lab_list:
+            self.main_window.lab_name_select.addItem(lab_name)
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
@@ -526,7 +536,7 @@ class Controller:
             if (search_str == "") or (search_str in client or search_str in self.client_data[client]['ip']):
 
                 # If lab filter is not ALL_LABS, look for clients that have matching lab
-                if (lab_name == "ALL LABS") or (self.client_data[client]['lab_name'] == lab_name):
+                if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
 
                     self.main_window.client_list.addItem(self.client_list[client])
 

@@ -59,19 +59,20 @@ class GalvoScan:
             self.log.error("No wavefunction selected for Y axis")
             return
 
-        period_x = self.gui.period_x.text()
-        dc_x = self.gui.dc_x.text()
-        amp_x = self.gui.amp_x.text()
-        offset_x = self.gui.offset_x.text()
+        period_x = float(self.gui.period_x.text())
+        dc_x = float(self.gui.dc_x.text())
+        amp_x = float(self.gui.amp_x.text())
+        offset_x = float(self.gui.offset_x.text())
 
-        period_y = self.gui.period_y.text()
-        dc_y = self.gui.dc_y.text()
-        amp_y = self.gui.amp_y.text()
-        offset_y = self.gui.offset_y.text()
+        period_y = float(self.gui.period_y.text())
+        dc_y = float(self.gui.dc_y.text())
+        amp_y = float(self.gui.amp_y.text())
+        offset_y = float(self.gui.offset_y.text())
 
         self.wavefunction_x = build_wavefunction(self.wavetype_x, period_x, dc_x, amp_x, offset_x)
         self.wavefunction_y = build_wavefunction(self.wavetype_y, period_y, dc_y, amp_y, offset_y)
 
+        self.log.info("Galvo scan configured!")
         self.configured = True
 
     def update_wavetype_x(self):
@@ -95,11 +96,24 @@ class GalvoScan:
             self.gui.dc_y.setEnabled(False)
 
     def start_stop_galvo(self):
-        return
+
+        if self.configured == False:
+            self.log.error('Configure wavefunctions before starting galvo scan!')
+            return
+
+        if self.gui.start.text() == 'Start Galvo':
+            self.gui.start.setStyleSheet('background-color: red')
+            self.gui.start.setText('Stop Galvo')
+            self.log.info('Galvo started')
+
+        else:
+            self.gui.start.setStyleSheet('background-color: green')
+            self.gui.start.setText('Start Galvo')
+            self.log.info('Galvo stopped')
 
 
 def build_wavefunction(wavetype, period, dc, amp, offset):
-    """ updates the function used for fitting """
+    """ builds wavefuncions for galvo scan """
 
     x = np.linspace(0, 1, 1000)
 
@@ -152,6 +166,7 @@ def launch(**kwargs):
         config=config,
         config_name=kwargs['config']
     )
+
     control.gui.set_network_info(port=kwargs['server_port'])
 
     # Run continuously

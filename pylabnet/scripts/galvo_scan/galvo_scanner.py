@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 from scipy.optimize import curve_fit
+import time
 
 from pylabnet.utils.logging.logger import LogHandler
 from pylabnet.gui.pyqt.external_gui import Window
@@ -13,7 +14,10 @@ from pylabnet.utils.helper_methods import load_config, generic_save, unpack_laun
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 150   # refresh rate in ms, try increasing if GUI lags
+REFRESH_RATE = 75   # refresh rate in ms, try increasing if GUI lags
+
+NIDAQ_SAMPLING_RATE = 5 # in kHz
+WAVEFUNC_LEN = 1000 # in ms
 
 
 class GalvoScan:
@@ -37,6 +41,31 @@ class GalvoScan:
         self.configured = False
         self.wavetype_x = None
         self.wavetype_y = None
+        self.scanning = False
+
+        # Find the client
+        device_config = None
+        for server in self.config['servers']:
+            # Currently works for nidaqmx only, but could be generalized to other daq types
+            if server['type'] == 'nidaqmx':
+                device_type = server['type']
+                device_config = server['config']
+                break
+        try:
+            self.daq_client = find_client(client_tuples, self.config, device_type, device_config, self.log)
+
+            if (self.daq_client == None):
+                device_item = QtWidgets.QListWidgetItem(f"{device_type}_{device_config}")
+                device_item.setForeground(Qt.gray)
+                self.gui.clients.addItem(device_item)
+                self.log.error("Datataker missing client: " + device_type)
+            else:
+                device_item = QtWidgets.QListWidgetItem(f"{device_type}_{device_config}")
+                device_item.setToolTip(str(device_config))
+                self.gui.clients.addItem(device_item)
+
+        except NameError:
+            self.log.error('No daq device identified in script config file')
 
         # Configure button clicks
         self.gui.configure.clicked.connect(self.configure)
@@ -48,6 +77,8 @@ class GalvoScan:
 
         #self.gui.showMaximized()
         self.gui.apply_stylesheet()
+
+        self.run()
 
     def configure(self):
         """ configures galvo scan wavefunctions """
@@ -104,30 +135,52 @@ class GalvoScan:
         if self.gui.start.text() == 'Start Galvo':
             self.gui.start.setStyleSheet('background-color: red')
             self.gui.start.setText('Stop Galvo')
+            self.scanning = True
             self.log.info('Galvo started')
 
         else:
             self.gui.start.setStyleSheet('background-color: green')
             self.gui.start.setText('Start Galvo')
+            self.scanning = False
             self.log.info('Galvo stopped')
+
+    def run(self):
+        # Continuously update data until paused
+        self.running = True
+
+        while self.running:
+            time.sleep(REFRESH_RATE / 1000)
+            self._update_output()
+            self.gui.force_update()
+
+    def _update_output(self):
+
+        if self.scanning == False:
+            return
+        else:
+            # self.daq_client.set_ao_voltage(self.daq_x, self.wavefunction_x)
+            # self.daq_client.set_ao_voltage(self.daq_y, self.wavefunction_y)
+            self.daq_client.set_ao_voltage([self.daq_x, self.daq_y], [self.wavefunction_x, self.wavefunction_y])
+
+            self.log.info('scanning...')
 
 
 def build_wavefunction(wavetype, period, dc, amp, offset):
     """ builds wavefuncions for galvo scan """
 
-    x = np.linspace(0, 1, 1000)
+    x = np.linspace(1, WAVEFUNC_LEN, WAVEFUNC_LEN * NIDAQ_SAMPLING_RATE)
 
-    if wavetype == "Sine Wave":
-        return sine(x, period, amp, offset)
+    if wavetype == "Sine wave":
+        return (sine(x, period, amp, offset)).tolist()
 
     if wavetype == "Square wave":
-        return square_wave(x, period, dc, amp, offset)
+        return (square_wave(x, period, dc, amp, offset)).tolist()
 
     if wavetype == "Triangle wave":
-        return triangle_wave(x, period, amp, offset)
+        return (triangle_wave(x, period, amp, offset)).tolist()
 
     if wavetype == "Sawtooth wave":
-        return sawtooth_wave(x, period, amp, offset)
+        return (sawtooth_wave(x, period, amp, offset)).tolist()
 
 
 def sine(x, period, amp, offset):

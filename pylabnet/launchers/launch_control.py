@@ -195,6 +195,12 @@ class Controller:
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
 
+        # If lab name for this Logger instance is specified, add to gui_logger
+        try:
+            lab_name = load_config("lab_name")['lab_name']
+        except (FileNotFoundError, AttributeError, KeyError):
+            lab_name = 'NO_LAB'
+
         module_str = ''
         if self.proxy:
             module_str = '_proxy'
@@ -204,6 +210,7 @@ class Controller:
                 host=self.host,
                 port=self.log_port,
                 module_tag=self.GUI_NAME + module_str,
+                lab_name=lab_name,
                 ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
@@ -212,11 +219,6 @@ class Controller:
             time.sleep(10)
             raise
 
-        # If lab name for this Logger instance is specified, add to gui_logger
-        try:
-            lab_name = load_config("lab_name")['lab_name']
-        except (FileNotFoundError, AttributeError, KeyError):
-            lab_name = 'NO_LAB'
         self.gui_logger.update_data(data=dict(lab_name=lab_name))
 
         # Instantiate GUI server and update GUI with port details
@@ -516,6 +518,7 @@ class Controller:
 
     def _configure_lab_name_select(self):
         self.main_window.lab_name_select.currentIndexChanged.connect(self._search_clients)
+        self.main_window.lab_name_select.currentIndexChanged.connect(self._filter_logs)
 
     def _configure_log_filter(self):
         self.main_window.logger_filter_text.textChanged.connect(self._filter_logs)
@@ -554,20 +557,24 @@ class Controller:
     def _filter_logs(self):
         """ Filter shown logs based on a search term and immediately show them on the terminal. """
         filter_txt = self.main_window.logger_filter_text.text()
+        filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
 
         if self.main_window.case_sensitive.isChecked():
-            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: filter_txt in s, self.full_logs)))
+            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt in s) and
+                                                                    (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
         else:
-            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: filter_txt.lower() in s.lower(), self.full_logs)))
+            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and
+                                                                    (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
 
     def _filter_string_list(self, str_list):
         """ Filter a given list of strings based on a search term and return the combined string. """
         filter_txt = self.main_window.logger_filter_text.text()
+        filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
 
         if self.main_window.case_sensitive.isChecked():
-            return "\n".join(filter(lambda s: filter_txt in s, str_list))
+            return "\n".join(filter(lambda s: (filter_txt in s) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
         else:
-            return "\n".join(filter(lambda s: filter_txt.lower() in s.lower(), str_list))
+            return "\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """

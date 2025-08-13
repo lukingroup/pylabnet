@@ -173,6 +173,7 @@ class Controller:
         self.debug = False
         self.debug_level = None
         self.autoscroll_off = False
+        self.full_logs = [] # Stores the entire log string
         # date string is None if not logging to file, and gives today's date if logging to file.
         # For day-chopping purposes
         self.logfile_date_str = None
@@ -436,6 +437,7 @@ class Controller:
         self._configure_logfile()
         self._configure_logging()
         self._configure_autoscroll_off()
+        self._configure_log_filter()
 
         self.main_window.force_update()
 
@@ -443,7 +445,12 @@ class Controller:
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
         # Remove the !~ bookmark from the message
-        self.main_window.terminal.appendPlainText(re.sub(r'!~\d+~!', '', new_msg))
+        new_msg_cleaned = re.sub(r'!~\d+~!', '', new_msg)
+        # Append the new message to the message terminal after message filtering
+        self.main_window.terminal.appendPlainText(self._filter_string_list(new_msg_cleaned.split("\n")))
+        # Append to full logs
+        self.full_logs = self.full_logs + new_msg_cleaned.split("\n")
+
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -510,6 +517,10 @@ class Controller:
     def _configure_lab_name_select(self):
         self.main_window.lab_name_select.currentIndexChanged.connect(self._search_clients)
 
+    def _configure_log_filter(self):
+        self.main_window.logger_filter_text.textChanged.connect(self._filter_logs)
+        self.main_window.case_sensitive.stateChanged.connect(self._filter_logs)
+
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
@@ -539,6 +550,24 @@ class Controller:
                 if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
 
                     self.main_window.client_list.addItem(self.client_list[client])
+
+    def _filter_logs(self):
+        """ Filter shown logs based on a search term and immediately show them on the terminal. """
+        filter_txt = self.main_window.logger_filter_text.text()
+
+        if self.main_window.case_sensitive.isChecked():
+            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: filter_txt in s, self.full_logs)))
+        else:
+            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: filter_txt.lower() in s.lower(), self.full_logs)))
+
+    def _filter_string_list(self, str_list):
+        """ Filter a given list of strings based on a search term and return the combined string. """
+        filter_txt = self.main_window.logger_filter_text.text()
+
+        if self.main_window.case_sensitive.isChecked():
+            return "\n".join(filter(lambda s: filter_txt in s, str_list))
+        else:
+            return "\n".join(filter(lambda s: filter_txt.lower() in s.lower(), str_list))
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """

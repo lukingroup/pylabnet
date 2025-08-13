@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>903</width>
-    <height>486</height>
+    <width>810</width>
+    <height>392</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -45,7 +45,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QListWidget" name="listWidget">
+         <widget class="QListWidget" name="wavelist_x">
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -84,7 +84,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_5">
+           <widget class="QLineEdit" name="period_x">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -108,7 +108,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_6">
+           <widget class="QLineEdit" name="dc_x">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -132,7 +132,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_7">
+           <widget class="QLineEdit" name="amp_x">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -156,7 +156,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_8">
+           <widget class="QLineEdit" name="offset_x">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -191,7 +191,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QListWidget" name="listWidget_2">
+         <widget class="QListWidget" name="wavelist_y">
           <property name="font">
            <font>
             <family>Calibri Light</family>
@@ -230,7 +230,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit">
+           <widget class="QLineEdit" name="peiod_y">
             <property name="enabled">
              <bool>true</bool>
             </property>
@@ -257,7 +257,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_2">
+           <widget class="QLineEdit" name="dc_y">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -281,7 +281,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_3">
+           <widget class="QLineEdit" name="amp_y">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -305,7 +305,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEdit_4">
+           <widget class="QLineEdit" name="offset_y">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -397,7 +397,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="run">
+         <widget class="QPushButton" name="start">
           <property name="maximumSize">
            <size>
             <width>150</width>
@@ -414,7 +414,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            <string notr="true">background-color: green;</string>
           </property>
           <property name="text">
-           <string>Run Galvo</string>
+           <string>Start Galvo</string>
           </property>
           <property name="checkable">
            <bool>false</bool>
@@ -432,7 +432,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>903</width>
+     <width>810</width>
      <height>21</height>
     </rect>
    </property>

@@ -30,7 +30,26 @@
        <number>100</number>
       </property>
       <item>
+       <widget class="QPushButton" name="clear_button">
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(200, 85, 65);</string>
+        </property>
+        <property name="text">
+         <string>Clear plots</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="ip_label">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="font">
          <font>
           <family>Calibri Light</family>

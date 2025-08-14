@@ -477,7 +477,7 @@ class MCCUSB3114(StaticLineHardwareHandler):
 
 
 class bktelAMP(StaticLineHardwareHandler):
-   def setup(self):
+    def setup(self):
         '''Sets up the staticline functions (e.g. up/down) in terms of the
         device client function calls.
         '''
@@ -509,8 +509,8 @@ class bktelAMP(StaticLineHardwareHandler):
             self.log.info('error')
 
     def set_value(self, value):
-        self.hardware_client.set_spc(float(value))    
-    
+        self.hardware_client.set_spc(float(value))
+
 
 class SiglentSDG6032X(StaticLineHardwareHandler):
 

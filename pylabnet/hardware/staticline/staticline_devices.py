@@ -419,6 +419,43 @@ class MCCUSB3114(StaticLineHardwareHandler):
             self.up()
 
 
+class bktelAMP(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.name = self.config['name']
+        self.log.info(f'BKtel amplifier assigned to staticline {self.name}')
+
+    def up(self):
+        if self.name == "read_alert":
+            self.hardware_client.read_ra()
+        elif self.name == "read_mode":
+            self.hardware_client.read_rmode()
+        elif self.name == "read_pout":
+            self.hardware_client.read_rpc()
+        elif self.name == "output_toggle":
+            self.hardware_client.smode_pc()
+        else:
+            self.log.info('error')
+
+    def down(self):
+        if self.name == "read_alert":
+            self.hardware_client.read_ra()
+        elif self.name == "read_mode":
+            self.hardware_client.read_rmode()
+        elif self.name == "read_pout":
+            self.hardware_client.read_rpc()
+        elif self.name == "output_toggle":
+            self.hardware_client.smode_off()
+        else:
+            self.log.info('error')
+
+    def set_value(self, value):
+        self.hardware_client.set_spc(float(value))
+
+
 ################################################################################
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
@@ -434,5 +471,6 @@ registered_staticline_modules = {
     'CLD101x': CLD101x,
     'SMC100A': SMC100A,
     'superK': superK,
+    'bktel': bktelAMP,
     'mcc_usb_3114': MCCUSB3114
 }

@@ -29,7 +29,7 @@ class DLC_Pro:
             self.dlc = Telnet(host=self.host, port=self.port)
             self.dlc.read_until(b'>', timeout=1)
 
-            self._check_laser_connection(laser_num=2)
+            self._check_laser_connection(laser_num=1)
 
         except ConnectionRefusedError:
             self.log.error('Could not connect to Toptica DLC Pro at '

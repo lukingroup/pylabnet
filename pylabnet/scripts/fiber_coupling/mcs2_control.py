@@ -44,6 +44,7 @@ class Controller:
             host=get_ip(),
             port=port
         )
+
         self.gui.apply_stylesheet()
 
         self.widgets = get_gui_widgets(self.gui, **self.WIDGET_DICT)
@@ -342,7 +343,7 @@ class Controller:
         :param channel: (int) channel to update
         :param voltage: (float) value of voltage to update ot
         """
-
+        self.log.info(f"Channel {channel} moved.")
         # If locked, get the current voltage and reset the GUI value to it
         if self._is_axis_locked(channel):
             self.widgets['voltage'][channel].setValue(

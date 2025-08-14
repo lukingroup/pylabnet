@@ -145,33 +145,7 @@
      </widget>
     </item>
     <item row="10" column="3">
-     <widget class="QComboBox" name="lab_name_select">
-      <item>
-       <property name="text">
-        <string>ALL LABS</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>SHARED</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>B16</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>G12</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>NO_LAB</string>
-       </property>
-      </item>
-     </widget>
+     <widget class="QComboBox" name="lab_name_select"/>
     </item>
     <item row="11" column="3">
      <widget class="QPushButton" name="close_server">
@@ -420,7 +394,7 @@ background-color: green;</string>
      <x>0</x>
      <y>0</y>
      <width>1625</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

@@ -559,7 +559,6 @@ class PhotonSpotBias(StaticLineHardwareHandler):
 
     def down(self):
         self.hardware_client.delatch(self.ch)
->>>>>>> 430b725d5cb4090a67c03f84063fd47be30af4d6
 
 
 ################################################################################

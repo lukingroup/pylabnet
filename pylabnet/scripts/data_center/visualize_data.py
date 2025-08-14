@@ -29,7 +29,7 @@ class DataVisualizer:
 
         # Instantiate GUI window
         self.gui = Window(
-            gui_template='data_visualizer_v3',
+            gui_template='data_visualizer',
             host=get_ip()
         )
 

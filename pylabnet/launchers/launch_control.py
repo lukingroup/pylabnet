@@ -565,15 +565,18 @@ class Controller:
 
     def _filter_logs(self):
         """ Filter shown logs based on a search term and immediately show them on the terminal. """
-        filter_txt = self.main_window.logger_filter_text.text()
-        filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
 
-        if self.main_window.case_sensitive.isChecked():
-            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt in s) and
-                                                                    (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
-        else:
-            self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and
-                                                                    (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
+        # Only work with proxy window to avoid messing with master logs
+        if self.proxy:
+            filter_txt = self.main_window.logger_filter_text.text()
+            filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
+
+            if self.main_window.case_sensitive.isChecked():
+                self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt in s) and
+                                                                        (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
+            else:
+                self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and
+                                                                        (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
 
     def _filter_string_list(self, str_list):
         """ Filter a given list of strings based on a search term and return the combined string. """

@@ -530,7 +530,7 @@ class Controller:
 
         # Don't filter/search as master to avoid messing up the client list
         if self.proxy:
-
+            clients = self.gui_client.get_container_info('clients')
             self.main_window.client_list.clear()
             self.client_list.clear()
 

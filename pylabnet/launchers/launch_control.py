@@ -308,7 +308,7 @@ class Controller:
         # Populate the lab dropdown list with all the accesible labs
         for lab_name in self.lab_list:
             self.main_window.lab_name_select.addItem(lab_name)
-            self.log_service.logger.info(f"Added {lab_name} to the GUI dropdown list.")
+            self.gui_logger.info(f"Added {lab_name} to the GUI dropdown list.")
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """

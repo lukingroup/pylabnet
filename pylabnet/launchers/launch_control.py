@@ -284,6 +284,12 @@ class Controller:
             self.gui_service.assign_module(module=self.main_window)
             self.gui_service.assign_logger(logger=self.gui_logger)
 
+            # Populate the lab list with all the current servers accesible
+            clients = self.gui_client.get_container_info('clients')
+            for client, info in clients.items():
+                if ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] not in self.lab_list):
+                    self.lab_list.append(self.client_data[client]["lab_name"])
+
         else:
 
             # Update internal attributes and add to list of log clients
@@ -293,18 +299,19 @@ class Controller:
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
             self.client_data[self.GUI_NAME + module_str] = self.log_service.client_data[self.GUI_NAME]
 
+            # Populate the lab list with all the current servers accesible
+            for client, info in self.client_data.items():
+                if ("lab_name" in info and info["lab_name"] not in self.lab_list):
+                    self.lab_list.append(info["lab_name"])
+
         # confluence handler and initiate confluence data into log's metadata
         self.confluence_handler = LaunchControl_Confluence_Handler(self, self.app)
         self.confluence_handler.confluence_popup.okay_event(is_close=False)
 
-        # Populate the lab list with all the current servers accesible
-        clients = self.gui_client.get_container_info('clients')
-        for client, info in clients.items():
-            if ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] not in self.lab_list):
-                self.lab_list.append(self.client_data[client]["lab_name"])
-
+        # Populate the lab dropdown list with all the accesible labs
         for lab_name in self.lab_list:
             self.main_window.lab_name_select.addItem(lab_name)
+            self.gui_logger.info(f"Added {lab_name} to the GUI dropdown list.")
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
@@ -535,24 +542,26 @@ class Controller:
         search_str = self.main_window.client_search.text()
         lab_name = self.main_window.lab_name_select.currentText()
 
-        clients = self.gui_client.get_container_info('clients')
-        self.main_window.client_list.clear()
-        self.client_list.clear()
+        # Don't filter/search as master to avoid messing up the client list
+        if self.proxy:
+            clients = self.gui_client.get_container_info('clients')
+            self.main_window.client_list.clear()
+            self.client_list.clear()
 
-        # Go through each client, add them to the displayed list if they satisfy the filters
-        for client, info in clients.items():
+            # Go through each client, add them to the displayed list if they satisfy the filters
+            for client, info in clients.items():
 
-            # Add every client to the client_list but don't necessarily show them
-            self.client_list[client] = QtWidgets.QListWidgetItem(client)
-            self.client_list[client].setToolTip(info)
+                # Add every client to the client_list but don't necessarily show them
+                self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                self.client_list[client].setToolTip(info)
 
-            # If search_string is non-empty, look for clients that have name or ip address containing search string
-            if (search_str == "") or (search_str in client or search_str in self.client_data[client]['ip']):
+                # If search_string is non-empty, look for clients that have name or ip address containing search string
+                if (search_str == "") or (search_str in client or search_str in self.client_data[client]['ip']):
 
-                # If lab filter is not ALL_LABS, look for clients that have matching lab
-                if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
+                    # If lab filter is not ALL_LABS, look for clients that have matching lab
+                    if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
 
-                    self.main_window.client_list.addItem(self.client_list[client])
+                        self.main_window.client_list.addItem(self.client_list[client])
 
     def _filter_logs(self):
         """ Filter shown logs based on a search term and immediately show them on the terminal. """

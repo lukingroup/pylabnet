@@ -522,6 +522,7 @@ class Controller:
 
     def _configure_client_search(self):
         self.main_window.client_search.textChanged.connect(self._search_clients)
+        self.main_window.case_sensitive.stateChanged.connect(self._search_clients)
 
     def _configure_lab_name_select(self):
         self.main_window.lab_name_select.currentIndexChanged.connect(self._search_clients)
@@ -555,8 +556,11 @@ class Controller:
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
                 self.client_list[client].setToolTip(info)
 
+                # Check if case-sensitive box is checked, if unchecked we apply the lower-case operator to all strings, else identity
+                case_fn = str.lower if not self.main_window.case_sensitive.isChecked() else (lambda x: x)
+
                 # If search_string is non-empty, look for clients that have name or ip address containing search string
-                if (search_str == "") or (search_str in client or search_str in self.client_data[client]['ip']):
+                if (search_str == "") or (case_fn(search_str) in case_fn(client) or search_str in self.client_data[client]['ip']):
 
                     # If lab filter is not ALL_LABS, look for clients that have matching lab
                     if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
@@ -571,6 +575,7 @@ class Controller:
             filter_txt = self.main_window.logger_filter_text.text()
             filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
 
+            # Check if case-sensitive box is checked
             if self.main_window.case_sensitive.isChecked():
                 self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt in s) and
                                                                         (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
@@ -583,6 +588,7 @@ class Controller:
         filter_txt = self.main_window.logger_filter_text.text()
         filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
 
+        # Check if case-sensitive box is checked
         if self.main_window.case_sensitive.isChecked():
             return "\n".join(filter(lambda s: (filter_txt in s) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
         else:

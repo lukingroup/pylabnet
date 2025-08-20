@@ -127,7 +127,7 @@ class Launcher:
     def _connect_to_logger(self):
         """ Connects to the LogServer"""
 
-        log_client = logger.LogClient(host=self.log_ip, port=self.log_port, module_tag=self.name)
+        log_client = logger.LogClient(host=self.log_ip, port=self.log_port, module_tag=self.name, lab_name=self.lab_name)
         return logger.LogHandler(logger=log_client)
 
     def _scan_servers(self):

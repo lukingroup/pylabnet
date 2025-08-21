@@ -610,6 +610,11 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
             <string>Free Power Decay</string>
            </property>
           </item>
+          <item>
+           <property name="text">
+            <string>siv cavity reflectivity</string>
+           </property>
+          </item>
          </widget>
         </item>
         <item>
@@ -629,13 +634,20 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="p0_val">
-          <property name="font">
-           <font>
-            <family>Calibri Light</family>
-            <pointsize>12</pointsize>
-           </font>
+         <widget class="QScrollArea" name="fit_scrollarea">
+          <property name="widgetResizable">
+           <bool>true</bool>
           </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>573</width>
+             <height>141</height>
+            </rect>
+           </property>
+          </widget>
          </widget>
         </item>
         <item>

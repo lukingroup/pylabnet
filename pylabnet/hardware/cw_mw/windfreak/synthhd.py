@@ -3,9 +3,9 @@ from pylabnet.utils.logging.logger import LogHandler
 
 
 class Driver():
-    POWER_RANGE = [-75, 20]    # acceptable power range in dBm
+    POWER_RANGE = [-50, 20]    # acceptable power range in dBm
     #POWER_PRECISION = 2 # number of digits of precision for power
-    FREQ_RANGE = [10e6, 40e9]    # acceptable frequency range in Hz
+    FREQ_RANGE = [10e6, 15e9]    # acceptable frequency range in Hz
 
     def __init__(self, device_port, logger):
         """ Instantiate driver class, connects to device

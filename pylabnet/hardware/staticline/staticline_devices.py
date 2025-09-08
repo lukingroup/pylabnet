@@ -5,6 +5,9 @@ from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 # Maximal output for Hittite MW source
 MW_MAXVAL = 25
 
+# Maximal output for Signalcore MW source
+SIGNALCORE_MW_MAXVAL = 15
+
 
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
@@ -300,6 +303,35 @@ class SYNTHHD(StaticLineHardwareHandler):
         self.hardware_client.output_off(channel='B')
 
 
+class SC5521A(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.maxval = SIGNALCORE_MW_MAXVAL
+
+        self.up = self.hardware_client.output_on
+        self.down = self.hardware_client.output_off
+        self.log.info(f'SC5521A assigned to staticline {self.name}')
+
+        self.setting = self.config['setting']
+
+        self.hardware_client.output_off()
+
+    def set_value(self, value):
+        if self.setting == "power":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value))
+
+        if self.setting == "frequency":
+            self.hardware_client.set_frequency(float(value) * 1E9)
+
+
 class TPLinkHS103(StaticLineHardwareHandler):
 
     def setup(self):
@@ -565,6 +597,7 @@ class PhotonSpotBias(StaticLineHardwareHandler):
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
     'synthhd': SYNTHHD,
+    'sc5521A': SC5521A,
     'zi_hdawg': HDAWG,
     'nidaqmx_green': NiDaqMx,
     'nidaqmx': NiDaqMx,

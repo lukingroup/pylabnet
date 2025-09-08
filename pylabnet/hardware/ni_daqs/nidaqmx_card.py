@@ -81,7 +81,7 @@ class Driver:
 
         # TODO: Understand the timing between output voltages (sample-wise?)
 
-        if isinstance(ao_channel, list):
+        if isinstance(ao_channel, list) or isinstance(ao_channel, np.ndarray):
             channel = []
             for channel_entry in ao_channel:
                 channel.append(self._gen_ch_path(channel_entry))

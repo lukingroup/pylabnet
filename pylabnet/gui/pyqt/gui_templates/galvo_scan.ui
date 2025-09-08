@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>810</width>
-    <height>400</height>
+    <height>425</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -252,7 +252,7 @@
           <item>
            <widget class="QLabel" name="label_4">
             <property name="text">
-             <string>Duty cyle (%)</string>
+             <string>Duty cycle (%)</string>
             </property>
            </widget>
           </item>

@@ -14,7 +14,7 @@ from pylabnet.utils.helper_methods import load_config, generic_save, unpack_laun
 from pylabnet.scripts.data_center import datasets
 
 
-REFRESH_RATE = 10  # refresh rate in ms, try increasing if GUI lags
+REFRESH_TIME = 10  # refresh rate in ms, try increasing if GUI lags
 
 NIDAQ_SAMPLING_RATE = 5 # in kHz
 WAVEFUNC_LEN = 2000 # in ms
@@ -149,7 +149,7 @@ class GalvoScan:
         self.running = True
 
         while self.running:
-            time.sleep(REFRESH_RATE / 1000)
+            time.sleep(REFRESH_TIME / 1000)
             self._update_output()
             self.gui.force_update()
 
@@ -164,7 +164,7 @@ class GalvoScan:
 def build_wavefunction(wavetype, period, dc, amp, offset):
     """ builds wavefuncions for galvo scan """
 
-    x = np.linspace(1, WAVEFUNC_LEN, WAVEFUNC_LEN * NIDAQ_SAMPLING_RATE)
+    x = np.linspace(0, WAVEFUNC_LEN - 1, WAVEFUNC_LEN * NIDAQ_SAMPLING_RATE)
 
     if wavetype == "Sine wave":
         return (sine(x, period, amp, offset)).tolist()

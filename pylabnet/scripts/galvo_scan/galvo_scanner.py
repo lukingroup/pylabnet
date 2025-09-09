@@ -164,7 +164,9 @@ class GalvoScan:
 def build_wavefunction(wavetype, period, dc, amp, offset):
     """ builds wavefuncions for galvo scan """
 
-    x = np.linspace(0, WAVEFUNC_LEN - 1, WAVEFUNC_LEN * NIDAQ_SAMPLING_RATE)
+    # Build a time array with time length WAVEFUNC_LEN and sampling reate NIDAQ_SAMPLING_RATE
+    # Add 1 at the end since both endpoints are included
+    x = np.linspace(0, WAVEFUNC_LEN, WAVEFUNC_LEN * NIDAQ_SAMPLING_RATE + 1)
 
     if wavetype == "Sine wave":
         return (sine(x, period, amp, offset)).tolist()

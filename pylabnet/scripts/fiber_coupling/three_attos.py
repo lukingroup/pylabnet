@@ -497,45 +497,43 @@ class Controller:
 
         for channel in range(self.NUM_CHANNELS):
 
-            channel_no = copy.deepcopy(channel)
-
             # Step buttons
-            self.widgets['step_left'][channel_no].pressed.connect(
-                lambda channel=channel_no: self._step_left(channel)
+            self.widgets['step_left'][channel].pressed.connect(
+                lambda channel=channel: self._step_left(channel)
             )
-            self.widgets['step_right'][channel_no].pressed.connect(
-                lambda channel=channel_no: self._step_right(channel)
+            self.widgets['step_right'][channel].pressed.connect(
+                lambda channel=channel: self._step_right(channel)
             )
 
             # Walk buttons
-            self.widgets['walk_left'][channel_no].pressed.connect(
-                lambda channel=channel_no: self._walk_left(channel)
+            self.widgets['walk_left'][channel].pressed.connect(
+                lambda channel=channel: self._walk_left(channel)
             )
-            self.widgets['walk_left'][channel_no].released.connect(
-                lambda channel=channel_no: self._stop(channel)
+            self.widgets['walk_left'][channel].released.connect(
+                lambda channel=channel: self._stop(channel)
             )
-            self.widgets['walk_right'][channel_no].pressed.connect(
-                lambda channel=channel_no: self._walk_right(channel)
+            self.widgets['walk_right'][channel].pressed.connect(
+                lambda channel=channel: self._walk_right(channel)
             )
-            self.widgets['walk_right'][channel_no].released.connect(
-                lambda channel=channel_no: self._stop(channel)
+            self.widgets['walk_right'][channel].released.connect(
+                lambda channel=channel: self._stop(channel)
             )
 
             # Parameters
-            self.widgets['voltage'][channel_no].valueChanged.connect(
-                lambda state, channel=channel_no: self._update_voltage(
+            self.widgets['voltage'][channel].valueChanged.connect(
+                lambda state, channel=channel: self._update_voltage(
                     channel=channel,
                     voltage=state
                 )
             )
-            self.widgets['amplitude'][channel_no].valueChanged.connect(
-                lambda state, channel=channel_no: self._update_amplitude(
+            self.widgets['amplitude'][channel].valueChanged.connect(
+                lambda state, channel=channel: self._update_amplitude(
                     channel=channel,
                     amplitude=state
                 )
             )
-            self.widgets['frequency'][channel_no].valueChanged.connect(
-                lambda state, channel=channel_no: self._update_frequency(
+            self.widgets['frequency'][channel].valueChanged.connect(
+                lambda state, channel=channel: self._update_frequency(
                     channel=channel,
                     frequency=state
                 )

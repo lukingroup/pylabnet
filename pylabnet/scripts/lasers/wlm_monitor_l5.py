@@ -645,7 +645,7 @@ class Channel:
         #         self.lock_override = False
         # else:
         if self.gui_lock != self.prev_gui_lock:
-            self.log.info(f"udpate lock to {self.gui_lock}")
+            self.log.info(f"Update lock to {self.gui_lock}")
             self.lock = copy.deepcopy(self.gui_lock)
 
         self.prev_gui_lock = copy.deepcopy(self.gui_lock)
@@ -659,10 +659,16 @@ class Channel:
                         self.current_voltage = self._min_voltage
                     else:
                         self.current_voltage = self._max_voltage
-                    self.ao['client'].set_ao_voltage(
-                        ao_channel=self.ao['channel'],
-                        voltages=[self.current_voltage]
-                    )
+                    try:
+                        self.ao['client'].set_ao_voltage(
+                            ao_channel=self.ao['channel'],
+                            voltages=[self.current_voltage]
+                        )
+                    except TypeError:
+                        self.ao['client'].set_ao_voltage(
+                            ao_channel=self.ao['channel'],
+                            voltage=self.current_voltage
+                        )
             except EOFError:
                 self.ao = None
 
@@ -676,10 +682,16 @@ class Channel:
         try:
             if self.ao is not None:
                 v_set = (self._min_voltage + self._max_voltage) / 2
-                self.ao['client'].set_ao_voltage(
-                    ao_channel=self.ao['channel'],
-                    voltages=[v_set]
-                )
+                try:
+                    self.ao['client'].set_ao_voltage(
+                        ao_channel=self.ao['channel'],
+                        voltages=[v_set]
+                    )
+                except TypeError:
+                    self.ao['client'].set_ao_voltage(
+                        ao_channel=self.ao['channel'],
+                        voltage=v_set
+                    )
                 self.current_voltage = v_set
         except EOFError:
             self.ao = None
@@ -785,7 +797,7 @@ def launch(**kwargs):
 
     logger = kwargs['logger']
     config = load_script_config(
-        script='wlm_monitor',
+        script='wlm_monitor_L5',
         config=kwargs['config'],
         logger=logger
     )

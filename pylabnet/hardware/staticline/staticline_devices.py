@@ -5,6 +5,9 @@ from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 # Maximal output for Hittite MW source
 MW_MAXVAL = 25
 
+# Maximal output for Signalcore MW source
+SIGNALCORE_MW_MAXVAL = 15
+
 
 class StaticLineHardwareHandler(ABC):
     '''Handler connecting hardware class to StaticLine instance
@@ -243,6 +246,92 @@ class HMCT2220(StaticLineHardwareHandler):
             self.hardware_client.set_freq(float(value) * 1E9)
 
 
+class SYNTHHD(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.maxval = MW_MAXVAL
+
+        # self.up = self.hardware_client.output_on
+        # self.down = self.hardware_client.output_off
+        self.log.info(f'SYNTHHD assigned to staticline {self.name}')
+
+        self.setting = self.config['setting']
+
+    # def set_dig_value(self, value):
+
+    #     if float(value) > self.maxval:
+    #         self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+    #         value = self.maxval
+
+    #     self.hardware_client.set_power(float(value))
+
+    # def set_value(self, value):
+    #     #This will be used for setting the frequencies with an analog staticline
+    #     self.hardware_client.set_freq(float(value) * 1E9)
+
+    def set_value(self, value):
+        if self.setting == "power_A":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value), channel='A')
+
+        if self.setting == "frequency_A":
+            self.hardware_client.set_freq(float(value) * 1E9, channel='A')
+
+        if self.setting == "power_B":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value), channel='B')
+
+        if self.setting == "frequency_B":
+            self.hardware_client.set_freq(float(value) * 1E9, channel='B')
+
+    def up(self):
+        self.hardware_client.output_on(channel='A')
+        self.hardware_client.output_on(channel='B')
+
+    def down(self):
+        self.hardware_client.output_off(channel='A')
+        self.hardware_client.output_off(channel='B')
+
+
+class SC5521A(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.maxval = SIGNALCORE_MW_MAXVAL
+
+        self.up = self.hardware_client.output_on
+        self.down = self.hardware_client.output_off
+        self.log.info(f'SC5521A assigned to staticline {self.name}')
+
+        self.setting = self.config['setting']
+
+        self.hardware_client.output_off()
+
+    def set_value(self, value):
+        if self.setting == "power":
+            if float(value) > self.maxval:
+                self.log.warn(f"New power of {value} dBm is larger than maximal power of {self.maxval} dBm.")
+                value = self.maxval
+
+            self.hardware_client.set_power(float(value))
+
+        if self.setting == "frequency":
+            self.hardware_client.set_frequency(float(value) * 1E9)
+
+
 class TPLinkHS103(StaticLineHardwareHandler):
 
     def setup(self):
@@ -419,6 +508,74 @@ class MCCUSB3114(StaticLineHardwareHandler):
             self.up()
 
 
+class bktelAMP(StaticLineHardwareHandler):
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.name = self.config['name']
+        self.log.info(f'BKtel amplifier assigned to staticline {self.name}')
+
+    def up(self):
+        if self.name == "read_alert":
+            self.hardware_client.read_ra()
+        elif self.name == "read_mode":
+            self.hardware_client.read_rmode()
+        elif self.name == "read_pout":
+            self.hardware_client.read_rpc()
+        elif self.name == "output_toggle":
+            self.hardware_client.smode_pc()
+        else:
+            self.log.info('error')
+
+    def down(self):
+        if self.name == "read_alert":
+            self.hardware_client.read_ra()
+        elif self.name == "read_mode":
+            self.hardware_client.read_rmode()
+        elif self.name == "read_pout":
+            self.hardware_client.read_rpc()
+        elif self.name == "output_toggle":
+            self.hardware_client.smode_off()
+        else:
+            self.log.info('error')
+
+    def set_value(self, value):
+        self.hardware_client.set_spc(float(value))
+
+
+class SiglentSDG6032X(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.ch = int(self.config['ch'])
+
+        self.log.info(f'Siglent SDG6032X channel {self.ch} assigned to staticline {self.name}')
+
+    def up(self):
+        self.hardware_client.output_on(ch=self.ch)
+
+    def down(self):
+        self.hardware_client.output_off(ch=self.ch)
+
+
+class AgiltronFFSW(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+        self.log.info(f'Agiltron FFSW assigned to staticline {self.name}')
+
+    def up(self):
+        self.hardware_client.set_output(ch=1)
+
+    def down(self):
+        self.hardware_client.set_output(ch=0)
+
+
 class PhotonSpotBias(StaticLineHardwareHandler):
 
     def setup(self):
@@ -439,6 +596,8 @@ class PhotonSpotBias(StaticLineHardwareHandler):
 ################################################################################
 registered_staticline_modules = {
     'HMC_T2220': HMCT2220,
+    'synthhd': SYNTHHD,
+    'sc5521A': SC5521A,
     'zi_hdawg': HDAWG,
     'nidaqmx_green': NiDaqMx,
     'nidaqmx': NiDaqMx,
@@ -451,6 +610,9 @@ registered_staticline_modules = {
     'CLD101x': CLD101x,
     'SMC100A': SMC100A,
     'superK': superK,
+    'bktel': bktelAMP,
     'mcc_usb_3114': MCCUSB3114,
-    'photonspot_bias': PhotonSpotBias
+    'photonspot_bias': PhotonSpotBias,
+    'siglent_sdg6032x': SiglentSDG6032X,
+    'agiltron_ffsw': AgiltronFFSW
 }

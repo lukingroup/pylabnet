@@ -524,6 +524,28 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="trac_1">
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(175, 0, 175);</string>
+            </property>
+            <property name="text">
+             <string>Hide Trace</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="avg_1">
             <property name="maximumSize">
              <size>
@@ -538,10 +560,10 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: rgb(170, 170, 255);</string>
+             <string notr="true">background-color: rgb(186, 28, 49);</string>
             </property>
             <property name="text">
-             <string>Avg only</string>
+             <string>Hide Avg</string>
             </property>
             <property name="checkable">
              <bool>false</bool>
@@ -589,6 +611,28 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="trac_2">
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <family>Calibri Light</family>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">background-color: rgb(175, 0, 175);</string>
+            </property>
+            <property name="text">
+             <string>Hide Trace</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="avg_2">
             <property name="maximumSize">
              <size>
@@ -603,10 +647,10 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-color: rgb(170, 170, 255);</string>
+             <string notr="true">background-color: rgb(186, 28, 49);</string>
             </property>
             <property name="text">
-             <string>Avg only</string>
+             <string>Hide Avg</string>
             </property>
             <property name="checkable">
              <bool>false</bool>
@@ -822,7 +866,7 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1948</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

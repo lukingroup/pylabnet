@@ -18,6 +18,8 @@ class Driver:
             self.device = self.rm.open_resource(ip_address)
             device_id = self.device.query('*IDN?')
             self.log.info(f"Successfully connected to {device_id} at IP {ip_address}.")
+            # Make timeout infinite as compilation might be slow
+            self.device.timeout = None
 
         except VisaIOError:
             self.log.error(f"Connection to IP {ip_address} failed.")
@@ -244,6 +246,10 @@ class Tek70K:
         """ Create new sequence with 0 steps """
         self.write(f'SLIST:SEQ:NEW "{name}", 0')
         return Sequence(name)
+
+    def delete_sequence(self, name):
+        """ Delete sequence with specified name. """
+        self.write(f'SLIST:SEQ:DELETE "{name}"')
 
     def compile_equation(self, path):
         """ Compile equation file and import waveforms defined in trhe file. """

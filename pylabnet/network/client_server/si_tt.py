@@ -165,7 +165,7 @@ class Client(ClientBase):
         :param name: (str) identifier for the counter measurement
         """
 
-        res_pickle = self._service.exposed_get_bin_widths(name=name)
+        res_pickle = self._service.exposed_get_counts_total(name=name)
         return pickle.loads(res_pickle)
 
     def get_bin_widths(self, name=None):

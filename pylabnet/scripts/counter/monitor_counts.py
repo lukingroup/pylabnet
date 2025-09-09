@@ -270,6 +270,7 @@ class CountMonitor:
         # plot_index = 0
 
         summed_counts = np.sum(counts_per_sec, axis=0)
+        #summed_counts = counts_per_sec[0]/counts_per_sec[0].max() + counts_per_sec[1]/counts_per_sec[1].max()
 
         for index, count_array in enumerate(counts_per_sec):
 

@@ -54,6 +54,7 @@ class Monitor:
         self.pm = pm_client
         self.running = False
         self.num_plots = 3
+        self.num_points = 1000
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
@@ -62,7 +63,8 @@ class Monitor:
             number_widget=4,
             label_widget=2,
             name_label=1,
-            combo_widget=2
+            combo_widget=2,
+            clear_button=1
         )
 
         # Dynamically populate the power ranges
@@ -103,6 +105,8 @@ class Monitor:
         self.widgets['combo_widget'][0].currentIndexChanged.connect(lambda: self._update_range(0))
         self.widgets['combo_widget'][1].currentIndexChanged.connect(lambda: self._update_range(1))
 
+        self.widgets['clear_button'].clicked.connect(self._clear_plot_output)
+
     def _update_wavelength(self):
         """ Updates wavelength of pm to WL of GUI"""
 
@@ -139,6 +143,9 @@ class Monitor:
             self._update_output()
             self.gui.force_update()
 
+    def _clear_plot_output(self):
+        self.plotdata = [np.zeros(self.num_points) for i in range(self.num_plots)]
+
     def _update_output(self):
         """ Runs the power monitor """
 
@@ -162,6 +169,9 @@ class Monitor:
             split_ref = (0, 0)
         try:
             efficiency = np.sqrt(p_ref / (p_in * self.calibration[0]))
+            # Clip to max 1 efficiency if it's a valid number
+            if not np.isnan(efficiency):
+                efficiency = min(1, efficiency)
         except ZeroDivisionError:
             efficiency = 0
         values = [p_in, p_ref, efficiency]
@@ -187,7 +197,7 @@ class Monitor:
         """ Instantiates GUI by assigning widgets """
 
         # Store plot data
-        self.plotdata = [np.zeros(1000) for i in range(self.num_plots)]
+        self.plotdata = [np.zeros(self.num_points) for i in range(self.num_plots)]
 
         for plot_no in range(self.num_plots):
            # Create a curve and store the widget in our dictionary

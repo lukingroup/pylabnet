@@ -98,6 +98,18 @@ class Wrap:
         # Get count data (see TT documentation)
         return self._ctr[name].getData()
 
+    def get_counts_normalized(self, name=None):
+        """Gets a 2D array of normalized counts on all channels. See the
+            getDataNormalized() method of Counter class in TT
+
+        :param name: (str) identifier for the counter measurement
+        """
+
+        name = self.handle_name(name)
+
+        # Get count data (see TT documentation)
+        return self._ctr[name].getDataNormalized()
+
     def get_counts_total(self, name=None):
         """Gets a 2D array of all counts on all channels of a Countrate class.
             See the getCountsTotal() method of Countrate class in TT

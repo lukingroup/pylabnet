@@ -19,6 +19,9 @@ class Service(ServiceBase):
             value=value
         )
 
+    def exposed_ao_waveform_scan(self, ao_channels, waveforms, scan_rate, num_samples, digital_trigger_ports):
+        return self._module.ao_waveform_scan(ao_channels, waveforms, scan_rate, num_samples, digital_trigger_ports)
+
 
 class Client(ClientBase):
 
@@ -34,3 +37,6 @@ class Client(ClientBase):
             digital_pin=digital_pin,
             value=value
         )
+
+    def ao_waveform_scan(self, ao_channels, waveforms, scan_rate, num_samples, digital_trigger_ports):
+        return self._service.exposed_ao_waveform_scan(ao_channels, waveforms, scan_rate, num_samples, digital_trigger_ports)

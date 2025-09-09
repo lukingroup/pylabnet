@@ -92,6 +92,6 @@ class Driver():
         """
 
         if self._valid_ch(ch) and self._valid_freq(freq):
-            freq = int((freq)
+            freq = int(freq)
             self.device.write(f'C{ch}:BASIC_WAVE FRQ, {freq}')
             self.log.info(f'Set MW output {ch} freq to {freq} Hz')

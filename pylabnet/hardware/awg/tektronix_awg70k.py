@@ -48,6 +48,9 @@ class Tek70K:
     MARKER_2 = (2 ** MARKER_2_POS).to_bytes(length=1, byteorder='little')
     MARKER_12 = (2 ** MARKER_1_POS + 2 ** MARKER_2_POS).to_bytes(length=1, byteorder='little')
 
+    # Max waveform write size is  999,999,999 bytes, each float is 4 bytes
+    MAX_WAVE_WRITE_SIZE = 999999999 // 4
+
     def __init__(self, device):
         """ device can be any object that implements the write(command), query(command) methods
         and the binary and ASCII variants. In particular, it can be a Driver for the Tek70k,
@@ -86,6 +89,10 @@ class Tek70K:
     def get_file_size(self, path):
         """ Get file size of a target file path on the AWG.  """
         return int(self.query(f'MMEMORY:DATA:SIZE? "{path}"'))
+
+    def delete_file(self, path):
+        """ Deletes target file path on the AWG.  """
+        self.write(f'MMEMORY:DELETE "{path}"')
 
     def write_marker(self, wave_name, marker1_arr, marker2_arr=np.array([], dtype=int), start_index=0):
         """ Takes two arrays for the 2 markers and writes them into the marker for a waveform.
@@ -212,9 +219,26 @@ class Tek70K:
 
     def clear_all_waveforms(self):
         self.write('WLIST:WAV:DEL ALL')
+        self.write('BWAV:RESET')
 
     def clear_all_sequences(self):
         self.write('SLIST:SEQ:DEL ALL')
+
+    def create_new_waveform(self, name, size):
+        """ Create new waveform of desired size if it does not yet exist.
+            Will fail if waveform already exists. """
+        self.write(f'WLIST:WAV:NEW "{name}", {size}')
+
+    def delete_waveform(self, name):
+        """ Delete waveform with specified name. """
+        self.write(f'WLIST:WAV:DELETE "{name}"')
+
+    def write_waveform(self, name, data, start_index=0):
+        """ Write waveform data to specified wave starting at index start_index. """
+        write_size = len(data)
+        if write_size > self.MAX_WAVE_WRITE_SIZE:
+            raise ValueError(f"Waveform data length of {write_size} exceeds max write size of {self.MAX_WAVE_WRITE_SIZE}.")
+        self.write_binary_values(f'WLIST:WAV:DATA "{name}", {start_index}, {write_size},', data, datatype='f', is_big_endian=False)
 
     def create_new_sequence(self, name):
         """ Create new sequence with 0 steps """
@@ -223,9 +247,6 @@ class Tek70K:
 
     def compile_equation(self, path):
         """ Compile equation file and import waveforms defined in trhe file. """
-        # Make sure we are in editor mode
-        self.write('WPLUGIN:ACTIVE "Equation Editor"')
-        self.wait()
         self.write(f'AWGCONTROL:COMP "{path}"')
 
 
@@ -236,8 +257,7 @@ class Sequence:
     step_ptr (int):
         Index of the first EMPTY step (i.e. will be 1 for an empty seq)
     wave_table (dict [str: int]):
-        Associates a given waveform or subsequence name with
-        the step number in the sequence
+        Associates a step number in the sequence with a waveform or subsequence name
     """
 
     def __init__(self, name, step_ptr=1):

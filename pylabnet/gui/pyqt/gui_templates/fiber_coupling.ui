@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2084</width>
+    <width>1049</width>
     <height>826</height>
    </rect>
   </property>
@@ -63,7 +63,7 @@
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;IP Address: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>IP Address: N/A</string>
         </property>
        </widget>
       </item>
@@ -82,7 +82,7 @@
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;GUI Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>GUI Port: N/A</string>
         </property>
        </widget>
       </item>
@@ -613,7 +613,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2084</width>
+     <width>1049</width>
      <height>21</height>
     </rect>
    </property>

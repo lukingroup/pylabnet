@@ -80,11 +80,23 @@ class Driver:
         """
 
         # TODO: Understand the timing between output voltages (sample-wise?)
-        channel = self._gen_ch_path(ao_channel)
 
-        with nidaqmx.Task() as task:
-            task.ao_channels.add_ao_voltage_chan(channel)
-            task.write(voltages, auto_start=True)
+        if isinstance(ao_channel, list) or isinstance(ao_channel, np.ndarray):
+            channel = []
+            for channel_entry in ao_channel:
+                channel.append(self._gen_ch_path(channel_entry))
+
+            with nidaqmx.Task() as task:
+                for channel_path in channel:
+                    task.ao_channels.add_ao_voltage_chan(channel_path)
+                task.write(voltages, auto_start=True)
+
+        else:
+            channel = self._gen_ch_path(ao_channel)
+
+            with nidaqmx.Task() as task:
+                task.ao_channels.add_ao_voltage_chan(channel)
+                task.write(voltages, auto_start=True)
 
     def get_ai_voltage(self, ai_channel, num_samples=1, max_range=10.0):
         """Measures the analog input voltage of NI DAQ mx card

@@ -7,6 +7,8 @@ from contextlib import closing
 import copy
 import ctypes
 import re
+import traceback
+
 from pylabnet.utils.logging.logger import LogService
 from PyQt5 import QtWidgets, QtGui, QtCore
 from datetime import datetime
@@ -16,13 +18,13 @@ import numpy as np
 from pylabnet.utils.logging.logger import LogService
 from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.core.client_base import ClientBase
-from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, LaunchControl_Confluence_Handler
+from pylabnet.gui.pyqt.external_gui import Window, ParameterPopup, LaunchControl_Confluence_Handler, warning_popup
 from pylabnet.network.client_server.external_gui import Service, Client
 from pylabnet.utils.logging.logger import LogClient
 from pylabnet.launchers.launcher import Launcher
 from pylabnet.utils.helper_methods import (UnsupportedOSException, get_os, dict_to_str, load_config,
-    remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
-    get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
+                                           remove_spaces, create_server, hide_console, get_dated_subdirectory_filepath,
+                                           get_config_directory, load_device_config, launch_device_server, launch_script, get_ip)
 
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -43,10 +45,12 @@ class LaunchWindow(Window):
         :param run: whether or not to run GUI on instantiation
         """
 
-        super().__init__(app, gui_template=gui_template, enable_confluence=False)
+        super().__init__(app, gui_template=gui_template)
         self.controller = controller
         self.apply_stylesheet()
         self.buffer_terminal.setVisible(False)
+
+        self.terminal.setReadOnly(True)
 
     def closeEvent(self, event):
         """ Occurs when window is closed. Overwrites parent class method"""
@@ -73,7 +77,7 @@ class Controller:
         self.operating_system = get_os()
         self.app = QtWidgets.QApplication(sys.argv)
         self.app.setWindowIcon(
-            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+            QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
         )
         # Instantiate GUI application
         if self.operating_system == 'Windows':
@@ -81,7 +85,6 @@ class Controller:
 
         self.main_window = LaunchWindow(self.app, self, gui_template=self.LOGGER_UI)
         self.main_window.stop_button.clicked.connect(self._kill)
-
         if self.operating_system not in ['Linux', 'Windows']:
             raise UnsupportedOSException
         try:
@@ -125,12 +128,11 @@ class Controller:
             try:
                 static_proxy_dict = load_config('static_proxy')
             except:
-                print('No config found named static_proxy.json')
+                warning_popup('No config found named static_proxy.json')
                 time.sleep(10)
                 raise
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
-            hide_console()
         elif self.proxy:
             popup = ParameterPopup(
                 host=str,
@@ -145,14 +147,13 @@ class Controller:
             try:
                 static_proxy_dict = load_config('static_proxy')
             except:
-                print('No config found named static_proxy.json')
+                warning_popup('No config found named static_proxy.json')
                 time.sleep(10)
                 raise
             self.host = static_proxy_dict['master_ip']
             self.log_port = static_proxy_dict['master_log_port']
             self.gui_port = static_proxy_dict['master_gui_port']
             self.proxy = True
-            hide_console()
         else:
             self.log_port = self.LOG_PORT
             self.gui_port = self.GUI_PORT
@@ -167,21 +168,21 @@ class Controller:
         self.port_list = {}
         self.script_list = {}
         self.client_data = {}
+        self.lab_list = ["ALL LABS", "NO_LAB"]
         self.disconnection = False
         self.debug = False
         self.debug_level = None
         self.autoscroll_off = False
+        self.full_logs = [] # Stores the entire log string
         # date string is None if not logging to file, and gives today's date if logging to file.
         # For day-chopping purposes
         self.logfile_date_str = None
         self.filenamepath = None
-        self.MAX_LOG_FILE_SIZE = 5000000 # 5MB
+        self.MAX_LOG_FILE_SIZE = 50000000 # 50MB
+        self.last_seen_buffer = ""
 
         # setting selection mode for server list to multi-select
         self.main_window.client_list.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-
-        # confluence handler
-        self.confluence = None
 
     def fill_parameters(self, params):
         """ Called when parameters have been entered into a popup """
@@ -194,6 +195,12 @@ class Controller:
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
 
+        # If lab name for this Logger instance is specified, add to gui_logger
+        try:
+            lab_name = load_config("lab_name")['lab_name']
+        except (FileNotFoundError, AttributeError, KeyError):
+            lab_name = 'NO_LAB'
+
         module_str = ''
         if self.proxy:
             module_str = '_proxy'
@@ -203,20 +210,14 @@ class Controller:
                 host=self.host,
                 port=self.log_port,
                 module_tag=self.GUI_NAME + module_str,
+                lab_name=lab_name,
                 ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
-            self.main_window.terminal.setText('Failed to connect to master. Shutting down')
+            self.main_window.terminal.setPlainText('Failed to connect to master. Shutting down')
             self.main_window.force_update()
             time.sleep(10)
             raise
-
-        # if lab name is specified: add to gui_logger
-        try:
-            lab_name_dict = load_config("lab_name")
-            lab_name = lab_name_dict['lab_name']
-        except:
-            lab_name = 'NO_LAB'
 
         self.gui_logger.update_data(data=dict(lab_name=lab_name))
 
@@ -283,6 +284,12 @@ class Controller:
             self.gui_service.assign_module(module=self.main_window)
             self.gui_service.assign_logger(logger=self.gui_logger)
 
+            # Populate the lab list with all the current servers accesible
+            clients = self.gui_client.get_container_info('clients')
+            for client, info in clients.items():
+                if ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] not in self.lab_list):
+                    self.lab_list.append(self.client_data[client]["lab_name"])
+
         else:
 
             # Update internal attributes and add to list of log clients
@@ -292,17 +299,24 @@ class Controller:
             self.client_list[self.GUI_NAME].setToolTip(dict_to_str(self.log_service.client_data[self.GUI_NAME]))
             self.client_data[self.GUI_NAME + module_str] = self.log_service.client_data[self.GUI_NAME]
 
+            # Populate the lab list with all the current servers accesible
+            for client, info in self.client_data.items():
+                if ("lab_name" in info and info["lab_name"] not in self.lab_list):
+                    self.lab_list.append(info["lab_name"])
+
         # confluence handler and initiate confluence data into log's metadata
-        self.confluence_handler = LaunchControl_Confluence_Handler( self, self.app)
+        self.confluence_handler = LaunchControl_Confluence_Handler(self, self.app)
         self.confluence_handler.confluence_popup.okay_event(is_close=False)
 
-
-        
+        # Populate the lab dropdown list with all the accesible labs
+        for lab_name in self.lab_list:
+            self.main_window.lab_name_select.addItem(lab_name)
+            self.gui_logger.info(f"Added {lab_name} to the GUI dropdown list.")
 
     def update_terminal(self, text):
         """ Updates terminal output on GUI """
 
-        self.main_window.terminal.append(text)
+        self.main_window.terminal.appendPlainText(text)
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -310,7 +324,7 @@ class Controller:
                 pass
         # Update buffer terminal
         buffer_str = f'!~{self.update_index}~!{text}'
-        self.main_window.buffer_terminal.append(buffer_str)
+        self.main_window.buffer_terminal.appendPlainText(buffer_str)
         self.update_index += 1
 
     def check_disconnection(self, text):
@@ -380,10 +394,7 @@ class Controller:
                 print(f'Failed to insantiate Log Server at port {self.LOG_PORT}')
                 raise
         self.log_server.start()
-
         self.log_service.logger.info('log service succesfully started')
-
-
 
     def initialize_gui(self):
         """ Initializes basic GUI display """
@@ -405,9 +416,9 @@ class Controller:
         self.main_window.logger_label.setText(f'{log_str} Logger Port: {self.log_port}')
 
         if self.proxy:
-            self.main_window.terminal.setText('Connected to master Log Server. \n')
-        self.main_window.terminal.setText('Log messages will be displayed below \n')
-        self.main_window.buffer_terminal.document().setMaximumBlockCount(100)
+            self.main_window.terminal.setPlainText('Connected to master Log Server. \n')
+        self.main_window.terminal.setPlainText('Log messages will be displayed below \n')
+        self.main_window.buffer_terminal.document().setMaximumBlockCount(1000)
 
         # Assign widgets for remote access
         self.main_window.assign_container('client_list', 'clients')
@@ -422,8 +433,8 @@ class Controller:
         self.main_window.logfile_status_button.setHidden(True)
         self.main_window.log_previous.setHidden(True)
         self.main_window.logfile_status_indicator.setEnabled(False)
-        self.main_window.confluence_update.clicked.connect(self.confluence_info_update)
 
+        self.main_window.confluence_update.clicked.connect(self.confluence_info_update)
 
         # Configure list of scripts to run and clicking actions
         self._load_scripts()
@@ -435,13 +446,20 @@ class Controller:
         self._configure_logfile()
         self._configure_logging()
         self._configure_autoscroll_off()
+        self._configure_log_filter()
 
         self.main_window.force_update()
 
     def update_proxy(self, new_msg):
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
-        self.main_window.terminal.append(re.sub(r'!~\d+~!', '', new_msg))
+        # Remove the !~ bookmark from the message
+        new_msg_cleaned = re.sub(r'!~\d+~!', '', new_msg)
+        # Append the new message to the message terminal after message filtering
+        self.main_window.terminal.appendPlainText(self._filter_string_list(new_msg_cleaned.split("\n")))
+        # Append to full logs
+        self.full_logs = self.full_logs + new_msg_cleaned.split("\n")
+
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -497,61 +515,84 @@ class Controller:
             if self.logfile_date_str != datetime.now().strftime("%Y_%m_%d"):
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
-            if os.stat(self.filenamepath).st_size > self.MAX_LOG_FILE_SIZE:
+
+            if os.stat(self.filenamepath.replace("\\", "/")).st_size > self.MAX_LOG_FILE_SIZE:
                 self.log_service.logger.info('Starting new logging file!')
                 self.start_stop_logging(master_log=True)
 
     def _configure_client_search(self):
-        self.main_window.client_search.textChanged.connect(self._update_displayed_client_list)
+        self.main_window.client_search.textChanged.connect(self._search_clients)
+        self.main_window.case_sensitive.stateChanged.connect(self._search_clients)
 
     def _configure_lab_name_select(self):
-        self.main_window.lab_name_select.currentIndexChanged.connect(self._update_displayed_client_list)
+        self.main_window.lab_name_select.currentIndexChanged.connect(self._search_clients)
+        self.main_window.lab_name_select.currentIndexChanged.connect(self._filter_logs)
+
+    def _configure_log_filter(self):
+        self.main_window.logger_filter_text.textChanged.connect(self._filter_logs)
+        self.main_window.case_sensitive.stateChanged.connect(self._filter_logs)
 
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
 
         self.main_window.close_server.pressed.connect(self._stop_server)
 
-    def _update_displayed_client_list(self):
+    def _search_clients(self):
+        """ Search the current list of clients and only display those that match the search string and/or lab name. """
 
         search_str = self.main_window.client_search.text()
         lab_name = self.main_window.lab_name_select.currentText()
 
-        clients = self.gui_client.get_container_info('clients')
+        # Don't filter/search as master to avoid messing up the client list
+        if self.proxy:
+            clients = self.gui_client.get_container_info('clients')
+            self.main_window.client_list.clear()
+            self.client_list.clear()
 
-        self.main_window.client_list.clear()
-        self.client_list.clear()
+            # Go through each client, add them to the displayed list if they satisfy the filters
+            for client, info in clients.items():
 
-        if lab_name == "ALL LABS": # if ALL LABS is selected, don't filter by lab name
-            if search_str != "":
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    # look for clients that have name or ip address containing search string
-                    if search_str in client or search_str in self.client_data[client]['ip']:
+                # Add every client to the client_list but don't necessarily show them
+                self.client_list[client] = QtWidgets.QListWidgetItem(client)
+                self.client_list[client].setToolTip(info)
+
+                # Check if case-sensitive box is checked, if unchecked we apply the lower-case operator to all strings, else identity
+                case_fn = str.lower if not self.main_window.case_sensitive.isChecked() else (lambda x: x)
+
+                # If search_string is non-empty, look for clients that have name or ip address containing search string
+                if (search_str == "") or (case_fn(search_str) in case_fn(client) or search_str in self.client_data[client]['ip']):
+
+                    # If lab filter is not ALL_LABS, look for clients that have matching lab
+                    if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
+
                         self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
-            else: # if search string is empty, don't use it to filter clients
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
 
-        else: # filter by lab name
-            if search_str != "":
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    # look for clients that have name or ip address containing search string, and that have the selected lab name
-                    if (search_str in client or search_str in self.client_data[client]['ip']) and (self.client_data[client]['lab_name'] == lab_name):
-                        self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
-            else: # if search string is empty, don't use it to filter clients
-                for client, info in clients.items():
-                    self.client_list[client] = QtWidgets.QListWidgetItem(client)
-                    # look for clients that have the selected lab name
-                    if self.client_data[client]['lab_name'] == lab_name:
-                        self.main_window.client_list.addItem(self.client_list[client])
-                    self.client_list[client].setToolTip(info)
+    def _filter_logs(self):
+        """ Filter shown logs based on a search term and immediately show them on the terminal. """
 
+        # Only work with proxy window to avoid messing with master logs
+        if self.proxy:
+            filter_txt = self.main_window.logger_filter_text.text()
+            filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
+
+            # Check if case-sensitive box is checked
+            if self.main_window.case_sensitive.isChecked():
+                self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt in s) and
+                                                                        (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
+            else:
+                self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and
+                                                                        (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
+
+    def _filter_string_list(self, str_list):
+        """ Filter a given list of strings based on a search term and return the combined string. """
+        filter_txt = self.main_window.logger_filter_text.text()
+        filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
+
+        # Check if case-sensitive box is checked
+        if self.main_window.case_sensitive.isChecked():
+            return "\n".join(filter(lambda s: (filter_txt in s) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
+        else:
+            return "\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """
@@ -647,15 +688,27 @@ class Controller:
                 server_debug_flag = '1'
 
             server_port = np.random.randint(1024, 49151)
-            launch_device_server(
-                server=device_server,
-                dev_config=device_config,
-                log_ip=self.host,
-                log_port=self.log_port,
-                server_port=server_port,
-                debug=server_debug_flag,
-                logger=self.gui_logger
-            )
+
+            try:
+                launch_device_server(
+                    server=device_server,
+                    dev_config=device_config,
+                    log_ip=self.host,
+                    log_port=self.log_port,
+                    server_port=server_port,
+                    debug=server_debug_flag,
+                    logger=self.gui_logger
+                )
+            except Exception as e:
+                # Can't use warning_popup() as closing that popup will also kill the Launch Control GUI with
+                # this error PyQt: RuntimeError: wrapped C/C++ object has been deleted
+                QtWidgets.QMessageBox.critical(
+                    None,
+                    "Error",
+                    traceback.format_exc(),
+                    QtWidgets.QMessageBox.Ok,
+                    QtWidgets.QMessageBox.NoButton
+                )
 
     def _script_clicked(self, index):
         """ Configures behavior for script double click
@@ -725,8 +778,6 @@ class Controller:
     def confluence_info_update(self):
         self.confluence_handler.confluence_popup.Popup_Update()
 
-        
-
     def _load_scripts(self):
         """ Loads all relevant scripts/devices from filesystem"""
 
@@ -778,9 +829,9 @@ class Controller:
                 self.client_data[client]['port'] = info.split('port: ')[1].split('\n')[0]
             if 'device_id: ' in info:
                 self.client_data[client]['device_id'] = info.split('device_id: ')[1].split('\n')[0]
-            if 'lab_name: ' in clients[client]:
-                self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
-            else: # if no lab name is specified
+            if 'lab_name: ' in info:
+                self.client_data[client]['lab_name'] = info.split('lab_name: ')[1].split('\n')[0]
+            else: # If no lab name is specified
                 self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _pull_connections(self):
@@ -815,7 +866,7 @@ class Controller:
                 self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
             if 'lab_name: ' in clients[client]:
                 self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
-            else: # if no lab name is specified
+            else: # If no lab name is specified
                 self.client_data[client]['lab_name'] = "NO_LAB"
 
         # Remove clients
@@ -839,7 +890,7 @@ class Controller:
                     self.client_data[client]['device_id'] = clients[client].split('device_id: ')[1].split('\n')[0]
                 if 'lab_name: ' in clients[client]:
                     self.client_data[client]['lab_name'] = clients[client].split('lab_name: ')[1].split('\n')[0]
-                else: # if no lab name is specified
+                else: # If no lab name is specified
                     self.client_data[client]['lab_name'] = "NO_LAB"
 
     def _configure_autoscroll_off(self):
@@ -957,8 +1008,8 @@ class Controller:
                     config_dict = load_config('static_proxy')
                     filepath = config_dict['logger_path']
                 except:
-                    self.main_window.terminal.setText('Critical error: '
-                                                      'no logger_path found in static_proxy.json')
+                    self.main_window.terminal.setPlainText('Critical error: '
+                                                           'no logger_path found in static_proxy.json')
                     self.main_window.force_update()
                     time.sleep(10)
                     raise
@@ -1049,6 +1100,7 @@ class ProxyUpdater(QtCore.QObject):
     def run(self):
         while True:
             time.sleep(0.001)
+
             # Check clients and update
             self.controller._pull_connections()
 
@@ -1126,12 +1178,12 @@ class ProxyUpdater(QtCore.QObject):
             if new_msg != '':
                 self.update_signal.emit(new_msg)
 
+            self.controller.last_seen_buffer = buffer_terminal
 
 
 def main():
     """ Runs the launch controller """
 
-    hide_console()
     log_controller = Controller()
     run(log_controller)
 
@@ -1198,4 +1250,4 @@ def run(log_controller):
 
 
 if __name__ == '__main__':
-    main_staticproxy()
+    main_master()

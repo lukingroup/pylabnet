@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2084</width>
+    <width>1049</width>
     <height>826</height>
    </rect>
   </property>
@@ -30,7 +30,26 @@
        <number>100</number>
       </property>
       <item>
+       <widget class="QPushButton" name="clear_button">
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(200, 85, 65);</string>
+        </property>
+        <property name="text">
+         <string>Clear plots</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="ip_label">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -44,7 +63,7 @@
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;IP Address: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>IP Address: N/A</string>
         </property>
        </widget>
       </item>
@@ -63,7 +82,7 @@
          <string notr="true"/>
         </property>
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ffffff;&quot;&gt;GUI Port: N/A&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>GUI Port: N/A</string>
         </property>
        </widget>
       </item>
@@ -548,76 +567,6 @@
         <property name="editable">
          <bool>true</bool>
         </property>
-        <item>
-         <property name="text">
-          <string>Auto</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 kW</string>
-         </property>
-        </item>
        </widget>
       </item>
       <item>
@@ -653,76 +602,6 @@
         <property name="editable">
          <bool>true</bool>
         </property>
-        <item>
-         <property name="text">
-          <string>Auto</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 nW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 uW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 mW</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>10 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>100 W</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>1 kW</string>
-         </property>
-        </item>
        </widget>
       </item>
      </layout>
@@ -734,8 +613,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2084</width>
-     <height>26</height>
+     <width>1049</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>

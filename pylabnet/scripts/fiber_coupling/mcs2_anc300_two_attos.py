@@ -52,6 +52,7 @@ class Controller:
     )
     DC_TOLERANCE = 0.1
     AXIS_ORDER = [[4, 3, 7], [6, 1, 5], [8, 0, 2]]
+    #AXIS_ORDER = [[0,1,2], [3,4,5], [6,7,8]]
 
     def __init__(self, nanopos_client: smaract_mcs2.Client, attocube_client: attocube_anc300.Client, gui='positioner_control_mixed_two_atto', log_client=None, config=None, port=None):
         """ Instantiates the controller

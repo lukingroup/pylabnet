@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1625</width>
-    <height>853</height>
+    <height>1093</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +24,25 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="13" column="1">
+     <widget class="QPlainTextEdit" name="buffer_terminal">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>10</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+      <property name="horizontalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOff</enum>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="1">
      <widget class="QPushButton" name="stop_button">
       <property name="enabled">
@@ -57,6 +76,13 @@
       </property>
      </widget>
     </item>
+    <item row="5" column="1">
+     <widget class="QLabel" name="confluence_page">
+      <property name="text">
+       <string>Page</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="4">
      <widget class="QLabel" name="label_2">
       <property name="font">
@@ -67,27 +93,8 @@
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Scripts:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
-     </widget>
-    </item>
-    <item row="12" column="1">
-     <widget class="QTextBrowser" name="buffer_terminal">
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>10</height>
-       </size>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-      <property name="verticalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="horizontalScrollBarPolicy">
-       <enum>Qt::ScrollBarAlwaysOff</enum>
-      </property>
-      <property name="overwriteMode">
-       <bool>false</bool>
+      <property name="margin">
+       <number>0</number>
       </property>
      </widget>
     </item>
@@ -95,28 +102,6 @@
      <widget class="QPushButton" name="confluence_update">
       <property name="text">
        <string>Update Confluence Info</string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="1">
-     <widget class="QLabel" name="confluence_page">
-      <property name="text">
-       <string>Page</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2" rowspan="11">
-     <widget class="QTextBrowser" name="terminal">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
       </property>
      </widget>
     </item>
@@ -182,33 +167,7 @@
      </widget>
     </item>
     <item row="10" column="3">
-     <widget class="QComboBox" name="lab_name_select">
-      <item>
-       <property name="text">
-        <string>ALL LABS</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>SHARED</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>B16</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>G12</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>NO_LAB</string>
-       </property>
-      </item>
-     </widget>
+     <widget class="QComboBox" name="lab_name_select"/>
     </item>
     <item row="11" column="3">
      <widget class="QPushButton" name="close_server">
@@ -289,7 +248,29 @@ color: rgb(255, 255, 255);</string>
      </widget>
     </item>
     <item row="1" column="4" rowspan="11">
-     <widget class="QTreeView" name="scripts"/>
+     <widget class="QTreeView" name="scripts">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>128</width>
+        <height>0</height>
+       </size>
+      </property>
+      <attribute name="headerDefaultSectionSize">
+       <number>502</number>
+      </attribute>
+      <attribute name="headerMinimumSectionSize">
+       <number>261</number>
+      </attribute>
+      <attribute name="headerStretchLastSection">
+       <bool>false</bool>
+      </attribute>
+     </widget>
     </item>
     <item row="0" column="5">
      <widget class="QLabel" name="label_4">
@@ -300,6 +281,9 @@ color: rgb(255, 255, 255);</string>
       </property>
       <property name="text">
        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Devices:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="margin">
+       <number>0</number>
       </property>
      </widget>
     </item>
@@ -393,7 +377,23 @@ background-color: green;</string>
      </widget>
     </item>
     <item row="1" column="5" rowspan="11">
-     <widget class="QTreeView" name="devices"/>
+     <widget class="QTreeView" name="devices">
+      <property name="minimumSize">
+       <size>
+        <width>128</width>
+        <height>0</height>
+       </size>
+      </property>
+      <attribute name="headerDefaultSectionSize">
+       <number>520</number>
+      </attribute>
+      <attribute name="headerMinimumSectionSize">
+       <number>260</number>
+      </attribute>
+      <attribute name="headerStretchLastSection">
+       <bool>false</bool>
+      </attribute>
+     </widget>
     </item>
     <item row="3" column="1">
      <widget class="QLabel" name="debug_label">
@@ -415,6 +415,31 @@ background-color: green;</string>
       </property>
      </widget>
     </item>
+    <item row="1" column="2" rowspan="11">
+     <widget class="QPlainTextEdit" name="terminal">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="13" column="3">
+     <widget class="QCheckBox" name="case_sensitive">
+      <property name="text">
+       <string>Case-sensitive</string>
+      </property>
+     </widget>
+    </item>
+    <item row="13" column="2">
+     <widget class="QLineEdit" name="logger_filter_text"/>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -423,7 +448,7 @@ background-color: green;</string>
      <x>0</x>
      <y>0</y>
      <width>1625</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

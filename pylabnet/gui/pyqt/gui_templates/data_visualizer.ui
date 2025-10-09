@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1338</width>
-    <height>1001</height>
+    <width>1339</width>
+    <height>1101</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -40,6 +40,7 @@
         <property name="font">
          <font>
           <pointsize>12</pointsize>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -66,6 +67,7 @@
         <property name="font">
          <font>
           <pointsize>12</pointsize>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -89,6 +91,7 @@
         <property name="font">
          <font>
           <pointsize>12</pointsize>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -112,6 +115,7 @@
         <property name="font">
          <font>
           <pointsize>12</pointsize>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -135,6 +139,7 @@
         <property name="font">
          <font>
           <pointsize>12</pointsize>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -177,6 +182,7 @@
         <property name="font">
          <font>
           <pointsize>12</pointsize>
+          <weight>50</weight>
           <italic>false</italic>
           <bold>false</bold>
          </font>
@@ -210,7 +216,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0,0">
         <property name="sizeConstraint">
-         <enum>QLayout::SetMinimumSize</enum>
+         <enum>QLayout::SetNoConstraint</enum>
         </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -332,6 +338,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
+             <widget class="QPushButton" name="clear_y_matching">
+              <property name="text">
+               <string>Clear y matched data</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLabel" name="param_5">
               <property name="maximumSize">
                <size>
@@ -343,6 +356,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
                <font>
                 <family>Calibri Light</family>
                 <pointsize>12</pointsize>
+                <weight>50</weight>
                 <italic>false</italic>
                 <bold>false</bold>
                </font>
@@ -381,6 +395,13 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
+             <widget class="QPushButton" name="y_match_check">
+              <property name="text">
+               <string>Help with matching y data</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QLabel" name="param_6">
               <property name="maximumSize">
                <size>
@@ -391,6 +412,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
+                <weight>50</weight>
                 <italic>false</italic>
                 <bold>false</bold>
                </font>
@@ -588,6 +610,11 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
             <string>Free Power Decay</string>
            </property>
           </item>
+          <item>
+           <property name="text">
+            <string>siv cavity reflectivity</string>
+           </property>
+          </item>
          </widget>
         </item>
         <item>
@@ -607,13 +634,20 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="p0_val">
-          <property name="font">
-           <font>
-            <family>Calibri Light</family>
-            <pointsize>12</pointsize>
-           </font>
+         <widget class="QScrollArea" name="fit_scrollarea">
+          <property name="widgetResizable">
+           <bool>true</bool>
           </property>
+          <widget class="QWidget" name="scrollAreaWidgetContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>573</width>
+             <height>141</height>
+            </rect>
+           </property>
+          </widget>
          </widget>
         </item>
         <item>
@@ -632,6 +666,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
             <property name="font">
              <font>
               <pointsize>12</pointsize>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -658,6 +693,7 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
             <property name="font">
              <font>
               <pointsize>12</pointsize>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -687,8 +723,8 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1338</width>
-     <height>22</height>
+     <width>1339</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>

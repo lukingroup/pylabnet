@@ -69,6 +69,8 @@ class Window(QtWidgets.QMainWindow):
     _default_template = "count_monitor"
     COLOR_LIST = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
                   '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+                  '#000075', '#808080', '#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c',
+                  '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
                   '#000075', '#808080']
 
     def __init__(self, app=None, gui_template=None, run=True, host=None, port=None, auto_close=True, max=False, log=None, enable_confluence=True):
@@ -90,7 +92,7 @@ class Window(QtWidgets.QMainWindow):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
-                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
             )
 
         # Initialize parent class QWidgets.QMainWindow
@@ -171,13 +173,6 @@ class Window(QtWidgets.QMainWindow):
             ActionMenu.addAction(extractAction_Upload)
             ActionMenu.addAction(extractAction_Update)
 
-
-
-
-
-
-
-
         # apply stylesheet
         self.apply_stylesheet()
 
@@ -252,7 +247,7 @@ class Window(QtWidgets.QMainWindow):
 
         if(datetime_axis):
             date_axis = TimeAxisItem(orientation='bottom')
-            graph = pg.PlotWidget(axisItems = {'bottom': date_axis})
+            graph = pg.PlotWidget(axisItems={'bottom': date_axis})
         else:
             graph = pg.PlotWidget()
 
@@ -883,7 +878,7 @@ class ParameterPopup(QtWidgets.QWidget):
 
 
 class GraphPopup(QtWidgets.QWidget):
-    """ Widget class for holding new graphs """
+    """ Widget class for holding new graphs in tabbed mode """
 
     def __init__(self, **kwargs):
 
@@ -902,6 +897,58 @@ class GraphPopup(QtWidgets.QWidget):
         self.setWindowTitle(window_title)
         self.setLayout(self.graph_layout)
         self.show()
+
+
+class GraphPopupTabs(QtWidgets.QWidget):
+    """ Widget class for holding new graphs """
+
+    def __init__(self, **kwargs):
+
+        QtWidgets.QWidget.__init__(self)
+
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+
+        self.setWindowTitle(window_title)
+
+        self.tabs_enabled = True
+
+        self.outer_layout = QtWidgets.QVBoxLayout()
+        self.outer_layout.setContentsMargins(30, 30, 30, 30)
+
+        # keep track of number of tabs that are filled
+        self.num_tabs = 0
+
+        # Prep first tab
+        self.tabs = QtWidgets.QTabWidget()
+        self.tab1 = QtWidgets.QWidget()
+        self.tabs.addTab(self.tab1, kwargs["tablabel"])
+
+        self.outer_layout.addWidget(self.tabs)
+
+        self.setWindowTitle(window_title)
+        self.setLayout(self.outer_layout)
+
+        # Prep the Graphlayout for
+        self.tab1.GraphLayout = QtWidgets.QVBoxLayout()
+        self.tab1.setLayout(self.tab1.GraphLayout)
+
+        self.show()
+
+    def add_graph_to_new_tab(self, graph, label):
+        new_tab = QtWidgets.QWidget()
+        self.tabs.addTab(new_tab, label)
+        new_tab.GraphLayout = QtWidgets.QVBoxLayout()
+        new_tab.setLayout(new_tab.GraphLayout)
+        new_tab.GraphLayout.addWidget(graph)
+        self.num_tabs += 1
+        return
+
 
 class Plot:
     """ Class for plot widgets inside of a Window
@@ -1329,7 +1376,7 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
     """ Widget class for holding new graphs """
 
     def __init__(self, **kwargs):
-    
+
         QtWidgets.QWidget.__init__(self)
 
         # self.app = app
@@ -1342,19 +1389,19 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
         if 'log' in kwargs:
             self.log = kwargs['log']
         else:
-            self.log=None
+            self.log = None
 
         if 'app' in kwargs:
             self.app = kwargs['app']
         else:
-            self.app=None
+            self.app = None
 
         if 'size' in kwargs:
             self.setMinimumSize(*kwargs['size'])
 
         # Confluence handler and its button
-        enable_confluence=True
-        
+        enable_confluence = True
+
         self.confluence_handler = None
 
         if(self.log is None):
@@ -1373,16 +1420,14 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
             extractAction_Update.setStatusTip('The space and page names of confluence')
             extractAction_Update.triggered.connect(self.update_setting)
 
-            
             mainMenu = QtWidgets.QMenuBar(self)
 
             ActionMenu = mainMenu.addMenu('&Action')
             ActionMenu.addAction(extractAction_Upload)
             ActionMenu.addAction(extractAction_Update)
 
-            
         self.graph_layout = QtWidgets.QVBoxLayout()
-        self.graph_layout.setContentsMargins(30,30,30,30)
+        self.graph_layout.setContentsMargins(30, 30, 30, 30)
         self.setWindowTitle(window_title)
         self.setLayout(self.graph_layout)
         self.show()
@@ -1394,6 +1439,102 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
         self.confluence_handler.confluence_popup.Popup_Upload()
         return
 
+
+class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
+    """ Widget class for holding new graphs """
+
+    def __init__(self, **kwargs):
+
+        QtWidgets.QWidget.__init__(self)
+
+        self.tabs_enabled = True
+
+        # self.app = app
+
+        if 'window_title' in kwargs:
+            window_title = kwargs['window_title']
+        else:
+            window_title = 'Graph Holder'
+
+        if 'log' in kwargs:
+            self.log = kwargs['log']
+        else:
+            self.log = None
+
+        if 'app' in kwargs:
+            self.app = kwargs['app']
+        else:
+            self.app = None
+
+        if 'size' in kwargs:
+            self.setMinimumSize(*kwargs['size'])
+
+        # Confluence handler and its button
+        enable_confluence = True
+
+        self.confluence_handler = None
+
+        if(self.log is None):
+            enable_confluence = False
+
+        if(enable_confluence is True):
+            self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
+
+            extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
+            extractAction_Upload.setShortcut("Ctrl+S")
+            extractAction_Upload.setStatusTip('Upload to the confluence page')
+            extractAction_Upload.triggered.connect(self.upload_pic)
+
+            extractAction_Update = QtWidgets.QAction("&CONFLUENCE SETTING", self)
+            extractAction_Update.setShortcut("Ctrl+X")
+            extractAction_Update.setStatusTip('The space and page names of confluence')
+            extractAction_Update.triggered.connect(self.update_setting)
+
+            mainMenu = QtWidgets.QMenuBar(self)
+
+            ActionMenu = mainMenu.addMenu('&Action')
+            ActionMenu.addAction(extractAction_Upload)
+            ActionMenu.addAction(extractAction_Update)
+
+        self.outer_layout = QtWidgets.QVBoxLayout()
+        self.outer_layout.setContentsMargins(30, 30, 30, 30)
+
+        # keep track of number of tabs that are filled
+        self.num_tabs = 0
+
+        # Prep first tab
+        self.tabs = QtWidgets.QTabWidget()
+        self.tab1 = QtWidgets.QWidget()
+        self.tabs.addTab(self.tab1, kwargs["tablabel"])
+
+        self.outer_layout.addWidget(self.tabs)
+
+        self.setWindowTitle(window_title)
+        self.setLayout(self.outer_layout)
+
+        # Prep the Graphlayout for
+        self.tab1.GraphLayout = QtWidgets.QVBoxLayout()
+        self.tab1.setLayout(self.tab1.GraphLayout)
+
+        self.show()
+
+    def update_setting(self):
+        self.confluence_handler.confluence_popup.Popup_Update()
+
+    def upload_pic(self):
+        self.confluence_handler.confluence_popup.Popup_Upload()
+        return
+
+    def add_graph_to_new_tab(self, graph, label):
+        new_tab = QtWidgets.QWidget()
+        self.tabs.addTab(new_tab, label)
+        new_tab.GraphLayout = QtWidgets.QVBoxLayout()
+        new_tab.setLayout(new_tab.GraphLayout)
+        new_tab.GraphLayout.addWidget(graph)
+        self.num_tabs += 1
+        return
+
+
 class Confluence_Handler():
     """ Handle the gui's confluence handler except main window (log server) """
 
@@ -1401,12 +1542,14 @@ class Confluence_Handler():
         self.log = log_client
         self.confluence_popup = Confluence_Popping_Windows(parent_wins, app, self.log, "Confluence_info_window")
 
+
 class LaunchControl_Confluence_Handler():
     """ Handle the main window (log server)'s confluence setting """
 
     def __init__(self, controller, app):
 
         self.confluence_popup = LaunchControl_Confluence_Windows(controller, app, 'Confluence_info_from_LaunchControl')
+
 
 class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     """ Instantiate a popping-up window, which documents the confluence setting, but not show until users press popping-up button.
@@ -1459,7 +1602,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         #         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
         #     self.app = QtWidgets.QApplication(sys.argv)
         #     self.app.setWindowIcon(
-        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        #         QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
         #     )
 
         # Initialize parent class QtWidgets.QDialog
@@ -1692,13 +1835,11 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         if not gui_template.endswith(".ui"):
             gui_template += ".ui"
 
-
         self._ui = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             self._gui_directory,
             gui_template
         )
-
 
         # Load UI
         try:
@@ -1829,6 +1970,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
 
         return status
 
+
 class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
     '''
     It instantiates the confluence window for the main window (Log server). It only shows when users press the button. The updatted info will be saved into
@@ -1869,7 +2011,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
             self.app = QtWidgets.QApplication(sys.argv)
             self.app.setWindowIcon(
-                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+                QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
             )
 
         # confluence
@@ -2051,7 +2193,7 @@ def fresh_popup(**params):
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     operating_system = get_os()
     app.setWindowIcon(
-        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')
@@ -2069,7 +2211,7 @@ def warning_popup(message):
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     operating_system = get_os()
     app.setWindowIcon(
-        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'devices.ico'))
+        QtGui.QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pylabnet_newlogo.ico'))
     )
     if operating_system == 'Windows':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('pylabnet')

@@ -43,7 +43,7 @@ SAMPLING_RATE_DICT = {
 
 class Driver():
 
-    def __init__(self, device_id, logger, dummy=False, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
+    def __init__(self, device_id, interface, logger, dummy=False, api_level=6, reset_dio=False, disable_everything=False, **kwargs):
         """ Instantiate AWG
 
         :logger: instance of LogClient class
@@ -58,7 +58,7 @@ class Driver():
         self.dummy = dummy
 
         # Setup HDAWG
-        self._setup_hdawg(device_id, logger, api_level, reset_dio, disable_everything)
+        self._setup_hdawg(device_id, interface, logger, api_level, reset_dio, disable_everything)
 
     @dummy_wrap
     def reset_DIO_outputs(self):
@@ -92,39 +92,34 @@ class Driver():
         return input_argument
 
     @dummy_wrap
-    def _setup_hdawg(self, device_id, logger, api_level, reset_dio, disable_everything):
+    def _setup_hdawg(self, device_id, interface, logger, api_level, reset_dio, disable_everything):
         ''' Sets up HDAWG '''
-
         # try finding the server address
         discovery = zhinst.ziPython.ziDiscovery()
         device_properties = discovery.get(discovery.find(device_id))
         server_address = device_properties["serveraddress"]
 
-        # Connect to device and log print output, not the lambda expression.
-        (daq, device, props) = self.log_stdout(
-            lambda: zhinst.utils.create_api_session(
-                device_id,
-                api_level,
-                server_host=server_address
-            )
-        )
+        server_host = "localhost"
+        server_port = 8004
+        api_level = 6  # Maximum API level supported for all instruments.
 
-        self.log_stdout(lambda: zhinst.utils.api_server_version_check(daq))
+        # Create an API session to the Data Server.
+        self.daq = zhinst.core.ziDAQServer(server_address, server_port, api_level)
+        # Establish a connection between Data Server and Device.
+        self.daq.connectDevice(device_id, interface)
 
-        self.daq = daq
-        self.device_id = device
+        self.device_id = device_id
 
         if disable_everything:
             # Create a base configuration
             self.disable_everything()
-
         if reset_dio:
             self.reset_DIO_outputs()
-
         # read out number of channels from property dictionary
         self.num_outputs = int(
-            re.compile('HDAWG(4|8{1})').match(props['devicetype']).group(1)
+            re.compile('HDAWG(4|8{1})').match(device_properties['devicetype']).group(1)
         )
+        self.log.info(f"Sucessfully connected to HDAWG {device_id} at {server_address}.")
 
     @log_standard_output
     @dummy_wrap
@@ -139,7 +134,7 @@ class Driver():
         :new_int: New value for integer
         """
 
-        self.daq.setInt(f'/{self.device_id}/{node}', new_int)
+        self.daq.syncSetInt(f'/{self.device_id}/{node}', new_int)
 
     @log_standard_output
     @dummy_wrap
@@ -154,7 +149,7 @@ class Driver():
         :new_double: New value for double.
         """
 
-        self.daq.setDouble(f'/{self.device_id}/{node}', new_double)
+        self.daq.syncSetDouble(f'/{self.device_id}/{node}', new_double)
 
     @log_standard_output
     @dummy_wrap

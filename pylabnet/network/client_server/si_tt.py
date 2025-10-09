@@ -39,8 +39,8 @@ class Service(ServiceBase):
         )
         return pickle.dumps(res_pickle)
 
-    def exposed_start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
-        return self._module.start_gated_counter(name, click_ch, gate_ch, gated, bins)
+    def exposed_start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000, end_channel=None):
+        return self._module.start_gated_counter(name, click_ch, gate_ch, gated, bins, end_channel=end_channel)
 
     def exposed_start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                                 sync_ch=-134217728, binwidth=1000, n_bins=1000,
@@ -150,7 +150,7 @@ class Client(ClientBase):
         )
         return pickle.loads(res_pickle)
 
-    def start_gated_counter(self, name, click_ch, gate_ch, bins=1000):
+    def start_gated_counter(self, name, click_ch, gate_ch, bins=1000, end_channel=None):
         """ Starts a new gated counter
 
         Starts counting at rising edge of gate, and returns count value into array
@@ -162,9 +162,9 @@ class Client(ClientBase):
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, True, bins)
+        self._service.exposed_start_gated_counter(name, click_ch, gate_ch, True, bins, end_channel=end_channel)
 
-    def count_between_markers(self, name, click_ch, marker_ch, bins=1000):
+    def count_between_markers(self, name, click_ch, marker_ch, bins=1000, end_channel=None):
         """ Starts a new counter that counts at the rising edge of a marker
 
         Starts counting at rising edge of marker channel, and returns count value
@@ -176,7 +176,7 @@ class Client(ClientBase):
         :param bins: (int) number of bins (gate windows) to store
         """
 
-        self._service.exposed_start_gated_counter(name, click_ch, marker_ch, False, bins)
+        self._service.exposed_start_gated_counter(name, click_ch, marker_ch, False, bins, end_channel=end_channel)
 
     def start_histogram(self, name, start_ch, click_ch, next_ch=-134217728,
                         sync_ch=-134217728, binwidth=1000, n_bins=1000,

@@ -144,7 +144,7 @@ class Wrap:
         time.sleep(integration)
         return self._ctr[name].getData()
 
-    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000):
+    def start_gated_counter(self, name, click_ch, gate_ch, gated=True, bins=1000, end_channel=None):
         """ Starts a new gated counter
 
         :param name: (str) name of counter measurement to use
@@ -156,13 +156,22 @@ class Wrap:
         """
 
         if gated:
-            self._ctr[name] = TT.CountBetweenMarkers(
-                self._tagger,
-                self._get_channel(click_ch),
-                self._get_channel(gate_ch),
-                end_channel=-gate_ch,
-                n_values=bins
-            )
+            if end_channel is None:
+                self._ctr[name] = TT.CountBetweenMarkers(
+                    self._tagger,
+                    self._get_channel(click_ch),
+                    self._get_channel(gate_ch),
+                    end_channel=-gate_ch,
+                    n_values=bins
+                )
+            else:
+                self._ctr[name] = TT.CountBetweenMarkers(
+                    self._tagger,
+                    self._get_channel(click_ch),
+                    self._get_channel(gate_ch),
+                    end_channel=end_channel,
+                    n_values=bins
+                )
         else:
             self._ctr[name] = TT.CountBetweenMarkers(
                 self._tagger,

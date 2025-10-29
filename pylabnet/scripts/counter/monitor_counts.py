@@ -76,6 +76,8 @@ class CountMonitor:
             self.gui,
             graph_widget=num_plots,
             number_label=8,
+            tt_name_label=1,
+            label=8,
             event_button=num_plots,
             legend_widget=num_plots
         )
@@ -115,6 +117,17 @@ class CountMonitor:
         self._n_bins = int(n_bins)
         self._ch_list = ch_list
         self._plot_list = plot_list
+
+    def set_names(self, config):
+        """Sets tt and channel names from config dict."""
+        if 'tt_name' in config:
+            self._tt_name = config['tt_name']
+        else:
+            self._tt_name = {}
+        if 'ch_names' in config:
+            self._ch_names = config['ch_names']
+        else:
+            self._ch_names = {}
 
     def run(self):
         """ Runs the counter from scratch"""
@@ -179,6 +192,22 @@ class CountMonitor:
                 self.widgets['legend_widget'][index]
             )
 
+        # Set TT name label, will leave blank if not given
+        self.widgets['tt_name_label'].setText(f'Time Tagger: {self._tt_name}')
+
+        # Channel name assignment using self._ch_names set by set_names
+        ch_names_dict = self._ch_names
+        for index in range(len(self.widgets['label'])):
+            channel_num = index + 1  # label_1 is for counter 1, etc.
+            ch_name = ch_names_dict.get(channel_num, None)
+            if ch_name is None:
+                ch_name = "",
+            if ch_name is not None and ch_name != "":
+                self.widgets[f'label_{channel_num}'].setText(f'{ch_name}')
+            else:
+                self.widgets[f'label_{channel_num}'].setText(f'Counter {channel_num}')
+
+        # For each channel, assign to the correct plot and create a curve
         for color, channel in enumerate(self._ch_list):
 
             # Figure out which plot to assign to
@@ -208,9 +237,18 @@ class CountMonitor:
             self.widgets[f'curve_{channel}'] = self.widgets['graph_widget'][plot_index].plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[color])
             )
+            # Get channel name if available
+            ch_name = None
+            if self._ch_names:
+                ch_name = self._ch_names.get(channel, None)
+                if ch_name is None:
+                    ch_name = ""
+                    legend_label = f'Counter {channel}'
+                if ch_name is not None and ch_name != "":
+                    legend_label = f'{ch_name} (Ch {channel})'
             self.widgets['legend_widget'][plot_index].addItem(
                 self.widgets[f'curve_{channel}'],
-                ' - ' + f'Channel {channel}'
+                ' - ' + legend_label
             )
 
             # Assign scalar
@@ -369,8 +407,9 @@ def launch(**kwargs):
     #         timeout += 1
     # pause_server.start()
 
-    # Set parameters
+    # Set parameters and names
     monitor.set_params(**config['params'])
+    monitor.set_names(config)
 
     # Run
     monitor.run()

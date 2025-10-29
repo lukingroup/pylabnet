@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1891</width>
-    <height>1087</height>
+    <width>1889</width>
+    <height>1078</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -691,6 +691,40 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
       </property>
      </widget>
     </item>
+    <item row="3" column="7">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QLabel" name="tt_name">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="3" column="8">
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="click_ch_name">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -698,8 +732,8 @@ font: 25 12pt &quot;Calibri Light&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1891</width>
-     <height>26</height>
+     <width>1889</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

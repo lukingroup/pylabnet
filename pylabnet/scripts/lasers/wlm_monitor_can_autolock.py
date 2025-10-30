@@ -320,11 +320,11 @@ class WlmMonitor:
             )
         elif channel.laser_lab is not None:
             self.widgets['freq_plot'][index].setText(
-                f'Freq Plot {channel.number} ({channel.name} - {channel.laser_lab})'
+                f'Freq Plot Ch {channel.number} ({channel.name} - {channel.laser_lab})'
             )
         else:
             self.widgets['freq_plot'][index].setText(
-                f'Freq Plot {channel.number} ({channel.name})'
+                f'Freq Plot Ch {channel.number} ({channel.name})'
             )
 
         # Create curves
@@ -392,11 +392,11 @@ class WlmMonitor:
             )
         elif channel.laser_lab is not None:
             self.widgets['volt_plot'][index].setText(
-                f'Volt Plot {channel.number} ({channel.name} - {channel.laser_lab})'
+                f'Volt Plot Ch {channel.number} ({channel.name} - {channel.laser_lab})'
             )
         else:
             self.widgets['volt_plot'][index].setText(
-                f'Volt Plot {channel.number} ({channel.name})'
+                f'Volt Plot Ch {channel.number} ({channel.name})'
             )
 
         # Error

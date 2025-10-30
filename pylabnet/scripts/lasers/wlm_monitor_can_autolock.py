@@ -56,13 +56,15 @@ class WlmMonitor:
             self.widgets = get_gui_widgets(
                 gui=self.gui,
                 freq=3, sp=3, rs=3, lock=3, error_status=3, graph=6, legend=6, clear=6,
-                zero=6, voltage=3, error=3, P_laser=3, I_laser=3, D_laser=3, PID_upd_laser=3
+                zero=6, voltage=3, error=3, P_laser=3, I_laser=3, D_laser=3, PID_upd_laser=3,
+                freq_plot=3, volt_plot=3,
             )
         else:
             self.widgets = get_gui_widgets(
                 gui=self.gui,
                 freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
-                zero=4, voltage=2, error=2, P_laser=2, I_laser=2, D_laser=2, PID_upd_laser=2
+                zero=4, voltage=2, error=2, P_laser=2, I_laser=2, D_laser=2, PID_upd_laser=2,
+                freq_plot=2, volt_plot=2,
             )
 
         # Set parameters
@@ -96,6 +98,9 @@ class WlmMonitor:
                 as a reference so that we know which channel to assign all the other parameters to
             - 'name': a string that can just be provided once and is used as a user-friendly name for the channel.
                 Initializes to 'Channel X' where X is a random integer if not provided
+            - 'laser_lab': a string that can just be provided once and is used as a user-friendly reference for the lab
+                name, specially useful in multiple-node exp. Left blank if not provided
+            - 'plot_name': a string that can be provided once and is used as the title of the plots for this channel
             - 'setpoint': setpoint for this channel.
             - 'lock': boolean that tells us whether or not to turn on the lock. Ignored if setpoint is None. Default is
                 False.
@@ -145,6 +150,12 @@ class WlmMonitor:
                     # Set all other parameters for this channel
                     if 'name' in parameter:
                         channel.name = parameter['name']
+
+                    if 'laser_lab' in parameter:
+                        channel.laser_lab = parameter['laser_lab']
+
+                    if 'plot_name' in parameter:
+                        channel.plot_name = parameter['plot_name']
 
                     if 'setpoint' in parameter:
 
@@ -301,6 +312,21 @@ class WlmMonitor:
             display_pts=self.display_pts
         )
 
+        # Create plot title
+        # frequency plot
+        if channel.plot_name is not None:
+            self.widgets['freq_plot'][index].setTitle(
+                f'{channel.plot_name}'
+            )
+        elif channel.laser_lab is not None:
+            self.widgets['freq_plot'][index].setTitle(
+                f'Freq Plot {channel.number} ({channel.name} - {channel.laser_lab})'
+            )
+        else:
+            self.widgets['freq_plot'][index].setTitle(
+                f'Freq Plot {channel.number} ({channel.name})'
+            )
+
         # Create curves
         # frequency
         self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
@@ -357,6 +383,21 @@ class WlmMonitor:
             curve=self.widgets['curve'][4 * index + 2],
             curve_name=channel.voltage_curve
         )
+
+        # Create plot title
+        # voltage plot
+        if channel.plot_name is not None:
+            self.widgets['volt_plot'][index].setTitle(
+                f'{channel.plot_name}'
+            )
+        elif channel.laser_lab is not None:
+            self.widgets['volt_plot'][index].setTitle(
+                f'Volt Plot {channel.number} ({channel.name} - {channel.laser_lab})'
+            )
+        else:
+            self.widgets['volt_plot'][index].setTitle(
+                f'Volt Plot {channel.number} ({channel.name})'
+            )
 
         # Error
         self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
@@ -725,6 +766,16 @@ class Channel:
         self.curve_name = self.name + ' Frequency'  # Name used for identifying the frequency Curve object
         self.lock_name = self.name + ' Lock'  # Name used for identifying lock Scalar object
         self.error_name = self.name + ' Error'  # Name used for identifying error Scalar object
+
+        if 'laser_lab' in channel_params:
+            self.laser_lab = channel_params['laser_lab']
+        else:
+            self.laser_lab = None
+
+        if 'plot_name' in channel_params:
+            self.plot_name = channel_params['plot_name']
+        else:
+            self.plot_name = None
 
         if 'setpoint' in channel_params:
             self.setpoint = channel_params['setpoint']

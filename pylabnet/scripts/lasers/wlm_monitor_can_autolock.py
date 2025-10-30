@@ -851,7 +851,7 @@ def launch(**kwargs):
 
     logger = kwargs['logger']
     config = load_script_config(
-        script='wlm_monitor_b16',
+        script='wlm_monitor',
         config=kwargs['config'],
         logger=logger
     )

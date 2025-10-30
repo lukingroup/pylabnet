@@ -315,15 +315,15 @@ class WlmMonitor:
         # Create plot title
         # frequency plot
         if channel.plot_name is not None:
-            self.widgets['freq_plot'][index].setTitle(
+            self.widgets['freq_plot'][index].setText(
                 f'{channel.plot_name}'
             )
         elif channel.laser_lab is not None:
-            self.widgets['freq_plot'][index].setTitle(
+            self.widgets['freq_plot'][index].setText(
                 f'Freq Plot {channel.number} ({channel.name} - {channel.laser_lab})'
             )
         else:
-            self.widgets['freq_plot'][index].setTitle(
+            self.widgets['freq_plot'][index].setText(
                 f'Freq Plot {channel.number} ({channel.name})'
             )
 
@@ -387,15 +387,15 @@ class WlmMonitor:
         # Create plot title
         # voltage plot
         if channel.plot_name is not None:
-            self.widgets['volt_plot'][index].setTitle(
+            self.widgets['volt_plot'][index].setText(
                 f'{channel.plot_name}'
             )
         elif channel.laser_lab is not None:
-            self.widgets['volt_plot'][index].setTitle(
+            self.widgets['volt_plot'][index].setText(
                 f'Volt Plot {channel.number} ({channel.name} - {channel.laser_lab})'
             )
         else:
-            self.widgets['volt_plot'][index].setTitle(
+            self.widgets['volt_plot'][index].setText(
                 f'Volt Plot {channel.number} ({channel.name})'
             )
 

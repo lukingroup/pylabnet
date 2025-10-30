@@ -123,7 +123,7 @@ class CountMonitor:
         if 'tt_name' in config:
             self._tt_name = config['tt_name']
         else:
-            self._tt_name = {}
+            self._tt_name = " "
         if 'ch_names' in config:
             self._ch_names = config['ch_names']
         else:
@@ -199,13 +199,15 @@ class CountMonitor:
         ch_names_dict = self._ch_names
         for index in range(len(self.widgets['label'])):
             channel_num = index + 1  # label_1 is for counter 1, etc.
-            ch_name = ch_names_dict.get(channel_num, None)
+            ch_name = ch_names_dict.get(f"{channel_num}", None)
             if ch_name is None:
-                ch_name = "",
+                ch_name = ""
+                self.widgets[f'label'][index].setText(f'Counter {channel_num}')
+
             if ch_name is not None and ch_name != "":
-                self.widgets[f'label_{channel_num}'].setText(f'{ch_name}')
+                self.widgets[f'label'][index].setText(f'{ch_name} (Ch {channel_num})')
             else:
-                self.widgets[f'label_{channel_num}'].setText(f'Counter {channel_num}')
+                self.widgets[f'label'][index].setText(f'Counter {channel_num}')
 
         # For each channel, assign to the correct plot and create a curve
         for color, channel in enumerate(self._ch_list):
@@ -239,17 +241,17 @@ class CountMonitor:
             )
             # Get channel name if available
             ch_name = None
+            legend_label = f'Counter {channel}'
             if self._ch_names:
-                ch_name = self._ch_names.get(channel, None)
-                if ch_name is None:
+                ch_name = self._ch_names.get(f"{channel}", None)
+                if ch_name is None or ch_name == "":
                     ch_name = ""
                     legend_label = f'Counter {channel}'
                 if ch_name is not None and ch_name != "":
                     legend_label = f'{ch_name} (Ch {channel})'
+
             self.widgets['legend_widget'][plot_index].addItem(
-                self.widgets[f'curve_{channel}'],
-                ' - ' + legend_label
-            )
+                self.widgets[f'curve_{channel}'], ' - ' + legend_label)
 
             # Assign scalar
             # self.gui_handler.assign_label(

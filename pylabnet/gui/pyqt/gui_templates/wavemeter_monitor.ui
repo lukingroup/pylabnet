@@ -43,9 +43,27 @@
          <string notr="true"/>
         </property>
         <property name="title">
-         <string>Plot 1</string>
+         <string/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QLabel" name="freq_plot_1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Freq Plot 1</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <property name="sizeConstraint">
@@ -313,9 +331,27 @@
          <string notr="true"/>
         </property>
         <property name="title">
-         <string>Plot 1</string>
+         <string/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QLabel" name="freq_plot_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Freq Plot 2</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
@@ -586,9 +622,27 @@
          <string notr="true"/>
         </property>
         <property name="title">
-         <string>Plot 1</string>
+         <string/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QLabel" name="volt_plot_1">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Voltage Plot 1</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <item>
@@ -874,9 +928,27 @@
          <string notr="true"/>
         </property>
         <property name="title">
-         <string>Plot 1</string>
+         <string/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QLabel" name="volt_plot_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Voltage Plot 2</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_7">
            <item>

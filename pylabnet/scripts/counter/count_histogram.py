@@ -190,6 +190,27 @@ class TimeTraceGui(TimeTrace):
         # Store config
         self.config = config
 
+        #Get naming GUI widgets
+        self.widgets = get_gui_widgets(
+            self.gui,
+            tt_name=1,
+            click_ch_name=1,
+        )
+
+        """Sets tt and channel names from config dict."""
+        if 'tt_name' in config:
+            self._tt_name = config['tt_name']
+        else:
+            self._tt_name = ''
+
+        if 'click_ch_name' in config:
+            self._click_ch_name = config['click_ch_name']
+        else:
+            self._click_ch_name = ''
+
+        self.widgets['tt_name'].setText(f'Time Tagger: {self._tt_name}')
+        self.widgets['click_ch_name'].setText(f'Click Channel: {self._click_ch_name}')
+
         self.correlation = False
         if 'type' in self.config:
             if self.config['type'] == 'correlation':

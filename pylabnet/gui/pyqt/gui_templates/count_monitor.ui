@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1056</width>
-    <height>692</height>
+    <width>1054</width>
+    <height>683</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -198,7 +198,7 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_7">
+       <widget class="QLabel" name="label_2">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -280,7 +280,7 @@
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_5">
+       <widget class="QLabel" name="label_1">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -296,7 +296,7 @@
        </widget>
       </item>
       <item row="3" column="0">
-       <widget class="QLabel" name="label_2">
+       <widget class="QLabel" name="label_4">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -394,7 +394,7 @@
        <number>10</number>
       </property>
       <item row="2" column="0">
-       <widget class="QLabel" name="label_4">
+       <widget class="QLabel" name="label_7">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -432,7 +432,7 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_8">
+       <widget class="QLabel" name="label_6">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -514,7 +514,7 @@
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_6">
+       <widget class="QLabel" name="label_5">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -530,7 +530,7 @@
        </widget>
       </item>
       <item row="3" column="0">
-       <widget class="QLabel" name="label_9">
+       <widget class="QLabel" name="label_8">
         <property name="font">
          <font>
           <family>Calibri Light</family>
@@ -547,6 +547,23 @@
       </item>
      </layout>
     </item>
+    <item row="0" column="2">
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <widget class="QLabel" name="tt_name_label">
+        <property name="font">
+         <font>
+          <family>Calibri Light</family>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -554,8 +571,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1056</width>
-     <height>26</height>
+     <width>1054</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>

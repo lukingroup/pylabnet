@@ -1,4 +1,4 @@
-from decouple import config
+from decouple import *
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 

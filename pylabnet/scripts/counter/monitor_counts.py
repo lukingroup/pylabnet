@@ -10,6 +10,11 @@ from pylabnet.network.core.generic_server import GenericServer
 from pylabnet.network.client_server import si_tt
 from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_launcher, load_config, get_gui_widgets, get_legend_from_graphics_view, find_client, load_script_config
 
+from pyqtgraph import PlotWidget, GraphicsView, GraphicsScene
+from pyqtgraph.graphicsItems.LegendItem import LegendItem
+from PyQt5 import QtWidgets
+from PyQt5.QtCore import Qt
+
 
 # Static methods
 
@@ -24,6 +29,37 @@ from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_lau
 #     for i in range(2, 8):
 #         numbers.append('number_label_' + str(i + 1))
 #     return graphs, legends, numbers
+
+
+def generate_widgets(self, num_plots):
+    """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
+
+    container = getattr(self.gui, 'verticalLayout')
+
+    for i in range(num_plots):
+        splitter = QtWidgets.QGroupBox()
+        splitter_layout = QtWidgets.QVBoxLayout()
+        legend = GraphicsView(GraphicsScene())
+        legend.setObjectName(f'legend_widget_{i+1}')
+        splitter_layout.addWidget(legend)
+        button = QtWidgets.QPushButton('Clear Plot')
+        button.setObjectName(f'event_button_{i+1}')
+        splitter_layout.addWidget(button)
+        splitter.setLayout(splitter_layout)
+        sub_container = QtWidgets.QGroupBox(f'Plot_{i+1}')
+        sub_container_layout = QtWidgets.QHBoxLayout()
+        graph = PlotWidget()
+        graph.setObjectName(f'graph_widget_{i+1}')
+        sub_container_layout.addWidget(graph)
+        sub_container_layout.addWidget(splitter)
+        sub_container.setLayout(sub_container_layout)
+        sub_container_layout.setStretch(0, 5)   # graph
+        sub_container_layout.setStretch(1, 1)   # splitter
+        container.layout().addWidget(sub_container)
+
+        setattr(self.gui, f'graph_widget_{i+1}', graph)
+        setattr(self.gui, f'legend_widget_{i+1}', legend)
+        setattr(self.gui, f'event_button_{i+1}', button)
 
 
 class CountMonitor:
@@ -50,10 +86,13 @@ class CountMonitor:
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
-        if self.combined_channel:
-            ui = 'count_monitor_combined'
-        else:
-            ui = 'count_monitor'
+        # if self.combined_channel:
+        #     # ui = 'count_monitor_combined'
+        #     ui = 'count_monitor_5windows'
+        # else:
+        #     ui = 'count_monitor'
+
+        ui = 'count_monitor_flex'
 
         # Instantiate GUI window
         self.gui = Window(
@@ -66,10 +105,43 @@ class CountMonitor:
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
+        # if self.combined_channel:
+        #     # num_plots = 3
+        #     num_plots = 5
+        # else:
+        #     num_plots = 2
+
+        # # Get all GUI widgets
+        # self.widgets = get_gui_widgets(
+        #     self.gui,
+        #     graph_widget=num_plots,
+        #     number_label=8,
+        #     tt_name_label=1,
+        #     label=8,
+        #     event_button=num_plots,
+        #     legend_widget=num_plots
+        # )
+
+        # Load config
+        self.config = {}
+        if config is not None:
+            # self.config = load_script_config(
+            #     script='monitor_counts',
+            #     config=config,
+            #     logger=self.log
+            # )
+            self.config = config
+
+        if not 'name' in self.config:
+            self.config.update({'name': f'monitor{np.random.randint(1000)}'})
+
+        self.log.info(self.config)
         if self.combined_channel:
-            num_plots = 3
+            num_plots = len(self.config['channels']) + 1
         else:
-            num_plots = 2
+            num_plots = len(self.config['channels'])
+
+        generate_widgets(self, num_plots)
 
         # Get all GUI widgets
         self.widgets = get_gui_widgets(
@@ -82,17 +154,12 @@ class CountMonitor:
             legend_widget=num_plots
         )
 
-        # Load config
-        self.config = {}
-        if config is not None:
-            self.config = load_script_config(
-                script='monitor_counts',
-                config=config,
-                logger=self.logger_client
-            )
-
-        if not 'name' in self.config:
-            self.config.update({'name': f'monitor{np.random.randint(1000)}'})
+        # self.widgets = get_gui_widgets(
+        #     self.gui,
+        #     number_label=8,
+        #     tt_name_label=1,
+        #     label=8
+        # )
 
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
@@ -370,47 +437,14 @@ def launch(**kwargs):
             ),
             logger_client=logger,
             server_port=kwargs['server_port'],
-            combined_channel=combined_channel
+            combined_channel=combined_channel,
+            config=config
         )
     except KeyError:
         print('Please make sure the module names for required servers and GUIS are correct.')
         time.sleep(15)
         raise
-    # except:
-    #     config = None
-    #     ch_list = [7, 8]
-    #     plot_list = [[7], [8]]
 
-    # Instantiate Pause server
-    # try:
-    #     pause_logger = LogClient(
-    #         host=loghost,
-    #         port=logport,
-    #         module_tag='count_monitor_pause_server'
-    #     )
-    # except ConnectionRefusedError:
-    #     logger.warn('Could not connect Count Monitor Pause server to logger')
-
-    # pause_service = PauseService()
-    # pause_service.assign_module(module=monitor)
-    # pause_service.assign_logger(logger=pause_logger)
-
-    # timeout = 0
-    # while timeout < 1000:
-    #     try:
-    #         port = np.random.randint(1, 9999)
-    #         pause_server = GenericServer(
-    #             host=get_ip(),
-    #             port=port,
-    #             service=pause_service)
-    #         pause_logger.update_data(data=dict(port=port))
-    #         timeout = 9999
-    #     except ConnectionRefusedError:
-    #         logger.warn(f'Failed to instantiate Count Monitor Pause server at port {port}')
-    #         timeout += 1
-    # pause_server.start()
-
-    # Set parameters and names
     monitor.set_params(**config['params'])
     monitor.set_names(config)
 

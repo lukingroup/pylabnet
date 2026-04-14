@@ -325,22 +325,22 @@ def generate_widgets(self, num_plots):
 
     container = getattr(self.gui, 'verticalLayout')
 
-    for i in range(num_plots):
+    if num_plots == 1:
         
         splitter = QtWidgets.QGroupBox()
         splitter_layout = QtWidgets.QVBoxLayout()
         legend = GraphicsView(GraphicsScene())
-        legend.setObjectName(f'legend_widget_{i+1}')
+        legend.setObjectName(f'legend_widget')
         splitter_layout.addWidget(legend)
         button = QtWidgets.QPushButton('Clear Plot')
-        button.setObjectName(f'event_button_{i+1}')
+        button.setObjectName(f'event_button')
         splitter_layout.addWidget(button)
         splitter.setLayout(splitter_layout)
         
-        sub_container = QtWidgets.QGroupBox(f'Plot_{i+1}')
+        sub_container = QtWidgets.QGroupBox(f'Plot_1')
         sub_container_layout = QtWidgets.QHBoxLayout()
         graph = PlotWidget()
-        graph.setObjectName(f'graph_widget_{i+1}')
+        graph.setObjectName(f'graph_widget')
         sub_container_layout.addWidget(graph)
         sub_container_layout.addWidget(splitter)
         sub_container.setLayout(sub_container_layout)
@@ -350,6 +350,37 @@ def generate_widgets(self, num_plots):
         container.layout().addWidget(sub_container)
 
         # set attributes of widgets so they can be accessed with get_gui_widgets()
-        setattr(self.gui, f'graph_widget_{i+1}', graph)
-        setattr(self.gui, f'legend_widget_{i+1}', legend)
-        setattr(self.gui, f'event_button_{i+1}', button)
+        setattr(self.gui, f'graph_widget', graph)
+        setattr(self.gui, f'legend_widget', legend)
+        setattr(self.gui, f'event_button', button)
+
+    else:
+        
+        for i in range(num_plots):
+            
+            splitter = QtWidgets.QGroupBox()
+            splitter_layout = QtWidgets.QVBoxLayout()
+            legend = GraphicsView(GraphicsScene())
+            legend.setObjectName(f'legend_widget_{i+1}')
+            splitter_layout.addWidget(legend)
+            button = QtWidgets.QPushButton('Clear Plot')
+            button.setObjectName(f'event_button_{i+1}')
+            splitter_layout.addWidget(button)
+            splitter.setLayout(splitter_layout)
+            
+            sub_container = QtWidgets.QGroupBox(f'Plot_{i+1}')
+            sub_container_layout = QtWidgets.QHBoxLayout()
+            graph = PlotWidget()
+            graph.setObjectName(f'graph_widget_{i+1}')
+            sub_container_layout.addWidget(graph)
+            sub_container_layout.addWidget(splitter)
+            sub_container.setLayout(sub_container_layout)
+            sub_container_layout.setStretch(0, 5)   # graph
+            sub_container_layout.setStretch(1, 1)   # legend+button
+            
+            container.layout().addWidget(sub_container)
+    
+            # set attributes of widgets so they can be accessed with get_gui_widgets()
+            setattr(self.gui, f'graph_widget_{i+1}', graph)
+            setattr(self.gui, f'legend_widget_{i+1}', legend)
+            setattr(self.gui, f'event_button_{i+1}', button)

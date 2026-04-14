@@ -74,6 +74,11 @@ class CountMonitor:
             legend_widget=num_plots
         )
 
+        if num_plots == 1:
+            self.widgets['graph_widget'] = [self.widgets['graph_widget']]
+            self.widgets['event_button'] = [self.widgets['event_button']]
+            self.widgets['legend_widget'] = [self.widgets['legend_widget']]
+
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
 

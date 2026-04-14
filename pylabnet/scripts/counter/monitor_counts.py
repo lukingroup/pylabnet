@@ -13,61 +13,11 @@ from pylabnet.utils.helper_methods import load_script_config, get_ip, unpack_lau
 from pyqtgraph import PlotWidget, GraphicsView, GraphicsScene
 from pyqtgraph.graphicsItems.LegendItem import LegendItem
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-
-
-# Static methods
-
-# def generate_widgets():
-#     """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
-
-#     graphs, legends, numbers = [], [], []
-#     for i in range(2):
-#         graphs.append('graph_widget_' + str(i + 1))
-#         legends.append('legend_widget_' + str(i + 1))
-#         numbers.append('number_label_' + str(i + 1))
-#     for i in range(2, 8):
-#         numbers.append('number_label_' + str(i + 1))
-#     return graphs, legends, numbers
-
-
-def generate_widgets(self, num_plots):
-    """Static method to return systematically named gui widgets for 4ch wavemeter monitor"""
-
-    container = getattr(self.gui, 'verticalLayout')
-
-    for i in range(num_plots):
-        splitter = QtWidgets.QGroupBox()
-        splitter_layout = QtWidgets.QVBoxLayout()
-        legend = GraphicsView(GraphicsScene())
-        legend.setObjectName(f'legend_widget_{i+1}')
-        splitter_layout.addWidget(legend)
-        button = QtWidgets.QPushButton('Clear Plot')
-        button.setObjectName(f'event_button_{i+1}')
-        splitter_layout.addWidget(button)
-        splitter.setLayout(splitter_layout)
-        sub_container = QtWidgets.QGroupBox(f'Plot_{i+1}')
-        sub_container_layout = QtWidgets.QHBoxLayout()
-        graph = PlotWidget()
-        graph.setObjectName(f'graph_widget_{i+1}')
-        sub_container_layout.addWidget(graph)
-        sub_container_layout.addWidget(splitter)
-        sub_container.setLayout(sub_container_layout)
-        sub_container_layout.setStretch(0, 5)   # graph
-        sub_container_layout.setStretch(1, 1)   # splitter
-        container.layout().addWidget(sub_container)
-
-        setattr(self.gui, f'graph_widget_{i+1}', graph)
-        setattr(self.gui, f'legend_widget_{i+1}', legend)
-        setattr(self.gui, f'event_button_{i+1}', button)
 
 
 class CountMonitor:
 
-    # Generate all widget instances for the .ui to use
-    # _plot_widgets, _legend_widgets, _number_widgets = generate_widgets()
-
-    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor', logger_client=None, server_port=None, combined_channel=False, config=None):
+    def __init__(self, ctr_client: si_tt.Client, ui='count_monitor_flex', logger_client=None, server_port=None, combined_channel=False, config=None):
         """ Constructor for CountMonitor script
 
         :param ctr_client: instance of hardware client for counter
@@ -86,14 +36,6 @@ class CountMonitor:
         self._plot_list = None  # List of channels to assign to each plot (e.g. [[1,2], [3,4]])
         self._plots_assigned = []  # List of plots on the GUI that have been assigned
 
-        # if self.combined_channel:
-        #     # ui = 'count_monitor_combined'
-        #     ui = 'count_monitor_5windows'
-        # else:
-        #     ui = 'count_monitor'
-
-        ui = 'count_monitor_flex'
-
         # Instantiate GUI window
         self.gui = Window(
             gui_template=ui,
@@ -105,31 +47,9 @@ class CountMonitor:
         # Setup stylesheet.
         self.gui.apply_stylesheet()
 
-        # if self.combined_channel:
-        #     # num_plots = 3
-        #     num_plots = 5
-        # else:
-        #     num_plots = 2
-
-        # # Get all GUI widgets
-        # self.widgets = get_gui_widgets(
-        #     self.gui,
-        #     graph_widget=num_plots,
-        #     number_label=8,
-        #     tt_name_label=1,
-        #     label=8,
-        #     event_button=num_plots,
-        #     legend_widget=num_plots
-        # )
-
         # Load config
         self.config = {}
         if config is not None:
-            # self.config = load_script_config(
-            #     script='monitor_counts',
-            #     config=config,
-            #     logger=self.log
-            # )
             self.config = config
 
         if not 'name' in self.config:
@@ -137,7 +57,7 @@ class CountMonitor:
 
         self.log.info(self.config)
         if self.combined_channel:
-            num_plots = len(self.config['channels']) + 1
+            num_plots = len(self.config['channels']) + 1 # additional plot channel that is sum of all other channels
         else:
             num_plots = len(self.config['channels'])
 
@@ -153,13 +73,6 @@ class CountMonitor:
             event_button=num_plots,
             legend_widget=num_plots
         )
-
-        # self.widgets = get_gui_widgets(
-        #     self.gui,
-        #     number_label=8,
-        #     tt_name_label=1,
-        #     label=8
-        # )
 
     def set_hardware(self, ctr):
         """ Sets hardware client for this script
@@ -286,22 +199,6 @@ class CountMonitor:
                         plot_index = index
                         break
 
-            # If we have not assigned this plot yet, assign it
-            # if plot_index not in self._plots_assigned:
-            #     self.gui_handler.assign_plot(
-            #         plot_widget=self._plot_widgets[plot_index],
-            #         plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #         legend_widget=self._legend_widgets[plot_index]
-            #     )
-            #     self._plots_assigned.append(plot_index)
-
-            # Now assign this curve
-            # self.gui_handler.assign_curve(
-            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #     curve_label='Channel {}'.format(channel),
-            #     error=True
-            # )
-
             # Create a curve and store the widget in our dictionary
             self.widgets[f'curve_{channel}'] = self.widgets['graph_widget'][plot_index].plot(
                 pen=pg.mkPen(color=self.gui.COLOR_LIST[color])
@@ -319,12 +216,6 @@ class CountMonitor:
 
             self.widgets['legend_widget'][plot_index].addItem(
                 self.widgets[f'curve_{channel}'], ' - ' + legend_label)
-
-            # Assign scalar
-            # self.gui_handler.assign_label(
-            #     label_widget=self._number_widgets[channel - 1],
-            #     label_label='Channel {}'.format(channel)
-            # )
 
         # Handle button pressing
         from functools import partial
@@ -369,39 +260,17 @@ class CountMonitor:
         """ Updates the output to all current values"""
 
         # Update all active channels
-        # x_axis = self._ctr.get_x_axis()/1e12
-
         counts = self._ctr.get_counts(name=self.config['name'])
         counts_per_sec = counts * (1e12 / self._bin_width)
-        # noise = np.sqrt(counts)*(1e12/self._bin_width)
-        # plot_index = 0
 
         summed_counts = np.sum(counts_per_sec, axis=0)
-        #summed_counts = counts_per_sec[0]/counts_per_sec[0].max() + counts_per_sec[1]/counts_per_sec[1].max()
 
         for index, count_array in enumerate(counts_per_sec):
 
             # Figure out which plot to assign to
             channel = self._ch_list[index]
-            # if self._plot_list is not None:
-            #     for index_plot, channel_set in enumerate(self._plot_list):
-            #         if channel in channel_set:
-            #             plot_index = index_plot
-            #             break
 
             # Update GUI data
-
-            # self.gui_handler.set_curve_data(
-            #     data=count_array,
-            #     error=noise[index],
-            #     plot_label='Counter Monitor {}'.format(plot_index + 1),
-            #     curve_label='Channel {}'.format(channel)
-            # )
-            # self.gui_handler.set_label(
-            #     text='{:.4e}'.format(count_array[-1]),
-            #     label_label='Channel {}'.format(channel)
-            # )
-
             self.widgets[f'curve_{channel}'].setData(count_array)
             self.widgets[f'number_label'][channel - 1].setText(str(count_array[-1]))
 
@@ -450,3 +319,37 @@ def launch(**kwargs):
 
     # Run
     monitor.run()
+
+def generate_widgets(self, num_plots):
+    """Static method to return systematically named gui widgets for desired number of monitor counts channels"""
+
+    container = getattr(self.gui, 'verticalLayout')
+
+    for i in range(num_plots):
+        
+        splitter = QtWidgets.QGroupBox()
+        splitter_layout = QtWidgets.QVBoxLayout()
+        legend = GraphicsView(GraphicsScene())
+        legend.setObjectName(f'legend_widget_{i+1}')
+        splitter_layout.addWidget(legend)
+        button = QtWidgets.QPushButton('Clear Plot')
+        button.setObjectName(f'event_button_{i+1}')
+        splitter_layout.addWidget(button)
+        splitter.setLayout(splitter_layout)
+        
+        sub_container = QtWidgets.QGroupBox(f'Plot_{i+1}')
+        sub_container_layout = QtWidgets.QHBoxLayout()
+        graph = PlotWidget()
+        graph.setObjectName(f'graph_widget_{i+1}')
+        sub_container_layout.addWidget(graph)
+        sub_container_layout.addWidget(splitter)
+        sub_container.setLayout(sub_container_layout)
+        sub_container_layout.setStretch(0, 5)   # graph
+        sub_container_layout.setStretch(1, 1)   # legend+button
+        
+        container.layout().addWidget(sub_container)
+
+        # set attributes of widgets so they can be accessed with get_gui_widgets()
+        setattr(self.gui, f'graph_widget_{i+1}', graph)
+        setattr(self.gui, f'legend_widget_{i+1}', legend)
+        setattr(self.gui, f'event_button_{i+1}', button)

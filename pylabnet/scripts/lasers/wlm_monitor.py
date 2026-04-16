@@ -668,7 +668,6 @@ class Channel:
         self.pid.set_cv()
 
         if self.gui_lock != self.prev_gui_lock:
-            self.log.info(f"udpate lock to {self.gui_lock}")
             self.lock = copy.deepcopy(self.gui_lock)
 
         self.prev_gui_lock = copy.deepcopy(self.gui_lock)

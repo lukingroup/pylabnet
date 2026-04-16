@@ -827,6 +827,7 @@ def launch(**kwargs):
         three_lasers = True
     else:
         three_lasers = False
+    device_id = config['device_id']
 
     wavemeter_client = find_client(
         clients=kwargs['clients'],
@@ -861,6 +862,7 @@ def launch(**kwargs):
 
     update_service = kwargs['service']
     update_service.assign_module(module=wlm_monitor)
+    logger.update_data(data=dict(device_id=device_id))
     wlm_monitor.gui.set_network_info(port=kwargs['server_port'])
 
     # Run continuously

@@ -63,9 +63,9 @@ class Launcher:
 
         # Get command line arguments as a dict
         self.args = parse_args()
-        self.name = self.args['script']
         self.script_name = self.args['script']
         self.config = self.args['config']
+        self.name = self.args['script'] + '_' + self.config
         self.log_ip = self.args['logip']
         self.log_port = int(self.args['logport'])
         self.debug = int(self.args['debug'])
@@ -73,17 +73,15 @@ class Launcher:
         self.server_debug = int(self.args['server_debug'])
         self.num_clients = int(self.args['num_clients'])
 
+        # Connect to logger
+        self.logger = self._connect_to_logger()
+
         # Load config
         self.config_dict = load_script_config(
             script=self.script_name,
-            config=self.config
+            config=self.config,
+            logger=self.logger
         )
-
-        if 'server_id' in self.config_dict:
-            self.name += '_' + self.config_dict['server_id']
-
-        # Connect to logger
-        self.logger = self._connect_to_logger()
 
         if self.debug == 1:
             import ptvsd

@@ -64,6 +64,7 @@ class Launcher:
         # Get command line arguments as a dict
         self.args = parse_args()
         self.name = self.args['script']
+        self.script_name = self.args['script']
         self.config = self.args['config']
         self.log_ip = self.args['logip']
         self.log_port = int(self.args['logport'])
@@ -72,15 +73,17 @@ class Launcher:
         self.server_debug = int(self.args['server_debug'])
         self.num_clients = int(self.args['num_clients'])
 
-        # Connect to logger
-        self.logger = self._connect_to_logger()
-
         # Load config
         self.config_dict = load_script_config(
-            script=self.name,
-            config=self.config,
-            logger=self.logger
+            script=self.script_name,
+            config=self.config
         )
+
+        if 'server_id' in self.config_dict:
+            self.name += '_' + self.config_dict['server_id']
+
+        # Connect to logger
+        self.logger = self._connect_to_logger()
 
         if self.debug == 1:
             import ptvsd
@@ -410,13 +413,13 @@ class Launcher:
         """ Launch the scripts to be run sequentially in this thread """
 
         spec = importlib.util.spec_from_file_location(
-            self.name,
+            self.script_name,
             self.config_dict['script']
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
-        self.logger.info(f'Launching script {self.name}')
+        self.logger.info(f'Launching script {self.script_name}')
 
         mod.launch(
             logger=self.logger,
@@ -434,7 +437,7 @@ class Launcher:
 
         if 'script_service' in self.config_dict and self.config_dict['script_service'] == 'True':
             spec = importlib.util.spec_from_file_location(
-                self.name,
+                self.script_name,
                 self.config_dict['script']
             )
             mod = importlib.util.module_from_spec(spec)

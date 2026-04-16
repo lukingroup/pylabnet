@@ -152,10 +152,10 @@ class Window(QtWidgets.QMainWindow):
         # Confluence handler and its button, which relies on the logger. If no logger, then disable the confluence handler
         self.confluence_handler = None
 
-        if(self.log == None):
+        if (self.log == None):
             enable_confluence = False
 
-        if(enable_confluence is True):
+        if (enable_confluence is True):
             self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
 
             extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
@@ -245,7 +245,7 @@ class Window(QtWidgets.QMainWindow):
         else:
             layout = getattr(self, graph_layout)
 
-        if(datetime_axis):
+        if (datetime_axis):
             date_axis = TimeAxisItem(orientation='bottom')
             graph = pg.PlotWidget(axisItems={'bottom': date_axis})
         else:
@@ -258,20 +258,42 @@ class Window(QtWidgets.QMainWindow):
 
         return graph
 
+    # def closeEvent(self, event):
+    #     """ Occurs when window is closed. Overwrites parent class method"""
+
+    #     if self.auto_close:
+    #         try:
+    #             close_client = ClientBase(
+    #                 host=self.host,
+    #                 port=self.port
+    #             )
+    #             close_client.close_server()
+    #         except:
+    #             pass
+
+    #     self.stop_button.setChecked(True)
+
     def closeEvent(self, event):
-        """ Occurs when window is closed. Overwrites parent class method"""
-
         if self.auto_close:
-            try:
-                close_client = ClientBase(
-                    host=self.host,
-                    port=self.port
-                )
-                close_client.close_server()
-            except:
-                pass
+            if self.host is None or self.port is None:
+                if self.log is not None:
+                    self.log.warn(f'GUI close: host/port not set, cannot auto-close server. host={self.host}, port={self.port}')
+            else:
+                try:
+                    if self.log is not None:
+                        self.log.info(f'GUI close: requesting shutdown of server at {self.host}:{self.port}')
+                    close_client = ClientBase(host=self.host, port=self.port)
+                    close_client.close_server()
+                except Exception as e:
+                    if self.log is not None:
+                        self.log.error(f'GUI close: failed to close server at {self.host}:{self.port}: {e}')
 
-        self.stop_button.setChecked(True)
+        try:
+            self.stop_button.setChecked(True)
+        except Exception:
+            pass
+
+        super().closeEvent(event)
 
     def remove_client_list_entry(self, client_to_stop):
         """ Removes item in QListWidge """
@@ -1404,10 +1426,10 @@ class Confluence_support_GraphPopup(QtWidgets.QWidget):
 
         self.confluence_handler = None
 
-        if(self.log is None):
+        if (self.log is None):
             enable_confluence = False
 
-        if(enable_confluence is True):
+        if (enable_confluence is True):
             self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
 
             extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
@@ -1474,10 +1496,10 @@ class Confluence_support_GraphPopupTabs(QtWidgets.QWidget):
 
         self.confluence_handler = None
 
-        if(self.log is None):
+        if (self.log is None):
             enable_confluence = False
 
-        if(enable_confluence is True):
+        if (enable_confluence is True):
             self.confluence_handler = Confluence_Handler(self, self.app, log_client=self.log)
 
             extractAction_Upload = QtWidgets.QAction("&UPLOAD to CONFLUENCE", self)
@@ -1571,14 +1593,14 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.enable = True
 
         # diable if cannot use the log
-        if(self.enable):
+        if (self.enable):
             try:
                 self.log = log_client
             except:
                 self.enable = False
 
         # param (global)
-        if(self.enable):
+        if (self.enable):
             try:
                 self.parent_wins = parent_wins
                 self.url = config('CONFLUENCE_URL')
@@ -1608,7 +1630,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         # Initialize parent class QtWidgets.QDialog
         super(Confluence_Popping_Windows, self).__init__()
 
-        if(self.enable):
+        if (self.enable):
             try:
                 self.confluence = Confluence(
                     url='{}/wiki'.format(self.url), # need to add 'wiki', see https://github.com/atlassian-api/atlassian-python-api/issues/252
@@ -1647,7 +1669,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.Update_confluence_info()
 
         # init the reading settings
-        if(self.auto_info_setting_mode):
+        if (self.auto_info_setting_mode):
             self.space_name_field.setReadOnly(True)
             self.space_name_field.setStyleSheet("background-color: gray; color: white")
             self.page_field.setReadOnly(True)
@@ -1656,9 +1678,9 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         return
 
     def Change_typing_mode(self):
-        if(not self.enable):
+        if (not self.enable):
             return
-        if(self.auto_info_setting_mode):
+        if (self.auto_info_setting_mode):
             self.auto_info_setting_mode = False
             self.actionchage_typing_mode.setText('Change to Auto-typing mode (From launch control')
 
@@ -1679,7 +1701,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         return
 
     def Update_confluence_info(self):
-        if(not self.enable):
+        if (not self.enable):
             return
 
         try:
@@ -1689,7 +1711,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             self.log.error("Confluence-cannot find the confluence_upload.json in the config folder!")
             self.enable = False
 
-        if(not self.enable):
+        if (not self.enable):
             self.log.error("Confluence-Update_confluence_info: has disabled the confluence functions")
             return
 
@@ -1712,14 +1734,14 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.space_name_field.setText(self.upload_space_name)
         self.page_field.setText(self.upload_page_title)
 
-        if(self.auto_info_setting_mode):
+        if (self.auto_info_setting_mode):
             self.space_name_field.setReadOnly(True)
-        if(self.auto_info_setting_mode):
+        if (self.auto_info_setting_mode):
             self.page_field.setReadOnly(True)
         return
 
     def Popup_Update(self):
-        if(not self.enable):
+        if (not self.enable):
             return
 
         self.upload = False
@@ -1736,7 +1758,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.ok_button.setShortcut("Ctrl+Return")
 
     def Popup_Upload(self):
-        if(not self.enable):
+        if (not self.enable):
             return
 
         self.upload = True
@@ -1745,7 +1767,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.pix = self.parent_wins.grab()
 
         # access the info of the space and page from the launch control
-        if(self.auto_info_setting_mode):
+        if (self.auto_info_setting_mode):
             self.Update_confluence_info()
 
         # display setting
@@ -1762,13 +1784,13 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.ok_button.setShortcut("Ctrl+Return")
 
     def cancel_event(self):
-        if(not self.enable):
+        if (not self.enable):
             return
 
         self.close()
 
     def okay_event(self):
-        if(not self.enable):
+        if (not self.enable):
             return
 
         self.upload_space_key = self.space_key_field.text()
@@ -1777,12 +1799,12 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         self.upload_setting = self.setting_field.text()
         self.upload_comment = self.comment_field.toPlainText()
 
-        if(self.upload == False):
+        if (self.upload == False):
             self.close()
             return
 
         # disbaled case
-        if(not self.enable):
+        if (not self.enable):
             self.log.error("Confluence-Uploading event: has disabled the confluence functions, so the uploading function is disbaled")
             self.close()
             return
@@ -1858,10 +1880,10 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     def upload_pic(self, scrn_shot_AbsPath, scrn_shot_filename):
         ''' Upload the picture if the page exists, otherwise firtst create a new page and then upload the picture
         '''
-        if(not self.enable):
+        if (not self.enable):
             return
 
-        if(self.confluence.page_exists(self.upload_space_key, self.upload_page_title)):
+        if (self.confluence.page_exists(self.upload_space_key, self.upload_page_title)):
             upload_page_id = self.confluence.get_page_id(self.upload_space_key, self.upload_page_title)
         else:
             response = self.confluence.update_or_create(
@@ -1886,7 +1908,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         '''
         Reads in a HTML template and replaces occurences of the keys of replace_dict by the key values.
         '''
-        if(not self.enable):
+        if (not self.enable):
             return
 
         with open(base_html, "r+") as f:
@@ -1900,7 +1922,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
         '''
         Renders base_html according to replace_dict and appends it on existing page
         '''
-        if(not self.enable):
+        if (not self.enable):
             return
 
         append_html = self.replace_html(base_html, replace_dict)
@@ -1917,7 +1939,7 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
     def upload_and_append_picture(self, fileAbsPath, filename, comment, settings, page_id, page_title):
         ''' Upload a picture and embed it to page, alongside measurement setting informations and possible comments
         '''
-        if(not self.enable):
+        if (not self.enable):
             return
 
         self.confluence.attach_file(fileAbsPath, name=None, content_type=None, page_id=page_id, title=None, space=None, comment=None)
@@ -1931,11 +1953,11 @@ class Confluence_Popping_Windows(QtWidgets.QMainWindow):
             return
 
         try:
-            if(self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()):
+            if (self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()):
                 html_template_filename = confluence_config_dict['html_template_filename']
-            elif(self.setting_checkbox.isChecked() and not self.comment_checkbox.isChecked()):
+            elif (self.setting_checkbox.isChecked() and not self.comment_checkbox.isChecked()):
                 html_template_filename = confluence_config_dict['html_template_no_comment_filename']
-            elif(not self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()):
+            elif (not self.setting_checkbox.isChecked() and self.comment_checkbox.isChecked()):
                 html_template_filename = confluence_config_dict['html_template_no_setting_filename']
             else:
                 html_template_filename = confluence_config_dict['html_template_neither_filename']
@@ -2015,7 +2037,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
             )
 
         # confluence
-        if(not self.enable):
+        if (not self.enable):
             self.confluence = None
 
         try:
@@ -2051,10 +2073,10 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
 
     def Popup_Update(self):
 
-        if(not self.controller.staticproxy):
+        if (not self.controller.staticproxy):
             self.controller.log_service.logger.setLevel(logging.INFO)
         response = self.confluence.get_all_spaces(start=0, limit=500, expand=None)['results']
-        if(not self.controller.staticproxy):
+        if (not self.controller.staticproxy):
             self.controller.log_service.logger.setLevel(logging.DEBUG)
 
         # update dictionary
@@ -2074,13 +2096,13 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         return
 
     def change_space_name_event(self):
-        if(not self.enable):
+        if (not self.enable):
             self.controller.gui_logger.error("Launcher Confluence-change_space_name_event: no space list is available.\
                  has disabled the confluece functions")
             return
 
         # Detect if valid
-        if(self.space_name_field.text() not in self.dict_name_key.keys()):
+        if (self.space_name_field.text() not in self.dict_name_key.keys()):
             return
 
         # Valid
@@ -2091,15 +2113,15 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         self.page_field.setReadOnly(False)
 
         # autocomplete for pages
-        if(not self.controller.staticproxy):
+        if (not self.controller.staticproxy):
             self.controller.log_service.logger.setLevel(logging.INFO)
         response = self.confluence.get_all_pages_from_space(self.upload_space_key, start=0, limit=500, status=None, expand=None, content_type='page')
-        if(not self.controller.staticproxy):
+        if (not self.controller.staticproxy):
             self.controller.log_service.logger.setLevel(logging.DEBUG)
         all_page_name_list = [item["title"] for item in response]
 
-        if(self.controller.staticproxy):
-            if(len(all_page_name_list) > 20):
+        if (self.controller.staticproxy):
+            if (len(all_page_name_list) > 20):
                 self.controller.gui_logger.info(str(all_page_name_list[0:20])[:-1] + '... ]')
             else:
                 self.controller.gui_logger.info(all_page_name_list)
@@ -2117,9 +2139,9 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
             confluence_config_dict = load_config('confluence_upload')
         except:
             self.enable = False
-        if(is_close is True):
+        if (is_close is True):
             self.close()
-        if(not self.enable):
+        if (not self.enable):
             self.controller.gui_logger.error("Launcher Confluence-okay-event: has disabled the confluece functions")
             return
 
@@ -2130,7 +2152,7 @@ class LaunchControl_Confluence_Windows(QtWidgets.QMainWindow):
         self.upload_space_name = self.space_name_field.text()
         self.upload_page_title = self.page_field.text()
 
-        if(self.controller.staticproxy):
+        if (self.controller.staticproxy):
             self.controller.gui_logger.update_metadata(**{'confluence_space_key_' + lab: self.upload_space_key})
             self.controller.gui_logger.update_metadata(**{'confluence_space_name_' + lab: self.upload_space_name})
             self.controller.gui_logger.update_metadata(**{'confluence_page_' + lab: self.upload_page_title})

@@ -65,7 +65,7 @@ class Launcher:
         self.args = parse_args()
         self.script_name = self.args['script']
         self.config = self.args['config']
-        self.name = self.args['script'] + '_' + self.config
+        self.name = self.script_name + '_' + self.config
         self.log_ip = self.args['logip']
         self.log_port = int(self.args['logport'])
         self.debug = int(self.args['debug'])

@@ -57,9 +57,9 @@ class CountMonitor:
 
         self.log.info(self.config)
         if self.combined_channel:
-            num_plots = len(self.config['channels']) + 1 # additional plot channel that is sum of all other channels
+            num_plots = len((self.config['params'])['plot_list']) + 1 # additional plot channel that is sum of all other channels
         else:
-            num_plots = len(self.config['channels'])
+            num_plots = len((self.config['params'])['plot_list'])
 
         generate_widgets(self, num_plots)
 
@@ -216,7 +216,7 @@ class CountMonitor:
                 if ch_name is None or ch_name == "":
                     ch_name = ""
                     legend_label = f'Counter {channel}'
-                if ch_name is not None and ch_name != "":
+                else:
                     legend_label = f'{ch_name} (Ch {channel})'
 
             self.widgets['legend_widget'][plot_index].addItem(
@@ -325,13 +325,14 @@ def launch(**kwargs):
     # Run
     monitor.run()
 
+
 def generate_widgets(self, num_plots):
     """Static method to return systematically named gui widgets for desired number of monitor counts channels"""
 
     container = getattr(self.gui, 'verticalLayout')
 
     if num_plots == 1:
-        
+
         splitter = QtWidgets.QGroupBox()
         splitter_layout = QtWidgets.QVBoxLayout()
         legend = GraphicsView(GraphicsScene())
@@ -341,7 +342,7 @@ def generate_widgets(self, num_plots):
         button.setObjectName(f'event_button')
         splitter_layout.addWidget(button)
         splitter.setLayout(splitter_layout)
-        
+
         sub_container = QtWidgets.QGroupBox(f'Plot_1')
         sub_container_layout = QtWidgets.QHBoxLayout()
         graph = PlotWidget()
@@ -351,7 +352,7 @@ def generate_widgets(self, num_plots):
         sub_container.setLayout(sub_container_layout)
         sub_container_layout.setStretch(0, 5)   # graph
         sub_container_layout.setStretch(1, 1)   # legend+button
-        
+
         container.layout().addWidget(sub_container)
 
         # set attributes of widgets so they can be accessed with get_gui_widgets()
@@ -360,9 +361,9 @@ def generate_widgets(self, num_plots):
         setattr(self.gui, f'event_button', button)
 
     else:
-        
+
         for i in range(num_plots):
-            
+
             splitter = QtWidgets.QGroupBox()
             splitter_layout = QtWidgets.QVBoxLayout()
             legend = GraphicsView(GraphicsScene())
@@ -372,7 +373,7 @@ def generate_widgets(self, num_plots):
             button.setObjectName(f'event_button_{i+1}')
             splitter_layout.addWidget(button)
             splitter.setLayout(splitter_layout)
-            
+
             sub_container = QtWidgets.QGroupBox(f'Plot_{i+1}')
             sub_container_layout = QtWidgets.QHBoxLayout()
             graph = PlotWidget()
@@ -382,9 +383,9 @@ def generate_widgets(self, num_plots):
             sub_container.setLayout(sub_container_layout)
             sub_container_layout.setStretch(0, 5)   # graph
             sub_container_layout.setStretch(1, 1)   # legend+button
-            
+
             container.layout().addWidget(sub_container)
-    
+
             # set attributes of widgets so they can be accessed with get_gui_widgets()
             setattr(self.gui, f'graph_widget_{i+1}', graph)
             setattr(self.gui, f'legend_widget_{i+1}', legend)

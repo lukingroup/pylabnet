@@ -160,9 +160,6 @@ class WlmMonitor:
 
                     if 'setpoint' in parameter:
 
-                        # self.widgets['sp'][index].setValue(parameter['setpoint'])
-                        # channel.setpoint = parameter['setpoint']
-
                         # Mark that we should override GUI setpoint, since it has been updated by the script
                         channel.setpoint_override = parameter['setpoint']
 
@@ -443,16 +440,6 @@ class WlmMonitor:
             # Update setpoints
             self.widgets['curve'][4 * index + 1].setData(channel.sp_data)
 
-            # Update the setpoint to GUI directly if it has been changed
-            # if channel.setpoint_override:
-
-            #     # Tell GUI to pull data provided by script and overwrite direct GUI input
-            #     self.widgets['sp'][index].setValue(channel.setpoint)
-
-            # If the lock has been updated, override the GUI
-            # if channel.lock_override:
-            #     self.widgets['lock'][index].setChecked(channel.lock)
-
             # Set the error boolean (true if the lock is active and we are outside the error threshold)
             if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
                 self.widgets['error_status'][index].setChecked(True)
@@ -659,20 +646,6 @@ class Channel:
 
         self.data = np.append(self.data[1:], wavelength)
 
-        # Pick which setpoint to use
-        # If the setpoint override is on, this means we need to try and set the GUI value to self.setpoint
-        # if self.setpoint_override:
-
-        #     # Check if the GUI has actually caught up
-        #     if self.setpoint == self.gui_setpoint:
-        #         self.setpoint_override = False
-
-        #     # Otherwise, the GUI still hasn't implemented the setpoint prescribed by update_parameters()
-
-        # # If setpoint override is off, this means the GUI caught up to our last update_parameters() call, and we
-        # # should refrain from updating the value until we get a new value from the GUI
-        # else:
-
         # Check if the GUI has changed, and if so, update the setpoint in the script to match
         if self.gui_setpoint != self.prev_gui_setpoint:
             self.setpoint = copy.deepcopy(self.gui_setpoint)
@@ -694,11 +667,6 @@ class Channel:
         # Set control variable
         self.pid.set_cv()
 
-        # See logic for setpoint above
-        # if self.lock_override:
-        #     if self.lock == self.gui_lock:
-        #         self.lock_override = False
-        # else:
         if self.gui_lock != self.prev_gui_lock:
             self.log.info(f"udpate lock to {self.gui_lock}")
             self.lock = copy.deepcopy(self.gui_lock)
@@ -860,7 +828,6 @@ def launch(**kwargs):
         three_lasers = True
     else:
         three_lasers = False
-    #server_id = config['server_id']
 
     wavemeter_client = find_client(
         clients=kwargs['clients'],
@@ -895,7 +862,6 @@ def launch(**kwargs):
 
     update_service = kwargs['service']
     update_service.assign_module(module=wlm_monitor)
-    #logger.update_data(data=dict(device_id=device_id))
     wlm_monitor.gui.set_network_info(port=kwargs['server_port'])
 
     # Run continuously

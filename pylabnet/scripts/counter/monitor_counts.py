@@ -188,6 +188,7 @@ class CountMonitor:
         # For each channel, assign to the correct plot and create a curve
         for plot_index, plot_entry in enumerate(self._plot_list):
 
+            # Check if plot_entry is a list or an integer (preferrably should be a list, but code can handle integer as well)
             try:
                 plot_entry_length = len(plot_entry)
             except TypeError:
@@ -213,16 +214,8 @@ class CountMonitor:
                     else:
                         legend_label += f'Ch {channel} + '
 
-                legend_label = legend_label[:-3]
-
-                # Create a curve and store the widget in our dictionary
-                self.widgets[f'curve_{plot_index}'] = self.widgets['graph_widget'][plot_index].plot(
-                    pen=pg.mkPen(color=self.gui.COLOR_LIST[plot_index])
-                )
-
-                self.widgets['legend_widget'][plot_index].addItem(
-                    self.widgets[f'curve_{plot_index}'], ' - ' + legend_label)
-
+                legend_label = legend_label[:-3] # Remove trailing ' + ' from label
+                
             else:
                 if plot_entry not in self._ch_list:
                     self.log.error(f'channel {plot_entry} is in plot_list but not in ch_list!')
@@ -231,21 +224,21 @@ class CountMonitor:
                 # Get channel name if available
                 ch_name = None
                 if self._ch_names:
-                    ch_name = self._ch_names.get(f"{channel}", None)
+                    ch_name = self._ch_names.get(f"{plot_entry}", None)
                     if ch_name is None or ch_name == "":
-                        legend_label = f'Ch {channel} + '
+                        legend_label = f'Ch {plot_entry}'
                     else:
-                        legend_label = f'{ch_name} (Ch {channel}) + '
+                        legend_label = f'{ch_name} (Ch {plot_entry})'
                 else:
-                    legend_label = f'Ch {channel} + '
+                    legend_label = f'Ch {plot_entry}'
 
-                    # Create a curve and store the widget in our dictionary
-                    self.widgets[f'curve_{plot_index}'] = self.widgets['graph_widget'][plot_index].plot(
-                        pen=pg.mkPen(color=self.gui.COLOR_LIST[plot_index])
-                    )
+            # Create a curve and store the widget in our dictionary
+            self.widgets[f'curve_{plot_index}'] = self.widgets['graph_widget'][plot_index].plot(
+                pen=pg.mkPen(color=self.gui.COLOR_LIST[plot_index])
+            )
 
-                    self.widgets['legend_widget'][plot_index].addItem(
-                        self.widgets[f'curve_{plot_index}'], ' - ' + legend_label)
+            self.widgets['legend_widget'][plot_index].addItem(
+                self.widgets[f'curve_{plot_index}'], ' - ' + legend_label)
 
         # Handle button pressing
         from functools import partial
@@ -274,10 +267,14 @@ class CountMonitor:
         counts = self._ctr.get_counts(name=self.config['name'])
         counts_per_sec = counts * (1e12 / self._bin_width)
 
+        # container for all plotted curves
         plot_data = np.zeros([len(self._plot_list), self._n_bins])
 
+        # cycle through measured channels
         for index, count_array in enumerate(counts_per_sec):
 
+            # check if current channel is in any plotted curves
+            # if yes, add current channel data to appropriate curves
             for plot_index, plot_entry in enumerate(self._plot_list):
                 if self._ch_list[index] in plot_entry:
                     plot_data[plot_index] += count_array

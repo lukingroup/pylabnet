@@ -57,13 +57,15 @@ class WlmMonitor:
             self.widgets = get_gui_widgets(
                 gui=self.gui,
                 freq=3, sp=3, rs=3, lock=3, error_status=3, graph=6, legend=6, clear=6,
-                zero=6, voltage=3, error=3, P_laser=3, I_laser=3, D_laser=3, PID_upd_laser=3
+                zero=6, voltage=3, error=3, P_laser=3, I_laser=3, D_laser=3, PID_upd_laser=3,
+                freq_plot=3, volt_plot=3
             )
         else:
             self.widgets = get_gui_widgets(
                 gui=self.gui,
                 freq=2, sp=2, rs=2, lock=2, error_status=2, graph=4, legend=4, clear=4,
-                zero=4, voltage=2, error=2, P_laser=2, I_laser=2, D_laser=2, PID_upd_laser=2
+                zero=4, voltage=2, error=2, P_laser=2, I_laser=2, D_laser=2, PID_upd_laser=2,
+                freq_plot=2, volt_plot=2
             )
 
         # Set parameters
@@ -97,6 +99,9 @@ class WlmMonitor:
                 as a reference so that we know which channel to assign all the other parameters to
             - 'name': a string that can just be provided once and is used as a user-friendly name for the channel.
                 Initializes to 'Channel X' where X is a random integer if not provided
+            - 'laser_lab': a string that can just be provided once and is used as a user-friendly reference for the lab
+                name, specially useful in multiple-node exp. Left blank if not provided
+            - 'plot_name': a string that can be provided once and is used as the title of the plots for this channel
             - 'setpoint': setpoint for this channel.
             - 'lock': boolean that tells us whether or not to turn on the lock. Ignored if setpoint is None. Default is
                 False.
@@ -147,20 +152,20 @@ class WlmMonitor:
                     if 'name' in parameter:
                         channel.name = parameter['name']
 
-                    if 'setpoint' in parameter:
+                    if 'laser_lab' in parameter:
+                        channel.laser_lab = parameter['laser_lab']
 
-                        # self.widgets['sp'][index].setValue(parameter['setpoint'])
-                        # channel.setpoint = parameter['setpoint']
+                    if 'plot_name' in parameter:
+                        channel.plot_name = parameter['plot_name']
+
+                    if 'setpoint' in parameter:
 
                         # Mark that we should override GUI setpoint, since it has been updated by the script
                         channel.setpoint_override = parameter['setpoint']
 
                     if 'lock' in parameter:
 
-                        self.log.info('setcheck on the widget...')
-
-                        self.widgets['lock'][index].setChecked(parameter['lock'])
-                        # channel.lock = parameter['lock']
+                        channel.lock_override = int(parameter['lock'])
 
                         # Mark that we should override the GUI lock since it has been updated by the script
                         # channel.lock_override = True
@@ -234,7 +239,7 @@ class WlmMonitor:
     def zero_voltage(self, channel):
         """ Zeros the output voltage for this channel
 
-        :param channel: Channel object to zero voltage
+        :param channel: Channel object to zero voltage of
         """
 
         try:
@@ -302,6 +307,21 @@ class WlmMonitor:
             display_pts=self.display_pts
         )
 
+        # Create plot title
+        # frequency plot
+        if channel.plot_name is not None:
+            self.widgets['freq_plot'][index].setText(
+                f'{channel.plot_name}'
+            )
+        elif channel.laser_lab is not None:
+            self.widgets['freq_plot'][index].setText(
+                f'Freq Plot Ch {channel.number} ({channel.name} - {channel.laser_lab})'
+            )
+        else:
+            self.widgets['freq_plot'][index].setText(
+                f'Freq Plot Ch {channel.number} ({channel.name})'
+            )
+
         # Create curves
         # frequency
         self.widgets['curve'].append(self.widgets['graph'][2 * index].plot(
@@ -359,6 +379,21 @@ class WlmMonitor:
             curve_name=channel.voltage_curve
         )
 
+        # Create plot title
+        # voltage plot
+        if channel.plot_name is not None:
+            self.widgets['volt_plot'][index].setText(
+                f'{channel.plot_name}'
+            )
+        elif channel.laser_lab is not None:
+            self.widgets['volt_plot'][index].setText(
+                f'Volt Plot Ch {channel.number} ({channel.name} - {channel.laser_lab})'
+            )
+        else:
+            self.widgets['volt_plot'][index].setText(
+                f'Volt Plot Ch {channel.number} ({channel.name})'
+            )
+
         # Error
         self.widgets['curve'].append(self.widgets['graph'][2 * index + 1].plot(
             pen=pg.mkPen(color=self.gui.COLOR_LIST[1])
@@ -385,10 +420,15 @@ class WlmMonitor:
 
         for index, channel in enumerate(self.channels):
 
-            # Check for override
+            # Check for override (freq)
             if channel.setpoint_override:
                 self.widgets['sp'][index].setValue(channel.setpoint_override)
                 channel.setpoint_override = 0
+
+            # Check for override (lock)
+            if channel.lock_override != -1:
+                self.widgets['lock'][index].setChecked(int(channel.lock_override))
+                channel.lock_override = -1
 
             # Update data with the new wavelength
             channel.update(self.wlm_client.get_wavelength(channel.number))
@@ -399,16 +439,6 @@ class WlmMonitor:
 
             # Update setpoints
             self.widgets['curve'][4 * index + 1].setData(channel.sp_data)
-
-            # Update the setpoint to GUI directly if it has been changed
-            # if channel.setpoint_override:
-
-            #     # Tell GUI to pull data provided by script and overwrite direct GUI input
-            #     self.widgets['sp'][index].setValue(channel.setpoint)
-
-            # If the lock has been updated, override the GUI
-            # if channel.lock_override:
-            #     self.widgets['lock'][index].setChecked(channel.lock)
 
             # Set the error boolean (true if the lock is active and we are outside the error threshold)
             if channel.lock and np.abs(channel.data[-1] - channel.setpoint) > self.threshold:
@@ -452,6 +482,12 @@ class WlmMonitor:
         physical_channel = self.channels[self._get_channels().index(channel)]
         return self.wlm_client.get_wavelength(physical_channel.number)
 
+    def get_setpoint(self, channel):
+        # Index of channel
+
+        physical_channel = self.channels[self._get_channels().index(channel)]
+        return physical_channel.gui_setpoint
+
 
 class Service(ServiceBase):
     """ A service to enable external updating of WlmMonitor parameters """
@@ -489,6 +525,9 @@ class Service(ServiceBase):
     def exposed_get_wavelength(self, channel):
         return self._module.get_wavelength(channel)
 
+    def exposed_get_setpoint(self, channel):
+        return self._module.get_setpoint(channel)
+
 
 class Client(ClientBase):
 
@@ -499,6 +538,9 @@ class Client(ClientBase):
 
     def get_wavelength(self, channel):
         return self._service.exposed_get_wavelength(channel)
+
+    def get_setpoint(self, channel):
+        return self._service.exposed_get_setpoint(channel)
 
     def clear_channel(self, channel):
         return self._service.exposed_clear_channel(channel)
@@ -551,7 +593,7 @@ class Channel:
         self.error = None  # Array of error values, used for plotting/monitoring lock error
         self.labels_updated = False  # Flag to check if we have updated all labels
         self.setpoint_override = 0  # Flag to check if setpoint has been updated + GUI should be overridden
-        # self.lock_override = True  # Flag to check if lock has been updated + GUI should be overridden
+        self.lock_override = -1 # Flag to check if lock has been updated + GUI should be overridden; -1: not overridden; 0: overriden with false; 1: overriden with true
         self.gui_setpoint = 0  # Current GUI setpoint
         self.gui_lock = False  # Current GUI lock boolean
         self.prev_gui_lock = None  # Previous GUI lock boolean
@@ -604,20 +646,6 @@ class Channel:
 
         self.data = np.append(self.data[1:], wavelength)
 
-        # Pick which setpoint to use
-        # If the setpoint override is on, this means we need to try and set the GUI value to self.setpoint
-        # if self.setpoint_override:
-
-        #     # Check if the GUI has actually caught up
-        #     if self.setpoint == self.gui_setpoint:
-        #         self.setpoint_override = False
-
-        #     # Otherwise, the GUI still hasn't implemented the setpoint prescribed by update_parameters()
-
-        # # If setpoint override is off, this means the GUI caught up to our last update_parameters() call, and we
-        # # should refrain from updating the value until we get a new value from the GUI
-        # else:
-
         # Check if the GUI has changed, and if so, update the setpoint in the script to match
         if self.gui_setpoint != self.prev_gui_setpoint:
             self.setpoint = copy.deepcopy(self.gui_setpoint)
@@ -639,13 +667,7 @@ class Channel:
         # Set control variable
         self.pid.set_cv()
 
-        # See logic for setpoint above
-        # if self.lock_override:
-        #     if self.lock == self.gui_lock:
-        #         self.lock_override = False
-        # else:
         if self.gui_lock != self.prev_gui_lock:
-            self.log.info(f"udpate lock to {self.gui_lock}")
             self.lock = copy.deepcopy(self.gui_lock)
 
         self.prev_gui_lock = copy.deepcopy(self.gui_lock)
@@ -710,6 +732,16 @@ class Channel:
         self.curve_name = self.name + ' Frequency'  # Name used for identifying the frequency Curve object
         self.lock_name = self.name + ' Lock'  # Name used for identifying lock Scalar object
         self.error_name = self.name + ' Error'  # Name used for identifying error Scalar object
+
+        if 'laser_lab' in channel_params:
+            self.laser_lab = channel_params['laser_lab']
+        else:
+            self.laser_lab = None
+
+        if 'plot_name' in channel_params:
+            self.plot_name = channel_params['plot_name']
+        else:
+            self.plot_name = None
 
         if 'setpoint' in channel_params:
             self.setpoint = channel_params['setpoint']
@@ -795,7 +827,8 @@ def launch(**kwargs):
         three_lasers = True
     else:
         three_lasers = False
-    device_id = config['device_id']
+
+    device_id = kwargs['config']
 
     wavemeter_client = find_client(
         clients=kwargs['clients'],

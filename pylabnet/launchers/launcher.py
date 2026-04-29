@@ -240,8 +240,14 @@ class Launcher:
             matches = []
             for connector in self.connectors.values():
                 # Add servers that have the correct name and ID
-                if (connector.name.startswith(module_name)) and (server_config['device_id'] == connector.device_id):
-                    matches.append(connector)
+                # if script server, check module_name and config_name
+                if "script" in server and server["script"] == "True":
+                    if (connector.name.startswith(module_name)) and (server['config'] == connector.device_id):
+                        matches.append(connector)
+                # if device server, check module_name and device_id
+                else:
+                    if (connector.name.startswith(module_name)) and (server_config['device_id'] == connector.device_id):
+                        matches.append(connector)
 
             if 'auto_connect' in server and server['auto_connect'] == 'False':
                 auto_connect = False

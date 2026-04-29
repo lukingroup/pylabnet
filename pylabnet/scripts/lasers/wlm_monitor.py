@@ -827,7 +827,8 @@ def launch(**kwargs):
         three_lasers = True
     else:
         three_lasers = False
-    device_id = config['device_id']
+
+    device_id = kwargs['config']
 
     wavemeter_client = find_client(
         clients=kwargs['clients'],

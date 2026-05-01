@@ -129,7 +129,7 @@ class LogClient:
         DEBUG=10
     )
 
-    def __init__(self, host, port, key='pylabnet.pem', module_tag='', server_port=None, ui=None):
+    def __init__(self, host, port, key='pylabnet.pem', module_tag='', lab_name='', server_port=None, ui=None):
 
         # Declare all internal vars
         self._host = ''
@@ -138,27 +138,16 @@ class LogClient:
         self._service = None
         self._level_str = ''
         self._level = 0
-        self._module_tag = ''
         self._server_port = server_port  # Identifies a server running in client's thread
         self._ui = ui  # Identifies a relevant .ui file for the client
         self.operating_system = get_os()
-        #self.lab_name = None
-
-        # try:
-        #     lab_name_dict = load_config("lab_name")
-        #     self.lab_name = lab_name_dict['lab_name']
-        # except:
-        #     print('found no lab_name config file, assigning to NO LAB')
-        #     self.lab_name = None
 
         # Set module alias to display with log messages
         self._module_tag = module_tag
+        self._lab_name = lab_name
 
         # Connect to log server
         self.connect(host=host, port=port, key=key)
-
-        # Set module alias to display with log messages
-        self._module_tag = module_tag
 
         # Log test message
         self.info('Started logging')
@@ -298,8 +287,8 @@ class LogClient:
 
     def _log_msg(self, msg_str, level_str):
 
-        # Prepending log message with module name.
-        message = ' {0}: {1}'.format(self._module_tag, msg_str)
+        # Prepending log message with module name and lab name.
+        message = f' {self._module_tag}: LAB:{self._lab_name} - {msg_str}'
 
         # Try sending message to the log server
         try:

@@ -173,6 +173,7 @@ class Controller:
         self.debug = False
         self.debug_level = None
         self.autoscroll_off = False
+        self.full_logs = [] # Stores the entire log string
         # date string is None if not logging to file, and gives today's date if logging to file.
         # For day-chopping purposes
         self.logfile_date_str = None
@@ -194,6 +195,12 @@ class Controller:
     def start_gui_server(self):
         """ Starts the launch controller GUI server, or connects to the server and updates GUI"""
 
+        # If lab name for this Logger instance is specified, add to gui_logger
+        try:
+            lab_name = load_config("lab_name")['lab_name']
+        except (FileNotFoundError, AttributeError, KeyError):
+            lab_name = 'NO_LAB'
+
         module_str = ''
         if self.proxy:
             module_str = '_proxy'
@@ -203,6 +210,7 @@ class Controller:
                 host=self.host,
                 port=self.log_port,
                 module_tag=self.GUI_NAME + module_str,
+                lab_name=lab_name,
                 ui=self.LOGGER_UI
             )
         except ConnectionRefusedError:
@@ -211,11 +219,6 @@ class Controller:
             time.sleep(10)
             raise
 
-        # If lab name for this Logger instance is specified, add to gui_logger
-        try:
-            lab_name = load_config("lab_name")['lab_name']
-        except (FileNotFoundError, AttributeError, KeyError):
-            lab_name = 'NO_LAB'
         self.gui_logger.update_data(data=dict(lab_name=lab_name))
 
         # Instantiate GUI server and update GUI with port details
@@ -443,6 +446,7 @@ class Controller:
         self._configure_logfile()
         self._configure_logging()
         self._configure_autoscroll_off()
+        self._configure_log_filter()
 
         self.main_window.force_update()
 
@@ -450,7 +454,12 @@ class Controller:
         """ Updates the proxy with new content using the buffer terminal continuously"""
 
         # Remove the !~ bookmark from the message
-        self.main_window.terminal.appendPlainText(re.sub(r'!~\d+~!', '', new_msg))
+        new_msg_cleaned = re.sub(r'!~\d+~!', '', new_msg)
+        # Append the new message to the message terminal after message filtering
+        self.main_window.terminal.appendPlainText(self._filter_string_list(new_msg_cleaned.split("\n")))
+        # Append to full logs
+        self.full_logs = self.full_logs + new_msg_cleaned.split("\n")
+
         if not self.autoscroll_off:
             try:
                 self.main_window.terminal.moveCursor(QtGui.QTextCursor.End)
@@ -513,9 +522,15 @@ class Controller:
 
     def _configure_client_search(self):
         self.main_window.client_search.textChanged.connect(self._search_clients)
+        self.main_window.case_sensitive.stateChanged.connect(self._search_clients)
 
     def _configure_lab_name_select(self):
         self.main_window.lab_name_select.currentIndexChanged.connect(self._search_clients)
+        self.main_window.lab_name_select.currentIndexChanged.connect(self._filter_logs)
+
+    def _configure_log_filter(self):
+        self.main_window.logger_filter_text.textChanged.connect(self._filter_logs)
+        self.main_window.case_sensitive.stateChanged.connect(self._filter_logs)
 
     def _configure_clicks(self):
         """ Configures what to do upon clicks """
@@ -541,13 +556,43 @@ class Controller:
                 self.client_list[client] = QtWidgets.QListWidgetItem(client)
                 self.client_list[client].setToolTip(info)
 
+                # Check if case-sensitive box is checked, if unchecked we apply the lower-case operator to all strings, else identity
+                case_fn = str.lower if not self.main_window.case_sensitive.isChecked() else (lambda x: x)
+
                 # If search_string is non-empty, look for clients that have name or ip address containing search string
-                if (search_str == "") or (search_str in client or search_str in self.client_data[client]['ip']):
+                if (search_str == "") or (case_fn(search_str) in case_fn(client) or search_str in self.client_data[client]['ip']):
 
                     # If lab filter is not ALL_LABS, look for clients that have matching lab
                     if (lab_name == "ALL LABS") or ("lab_name" in self.client_data[client] and self.client_data[client]["lab_name"] == lab_name):
 
                         self.main_window.client_list.addItem(self.client_list[client])
+
+    def _filter_logs(self):
+        """ Filter shown logs based on a search term and immediately show them on the terminal. """
+
+        # Only work with proxy window to avoid messing with master logs
+        if self.proxy:
+            filter_txt = self.main_window.logger_filter_text.text()
+            filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
+
+            # Check if case-sensitive box is checked
+            if self.main_window.case_sensitive.isChecked():
+                self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt in s) and
+                                                                        (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
+            else:
+                self.main_window.terminal.setPlainText("\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and
+                                                                        (filter_lab == "LAB:ALL LABS" or filter_lab in s), self.full_logs)))
+
+    def _filter_string_list(self, str_list):
+        """ Filter a given list of strings based on a search term and return the combined string. """
+        filter_txt = self.main_window.logger_filter_text.text()
+        filter_lab = "LAB:" + self.main_window.lab_name_select.currentText()
+
+        # Check if case-sensitive box is checked
+        if self.main_window.case_sensitive.isChecked():
+            return "\n".join(filter(lambda s: (filter_txt in s) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
+        else:
+            return "\n".join(filter(lambda s: (filter_txt.lower() in s.lower()) and (filter_lab == "LAB:ALL LABS" or filter_lab in s), str_list))
 
     def _stop_server(self):
         """ Stops the highlighted server, if applicable """

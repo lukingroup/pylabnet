@@ -69,6 +69,7 @@ def main():
         host=log_ip,
         port=log_port,
         module_tag=logger_tag,
+        lab_name=lab_name,
         server_port=server_port
     )
 

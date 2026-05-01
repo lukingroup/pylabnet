@@ -333,20 +333,9 @@ class Controller:
         if 'Client disconnected' in text or self.disconnection:
             self.disconnection = True
 
-    # def disconnect(self):
-    #     """ Handles case where client has disconnected """
-
-    #     to_del = [client for (client, port) in self.port_list.items() if port not in self.log_server._server.clients]
-    #     for client in to_del:
-    #         print('[INFO] {} disconnected at {}'.format(client, time.strftime("%Y-%m-%d, %H:%M:%S", time.gmtime())))
-    #         self.main_window.client_list.takeItem(self.main_window.client_list.row(self.client_list[client]))
-    #         del self.client_list[client]
-    #         del self.port_list[client]
-    #         del self.log_service.client_data[client]
-    #         del self.client_data[client]
-    #         self.disconnection = False
-
     def disconnect(self):
+        """ Handles case where client has disconnected """
+
         actual_clients = set(self.log_service.client_data.keys())
         shown_clients = set(self.client_list.keys())
 

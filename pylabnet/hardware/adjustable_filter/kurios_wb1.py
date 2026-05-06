@@ -1,4 +1,4 @@
-﻿from pyvisa import VisaIOError, ResourceManager
+from pyvisa import VisaIOError, ResourceManager
 import numpy as np
 from pylabnet.utils.logging.logger import LogHandler
 

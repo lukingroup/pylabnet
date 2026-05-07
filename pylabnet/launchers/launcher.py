@@ -63,8 +63,9 @@ class Launcher:
 
         # Get command line arguments as a dict
         self.args = parse_args()
-        self.name = self.args['script']
+        self.script_name = self.args['script']
         self.config = self.args['config']
+        self.name = self.script_name + '_' + self.config
         self.log_ip = self.args['logip']
         self.log_port = int(self.args['logport'])
         self.debug = int(self.args['debug'])
@@ -77,7 +78,7 @@ class Launcher:
 
         # Load config
         self.config_dict = load_script_config(
-            script=self.name,
+            script=self.script_name,
             config=self.config,
             logger=self.logger
         )
@@ -174,35 +175,6 @@ class Launcher:
             except KeyError:
                 continue
 
-        # for client_index in range(self.num_clients):
-
-        #     # Check if there is a port for this client, instantiate connector if so
-        #     port_name = 'port{}'.format(client_index + 1)
-        #     client_name = self.args['client{}'.format(client_index + 1)]
-
-        #     #First see if there is a device id
-        #     try:
-        #         device_id = self.args['device_id{}'.format(client_index + 1)]
-        #     except KeyError:
-        #         self.logger.warn(f'No device_id on client {client_name}, None assigned as default')
-        #         device_id = None
-        #     try:
-        #         self.connectors[client_name] = Connector(
-        #             name=client_name,
-        #             ip=self.args['ip{}'.format(client_index + 1)],
-        #             port=self.args[port_name],
-        #             device_id=device_id
-        #         )
-        #     except KeyError:
-        #         pass
-
-        #     # Check for a ui file as well, if it is a GUI
-        #     ui_name = 'ui{}'.format(client_index + 1)
-        #     try:
-        #         self.connectors[client_name].set_ui(self.args[ui_name])
-        #     except KeyError:
-        #         pass
-
     def _connect_to_server(self, module, host, port, device_id=None):
         """ Connects to a server and stores the client as an attribute, to be used in the main script(s)
 
@@ -268,8 +240,14 @@ class Launcher:
             matches = []
             for connector in self.connectors.values():
                 # Add servers that have the correct name and ID
-                if (connector.name.startswith(module_name)) and (server_config['device_id'] == connector.device_id):
-                    matches.append(connector)
+                # if script server, check module_name and config_name
+                if "script" in server and server["script"] == "True":
+                    if (connector.name.startswith(module_name)) and (server['config'] == connector.device_id):
+                        matches.append(connector)
+                # if device server, check module_name and device_id
+                else:
+                    if (connector.name.startswith(module_name)) and (server_config['device_id'] == connector.device_id):
+                        matches.append(connector)
 
             if 'auto_connect' in server and server['auto_connect'] == 'False':
                 auto_connect = False
@@ -410,13 +388,13 @@ class Launcher:
         """ Launch the scripts to be run sequentially in this thread """
 
         spec = importlib.util.spec_from_file_location(
-            self.name,
+            self.script_name,
             self.config_dict['script']
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
 
-        self.logger.info(f'Launching script {self.name}')
+        self.logger.info(f'Launching script {self.script_name}')
 
         mod.launch(
             logger=self.logger,
@@ -434,7 +412,7 @@ class Launcher:
 
         if 'script_service' in self.config_dict and self.config_dict['script_service'] == 'True':
             spec = importlib.util.spec_from_file_location(
-                self.name,
+                self.script_name,
                 self.config_dict['script']
             )
             mod = importlib.util.module_from_spec(spec)

@@ -258,21 +258,6 @@ class Window(QtWidgets.QMainWindow):
 
         return graph
 
-    # def closeEvent(self, event):
-    #     """ Occurs when window is closed. Overwrites parent class method"""
-
-    #     if self.auto_close:
-    #         try:
-    #             close_client = ClientBase(
-    #                 host=self.host,
-    #                 port=self.port
-    #             )
-    #             close_client.close_server()
-    #         except:
-    #             pass
-
-    #     self.stop_button.setChecked(True)
-
     def closeEvent(self, event):
         if self.auto_close:
             if self.host is None or self.port is None:

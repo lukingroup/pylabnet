@@ -5,6 +5,9 @@ from pylabnet.hardware.awg.awg_utils import convert_awg_pin_to_dio_board
 # Maximal output for Hittite MW source
 MW_MAXVAL = 25
 
+# Maximal output for Keithley V source
+V_MAXVAL = 150
+
 # Maximal output for Signalcore MW source
 SIGNALCORE_MW_MAXVAL = 15
 
@@ -593,8 +596,40 @@ class PhotonSpotBias(StaticLineHardwareHandler):
         self.hardware_client.delatch(self.ch)
 
 
+class keithley_2400(StaticLineHardwareHandler):
+
+    def setup(self):
+        '''Sets up the staticline functions (e.g. up/down) in terms of the
+        device client function calls.
+        '''
+
+        self.maxval = V_MAXVAL
+
+        self.up = self.hardware_client.output_on
+        self.down = self.hardware_client.output_off
+        self.log.info(f'keithley assigned to staticline {self.name}')
+
+        self.setting = self.config['setting']
+
+    def set_value(self, value):
+        if self.setting == "voltage":
+            if float(value) > self.maxval:
+                self.log.warn(f"New volatge of {value} V is larger than maximal voltage of {self.maxval} V.")
+                value = self.maxval
+
+            self.hardware_client.set_voltage_source()
+            self.hardware_client.set_voltage(float(value))
+            
+
+        if self.setting == "current":
+            self.hardware_client.set_current_compliance(float(value))
+
+
+
+
 ################################################################################
 registered_staticline_modules = {
+    'keithley_2400': keithley_2400, 
     'HMC_T2220': HMCT2220,
     'synthhd': SYNTHHD,
     'sc5521A': SC5521A,

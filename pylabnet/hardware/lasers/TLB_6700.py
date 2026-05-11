@@ -1,5 +1,6 @@
 import Newport
-from System.Text import StringBuilder
+#from System.Text import StringBuilder
+
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -21,7 +22,7 @@ class Driver:
         self.log = LogHandler(logger)
         self.tlb = None
 
-        self._buff = StringBuilder(64)
+        #self._buff = StringBuilder(64)
 
         # Try connecting to laser
         try:
@@ -44,9 +45,10 @@ class Driver:
         self.tlb.CloseDevices()
 
     def tlb_query(self, msg):
-        self._buff.Clear()
-        self.tlb.Query(self.device_id, msg, self._buff)
-        return self._buff.ToString()
+        # self._buff.Clear()
+        # self.tlb.Query(self.device_id, msg, self._buff)
+        # return self._buff.ToString()
+        return self.tlb.Query(self.device_id, msg)
 
     def set_remote_control(self):
         """ set laser to be controlled remotely """

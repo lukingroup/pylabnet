@@ -22,7 +22,7 @@ class Service(ServiceBase):
         return self._module.set_current(power)
 
     def exposed_set_wavelength(self, wavelength):
-        return self._module.set_cwavelength(wavelength)
+        return self._module.set_wavelength(wavelength)
 
 
 class Client(ClientBase):

@@ -1,6 +1,6 @@
-import Newport
-#from System.Text import StringBuilder
-
+import sys
+import clr
+from System.Text import StringBuilder
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -8,21 +8,31 @@ from pylabnet.utils.logging.logger import LogHandler
 class Driver:
     """ Driver class for Toptica DLC Pro """
 
-    def __init__(self, device_id, product_id=4106, logger=None):
+    def __init__(self, device_id, New_Focus_program_path, product_id=4106, logger=None):
         """ Instantiates DLC_Pro object
+
+        NOTE: for this driver to work, you must have installed the New Focus Laser Tuning
+        application: https://www.newport.com/f/velocity-wide-&-fine-tunable-lasers on your computer
 
         :param host: (str) hostname of laser (IP address)
         :param port: (int) port number, toptica defaults to 1998
-        :num_lasers: Number of installed lasers
+        :param device_id (str): DeviceKey or name of device, of form '6700 SNxxxxx'
+        :param product_id (int): ProductID of device
+        :param New_Focus_program_path (str): path to where the New Focus Driver has been installed (location of UsbDllWrap.dll file)
         :param logger: (LogClient)
         """
 
         self.device_id = device_id
         self.product_id = product_id
+        self.New_Focus_program_path = New_Focus_program_path
         self.log = LogHandler(logger)
         self.tlb = None
 
-        #self._buff = StringBuilder(64)
+        self._buff = StringBuilder(64)
+
+        sys.path.append(self.New_Focus_program_path)
+        clr.AddReference('UsbDllWrap')
+        import Newport
 
         # Try connecting to laser
         try:
@@ -45,10 +55,9 @@ class Driver:
         self.tlb.CloseDevices()
 
     def tlb_query(self, msg):
-        # self._buff.Clear()
-        # self.tlb.Query(self.device_id, msg, self._buff)
-        # return self._buff.ToString()
-        return self.tlb.Query(self.device_id, msg)
+        self._buff.Clear()
+        self.tlb.Query(self.device_id, msg, self._buff)
+        return self._buff.ToString()
 
     def set_remote_control(self):
         """ set laser to be controlled remotely """
@@ -102,4 +111,5 @@ class Driver:
 
     def query_laser_id(self):
         """ Identification string query """
-        self.log.info('*IDN?')
+        output = self.tlb_query('*IDN?')
+        self.log.info('Connected to Laser: ' + output)

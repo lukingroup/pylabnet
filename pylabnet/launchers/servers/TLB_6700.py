@@ -15,10 +15,13 @@ def launch(**kwargs):
 
     # Instantiate driver
     velocity_logger = kwargs['logger']
-    config = load_device_config('toptica_dlc_pro', kwargs['config'], velocity_logger)
+    config = load_device_config('TLB_6700', kwargs['config'], velocity_logger)
 
     tlb = Driver(
-        device_id=config['device_id'], product_id=int(config['product_id']), logger=velocity_logger
+        device_id=config['device_id'],
+        New_Focus_program_path=config['New_Focus_program_path'],
+        product_id=int(config['product_id']),
+        logger=velocity_logger
     )
 
     # Instantiate server

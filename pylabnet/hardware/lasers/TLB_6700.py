@@ -1,6 +1,7 @@
 import sys
 import clr
 from System.Text import StringBuilder
+import time
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -78,38 +79,94 @@ class Driver:
     def turn_on(self):
         """ Turns on the laser """
 
-        # Check if laser is on already
-        if self.is_laser_on():
-            self.log.info(f'Velocity laser is already on')
+        check_passed = self.check_operation_status()
+
+        if check_passed:
+            # Check if laser is on already
+            if self.is_laser_on():
+                self.log.info(f'Velocity laser is already on')
+            else:
+                self.tlb_query('OUTPut:STATe ON')
         else:
-            self.tlb_query('OUTPut:STATe ON')
+            self.log.error('cannot turn laser on!')
 
     def turn_off(self):
         """ Turns off the laser """
 
-        # Check if laser is on already
-        if self.is_laser_on():
-            self.tlb_query('OUTPut:STATe OFF')
+        check_passed = self.check_operation_status()
+
+        if check_passed:
+            # Check if laser is on already
+            if self.is_laser_on():
+                self.tlb_query('OUTPut:STATe OFF')
+            else:
+                self.log.info(f'Velocity laser is already off')
         else:
-            self.log.info(f'Velocity laser is already off')
+            self.log.error('cannot turn laser off!')
 
     def set_current(self, current):
         """ Set diode current setpoint in mA """
 
-        self.tlb_query(f'SOURce:CURRent:DIODe {current}')
+        check_passed = self.check_operation_status()
+
+        if check_passed:
+            self.tlb_query(f'SOURce:CURRent:DIODe {current}')
+        else:
+            self.log.error('cannot set current!')
 
     def set_power(self, power):
         """ Set diode power setpoint in mW """
 
-        self.tlb_query(f'SOURce:POWer:DIODe {power}')
+        check_passed = self.check_operation_status()
+
+        if check_passed:
+            self.tlb_query(f'SOURce:POWer:DIODe {power}')
+        else:
+            self.log.error('cannot set power!')
 
     def set_wavelength(self, wavelength):
         """ Set wavelength setpoint in nm """
 
-        self.tlb_query(f'SOURce:WAVElength {wavelength}')
-        self.tlb_query('OUTPut:TRACK 1')
+        check_passed = self.check_operation_status()
+
+        if check_passed:
+            self.tlb_query(f'SOURce:WAVElength {wavelength}')
+            self.tlb_query('OUTPut:TRACK 1')
+        else:
+            self.log.error('cannot set wavelength!')
+
+    def get_wavelength(self):
+        """ Get wavelength setpoint in nm """
+
+        return self.tlb_query(f'SOURce:WAVElength?')
 
     def query_laser_id(self):
         """ Identification string query """
         output = self.tlb_query('*IDN?')
         self.log.info('Connected to Laser: ' + output)
+
+    def check_operation_status(self):
+        """
+        checks if Operation complete status is 1 twice in a row.
+        This prevents the drive from crashing from receiving too
+        many commands in quick succession, which completely shuts
+        down the USB connection (only salvagable with power cycling).
+        """
+        watch_dog = 0
+        doubledouble = 0
+        while (doubledouble == 0):
+            single = bool(int(self.tlb_query('*OPC?')))
+            time.sleep(1)
+            if single:
+                doubledouble = bool(int(self.tlb_query('*OPC?')))
+                time.sleep(1)
+            watch_dog += 1
+            if watch_dog > 30:
+                break
+
+        if doubledouble:
+            self.log.info('Operation check passed. Laser ready to receive command.')
+        else:
+            self.log.error('Operation check not passing. Aborting command...')
+
+        return doubledouble

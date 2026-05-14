@@ -2,6 +2,7 @@ import sys
 import clr
 from System.Text import StringBuilder
 import time
+import numpy as np
 
 from pylabnet.utils.logging.logger import LogHandler
 
@@ -134,6 +135,13 @@ class Driver:
             self.tlb_query('OUTPut:TRACK 1')
         else:
             self.log.error('cannot set wavelength!')
+
+    def set_piezo_voltage(self, V):
+
+        if V >= 0 and V <= 100:
+            self.tlb_query(f'SOURce:VOLTage:PIEZo {np.round(V,2)}')
+        else:
+            self.log.error(f'Piezo voltage {V} out of range!')
 
     def get_wavelength(self):
         """ Get wavelength setpoint in nm """

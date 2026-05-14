@@ -26,6 +26,9 @@ class Service(ServiceBase):
     def exposed_get_wavelength(self):
         return self._module.get_wavelength()
 
+    def exposed_set_piezo_voltage(self, V):
+        return self._module.set_piezo_voltage(V)
+
 
 class Client(ClientBase):
 
@@ -58,3 +61,17 @@ class Client(ClientBase):
 
     def get_wavelength(self):
         return self._service.exposed_get_wavelength()
+
+    def set_set_piezo_voltage(self, V):
+
+        return self._service.exposed_set_piezo_voltage(V)
+
+    def set_ao_voltage(self, ao_channel=1, voltages=[0]):
+        """ Wrapper for using this in generic AO context (specifically for wlm_monitor)
+
+        :param ao_channel: not used in this context
+        :param voltages: (list) list containing one element, the voltage to set
+        """
+
+        voltage = voltages[0]
+        return self._service.exposed_set_piezo_voltage(voltage)

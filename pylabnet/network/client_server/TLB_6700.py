@@ -18,7 +18,7 @@ class Service(ServiceBase):
         return self._module.set_current(current)
 
     def exposed_set_power(self, power):
-        return self._module.set_current(power)
+        return self._module.set_power(power)
 
     def exposed_set_wavelength(self, wavelength):
         return self._module.set_wavelength(wavelength)
@@ -62,7 +62,7 @@ class Client(ClientBase):
     def get_wavelength(self):
         return self._service.exposed_get_wavelength()
 
-    def set_set_piezo_voltage(self, V):
+    def set_piezo_voltage(self, V):
 
         return self._service.exposed_set_piezo_voltage(V)
 

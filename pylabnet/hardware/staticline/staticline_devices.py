@@ -619,17 +619,37 @@ class keithley_2400(StaticLineHardwareHandler):
 
             self.hardware_client.set_voltage_source()
             self.hardware_client.set_voltage(float(value))
-            
 
         if self.setting == "current":
             self.hardware_client.set_current_compliance(float(value))
 
 
+class TLB_6700(StaticLineHardwareHandler):
+
+    def setup(self):
+
+        self.setting = self.config['setting']
+
+        self.log.info(f'Velocity assigned to staticline {self.name}')
+
+    def set_value(self, value):
+        if self.setting == "piezo_voltage":
+            self.hardware_client.set_piezo_voltage(float(value))
+
+        if self.setting == "current":
+            self.hardware_client.set_current(float(value))
+
+        if self.setting == "power":
+            self.hardware_client.set_power(float(value))
+
+        if self.setting == "wavelength":
+            self.hardware_client.set_wavelength(float(value))
 
 
 ################################################################################
 registered_staticline_modules = {
-    'keithley_2400': keithley_2400, 
+    'TLB_6700': TLB_6700,
+    'keithley_2400': keithley_2400,
     'HMC_T2220': HMCT2220,
     'synthhd': SYNTHHD,
     'sc5521A': SC5521A,

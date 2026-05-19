@@ -42,21 +42,12 @@ class Client(ClientBase):
         return self._service.exposed_turn_off()
 
     def set_current(self, current):
-
-        #current = pickle.dumps(current)
-
         return self._service.exposed_set_current(current)
 
     def set_power(self, power):
-
-        #power = pickle.dumps(power)
-
         return self._service.exposed_set_power(power)
 
     def set_wavelength(self, wavelength):
-
-        #wavelength = pickle.dumps(wavelength)
-
         return self._service.exposed_set_wavelength(wavelength)
 
     def get_wavelength(self):

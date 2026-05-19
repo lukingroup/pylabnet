@@ -108,22 +108,12 @@ class Driver:
     def set_current(self, current):
         """ Set diode current setpoint in mA """
 
-        check_passed = self.check_operation_status()
-
-        if check_passed:
-            self.tlb_query(f'SOURce:CURRent:DIODe {current}')
-        else:
-            self.log.error('cannot set current!')
+        self.tlb_query(f'SOURce:CURRent:DIODe {current}')
 
     def set_power(self, power):
         """ Set diode power setpoint in mW """
 
-        check_passed = self.check_operation_status()
-
-        if check_passed:
             self.tlb_query(f'SOURce:POWer:DIODe {power}')
-        else:
-            self.log.error('cannot set power!')
 
     def set_wavelength(self, wavelength):
         """ Set wavelength setpoint in nm """
@@ -141,7 +131,7 @@ class Driver:
         if V >= 0 and V <= 100:
             self.tlb_query(f'SOURce:VOLTage:PIEZo {np.round(V,2)}')
         else:
-            self.log.error(f'Piezo voltage {V} out of range!')
+            self.log.error(f'Piezo voltage {V} out of range! Must be between 0 and 100!')
 
     def get_wavelength(self):
         """ Get wavelength setpoint in nm """
@@ -169,7 +159,7 @@ class Driver:
                 doubledouble = bool(int(self.tlb_query('*OPC?')))
                 time.sleep(1)
             watch_dog += 1
-            if watch_dog > 30:
+            if watch_dog > 30: # if checking operation status takes more than 30 seconds, abort
                 break
 
         if doubledouble:

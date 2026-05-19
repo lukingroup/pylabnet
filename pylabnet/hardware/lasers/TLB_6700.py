@@ -113,7 +113,7 @@ class Driver:
     def set_power(self, power):
         """ Set diode power setpoint in mW """
 
-            self.tlb_query(f'SOURce:POWer:DIODe {power}')
+        self.tlb_query(f'SOURce:POWer:DIODe {power}')
 
     def set_wavelength(self, wavelength):
         """ Set wavelength setpoint in nm """

@@ -17,9 +17,8 @@ class Driver:
         application: https://www.newport.com/f/velocity-wide-&-fine-tunable-lasers on your computer
 
         :param host: (str) hostname of laser (IP address)
-        :param port: (int) port number, toptica defaults to 1998
         :param device_id (str): DeviceKey or name of device, of form '6700 SNxxxxx'
-        :param product_id (int): ProductID of device
+        :param product_id (int): ProductID of device, Velocity defaults to 4106
         :param New_Focus_program_path (str): path to where the New Focus Driver has been installed (location of UsbDllWrap.dll file)
         :param logger: (LogClient)
         """

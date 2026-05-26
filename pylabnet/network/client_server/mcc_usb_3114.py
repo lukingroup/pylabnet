@@ -25,8 +25,11 @@ class Service(ServiceBase):
 
 class Client(ClientBase):
 
-    def set_ao_voltage(self, ao_channel, voltage):
-        voltage_pickle = pickle.dumps(voltage)
+    def set_ao_voltage(self, ao_channel, voltages):
+        try:
+            voltage_pickle = pickle.dumps(voltages[0])
+        except:
+            voltage_pickle = pickle.dumps(voltages)
         return self._service.exposed_set_ao_voltage(
             ao_channel=ao_channel,
             voltage_pickle=voltage_pickle
